@@ -15,6 +15,8 @@ DOCUMENTATION = '''
       - "Tasks show up in the report as follows:
         'ok': pass
         'failed' with 'EXPECTED FAILURE' in the task name: pass
+        'failed' with 'TOGGLE RESULT' in the task name: pass
+        'ok' with 'TOGGLE RESULT' in the task name: failure
         'failed' due to an exception: error
         'failed' for other reasons: failure
         'skipped': skipped"
@@ -37,6 +39,18 @@ DOCUMENTATION = '''
         description: Consider any tasks reporting "changed" as a junit test failure
         env:
           - name: JUNIT_FAIL_ON_CHANGE
+      fail_on_ignore:
+        name: JUnit fail on ignore
+        default: False
+        description: Consider failed tasks as a junit test failure even if ignore_on_error is set
+        env:
+          - name: JUNIT_FAIL_ON_IGNORE
+      include_setup_tasks_in_report:
+        name: JUnit include setup tasks in report
+        default: True
+        description: Should the setup tasks be included in the final report
+        env:
+          - name: JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT
     requirements:
       - whitelist in configuration
       - junit_xml (python lib)
@@ -73,6 +87,8 @@ class CallbackModule(CallbackBase):
     Tasks show up in the report as follows:
         'ok': pass
         'failed' with 'EXPECTED FAILURE' in the task name: pass
+        'failed' with 'TOGGLE RESULT' in the task name: pass
+        'ok' with 'TOGGLE RESULT' in the task name: failure
         'failed' due to an exception: error
         'failed' for other reasons: failure
         'skipped': skipped
@@ -84,6 +100,10 @@ class CallbackModule(CallbackBase):
                                      Default: False
         JUNIT_FAIL_ON_CHANGE (optional): Consider any tasks reporting "changed" as a junit test failure
                                      Default: False
+        JUNIT_FAIL_ON_IGNORE (optional): Consider failed tasks as a junit test failure even if ignore_on_error is set
+                                     Default: False
+        JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT (optional): Should the setup tasks be included in the final report
+                                     Default: True
 
     Requires:
         junit_xml
@@ -101,6 +121,8 @@ class CallbackModule(CallbackBase):
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
         self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
         self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
+        self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
+        self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -134,13 +156,14 @@ class CallbackModule(CallbackBase):
         play = self._play_name
         name = task.get_name().strip()
         path = task.get_path()
+        action = task.action
 
         if not task.no_log:
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
             if args:
                 name += ' ' + args
 
-        self._task_data[uuid] = TaskData(uuid, name, path, play)
+        self._task_data[uuid] = TaskData(uuid, name, path, play, action)
 
     def _finish_task(self, status, result):
         """ record the results of a task for a single host """
@@ -159,8 +182,14 @@ class CallbackModule(CallbackBase):
         if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
             status = 'failed'
 
+        # ignore failure if expected and toggle result if asked for
         if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
             status = 'ok'
+        elif 'TOGGLE RESULT' in task_data.name:
+            if status == 'failed':
+                status = 'ok'
+            elif status == 'ok':
+                status = 'failed'
 
         task_data.add_host(HostData(host_uuid, host_name, status, result))
 
@@ -217,6 +246,9 @@ class CallbackModule(CallbackBase):
         test_cases = []
 
         for task_uuid, task_data in self._task_data.items():
+            if task_data.action == 'setup' and self._include_setup_tasks_in_report == 'false':
+                continue
+
             for host_uuid, host_data in task_data.host_data.items():
                 test_cases.append(self._build_test_case(task_data, host_data))
 
@@ -248,7 +280,7 @@ class CallbackModule(CallbackBase):
         self._start_task(task)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if ignore_errors:
+        if ignore_errors and self._fail_on_ignore != 'true':
             self._finish_task('ok', result)
         else:
             self._finish_task('failed', result)
@@ -271,7 +303,7 @@ class TaskData:
     Data about an individual task.
     """
 
-    def __init__(self, uuid, name, path, play):
+    def __init__(self, uuid, name, path, play, action):
         self.uuid = uuid
         self.name = name
         self.path = path
@@ -279,6 +311,7 @@ class TaskData:
         self.start = None
         self.host_data = OrderedDict()
         self.start = time.time()
+        self.action = action
 
     def add_host(self, host):
         if host.uuid in self.host_data:

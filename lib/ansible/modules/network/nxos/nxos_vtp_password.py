@@ -47,12 +47,9 @@ options:
     vtp_password:
         description:
             - VTP password
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -60,7 +57,6 @@ options:
 EXAMPLES = '''
 # ENSURE VTP PASSWORD IS SET
 - nxos_vtp_password:
-    password: ntc
     state: present
     host: "{{ inventory_hostname }}"
     username: "{{ un }}"
@@ -68,7 +64,6 @@ EXAMPLES = '''
 
 # ENSURE VTP PASSWORD IS REMOVED
 - nxos_vtp_password:
-    password: ntc
     state: absent
     host: "{{ inventory_hostname }}"
     username: "{{ un }}"

@@ -1,5 +1,7 @@
 ---
-- - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vxlan_vtep sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - block:
   - name: "Apply N7K specific setup config"
@@ -10,18 +12,18 @@
     nxos_config: 
       commands:
         - feature nv overlay
-      provider: "{{ connection }}"
       match: none
+      provider: "{{ connection }}"
 
   - block:
     - name: configure vxlan_vtep
       nxos_vxlan_vtep: &configure9
         interface: nve1
-        description: default
+        description: "abcd"
         host_reachability: true
         source_interface: Loopback0
         source_interface_hold_down_time: 30
-        shutdown: true
+        shutdown: false
         provider: "{{ connection }}"
       register: result
   
@@ -37,6 +39,25 @@
         that:
           - "result.changed == false"
 
+    - name: reset vxlan_vtep
+      nxos_vxlan_vtep: &def9
+        interface: nve1
+        description: default
+        host_reachability: false
+        source_interface_hold_down_time: default
+        source_interface: default
+        shutdown: true
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+  
+    - name: "reset Idempotence"
+      nxos_vxlan_vtep: *def9
+      register: result
+
+    - assert: *false
+
     when: (platform is search('N9K'))
 
   - block:
@@ -46,7 +67,7 @@
         description: default
         host_reachability: true
         source_interface: Loopback0
-        shutdown: true
+        shutdown: false
         provider: "{{ connection }}"
       register: result
   
@@ -62,6 +83,24 @@
         that:
           - "result.changed == false"
 
+    - name: reset vxlan_vtep
+      nxos_vxlan_vtep: &def7
+        interface: nve1
+        description: default
+        host_reachability: false
+        source_interface: default
+        shutdown: true
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+  
+    - name: "reset Idempotence"
+      nxos_vxlan_vtep: *def7
+      register: result
+
+    - assert: *false
+
     when: (platform is search('N7K'))
 
   - name: remove vxlan_vtep
@@ -72,8 +111,8 @@
       source_interface: Loopback0
       source_interface_hold_down_time: 30
       shutdown: true
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert:
@@ -98,8 +137,8 @@
   - name: "Disable feature nv overlay"
     nxos_feature: 
       feature: nve
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vxlan_vtep sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"

@@ -15,6 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: install requirements for RHEL
+  package:
+    name: policycoreutils-python
+  when:
+    - ansible_distribution == 'RedHat'
+
 - name: Cleanup
   shell: setsebool -P httpd_can_network_connect 0
 ##########################################################################################

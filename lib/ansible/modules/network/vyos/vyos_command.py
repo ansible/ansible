@@ -54,8 +54,6 @@ options:
         the task to wait for a particular conditional to be true
         before moving forward.  If the conditional is not true
         by the configured I(retries), the task fails. See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
   match:
     description:
@@ -65,7 +63,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
   retries:
@@ -74,7 +71,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the I(wait_for)
         conditionals.
-    required: false
     default: 10
   interval:
     description:
@@ -82,13 +78,14 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 
 notes:
   - Tested against VYOS 1.1.7
   - Running C(show system boot-messages all) will cause the module to hang since
     VyOS is using a custom pager setting to display the output of that command.
+  - If a command sent to the device requires answering a prompt, it is possible
+    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 """
 
 EXAMPLES = """
@@ -108,6 +105,13 @@ tasks:
         - show hardware cpu
       wait_for:
         - "result[0] contains 'VyOS 1.1.7'"
+
+  - name: run command that requires answering a prompt
+    vyos_command:
+      commands:
+        - command: 'rollback 1'
+          prompt: 'Proceed with reboot? [confirm][y]'
+          answer: y
 """
 
 RETURN = """
@@ -135,7 +139,7 @@ warnings:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
@@ -164,7 +168,7 @@ def parse_commands(module, warnings):
             warnings.append('only show commands are supported when using '
                             'check mode, not executing `%s`' % item['command'])
         else:
-            items.append(module.jsonify(item))
+            items.append(item)
 
     return items
 
@@ -191,9 +195,8 @@ def main():
     wait_for = module.params['wait_for'] or list()
     try:
         conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except AttributeError as exc:
+        module.fail_json(msg=to_native(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
@@ -209,15 +212,15 @@ def main():
                     break
                 conditionals.remove(item)
 
-            if not conditionals:
-                break
+        if not conditionals:
+            break
 
-            time.sleep(interval)
+        time.sleep(interval)
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not been satisfied'
-        module.fail_json(msg=msg, falied_conditions=failed_conditions)
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result = {
         'changed': False,

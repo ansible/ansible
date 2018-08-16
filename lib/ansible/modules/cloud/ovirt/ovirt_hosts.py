@@ -129,6 +129,11 @@ options:
                action before executing upgrade action."
         default: True
         version_added: 2.4
+    reboot_after_upgrade:
+        description:
+            - "If I(true) and C(state) is I(upgraded) reboot host after successful upgrade."
+        default: True
+        version_added: 2.6
 extends_documentation_fragment: ovirt
 '''
 
@@ -268,9 +273,6 @@ class HostsModule(BaseModule):
             ssh=otypes.Ssh(
                 authentication_method=otypes.SshAuthenticationMethod.PUBLICKEY,
             ) if self.param('public_key') else None,
-            kdump_status=otypes.KdumpStatus(
-                self.param('kdump_integration')
-            ) if self.param('kdump_integration') else None,
             spm=otypes.Spm(
                 priority=self.param('spm_priority'),
             ) if self.param('spm_priority') else None,
@@ -283,14 +285,15 @@ class HostsModule(BaseModule):
             ) if self.param('kernel_params') else None,
             power_management=otypes.PowerManagement(
                 enabled=self.param('power_management_enabled'),
-            ) if self.param('power_management_enabled') is not None else None,
+                kdump_detection=self.param('kdump_integration') == 'enabled',
+            ) if self.param('power_management_enabled') is not None or self.param('kdump_integration') else None,
         )
 
     def update_check(self, entity):
         kernel_params = self.param('kernel_params')
         return (
             equal(self.param('comment'), entity.comment) and
-            equal(self.param('kdump_integration'), entity.kdump_status) and
+            equal(self.param('kdump_integration'), 'enabled' if entity.power_management.kdump_detection else 'disabled') and
             equal(self.param('spm_priority'), entity.spm.priority) and
             equal(self.param('power_management_enabled'), entity.power_management.enabled) and
             equal(self.param('override_display'), getattr(entity.display, 'address', None)) and
@@ -414,6 +417,7 @@ def main():
         activate=dict(default=True, type='bool'),
         iscsi=dict(default=None, type='dict'),
         check_upgrade=dict(default=True, type='bool'),
+        reboot_after_upgrade=dict(default=True, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -476,8 +480,11 @@ def main():
                             event
                             for event in events_service.list(
                                 from_=int(last_event.id),
-                                search='type=885 and host.name=%s' % host.name,
-                            )
+                                search='type=885',
+                                # Uncomment when 4.1 is EOL, and remove the cond:
+                                # if host.name in event.description
+                                # search='type=885 and host.name=%s' % host.name,
+                            ) if host.name in event.description
                         ]) > 0
                     ),
                     fail_condition=lambda host: len([
@@ -496,6 +503,7 @@ def main():
                 wait_condition=lambda h: h.status == result_state,
                 post_action=lambda h: time.sleep(module.params['poll_interval']),
                 fail_condition=hosts_module.failed_state_after_reinstall,
+                reboot=module.params['reboot_after_upgrade'],
             )
         elif state == 'iscsidiscover':
             host_id = get_id_by_name(hosts_service, module.params['name'])
@@ -531,7 +539,7 @@ def main():
                 action='fence',
                 action_condition=lambda h: h.status == hoststate.DOWN,
                 wait_condition=lambda h: h.status in [hoststate.UP, hoststate.MAINTENANCE],
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
                 fence_type='start',
             )
         elif state == 'stopped':
@@ -552,7 +560,7 @@ def main():
             ret = hosts_module.action(
                 action='fence',
                 wait_condition=lambda h: h.status == hoststate.UP,
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
                 fence_type='restart',
             )
         elif state == 'reinstalled':

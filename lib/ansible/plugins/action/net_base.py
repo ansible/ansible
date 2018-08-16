@@ -25,6 +25,8 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
+from ansible.plugins.action.nxos import ActionModule as _NxosActionModule
+from ansible.plugins.action.eos import ActionModule as _EosActionModule
 from ansible.module_utils.network.common.utils import load_provider
 
 from imp import find_module, load_module
@@ -35,10 +37,15 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+_CLI_ONLY_MODULES = frozenset(['junos_netconf', 'iosxr_netconf', 'iosxr_config', 'iosxr_command'])
+_NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
+
 
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
         socket_path = None
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = self._get_network_os(task_vars)
@@ -55,9 +62,13 @@ class ActionModule(ActionBase):
             module = load_module(module_name, f, p, d)
 
             self.provider = load_provider(module.get_provider_argspec(), self._task.args)
-            if play_context.network_os == 'junos':
+            if self.provider.get('transport') == 'netconf' and play_context.network_os in _NETCONF_SUPPORTED_PLATFORMS \
+                    and self._task.action not in _CLI_ONLY_MODULES:
                 play_context.connection = 'netconf'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 830)
+            elif self.provider.get('transport') in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):
+                play_context.connection = play_context.connection
+                play_context.port = int(self.provider['port'] or self._play_context.port or 22)
             else:
                 play_context.connection = 'network_cli'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 22)
@@ -73,12 +84,19 @@ class ActionModule(ActionBase):
                 play_context.become_method = 'enable'
 
             if self._play_context.connection == 'local':
-                socket_path = self._start_connection(play_context)
-                task_vars['ansible_socket'] = socket_path
+                if self.provider.get('transport') == 'nxapi' and play_context.network_os == 'nxos':
+                    self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, self._play_context)
+                elif self.provider.get('transport') == 'eapi' and play_context.network_os == 'eos':
+                    self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
+                else:
+                    socket_path = self._start_connection(play_context)
+                    task_vars['ansible_socket'] = socket_path
+
         else:
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
-                display.warning('provider is unnecessary when using connection=%s and will be ignored' % play_context.connection)
+                display.warning('provider is unnecessary when using %s and will be ignored' % play_context.connection)
+                del self._task.args['provider']
 
         if play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
@@ -95,7 +113,7 @@ class ActionModule(ActionBase):
         if 'fail_on_missing_module' not in self._task.args:
             self._task.args['fail_on_missing_module'] = False
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         module = self._get_implementation_module(play_context.network_os, self._task.action)
 
@@ -129,9 +147,11 @@ class ActionModule(ActionBase):
 
     def _start_connection(self, play_context):
 
-        display.vvv('using connection plugin %s' % play_context.connection, play_context.remote_addr)
+        display.vvv('using connection plugin %s (was local)' % play_context.connection, play_context.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent',
                                                                    play_context, sys.stdin)
+
+        connection.set_options(direct={'persistent_command_timeout': play_context.timeout})
 
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, play_context.remote_addr)

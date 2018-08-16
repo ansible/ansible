@@ -1,107 +1,36 @@
 #!powershell
 
-# (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.SID
 
 $ErrorActionPreference = "Stop"
 
 function Test-GroupMember {
     <#
     .SYNOPSIS
-    Parse desired member into domain and username.
+    Return SID and consistent account name (DOMAIN\Username) format of desired member.
     Also, ensure member can be resolved/exists on the target system by checking its SID.
     .NOTES
     Returns a hashtable of the same type as returned from Get-GroupMember.
-    Accepts username (users, groups) and domains in the following formats:
-    - username
-    - .\username
-    - SERVERNAME\username
-    - NT AUTHORITY\username
-    - DOMAIN\username
-    - username@DOMAIN
+    Accepts username (users, groups) and domains in the formats accepted by Convert-ToSID.
     #>
     param(
         [String]$GroupMember
     )
 
     $parsed_member = @{
-        domain = $null
-        username = $null
-        combined = $null
+        sid = $null
+        account_name = $null
     }
 
-    # Split domain and account name into separate values
-    # '\' or '@' needs additional parsing, otherwise assume local computer
+    $sid = Convert-ToSID -account_name $GroupMember
+    $account_name = Convert-FromSID -sid $sid
 
-    if ($GroupMember -match "\\") {
-        # DOMAIN\username
-        $split_member = $GroupMember.Split("\")
-
-        if ($split_member[0] -in @($env:COMPUTERNAME, ".")) {
-            # Local
-            $parsed_member.domain = $env:COMPUTERNAME
-        }
-        else {
-            # Domain or service (i.e. NT AUTHORITY)
-            $parsed_member.domain = $split_member[0]
-        }
-        $parsed_member.username = $split_member[1]
-    }
-    elseif ($GroupMember -match "@") {
-        # username@DOMAIN
-        $parsed_member.domain = $GroupMember.Split("@")[1]
-        $parsed_member.username = $GroupMember.Split("@")[0]
-    }
-    else {
-        # Local
-        $parsed_member.domain = $env:COMPUTERNAME
-        $parsed_member.username = $GroupMember
-    }
-
-    if ($parsed_member.domain -match "\.") {
-        # Assume FQDN was passed - change to NetBIOS/short name for later ADSI membership comparisons
-        $netbios_name = (Get-CimInstance -ClassName Win32_NTDomain -Filter "DnsForestName = '$($parsed_member.domain)'").DomainName
-
-        if (!$netbios_name) {
-            Fail-Json -obj $result -message "Could not resolve NetBIOS name for domain $($parsed_member.domain)"
-        }
-        $parsed_member.domain = $netbios_name
-    }
-
-    # Set SID check arguments, and 'combined' for later comparison and output reporting
-    if ($parsed_member.domain -eq $env:COMPUTERNAME) {
-        $sid_check_args = @($parsed_member.username)
-        $parsed_member.combined = "{0}" -f $parsed_member.username
-    }
-    else {
-        $sid_check_args = @($parsed_member.domain, $parsed_member.username)
-        $parsed_member.combined = "{0}\{1}" -f $parsed_member.domain, $parsed_member.username
-    }
-
-    try {
-        $user_object = New-Object -TypeName System.Security.Principal.NTAccount -ArgumentList $sid_check_args
-        $user_object.Translate([System.Security.Principal.SecurityIdentifier])
-    }
-    catch {
-        Fail-Json -obj $result -message "Could not resolve group member $GroupMember"
-    }
+    $parsed_member.sid = $sid
+    $parsed_member.account_name = $account_name
 
     return $parsed_member
 }
@@ -120,35 +49,28 @@ function Get-GroupMember {
     $members = @()
 
     $current_members = $Group.psbase.Invoke("Members") | ForEach-Object {
-        ([ADSI]$_).InvokeGet("ADsPath")
+        $bytes = ([ADSI]$_).InvokeGet("objectSID")
+        $sid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList $bytes, 0
+        $adspath = ([ADSI]$_).InvokeGet("ADsPath")
+
+        @{sid = $sid; adspath = $adspath} | Write-Output
     }
 
     foreach ($current_member in $current_members) {
         $parsed_member = @{
-            domain = $null
-            username = $null
-            combined = $null
+            sid = $current_member.sid
+            account_name = $null
         }
 
-        $rootless_adspath = $current_member.Replace("WinNT://", "")
+        $rootless_adspath = $current_member.adspath.Replace("WinNT://", "")
         $split_adspath = $rootless_adspath.Split("/")
 
-        if ($split_adspath -match $env:COMPUTERNAME) {
-            # Local
-            $parsed_member.domain = $env:COMPUTERNAME
-            $parsed_member.username = $split_adspath[-1]
-            $parsed_member.combined = $split_adspath[-1]
-        }
-        elseif ($split_adspath.Count -eq 1 -and $split_adspath[0] -like "S-1*") {
-            # Broken SID
-            $parsed_member.username = $split_adspath[0]
-            $parsed_member.combined = $split_adspath[0]
-        }
-        else {
-            # Domain or service (i.e. NT AUTHORITY)
-            $parsed_member.domain = $split_adspath[0]
-            $parsed_member.username = $split_adspath[1]
-            $parsed_member.combined = "{0}\{1}" -f $split_adspath[0], $split_adspath[1]
+        # Ignore lookup on a broken SID, and just return the SID as the account_name
+        if ($split_adspath.Count -eq 1 -and $split_adspath[0] -like "S-1*") {
+            $parsed_member.account_name = $split_adspath[0]
+        } else {
+            $account_name = Convert-FromSID -sid $current_member.sid
+            $parsed_member.account_name = $account_name
         }
 
         $members += $parsed_member
@@ -170,8 +92,7 @@ $result = @{
 }
 if ($state -eq "present") {
     $result.added = @()
-}
-elseif ($state -eq "absent") {
+} elseif ($state -eq "absent") {
     $result.removed = @()
 }
 
@@ -189,31 +110,29 @@ foreach ($member in $members) {
 
     $user_in_group = $false
     foreach ($current_member in $current_members) {
-        if ($current_member.combined -eq $group_member.combined) {
+        if ($current_member.sid -eq $group_member.sid) {
             $user_in_group = $true
             break
         }
     }
 
-    $member_adspath = "WinNT://{0}/{1}" -f $group_member.domain, $group_member.username
+    $member_sid = "WinNT://{0}" -f $group_member.sid
 
     try {
         if ($state -eq "present" -and !$user_in_group) {
             if (!$check_mode) {
-                $group.Add($member_adspath)
-                $result.added += $group_member.combined
+                $group.Add($member_sid)
+                $result.added += $group_member.account_name
             }
             $result.changed = $true
-        }
-        elseif ($state -eq "absent" -and $user_in_group) {
+        } elseif ($state -eq "absent" -and $user_in_group) {
             if (!$check_mode) {
-                $group.Remove($member_adspath)
-                $result.removed += $group_member.combined
+                $group.Remove($member_sid)
+                $result.removed += $group_member.account_name
             }
             $result.changed = $true
         }
-    }
-    catch {
+    } catch {
         Fail-Json -obj $result -message $_.Exception.Message
     }
 }
@@ -221,9 +140,8 @@ foreach ($member in $members) {
 $final_members = Get-GroupMember -Group $group
 
 if ($final_members) {
-    $result.members = [Array]$final_members.combined
-}
-else {
+    $result.members = [Array]$final_members.account_name
+} else {
     $result.members = @()
 }
 

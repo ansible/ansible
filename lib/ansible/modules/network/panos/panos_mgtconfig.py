@@ -30,44 +30,24 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     dns_server_primary:
         description:
             - address of primary DNS server
-        required: false
-        default: None
     dns_server_secondary:
         description:
             - address of secondary DNS server
-        required: false
-        default: None
     panorama_primary:
         description:
             - address of primary Panorama server
-        required: false
-        default: None
     panorama_secondary:
         description:
             - address of secondary Panorama server
-        required: false
-        default: None
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -91,7 +71,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -196,11 +176,11 @@ def main():
 
         if changed and commit:
             xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     module.exit_json(changed=changed, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

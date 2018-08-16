@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, Trond Hindenes <trond@hindenes.com> and others
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, Paul Durivage <paul.durivage@rackspace.com>
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -32,50 +19,39 @@ module: win_feature
 version_added: "1.7"
 short_description: Installs and uninstalls Windows Features on Windows Server
 description:
-     - Installs or uninstalls Windows Roles or Features on Windows Server. This module uses the Add/Remove-WindowsFeature Cmdlets on Windows 2008
+     - Installs or uninstalls Windows Roles or Features on Windows Server. This module uses the Add/Remove-WindowsFeature Cmdlets on Windows 2008 R2
        and Install/Uninstall-WindowsFeature Cmdlets on Windows 2012, which are not available on client os machines.
 options:
   name:
     description:
-      - Names of roles or features to install as a single feature or a comma-separated list of features
-    required: true
+      - Names of roles or features to install as a single feature or a comma-separated list of features.
+    required: yes
+    type: list
   state:
     description:
-      - State of the features or roles on the system
-    choices:
-      - present
-      - absent
+      - State of the features or roles on the system.
+    choices: [ absent, present ]
     default: present
-  restart:
-    description:
-      - Restarts the computer automatically when installation is complete, if restarting is required by the roles or features installed.
-      - DEPRECATED in Ansible 2.4, as unmanaged reboots cause numerous issues under Ansible. Check the C(reboot_required) return value
-        from this module to determine if a reboot is necessary, and if so, use the M(win_reboot) action to perform it.
-    choices:
-      - yes
-      - no
   include_sub_features:
     description:
-      - Adds all subfeatures of the specified feature
-    choices:
-      - yes
-      - no
+      - Adds all subfeatures of the specified feature.
+    type: bool
+    default: 'no'
   include_management_tools:
     description:
       - Adds the corresponding management tools to the specified feature.
-      - Not supported in Windows 2008. If present when using Windows 2008 this option will be ignored.
-    choices:
-      - yes
-      - no
+      - Not supported in Windows 2008 R2 and will be ignored.
+    type: bool
+    default: 'no'
   source:
     description:
       - Specify a source to install the feature from.
-      - Not supported in Windows 2008. If present when using Windows 2008 this option will be ignored.
-    choices: [ ' {driveletter}:\sources\sxs', ' {IP}\Share\sources\sxs' ]
+      - Not supported in Windows 2008 R2 and will be ignored.
+      - Can either be C({driveletter}:\sources\sxs) or C(\\{IP}\share\sources\sxs).
     version_added: "2.1"
 author:
-    - "Paul Durivage (@angstwad)"
-    - "Trond Hindenes (@trondhindenes)"
+    - Paul Durivage (@angstwad)
+    - Trond Hindenes (@trondhindenes)
 '''
 
 EXAMPLES = r'''
@@ -86,7 +62,9 @@ EXAMPLES = r'''
 
 - name: Install IIS (Web-Server and Web-Common-Http)
   win_feature:
-    name: Web-Server,Web-Common-Http
+    name:
+    - Web-Server
+    - Web-Common-Http
     state: present
 
 - name: Install NET-Framework-Core from file
@@ -99,8 +77,8 @@ EXAMPLES = r'''
   win_feature:
     name: Web-Server
     state: present
-    include_sub_features: True
-    include_management_tools: True
+    include_sub_features: yes
+    include_management_tools: yes
   register: win_feature
 
 - name: reboot if installing Web-Server feature requires it

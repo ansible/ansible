@@ -26,10 +26,11 @@ options:
   name:
     description:
     - The name of the environment variable.
-    required: true
+    required: yes
   value:
     description:
     - The value to store in the environment variable.
+    - Must be set when C(state=present) and cannot be an empty string.
     - Can be omitted for C(state=absent).
   level:
     description:
@@ -38,7 +39,7 @@ options:
     - Use C(user) to set for the current user that ansible is connected as.
     - Use C(process) to set for the current process.  Probably not that useful.
     choices: [ machine, user, process ]
-    required: true
+    required: yes
 author:
 - Jon Hawkesworth (@jhawkesworth)
 notes:

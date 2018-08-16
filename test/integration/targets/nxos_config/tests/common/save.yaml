@@ -1,5 +1,5 @@
 ---
-- debug: msg="START {{ connection.transport }}/save.yaml"
+- debug: msg="START common/save.yaml on connection={{ ansible_connection }}"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -36,4 +36,4 @@
     that:
       - "result.changed == true"
 
-- debug: msg="END {{ connection.transport }}/save.yaml"
+- debug: msg="END common/save.yaml on connection={{ ansible_connection }}"

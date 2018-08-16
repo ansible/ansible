@@ -1,0 +1,10 @@
+      Size(b)     Free(b)      Feature      Type   Flags  Prefixes
+   6429872128  5582319616        FAT32 USERFLASH      rw  flash:
+            -           -  unformatted USERFLASH      rw  fcmfs:
+    241172480    91893760      Unknown  NFSMOUNT      rw  nfsmount:
+            -           -            -   network      rw  ftp:
+            -           -            -   network      rw  tftp:
+            -           -            -   network      rw  scp:
+            -           -            -   network      rw  http:
+            -           -            -   network      rw  https:
+

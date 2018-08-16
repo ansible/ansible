@@ -32,11 +32,11 @@ import sys
 try:
     # Allow wildcard import because we really do want to import all of mock's
     # symbols into this compat shim
-    # pylint: disable=wildcard-import
+    # pylint: disable=wildcard-import,unused-wildcard-import
     from unittest.mock import *
 except ImportError:
     # Python 2
-    # pylint: disable=wildcard-import
+    # pylint: disable=wildcard-import,unused-wildcard-import
     try:
         from mock import *
     except ImportError:

@@ -185,3 +185,53 @@
           - flat_two == [1, 2, 3, 4, [5], 6, 7]
   vars:
     orig_list: [1, 2, [3, [4, [5]], 6], 7]
+
+- name: Test base64 filter
+  assert:
+    that:
+    - "'Ansible - くらとみ\n' | b64encode == 'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwo='"
+    - "'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwo=' | b64decode == 'Ansible - くらとみ\n'"
+    - "'Ansible - くらとみ\n' | b64encode(encoding='utf-16-le') == 'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA'"
+    - "'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA' | b64decode(encoding='utf-16-le') == 'Ansible - くらとみ\n'"
+
+- name: Test random_mac filter bad argument type
+  debug:
+    var: "0 | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a bad argument type error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value type (.*int.*) for random_mac .*')"
+
+- name: Test random_mac filter bad argument value
+  debug:
+    var: "'dummy' | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a bad argument value error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value (.*) for random_mac: .* not hexa byte')"
+
+- name: Test random_mac filter prefix too big
+  debug:
+    var: "'00:00:00:00:00:00' | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a prefix too big error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value (.*) for random_mac: 5 colon.* separated items max')"
+
+- name:  Verify random_mac filter
+  assert:
+    that:
+            - "'00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00' | random_mac != '00:00:00' | random_mac"

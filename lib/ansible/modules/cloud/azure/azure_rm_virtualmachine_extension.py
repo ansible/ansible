@@ -45,7 +45,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
         required: false
     virtual_machine_name:
         description:
@@ -75,6 +74,7 @@ options:
         description:
             - Whether the extension handler should be automatically upgraded across minor versions.
         required: false
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -121,9 +121,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import (
-        VirtualMachineExtension
-    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -260,7 +257,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
         '''
         self.log("Creating VM extension {0}".format(self.name))
         try:
-            params = VirtualMachineExtension(
+            params = self.compute_models.VirtualMachineExtension(
                 location=self.location,
                 publisher=self.publisher,
                 virtual_machine_extension_type=self.virtual_machine_extension_type,
@@ -311,6 +308,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMVMExtension()
+
 
 if __name__ == '__main__':
     main()

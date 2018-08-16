@@ -15,41 +15,35 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact:
-    ansible_user: ansible_user
-    ansible_group: ansible_group
-    ansible_file: /tmp/ansible_file
-    ansible_dir: /tmp/ansible_dir
-
 - name: Create ansible user
   user:
-    name: "{{ ansible_user }}"
+    name: "{{ test_user }}"
 
 - name: Create ansible group
   group:
-    name: "{{ ansible_group }}"
+    name: "{{ test_group }}"
 
 - name: Create ansible file
   file:
-    path: "{{ ansible_file }}"
+    path: "{{ test_file }}"
     state: touch
 
 - name: Create ansible dir
   file:
-    path: "{{ ansible_dir }}"
+    path: "{{ test_dir }}"
     state: directory
 ##############################################################################
 - name: Grant ansible user read access to a file
   acl:
-    path: "{{ ansible_file }}"
-    entity: "{{ ansible_user }}"
+    path: "{{ test_file }}"
+    entity: "{{ test_user }}"
     etype: user
     permissions: r
     state: present
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ ansible_file }}"
+  shell: "getfacl {{ test_file }}"
   register: getfacl_output
 
 - name: verify output
@@ -57,16 +51,16 @@
     that:
       - output is changed
       - output is not failed
-      - "'user:{{ ansible_user }}:r--' in output.acl"
-      - "'user:{{ ansible_user }}:r--' in getfacl_output.stdout_lines"
+      - "'user:{{ test_user }}:r--' in output.acl"
+      - "'user:{{ test_user }}:r--' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Obtain the acl for a specific file
   acl:
-    path: "{{ ansible_file }}"
+    path: "{{ test_file }}"
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ ansible_file }}"
+  shell: "getfacl {{ test_file }}"
   register: getfacl_output
 
 - name: verify output
@@ -75,26 +69,26 @@
       - output is not changed
       - output is not failed
       - "'user::rw-' in output.acl"
-      - "'user:{{ ansible_user }}:r--' in output.acl"
+      - "'user:{{ test_user }}:r--' in output.acl"
       - "'group::r--' in output.acl"
       - "'mask::r--' in output.acl"
       - "'other::r--' in output.acl"
       - "'user::rw-' in getfacl_output.stdout_lines"
-      - "'user:{{ ansible_user }}:r--' in getfacl_output.stdout_lines"
+      - "'user:{{ test_user }}:r--' in getfacl_output.stdout_lines"
       - "'group::r--' in getfacl_output.stdout_lines"
       - "'mask::r--' in getfacl_output.stdout_lines"
       - "'other::r--' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Removes the acl for ansible user on a specific file
   acl:
-    path: "{{ ansible_file }}"
-    entity: "{{ ansible_user }}"
+    path: "{{ test_file }}"
+    entity: "{{ test_user }}"
     etype: user
     state: absent
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ ansible_file }}"
+  shell: "getfacl {{ test_file }}"
   register: getfacl_output
 
 - name: verify output
@@ -102,13 +96,13 @@
     that:
       - output is changed
       - output is not failed
-      - "'user:{{ ansible_user }}:r--' not in output.acl"
-      - "'user:{{ ansible_user }}:r--' not in getfacl_output.stdout_lines"
+      - "'user:{{ test_user }}:r--' not in output.acl"
+      - "'user:{{ test_user }}:r--' not in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Sets default acl for ansible user on ansible dir
   acl:
-    path: "{{ ansible_dir }}"
-    entity: "{{ ansible_user }}"
+    path: "{{ test_dir }}"
+    entity: "{{ test_user }}"
     etype: user
     permissions: rw
     default: yes
@@ -116,7 +110,7 @@
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ ansible_dir }}"
+  shell: "getfacl {{ test_dir }}"
   register: getfacl_output
 
 - name: verify output
@@ -124,22 +118,22 @@
     that:
       - output is changed
       - output is not failed
-      - "'user:{{ ansible_user }}:rw-' in output.acl"
-      - "'default:user:{{ ansible_user }}:rw-' in getfacl_output.stdout_lines"
+      - "'user:{{ test_user }}:rw-' in output.acl"
+      - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Cleanup
-  shell: "setfacl -b {{ ansible_dir }}"
+  shell: "setfacl -b {{ test_dir }}"
 ##############################################################################
 - name: Same as previous but using entry shorthand
   acl:
-    path: "{{ ansible_dir }}"
-    entry: "user:{{ ansible_user }}:rw-"
+    path: "{{ test_dir }}"
+    entry: "user:{{ test_user }}:rw-"
     default: yes
     state: present
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ ansible_dir }}"
+  shell: "getfacl {{ test_dir }}"
   register: getfacl_output
 
 - name: verify output
@@ -147,19 +141,19 @@
     that:
       - output is changed
       - output is not failed
-      - "'user:{{ ansible_user }}:rw-' in output.acl"
-      - "'default:user:{{ ansible_user }}:rw-' in getfacl_output.stdout_lines"
+      - "'user:{{ test_user }}:rw-' in output.acl"
+      - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Same as previous, to test idempotence
   acl:
-    path: "{{ ansible_dir }}"
-    entry: "user:{{ ansible_user }}:rw-"
+    path: "{{ test_dir }}"
+    entry: "user:{{ test_user }}:rw-"
     default: yes
     state: present
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ ansible_dir }}"
+  shell: "getfacl {{ test_dir }}"
   register: getfacl_output
 
 - name: verify output
@@ -167,32 +161,32 @@
     that:
       - output is not changed
       - output is not failed
-      - "'user:{{ ansible_user }}:rw-' in output.acl"
-      - "'default:user:{{ ansible_user }}:rw-' in getfacl_output.stdout_lines"
+      - "'user:{{ test_user }}:rw-' in output.acl"
+      - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Cleanup
-  shell: "setfacl -b {{ ansible_dir }}"
+  shell: "setfacl -b {{ test_dir }}"
 ##############################################################################
 - name: Set default acls
   acl:
-    path: "{{ ansible_dir }}"
+    path: "{{ test_dir }}"
     entry: "{{ item }}"
     default: yes
     state: present
   with_items:
-      - "user:{{ ansible_user }}:rw-"
-      - "group:{{ ansible_group }}:rw-"
+      - "user:{{ test_user }}:rw-"
+      - "group:{{ test_group }}:rw-"
 
-- name: Remove default group ansible_user acl
+- name: Remove default group test_user acl
   acl:
-    path: "{{ ansible_dir }}"
-    entry: "group:{{ ansible_group }}:rw-"
+    path: "{{ test_dir }}"
+    entry: "group:{{ test_group }}:rw-"
     default: yes
     state: absent
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ ansible_dir }}"
+  shell: "getfacl {{ test_dir }}"
   register: getfacl_output
 
 - name: verify output
@@ -204,8 +198,8 @@
       - "'group::r-x' in getfacl_output.stdout_lines"
       - "'other::r-x' in getfacl_output.stdout_lines"
       - "'default:user::rwx' in getfacl_output.stdout_lines"
-      - "'default:user:{{ ansible_user }}:rw-' in getfacl_output.stdout_lines"
+      - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
       - "'default:group::r-x' in getfacl_output.stdout_lines"
       - "'default:mask::rwx' in getfacl_output.stdout_lines"
       - "'default:other::r-x' in getfacl_output.stdout_lines"
-      - "'default:group:{{ ansible_group }}:rw-' not in getfacl_output.stdout_lines"
+      - "'default:group:{{ test_group }}:rw-' not in getfacl_output.stdout_lines"

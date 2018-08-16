@@ -8,6 +8,7 @@ __metaclass__ = type
 import ast
 import yaml
 
+from ansible.module_utils._text import to_text
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
 
@@ -61,7 +62,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                                 data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                             else:
                                 # not yaml, should be a simple string
-                                data[varkey] = child.value.s
+                                data[varkey] = to_text(child.value.s)
                         display.debug('assigned :%s' % varkey)
 
         # Metadata is per-file and a dict rather than per-plugin/function and yaml
@@ -72,6 +73,46 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
             for x in ('version', 'metadata_version'):
                 if x in data['metadata']:
                     del data['metadata'][x]
+    except:
+        if verbose:
+            display.error("unable to parse %s" % filename)
+        if not ignore_errors:
+            raise
+
+    return data
+
+
+def read_docstub(filename, verbose=True, ignore_errors=True):
+    """
+    Quickly find short_description using string methods instead of node parsing.
+    This does not return a full set of documentation strings and is intended for
+    operations like ansible-doc -l.
+    """
+
+    data = {
+        'doc': None,
+        'plainexamples': None,
+        'returndocs': None,
+        'metadata': None
+    }
+
+    try:
+        t_module_data = open(filename, 'r')
+        capturing = False
+        doc_stub = []
+
+        for line in t_module_data:
+            # start capturing the stub until indentation returns
+            if capturing and line[0] == ' ':
+                doc_stub.append(line)
+            elif capturing and line[0] != ' ':
+                break
+            if 'short_description:' in line:
+                capturing = True
+                doc_stub.append(line)
+
+        data['doc'] = AnsibleLoader(r"".join(doc_stub), file_name=filename).get_single_data()
+
     except:
         if verbose:
             display.error("unable to parse %s" % filename)

@@ -4,25 +4,38 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import io
 import os
+import os.path
 import sys
+import stat
 import tempfile
-import yaml
-
+import traceback
 from collections import namedtuple
+
+from yaml import load as yaml_load
+try:
+    # use C version if possible for speedup
+    from yaml import CSafeLoader as SafeLoader
+except ImportError:
+    from yaml import SafeLoader
 
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
+from ansible.utils import py3compat
 from ansible.utils.path import unfrackpath
 from ansible.utils.path import makedirs_safe
 
+
 Plugin = namedtuple('Plugin', 'name type')
 Setting = namedtuple('Setting', 'name value origin type')
+
+INTERNAL_DEFS = {'lookup': ('_terms',)}
 
 
 # FIXME: see if we can unify in module_utils with similar function used by argspec
@@ -54,7 +67,7 @@ def ensure_type(value, value_type, origin=None):
     if value_type in ('boolean', 'bool'):
         value = boolean(value, strict=False)
 
-    elif value:
+    elif value is not None:
         if value_type in ('integer', 'int'):
             value = int(value)
 
@@ -89,7 +102,10 @@ def ensure_type(value, value_type, origin=None):
                 value = value.split(',')
             value = [resolve_path(x, basedir=basedir) for x in value]
 
-        # defaults to string types
+        elif value_type in ('str', 'string'):
+            value = unquote(to_text(value, errors='surrogate_or_strict'))
+
+        # defaults to string type
         elif isinstance(value, string_types):
             value = unquote(value)
 
@@ -133,41 +149,76 @@ def get_ini_config_value(p, entry):
     return value
 
 
-def find_ini_config_file():
+def find_ini_config_file(warnings=None):
     ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
     # FIXME: eventually deprecate ini configs
 
-    path0 = os.getenv("ANSIBLE_CONFIG", None)
-    if path0 is not None:
-        path0 = unfrackpath(path0, follow=False)
-        if os.path.isdir(path0):
-            path0 += "/ansible.cfg"
-    try:
-        path1 = os.getcwd() + "/ansible.cfg"
-    except OSError:
-        path1 = None
-    path2 = unfrackpath("~/.ansible.cfg", follow=False)
-    path3 = "/etc/ansible/ansible.cfg"
+    if warnings is None:
+        # Note: In this case, warnings does nothing
+        warnings = set()
 
-    for path in [path0, path1, path2, path3]:
-        if path is not None and os.path.exists(path):
+    # A value that can never be a valid path so that we can tell if ANSIBLE_CONFIG was set later
+    # We can't use None because we could set path to None.
+    SENTINEL = object
+
+    potential_paths = []
+
+    # Environment setting
+    path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
+    if path_from_env is not SENTINEL:
+        path_from_env = unfrackpath(path_from_env, follow=False)
+        if os.path.isdir(path_from_env):
+            path_from_env = os.path.join(path_from_env, "ansible.cfg")
+        potential_paths.append(path_from_env)
+
+    # Current working directory
+    warn_cmd_public = False
+    try:
+        cwd = os.getcwd()
+        perms = os.stat(cwd)
+        if perms.st_mode & stat.S_IWOTH:
+            warn_cmd_public = True
+        else:
+            potential_paths.append(os.path.join(cwd, "ansible.cfg"))
+    except OSError:
+        # If we can't access cwd, we'll simply skip it as a possible config source
+        pass
+
+    # Per user location
+    potential_paths.append(unfrackpath("~/.ansible.cfg", follow=False))
+
+    # System location
+    potential_paths.append("/etc/ansible/ansible.cfg")
+
+    for path in potential_paths:
+        if os.path.exists(path):
             break
     else:
         path = None
+
+    # Emit a warning if all the following are true:
+    # * We did not use a config from ANSIBLE_CONFIG
+    # * There's an ansible.cfg in the current working directory that we skipped
+    if path_from_env != path and warn_cmd_public:
+        warnings.add(u"Ansible is being run in a world writable directory (%s),"
+                     u" ignoring it as an ansible.cfg source."
+                     u" For more information see"
+                     u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
+                     % to_text(cwd))
 
     return path
 
 
 class ConfigManager(object):
 
-    UNABLE = []
     DEPRECATED = []
+    WARNINGS = set()
 
     def __init__(self, conf_file=None, defs_file=None):
 
         self._base_defs = {}
         self._plugins = {}
-        self._parser = None
+        self._parsers = {}
 
         self._config_file = conf_file
         self.data = ConfigData()
@@ -181,13 +232,13 @@ class ConfigManager(object):
         # consume definitions
         if os.path.exists(b_defs_file):
             with open(b_defs_file, 'rb') as config_def:
-                self._base_defs = yaml.safe_load(config_def)
+                self._base_defs = yaml_load(config_def, Loader=SafeLoader)
         else:
             raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(b_defs_file))
 
         if self._config_file is None:
             # set config using ini
-            self._config_file = find_ini_config_file()
+            self._config_file = find_ini_config_file(self.WARNINGS)
 
         # consume configuration
         if self._config_file:
@@ -208,15 +259,24 @@ class ConfigManager(object):
         ftype = get_config_type(cfile)
         if cfile is not None:
             if ftype == 'ini':
-                self._parser = configparser.ConfigParser()
+                self._parsers[cfile] = configparser.ConfigParser()
+                with open(cfile, 'rb') as f:
+                    try:
+                        cfg_text = to_text(f.read(), errors='surrogate_or_strict')
+                    except UnicodeError as e:
+                        raise AnsibleOptionsError("Error reading config file(%s) because the config file was not utf8 encoded: %s" % (cfile, to_native(e)))
                 try:
-                    self._parser.read(cfile)
+                    if PY3:
+                        self._parsers[cfile].read_string(cfg_text)
+                    else:
+                        cfg_file = io.StringIO(cfg_text)
+                        self._parsers[cfile].readfp(cfg_file)
                 except configparser.Error as e:
                     raise AnsibleOptionsError("Error reading config file (%s): %s" % (cfile, to_native(e)))
             # FIXME: this should eventually handle yaml config files
             # elif ftype == 'yaml':
             #     with open(cfile, 'rb') as config_stream:
-            #         self._parser = yaml.safe_load(config_stream)
+            #         self._parsers[cfile] = yaml.safe_load(config_stream)
             else:
                 raise AnsibleOptionsError("Unsupported configuration file type: %s" % to_native(ftype))
 
@@ -224,12 +284,12 @@ class ConfigManager(object):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
 
-    def get_plugin_options(self, plugin_type, name, keys=None, variables=None):
+    def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
 
         options = {}
         defs = self.get_configuration_definitions(plugin_type, name)
         for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables)
+            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
 
         return options
 
@@ -273,18 +333,23 @@ class ConfigManager(object):
 
         return value, origin
 
-    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None):
+    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
         ''' wrapper '''
-        value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name, keys=keys, variables=variables)
+
+        try:
+            value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
+                                                            keys=keys, variables=variables, direct=direct)
+        except AnsibleError:
+            raise
+        except Exception as e:
+            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, traceback.format_exc()))
         return value
 
-    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None):
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
-
         if cfile is None:
+            # use default config
             cfile = self._config_file
-        else:
-            self._parse_config_file(cfile)
 
         # Note: sources that are lists listed in low to high precedence (last one wins)
         value = None
@@ -298,54 +363,71 @@ class ConfigManager(object):
             defs = self._plugins[plugin_type][plugin_name]
 
         if config in defs:
-            # Use 'variable overrides' if present, highest precedence, but only present when querying running play
-            if variables and defs[config].get('vars'):
-                value, origin = self._loop_entries(variables, defs[config]['vars'])
-                origin = 'var: %s' % origin
 
-            # use playbook keywords if you have em
-            if value is None and keys:
-                value, origin = self._loop_entries(keys, defs[config]['keywords'])
-                origin = 'keyword: %s' % origin
+            # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
+            if direct and config in direct:
+                value = direct[config]
+                origin = 'Direct'
 
-            # env vars are next precedence
-            if value is None and defs[config].get('env'):
-                value, origin = self._loop_entries(os.environ, defs[config]['env'])
-                origin = 'env: %s' % origin
+            else:
+                # Use 'variable overrides' if present, highest precedence, but only present when querying running play
+                if variables and defs[config].get('vars'):
+                    value, origin = self._loop_entries(variables, defs[config]['vars'])
+                    origin = 'var: %s' % origin
 
-            # try config file entries next, if we have one
-            if value is None and cfile is not None:
-                ftype = get_config_type(cfile)
-                if ftype and defs[config].get(ftype):
-                    if ftype == 'ini':
-                        # load from ini config
-                        try:  # FIXME: generalize _loop_entries to allow for files also, most of this code is dupe
-                            for ini_entry in defs[config]['ini']:
-                                temp_value = get_ini_config_value(self._parser, ini_entry)
-                                if temp_value is not None:
-                                    value = temp_value
-                                    origin = cfile
-                                    if 'deprecated' in ini_entry:
-                                        self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
-                        except Exception as e:
-                            sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
-                    elif ftype == 'yaml':
-                        # FIXME: implement, also , break down key from defs (. notation???)
-                        origin = cfile
+                # use playbook keywords if you have em
+                if value is None and keys and defs[config].get('keywords'):
+                    value, origin = self._loop_entries(keys, defs[config]['keywords'])
+                    origin = 'keyword: %s' % origin
 
-            # set default if we got here w/o a value
-            if value is None:
-                value = defs[config].get('default')
-                origin = 'default'
-                # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
-                if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
-                    return value, origin
+                # env vars are next precedence
+                if value is None and defs[config].get('env'):
+                    value, origin = self._loop_entries(py3compat.environ, defs[config]['env'])
+                    origin = 'env: %s' % origin
 
-            # ensure correct type
-            try:
-                value = ensure_type(value, defs[config].get('type'), origin=origin)
-            except Exception as e:
-                self.UNABLE.append(config)
+                # try config file entries next, if we have one
+                if self._parsers.get(cfile, None) is None:
+                    self._parse_config_file(cfile)
+
+                if value is None and cfile is not None:
+                    ftype = get_config_type(cfile)
+                    if ftype and defs[config].get(ftype):
+                        if ftype == 'ini':
+                            # load from ini config
+                            try:  # FIXME: generalize _loop_entries to allow for files also, most of this code is dupe
+                                for ini_entry in defs[config]['ini']:
+                                    temp_value = get_ini_config_value(self._parsers[cfile], ini_entry)
+                                    if temp_value is not None:
+                                        value = temp_value
+                                        origin = cfile
+                                        if 'deprecated' in ini_entry:
+                                            self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                            except Exception as e:
+                                sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
+                        elif ftype == 'yaml':
+                            # FIXME: implement, also , break down key from defs (. notation???)
+                            origin = cfile
+
+                # set default if we got here w/o a value
+                if value is None:
+                    if defs[config].get('required', False):
+                        entry = ''
+                        if plugin_type:
+                            entry += 'plugin_type: %s ' % plugin_type
+                            if plugin_name:
+                                entry += 'plugin: %s ' % plugin_name
+                        entry += 'setting: %s ' % config
+                        if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {}):
+                            raise AnsibleError("No setting was provided for required configuration %s" % (entry))
+                    else:
+                        value = defs[config].get('default')
+                        origin = 'default'
+                        # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+                        if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
+                            return value, origin
+
+            # ensure correct type, can raise exceptoins on mismatched types
+            value = ensure_type(value, defs[config].get('type'), origin=origin)
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
@@ -384,7 +466,20 @@ class ConfigManager(object):
                 raise AnsibleOptionsError("Invalid configuration definition '%s': type is %s" % (to_native(config), type(defs[config])))
 
             # get value and origin
-            value, origin = self.get_config_value_and_origin(config, configfile)
+            try:
+                value, origin = self.get_config_value_and_origin(config, configfile)
+            except Exception as e:
+                # Printing the problem here because, in the current code:
+                # (1) we can't reach the error handler for AnsibleError before we
+                #     hit a different error due to lack of working config.
+                # (2) We don't have access to display yet because display depends on config
+                #     being properly loaded.
+                #
+                # If we start getting double errors printed from this section of code, then the
+                # above problem #1 has been fixed.  Revamp this to be more like the try: except
+                # in get_config_value() at that time.
+                sys.stderr.write("Unhandled error:\n %s\n\n" % traceback.format_exc())
+                raise AnsibleError("Invalid settings supplied for %s: %s\n%s" % (config, to_native(e), traceback.format_exc()))
 
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))

@@ -40,12 +40,13 @@ options:
     aliases: [ dest, destfile, name ]
     required: true
   regexp:
+    aliases: [ 'regex' ]
     description:
       - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found; only the last line
+        C(state=present), the pattern to replace if found. Only the last line
         found will be replaced. For C(state=absent), the pattern of the line(s)
-        to remove.  Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        to remove. Uses Python regular expressions.
+        See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
     description:
@@ -59,7 +60,7 @@ options:
         expanded with the C(regexp) capture groups if the regexp matches.
   backrefs:
     description:
-      - Used with C(state=present). If set, line can contain backreferences
+      - Used with C(state=present). If set, C(line) can contain backreferences
         (both positional and named) that will get populated if the C(regexp)
         matches. This flag changes the operation of the module slightly;
         C(insertbefore) and C(insertafter) will be ignored, and if the C(regexp)
@@ -130,6 +131,7 @@ EXAMPLES = r"""
     state: absent
     regexp: '^%wheel'
 
+# Searches for a line that begins with 127.0.0.1 and replaces it with the value of the 'line' parameter
 - lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
@@ -150,10 +152,11 @@ EXAMPLES = r"""
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
-# Add a line to a file if it does not exist, without passing regexp
+# Add a line to a file if the file does not exist, without passing regexp
 - lineinfile:
     path: /tmp/testfile
     line: '192.168.1.99 foo.lab.net foo'
+    create: yes
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile:
@@ -191,9 +194,8 @@ from ansible.module_utils._text import to_bytes, to_native
 def write_changes(module, b_lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    f = os.fdopen(tmpfd, 'wb')
-    f.writelines(b_lines)
-    f.close()
+    with open(tmpfile, 'wb') as f:
+        f.writelines(b_lines)
 
     validate = module.params.get('validate', None)
     valid = not validate
@@ -238,12 +240,15 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         b_destpath = os.path.dirname(b_dest)
         if not os.path.exists(b_destpath) and not module.check_mode:
-            os.makedirs(b_destpath)
+            try:
+                os.makedirs(b_destpath)
+            except Exception as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
+
         b_lines = []
     else:
-        f = open(b_dest, 'rb')
-        b_lines = f.readlines()
-        f.close()
+        with open(b_dest, 'rb') as f:
+            b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
@@ -278,15 +283,15 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 if firstmatch:
                     break
             if insertbefore:
-                # + 1 for the previous line
+                # index[1] for the previous line
                 index[1] = lineno
                 if firstmatch:
                     break
 
     msg = ''
     changed = False
-    # Regexp matched a line in the file
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
+    # Regexp matched a line in the file
     if index[0] != -1:
         if backrefs:
             b_new_line = m.expand(b_line)
@@ -297,10 +302,48 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        if b_lines[index[0]] != b_new_line:
+        # If no regexp was given and a line match is found anywhere in the file,
+        # insert the line appropriately if using insertbefore or insertafter
+        if regexp is None and m:
+
+            # Insert lines
+            if insertafter and insertafter != 'EOF':
+                # Ensure there is a line separator after the found string
+                # at the end of the file.
+                if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+                    b_lines[-1] = b_lines[-1] + b_linesep
+
+                # If the line to insert after is at the end of the file
+                # use the appropriate index value.
+                if len(b_lines) == index[1]:
+                    if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                        b_lines.append(b_line + b_linesep)
+                        msg = 'line added'
+                        changed = True
+                elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                    b_lines.insert(index[1], b_line + b_linesep)
+                    msg = 'line added'
+                    changed = True
+
+            elif insertbefore and insertbefore != 'BOF':
+                # If the line to insert before is at the beginning of the file
+                # use the appropriate index value.
+                if index[1] == 0:
+                    if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                        b_lines.insert(index[1], b_line + b_linesep)
+                        msg = 'line replaced'
+                        changed = True
+
+                elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                    b_lines.insert(index[1], b_line + b_linesep)
+                    msg = 'line replaced'
+                    changed = True
+
+        elif b_lines[index[0]] != b_new_line:
             b_lines[index[0]] = b_new_line
             msg = 'line replaced'
             changed = True
+
     elif backrefs:
         # Do absolutely nothing, since it's not safe generating the line
         # without the regexp matching to populate the backrefs.
@@ -322,7 +365,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         b_lines.append(b_line + b_linesep)
         msg = 'line added'
         changed = True
-    # insert* matched, but not the regexp
+    # insert matched, but not the regexp
     else:
         b_lines.insert(index[1], b_line + b_linesep)
         msg = 'line added'
@@ -362,9 +405,8 @@ def absent(module, dest, regexp, line, backup):
             'before_header': '%s (content)' % dest,
             'after_header': '%s (content)' % dest}
 
-    f = open(b_dest, 'rb')
-    b_lines = f.readlines()
-    f.close()
+    with open(b_dest, 'rb') as f:
+        b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
@@ -415,7 +457,7 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            regexp=dict(type='str'),
+            regexp=dict(type='str', aliases=['regex']),
             line=dict(type='str', aliases=['value']),
             insertafter=dict(type='str'),
             insertbefore=dict(type='str'),
@@ -436,17 +478,25 @@ def main():
     backrefs = params['backrefs']
     path = params['path']
     firstmatch = params['firstmatch']
+    regexp = params['regexp']
+    line = params['line']
+
+    if regexp == '':
+        module.warn(
+            "The regular expression is an empty string, which will match every line in the file. "
+            "This may have unintended consequences, such as replacing the last line in the file rather than appending. "
+            "If this is desired, use '^' to match every line in the file and avoid this warning.")
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
     if params['state'] == 'present':
-        if backrefs and params['regexp'] is None:
-            module.fail_json(msg='regexp= is required with backrefs=true')
+        if backrefs and regexp is None:
+            module.fail_json(msg='regexp is required with backrefs=true')
 
-        if params.get('line', None) is None:
-            module.fail_json(msg='line= is required with state=present')
+        if line is None:
+            module.fail_json(msg='line is required with state=present')
 
         # Deal with the insertafter default value manually, to avoid errors
         # because of the mutually_exclusive mechanism.
@@ -454,15 +504,14 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        line = params['line']
-
-        present(module, path, params['regexp'], line,
+        present(module, path, regexp, line,
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
-        if params['regexp'] is None and params.get('line', None) is None:
-            module.fail_json(msg='one of line= or regexp= is required with state=absent')
+        if regexp is None and line is None:
+            module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        absent(module, path, params['regexp'], params.get('line', None), backup)
+        absent(module, path, regexp, line, backup)
+
 
 if __name__ == '__main__':
     main()

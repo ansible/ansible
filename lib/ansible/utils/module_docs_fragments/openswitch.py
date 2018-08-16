@@ -36,7 +36,6 @@ options:
         value will default to the appropriate transport common port if
         none is provided in the task.  (cli=22, http=80, https=443).  Note
         this argument does not affect the SSH transport.
-    required: false
     default: 0 (use common port)
   username:
     description:
@@ -46,7 +45,6 @@ options:
         transport is used. Note this argument does not affect the SSH
         transport. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
-    required: false
   password:
     description:
       - Specifies the password to use to authenticate the connection to
@@ -54,14 +52,11 @@ options:
         or I(rest) transports.  Note this argument does not affect the SSH
         transport. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-    required: false
-    default: null
   timeout:
     description:
       - Specifies the timeout in seconds for communicating with the network device
         for either connecting or sending commands.  If the timeout is
         exceeded before the operation is completed, the module will error.
-    require: false
     default: 10
   ssh_keyfile:
     description:
@@ -69,7 +64,6 @@ options:
         the remote device.  This argument is only used for the I(cli)
         transports. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
-    required: false
   transport:
     description:
       - Configures the transport connection to use when connecting to the
@@ -83,16 +77,12 @@ options:
       - Configures the I(transport) to use SSL if set to true only when the
         I(transport) argument is configured as rest.  If the transport
         argument is not I(rest), this value is ignored.
-    required: false
-    default: yes
-    choices: ['yes', 'no']
+    type: bool
+    default: 'yes'
   provider:
     description:
       - Convenience method that allows all I(openswitch) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
-    required: false
-    default: null
-
 
 """

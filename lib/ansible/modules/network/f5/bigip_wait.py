@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -20,7 +20,7 @@ description:
     to accept configuration.
   - This module can take into account situations where the device is in the middle
     of rebooting due to a configuration change.
-version_added: "2.5"
+version_added: 2.5
 options:
   timeout:
     description:
@@ -40,11 +40,6 @@ options:
   msg:
     description:
       - This overrides the normal error message from a failure to meet the required conditions.
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -84,133 +79,40 @@ import signal
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.f5_utils import F5_COMMON_ARGS
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
 
 try:
-    from f5.bigip import ManagementRoot as BigIpMgmt
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
-def hard_timeout(client, want, start):
+def hard_timeout(module, want, start):
     elapsed = datetime.datetime.utcnow() - start
-    client.module.fail_json(
-        want.msg or "Timeout when waiting for BIG-IP", elapsed=elapsed.seconds
+    module.fail_json(
+        msg=want.msg or "Timeout when waiting for BIG-IP", elapsed=elapsed.seconds
     )
-
-
-class AnsibleF5ClientStub(AnsibleF5Client):
-    """Interim class to disconnect Params from connection
-
-    This module is an interim class that was made to separate the Ansible Module
-    Parameters from the connection to BIG-IP.
-
-    Since this module needs to be able to control the connection process, the default
-    class is not appropriate. Therefore, we overload it and re-define out the
-    connection related work to a separate method.
-
-    This class should serve as a reason to break apart this work itself into separate
-    classes in module_utils. There will be on-going work to do this and, when done,
-    the result will replace this work here.
-
-    """
-
-    def __init__(self, argument_spec=None, supports_check_mode=False,
-                 mutually_exclusive=None, required_together=None,
-                 required_if=None, required_one_of=None, add_file_common_args=False,
-                 f5_product_name='bigip'):
-        self.f5_product_name = f5_product_name
-
-        merged_arg_spec = dict()
-        merged_arg_spec.update(F5_COMMON_ARGS)
-        if argument_spec:
-            merged_arg_spec.update(argument_spec)
-            self.arg_spec = merged_arg_spec
-
-        mutually_exclusive_params = []
-        if mutually_exclusive:
-            mutually_exclusive_params += mutually_exclusive
-
-        required_together_params = []
-        if required_together:
-            required_together_params += required_together
-
-        self.module = AnsibleModule(
-            argument_spec=merged_arg_spec,
-            supports_check_mode=supports_check_mode,
-            mutually_exclusive=mutually_exclusive_params,
-            required_together=required_together_params,
-            required_if=required_if,
-            required_one_of=required_one_of,
-            add_file_common_args=add_file_common_args
-        )
-
-        self.check_mode = self.module.check_mode
-        self._connect_params = self._get_connect_params()
-
-    def connect(self):
-        try:
-            if 'transport' not in self.module.params or self.module.params['transport'] != 'cli':
-                self.api = self._get_mgmt_root(
-                    self.f5_product_name, **self._connect_params
-                )
-            return True
-        except Exception:
-            return False
-
-    def _get_mgmt_root(self, type, **kwargs):
-        if type == 'bigip':
-            result = BigIpMgmt(
-                kwargs['server'],
-                kwargs['user'],
-                kwargs['password'],
-                port=kwargs['server_port'],
-                timeout=1,
-                token='tmos'
-            )
-            return result
 
 
 class Parameters(AnsibleF5Parameters):
     returnables = [
         'elapsed'
     ]
-
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-        self._values['__warnings'] = []
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
 
     def to_return(self):
         result = {}
@@ -246,10 +148,11 @@ class Changes(Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def exec_module(self):
@@ -269,15 +172,18 @@ class ModuleManager(object):
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
 
+    def _get_client_connection(self):
+        return F5Client(**self.module.params)
+
     def execute(self):
         signal.signal(
             signal.SIGALRM,
-            lambda sig, frame: hard_timeout(self.client, self.want, start)
+            lambda sig, frame: hard_timeout(self.module, self.want, start)
         )
 
         # setup handler before scheduling signal, to eliminate a race
@@ -292,8 +198,8 @@ class ModuleManager(object):
             try:
                 # The first test verifies that the REST API is available; this is done
                 # by repeatedly trying to login to it.
-                connected = self._connect_to_device()
-                if not connected:
+                self.client = self._get_client_connection()
+                if not self.client:
                     continue
 
                 if self._device_is_rebooting():
@@ -334,16 +240,12 @@ class ModuleManager(object):
                 continue
         else:
             elapsed = datetime.datetime.utcnow() - start
-            self.client.module.fail_json(
+            self.module.fail_json(
                 msg=self.want.msg or "Timeout when waiting for BIG-IP", elapsed=elapsed.seconds
             )
         elapsed = datetime.datetime.utcnow() - start
         self.changes.update({'elapsed': elapsed.seconds})
         return False
-
-    def _connect_to_device(self):
-        result = self.client.connect()
-        return result
 
     def _device_is_rebooting(self):
         output = self.client.api.tm.util.bash.exec_cmd(
@@ -387,33 +289,33 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             timeout=dict(default=7200, type='int'),
             delay=dict(default=0, type='int'),
             sleep=dict(default=1, type='int'),
             msg=dict()
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5ClientStub(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        client.module.exit_json(**results)
+        module.exit_json(**results)
     except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e))
 
 
 if __name__ == '__main__':

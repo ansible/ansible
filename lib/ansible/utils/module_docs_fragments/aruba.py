@@ -25,7 +25,6 @@ options:
   provider:
     description:
       - A dict object containing connection details.
-    default: null
     suboptions:
       host:
         description:
@@ -50,7 +49,6 @@ options:
             the remote device.   This value is used to authenticate
             the SSH session. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-        default: null
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device

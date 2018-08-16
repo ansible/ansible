@@ -5,14 +5,14 @@
 
 - name: check sos with rpm
   shell: rpm -q sos
-  failed_when: False
+  ignore_errors: True
   register: rpm_result
 
 - name: verify uninstallation of sos
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "rpm_result.rc == 1"
+        - "yum_result is success"
+        - "rpm_result is failed"
 
 # UNINSTALL AGAIN
 - name: uninstall sos again in check mode
@@ -23,7 +23,7 @@
 - name: verify no change on re-uninstall in check mode
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: uninstall sos again
   yum: name=sos state=removed
@@ -32,7 +32,7 @@
 - name: verify no change on re-uninstall
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 # INSTALL
 - name: install sos in check mode
@@ -43,31 +43,27 @@
 - name: verify installation of sos in check mode
   assert:
     that:
-        - "yum_result.changed"
+        - "yum_result is changed"
 
 - name: install sos
   yum: name=sos state=present
   register: yum_result
 
-- name: check sos with rpm
-  shell: rpm -q sos
-  failed_when: False
-  register: rpm_result
-
 - name: verify installation of sos
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
-        - "rpm_result.rc == 0"
+        - "yum_result is success"
+        - "yum_result is changed"
 
 - name: verify yum module outputs
   assert:
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
+
+- name: check sos with rpm
+  shell: rpm -q sos
 
 # INSTALL AGAIN
 - name: install sos again in check mode
@@ -77,7 +73,7 @@
 - name: verify no change on second install in check mode
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: install sos again
   yum: name=sos state=present
@@ -85,7 +81,7 @@
 - name: verify no change on second install
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 # INSTALL AGAIN WITH LATEST
 - name: install sos again with state latest in check mode
@@ -95,7 +91,7 @@
 - name: verify install sos again with state latest in check mode
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: install sos again with state latest idempotence
   yum: name=sos state=latest
@@ -103,7 +99,7 @@
 - name: verify install sos again with state latest idempotence
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 # INSTALL WITH LATEST
 - name: uninstall sos
@@ -121,7 +117,7 @@
 - name: verify install sos with state latest in check mode
   assert:
     that:
-        - "yum_result.changed"
+        - "yum_result is changed"
 
 - name: install sos with state latest
   yum: name=sos state=latest
@@ -129,7 +125,7 @@
 - name: verify install sos with state latest
   assert:
     that:
-        - "yum_result.changed"
+        - "yum_result is changed"
 
 - name: install sos with state latest idempotence
   yum: name=sos state=latest
@@ -137,50 +133,43 @@
 - name: verify install sos with state latest idempotence
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 # Multiple packages
 - name: uninstall sos and bc
   yum: name=sos,bc state=removed
-  register: yum_result
 
 - name: check sos with rpm
   shell: rpm -q sos
-  failed_when: False
+  ignore_errors: True
   register: rpm_sos_result
 
 - name: check bc with rpm
   shell: rpm -q bc
-  failed_when: False
+  ignore_errors: True
   register: rpm_bc_result
 
 - name: verify packages installed
   assert:
     that:
-        - "rpm_sos_result.rc != 0"
-        - "rpm_bc_result.rc != 0"
+        - "rpm_sos_result is failed"
+        - "rpm_bc_result is failed"
 
 - name: install sos and bc as comma separated
   yum: name=sos,bc state=present
   register: yum_result
 
-- name: check sos with rpm
-  shell: rpm -q sos
-  failed_when: False
-  register: rpm_sos_result
-
-- name: check bc with rpm
-  shell: rpm -q bc
-  failed_when: False
-  register: rpm_bc_result
-
 - name: verify packages installed
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
-        - "rpm_sos_result.rc == 0"
-        - "rpm_bc_result.rc == 0"
+        - "yum_result is success"
+        - "yum_result is changed"
+
+- name: check sos with rpm
+  shell: rpm -q sos
+
+- name: check bc with rpm
+  shell: rpm -q bc
 
 - name: uninstall sos and bc
   yum: name=sos,bc state=removed
@@ -194,23 +183,17 @@
     state: present
   register: yum_result
 
-- name: check sos with rpm
-  shell: rpm -q sos
-  failed_when: False
-  register: rpm_sos_result
-
-- name: check bc with rpm
-  shell: rpm -q bc
-  failed_when: False
-  register: rpm_bc_result
-
 - name: verify packages installed
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
-        - "rpm_sos_result.rc == 0"
-        - "rpm_bc_result.rc == 0"
+        - "yum_result is success"
+        - "yum_result is changed"
+
+- name: check sos with rpm
+  shell: rpm -q sos
+
+- name: check bc with rpm
+  shell: rpm -q bc
 
 - name: uninstall sos and bc
   yum: name=sos,bc state=removed
@@ -222,23 +205,17 @@
     state: present
   register: yum_result
 
-- name: check sos with rpm
-  shell: rpm -q sos
-  failed_when: False
-  register: rpm_sos_result
-
-- name: check sos with rpm
-  shell: rpm -q bc
-  failed_when: False
-  register: rpm_bc_result
-
 - name: verify packages installed
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
-        - "rpm_sos_result.rc == 0"
-        - "rpm_bc_result.rc == 0"
+        - "yum_result is success"
+        - "yum_result is changed"
+
+- name: check sos with rpm
+  shell: rpm -q sos
+
+- name: check bc with rpm
+  shell: rpm -q bc
 
 - name: uninstall sos and bc
   yum: name=sos,bc state=removed
@@ -260,25 +237,21 @@
   yum: name=sos state=present installroot='/'
   register: yum_result
 
-- name: check sos with rpm
-  shell: rpm -q sos --root=/
-  failed_when: False
-  register: rpm_result
-
 - name: verify installation of sos
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
-        - "rpm_result.rc == 0"
+        - "yum_result is success"
+        - "yum_result is changed"
 
 - name: verify yum module outputs
   assert:
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
+
+- name: check sos with rpm
+  shell: rpm -q sos --root=/
 
 - name: uninstall sos
   yum:
@@ -286,6 +259,32 @@
     installroot: '/'
     state: removed
   register: yum_result
+
+# Test download_only
+- name: install sos
+  yum:
+    name: sos
+    state: latest
+    download_only: true
+  register: yum_result
+
+- name: verify download of sos (part 1 -- yum "install" succeeded)
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is changed"
+
+- name: uninstall sos (noop)
+  yum:
+    name: sos
+    state: removed
+  register: yum_result
+
+- name: verify download of sos (part 2 -- nothing removed during uninstall)
+  assert:
+    that:
+        - "yum_result is success"
+        - "not yum_result is changed"
 
 - name: install group
   yum:
@@ -296,15 +295,14 @@
 - name: verify installation of the group
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is success"
+        - "yum_result is changed"
 
 - name: verify yum module outputs
   assert:
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
 
 - name: install the group again
@@ -316,15 +314,14 @@
 - name: verify nothing changed
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "not yum_result.changed"
+        - "yum_result is success"
+        - "not yum_result is changed"
 
 - name: verify yum module outputs
   assert:
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
 
 - name: install the group again but also with a package that is not yet installed
@@ -338,15 +335,14 @@
 - name: verify sos is installed
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is success"
+        - "yum_result is changed"
 
 - name: verify yum module outputs
   assert:
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
 
 - name: try to install the group again, with --check to check 'changed'
@@ -359,7 +355,7 @@
 - name: verify nothing changed
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -378,8 +374,8 @@
 - name: verify installation of the non existing group failed
   assert:
     that:
-        - "yum_result.rc == 1"
-        - "not yum_result.changed"
+        - "yum_result is failed"
+        - "not yum_result is changed"
         - "yum_result is failed"
 
 - name: verify yum module outputs
@@ -387,7 +383,6 @@
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
 
 - name: try to install non existing file
@@ -401,7 +396,7 @@
   assert:
     that:
         - "yum_result is failed"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -420,7 +415,7 @@
   assert:
     that:
         - "yum_result is failed"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -454,7 +449,7 @@
 - name: verify httpd not installed
   assert:
     that:
-      - "not yum_result.changed"
+      - "not yum_result is changed"
       - "'Packages providing httpd not installed due to update_only specified' in yum_result.results"
 
 - name: try to install not compatible arch rpm, should fail
@@ -467,8 +462,7 @@
 - name: verify that yum failed
   assert:
     that:
-        - "yum_result.rc == 1"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
         - "yum_result is failed"
 
 # setup for testing installing an RPM from url
@@ -482,7 +476,7 @@
     state: absent
 
 - set_fact:
-    pkg_url: http://download.fedoraproject.org/pub/epel/7/x86_64/Packages/f/fpaste-0.3.7.4.1-1.el7.noarch.rpm
+    pkg_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/fpaste-0.3.7.4.1-2.el7.noarch.rpm
 # setup end
 
 - name: download an rpm
@@ -499,8 +493,8 @@
 - name: verify installation
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is success"
+        - "yum_result is changed"
         - "yum_result is not failed"
 
 - name: verify yum module outputs
@@ -508,7 +502,6 @@
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
 
 - name: install the downloaded rpm again
@@ -520,8 +513,8 @@
 - name: verify installation
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "not yum_result.changed"
+        - "yum_result is success"
+        - "not yum_result is changed"
         - "yum_result is not failed"
 
 - name: verify yum module outputs
@@ -529,7 +522,6 @@
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
 
 - name: clean up
@@ -546,8 +538,8 @@
 - name: verify installation
   assert:
     that:
-        - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is success"
+        - "yum_result is changed"
         - "yum_result is not failed"
 
 - name: verify yum module outputs
@@ -555,5 +547,138 @@
     that:
         - "'changed' in yum_result"
         - "'msg' in yum_result"
-        - "'rc' in yum_result"
         - "'results' in yum_result"
+
+- name: Create a temp RPM file which does not contain nevra information
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: touch
+
+- name: Try installing RPM file which does not contain nevra information
+  yum:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: present
+  register: no_nevra_info_result
+  ignore_errors: yes
+
+- name: Verify RPM failed to install
+  assert:
+    that:
+      - "'changed' in no_nevra_info_result"
+      - "'msg' in no_nevra_info_result"
+      - "'Failed to get nevra information from RPM package' in no_nevra_info_result.msg"
+
+- name: Delete a temp RPM file
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: absent
+
+- name: get yum version
+  yum:
+    list: yum
+  register: yum_version
+
+- name: set yum_version of installed version
+  set_fact:
+    yum_version: "{%- if item.yumstate == 'installed' -%}{{ item.version }}{%- else -%}{{ yum_version }}{%- endif -%}"
+  with_items: "{{ yum_version.results }}"
+
+- name: check whether yum supports disableexcludes (>= 3.4)
+  set_fact:
+    supports_disable_excludes: "{{ yum_version is version_compare('3.4.0', '>=') }}"
+
+- name: uninstall zip
+  yum: name=zip state=removed
+
+- name: check zip with rpm
+  shell: rpm -q zip
+  ignore_errors: True
+  register: rpm_zip_result
+
+- name: verify zip is uninstalled
+  assert:
+    that:
+      - "rpm_zip_result is failed"
+
+- name: exclude zip
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=)(.)*
+    line: "exclude=zip*"
+    state: present
+
+# begin test case where disable_excludes is supported
+- name: Try install zip without disable_excludes
+  yum: name=zip state=latest
+  register: yum_zip_result
+  ignore_errors: True
+  when: supports_disable_excludes
+
+- name: verify zip did not install because it is in exclude list
+  assert:
+    that:
+      - "yum_zip_result is failed"
+  when: supports_disable_excludes
+
+- name: install zip with disable_excludes
+  yum: name=zip state=latest disable_excludes=all
+  register: yum_zip_result_using_excludes
+  when: supports_disable_excludes
+
+- name: verify zip did install using disable_excludes=all
+  assert:
+    that:
+      - "yum_zip_result_using_excludes is success"
+      - "yum_zip_result_using_excludes is changed"
+      - "yum_zip_result_using_excludes is not failed"
+  when: supports_disable_excludes
+
+- name: remove exclude zip (cleanup yum.conf)
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=zip*)
+    line: "exclude="
+    state: present
+  when: supports_disable_excludes
+# end test case where disable_excludes is supported
+
+# begin test case where disable_excludes is not supported
+- name: Try install zip with disable_excludes
+  yum: name=zip state=latest disable_excludes=all
+  register: yum_fail_zip_result_old_yum
+  ignore_errors: True
+  when: not supports_disable_excludes
+
+- name: verify packages did not install because yum version is unsupported
+  assert:
+    that:
+      - "yum_fail_zip_result_old_yum is failed"
+  when: not supports_disable_excludes
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'is available in yum version 3.4 and onwards.' in yum_fail_zip_result_old_yum.msg"
+  when: not supports_disable_excludes
+
+- name: remove exclude zip (cleanup yum.conf)
+  lineinfile:
+    dest: /etc/yum.conf
+    regexp: (^exclude=zip*)
+    line: "exclude="
+    state: present
+  when: not supports_disable_excludes
+
+- name: install zip (bring test env in same state as when testing started)
+  yum: name=zip state=latest
+  register: yum_zip_result_old_yum
+  when: not supports_disable_excludes
+
+- name: verify zip installed
+  assert:
+    that:
+      - "yum_zip_result_old_yum is success"
+      - "yum_zip_result_old_yum is changed"
+      - "yum_zip_result_old_yum is not failed"
+  when: not supports_disable_excludes
+# end test case where disable_excludes is not supported

@@ -51,7 +51,9 @@ options:
     default: present
     choices: ['present', 'absent', 'accept', 'reject']
 author: Mike Mochan(@mmochan)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements: [ botocore, boto3, json ]
 '''
 
@@ -236,12 +238,10 @@ def tags_changed(pcx_id, client, module):
         tags = [item for sublist in tag_values for item in sublist]
         if sorted(pcx_tags) == sorted(tags):
             changed = False
-            return changed
-        else:
+        elif tags:
             delete_tags(pcx_id, client, module)
             create_tags(pcx_id, client, module)
             changed = True
-            return changed
     return changed
 
 

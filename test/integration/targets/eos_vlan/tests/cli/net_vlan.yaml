@@ -1,0 +1,41 @@
+---
+- debug: msg="START eos cli/net_vlan.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove vlans used in test
+  eos_config:
+    lines:
+      - no vlan 4000
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- name: Create vlan using platform agnostic vlan module
+  net_vlan:
+    vlan_id: 4000
+    name: vlan-4000
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'vlan 4000' in result.commands"
+      - "'name vlan-4000' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: setup - remove vlans used in test
+  eos_config:
+    lines:
+      - no vlan 4000
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- debug: msg="END eos cli/net_vlan.yaml on connection={{ ansible_connection }}"

@@ -1,0 +1,15 @@
+{
+    "kind": "tm:sys:snmp:users:usersstate",
+    "name": "/Common/foo",
+    "fullPath": "/Common/foo",
+    "generation": 0,
+    "selfLink": "https://localhost/mgmt/tm/sys/snmp/users/~Common~foo?ver=13.0.0",
+    "access": "ro",
+    "authPasswordEncrypted": "secret",
+    "authProtocol": "sha",
+    "oidSubset": ".1",
+    "privacyPasswordEncrypted": "secret",
+    "privacyProtocol": "aes",
+    "securityLevel": "auth-privacy",
+    "username": "foo"
+}

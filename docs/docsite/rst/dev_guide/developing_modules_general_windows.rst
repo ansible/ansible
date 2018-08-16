@@ -1,3 +1,5 @@
+.. _developing_modules_general_windows:
+
 Windows Ansible Module Development Walkthrough
 ==============================================
 
@@ -334,13 +336,13 @@ the most popular are
 - `Powershell ISE`_
 - `Visual Studio Code`_
 
-.. _Powershell ISE: https://msdn.microsoft.com/en-us/powershell/scripting/core-powershell/ise/how-to-debug-scripts-in-windows-powershell-ise
+.. _Powershell ISE: https://docs.microsoft.com/en-us/powershell/scripting/core-powershell/ise/how-to-debug-scripts-in-windows-powershell-ise
 .. _Visual Studio Code: https://blogs.technet.microsoft.com/heyscriptingguy/2017/02/06/debugging-powershell-script-in-visual-studio-code-part-1/
 
 To be able to view the arguments as passed by Ansible to the module follow
 these steps.
 
-- Prefix the Ansible command with :envvar:`ANSIBLE_KEEP_REMOTE_FILES=1` to specify that Ansible should keep the exec files on the server.
+- Prefix the Ansible command with :envvar:`ANSIBLE_KEEP_REMOTE_FILES=1<ANSIBLE_KEEP_REMOTE_FILES>` to specify that Ansible should keep the exec files on the server.
 - Log onto the Windows server using the same user account that Ansible used to execute the module.
 - Navigate to ``%TEMP%\..``. It should contain a folder starting with ``ansible-tmp-``.
 - Inside this folder, open the PowerShell script for the module.

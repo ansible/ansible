@@ -83,6 +83,7 @@ options:
         operationally up and C(down) means present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -305,11 +306,9 @@ def check_declarative_intent_params(module, want, result):
     have_neighbors = None
     for w in want:
         want_state = w.get('state')
-        want_tx_rate = w.get('tx_rate')
-        want_rx_rate = w.get('rx_rate')
         want_neighbors = w.get('neighbors')
 
-        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate and not want_neighbors:
+        if want_state not in ('up', 'down') and not want_neighbors:
             continue
 
         if result['changed']:
@@ -394,7 +393,7 @@ def main():
     required_one_of = [['name', 'aggregate']]
     mutually_exclusive = [['name', 'aggregate']]
 
-    required_together = (['speed', 'duplex'])
+    required_together = [['speed', 'duplex']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive,
@@ -428,6 +427,7 @@ def main():
         msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

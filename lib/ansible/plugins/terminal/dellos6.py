@@ -1,4 +1,7 @@
-#  2016 Red Hat Inc.
+#
+# (c) 2016 Red Hat Inc.
+#
+# (c) 2017 Dell EMC.
 #
 # This file is part of Ansible
 #
@@ -34,12 +37,17 @@ class TerminalModule(TerminalBase):
     ]
 
     terminal_stderr_re = [
-        re.compile(br"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b)(?!\bnot active\b).)*$"),
         re.compile(br"% ?Bad secret"),
-        re.compile(br"invalid input", re.I),
+        re.compile(br"(\bInterface is part of a port-channel\b)"),
+        re.compile(br"(\bThe maximum number of users have already been created\b)|(\bUse '-' for range\b)"),
+        re.compile(br"Error:(.+)\s(\S+)"),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"Invalid|invalid.*$", re.I),
+        re.compile(br"((\bout of range\b)|(\bnot found\b)|(\bCould not\b)|(\bUnable to\b)|(\bCannot\b)).*", re.I),
+        re.compile(br"((\balready exists\b)|(\bdoes not exist\b)|(\bnot active\b)|(\bFailed\b)|(\bIncorrect\b)|(\bnot enabled\b)).*", re.I),
+
     ]
 
     def on_become(self, passwd=None):

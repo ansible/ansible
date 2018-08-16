@@ -1,39 +1,6 @@
 ---
 - debug: msg="START ios_interface cli/basic.yaml on connection={{ ansible_connection }}"
 
-- name: Run show version
-  ios_command:
-    commands: show version
-    authorize: yes
-  register: show_version_result
-
-- block:
-    - name: Set test interface to GigabitEthernet0/1 as we are on Cisco IOS
-      set_fact: test_interface=GigabitEthernet0/1
-    - name: Set test interface 2 to GigabitEthernet0/2 as we are on Cisco IOS
-      set_fact: test_interface2=GigabitEthernet0/2
-  when: "'Cisco IOS' in show_version_result.stdout[0]"
-
-- block:
-    - name: Set test interface to GigabitEthernet2 as we are on Cisco IOS-XE
-      set_fact: test_interface=GigabitEthernet2
-    - name: Disable autonegotiation on GigabitEthernet2
-      ios_config:
-        lines:
-          - no negotiation auto
-        parents: int GigabitEthernet2
-        authorize: yes
-
-    - name: Set test interface 2 to GigabitEthernet3 as we are on Cisco IOS-XE
-      set_fact: test_interface2=GigabitEthernet3
-    - name: Disable autonegotiation on GigabitEthernet3
-      ios_config:
-        lines:
-          - no negotiation auto
-        parents: int GigabitEthernet3
-        authorize: yes
-  when: "'Cisco IOS-XE' in show_version_result.stdout[0]"
-
 - name: Configure interface (setup)
   ios_interface:
     name: "{{ test_interface }}"
@@ -41,7 +8,7 @@
     speed: 1000
     mtu: 1800
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - name: Configure interface
@@ -49,7 +16,7 @@
     name: "{{ test_interface }}"
     description: test-interface-initial
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -63,7 +30,7 @@
     name: "{{ test_interface }}"
     description: test-interface-initial
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -76,7 +43,7 @@
     description: test-interface
     mtu: 2000
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -92,7 +59,7 @@
     description: test-interface-1
     mtu: 1800
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -106,7 +73,7 @@
   ios_interface:
     name: "{{ test_interface }}"
     enabled: False
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -119,7 +86,7 @@
   ios_interface:
     name: "{{ test_interface }}"
     enabled: True
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -135,7 +102,7 @@
     speed: 1000
     mtu: 1800
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - name: Add interface aggregate
@@ -145,7 +112,7 @@
     - { name: "{{ test_interface2 }}", mtu: 2000, description: test-interface-2 }
     speed: 1000
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -164,7 +131,7 @@
     - { name: "{{ test_interface2 }}", mtu: 2000, description: test-interface-2 }
     speed: 1000
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -178,7 +145,7 @@
     - { name: "{{ test_interface2 }}" }
     enabled: False
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -196,7 +163,7 @@
     - { name: "{{ test_interface2 }}" }
     enabled: True
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -213,7 +180,7 @@
     - name: Loopback9
     - name: Loopback10
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: Create loopback interface aggregate
   ios_interface:
@@ -221,7 +188,7 @@
     - name: Loopback9
     - name: Loopback10
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -236,7 +203,7 @@
     - name: Loopback9
     - name: Loopback10
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -251,7 +218,7 @@
     - name: Loopback9
     - name: Loopback10
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:

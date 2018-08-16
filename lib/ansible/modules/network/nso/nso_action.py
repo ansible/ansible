@@ -36,6 +36,8 @@ short_description: Executes Cisco NSO actions and verifies output.
 description:
   - This module provices support for executing Cisco NSO actions and then
     verifying that the output is as expected.
+requirements:
+  - Cisco NSO version 3.4 or higher.
 author: "Claes Nästén (@cnasten)"
 options:
   path:
@@ -85,6 +87,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class NsoAction(object):
+    REQUIRED_VERSIONS = [
+        (3, 4)
+    ]
+
     def __init__(self, check_mode, client,
                  path, input,
                  output_required, output_invalid, validate_strict):
@@ -165,7 +171,7 @@ def main():
         p['output_invalid'],
         p['validate_strict'])
     try:
-        verify_version(client)
+        verify_version(client, NsoAction.REQUIRED_VERSIONS)
 
         output = nso_action.main()
         client.logout()

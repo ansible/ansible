@@ -29,7 +29,6 @@
   win_package:
     path: '{{test_win_package_path}}\good.msi'
     state: present
-    expected_return_code: "" # historical, an empty string means 0, 3010
   register: install_local_msi
 
 - name: get result of install local msi
@@ -267,7 +266,7 @@
 
 - name: install local msi with arguments (check mode)
   win_package:
-    path: '{{test_win_package_path}}\good.msi'
+    path: '{{test_win_package_path}}\good.MSI'
     state: present
     arguments: ADDLOCAL=Cow
   register: install_msi_argument_check
@@ -293,7 +292,7 @@
 
 - name: install local msi with arguments
   win_package:
-    path: '{{test_win_package_path}}\good.msi'
+    path: '{{test_win_package_path}}\good.MSI'
     state: present
     arguments: ADDLOCAL=Cow
   register: install_msi_argument
@@ -319,7 +318,7 @@
 
 - name: install local msi with arguments (idempotent)
   win_package:
-    path: '{{test_win_package_path}}\good.msi'
+    path: '{{test_win_package_path}}\good.MSI'
     state: present
     arguments: ADDLOCAL=Cow
   register: install_msi_argument_again

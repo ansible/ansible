@@ -47,15 +47,25 @@ except NameError:
     pass
 
 
+class FilterBlackList(logging.Filter):
+    def __init__(self, blacklist):
+        self.blacklist = [logging.Filter(name) for name in blacklist]
+
+    def filter(self, record):
+        return not any(f.filter(record) for f in self.blacklist)
+
+
 logger = None
 # TODO: make this a logging callback instead
-if C.DEFAULT_LOG_PATH:
+if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
-    if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
+    if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
         logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
         mypid = str(os.getpid())
         user = getpass.getuser()
         logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        for handler in logging.root.handlers:
+            handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
@@ -101,8 +111,8 @@ class Display:
         if C.ANSIBLE_NOCOWS:
             return
 
-        if C.ANSIBLE_COWPATH:
-            self.b_cowsay = C.ANSIBLE_COWPATH
+        if C.ANSIBLE_COW_PATH:
+            self.b_cowsay = C.ANSIBLE_COW_PATH
         else:
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
@@ -131,6 +141,8 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
 
+            # Note: After Display() class is refactored need to update the log capture
+            # code in 'bin/ansible-connection' (and other relevant places).
             if not stderr:
                 fileobj = sys.stdout
             else:
@@ -179,9 +191,12 @@ class Display:
     def vvvvvv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=5)
 
-    def debug(self, msg):
+    def debug(self, msg, host=None):
         if C.DEFAULT_DEBUG:
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+            if host is None:
+                self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+            else:
+                self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
         if self.verbosity > caplevel:

@@ -121,3 +121,37 @@
       months_of_year: fakemonth
   register: fail_trigger_invalid_month_of_year
   failed_when: fail_trigger_invalid_month_of_year.msg != "invalid month name 'fakemonth', please specify full month name"
+
+- name: fail trigger repetition with duration in incorrect format
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+    - type: boot
+      repetition:
+      - duration: fake
+  register: fail_trigger_repetition_invalid_duration
+  failed_when: fail_trigger_repetition_invalid_duration.msg != "trigger option 'duration' must be in the XML duration format but was 'fake'"
+
+- name: fail trigger repetition with interval in incorrect format
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+    - type: boot
+      repetition:
+      - interval: fake
+  register: fail_trigger_repetition_invalid_interval
+  failed_when: fail_trigger_repetition_invalid_interval.msg != "trigger option 'interval' must be in the XML duration format but was 'fake'"
+
+- name: fail trigger repetition option interval greater than duration
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    triggers:
+      - type: boot
+        repetition:
+        - interval: PT5M
+          duration: PT1M
+  register: fail_trigger_repetition_interval_greater_than_duration
+  failed_when: fail_trigger_repetition_interval_greater_than_duration.msg != "trigger repetition option 'interval' value 'PT5M' must be less than or equal to 'duration' value 'PT1M'"

@@ -26,13 +26,11 @@ description:
 version_added: "2.2"
 author: "William Albert (@walbert947)"
 requirements:
-    - "python >= 2.6"
     - "apache-libcloud >= 0.19.0"
 options:
     state:
         description:
             - Whether the given zone should or should not be present.
-        required: false
         choices: ["present", "absent"]
         default: "present"
     zone:
@@ -46,33 +44,24 @@ options:
     description:
         description:
             - An arbitrary text string to use for the zone description.
-        required: false
         default: ""
     service_account_email:
         description:
             - The e-mail address for a service account with access to Google
               Cloud DNS.
-        required: false
-        default: null
     pem_file:
         description:
             - The path to the PEM file associated with the service account
               email.
             - This option is deprecated and may be removed in a future release.
               Use I(credentials_file) instead.
-        required: false
-        default: null
     credentials_file:
         description:
             - The path to the JSON file associated with the service account
               email.
-        required: false
-        default: null
     project_id:
         description:
             - The Google Cloud Platform project ID to use.
-        required: false
-        default: null
 notes:
     - See also M(gcdns_record).
     - Zones that are newly created must still be set up with a domain registrar
@@ -124,9 +113,12 @@ try:
     from libcloud.common.google import ResourceExistsError
     from libcloud.common.google import ResourceNotFoundError
     from libcloud.dns.types import Provider
+    # The libcloud Google Cloud DNS provider.
+    PROVIDER = Provider.GOOGLE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
+    PROVIDER = None
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gcdns import gcdns_connect
@@ -140,9 +132,6 @@ from ansible.module_utils.gcdns import gcdns_connect
 # v1 API. Earlier versions contained the beta v1 API, which has since been
 # deprecated and decommissioned.
 MINIMUM_LIBCLOUD_VERSION = '0.19.0'
-
-# The libcloud Google Cloud DNS provider.
-PROVIDER = Provider.GOOGLE
 
 # The URL used to verify ownership of a zone in Google Cloud DNS.
 ZONE_VERIFICATION_URL = 'https://www.google.com/webmasters/verification/'

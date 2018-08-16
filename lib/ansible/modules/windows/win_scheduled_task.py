@@ -1,14 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -26,8 +24,9 @@ notes:
 options:
   # module definition options
   name:
-    description: The name of the scheduled task without the path.
-    required: true
+    description:
+    - The name of the scheduled task without the path.
+    required: yes
   path:
     description:
     - Task folder in which this task will be stored.
@@ -54,11 +53,12 @@ options:
       is kept when modifying the task.
     - This module only supports the C(ExecAction) type but can still delete the
       older legacy types.
+    type: list
     suboptions:
       path:
         description:
         - The path to the executable for the ExecAction.
-        required: true
+        required: yes
       arguments:
         description:
         - An argument string to supply for the executable.
@@ -66,19 +66,6 @@ options:
         description:
         - The working directory to run the executable from.
     version_added: '2.5'
-  arguments:
-    description:
-    - Arguments to provide for a scheduled task action.
-    - DEPRECATED since 2.5, use the C(actions) option instead to specify a list
-      of actions to run.
-    - Will be removed in 2.7.
-    aliases: [ argument ]
-  executable:
-    description:
-    - The path to the executable to run for a scheduled task action.
-    - DEPRECATED since 2.5, use the C(actions) option instead to specify a list
-      of actions to run.
-    - Will be removed in 2.7.
 
   # Trigger options
   triggers:
@@ -91,12 +78,13 @@ options:
       for a list of trigger types and their options.
     - The suboption options listed below are not required for all trigger
       types, read the description for more details.
+    type: list
     suboptions:
       type:
         description:
         - The trigger type, this value controls what below options are
           required.
-        required: true
+        required: yes
         choices: [ boot, daily, event, idle, logon, monthlydow, monthly, registration, time, weekly, session_state_change ]
       enabled:
         description:
@@ -193,28 +181,15 @@ options:
         - The interval of weeks to run on, e.g. C(1) means every week while
           C(2) means every other week.
         - Optional when C(type=weekly).
+      repetition:
+        description:
+        - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated
+          after the task is started.
+        - It takes in the following keys, C(duration), C(interval), C(stop_at_duration_end)
+        - C(duration) is how long the pattern is repeated and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(stop_at_duration_end) is a boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
     version_added: '2.5'
-  days_of_week:
-    description:
-    - Days of the week to run a weekly task.
-    - Specify a list or comma separate days in the full version, e.g. monday
-      instead of mon.
-    - DEPRECATED since 2.5, use the C(triggers) option list with the type of
-      C(monthlydow) or C(weekly).
-    - Will be removed in 2.7.
-  frequency:
-    description:
-    - The frequency of the task to run.
-    - DEPRECATED since 2.5, use the C(triggers) option list and specify the
-      type based on the frequency required.
-    - Will be removed in 2.7.
-    choices: [ daily, once, weekly ]
-  time:
-    description:
-    - The start time to execute the scheduled task.
-    - DEPRECATED since 2.5, use the C(triggers) option list and use the
-      C(start_boundary) option to set the start time.
-    - Will be removed in 2.7.
 
   # Principal options
   display_name:
@@ -271,16 +246,6 @@ options:
     type: bool
     default: 'yes'
     version_added: '2.5'
-  store_password:
-    description:
-    - Whether to store the password for the user running the task.
-    - If C(no), the task will only have access to local resources.
-    - DEPRECATED since 2.5, use C(logon_type=password) to set whether to store
-      the password for the task.
-    - Will be removed in 2.7.
-    type: bool
-    default: 'yes'
-    version_added: '2.4'
 
   # RegistrationInfo options
   author:
@@ -323,6 +288,7 @@ options:
     - C(0) means the task is compatible with the AT command.
     - C(1) means the task is compatible with Task Scheduler 1.0.
     - C(2) means the task is compatible with Task Scheduler 2.0.
+    type: int
     choices: [ 0, 1, 2 ]
     version_added: '2.5'
   delete_expired_task_after:
@@ -365,6 +331,7 @@ options:
       before starting itself.
     - C(2) will not start a new instance if another is running.
     - C(3) will stop other instances of the task and start the new one.
+    type: int
     choices: [ 0, 1, 2, 3 ]
     version_added: '2.5'
   priority:
@@ -373,11 +340,13 @@ options:
     - When creating a new task the default if C(7).
     - See U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa383512.aspx)
       for details on the priority levels.
+    type: int
     version_added: '2.5'
   restart_count:
     description:
     - The number of times that the Task Scheduler will attempt to restart the
       task.
+    type: int
     version_added: '2.5'
   restart_interval:
     description:
@@ -432,7 +401,7 @@ EXAMPLES = r'''
       arguments: /c whoami
     triggers:
     - type: daily
-      start_boundary: 2017-10-09T09:00:00
+      start_boundary: '2017-10-09T09:00:00'
     username: SYSTEM
     state: present
     enabled: yes
@@ -488,6 +457,20 @@ EXAMPLES = r'''
   win_scheduled_task:
     name: TaskToDisable
     enabled: no
+
+- name: create a task that will be repeated every minute for five minutes
+  win_scheduled_task:
+    name: RepeatedTask
+    description: open command prompt
+    actions:
+    - path: cmd.exe
+      arguments: /c hostname
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
 '''
 
 RETURN = r'''

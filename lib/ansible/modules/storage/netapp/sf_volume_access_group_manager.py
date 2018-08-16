@@ -40,37 +40,25 @@ options:
     initiators:
         description:
         - List of initiators to include in the volume access group. If unspecified, the access group will start out without configured initiators.
-        required: false
-        default: None
 
     volumes:
         description:
         - List of volumes to initially include in the volume access group. If unspecified, the access group will start without any volumes.
-        required: false
-        default: None
 
     virtual_network_id:
         description:
         - The ID of the SolidFire Virtual Network ID to associate the volume access group with.
-        required: false
-        default: None
 
     virtual_network_tags:
         description:
         - The ID of the VLAN Virtual Network Tag to associate the volume access group with.
-        required: false
-        default: None
 
     attributes:
         description: List of Name/Value pairs in JSON object format.
-        required: false
-        default: None
 
     volume_access_group_id:
         description:
         - The ID of the volume access group to modify or delete.
-        required: false
-        default: None
 
 '''
 
@@ -252,6 +240,7 @@ class SolidFireVolumeAccessGroup(object):
 def main():
     v = SolidFireVolumeAccessGroup()
     v.apply()
+
 
 if __name__ == '__main__':
     main()

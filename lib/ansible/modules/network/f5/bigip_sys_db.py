@@ -18,7 +18,7 @@ module: bigip_sys_db
 short_description: Manage BIG-IP system database variables
 description:
   - Manage BIG-IP system database variables
-version_added: "2.2"
+version_added: 2.2
 options:
   key:
     description:
@@ -30,7 +30,6 @@ options:
         that an existing variable is set to C(value). When C(reset) sets the
         variable back to the default value. At least one of value and state
         C(reset) are required.
-    required: False
     default: present
     choices:
       - present
@@ -39,14 +38,9 @@ options:
     description:
       - The value to set the key to. At least one of value and state C(reset)
         are required.
-    required: False
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires BIG-IP version 12.0.0 or greater
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -98,15 +92,32 @@ value:
   sample: false
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -124,16 +135,6 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
     @property
     def name(self):
         return self._values['key']
@@ -143,12 +144,17 @@ class Parameters(AnsibleF5Parameters):
         self._values['key'] = value
 
 
+class Changes(Parameters):
+    pass
+
+
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.want = Parameters(params=self.module.params)
+        self.changes = Changes()
 
     def _update_changed_options(self):
         changed = {}
@@ -159,10 +165,10 @@ class ModuleManager(object):
                 if attr1 != attr2:
                     changed[key] = attr1
         if self.want.state == 'reset':
-            if str(self.want.value) == str(self.want.default_value):
-                changed[self.want.key] = self.want.value
+            if str(self.have.value) != str(self.have.default_value):
+                changed[self.want.key] = self.have.default_value
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(params=changed)
             return True
         return False
 
@@ -189,7 +195,7 @@ class ModuleManager(object):
             name=self.want.key
         )
         result = resource.attrs
-        return Parameters(result)
+        return Parameters(params=result)
 
     def exists(self):
         resource = self.client.api.tm.sys.dbs.db.load(
@@ -213,7 +219,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -235,9 +241,11 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
-        self.update_on_device()
+        self.reset_on_device()
+        self.want.update({'key': self.want.key})
+        self.want.update({'value': self.have.default_value})
         if self.exists():
             return True
         else:
@@ -249,13 +257,13 @@ class ModuleManager(object):
         resource = self.client.api.tm.sys.dbs.db.load(
             name=self.want.key
         )
-        resource.update(value=self.want.default_value)
+        resource.update(value=self.have.default_value)
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             key=dict(required=True),
             state=dict(
                 default='present',
@@ -263,27 +271,30 @@ class ArgumentSpec(object):
             ),
             value=dict()
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

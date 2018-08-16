@@ -17,20 +17,22 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_iapp_service import Parameters
-    from library.bigip_iapp_service import ModuleManager
-    from library.bigip_iapp_service import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.modules.bigip_iapp_service import Parameters
+    from library.modules.bigip_iapp_service import ModuleManager
+    from library.modules.bigip_iapp_service import ArgumentSpec
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_iapp_service import Parameters
         from ansible.modules.network.f5.bigip_iapp_service import ModuleManager
         from ansible.modules.network.f5.bigip_iapp_service import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -61,7 +63,7 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_keys(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(args)
+        p = Parameters(params=args)
 
         # Assert the top-level keys
         assert p.name == 'http_example'
@@ -74,7 +76,7 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_lists(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(args)
+        p = Parameters(params=args)
 
         assert 'lists' in p._values
 
@@ -90,7 +92,7 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_tables(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(args)
+        p = Parameters(params=args)
 
         assert 'tables' in p._values
 
@@ -117,7 +119,7 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_variables(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(args)
+        p = Parameters(params=args)
 
         assert 'variables' in p._values
         assert len(p.variables) == 34
@@ -140,13 +142,13 @@ class TestParameters(unittest.TestCase):
         args = dict(
             strict_updates=True
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.strict_updates == 'enabled'
 
         args = dict(
             strict_updates=False
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.strict_updates == 'disabled'
 
     def test_module_strict_updates_override_from_top_level(self):
@@ -156,7 +158,7 @@ class TestParameters(unittest.TestCase):
                 strictUpdates='disabled'
             )
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.strict_updates == 'enabled'
 
         args = dict(
@@ -165,7 +167,7 @@ class TestParameters(unittest.TestCase):
                 strictUpdates='enabled'
             )
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.strict_updates == 'disabled'
 
     def test_module_strict_updates_only_parameters(self):
@@ -174,7 +176,7 @@ class TestParameters(unittest.TestCase):
                 strictUpdates='disabled'
             )
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.strict_updates == 'disabled'
 
         args = dict(
@@ -182,20 +184,20 @@ class TestParameters(unittest.TestCase):
                 strictUpdates='enabled'
             )
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.strict_updates == 'enabled'
 
     def test_api_strict_updates_from_top_level(self):
         args = dict(
             strictUpdates='enabled'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.strict_updates == 'enabled'
 
         args = dict(
             strictUpdates='disabled'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.strict_updates == 'disabled'
 
     def test_api_parameters_variables(self):
@@ -208,7 +210,7 @@ class TestParameters(unittest.TestCase):
                 )
             ]
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.variables[0]['name'] == 'client__http_compression'
 
     def test_api_parameters_tables(self):
@@ -240,7 +242,7 @@ class TestParameters(unittest.TestCase):
                 }
             ]
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.tables[0]['name'] == 'pool__members'
         assert p.tables[0]['columnNames'] == ['addr', 'port', 'connection_limit']
         assert len(p.tables[0]['rows']) == 2
@@ -253,28 +255,28 @@ class TestParameters(unittest.TestCase):
         args = dict(
             deviceGroup='none'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.deviceGroup == 'none'
 
     def test_api_parameters_inherited_traffic_group(self):
         args = dict(
             inheritedTrafficGroup='true'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.inheritedTrafficGroup == 'true'
 
     def test_api_parameters_inherited_devicegroup(self):
         args = dict(
             inheritedDevicegroup='true'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.inheritedDevicegroup == 'true'
 
     def test_api_parameters_traffic_group(self):
         args = dict(
             trafficGroup='/Common/traffic-group-local-only'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.traffic_group == '/Common/traffic-group-local-only'
 
     def test_module_template_same_partition(self):
@@ -282,7 +284,7 @@ class TestParameters(unittest.TestCase):
             template='foo',
             partition='bar'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.template == '/bar/foo'
 
     def test_module_template_same_partition_full_path(self):
@@ -290,7 +292,7 @@ class TestParameters(unittest.TestCase):
             template='/bar/foo',
             partition='bar'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.template == '/bar/foo'
 
     def test_module_template_different_partition_full_path(self):
@@ -298,12 +300,10 @@ class TestParameters(unittest.TestCase):
             template='/Common/foo',
             partition='bar'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.template == '/Common/foo'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -321,12 +321,11 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(return_value=False)
@@ -352,12 +351,11 @@ class TestManager(unittest.TestCase):
         parameters = load_fixture('create_iapp_service_parameters_f5_http.json')
         current = Parameters(parameters)
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(return_value=True)

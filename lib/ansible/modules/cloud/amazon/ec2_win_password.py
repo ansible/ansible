@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: ec2_win_password
 short_description: gets the default administrator password for ec2 windows instances
 description:
-    - Gets the default administrator password from any EC2 Windows instance.  The instance is referenced by its id (e.g. i-XXXXXXX). This module
+    - Gets the default administrator password from any EC2 Windows instance. The instance is referenced by its id (e.g. C(i-XXXXXXX)). This module
       has a dependency on python-boto.
 version_added: "2.0"
 author: "Rick Mendes (@rickmendes)"
@@ -33,21 +33,17 @@ options:
     version_added: "2.0"
     description:
       - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to
-        convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3.
-    required: false
-    default: null
+        convert your password protected keys if they do not use DES or 3DES. ex) C(openssl rsa -in current_key -out new_key -des3).
   wait:
     version_added: "2.0"
     description:
       - Whether or not to wait for the password to be available before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     version_added: "2.0"
     description:
       - Number of seconds to wait before giving up.
-    required: false
     default: 120
 
 extends_documentation_fragment:
@@ -64,7 +60,6 @@ notes:
 
 EXAMPLES = '''
 # Example of getting a password
-tasks:
 - name: get the Administrator password
   ec2_win_password:
     profile: my-boto-profile
@@ -73,7 +68,6 @@ tasks:
     key_file: "~/aws-creds/my_test_key.pem"
 
 # Example of getting a password with a password protected key
-tasks:
 - name: get the Administrator password
   ec2_win_password:
     profile: my-boto-profile
@@ -83,7 +77,6 @@ tasks:
     key_passphrase: "secret"
 
 # Example of waiting for a password
-tasks:
 - name: get the Administrator password
   ec2_win_password:
     profile: my-boto-profile
@@ -98,22 +91,17 @@ import datetime
 import time
 from base64 import b64decode
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
-
 try:
-    import boto.ec2
-    HAS_BOTO = True
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+    HAS_CRYPTOGRAPHY = True
 except ImportError:
-    HAS_BOTO = False
+    HAS_CRYPTOGRAPHY = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
 from ansible.module_utils._text import to_bytes
-
-
-BACKEND = default_backend()
 
 
 def main():
@@ -123,13 +111,16 @@ def main():
         key_file=dict(required=True, type='path'),
         key_passphrase=dict(no_log=True, default=None, required=False),
         wait=dict(type='bool', default=False, required=False),
-        wait_timeout=dict(default=120, required=False),
+        wait_timeout=dict(default=120, required=False, type='int'),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
         module.fail_json(msg='Boto required for this module.')
+
+    if not HAS_CRYPTOGRAPHY:
+        module.fail_json(msg='cryptography package required for this module.')
 
     instance_id = module.params.get('instance_id')
     key_file = module.params.get('key_file')
@@ -138,7 +129,7 @@ def main():
     else:
         b_key_passphrase = to_bytes(module.params.get('key_passphrase'), errors='surrogate_or_strict')
     wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
 
     ec2 = ec2_connect(module)
 
@@ -149,7 +140,7 @@ def main():
         while datetime.datetime.now() < end:
             data = ec2.get_password_data(instance_id)
             decoded = b64decode(data)
-            if wait and not decoded:
+            if not decoded:
                 time.sleep(5)
             else:
                 break
@@ -167,7 +158,7 @@ def main():
     else:
         try:
             with f:
-                key = load_pem_private_key(f.read(), b_key_passphrase, BACKEND)
+                key = load_pem_private_key(f.read(), b_key_passphrase, default_backend())
         except (ValueError, TypeError) as e:
             module.fail_json(msg="unable to parse key file")
 

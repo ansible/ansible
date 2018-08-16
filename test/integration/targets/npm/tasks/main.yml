@@ -1,0 +1,35 @@
+# test code for the npm module
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# -------------------------------------------------------------
+# Setup steps
+
+# expand remote path
+- command: 'echo {{ output_dir }}'
+  register: echo
+- set_fact:
+    remote_dir: '{{ echo.stdout }}'
+
+- include_tasks: run.yml
+  vars:
+    nodejs_version: '{{ item }}'
+    nodejs_path: 'node-v{{ nodejs_version }}-{{ ansible_system|lower }}-x{{ ansible_userspace_bits }}'
+  with_items:
+    - 7.10.1 # provides npm 4.2.0 (last npm < 5 released)
+    - 8.0.0 # provides npm 5.0.0
+    - 8.2.0 # provides npm 5.3.0 (output change with this version)

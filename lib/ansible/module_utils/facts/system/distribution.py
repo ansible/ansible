@@ -55,7 +55,9 @@ class DistributionFiles:
     #  - allowempty == True
     #  - be listed in SEARCH_STRING
     #  - have a function get_distribution_DISTNAME implemented
+    # keep names in sync with Conditionals page of docs
     OSDIST_LIST = (
+        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
         {'path': '/etc/redhat-release', 'name': 'RedHat'},
@@ -71,7 +73,6 @@ class DistributionFiles:
         {'path': '/etc/os-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
-        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
@@ -81,8 +82,8 @@ class DistributionFiles:
     SEARCH_STRING = {
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
-        'Altlinux': 'ALT Linux',
-        'ClearLinux': 'Clear Linux Software for Intel Architecture',
+        'Altlinux': 'ALT',
+        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
@@ -115,6 +116,7 @@ class DistributionFiles:
             if self.SEARCH_STRING[name] in dist_file_content:
                 # this sets distribution=RedHat if 'Red Hat' shows up in data
                 dist_file_dict['distribution'] = name
+                dist_file_dict['distribution_file_search_string'] = self.SEARCH_STRING[name]
             else:
                 # this sets distribution to what's in the data, e.g. CentOS, Scientific, ...
                 dist_file_dict['distribution'] = dist_file_content.split()[0]
@@ -254,6 +256,7 @@ class DistributionFiles:
                 distribution_version = re.search(r'^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
                 if distribution_version:
                     suse_facts['distribution_version'] = distribution_version.group(1)
+                    suse_facts['distribution_major_version'] = distribution_version.group(1).split('.')[0]
                 if 'open' in data.lower():
                     release = re.search(r'^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
                     if release:
@@ -309,6 +312,9 @@ class DistributionFiles:
         elif 'Ubuntu' in data:
             debian_facts['distribution'] = 'Ubuntu'
             # nothing else to do, Ubuntu gets correct info from python functions
+        elif 'SteamOS' in data:
+            debian_facts['distribution'] = 'SteamOS'
+            # nothing else to do, SteamOS gets correct info from python functions
         else:
             return False, debian_facts
 
@@ -403,11 +409,12 @@ class Distribution(object):
         'SMGL': 'Source Mage GNU/Linux',
     }
 
+    # keep keys in sync with Conditionals page of docs
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint'],
+                                'Linux Mint', 'SteamOS'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
@@ -421,7 +428,7 @@ class Distribution(object):
                      'AIX': ['AIX'],
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
-                     'FreeBSD': ['FreeBSD']}
+                     'FreeBSD': ['FreeBSD', 'TrueOS']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
@@ -496,7 +503,9 @@ class Distribution(object):
     def get_distribution_FreeBSD(self):
         freebsd_facts = {}
         freebsd_facts['distribution_release'] = platform.release()
-        data = re.search(r'(\d+)\.(\d+)-RELEASE.*', freebsd_facts['distribution_release'])
+        data = re.search(r'(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', freebsd_facts['distribution_release'])
+        if 'trueos' in platform.version():
+            freebsd_facts['distribution'] = 'TrueOS'
         if data:
             freebsd_facts['distribution_major_version'] = data.group(1)
             freebsd_facts['distribution_version'] = '%s.%s' % (data.group(1), data.group(2))
@@ -576,7 +585,8 @@ class DistributionFactCollector(BaseFactCollector):
     name = 'distribution'
     _fact_ids = set(['distribution_version',
                      'distribution_release',
-                     'distribution_major_version'])
+                     'distribution_major_version',
+                     'os_family'])
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}

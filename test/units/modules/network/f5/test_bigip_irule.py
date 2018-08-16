@@ -18,16 +18,17 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
 from ansible.compat.tests.mock import mock_open
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY3
 
 try:
-    from library.bigip_irule import Parameters
-    from library.bigip_irule import ModuleManager
-    from library.bigip_irule import ArgumentSpec
-    from library.bigip_irule import GtmManager
-    from library.bigip_irule import LtmManager
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.modules.bigip_irule import Parameters
+    from library.modules.bigip_irule import ModuleManager
+    from library.modules.bigip_irule import ArgumentSpec
+    from library.modules.bigip_irule import GtmManager
+    from library.modules.bigip_irule import LtmManager
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
@@ -36,7 +37,8 @@ except ImportError:
         from ansible.modules.network.f5.bigip_irule import ArgumentSpec
         from ansible.modules.network.f5.bigip_irule import GtmManager
         from ansible.modules.network.f5.bigip_irule import LtmManager
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -77,7 +79,7 @@ class TestParameters(unittest.TestCase):
             name='foo',
             state='present'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.content == content.strip()
 
     def test_module_parameters_gtm(self):
@@ -88,7 +90,7 @@ class TestParameters(unittest.TestCase):
             name='foo',
             state='present'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.content == content.strip()
 
     def test_api_parameters_ltm(self):
@@ -96,7 +98,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             apiAnonymous=content
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.content == content.strip()
 
     def test_return_api_params(self):
@@ -107,14 +109,12 @@ class TestParameters(unittest.TestCase):
             name='foo',
             state='present'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         params = p.api_params()
 
         assert 'apiAnonymous' in params
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -141,20 +141,19 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
             supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name,
             mutually_exclusive=self.spec.mutually_exclusive,
         )
 
         # Override methods in the specific type of manager
-        tm = LtmManager(client)
+        tm = LtmManager(module=module, params=module.params)
         tm.exists = Mock(side_effect=[False, True])
         tm.create_on_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.get_manager = Mock(return_value=tm)
 
         results = mm.exec_module()
@@ -173,20 +172,19 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
             supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name,
             mutually_exclusive=self.spec.mutually_exclusive,
         )
 
         # Override methods in the specific type of manager
-        tm = GtmManager(client)
+        tm = GtmManager(module=module, params=module.params)
         tm.exists = Mock(side_effect=[False, True])
         tm.create_on_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.get_manager = Mock(return_value=tm)
 
         results = mm.exec_module()
@@ -205,10 +203,9 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
             supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name,
             mutually_exclusive=self.spec.mutually_exclusive,
         )
 
@@ -219,12 +216,12 @@ class TestManager(unittest.TestCase):
 
         with patch(builtins_name + '.open', mock_open(read_data='this is my content'), create=True):
             # Override methods in the specific type of manager
-            tm = GtmManager(client)
+            tm = GtmManager(module=module, params=module.params)
             tm.exists = Mock(side_effect=[False, True])
             tm.create_on_device = Mock(return_value=True)
 
             # Override methods to force specific logic in the module to happen
-            mm = ModuleManager(client)
+            mm = ModuleManager(module=module)
             mm.get_manager = Mock(return_value=tm)
 
             results = mm.exec_module()
@@ -249,10 +246,9 @@ class TestManager(unittest.TestCase):
         ))
 
         with patch('ansible.module_utils.basic.AnsibleModule.fail_json', unsafe=True) as mo:
-            AnsibleF5Client(
+            AnsibleModule(
                 argument_spec=self.spec.argument_spec,
                 supports_check_mode=self.spec.supports_check_mode,
-                f5_product_name=self.spec.f5_product_name,
                 mutually_exclusive=self.spec.mutually_exclusive,
             )
             mo.assert_called_once()

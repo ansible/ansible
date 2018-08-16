@@ -42,9 +42,10 @@ options:
         description:
             - Case sensitive group.
         required: true
-        choices: ['aaa', 'bridge', 'callhome', 'cfs', 'config', 'entity',
-          'feature-control', 'hsrp', 'license', 'link', 'lldp', 'ospf', 'pim',
-          'rf', 'rmon', 'snmp', 'storm-control', 'stpx', 'sysmgr', 'system',
+        choices: ['aaa', 'bfd', 'bgp', 'bridge', 'callhome', 'cfs', 'config',
+          'eigrp', 'entity', 'feature-control', 'generic', 'hsrp', 'license',
+          'link', 'lldp', 'mmode', 'ospf', 'pim', 'rf', 'rmon', 'snmp',
+          'storm-control', 'stpx', 'switchfabric', 'syslog', 'sysmgr', 'system',
           'upgrade', 'vtp', 'all']
     state:
         description:
@@ -83,23 +84,10 @@ from ansible.module_utils.basic import AnsibleModule
 def execute_show_command(command, module):
     command = {
         'command': command,
-        'output': 'json',
+        'output': 'text',
     }
 
     return run_commands(module, command)
-
-
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = str(value)
-            else:
-                new_dict[new_key] = value
-    return new_dict
 
 
 def flatten_list(command_lists):
@@ -113,61 +101,44 @@ def flatten_list(command_lists):
 
 
 def get_snmp_traps(group, module):
-    body = execute_show_command('show snmp trap', module)
-
-    trap_key = {
-        'description': 'trap',
-        'isEnabled': 'enabled'
-    }
-
-    trap_key_5k = {
-        'trap': 'trap',
-        'enabled': 'enabled'
-    }
+    body = execute_show_command('show run snmp all', module)[0].split('\n')
 
     resource = {}
-    feature_list = ['aaa', 'bridge', 'callhome', 'cfs', 'config',
-                    'entity', 'feature-control', 'hsrp', 'license',
-                    'link', 'lldp', 'ospf', 'pim', 'rf', 'rmon',
-                    'snmp', 'storm-control', 'stpx', 'sysmgr',
-                    'system', 'upgrade', 'vtp']
-    try:
-        resource_table = body[0]['TABLE_snmp_trap']['ROW_snmp_trap']
+    feature_list = ['aaa', 'bfd', 'bgp', 'bridge', 'callhome', 'cfs', 'config',
+                    'eigrp', 'entity', 'feature-control', 'generic', 'hsrp',
+                    'license', 'link', 'lldp', 'mmode', 'ospf', 'pim',
+                    'rf', 'rmon', 'snmp', 'storm-control', 'stpx',
+                    'switchfabric', 'syslog', 'sysmgr', 'system', 'upgrade',
+                    'vtp']
+    for each in feature_list:
+        for line in body:
+            if each == 'ospf':
+                # ospf behaves differently when routers are present
+                if 'snmp-server enable traps ospf' == line:
+                    resource[each] = True
+                    break
+            else:
+                if 'enable traps {0}'.format(each) in line:
+                    if 'no ' in line:
+                        resource[each] = False
+                        break
+                    else:
+                        resource[each] = True
 
-        for each_feature in feature_list:
-            resource[each_feature] = []
-
-        for each_resource in resource_table:
-            key = str(each_resource['trap_type'])
-            mapped_trap = apply_key_map(trap_key, each_resource)
-
-            if key != 'Generic':
-                resource[key].append(mapped_trap)
-    except KeyError:
-        try:
-            resource_table = body[0]['TABLE_mib']['ROW_mib']
-
-            for each_feature in feature_list:
-                resource[each_feature] = []
-
-            for each_resource in resource_table:
-                key = str(each_resource['mib'])
-                each_resource = each_resource['TABLE_trap']['ROW_trap']
-                mapped_trap = apply_key_map(trap_key_5k, each_resource)
-
-                if key != 'Generic':
-                    resource[key].append(mapped_trap)
-        except (KeyError, AttributeError):
-            return resource
-    except AttributeError:
-        return resource
+    for each in feature_list:
+        if resource.get(each) is None:
+            # on some platforms, the 'no' cmd does not
+            # show up and so check if the feature is enabled
+            body = execute_show_command('show run | inc feature', module)[0]
+            if 'feature {0}'.format(each) in body:
+                resource[each] = False
 
     find = resource.get(group, None)
 
     if group == 'all'.lower():
         return resource
-    elif find:
-        trap_resource = {group: resource[group]}
+    elif find is not None:
+        trap_resource = {group: find}
         return trap_resource
     else:
         # if 'find' is None, it means that 'group' is a
@@ -183,26 +154,22 @@ def get_trap_commands(group, state, existing, module):
     if group == 'all':
         if state == 'disabled':
             for feature in existing:
-                trap_commands = ['no snmp-server enable traps {0}'.format(feature) for
-                                 trap in existing[feature] if trap['enabled'] == 'Yes']
-                trap_commands = list(set(trap_commands))
-                commands.append(trap_commands)
+                if existing[feature]:
+                    trap_command = 'no snmp-server enable traps {0}'.format(feature)
+                    commands.append(trap_command)
 
         elif state == 'enabled':
             for feature in existing:
-                trap_commands = ['snmp-server enable traps {0}'.format(feature) for
-                                 trap in existing[feature] if trap['enabled'] == 'No']
-                trap_commands = list(set(trap_commands))
-                commands.append(trap_commands)
+                if existing[feature] is False:
+                    trap_command = 'snmp-server enable traps {0}'.format(feature)
+                    commands.append(trap_command)
 
     else:
         if group in existing:
-            for each_trap in existing[group]:
-                check = each_trap['enabled']
-                if check.lower() == 'yes':
-                    enabled = True
-                if check.lower() == 'no':
-                    disabled = True
+            if existing[group]:
+                enabled = True
+            else:
+                disabled = True
 
             if state == 'disabled' and enabled:
                 commands.append(['no snmp-server enable traps {0}'.format(group)])
@@ -218,11 +185,12 @@ def get_trap_commands(group, state, existing, module):
 def main():
     argument_spec = dict(
         state=dict(choices=['enabled', 'disabled'], default='enabled'),
-        group=dict(choices=['aaa', 'bridge', 'callhome', 'cfs', 'config',
-                            'entity', 'feature-control', 'hsrp',
-                            'license', 'link', 'lldp', 'ospf', 'pim', 'rf',
-                            'rmon', 'snmp', 'storm-control', 'stpx',
-                            'sysmgr', 'system', 'upgrade', 'vtp', 'all'],
+        group=dict(choices=['aaa', 'bfd', 'bgp', 'bridge', 'callhome', 'cfs', 'config',
+                            'eigrp', 'entity', 'feature-control', 'generic', 'hsrp',
+                            'license', 'link', 'lldp', 'mmode', 'ospf', 'pim',
+                            'rf', 'rmon', 'snmp', 'storm-control', 'stpx',
+                            'switchfabric', 'syslog', 'sysmgr', 'system', 'upgrade',
+                            'vtp', 'all'],
                    required=True),
     )
 

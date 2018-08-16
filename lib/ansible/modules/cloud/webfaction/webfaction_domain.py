@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: webfaction_domain
 short_description: Add or remove domains and subdomains on Webfaction
 description:
-    - Add or remove domains or subdomains on a Webfaction host. Further documentation at http://github.com/quentinsf/ansible-webfaction.
+    - Add or remove domains or subdomains on a Webfaction host. Further documentation at https://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
@@ -29,7 +29,7 @@ notes:
       You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
       The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
       your host, you may want to add C(serial: 1) to the plays.
-    - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
+    - See `the webfaction API <https://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 
 options:
 
@@ -41,15 +41,13 @@ options:
     state:
         description:
             - Whether the domain should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
     subdomains:
         description:
             - Any subdomains to create.
-        required: false
-        default: null
+        default: []
 
     login_name:
         description:
@@ -82,12 +80,11 @@ EXAMPLES = '''
 
 '''
 
-import xmlrpclib
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():
@@ -96,7 +93,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
-            subdomains=dict(required=False, default=[]),
+            subdomains=dict(required=False, default=[], type='list'),
             login_name=dict(required=True),
             login_password=dict(required=True, no_log=True),
         ),

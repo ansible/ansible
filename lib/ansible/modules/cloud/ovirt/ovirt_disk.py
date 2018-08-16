@@ -82,15 +82,21 @@ options:
     interface:
         description:
             - "Driver of the storage interface."
+            - "It's required parameter when creating the new disk."
         choices: ['virtio', 'ide', 'virtio_scsi']
         default: 'virtio'
     format:
         description:
             - Specify format of the disk.
-            - If (cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision).
-            - If (raw) format is used, disk storage will be allocated right away, also known as I(preallocated).
             - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
         choices: ['raw', 'cow']
+    sparse:
+        required: False
+        version_added: "2.5"
+        description:
+            - "I(True) if the disk should be sparse (also known as I(thin provision)).
+              If the parameter is omitted, cow disks will be created as sparse and raw disks as I(preallocated)"
+            - Note that this option isn't idempotent as it's not currently possible to change sparseness of the disk via API.
     storage_domain:
         description:
             - "Storage domain name where disk should be created. By default storage is chosen by oVirt/RHV engine."
@@ -438,7 +444,11 @@ class DisksModule(BaseModule):
             format=otypes.DiskFormat(
                 self._module.params.get('format')
             ) if self._module.params.get('format') else None,
-            sparse=self._module.params.get('format') != 'raw',
+            sparse=self._module.params.get(
+                'sparse'
+            ) if self._module.params.get(
+                'sparse'
+            ) is not None else self._module.params.get('format') != 'raw',
             openstack_volume_type=otypes.OpenStackVolumeType(
                 name=self.param('openstack_volume_type')
             ) if self.param('openstack_volume_type') else None,
@@ -519,7 +529,7 @@ class DisksModule(BaseModule):
     def _update_check(self, entity):
         return (
             equal(self._module.params.get('description'), entity.description) and
-            equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
+            equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
             equal(self._module.params.get('shareable'), entity.shareable)
         )
@@ -545,6 +555,18 @@ class DiskAttachmentsModule(DisksModule):
         )
 
 
+def searchable_attributes(module):
+    """
+    Return all searchable disk attributes passed to module.
+    """
+    attributes = {
+        'name': module.params.get('name'),
+        'Storage.name': module.params.get('storage_domain'),
+        'vm_names': module.params.get('vm_name'),
+    }
+    return dict((k, v) for k, v in attributes.items() if v is not None)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -563,6 +585,7 @@ def main():
         profile=dict(default=None),
         quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
+        sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
         logical_unit=dict(default=None, type='dict'),
@@ -605,7 +628,9 @@ def main():
         if state in ('present', 'detached', 'attached'):
             ret = disks_module.create(
                 entity=disk,
+                search_params=searchable_attributes(module),
                 result_state=otypes.DiskStatus.OK if lun is None else None,
+                fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL if lun is None else False,
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])

@@ -36,7 +36,7 @@ options:
     description:
       - EVPN control plane.
     required: true
-    choices: ['true', 'false']
+    type: bool
 '''
 
 EXAMPLES = '''
@@ -57,20 +57,9 @@ from ansible.module_utils.network.nxos.nxos import get_config, load_config
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 
 
-def check_args(module, warnings):
-    for key in ('include_defaults', 'config', 'save'):
-        if module.params[key] is not None:
-            warnings.append('argument %s is no longer supported, ignoring value' % key)
-
-
 def main():
     argument_spec = dict(
         nv_overlay_evpn=dict(required=True, type='bool'),
-
-        # deprecated in Ans2.3
-        include_defaults=dict(),
-        config=dict(),
-        save=dict()
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -80,7 +69,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     if warnings:
         result['warnings'] = warnings
 

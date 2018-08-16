@@ -184,6 +184,11 @@ class Task(Base, Conditional, Taggable, Become):
         try:
             (action, args, delegate_to) = args_parser.parse()
         except AnsibleParserError as e:
+            # if the raises exception was created with obj=ds args, then it includes the detail
+            # so we dont need to add it so we can just re raise.
+            if e._obj:
+                raise
+            # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
 
         # the command/shell/script modules used to support the `cmd` arg,
@@ -223,10 +228,10 @@ class Task(Base, Conditional, Taggable, Become):
                 # as we will remove this at some point in the future.
                 if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
-                                       " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
+                                       " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                                        " for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
-                elif k in self._valid_attrs:
+                elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
@@ -273,9 +278,11 @@ class Task(Base, Conditional, Taggable, Become):
                 try:
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
-                    if self.action in ('setup', 'gather_facts') and 'ansible_env' in to_native(e):
-                        # ignore as fact gathering sets ansible_env
-                        pass
+                    error = to_native(e)
+                    if self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+                        # ignore as fact gathering is required for 'env' facts
+                        return
+                    raise
 
             if isinstance(value, list):
                 for env_item in value:
@@ -414,16 +421,24 @@ class Task(Base, Conditional, Taggable, Become):
         Generic logic to get the attribute or parent attribute for a task value.
         '''
 
-        value = None
+        extend = self._valid_attrs[attr].extend
+        prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
-            if self._parent and (value is None or extend):
-                if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
+            # If parent is static, we can grab attrs from the parent
+            # otherwise, defer to the grandparent
+            if getattr(self._parent, 'statically_loaded', True):
+                _parent = self._parent
+            else:
+                _parent = self._parent._parent
+
+            if _parent and (value is None or extend):
+                if getattr(_parent, 'statically_loaded', True):
                     # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and not getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
-                        parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
+                    if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
+                        parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = getattr(self._parent, attr, None)
+                        parent_value = _parent._attributes.get(attr, None)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
@@ -441,12 +456,6 @@ class Task(Base, Conditional, Taggable, Become):
         if value is None:
             value = C.ANY_ERRORS_FATAL
         return value
-
-    def _get_attr_environment(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        return self._get_parent_attribute('environment', extend=True, prepend=True)
 
     def get_dep_chain(self):
         if self._parent:

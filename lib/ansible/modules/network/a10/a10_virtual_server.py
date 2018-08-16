@@ -25,30 +25,31 @@ description:
 author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
 notes:
     - Requires A10 Networks aXAPI 2.1.
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
+  state:
+    description:
+      - If the specified virtual server should exist.
+    choices: ['present', 'absent']
+    default: present
   partition:
     version_added: "2.3"
     description:
       - set active-partition
-    required: false
-    default: null
   virtual_server:
     description:
       - The SLB (Server Load Balancing) virtual server name.
     required: true
-    default: null
     aliases: ['vip', 'virtual']
   virtual_server_ip:
     description:
       - The SLB virtual server IPv4 address.
-    required: false
-    default: null
     aliases: ['ip', 'address']
   virtual_server_status:
     description:
       - The SLB virtual server status, such as enabled or disabled.
-    required: false
     default: enable
     aliases: ['status']
     choices: ['enabled', 'disabled']
@@ -58,14 +59,12 @@ options:
         dictionary which specifies the C(port:) and C(type:), but can also optionally
         specify the C(service_group:) as well as the C(status:). See the examples
         below for details. This parameter is required when C(state) is C(present).
-    required: false
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled devices using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 

@@ -103,7 +103,7 @@ Here is an example of a function::
     
 Here is an example of a class::
 
-  import unittest:
+  import unittest
       
   class AddTester(unittest.TestCase)
       
@@ -127,7 +127,7 @@ few basic tests for a module.  The class-based test allows more tidy set up and 
 of pre-requisites, so if you have many test cases for your module you may want to refactor
 to use that.  
 
-Assertions using the simple ``assert`` function inside the tests will give give full
+Assertions using the simple ``assert`` function inside the tests will give full
 information on the cause of the failure with a trace-back of functions called during the
 assertion.  This means that plain asserts are recommended over other external assertion
 libraries.
@@ -164,7 +164,7 @@ See `eos_banner test
 for a practical example.
 
 If you are simulating APIs you may find that python placebo is useful.  See
-doc:`testing_units_modules` for more information.
+:ref:`testing_units_modules` for more information.
 
 
 Code Coverage For New or Updated Unit Tests
@@ -189,13 +189,13 @@ Reports can be generated in several different formats:
 * ``ansible-test coverage xml`` - XML report.
 
 To clear data between test runs, use the ``ansible-test coverage erase`` command.  See
-:doc:`testing_units_running_locally` for more information about generating coverage
+:ref:`testing_running_locally` for more information about generating coverage
 reports.
 
 
 .. seealso::
 
-   :doc:`testing_units_modules`
+   :ref:`testing_units_modules`
        Special considerations for unit testing modules
    :doc:`testing_running_locally`
        Running tests locally including gathering and reporting coverage data

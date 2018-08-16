@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -19,29 +19,36 @@ short_description: Manage HTTPD related settings on BIG-IP
 description:
   - Manages HTTPD related settings on the BIG-IP. These settings are interesting
     to change when you want to set GUI timeouts and other TMUI related settings.
-version_added: "2.5"
+version_added: 2.5
 options:
+  allow:
+    description:
+      - Specifies, if you have enabled HTTPD access, the IP address or address
+        range for other systems that can communicate with this system.
+      - To specify all addresses, use the value C(all).
+      - IP address can be specified, such as 172.27.1.10.
+      - IP rangees can be specified, such as 172.27.*.* or 172.27.0.0/255.255.0.0.
   auth_name:
     description:
-      - Sets the BIG-IP authentication realm name
+      - Sets the BIG-IP authentication realm name.
   auth_pam_idle_timeout:
     description:
       - Sets the GUI timeout for automatic logout, in seconds.
   auth_pam_validate_ip:
     description:
       - Sets the authPamValidateIp setting.
-    choices: ['on', 'off']
+    type: bool
   auth_pam_dashboard_timeout:
     description:
       - Sets whether or not the BIG-IP dashboard will timeout.
-    choices: ['on', 'off']
+    type: bool
   fast_cgi_timeout:
     description:
       - Sets the timeout of FastCGI.
   hostname_lookup:
     description:
       - Sets whether or not to display the hostname, if possible.
-    choices: ['on', 'off']
+    type: bool
   log_level:
     description:
       - Sets the minimum httpd log level.
@@ -52,17 +59,39 @@ options:
   redirect_http_to_https:
     description:
       - Whether or not to redirect http requests to the GUI to https.
-    choices: ['yes', 'no']
+    type: bool
   ssl_port:
     description:
       - The HTTPS port to listen on.
+  ssl_cipher_suite:
+    description:
+      - Specifies the ciphers that the system uses.
+      - The values in the suite are separated by colons (:).
+      - Can be specified in either a string or list form. The list form is the
+        recommended way to provide the cipher suite. See examples for usage.
+      - Use the value C(default) to set the cipher suite to the system default.
+        This value is equivalent to specifying a list of C(ECDHE-RSA-AES128-GCM-SHA256,
+        ECDHE-RSA-AES256-GCM-SHA384,ECDHE-RSA-AES128-SHA,ECDHE-RSA-AES256-SHA,
+        ECDHE-RSA-AES128-SHA256,ECDHE-RSA-AES256-SHA384,ECDHE-ECDSA-AES128-GCM-SHA256,
+        ECDHE-ECDSA-AES256-GCM-SHA384,ECDHE-ECDSA-AES128-SHA,ECDHE-ECDSA-AES256-SHA,
+        ECDHE-ECDSA-AES128-SHA256,ECDHE-ECDSA-AES256-SHA384,AES128-GCM-SHA256,
+        AES256-GCM-SHA384,AES128-SHA,AES256-SHA,AES128-SHA256,AES256-SHA256,
+        ECDHE-RSA-DES-CBC3-SHA,ECDHE-ECDSA-DES-CBC3-SHA,DES-CBC3-SHA).
+    version_added: 2.6
+  ssl_protocols:
+    description:
+      - The list of SSL protocols to accept on the management console.
+      - A space-separated list of tokens in the format accepted by the Apache
+        mod_ssl SSLProtocol directive.
+      - Can be specified in either a string or list form. The list form is the
+        recommended way to provide the cipher suite. See examples for usage.
+      - Use the value C(default) to set the SSL protocols to the system default.
+        This value is equivalent to specifying a list of C(all,-SSLv2,-SSLv3).
+    version_added: 2.6
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires the requests Python package on the host. This is as easy as
-    pip install requests.
+    C(pip install requests).
 requirements:
-  - f5-sdk >= 3.0.4
   - requests
 extends_documentation_fragment: f5
 author:
@@ -94,6 +123,45 @@ EXAMPLES = r'''
     server: lb.mydomain.com
     user: admin
   delegate_to: localhost
+
+- name: Set SSL cipher suite by list
+  bigip_device_httpd:
+    password: secret
+    server: lb.mydomain.com
+    user: admin
+    ssl_cipher_suite:
+      - ECDHE-RSA-AES128-GCM-SHA256
+      - ECDHE-RSA-AES256-GCM-SHA384
+      - ECDHE-RSA-AES128-SHA
+      - AES256-SHA256
+  delegate_to: localhost
+
+- name: Set SSL cipher suite by string
+  bigip_device_httpd:
+    password: secret
+    server: lb.mydomain.com
+    user: admin
+    ssl_cipher_suite: ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA:AES256-SHA256
+  delegate_to: localhost
+
+- name: Set SSL protocols by list
+  bigip_device_httpd:
+    password: secret
+    server: lb.mydomain.com
+    user: admin
+    ssl_protocols:
+      - all
+      - -SSLv2
+      - -SSLv3
+  delegate_to: localhost
+
+- name: Set SSL protocols by string
+  bigip_device_httpd:
+    password: secret
+    server: lb.mydomain.com
+    user: admin
+    ssl_cipher_suite: all -SSLv2 -SSLv3
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -102,21 +170,90 @@ auth_pam_idle_timeout:
   returned: changed
   type: string
   sample: 1200
+auth_name:
+  description: The new authentication realm name.
+  returned: changed
+  type: string
+  sample: 'foo'
+auth_pam_validate_ip:
+  description: The new authPamValidateIp setting.
+  returned: changed
+  type: bool
+  sample: on
+auth_pam_dashboard_timeout:
+  description: Whether or not the BIG-IP dashboard will timeout.
+  returned: changed
+  type: bool
+  sample: off
+fast_cgi_timeout:
+  description: The new timeout of FastCGI.
+  returned: changed
+  type: int
+  sample: 500
+hostname_lookup:
+  description: Whether or not to display the hostname, if possible.
+  returned: changed
+  type: bool
+  sample: on
+log_level:
+  description: The new minimum httpd log level.
+  returned: changed
+  type: string
+  sample: crit
+max_clients:
+  description: The new maximum number of clients that can connect to the GUI at once.
+  returned: changed
+  type: int
+  sample: 20
+redirect_http_to_https:
+  description: Whether or not to redirect http requests to the GUI to https.
+  returned: changed
+  type: bool
+  sample: on
+ssl_port:
+  description: The new HTTPS port to listen on.
+  returned: changed
+  type: int
+  sample: 10443
+ssl_cipher_suite:
+  description: The new ciphers that the system uses.
+  returned: changed
+  type: string
+  sample: ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA
+ssl_protocols:
+  description: The new list of SSL protocols to accept on the management console.
+  returned: changed
+  type: string
+  sample: all -SSLv2 -SSLv3
 '''
 
 import time
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 try:
     from requests.exceptions import ConnectionError
@@ -136,66 +273,54 @@ class Parameters(AnsibleF5Parameters):
         'logLevel': 'log_level',
         'maxClients': 'max_clients',
         'redirectHttpToHttps': 'redirect_http_to_https',
-        'sslPort': 'ssl_port'
+        'sslPort': 'ssl_port',
+        'sslCiphersuite': 'ssl_cipher_suite',
+        'sslProtocol': 'ssl_protocols'
     }
 
     api_attributes = [
         'authPamIdleTimeout', 'authPamValidateIp', 'authName', 'authPamDashboardTimeout',
         'fastcgiTimeout', 'hostnameLookup', 'logLevel', 'maxClients', 'sslPort',
-        'redirectHttpToHttps'
+        'redirectHttpToHttps', 'allow', 'sslCiphersuite', 'sslProtocol'
     ]
 
     returnables = [
         'auth_pam_idle_timeout', 'auth_pam_validate_ip', 'auth_name',
         'auth_pam_dashboard_timeout', 'fast_cgi_timeout', 'hostname_lookup',
-        'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port'
+        'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port',
+        'allow', 'ssl_cipher_suite', 'ssl_protocols'
     ]
 
     updatables = [
         'auth_pam_idle_timeout', 'auth_pam_validate_ip', 'auth_name',
         'auth_pam_dashboard_timeout', 'fast_cgi_timeout', 'hostname_lookup',
-        'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port'
+        'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port',
+        'allow', 'ssl_cipher_suite', 'ssl_protocols'
     ]
 
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        self._values['__warnings'] = []
-        if params:
-            self.update(params=params)
+    _ciphers = "ECDHE-RSA-AES128-GCM-SHA256:" \
+        "ECDHE-RSA-AES256-GCM-SHA384:" \
+        "ECDHE-RSA-AES128-SHA:" \
+        "ECDHE-RSA-AES256-SHA:" \
+        "ECDHE-RSA-AES128-SHA256:" \
+        "ECDHE-RSA-AES256-SHA384:" \
+        "ECDHE-ECDSA-AES128-GCM-SHA256:" \
+        "ECDHE-ECDSA-AES256-GCM-SHA384:" \
+        "ECDHE-ECDSA-AES128-SHA:" \
+        "ECDHE-ECDSA-AES256-SHA:" \
+        "ECDHE-ECDSA-AES128-SHA256:" \
+        "ECDHE-ECDSA-AES256-SHA384:" \
+        "AES128-GCM-SHA256:" \
+        "AES256-GCM-SHA384:" \
+        "AES128-SHA:" \
+        "AES256-SHA:" \
+        "AES128-SHA256:" \
+        "AES256-SHA256:" \
+        "ECDHE-RSA-DES-CBC3-SHA:" \
+        "ECDHE-ECDSA-DES-CBC3-SHA:" \
+        "DES-CBC3-SHA"
 
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+    _protocols = 'all -SSLv2 -SSLv3'
 
     @property
     def auth_pam_idle_timeout(self):
@@ -255,9 +380,71 @@ class ModuleParameters(Parameters):
             return "enabled"
         return "disabled"
 
+    @property
+    def allow(self):
+        if self._values['allow'] is None:
+            return None
+        if self._values['allow'][0] == 'all':
+            return 'all'
+        if self._values['allow'][0] == '':
+            return ''
+        allow = self._values['allow']
+        result = list(set([str(x) for x in allow]))
+        result = sorted(result)
+        return result
+
+    @property
+    def ssl_cipher_suite(self):
+        if self._values['ssl_cipher_suite'] is None:
+            return None
+        if isinstance(self._values['ssl_cipher_suite'], string_types):
+            ciphers = self._values['ssl_cipher_suite'].strip()
+        else:
+            ciphers = self._values['ssl_cipher_suite']
+        if not ciphers:
+            raise F5ModuleError(
+                "ssl_cipher_suite may not be set to 'none'"
+            )
+        if ciphers == 'default':
+            ciphers = ':'.join(sorted(Parameters._ciphers.split(':')))
+        elif isinstance(self._values['ssl_cipher_suite'], string_types):
+            ciphers = ':'.join(sorted(ciphers.split(':')))
+        else:
+            ciphers = ':'.join(sorted(ciphers))
+        return ciphers
+
+    @property
+    def ssl_protocols(self):
+        if self._values['ssl_protocols'] is None:
+            return None
+        if isinstance(self._values['ssl_protocols'], string_types):
+            protocols = self._values['ssl_protocols'].strip()
+        else:
+            protocols = self._values['ssl_protocols']
+        if not protocols:
+            raise F5ModuleError(
+                "ssl_protocols may not be set to 'none'"
+            )
+        if protocols == 'default':
+            protocols = ' '.join(sorted(Parameters._protocols.split(' ')))
+        elif isinstance(protocols, string_types):
+            protocols = ' '.join(sorted(protocols.split(' ')))
+        else:
+            protocols = ' '.join(sorted(protocols))
+        return protocols
+
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def allow(self):
+        if self._values['allow'] is None:
+            return ''
+        if self._values['allow'][0] == 'All':
+            return 'all'
+        allow = self._values['allow']
+        result = list(set([str(x) for x in allow]))
+        result = sorted(result)
+        return result
 
 
 class Changes(Parameters):
@@ -277,7 +464,21 @@ class UsableChanges(Changes):
 
 
 class ReportableChanges(Changes):
-    pass
+    @property
+    def ssl_cipher_suite(self):
+        default = ':'.join(sorted(Parameters._ciphers.split(':')))
+        if self._values['ssl_cipher_suite'] == default:
+            return 'default'
+        else:
+            return self._values['ssl_cipher_suite']
+
+    @property
+    def ssl_protocols(self):
+        default = ' '.join(sorted(Parameters._protocols.split(' ')))
+        if self._values['ssl_protocols'] == default:
+            return 'default'
+        else:
+            return self._values['ssl_protocols']
 
 
 class Difference(object):
@@ -301,11 +502,27 @@ class Difference(object):
         except AttributeError:
             return attr1
 
+    @property
+    def allow(self):
+        if self.want.allow is None:
+            return None
+        if self.want.allow == 'all' and self.have.allow == 'all':
+            return None
+        if self.want.allow == 'all':
+            return ['All']
+        if self.want.allow == '' and self.have.allow == '':
+            return None
+        if self.want.allow == '':
+            return []
+        if self.want.allow != self.have.allow:
+            return self.want.allow
+
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = ModuleParameters(params=self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
 
@@ -315,7 +532,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(changed)
+            self.changes = Changes(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -331,7 +548,7 @@ class ModuleManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = UsableChanges(changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -349,7 +566,7 @@ class ModuleManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        reportable = ReportableChanges(self.changes.to_return())
+        reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
@@ -359,7 +576,7 @@ class ModuleManager(object):
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
@@ -371,7 +588,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -379,20 +596,17 @@ class ModuleManager(object):
     def update_on_device(self):
         params = self.changes.api_params()
         resource = self.client.api.tm.sys.httpd.load()
-
         try:
             resource.modify(**params)
             return True
         except ConnectionError as ex:
-            pass
-
-        # BIG-IP will kill your management connection when you change the HTTP
-        # redirect setting. So this catches that and handles it gracefully.
-        if 'Connection aborted' in str(ex) and 'redirectHttpToHttps' in params:
-            # Wait for BIG-IP web server to settle after changing this
-            time.sleep(2)
-            return True
-        raise F5ModuleError(str(ex))
+            # BIG-IP will kill your management connection when you change the HTTP
+            # redirect setting. So this catches that and handles it gracefully.
+            if 'Connection aborted' in str(ex) and 'redirectHttpToHttps' in params:
+                # Wait for BIG-IP web server to settle after changing this
+                time.sleep(2)
+                return True
+            raise F5ModuleError(str(ex))
 
     def read_current_from_device(self):
         resource = self.client.api.tm.sys.httpd.load()
@@ -402,7 +616,10 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
+            allow=dict(
+                type='list'
+            ),
             auth_name=dict(),
             auth_pam_idle_timeout=dict(
                 type='int'
@@ -433,44 +650,36 @@ class ArgumentSpec(object):
             ),
             redirect_http_to_https=dict(
                 type='bool'
-            )
+            ),
+            ssl_cipher_suite=dict(type='raw'),
+            ssl_protocols=dict(type='raw')
         )
-        self.f5_product_name = 'bigip'
-
-
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
-    if not HAS_REQUESTS:
-        raise F5ModuleError("The python requests module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
+    if not HAS_REQUESTS:
+        module.fail_json(msg="The python requests module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
+        module.exit_json(**results)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

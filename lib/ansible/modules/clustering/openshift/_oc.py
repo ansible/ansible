@@ -17,7 +17,10 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 author:
   - "Kenneth D. Evensen (@kevensen)"
-deprecated: In 2.5 use M(openshift_raw) instead.
+deprecated:
+  removed_in: "2.9"
+  why: This module used the oc command line tool, where as M(openshift_raw) goes over the REST API.
+  alternative: Use M(openshift_raw) instead.
 description:
   - This module allows management of resources in an OpenShift cluster. The
     inventory host can be any host with network connectivity to the OpenShift
@@ -40,6 +43,7 @@ options:
     description:
       - "The inline definition of the resource. This is mutually exclusive with name, namespace and kind."
     required: false
+    aliases: ['def', 'definition']
   kind:
     description: The kind of the resource upon which to take action.
     required: true
@@ -53,8 +57,15 @@ options:
     required: false
   token:
     description:
-      - "The token with which to authenticate agains the OpenShift cluster."
+      - "The token with which to authenticate against the OpenShift cluster."
     required: true
+  validate_certs:
+    description:
+      - If C(no), SSL certificates for the target url will not be validated.
+        This should only be used on personally controlled sites using
+        self-signed certificates.
+    type: bool
+    default: yes
   state:
     choices:
       - present

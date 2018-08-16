@@ -79,6 +79,35 @@
       - "no_command.msg == 'no command given'"
       - "no_command.rc == 256"
 
+- name: use argv
+  command:
+    argv:
+      - echo
+      - testing
+  register: argv_command
+  ignore_errors: true
+
+- name: assert executable works with argv
+  assert:
+    that:
+      - "argv_command.stdout == 'testing'"
+
+- name: use argv and command string
+  command: echo testing
+  args:
+    argv:
+      - echo
+      - testing
+  register: argv_and_string_command
+  ignore_errors: true
+
+- name: assert executable fails with both argv and command string
+  assert:
+    that:
+      - "argv_and_string_command.failed == true"
+      - "argv_and_string_command.msg == 'only command or argv can be given, not both'"
+      - "argv_and_string_command.rc == 256"
+
 - set_fact: output_dir_test={{output_dir}}/test_command_shell
 
 - name: make sure our testing sub-directory does not exist
@@ -99,10 +128,6 @@
 - name: locate bash
   shell: which bash
   register: bash
-
-- name: locate sha1sum/shasum
-  shell: which sha1sum || which shasum
-  register: sha1sum
 
 ##
 ## command
@@ -196,7 +221,7 @@
       - "command_result5.stdout == 'foobar'"
 
 - name: send to stdin literal multiline block
-  command: "{{ sha1sum.stdout }}"
+  command: "{{ ansible_python_interpreter }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, \"buffer\") else sys.stdin).read()).hexdigest())'"
   args:
     stdin: |-
       this is the first line
@@ -209,7 +234,7 @@
 - name: assert the multiline input was passed correctly
   assert:
     that:
-      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903  -'"
+      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 ##
 ## shell
@@ -278,9 +303,7 @@
     "multiline echo" \
     "with a new line
     in quotes" \
-    | {{ sha1sum.stdout }} \
-    | tr -s ' ' \
-    | cut -f1 -d ' '
+    | {{ ansible_python_interpreter }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin).read()).hexdigest())'
     echo "this is a second line"
   register: shell_result5
 

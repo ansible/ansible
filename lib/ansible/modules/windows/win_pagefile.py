@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2017, Liran Nisanov <lirannis@gmail.com>
+# Copyright: (c) 2017, Liran Nisanov <lirannis@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -10,7 +10,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -28,9 +27,11 @@ options:
   initial_size:
     description:
       - The initial size of the pagefile in megabytes.
+    type: int
   maximum_size:
     description:
       - The maximum size of the pagefile in megabytes.
+    type: int
   override:
     description:
       - Override the current pagefile on the drive.
@@ -58,10 +59,7 @@ options:
   state:
     description:
       - State of the pagefile.
-    choices:
-      - present
-      - absent
-      - query
+    choices: [ absent, present, query ]
     default: query
 notes:
 - There is difference between automatic managed pagefiles that configured once for the entire system and system managed pagefile that configured per pagefile.

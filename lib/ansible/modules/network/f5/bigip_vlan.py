@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -18,7 +18,7 @@ module: bigip_vlan
 short_description: Manage VLANs on a BIG-IP system
 description:
   - Manage VLANs on a BIG-IP system
-version_added: "2.2"
+version_added: 2.2
 options:
   description:
     description:
@@ -55,13 +55,65 @@ options:
       - Tag number for the VLAN. The tag number can be any integer between 1
         and 4094. The system automatically assigns a tag number if you do not
         specify a value.
+  mtu:
+    description:
+      - Specifies the maximum transmission unit (MTU) for traffic on this VLAN.
+        When creating a new VLAN, if this parameter is not specified, the default
+        value used will be C(1500).
+      - This number must be between 576 to 9198.
+    version_added: 2.5
+  cmp_hash:
+    description:
+      - Specifies how the traffic on the VLAN will be disaggregated. The value
+        selected determines the traffic disaggregation method. You can choose to
+        disaggregate traffic based on C(source-address) (the source IP address),
+        C(destination-address) (destination IP address), or C(default), which
+        specifies that the default CMP hash uses L4 ports.
+      - When creating a new VLAN, if this parameter is not specified, the default
+        of C(default) is used.
+    choices:
+      - default
+      - destination-address
+      - source-address
+      - dst-ip
+      - src-ip
+      - dest
+      - destination
+      - source
+      - dst
+      - src
+    version_added: 2.5
+  dag_tunnel:
+    description:
+      - Specifies how the disaggregator (DAG) distributes received tunnel-encapsulated
+        packets to TMM instances. Select C(inner) to distribute packets based on information
+        in inner headers. Select C(outer) to distribute packets based on information in
+        outer headers without inspecting inner headers.
+      - When creating a new VLAN, if this parameter is not specified, the default
+        of C(outer) is used.
+      - This parameter is not supported on Virtual Editions of BIG-IP.
+    version_added: 2.5
+    choices:
+      - inner
+      - outer
+  dag_round_robin:
+    description:
+      - Specifies whether some of the stateless traffic on the VLAN should be
+        disaggregated in a round-robin order instead of using a static hash. The
+        stateless traffic includes non-IP L2 traffic, ICMP, some UDP protocols,
+        and so on.
+      - When creating a new VLAN, if this parameter is not specified, the default
+        of (no) is used.
+    version_added: 2.5
+    type: bool
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
+    version_added: 2.5
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires BIG-IP versions >= 12.0.0
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
   - Wojciech Wypior (@wojtek0806)
@@ -114,134 +166,87 @@ EXAMPLES = r'''
 
 RETURN = r'''
 description:
-    description: The description set on the VLAN
-    returned: changed
-    type: string
-    sample: foo VLAN
+  description: The description set on the VLAN.
+  returned: changed
+  type: string
+  sample: foo VLAN
 interfaces:
-    description: Interfaces that the VLAN is assigned to
-    returned: changed
-    type: list
-    sample: ['1.1','1.2']
-name:
-    description: The name of the VLAN
-    returned: changed
-    type: string
-    sample: net1
+  description: Interfaces that the VLAN is assigned to.
+  returned: changed
+  type: list
+  sample: ['1.1','1.2']
 partition:
-    description: The partition that the VLAN was created on
-    returned: changed
-    type: string
-    sample: Common
+  description: The partition that the VLAN was created on.
+  returned: changed
+  type: string
+  sample: Common
 tag:
-    description: The ID of the VLAN
-    returned: changed
-    type: int
-    sample: 2345
+  description: The ID of the VLAN.
+  returned: changed
+  type: int
+  sample: 2345
+cmp_hash:
+  description: New traffic disaggregation method.
+  returned: changed
+  type: string
+  sample: source-address
+dag_tunnel:
+  description: The new DAG tunnel setting.
+  returned: changed
+  type: string
+  sample: outer
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
+    api_map = {
+        'cmpHash': 'cmp_hash',
+        'dagTunnel': 'dag_tunnel',
+        'dagRoundRobin': 'dag_round_robin'
+    }
 
     updatables = [
         'tagged_interfaces', 'untagged_interfaces', 'tag',
-        'description'
+        'description', 'mtu', 'cmp_hash', 'dag_tunnel',
+        'dag_round_robin'
     ]
 
     returnables = [
-        'description', 'partition', 'name', 'tag', 'interfaces',
-        'tagged_interfaces', 'untagged_interfaces'
+        'description', 'partition', 'tag', 'interfaces',
+        'tagged_interfaces', 'untagged_interfaces', 'mtu',
+        'cmp_hash', 'dag_tunnel', 'dag_round_robin'
     ]
 
     api_attributes = [
-        'description', 'interfaces', 'partition', 'name', 'tag'
+        'description', 'interfaces', 'tag', 'mtu', 'cmpHash',
+        'dagTunnel', 'dagRoundRobin'
     ]
-    api_map = {}
-
-    @property
-    def interfaces(self):
-        tagged = self._values['tagged_interfaces']
-        untagged = self._values['untagged_interfaces']
-        if tagged:
-            return [dict(name=x, tagged=True) for x in tagged]
-        if untagged:
-            return [dict(name=x, untagged=True) for x in untagged]
-
-    @property
-    def tagged_interfaces(self):
-        value = self._values['tagged_interfaces']
-        if value is None:
-            return None
-        ifcs = self._parse_return_ifcs()
-        for ifc in value:
-            if ifc not in ifcs:
-                err = 'The specified interface "%s" was not found' % ifc
-                raise F5ModuleError(err)
-        return value
-
-    @property
-    def untagged_interfaces(self):
-        value = self._values['untagged_interfaces']
-        if value is None:
-            return None
-        ifcs = self._parse_return_ifcs()
-        for ifc in value:
-            if ifc not in ifcs:
-                err = 'The specified interface "%s" was not found' % ifc
-                raise F5ModuleError(err)
-        return value
-
-    def _get_interfaces_from_device(self):
-        lst = self.client.api.tm.net.interfaces.get_collection()
-        return lst
-
-    def _parse_return_ifcs(self):
-        ifclst = self._get_interfaces_from_device()
-        ifcs = [str(x.name) for x in ifclst]
-        if not ifcs:
-            err = 'No interfaces were found'
-            raise F5ModuleError(err)
-        return ifcs
 
     def to_return(self):
         result = {}
@@ -250,26 +255,202 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
-    def api_params(self):
+
+class ApiParameters(Parameters):
+    @property
+    def tagged_interfaces(self):
+        if self._values['interfaces'] is None:
+            return None
+        result = [str(x.name) for x in self._values['interfaces'] if x.tagged is True]
+        result = sorted(result)
+        return result
+
+    @property
+    def untagged_interfaces(self):
+        if self._values['interfaces'] is None:
+            return None
+        result = [str(x.name) for x in self._values['interfaces'] if x.untagged is True]
+        result = sorted(result)
+        return result
+
+
+class ModuleParameters(Parameters):
+    @property
+    def untagged_interfaces(self):
+        if self._values['untagged_interfaces'] is None:
+            return None
+        if self._values['untagged_interfaces'] is None:
+            return None
+        if len(self._values['untagged_interfaces']) == 1 and self._values['untagged_interfaces'][0] == '':
+            return ''
+        result = sorted([str(x) for x in self._values['untagged_interfaces']])
+        return result
+
+    @property
+    def tagged_interfaces(self):
+        if self._values['tagged_interfaces'] is None:
+            return None
+        if self._values['tagged_interfaces'] is None:
+            return None
+        if len(self._values['tagged_interfaces']) == 1 and self._values['tagged_interfaces'][0] == '':
+            return ''
+        result = sorted([str(x) for x in self._values['tagged_interfaces']])
+        return result
+
+    @property
+    def mtu(self):
+        if self._values['mtu'] is None:
+            return None
+        if int(self._values['mtu']) < 576 or int(self._values['mtu']) > 9198:
+            raise F5ModuleError(
+                "The mtu value must be between 576 - 9198"
+            )
+        return int(self._values['mtu'])
+
+    @property
+    def cmp_hash(self):
+        if self._values['cmp_hash'] is None:
+            return None
+        if self._values['cmp_hash'] in ['source-address', 'src', 'src-ip', 'source']:
+            return 'src-ip'
+        if self._values['cmp_hash'] in ['destination-address', 'dest', 'dst-ip', 'destination', 'dst']:
+            return 'dst-ip'
+        else:
+            return 'default'
+
+    @property
+    def dag_round_robin(self):
+        if self._values['dag_round_robin'] is None:
+            return None
+        if self._values['dag_round_robin'] is True:
+            return 'enabled'
+        else:
+            return 'disabled'
+
+
+class Changes(Parameters):
+    def to_return(self):
         result = {}
-        for api_attribute in self.api_attributes:
-            if api_attribute in self.api_map:
-                result[api_attribute] = getattr(
-                    self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    @property
+    def tagged_interfaces(self):
+        if self._values['interfaces'] is None:
+            return None
+        result = [str(x['name']) for x in self._values['interfaces'] if 'tagged' in x and x['tagged'] is True]
+        result = sorted(result)
+        return result
+
+    @property
+    def untagged_interfaces(self):
+        if self._values['interfaces'] is None:
+            return None
+        result = [str(x['name']) for x in self._values['interfaces'] if 'untagged' in x and x['untagged'] is True]
+        result = sorted(result)
+        return result
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def untagged_interfaces(self):
+        result = []
+        if self.want.untagged_interfaces is None:
+            return None
+        elif self.want.untagged_interfaces == '' and self.have.untagged_interfaces is None:
+            return None
+        elif self.want.untagged_interfaces == '' and len(self.have.untagged_interfaces) > 0:
+            pass
+        elif not self.have.untagged_interfaces:
+            result = dict(
+                interfaces=[dict(name=x, untagged=True) for x in self.want.untagged_interfaces]
+            )
+        elif set(self.want.untagged_interfaces) != set(self.have.untagged_interfaces):
+            result = dict(
+                interfaces=[dict(name=x, untagged=True) for x in self.want.untagged_interfaces]
+            )
+        else:
+            return None
+        return result
+
+    @property
+    def tagged_interfaces(self):
+        result = []
+        if self.want.tagged_interfaces is None:
+            return None
+        elif self.want.tagged_interfaces == '' and self.have.tagged_interfaces is None:
+            return None
+        elif self.want.tagged_interfaces == '' and len(self.have.tagged_interfaces) > 0:
+            pass
+        elif not self.have.tagged_interfaces:
+            result = dict(
+                interfaces=[dict(name=x, tagged=True) for x in self.want.tagged_interfaces]
+            )
+        elif set(self.want.tagged_interfaces) != set(self.have.tagged_interfaces):
+            result = dict(
+                interfaces=[dict(name=x, tagged=True) for x in self.want.tagged_interfaces]
+            )
+        else:
+            return None
         return result
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.have = None
-        self.want = Parameters()
-        self.want.client = self.client
-        self.want.update(self.client.module.params)
-        self.changes = Parameters()
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
+            return True
+        return False
 
     def exec_module(self):
         changed = False
@@ -284,39 +465,20 @@ class ModuleManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
-    def _set_changed_options(self):
-        changed = {}
-        for key in Parameters.returnables:
-            if getattr(self.want, key) is not None:
-                changed[key] = getattr(self.want, key)
-        if changed:
-            self.changes = Parameters(changed)
-
-    def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
-        if changed:
-            self.changes = Parameters(changed)
-            return True
-        return False
-
-    def _have_interfaces(self, ifcs):
-        untagged = [str(x.name) for x in ifcs if hasattr(x, 'untagged')]
-        tagged = [str(x.name) for x in ifcs if hasattr(x, 'tagged')]
-        if untagged:
-            self.have.update({'untagged_interfaces': untagged})
-        if tagged:
-            self.have.update({'tagged_interfaces': tagged})
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def present(self):
         if self.exists():
@@ -336,18 +498,16 @@ class ModuleManager(object):
         return False
 
     def update(self):
-        self.have, ifcs = self.read_current_from_device()
-        if ifcs:
-            self._have_interfaces(ifcs)
+        self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -355,49 +515,59 @@ class ModuleManager(object):
         return True
 
     def create(self):
-        self._set_changed_options()
-        if self.client.check_mode:
+        self.have = ApiParameters()
+        if self.want.mtu is None:
+            self.want.update({'mtu': 1500})
+        self._update_changed_options()
+        if self.module.check_mode:
             return True
         self.create_on_device()
         return True
 
     def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.net.vlans.vlan.create(**params)
+        params = self.changes.api_params()
+        self.client.api.tm.net.vlans.vlan.create(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
 
     def update_on_device(self):
-        params = self.want.api_params()
-        result = self.client.api.tm.net.vlans.vlan.load(
-            name=self.want.name, partition=self.want.partition
+        params = self.changes.api_params()
+        resource = self.client.api.tm.net.vlans.vlan.load(
+            name=self.want.name,
+            partition=self.want.partition
         )
-        result.modify(**params)
+        resource.modify(**params)
 
     def exists(self):
         return self.client.api.tm.net.vlans.vlan.exists(
-            name=self.want.name, partition=self.want.partition
+            name=self.want.name,
+            partition=self.want.partition
         )
 
     def remove_from_device(self):
-        result = self.client.api.tm.net.vlans.vlan.load(
-            name=self.want.name, partition=self.want.partition
+        resource = self.client.api.tm.net.vlans.vlan.load(
+            name=self.want.name,
+            partition=self.want.partition
         )
-        if result:
-            result.delete()
+        if resource:
+            resource.delete()
 
     def read_current_from_device(self):
-        tmp_res = self.client.api.tm.net.vlans.vlan.load(
+        resource = self.client.api.tm.net.vlans.vlan.load(
             name=self.want.name, partition=self.want.partition
         )
-        ifcs = tmp_res.interfaces_s.get_collection()
-
-        result = tmp_res.attrs
-        return Parameters(result), ifcs
+        interfaces = resource.interfaces_s.get_collection()
+        result = resource.attrs
+        result['interfaces'] = interfaces
+        return ApiParameters(params=result)
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(
                 required=True,
             ),
@@ -412,32 +582,56 @@ class ArgumentSpec(object):
             description=dict(),
             tag=dict(
                 type='int'
+            ),
+            mtu=dict(type='int'),
+            cmp_hash=dict(
+                choices=[
+                    'default',
+                    'destination-address', 'dest', 'dst-ip', 'destination', 'dst',
+                    'source-address', 'src', 'src-ip', 'source'
+                ]
+            ),
+            dag_tunnel=dict(
+                choices=['inner', 'outer']
+            ),
+            dag_round_robin=dict(type='bool'),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
+        self.mutually_exclusive = [
+            ['tagged_interfaces', 'untagged_interfaces']
+        ]
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
-        mutually_exclusive=[
-            ['tagged_interfaces', 'untagged_interfaces']
-        ]
+        mutually_exclusive=spec.mutually_exclusive
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
+        cleanup_tokens(client)
+        module.exit_json(**results)
     except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.fail_json(msg=str(e))
 
 
 if __name__ == '__main__':

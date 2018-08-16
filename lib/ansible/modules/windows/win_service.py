@@ -24,6 +24,7 @@ options:
       service.
     - This works by C(dependency_action) to either add/remove or set the
       services in this list.
+    type: list
     version_added: "2.3"
   dependency_action:
     description:
@@ -32,16 +33,13 @@ options:
     - Remove the dependencies to the existing dependencies.
     - Set the dependencies to only the values in the list replacing the
       existing dependencies.
+    choices: [ add, remove, set ]
     default: set
-    choices:
-    - set
-    - add
-    - remove
     version_added: "2.3"
   desktop_interact:
     description:
       - Whether to allow the service user to interact with the desktop.
-      - This should only be set to true when using the LocalSystem username.
+      - This should only be set to C(yes) when using the LocalSystem username.
     type: bool
     default: 'no'
     version_added: "2.3"
@@ -67,7 +65,7 @@ options:
       - Name of the service.
       - If only the name parameter is specified, the module will report
         on whether the service exists or not without making any changes.
-    required: true
+    required: yes
   path:
     description:
       - The path to the executable to set for the service.
@@ -83,11 +81,7 @@ options:
     description:
       - Set the startup type for the service.
       - C(delayed) added in Ansible 2.3
-    choices:
-      - auto
-      - manual
-      - disabled
-      - delayed
+    choices: [ auto, delayed, disabled, manual ]
   state:
     description:
       - C(started)/C(stopped)/C(absent)/C(pause) are idempotent actions that will not run
@@ -98,16 +92,13 @@ options:
       - Only services that support the paused state can be paused, you can
         check the return value C(can_pause_and_continue).
       - You can only pause a service that is already started.
-    choices:
-      - started
-      - stopped
-      - restarted
-      - absent
-      - paused
+    choices: [ absent, paused, started, stopped, restarted ]
   username:
     description:
       - The username to set the service to start as.
-      - This and the C(password) argument must be supplied together.
+      - This and the C(password) argument must be supplied together when using
+        a local or domain account.
+      - Set to C(LocalSystem) to use the SYSTEM account.
     version_added: "2.3"
 notes:
     - For non-Windows targets, use the M(service) module instead.
@@ -185,7 +176,7 @@ EXAMPLES = r'''
     state: restarted
     username: LocalSystem
     password: ""
-    desktop_interact: True
+    desktop_interact: yes
 
 - name: Set the log on user to Network Service
   win_service:

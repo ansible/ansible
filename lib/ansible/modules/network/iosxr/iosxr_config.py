@@ -25,7 +25,12 @@ description:
     a deterministic way.
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XR 6.1.2
+  - Tested against IOS XRv 6.1.2
+  - This module does not support netconf connection
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
+  - Avoid service disrupting changes (viz. Management IP) from config replace.
+  - Do not use C(end) in the replace config file.
 options:
   lines:
     description:
@@ -34,26 +39,20 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
-    required: false
-    default: null
+        exclusive with I(lines), I(parents).
     version_added: "2.2"
   before:
     description:
@@ -62,16 +61,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -82,7 +77,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -93,7 +87,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block', 'config']
   force:
@@ -105,9 +98,8 @@ options:
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in a future release.
-    required: false
-    default: false
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.2"
   config:
     description:
@@ -118,35 +110,39 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
+    type: bool
+    default: 'no'
     version_added: "2.2"
   comment:
     description:
       - Allows a commit description to be specified to be included
         when the configuration is committed.  If the configuration is
         not changed or committed, this argument is ignored.
-    required: false
     default: 'configured by iosxr_config'
     version_added: "2.2"
   admin:
     description:
       - Enters into administration configuration mode for making config
         changes to the device.
-    required: false
-    default: false
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.4"
+  label:
+    description:
+      - Allows a commit label to be specified to be included when the
+        configuration is committed. A valid label must begin with an alphabet
+        and not exceed 30 characters, only alphabets, digits, hyphens and
+        underscores are allowed. If the configuration is not changed or
+        committed, this argument is ignored.
+    version_added: "2.7"
 """
 
 EXAMPLES = """
@@ -164,7 +160,16 @@ EXAMPLES = """
 - name: load a config from disk and replace the current config
   iosxr_config:
     src: config.cfg
+    replace: config
     backup: yes
+
+- name: for idempotency, use full-form commands
+  iosxr_config:
+    lines:
+      # - shut
+      - shutdown
+    # parents: int g0/0/0/1
+    parents: interface GigabitEthernet0/0/0/1
 """
 
 RETURN = """
@@ -179,36 +184,168 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
-
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
+
+CONFIG_MISPLACED_CHILDREN = [
+    re.compile(r'^end-\s*(.+)$')
+]
+
+# Objects defined in Route-policy Language guide of IOS_XR.
+# Reconfiguring these objects replace existing configurations.
+# Hence these objects should be played direcly from candidate
+# configurations
+CONFIG_BLOCKS_FORCED_IN_DIFF = [
+    {
+        'start': re.compile(r'route-policy'),
+        'end': re.compile(r'end-policy')
+    },
+    {
+        'start': re.compile(r'prefix-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'as-path-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'community-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'rd-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'extcommunity-set'),
+        'end': re.compile(r'end-set')
+    }
+]
+
+
+def copy_file_to_node(module):
+    """ Copy config file to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
+    """
+    src = '/tmp/ansible_config.txt'
+    file = open(src, 'wb')
+    file.write(module.params['src'])
+    file.close()
+
+    dst = '/harddisk:/ansible_config.txt'
+    copy_file(module, src, dst, 'sftp')
+
+    return True
 
 
 def check_args(module, warnings):
     if module.params['comment']:
         if len(module.params['comment']) > 60:
             module.fail_json(msg='comment argument cannot be more than 60 characters')
+    if module.params['label']:
+        label = module.params['label']
+        if len(label) > 30:
+            module.fail_json(msg='label argument cannot be more than 30 characters')
+        if not label[0].isalpha():
+            module.fail_json(msg='label argument must begin with an alphabet')
+        valid_chars = re.match(r'[\w-]*$', label)
+        if not valid_chars:
+            module.fail_json(
+                msg='label argument must only contain alphabets,' +
+                'digits, underscores or hyphens'
+            )
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
 
 
+# A list of commands like {end-set, end-policy, ...} are part of configuration
+# block like { prefix-set, as-path-set , ... } but they are not indented properly
+# to be included with their parent. sanitize_config will add indentation to
+# end-* commands so they are included with their parents
+def sanitize_config(config, force_diff_prefix=None):
+    conf_lines = config.split('\n')
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(conf_lines):
+            m = regex.search(line)
+            if m and m.group(0):
+                if force_diff_prefix:
+                    conf_lines[index] = '  ' + m.group(0) + force_diff_prefix
+                else:
+                    conf_lines[index] = '  ' + m.group(0)
+    conf = ('\n').join(conf_lines)
+    return conf
+
+
+def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
+    conf_lines = config.split('\n')
+    candidate_lines = candidate.split('\n')
+
+    for regex in CONFIG_BLOCKS_FORCED_IN_DIFF:
+        block_index_start_end = []
+        for index, line in enumerate(candidate_lines):
+            startre = regex['start'].search(line)
+            if startre and startre.group(0):
+                start_index = index
+            else:
+                endre = regex['end'].search(line)
+                if endre and endre.group(0):
+                    end_index = index
+                    new_block = True
+                    for prev_start, prev_end in block_index_start_end:
+                        if start_index == prev_start:
+                            # This might be end-set of another regex
+                            # otherwise we would be having new start
+                            new_block = False
+                            break
+                    if new_block:
+                        block_index_start_end.append((start_index, end_index))
+
+        for start, end in block_index_start_end:
+            diff = False
+            if candidate_lines[start] in conf_lines:
+                run_conf_start_index = conf_lines.index(candidate_lines[start])
+            else:
+                diff = False
+                continue
+            for i in range(start, end + 1):
+                if conf_lines[run_conf_start_index] == candidate_lines[i]:
+                    run_conf_start_index = run_conf_start_index + 1
+                else:
+                    diff = True
+                    break
+            if diff:
+                run_conf_start_index = conf_lines.index(candidate_lines[start])
+                for i in range(start, end + 1):
+                    conf_lines[run_conf_start_index] = conf_lines[run_conf_start_index] + force_diff_prefix
+                    run_conf_start_index = run_conf_start_index + 1
+
+    conf = ('\n').join(conf_lines)
+    return conf
+
+
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
         contents = get_config(module)
+    if module.params['src']:
+        contents = mask_config_blocks_from_diff(contents, module.params['src'], "ansible")
+        contents = sanitize_config(contents)
     return NetworkConfig(indent=1, contents=contents)
 
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        config = module.params['src']
+        config = sanitize_config(config)
+        candidate.load(config)
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
@@ -223,19 +360,35 @@ def run(module, result):
     comment = module.params['comment']
     admin = module.params['admin']
     check_mode = module.check_mode
+    label = module.params['label']
 
-    candidate = get_candidate(module)
+    candidate_config = get_candidate(module)
+    running_config = get_running_config(module)
+
+    commands = None
+    replace_file_path = None
 
     if match != 'none' and replace != 'config':
-        contents = get_running_config(module)
-        configobj = NetworkConfig(contents=contents, indent=1)
-        commands = candidate.difference(configobj, path=path, match=match,
-                                        replace=replace)
+        commands = candidate_config.difference(running_config, path=path, match=match, replace=replace)
+    elif replace_config:
+        can_config = candidate_config.difference(running_config, path=path, match=match, replace=replace)
+        candidate = dumps(can_config, 'commands').split('\n')
+        run_config = running_config.difference(candidate_config, path=path, match=match, replace=replace)
+        running = dumps(run_config, 'commands').split('\n')
+
+        if len(candidate) > 1 or len(running) > 1:
+            ret = copy_file_to_node(module)
+            if not ret:
+                module.fail_json(msg='Copy of config file to the node failed')
+
+            commands = ['load harddisk:/ansible_config.txt']
+            replace_file_path = 'harddisk:/ansible_config.txt'
     else:
-        commands = candidate.items
+        commands = candidate_config.items
 
     if commands:
-        commands = dumps(commands, 'commands').split('\n')
+        if not replace_config:
+            commands = dumps(commands, 'commands').split('\n')
 
         if any((module.params['lines'], module.params['src'])):
             if module.params['before']:
@@ -247,10 +400,14 @@ def run(module, result):
             result['commands'] = commands
 
         commit = not check_mode
-        diff = load_config(module, commands, commit=commit, replace=replace_config,
-                           comment=comment, admin=admin)
+        diff = load_config(
+            module, commands, commit=commit,
+            replace=replace_file_path, comment=comment, admin=admin,
+            label=label
+        )
         if diff:
             result['diff'] = dict(prepared=diff)
+
         result['changed'] = True
 
 
@@ -276,12 +433,14 @@ def main():
         config=dict(),
         backup=dict(type='bool', default=False),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
-        admin=dict(type='bool', default=False)
+        admin=dict(type='bool', default=False),
+        label=dict()
     )
 
     argument_spec.update(iosxr_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),

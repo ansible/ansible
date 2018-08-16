@@ -42,9 +42,10 @@ options:
             - "Name of the storage domain to manage. (Not required when state is I(imported))"
     state:
         description:
-            - "Should the storage domain be present/absent/maintenance/unattached/imported"
+            - "Should the storage domain be present/absent/maintenance/unattached/imported/update_ovf_store"
             - "I(imported) is supported since version 2.4."
-        choices: ['present', 'absent', 'maintenance', 'unattached']
+            - "I(update_ovf_store) is supported since version 2.5, currently if C(wait) is (true), we don't wait for update."
+        choices: ['present', 'absent', 'maintenance', 'unattached', 'update_ovf_store']
         default: present
     description:
         description:
@@ -92,7 +93,10 @@ options:
             - "C(username) - A CHAP user name for logging into a target."
             - "C(password) - A CHAP password for logging into a target."
             - "C(override_luns) - If I(True) ISCSI storage domain luns will be overridden before adding."
+            - C(target_lun_map) - List of dictionary containing targets and LUNs."
             - "Note that these parameters are not idempotent."
+            - "Parameter C(target_lun_map) is supported since Ansible 2.5."
+
     posixfs:
         description:
             - "Dictionary with values for PosixFS storage type:"
@@ -110,10 +114,25 @@ options:
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
-            - "C(address) - Address of the fibre channel storage server."
-            - "C(port) - Port of the fibre channel storage server."
             - "C(lun_id) - LUN id."
+            - "C(override_luns) - If I(True) FCP storage domain luns will be overridden before adding."
             - "Note that these parameters are not idempotent."
+    wipe_after_delete:
+        description:
+            - "Boolean flag which indicates whether the storage domain should wipe the data after delete."
+        version_added: "2.5"
+    backup:
+        description:
+            - "Boolean flag which indicates whether the storage domain is configured as backup or not."
+        version_added: "2.5"
+    critical_space_action_blocker:
+        description:
+            - "Inidcates the minimal free space the storage domain should contain in percentages."
+        version_added: "2.5"
+    warning_low_space:
+        description:
+            - "Inidcates the minimum percentage of a free space in a storage domain to present a warning."
+        version_added: "2.5"
     destroy:
         description:
             - "Logical remove of the storage domain. If I(true) retains the storage domain's data for import."
@@ -173,6 +192,25 @@ EXAMPLES = '''
        - 1IET_000d0001
        - 1IET_000d0002
       address: 10.34.63.204
+    discard_after_delete: True
+    backup: False
+    critical_space_action_blocker: 5
+    warning_low_space: 10
+
+# Since Ansible 2.5 you can specify multiple targets for storage domain,
+# Add data iSCSI storage domain with multiple targets:
+- ovirt_storage_domains:
+    name: data_iscsi
+    host: myhost
+    data_center: mydatacenter
+    iscsi:
+      target_lun_map:
+        - target: iqn.2016-08-09.domain-01:nickname
+          lun_id: 1IET_000d0001
+        - target: iqn.2016-08-09.domain-02:nickname
+          lun_id: 1IET_000d0002
+      address: 10.34.63.204
+    discard_after_delete: True
 
 # Add data glusterfs storage domain
 -  ovirt_storage_domains:
@@ -192,6 +230,10 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/export
+    wipe_after_delete: False
+    backup: True
+    critical_space_action_blocker: 2
+    warning_low_space: 5
 
 # Import export NFS storage domain:
 - ovirt_storage_domains:
@@ -202,6 +244,19 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/export
+
+# Import FCP storage domain:
+- ovirt_storage_domains:
+    state: imported
+    name: data_fcp
+    host: myhost
+    data_center: mydatacenter
+    fcp: {}
+
+# Update OVF_STORE:
+- ovirt_storage_domains:
+    state: update_ovf_store
+    name: domain
 
 # Create ISO NFS storage domain
 - ovirt_storage_domains:
@@ -263,26 +318,47 @@ class StorageDomainModule(BaseModule):
 
     def _get_storage_type(self):
         for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
-            if self._module.params.get(sd_type) is not None:
+            if self.param(sd_type) is not None:
                 return sd_type
 
     def _get_storage(self):
         for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
-            if self._module.params.get(sd_type) is not None:
-                return self._module.params.get(sd_type)
+            if self.param(sd_type) is not None:
+                return self.param(sd_type)
 
     def _login(self, storage_type, storage):
         if storage_type == 'iscsi':
             hosts_service = self._connection.system_service().hosts_service()
-            host_id = get_id_by_name(hosts_service, self._module.params['host'])
-            hosts_service.host_service(host_id).iscsi_login(
-                iscsi=otypes.IscsiDetails(
-                    username=storage.get('username'),
-                    password=storage.get('password'),
-                    address=storage.get('address'),
-                    target=storage.get('target'),
-                ),
-            )
+            host_id = get_id_by_name(hosts_service, self.param('host'))
+            if storage.get('target'):
+                hosts_service.host_service(host_id).iscsi_login(
+                    iscsi=otypes.IscsiDetails(
+                        username=storage.get('username'),
+                        password=storage.get('password'),
+                        address=storage.get('address'),
+                        target=storage.get('target'),
+                    ),
+                )
+            elif storage.get('target_lun_map'):
+                for target in [m['target'] for m in storage.get('target_lun_map')]:
+                    hosts_service.host_service(host_id).iscsi_login(
+                        iscsi=otypes.IscsiDetails(
+                            username=storage.get('username'),
+                            password=storage.get('password'),
+                            address=storage.get('address'),
+                            target=target,
+                        ),
+                    )
+
+    def __target_lun_map(self, storage):
+        if storage.get('target'):
+            lun_ids = storage.get('lun_id') if isinstance(storage.get('lun_id'), list) else [(storage.get('lun_id'))]
+            return [(lun_id, storage.get('target')) for lun_id in lun_ids]
+        elif storage.get('target_lun_map'):
+            return [(target_map.get('lun_id'), target_map.get('target')) for target_map in storage.get('target_lun_map')]
+        else:
+            lun_ids = storage.get('lun_id') if isinstance(storage.get('lun_id'), list) else [(storage.get('lun_id'))]
+            return [(lun_id, None) for lun_id in lun_ids]
 
     def build_entity(self):
         storage_type = self._get_storage_type()
@@ -290,25 +366,18 @@ class StorageDomainModule(BaseModule):
         self._login(storage_type, storage)
 
         return otypes.StorageDomain(
-            name=self._module.params['name'],
-            description=self._module.params['description'],
-            comment=self._module.params['comment'],
-            import_=(
-                True
-                if self._module.params['state'] == 'imported' else None
-            ),
-            id=(
-                self._module.params['id']
-                if self._module.params['state'] == 'imported' else None
-            ),
-            type=otypes.StorageDomainType(
-                self._module.params['domain_function']
-            ),
-            host=otypes.Host(
-                name=self._module.params['host'],
-            ),
-            discard_after_delete=self._module.params['discard_after_delete']
-            if storage_type in ['iscsi', 'fcp'] else False,
+            name=self.param('name'),
+            description=self.param('description'),
+            comment=self.param('comment'),
+            wipe_after_delete=self.param('wipe_after_delete'),
+            backup=self.param('backup'),
+            critical_space_action_blocker=self.param('critical_space_action_blocker'),
+            warning_low_space_indicator=self.param('warning_low_space'),
+            import_=True if self.param('state') == 'imported' else None,
+            id=self.param('id') if self.param('state') == 'imported' else None,
+            type=otypes.StorageDomainType(self.param('domain_function')),
+            host=otypes.Host(name=self.param('host')),
+            discard_after_delete=self.param('discard_after_delete'),
             storage=otypes.HostStorage(
                 type=otypes.StorageType(storage_type),
                 logical_units=[
@@ -316,14 +385,10 @@ class StorageDomainModule(BaseModule):
                         id=lun_id,
                         address=storage.get('address'),
                         port=int(storage.get('port', 3260)),
-                        target=storage.get('target'),
+                        target=target,
                         username=storage.get('username'),
                         password=storage.get('password'),
-                    ) for lun_id in (
-                        storage.get('lun_id')
-                        if isinstance(storage.get('lun_id'), list)
-                        else [storage.get('lun_id')]
-                    )
+                    ) for lun_id, target in self.__target_lun_map(storage)
                 ] if storage_type in ['iscsi', 'fcp'] else None,
                 override_luns=storage.get('override_luns'),
                 mount_options=storage.get('mount_options'),
@@ -362,7 +427,7 @@ class StorageDomainModule(BaseModule):
             raise Exception(
                 "Can't bring storage to state `%s`, because it seems that"
                 "it is not attached to any datacenter"
-                % self._module.params['state']
+                % self.param('state')
             )
         else:
             if dc.status == dcstatus.UP:
@@ -377,7 +442,7 @@ class StorageDomainModule(BaseModule):
         # Get data center object of the storage domain:
         dcs_service = self._connection.system_service().data_centers_service()
 
-        # Search the data_center name, if it does not exists, try to search by guid.
+        # Search the data_center name, if it does not exist, try to search by guid.
         dc = search_by_name(dcs_service, dc_name)
         if dc is None:
             dc = get_entity(dcs_service.service(dc_name))
@@ -388,7 +453,7 @@ class StorageDomainModule(BaseModule):
         return dc_service.storage_domains_service()
 
     def _attached_sd_service(self, storage_domain):
-        dc_name = self._module.params['data_center']
+        dc_name = self.param('data_center')
         if not dc_name:
             # Find the DC, where the storage resides:
             dc_name = self._find_attached_datacenter_name(storage_domain.name)
@@ -408,8 +473,8 @@ class StorageDomainModule(BaseModule):
             wait(
                 service=attached_sd_service,
                 condition=lambda sd: sd.status == sdstate.MAINTENANCE,
-                wait=self._module.params['wait'],
-                timeout=self._module.params['timeout'],
+                wait=self.param('wait'),
+                timeout=self.param('timeout'),
             )
 
     def _unattach(self, storage_domain):
@@ -425,15 +490,15 @@ class StorageDomainModule(BaseModule):
             wait(
                 service=attached_sd_service,
                 condition=lambda sd: sd is None,
-                wait=self._module.params['wait'],
-                timeout=self._module.params['timeout'],
+                wait=self.param('wait'),
+                timeout=self.param('timeout'),
             )
 
     def pre_remove(self, storage_domain):
         # In case the user chose to destroy the storage domain there is no need to
         # move it to maintenance or detach it, it should simply be removed from the DB.
         # Also if storage domain in already unattached skip this step.
-        if storage_domain.status == sdstate.UNATTACHED or self._module.params['destroy']:
+        if storage_domain.status == sdstate.UNATTACHED or self.param('destroy'):
             return
         # Before removing storage domain we need to put it into maintenance state:
         self._maintenance(storage_domain)
@@ -443,7 +508,7 @@ class StorageDomainModule(BaseModule):
 
     def post_create_check(self, sd_id):
         storage_domain = self._service.service(sd_id).get()
-        dc_name = self._module.params['data_center']
+        dc_name = self.param('data_center')
         if not dc_name:
             # Find the DC, where the storage resides:
             dc_name = self._find_attached_datacenter_name(storage_domain.name)
@@ -462,12 +527,12 @@ class StorageDomainModule(BaseModule):
             wait(
                 service=attached_sd_service,
                 condition=lambda sd: sd.status == sdstate.ACTIVE,
-                wait=self._module.params['wait'],
-                timeout=self._module.params['timeout'],
+                wait=self.param('wait'),
+                timeout=self.param('timeout'),
             )
 
     def unattached_pre_action(self, storage_domain):
-        dc_name = self._module.params['data_center']
+        dc_name = self.param('data_center')
         if not dc_name:
             # Find the DC, where the storage resides:
             dc_name = self._find_attached_datacenter_name(storage_domain.name)
@@ -476,8 +541,13 @@ class StorageDomainModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self._module.params['comment'], entity.comment) and
-            equal(self._module.params['description'], entity.description)
+            equal(self.param('comment'), entity.comment) and
+            equal(self.param('description'), entity.description) and
+            equal(self.param('backup'), entity.backup) and
+            equal(self.param('critical_space_action_blocker'), entity.critical_space_action_blocker) and
+            equal(self.param('discard_after_delete'), entity.discard_after_delete) and
+            equal(self.param('wipe_after_delete'), entity.wipe_after_delete) and
+            equal(self.param('warning_low_space_indicator'), entity.warning_low_space_indicator)
         )
 
 
@@ -523,7 +593,7 @@ def control_state(sd_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'unattached', 'imported'],
+            choices=['present', 'absent', 'maintenance', 'unattached', 'imported', 'update_ovf_store'],
             default='present',
         ),
         id=dict(default=None),
@@ -539,9 +609,13 @@ def main():
         posixfs=dict(default=None, type='dict'),
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),
-        destroy=dict(type='bool', default=False),
-        format=dict(type='bool', default=False),
-        discard_after_delete=dict(type='bool', default=True)
+        wipe_after_delete=dict(type='bool', default=None),
+        backup=dict(type='bool', default=None),
+        critical_space_action_blocker=dict(type='int', default=None),
+        warning_low_space=dict(type='int', default=None),
+        destroy=dict(type='bool', default=None),
+        format=dict(type='bool', default=None),
+        discard_after_delete=dict(type='bool', default=None)
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -602,7 +676,10 @@ def main():
                 storage_domain=storage_domains_service.service(ret['id']).get()
             )
             ret['changed'] = storage_domains_module.changed
-
+        elif state == 'update_ovf_store':
+            ret = storage_domains_module.action(
+                action='update_ovf_store'
+            )
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())

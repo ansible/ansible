@@ -45,6 +45,8 @@ class TestNetscalerCSVserverModule(TestModule):
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver.csvserver': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_cspolicy_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_cspolicy_binding.csvserver_cspolicy_binding': m,
+            'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_lbvserver_binding': m,
+            'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_lbvserver_binding.csvserver_lbvserver_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl.sslvserver_sslcertkey_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl.sslvserver_sslcertkey_binding.sslvserver_sslcertkey_binding': m,
@@ -77,7 +79,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         self.nitro_base_patcher.stop()
@@ -91,7 +93,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -117,7 +119,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -141,7 +143,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -168,7 +170,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -198,7 +200,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -224,7 +226,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
             save_config=False,
         ))
@@ -255,7 +257,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
             save_config=False,
         ))
@@ -282,7 +284,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -316,7 +318,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -352,7 +354,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -386,7 +388,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -421,7 +423,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -455,7 +457,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -492,7 +494,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -529,7 +531,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -565,7 +567,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -601,7 +603,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -629,7 +631,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver
@@ -657,7 +659,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
 
@@ -685,7 +687,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
             servicetype='SSL',
         ))
@@ -726,7 +728,7 @@ class TestNetscalerCSVserverModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_vserver

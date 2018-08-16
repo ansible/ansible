@@ -14,8 +14,58 @@ Please do not add new dependencies on the old boto library.
 
 Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to
 boto3 has begun.  From Ansible 2.4 it is permissible for modules which previously required boto to
-start to require boto3 in order to deliver the functionality previously supported with boto and the
+start to migrate to boto3 in order to deliver the functionality previously supported with boto and the
 boto dependency can be deleted.
+
+From 2.6, all new modules should use AnsibleAWSModule as a base, or have a documented reason not
+to. Using AnsibleAWSModule greatly simplifies exception handling and library management, reducing
+the amount of boilerplate code.
+
+## Porting code to AnsibleAWSModule
+
+Change
+
+```
+from ansible.module_utils.basic import AnsibleModule
+...
+module = AnsibleModule(...)
+```
+
+to
+
+```
+from ansible.module_utils.aws.core import AnsibleAWSModule
+...
+module = AnsibleAWSModule(...)
+```
+
+Few other changes are required. One possible issue that you might encounter is that AnsibleAWSModule
+does not inherit methods from AnsibleModule by default, but most useful methods
+are included. If you do find an issue, please raise a bug report.
+
+When porting, keep in mind that AnsibleAWSModule also will add the default ec2
+argument spec by default. In pre-port modules, you should see common arguments
+specfied with:
+
+```
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+        state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+        name=dict(default='default'),
+        # ... and so on ...
+    ))
+    module = AnsibleModule(argument_spec=argument_spec, ...)
+
+# can be replaced with
+def main():
+    argument_spec = dict(
+        state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+        name=dict(default='default'),
+        # ... and so on ...
+    )
+    module = AnsibleAWSModule(argument_spec=argument_spec, ...)
+```
 
 ## Bug fixing
 
@@ -57,35 +107,17 @@ else:
 
 The `ansible.module_utils.ec2` module and `ansible.module_utils.core.aws` modules will both
 automatically import boto3 and botocore.  If boto3 is missing from the system then the variable
-`HAS_BOTO3` will be set to false.  Normally, this means that modules don't need to import either
-botocore or boto3 directly. There is no need to check `HAS_BOTO3` when using AnsibleAWSModule
+`HAS_BOTO3` will be set to false.  Normally, this means that modules don't need to import
+boto3 directly. There is no need to check `HAS_BOTO3` when using AnsibleAWSModule
 as the module does that check.
-
-If you want to import the modules anyway (for example `from botocore.exception import
-ClientError`) Wrap import statements in a try block and fail the module later using `HAS_BOTO3` if
-the import fails. See below as well (`Exception Handling for boto3 and botocore`) for more detail
-on how to safely import botocore exceptions.
-
-#### boto
-
-```python
-try:
-    import boto.ec2
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-def main():
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
-```
-
-#### boto3
 
 ```python
 from ansible.module_utils.aws.core import AnsibleAWSModule
+
+try:
+    import botocore
+except ImportError:
+    pass  # handled by AnsibleAWSModule
 ```
 
 or
@@ -94,6 +126,10 @@ or
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO3
 
+try:
+    import botocore
+except ImportError:
+    pass  # handled by imported HAS_BOTO3
 
 def main():
 
@@ -103,118 +139,109 @@ def main():
 
 #### boto and boto3 combined
 
-Ensure that you clearly document if a new parameter requires requires a specific version. Import
-boto3 at the top of the module as normal and then use the `HAS_BOTO3` bool when necessary, before the
-new feature.
+Modules should be ported to use boto3 rather than use both boto and boto3.
 
-```python
-from ansible.module_utils.ec2 import HAS_BOTO3
-
-try:
-    import boto
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-if my_new_feature_Parameter_is_set:
-    if HAS_BOTO3:
-        # do feature
-    else:
-        module.fail_json(msg="boto3 is required for this feature")
-```
 
 ### Connecting to AWS
 
-To connect to AWS, you should use `get_aws_connection_info` and then `boto3_conn`.
+AnsibleAWSModule provides the `resource` and `client` helper methods for obtaining boto3 connections.
+These handle some of the more esoteric connection options, such as security tokens and boto profiles.
 
-These functions handle some of the more esoteric connection options, such as security tokens and
-boto profiles.
+If using the basic AnsibleModule then you should use `get_aws_connection_info` and then `boto3_conn`
+to connect to AWS as these handle the same range of connection options.
 
+These helpers also for missing profiles or a region not set when it needs to be, so you don't have to.
 
-#### boto
-
-An example of connecting to ec2:
-
-Some boto services require that the region is specified. You should check for the region parameter
-if required.
+An example of connecting to ec2 is shown below. Note that unlike boto there is no `NoAuthHandlerFound`
+exception handling like in boto. Instead, an `AuthFailure` exception will be thrown when you use the
+connection. To ensure that authorization, parameter validation and permissions errors are all caught,
+you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
+See exception handling.
 
 ```python
-region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-if region:
-    try:
-        connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-        module.fail_json(msg=str(e))
-else:
-    module.fail_json(msg="region must be specified")
+module.client('ec2')
 ```
 
-#### boto3
+or for the higher level ec2 resource:
 
-An example of connecting to ec2 is shown below.  Note that there is no `NoAuthHandlerFound`
-exception handling like in boto.  Instead, an `AuthFailure` exception will be thrown when you use
-'connection'. To ensure that authorization, parameter validation and permissions errors are all
-caught, you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
-See exception handling. module_utils.ec2 checks for missing profiles or a region not set when it needs to be,
-so you don't have to.
+```python
+module.resource('ec2')
+```
+
+An example of the older style connection used for modules based on AnsibleModule rather than AnsibleAWSModule:
 
 ```python
 region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 ```
 
-### Exception Handling for boto
-
-You should wrap any boto call in a try block. If an exception is thrown, it is up to you decide how
-to handle it but usually calling fail_json with the error or helpful message and traceback will
-suffice.
-
-#### boto
-
 ```python
-# Import BotoServerError
-try:
-    import boto.ec2
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-# Connect to AWS
-...
-
-# Make a call to AWS
-try:
-    result = connection.aws_call()
-except BotoServerError as e:
-    module.fail_json(msg="helpful message here", exception=traceback.format_exc(),
-                     **camel_dict_to_snake_dict(e.message))
+region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 ```
 
-### Exception Handling for boto3 and botocore
+### Common Documentation Fragments for Connection Parameters
+
+There are two [common documentation fragments](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
+that should be included into almost all AWS modules:
+
+* `aws` - contains the common boto connection parameters
+* `ec2` - contains the common region parameter required for many AWS modules
+
+These fragments should be used rather than re-documenting these properties to ensure consistency
+and that the more esoteric connection options are documented. e.g.
+
+```python
+DOCUMENTATION = '''
+module: my_module
+...
+requirements: [ 'botocore', 'boto3' ]
+extends_documentation_fragment:
+    - aws
+    - ec2
+'''
+```
+
+### Exception Handling
 
 You should wrap any boto3 or botocore call in a try block. If an exception is thrown, then there
 are a number of possibilities for handling it.
 
-* use aws_module.fail_json_aws() to report the module failure in a standard way
-* retry using AWSRetry
-* use fail_json() to report the failure without using `ansible.module_utils.aws.core`
-* do something custom in the case where you know how to handle the exception
+* Catch the general `ClientError` or look for a specific error code with
+    `is_boto3_error_code`.
+* Use aws_module.fail_json_aws() to report the module failure in a standard way
+* Retry using AWSRetry
+* Use fail_json() to report the failure without using `ansible.module_utils.aws.core`
+* Do something custom in the case where you know how to handle the exception
 
-For more information on botocore exception handling see [the botocore error documentation](http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling).
+For more information on botocore exception handling see [the botocore error documentation](https://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling).
 
-#### using fail_json_aws()
+### Using is_boto3_error_code
 
-_fail_json_aws() is a new method and may be subject to change.  You can use it in modules which are
-being contributed back to Ansible, however if you are publishing your module separately please
-don't use it before the start of 2018 / Ansible 2.4_
+To use `ansible.module_utils.aws.core.is_boto3_error_code` to catch a single
+AWS error code, call it in place of `ClientError` in your except clauses. In
+this case, *only* the `InvalidGroup.NotFound` error code will be caught here,
+and any other error will be raised for handling elsewhere in the program.
+
+```python
+try:
+    return connection.describe_security_groups(**kwargs)
+except is_boto3_error_code('InvalidGroup.NotFound'):
+    return {'SecurityGroups': []}
+```
+
+#### Using fail_json_aws()
 
 In the AnsibleAWSModule there is a special method, `module.fail_json_aws()` for nice reporting of
 exceptions.  Call this on your exception and it will report the error together with a traceback for
 use in Ansible verbose mode.
 
+You should use the AnsibleAWSModule for all new modules, unless not possible. If adding significant
+amounts of exception handling to existing modules, we recommend migrating the module to use AnsibleAWSModule
+(there are very few changes required to do this)
+
 ```python
-from ansible.module_utils.aws.core AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 # Set up module parameters
 ...
@@ -312,7 +339,7 @@ catch throttling exceptions to work correctly), you'd need to provide a backoff 
 and then put exception handling around the backoff function.
 
 You can use `exponential_backoff` or `jittered_backoff` strategies - see
-the [cloud module_utils](/tree/devel/lib/ansible/module_utils/cloud.py)
+the [cloud module_utils](/lib/ansible/module_utils/cloud.py)
 and [AWS Architecture blog](https://www.awsarchitectureblog.com/2015/03/backoff.html)
 for more details.
 
@@ -363,6 +390,32 @@ def describe_some_resource(client, module):
         module.fail_json_aws(e, msg="Could not describe resource %s" % name)
 ```
 
+To make use of AWSRetry easier, it can now be wrapped around a client returned
+by `AnsibleAWSModule`. any call from a client. To add retries to a client,
+create a client:
+
+```
+module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+```
+
+Any calls from that client can be made to use the decorator passed at call-time
+using the `aws_retry` argument. By default, no retries are used.
+
+```
+ec2 = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+ec2.describe_instances(InstanceIds=['i-123456789'], aws_retry=True)
+
+# equivalent with normal AWSRetry
+@AWSRetry.jittered_backoff(retries=10)
+def describe_instances(client, **kwargs):
+    return ec2.describe_instances(**kwargs)
+
+describe_instances(module.client('ec2'), InstanceIds=['i-123456789'])
+```
+
+The call will be retried the specified number of times, so the calling functions
+don't need to be wrapped in the backoff decorator.
+
 ### Returning Values
 
 When you make a call using boto3, you will probably get back some useful information that you
@@ -398,19 +451,29 @@ argument_spec.update(
 ```
 
 Note that AWS is unlikely to return the policy in the same order that is was submitted. Therefore,
-a helper function has been created to order policies before comparison.
+use the `compare_policies` helper function which handles this variance.
+
+`compare_policies` takes two dictionaries, recursively sorts and makes them hashable for comparison
+and returns True if they are different.
 
 ```python
-# Get the policy from AWS
-current_policy = aws_object.get_policy()
+from ansible.module_utils.ec2 import compare_policies
 
-# Compare the user submitted policy to the current policy but sort them first
-if sort_json_policy_dict(user_policy) == sort_json_policy_dict(current_policy):
-    # Nothing to do
-    pass
-else:
+import json
+
+......
+
+# Get the policy from AWS
+current_policy = json.loads(aws_object.get_policy())
+user_policy = json.loads(module.params.get('policy'))
+
+# Compare the user submitted policy to the current policy ignoring order
+if compare_policies(user_policy, current_policy):
     # Update the policy
     aws_object.set_policy(user_policy)
+else:
+    # Nothing to do
+    pass
 ```
 
 ### Dealing with tags
@@ -438,6 +501,20 @@ functions detailed below.
 boto3 returns results in a dict.  The keys of the dict are in CamelCase format. In keeping with
 Ansible format, this function will convert the keys to snake_case.
 
+`camel_dict_to_snake_dict` takes an optional parameter called `ignore_list` which is a list of
+keys not to convert (this is usually useful for the `tags` dict, whose child keys should remain with
+case preserved)
+
+Another optional parameter is `reversible`. By default, `HTTPEndpoint` is converted to `http_endpoint`,
+which would then be converted by `snake_dict_to_camel_dict` to `HttpEndpoint`.
+Passing `reversible=True` converts HTTPEndpoint to `h_t_t_p_endpoint` which converts back to `HTTPEndpoint`.
+
+#### snake_dict_to_camel_dict
+
+`snake_dict_to_camel_dict` converts snake cased keys to camel case. By default, because it was
+first introduced for ECS purposes, this converts to dromedaryCase. An optional
+parameter called `capitalize_first`, which defaults to `False`, can be used to convert to CamelCase.
+
 #### ansible_dict_to_boto3_filter_list
 
 Converts a an Ansible list of filters to a boto3 friendly list of dicts.  This is useful for any
@@ -447,15 +524,7 @@ boto3 `_facts` modules.
 
 Pass an exception returned from boto or boto3, and this function will consistently get the message from the exception.
 
-```
-import traceback
-from ansible.module_utils.ec2 import boto_exception
-try:
-    ...
-except boto.exception.BotoServerError as err:
-    error_msg = boto_exception(err)
-    module.fail_json(msg=error_msg, exception=traceback.format_exc())
-```
+Deprecated: use `AnsibleAWSModule`'s `fail_json_aws` instead.
 
 
 #### boto3_tag_list_to_ansible_dict
@@ -479,13 +548,24 @@ Pass this function a list of security group names or combination of security gro
 and this function will return a list of IDs.  You should also pass the VPC ID if known because
 security group names are not necessarily unique across VPCs.
 
+#### compare_policies
+
+Pass two dicts of policies to check if there are any meaningful differences and returns true
+if there are. This recursively sorts the dicts and makes them hashable before comparison.
+
+This method should be used any time policies are being compared so that a change in order
+doesn't result in unnecessary changes.
+
 #### sort_json_policy_dict
 
 Pass any JSON policy dict to this function in order to sort any list contained therein. This is
 useful because AWS rarely return lists in the same order that they were submitted so without this
 function, comparison of identical policies returns false.
 
-### compare_aws_tags
+Note if your goal is to check if two policies are the same you're better to use the `compare_policies`
+helper which sorts recursively.
+
+#### compare_aws_tags
 
 Pass two dicts of tags and an optional purge parameter and this function will return a dict
 containing key pairs you need to modify and a list of tag key names that you need to remove.  Purge
@@ -496,3 +576,73 @@ other helper function `boto3_tag_list_to_ansible_dict` to get an appropriate tag
 calling this function. Since the AWS APIs are not uniform (e.g. EC2 versus Lambda) this will work
 without modification for some (Lambda) and others may need modification before using these values
 (such as EC2, with requires the tags to unset to be in the form `[{'Key': key1}, {'Key': key2}]`).
+
+## Integration Tests for AWS Modules
+
+All new AWS modules should include integration tests to ensure that any changes in AWS APIs that
+affect the module are detected. At a minimum this should cover the key API calls and check the
+documented return values are present in the module result.
+
+For general information on running the integration tests see the [Integration Tests page of the
+Module Development Guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
+Particularly the [cloud test configuration section](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
+
+The integration tests for your module should be added in `test/integration/targets/MODULE_NAME`.
+
+You must also have a aliases file in `test/integration/targets/MODULE_NAME/aliases`. This file serves
+two purposes. First indicates it's in an AWS test causing the test framework to make AWS credentials
+available during the test run. Second putting the test in a test group causing it to be run in the
+continuous integration build.
+
+Tests for new modules should be added to the same group as existing AWS tests. In general just copy
+an existing aliases file such as the [aws_s3 tests aliases file](/test/integration/targets/aws_s3/aliases).
+
+### AWS Credentials for Integration Tests
+
+The testing framework handles running the test with appropriate AWS credentials, these are made available
+to your test in the following variables:
+
+* `aws_region`
+* `aws_access_key`
+* `aws_secret_key`
+* `security_token`
+
+So all invocations of AWS modules in the test should set these parameters. To avoid duplication these
+for every call, it's preferrable to use [YAML Anchors](http://blog.daemonl.com/2016/02/yaml.html) E.g.
+
+```yaml
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: Do Something
+  ec2_instance:
+    ... params ...
+    <<: *aws_connection_info
+
+- name: Do Something Else
+  ec2_instance:
+    ... params ...
+    <<: *aws_connection_info
+```
+
+### AWS Permissions for Integration Tests
+
+As explained in the [Integration Test guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
+there are defined IAM policies in `hacking/aws_config/testing_policies/` that contain the necessary permissions
+to run the AWS integration test.
+
+If your module is interacting with a new service or otherwise requires new permissions you must update the
+appropriate policy file to grant the permissions needed to run your integration test.
+
+There is no process for automatically granting additional permissions to the roles used by the continuous
+integration builds, so the tests will initially fail when you submit a pull request and the
+[Ansibullbot](https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md) will tag it as needing revision.
+
+Once you're certain the failure is only due to the missing permissions, add a comment with the `ready_for_review`
+tag and explain that it's due to missing permissions.

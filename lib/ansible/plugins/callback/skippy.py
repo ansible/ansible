@@ -13,6 +13,10 @@ DOCUMENTATION = '''
       - set as main display callback
     short_description: Ansible screen output that ignores skipped status
     version_added: "2.0"
+    deprecated:
+        why: The 'default' callback plugin now supports this functionality
+        removed_in: '2.11'
+        alternative: "'default' callback plugin with 'display_skipped_hosts = no' option"
     extends_documentation_fragment:
       - default_callback
     description:

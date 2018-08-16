@@ -31,29 +31,22 @@ options:
     name:
         description:
             - Name of the storage account to update or create.
-        required: false
-        default: null
     state:
         description:
             - Assert the state of the storage account. Use 'present' to create or update a storage account and
               'absent' to delete an account.
         default: present
-        required: false
         choices:
             - absent
             - present
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        required: false
-        default: resource_group location
     account_type:
         description:
             - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
               accounts cannot be changed to other account types, and other account types cannot be changed to
               Standard_ZRS or Premium_LRS."
-        required: false
-        default: null
         choices:
             - Premium_LRS
             - Standard_GRS
@@ -68,26 +61,26 @@ options:
               keys where 'name' is the CNAME source. Only one custom domain is supported per storage account at this
               time. To clear the existing custom domain, use an empty string for the custom domain name property.
             - Can be added to an existing storage account. Will be ignored during storage account creation.
-        required: false
-        default: null
     kind:
         description:
             - The 'kind' of storage.
-        required: false
         default: 'Storage'
         choices:
             - Storage
+            - StorageV2
             - BlobStorage
         version_added: "2.2"
     access_tier:
         description:
             - The access tier for this storage account. Required for a storage account of kind 'BlobStorage'.
-        required: false
-        default: 'Storage'
         choices:
             - Hot
             - Cool
         version_added: "2.4"
+    force:
+        description:
+            - Attempt deletion if resource already exists and cannot be updated
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -112,8 +105,8 @@ EXAMPLES = '''
         name: clh0002
         type: Standard_RAGRS
         tags:
-          - testing: testing
-          - delete: on-exit
+          testing: testing
+          delete: on-exit
 '''
 
 
@@ -153,14 +146,11 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from azure.common import AzureMissingResourceHttpError
-    from azure.mgmt.storage.models import ProvisioningState, SkuName, SkuTier, Kind
-    from azure.mgmt.storage.models import StorageAccountUpdateParameters, CustomDomain, \
-        StorageAccountCreateParameters, Sku
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase, HAS_AZURE
 
 
 class AzureRMStorageAccount(AzureRMModuleBase):
@@ -176,12 +166,13 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             state=dict(default='present', choices=['present', 'absent']),
             force=dict(type='bool', default=False),
             tags=dict(type='dict'),
-            kind=dict(type='str', default='Storage', choices=['Storage', 'BlobStorage']),
+            kind=dict(type='str', default='Storage', choices=['Storage', 'StorageV2', 'BlobStorage']),
             access_tier=dict(type='str', choices=['Hot', 'Cool'])
         )
 
-        for key in SkuName:
-            self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
+        if HAS_AZURE:
+            for key in self.storage_models.SkuName:
+                self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
             changed=False,
@@ -322,6 +313,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         if self.account_type:
             if self.account_type != self.account_dict['sku_name']:
                 # change the account type
+                SkuName = self.storage_models.SkuName
                 if self.account_dict['sku_name'] in [SkuName.premium_lrs, SkuName.standard_zrs]:
                     self.fail("Storage accounts of type {0} and {1} cannot be changed.".format(
                         SkuName.premium_lrs, SkuName.standard_zrs))
@@ -337,9 +329,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                     try:
                         self.log("sku_name: %s" % self.account_dict['sku_name'])
                         self.log("sku_tier: %s" % self.account_dict['sku_tier'])
-                        sku = Sku(SkuName(self.account_dict['sku_name']))
-                        sku.tier = SkuTier(self.account_dict['sku_tier'])
-                        parameters = StorageAccountUpdateParameters(sku=sku)
+                        sku = self.storage_models.Sku(SkuName(self.account_dict['sku_name']))
+                        sku.tier = self.storage_models.SkuTier(self.account_dict['sku_tier'])
+                        parameters = self.storage_models.StorageAccountUpdateParameters(sku=sku)
                         self.storage_client.storage_accounts.update(self.resource_group,
                                                                     self.name,
                                                                     parameters)
@@ -352,9 +344,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 self.account_dict['custom_domain'] = self.custom_domain
 
             if self.results['changed'] and not self.check_mode:
-                new_domain = CustomDomain(name=self.custom_domain['name'],
-                                          use_sub_domain=self.custom_domain['use_sub_domain'])
-                parameters = StorageAccountUpdateParameters(custom_domain=new_domain)
+                new_domain = self.storage_models.CustomDomain(name=self.custom_domain['name'],
+                                                              use_sub_domain=self.custom_domain['use_sub_domain'])
+                parameters = self.storage_models.StorageAccountUpdateParameters(custom_domain=new_domain)
                 try:
                     self.storage_client.storage_accounts.update(self.resource_group, self.name, parameters)
                 except Exception as exc:
@@ -366,7 +358,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 self.account_dict['access_tier'] = self.access_tier
 
             if self.results['changed'] and not self.check_mode:
-                parameters = StorageAccountUpdateParameters(access_tier=self.access_tier)
+                parameters = self.storage_models.StorageAccountUpdateParameters(access_tier=self.access_tier)
                 try:
                     self.storage_client.storage_accounts.update(self.resource_group, self.name, parameters)
                 except Exception as exc:
@@ -376,7 +368,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         if update_tags:
             self.results['changed'] = True
             if not self.check_mode:
-                parameters = StorageAccountUpdateParameters(tags=self.account_dict['tags'])
+                parameters = self.storage_models.StorageAccountUpdateParameters(tags=self.account_dict['tags'])
                 try:
                     self.storage_client.storage_accounts.update(self.resource_group, self.name, parameters)
                 except Exception as exc:
@@ -408,9 +400,11 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             if self.tags:
                 account_dict['tags'] = self.tags
             return account_dict
-        sku = Sku(SkuName(self.account_type))
-        sku.tier = SkuTier.standard if 'Standard' in self.account_type else SkuTier.premium
-        parameters = StorageAccountCreateParameters(sku, self.kind, self.location, tags=self.tags, access_tier=self.access_tier)
+        sku = self.storage_models.Sku(self.storage_models.SkuName(self.account_type))
+        sku.tier = self.storage_models.SkuTier.standard if 'Standard' in self.account_type else \
+            self.storage_models.SkuTier.premium
+        parameters = self.storage_models.StorageAccountCreateParameters(sku, self.kind, self.location,
+                                                                        tags=self.tags, access_tier=self.access_tier)
         self.log(str(parameters))
         try:
             poller = self.storage_client.storage_accounts.create(self.resource_group, self.name, parameters)
@@ -422,7 +416,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         return self.get_account()
 
     def delete_account(self):
-        if self.account_dict['provisioning_state'] == ProvisioningState.succeeded.value and \
+        if self.account_dict['provisioning_state'] == self.storage_models.ProvisioningState.succeeded.value and \
            self.account_has_blob_containers() and self.force:
             self.fail("Account contains blob containers. Is it in use? Use the force option to attempt deletion.")
 
@@ -457,6 +451,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
 def main():
     AzureRMStorageAccount()
+
 
 if __name__ == '__main__':
     main()

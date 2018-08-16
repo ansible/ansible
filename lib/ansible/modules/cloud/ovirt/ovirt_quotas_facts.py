@@ -60,7 +60,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_quotas:
-    description: "List of dictionaries describing the quotas. Quota attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the quotas. Quota attributes are mapped to dictionary keys,
                   all quotas attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/quota."
     returned: On success.
     type: list

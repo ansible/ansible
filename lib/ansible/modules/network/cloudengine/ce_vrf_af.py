@@ -34,45 +34,36 @@ options:
         description:
             - VPN instance.
         required: true
-        default: null
     vrf_aftype:
         description:
             - VPN instance address family.
-        required: false
         choices: ['v4','v6']
         default: v4
     route_distinguisher:
         description:
             - VPN instance route distinguisher,the RD used to distinguish same route prefix from different vpn.
               The RD must be setted before setting vpn_target_value.
-        required: false
     vpn_target_state:
         description:
             - Manage the state of the vpn target.
-        required: false
         choices: ['present','absent']
     vpn_target_type:
         description:
             - VPN instance vpn target type.
-        required: false
         choices: ['export_extcommunity', 'import_extcommunity']
-        default: null
     vpn_target_value:
         description:
             - VPN instance target value. Such as X.X.X.X:number<0-65535> or number<0-65535>:number<0-4294967295>
               or number<0-65535>.number<0-65535>:number<0-65535> or number<65536-4294967295>:number<0-65535>
               but not support 0:0 and 0.0:0.
-        required: false
     evpn:
         description:
             - Is extend vpn or normal vpn.
-        required: false
-        choices: ['true', 'false']
-        default: false
+        type: bool
+        default: 'no'
     state:
         description:
             - Manage the state of the af.
-        required: false
         choices: ['present','absent']
         default: present
 '''

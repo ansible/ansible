@@ -360,6 +360,23 @@
     that:
     - add_firewall_rule_with_string_profiles.changed == true
 
+- name: Set firewall rule profile back to 'all'
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: [Domain, Public, Private]
+  register: add_firewall_rule_with_string_profiles
+
+- name: Check that setting firewall rule profile back to 'all' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_string_profiles.changed == true
+
 - name: Add firewall rule with profiles in list format
   win_firewall_rule:
     name: http

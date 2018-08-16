@@ -1,21 +1,44 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    name: powershell
+    plugin_type: shell
+    version_added: ""
+    short_description: Windows Powershell
+    description:
+      - The only option when using 'winrm' as a connection plugin
+    options:
+      remote_tmp:
+        description:
+        - Temporary directory to use on targets when copying files to the host.
+        default: '%TEMP%'
+        ini:
+        - section: powershell
+          key: remote_tmp
+        vars:
+        - name: ansible_remote_tmp
+      set_module_language:
+        description:
+        - Controls if we set the locale for moduels when executing on the
+          target.
+        - Windows only supports C(no) as an option.
+        type: bool
+        default: 'no'
+        choices:
+        - 'no'
+      environment:
+        description:
+        - Dictionary of environment variables and their values to use when
+          executing commands.
+        type: dict
+        default: {}
+'''
+# FIXME: admin_users and set_module_language don't belong here but must be set
+# so they don't failk when someone get_option('admin_users') on this plugin
 
 import base64
 import os
@@ -23,7 +46,8 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
+from ansible.plugins.shell import ShellBase
 
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
@@ -132,7 +156,10 @@ Function Run($payload) {
     $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") | Out-Null
 
     ForEach ($env_kv in $payload.environment.GetEnumerator()) {
-        $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
+        # need to escape ' in both the key and value
+        $env_key = $env_kv.Key.ToString().Replace("'", "''")
+        $env_value = $env_kv.Value.ToString().Replace("'", "''")
+        $escaped_env_set = "[System.Environment]::SetEnvironmentVariable('{0}', '{1}')" -f $env_key, $env_value
         $ps.AddStatement().AddScript($escaped_env_set) | Out-Null
     }
 
@@ -252,30 +279,6 @@ namespace Ansible
         public SID_AND_ATTRIBUTES User;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct JOBOBJECT_BASIC_LIMIT_INFORMATION
-    {
-        public UInt64 PerProcessUserTimeLimit;
-        public UInt64 PerJobUserTimeLimit;
-        public LimitFlags LimitFlags;
-        public UIntPtr MinimumWorkingSetSize;
-        public UIntPtr MaximumWorkingSetSize;
-        public UInt32 ActiveProcessLimit;
-        public UIntPtr Affinity;
-        public UInt32 PriorityClass;
-        public UInt32 SchedulingClass;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public class JOBOBJECT_EXTENDED_LIMIT_INFORMATION
-    {
-        public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation = new JOBOBJECT_BASIC_LIMIT_INFORMATION();
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst=48)]
-        public byte[] IO_COUNTERS_BLOB;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst=4)]
-        public UIntPtr[] LIMIT_BLOB;
-    }
-
     [Flags]
     public enum StartupInfoFlags : uint
     {
@@ -355,24 +358,6 @@ namespace Ansible
         TokenImpersonation
     }
 
-    enum JobObjectInfoType
-    {
-        ExtendedLimitInformation = 9,
-    }
-
-    [Flags]
-    enum ThreadAccessRights : uint
-    {
-        SUSPEND_RESUME = 0x0002
-    }
-
-    [Flags]
-    public enum LimitFlags : uint
-    {
-        JOB_OBJECT_LIMIT_BREAKAWAY_OK = 0x00000800,
-        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
-    }
-
     class NativeWaitHandle : WaitHandle
     {
         public NativeWaitHandle(IntPtr handle)
@@ -398,63 +383,6 @@ namespace Ansible
         public string StandardOut { get; internal set; }
         public string StandardError { get; internal set; }
         public uint ExitCode { get; internal set; }
-    }
-
-    public class Job : IDisposable
-    {
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        private static extern IntPtr CreateJobObject(
-            IntPtr lpJobAttributes,
-            string lpName);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool SetInformationJobObject(
-            IntPtr hJob,
-            JobObjectInfoType JobObjectInfoClass,
-            JOBOBJECT_EXTENDED_LIMIT_INFORMATION lpJobObjectInfo,
-            int cbJobObjectInfoLength);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool AssignProcessToJobObject(
-            IntPtr hJob,
-            IntPtr hProcess);
-
-        [DllImport("kernel32.dll")]
-        private static extern bool CloseHandle(
-            IntPtr hObject);
-
-        private IntPtr handle;
-
-        public Job()
-        {
-            handle = CreateJobObject(IntPtr.Zero, null);
-            if (handle == IntPtr.Zero)
-                throw new Win32Exception("CreateJobObject() failed");
-
-            JOBOBJECT_EXTENDED_LIMIT_INFORMATION extendedJobInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
-            // on OSs that support nested jobs, one of the jobs must allow breakaway for async to work properly under WinRM
-            extendedJobInfo.BasicLimitInformation.LimitFlags = LimitFlags.JOB_OBJECT_LIMIT_BREAKAWAY_OK | LimitFlags.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-
-            if (!SetInformationJobObject(handle, JobObjectInfoType.ExtendedLimitInformation, extendedJobInfo, Marshal.SizeOf(extendedJobInfo)))
-                throw new Win32Exception("SetInformationJobObject() failed");
-        }
-
-        public void AssignProcess(IntPtr processHandle)
-        {
-            if (!AssignProcessToJobObject(handle, processHandle))
-                throw new Win32Exception("AssignProcessToJobObject() failed");
-        }
-
-        public void Dispose()
-        {
-            if (handle != IntPtr.Zero)
-            {
-                CloseHandle(handle);
-                handle = IntPtr.Zero;
-            }
-
-            GC.SuppressFinalize(this);
-        }
     }
 
     public class BecomeUtil
@@ -564,19 +492,14 @@ namespace Ansible
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool RevertToSelf();
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern SafeFileHandle OpenThread(
-            ThreadAccessRights dwDesiredAccess,
-            bool bInheritHandle,
-            int dwThreadId);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern int ResumeThread(
-            SafeHandle hThread);
-
-        public static CommandResult RunAsUser(string username, string password, string lpCommandLine, string lpCurrentDirectory, string stdinInput)
+        public static CommandResult RunAsUser(string username, string password, string lpCommandLine,
+            string lpCurrentDirectory, string stdinInput, LogonFlags logonFlags, LogonType logonType)
         {
-            SecurityIdentifier account = GetBecomeSid(username);
+            SecurityIdentifier account = null;
+            if (logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
+            {
+                account = GetBecomeSid(username);
+            }
 
             STARTUPINFOEX si = new STARTUPINFOEX();
             si.startupInfo.dwFlags = (int)StartupInfoFlags.USESTDHANDLES;
@@ -613,20 +536,19 @@ namespace Ansible
             // Create the environment block if set
             IntPtr lpEnvironment = IntPtr.Zero;
 
-            // To support async + become, we have to do some job magic later, which requires both breakaway and starting suspended
-            CreationFlags startup_flags = CreationFlags.CREATE_UNICODE_ENVIRONMENT | CreationFlags.CREATE_BREAKAWAY_FROM_JOB | CreationFlags.CREATE_SUSPENDED;
+            CreationFlags startup_flags = CreationFlags.CREATE_UNICODE_ENVIRONMENT;
 
             PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
 
             // Get the user tokens to try running processes with
-            List<IntPtr> tokens = GetUserTokens(account, username, password);
+            List<IntPtr> tokens = GetUserTokens(account, username, password, logonType);
 
             bool launch_success = false;
             foreach (IntPtr token in tokens)
             {
                 if (CreateProcessWithTokenW(
                     token,
-                    LogonFlags.LOGON_WITH_PROFILE,
+                    logonFlags,
                     null,
                     new StringBuilder(lpCommandLine),
                     startup_flags,
@@ -643,44 +565,26 @@ namespace Ansible
             if (!launch_success)
                 throw new Win32Exception("Failed to start become process");
 
-            // If 2012/8+ OS, create new job with JOB_OBJECT_LIMIT_BREAKAWAY_OK
-            // so that async can work
-            Job job = null;
-            if (Environment.OSVersion.Version >= new Version("6.2"))
-            {
-                job = new Job();
-                job.AssignProcess(pi.hProcess);
-            }
-            ResumeProcessById(pi.dwProcessId);
-
             CommandResult result = new CommandResult();
-            try
-            {
-                // Setup the output buffers and get stdout/stderr
-                FileStream stdout_fs = new FileStream(stdout_read, FileAccess.Read, 4096);
-                StreamReader stdout = new StreamReader(stdout_fs, utf8_encoding, true, 4096);
-                stdout_write.Close();
+            // Setup the output buffers and get stdout/stderr
+            FileStream stdout_fs = new FileStream(stdout_read, FileAccess.Read, 4096);
+            StreamReader stdout = new StreamReader(stdout_fs, utf8_encoding, true, 4096);
+            stdout_write.Close();
 
-                FileStream stderr_fs = new FileStream(stderr_read, FileAccess.Read, 4096);
-                StreamReader stderr = new StreamReader(stderr_fs, utf8_encoding, true, 4096);
-                stderr_write.Close();
+            FileStream stderr_fs = new FileStream(stderr_read, FileAccess.Read, 4096);
+            StreamReader stderr = new StreamReader(stderr_fs, utf8_encoding, true, 4096);
+            stderr_write.Close();
 
-                stdin.WriteLine(stdinInput);
-                stdin.Close();
+            stdin.WriteLine(stdinInput);
+            stdin.Close();
 
-                string stdout_str, stderr_str = null;
-                GetProcessOutput(stdout, stderr, out stdout_str, out stderr_str);
-                UInt32 rc = GetProcessExitCode(pi.hProcess);
+            string stdout_str, stderr_str = null;
+            GetProcessOutput(stdout, stderr, out stdout_str, out stderr_str);
+            UInt32 rc = GetProcessExitCode(pi.hProcess);
 
-                result.StandardOut = stdout_str;
-                result.StandardError = stderr_str;
-                result.ExitCode = rc;
-            }
-            finally
-            {
-                if (job != null)
-                    job.Dispose();
-            }
+            result.StandardOut = stdout_str;
+            result.StandardError = stderr_str;
+            result.ExitCode = rc;
 
             return result;
         }
@@ -699,7 +603,7 @@ namespace Ansible
             }
         }
 
-        private static List<IntPtr> GetUserTokens(SecurityIdentifier account, string username, string password)
+        private static List<IntPtr> GetUserTokens(SecurityIdentifier account, string username, string password, LogonType logonType)
         {
             List<IntPtr> tokens = new List<IntPtr>();
             List<String> service_sids = new List<String>()
@@ -709,16 +613,20 @@ namespace Ansible
                 "S-1-5-20"  // NT AUTHORITY\NetworkService
             };
 
-            GrantAccessToWindowStationAndDesktop(account);
-            string account_sid = account.ToString();
+            IntPtr hSystemToken = IntPtr.Zero;
+            string account_sid = "";
+            if (logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
+            {
+                GrantAccessToWindowStationAndDesktop(account);
+                // Try to get SYSTEM token handle so we can impersonate to get full admin token
+                hSystemToken = GetSystemUserHandle();
+                account_sid = account.ToString();
+            }
             bool impersonated = false;
 
             try
             {
                 IntPtr hSystemTokenDup = IntPtr.Zero;
-
-                // Try to get SYSTEM token handle so we can impersonate to get full admin token
-                IntPtr hSystemToken = GetSystemUserHandle();
                 if (hSystemToken == IntPtr.Zero && service_sids.Contains(account_sid))
                 {
                     // We need the SYSTEM token if we want to become one of those accounts, fail here
@@ -750,12 +658,11 @@ namespace Ansible
                     // might get a limited token in UAC-enabled cases, but better than nothing...
                 }
 
-                LogonType logonType;
                 string domain = null;
 
                 if (service_sids.Contains(account_sid))
                 {
-                    // We're using a well-known service account, do a service logon instead of interactive
+                    // We're using a well-known service account, do a service logon instead of the actual flag set
                     logonType = LogonType.LOGON32_LOGON_SERVICE;
                     domain = "NT AUTHORITY";
                     password = null;
@@ -775,7 +682,6 @@ namespace Ansible
                 else
                 {
                     // We are trying to become a local or domain account
-                    logonType = LogonType.LOGON32_LOGON_INTERACTIVE;
                     if (username.Contains(@"\"))
                     {
                         var user_split = username.Split(Convert.ToChar(@"\"));
@@ -846,7 +752,6 @@ namespace Ansible
                         TokenAccessLevels.AssignPrimary |
                         TokenAccessLevels.Impersonate;
 
-                    // TODO: Find out why I can't see processes from Network Service and Local Service
                     if (OpenProcessToken(hProcess, desired_access, out hToken))
                     {
                         string sid = GetTokenUserSID(hToken);
@@ -980,44 +885,6 @@ namespace Ansible
             security.Persist(safeHandle, AccessControlSections.Access);
         }
 
-        private static void ResumeThreadById(int threadId)
-        {
-            var threadHandle = OpenThread(ThreadAccessRights.SUSPEND_RESUME, false, threadId);
-            if (threadHandle.IsInvalid)
-                throw new Win32Exception(String.Format("Thread ID {0} is invalid", threadId));
-
-            try
-            {
-                if (ResumeThread(threadHandle) == -1)
-                    throw new Win32Exception(String.Format("Thread ID {0} cannot be resumed", threadId));
-            }
-            finally
-            {
-                threadHandle.Dispose();
-            }
-        }
-
-        private static void ResumeProcessById(int pid)
-        {
-            var proc = Process.GetProcessById(pid);
-
-            // wait for at least one suspended thread in the process (this handles possible slow startup race where
-            // primary thread of created-suspended process has not yet become runnable)
-            var retryCount = 0;
-            while (!proc.Threads.OfType<ProcessThread>().Any(t => t.ThreadState == System.Diagnostics.ThreadState.Wait &&
-                 t.WaitReason == ThreadWaitReason.Suspended))
-            {
-                proc.Refresh();
-                Thread.Sleep(50);
-                if (retryCount > 100)
-                    throw new InvalidOperationException(String.Format("No threads were suspended in target PID {0} after 5s", pid));
-            }
-
-            foreach (var thread in proc.Threads.OfType<ProcessThread>().Where(t => t.ThreadState == System.Diagnostics.ThreadState.Wait &&
-                 t.WaitReason == ThreadWaitReason.Suspended))
-                ResumeThreadById(thread.Id);
-        }
-
         private class GenericSecurity : NativeObjectSecurity
         {
             public GenericSecurity(bool isContainer, ResourceType resType, SafeHandle objectHandle, AccessControlSections sectionsRequested)
@@ -1052,6 +919,17 @@ namespace Ansible
 }
 "@
 
+# due to the command line size limitations of CreateProcessWithTokenW, we
+# execute a simple PS script that executes our full exec_wrapper so no files
+# touch the disk
+$become_exec_wrapper = {
+    chcp.com 65001 > $null
+    $ProgressPreference = "SilentlyContinue"
+    $exec_wrapper_str = [System.Console]::In.ReadToEnd()
+    $exec_wrapper = [ScriptBlock]::Create($exec_wrapper_str)
+    &$exec_wrapper
+}
+
 $exec_wrapper = {
     Set-StrictMode -Version 2
     $DebugPreference = "Continue"
@@ -1070,9 +948,9 @@ $exec_wrapper = {
     }
 
     # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
-    # exec runspace, capture output, cleanup, return module output
-
-    $json_raw = [System.Console]::In.ReadToEnd()
+    # exec runspace, capture output, cleanup, return module output. Do not change this as it is set become before being passed to the
+    # become process.
+    $json_raw = ""
 
     If (-not $json_raw) {
         Write-Error "no input given" -Category InvalidArgument
@@ -1103,63 +981,134 @@ $exec_wrapper = {
     }
 
     $output = $entrypoint.Run($payload)
-
-    Write-Output $output
+    # base64 encode the output so the non-ascii characters are preserved
+    Write-Output ([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Write-Output $output))))
 } # end exec_wrapper
 
-Function Dump-Error ($excep) {
+Function Dump-Error ($excep, $msg=$null) {
     $eo = @{failed=$true}
 
-    $eo.msg = $excep.Exception.Message
+    $exception_message = $excep.Exception.Message
+    if ($null -ne $msg) {
+        $exception_message = "$($msg): $exception_message"
+    }
+    $eo.msg = $exception_message
     $eo.exception = $excep | Out-String
     $host.SetShouldExit(1)
 
-    $eo | ConvertTo-Json -Depth 10
+    $eo | ConvertTo-Json -Depth 10 -Compress
+}
+
+Function Parse-EnumValue($enum, $flag_type, $value, $prefix) {
+    $raw_enum_value = "$prefix$($value.ToUpper())"
+    try {
+        $enum_value = [Enum]::Parse($enum, $raw_enum_value)
+    } catch [System.ArgumentException] {
+        $valid_options = [Enum]::GetNames($enum) | ForEach-Object { $_.Substring($prefix.Length).ToLower() }
+        throw "become_flags $flag_type value '$value' is not valid, valid values are: $($valid_options -join ", ")"
+    }
+    return $enum_value
+}
+
+Function Parse-BecomeFlags($flags) {
+    $logon_type = [Ansible.LogonType]::LOGON32_LOGON_INTERACTIVE
+    $logon_flags = [Ansible.LogonFlags]::LOGON_WITH_PROFILE
+
+    if ($flags -eq $null -or $flags -eq "") {
+        $flag_split = @()
+    } elseif ($flags -is [string]) {
+        $flag_split = $flags.Split(" ")
+    } else {
+        throw "become_flags must be a string, was $($flags.GetType())"
+    }
+
+    foreach ($flag in $flag_split) {
+        $split = $flag.Split("=")
+        if ($split.Count -ne 2) {
+            throw "become_flags entry '$flag' is in an invalid format, must be a key=value pair"
+        }
+        $flag_key = $split[0]
+        $flag_value = $split[1]
+        if ($flag_key -eq "logon_type") {
+            $enum_details = @{
+                enum = [Ansible.LogonType]
+                flag_type = $flag_key
+                value = $flag_value
+                prefix = "LOGON32_LOGON_"
+            }
+            $logon_type = Parse-EnumValue @enum_details
+        } elseif ($flag_key -eq "logon_flags") {
+            $logon_flag_values = $flag_value.Split(",")
+            $logon_flags = 0 -as [Ansible.LogonFlags]
+            foreach ($logon_flag_value in $logon_flag_values) {
+                if ($logon_flag_value -eq "") {
+                    continue
+                }
+                $enum_details = @{
+                    enum = [Ansible.LogonFlags]
+                    flag_type = $flag_key
+                    value = $logon_flag_value
+                    prefix = "LOGON_"
+                }
+                $logon_flag = Parse-EnumValue @enum_details
+                $logon_flags = $logon_flags -bor $logon_flag
+            }
+        } else {
+            throw "become_flags key '$flag_key' is not a valid runas flag, must be 'logon_type' or 'logon_flags'"
+        }
+    }
+
+    return $logon_type, [Ansible.LogonFlags]$logon_flags
 }
 
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
 
+    $original_tmp = $env:TMP
+    $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
+    $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
+    if ($null -eq $remote_tmp) {
+        $remote_tmp = $original_tmp
+    }
+
+    # become process is run under a different console to the WinRM one so we
+    # need to set the UTF-8 codepage again
+    $env:TMP = $remote_tmp
+    Add-Type -TypeDefinition $helper_def -Debug:$false
+    $env:TMP = $original_tmp
+
     $username = $payload.become_user
     $password = $payload.become_password
+    try {
+        $logon_type, $logon_flags = Parse-BecomeFlags -flags $payload.become_flags
+    } catch {
+        Dump-Error -excep $_ -msg "Failed to parse become_flags '$($payload.become_flags)'"
+        return $null
+    }
 
-    Add-Type -TypeDefinition $helper_def -Debug:$false
-
-    # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via filesystem
-    $temp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".ps1")
-    $exec_wrapper.ToString() | Set-Content -Path $temp
+    # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via small
+    # wrapper which calls our read wrapper passed through stdin. Cannot use 'powershell -' as
+    # the $ErrorActionPreference is always set to Stop and cannot be changed
+    $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
+    $exec_wrapper = $exec_wrapper.ToString().Replace('$json_raw = ""', "`$json_raw = '$payload_string'")
     $rc = 0
 
+    $exec_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($become_exec_wrapper.ToString()))
+    $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $exec_command")
+    $lp_current_directory = "$env:SystemRoot"
+
     Try {
-        # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
-        $acl = Get-Acl $temp
-
-        Try {
-            $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
-        }
-        Catch [System.Security.Principal.IdentityNotMappedException] {
-            throw "become_user '$username' is not recognized on this host"
-        }
-
-        Set-Acl $temp $acl | Out-Null
-
-        $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
-
-        $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -File $temp")
-        $lp_current_directory = "$env:SystemRoot"
-
-        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $payload_string)
+        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $exec_wrapper, $logon_flags, $logon_type)
         $stdout = $result.StandardOut
+        $stdout = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($stdout.Trim()))
         $stderr = $result.StandardError
         $rc = $result.ExitCode
 
-        [Console]::Out.WriteLine($stdout.Trim())
+        [Console]::Out.WriteLine($stdout)
         [Console]::Error.WriteLine($stderr.Trim())
     } Catch {
         $excep = $_
-        Dump-Error $excep
-    } Finally {
-        Remove-Item $temp -ErrorAction SilentlyContinue
+        Dump-Error -excep $excep -msg "Failed to become user $username"
     }
     $host.SetShouldExit($rc)
 }
@@ -1175,390 +1124,183 @@ $ErrorActionPreference = "Stop"
 # return asyncresult to controller
 
 $exec_wrapper = {
-$DebugPreference = "Continue"
-$ErrorActionPreference = "Stop"
-Set-StrictMode -Version 2
-
-function ConvertTo-HashtableFromPsCustomObject ($myPsObject){
-    $output = @{};
-    $myPsObject | Get-Member -MemberType *Property | % {
-        $val = $myPsObject.($_.name);
-        If ($val -is [psobject]) {
-            $val = ConvertTo-HashtableFromPsCustomObject $val
-        }
-        $output.($_.name) = $val
+    # help to debug any errors in the exec_wrapper or async_watchdog by generating
+    # an error log in case of a terminating error
+    trap {
+        $log_path = "$($env:TEMP)\async-exec-wrapper-$(Get-Date -Format "yyyy-MM-ddTHH-mm-ss.ffffZ")-error.txt"
+        $error_msg = "Error while running the async exec wrapper`r`n$_`r`n$($_.ScriptStackTrace)"
+        Set-Content -Path $log_path -Value $error_msg
+        throw $_
     }
-    return $output;
-}
-# stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
-# exec runspace, capture output, cleanup, return module output
 
-$json_raw = [System.Console]::In.ReadToEnd()
+    &chcp.com 65001 > $null
+    $DebugPreference = "Continue"
+    $ErrorActionPreference = "Stop"
+    Set-StrictMode -Version 2
 
-If (-not $json_raw) {
-    Write-Error "no input given" -Category InvalidArgument
-}
+    function ConvertTo-HashtableFromPsCustomObject ($myPsObject){
+        $output = @{};
+        $myPsObject | Get-Member -MemberType *Property | % {
+            $val = $myPsObject.($_.name);
+            If ($val -is [psobject]) {
+                $val = ConvertTo-HashtableFromPsCustomObject $val
+            }
+            $output.($_.name) = $val
+        }
+        return $output;
+    }
 
-$payload = ConvertTo-HashtableFromPsCustomObject (ConvertFrom-Json $json_raw)
+    # store the pipe name and no. of bytes to read, these are populated by the
+    # Run function before being run - do not remove or change
+    $pipe_name = ""
+    $bytes_length = 0
 
-# TODO: handle binary modules
-# TODO: handle persistence
+    # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
+    # exec runspace, capture output, cleanup, return module output
+    $input_bytes = New-Object -TypeName byte[] -ArgumentList $bytes_length
+    $pipe = New-Object -TypeName System.IO.Pipes.NamedPipeClientStream -ArgumentList @(
+        ".",  # localhost
+        $pipe_name,
+        [System.IO.Pipes.PipeDirection]::In,
+        [System.IO.Pipes.PipeOptions]::None,
+        [System.Security.Principal.TokenImpersonationLevel]::Anonymous
+    )
+    try {
+        $pipe.Connect()
+        $pipe.Read($input_bytes, 0, $bytes_length) > $null
+    } finally {
+        $pipe.Close()
+    }
+    $json_raw = [System.Text.Encoding]::UTF8.GetString($input_bytes)
 
-$actions = $payload.actions
+    If (-not $json_raw) {
+        Write-Error "no input given" -Category InvalidArgument
+    }
 
-# pop 0th action as entrypoint
-$entrypoint = $payload.($actions[0])
-$payload.actions = $payload.actions[1..99]
+    $payload = ConvertTo-HashtableFromPsCustomObject (ConvertFrom-Json $json_raw)
 
-$entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($entrypoint))
+    # TODO: handle binary modules
+    # TODO: handle persistence
 
-# load the current action entrypoint as a module custom object with a Run method
-$entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
+    $actions = $payload.actions
 
-Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | Out-Null
+    # pop 0th action as entrypoint
+    $entrypoint = $payload.($actions[0])
+    $payload.actions = $payload.actions[1..99]
 
-# dynamically create/load modules
-ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
-    $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-    New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
-}
+    $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($entrypoint))
 
-$output = $entrypoint.Run($payload)
+    # load the current action entrypoint as a module custom object with a Run method
+    $entrypoint = New-Module -ScriptBlock ([scriptblock]::Create($entrypoint)) -AsCustomObject
 
-Write-Output $output
+    Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | Out-Null
 
+    # dynamically create/load modules
+    ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
+        $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
+        New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
+    }
+
+    $output = $entrypoint.Run($payload)
+
+    Write-Output $output
 } # end exec_wrapper
 
 
 Function Run($payload) {
-# BEGIN Ansible.Async native type definition
-    $native_process_util = @"
-        using Microsoft.Win32.SafeHandles;
-        using System;
-        using System.ComponentModel;
-        using System.Diagnostics;
-        using System.IO;
-        using System.Linq;
-        using System.Runtime.InteropServices;
-        using System.Text;
-        using System.Threading;
-
-        namespace Ansible.Async {
-
-            public static class NativeProcessUtil
-            {
-                [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode, BestFitMapping=false)]
-                public static extern bool CreateProcess(
-                    [MarshalAs(UnmanagedType.LPTStr)]
-                    string lpApplicationName,
-                    StringBuilder lpCommandLine,
-                    IntPtr lpProcessAttributes,
-                    IntPtr lpThreadAttributes,
-                    bool bInheritHandles,
-                    uint dwCreationFlags,
-                    IntPtr lpEnvironment,
-                    [MarshalAs(UnmanagedType.LPTStr)]
-                    string lpCurrentDirectory,
-                    STARTUPINFOEX lpStartupInfo,
-                    out PROCESS_INFORMATION lpProcessInformation);
-
-                [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
-                public static extern uint SearchPath (
-                    string lpPath,
-                    string lpFileName,
-                    string lpExtension,
-                    int nBufferLength,
-                    [MarshalAs (UnmanagedType.LPTStr)]
-                    StringBuilder lpBuffer,
-                    out IntPtr lpFilePart);
-
-                [DllImport("kernel32.dll")]
-                public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, uint nSize);
-
-                [DllImport("kernel32.dll", SetLastError=true)]
-                public static extern IntPtr GetStdHandle(StandardHandleValues nStdHandle);
-
-                [DllImport("kernel32.dll", SetLastError=true)]
-                public static extern bool SetHandleInformation(IntPtr hObject, HandleFlags dwMask, int dwFlags);
-
-                [DllImport("kernel32.dll", SetLastError=true)]
-                public static extern bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref int lpSize);
-
-                [DllImport("kernel32.dll", SetLastError=true)]
-                public static extern bool UpdateProcThreadAttribute(
-                     IntPtr lpAttributeList,
-                     uint dwFlags,
-                     IntPtr Attribute,
-                     IntPtr lpValue,
-                     IntPtr cbSize,
-                     IntPtr lpPreviousValue,
-                     IntPtr lpReturnSize);
-
-                public static string SearchPath(string findThis)
-                {
-                    StringBuilder sbOut = new StringBuilder(1024);
-                    IntPtr filePartOut;
-
-                    if(SearchPath(null, findThis, null, sbOut.Capacity, sbOut, out filePartOut) == 0)
-                        throw new FileNotFoundException("Couldn't locate " + findThis + " on path");
-
-                    return sbOut.ToString();
-                }
-
-                [DllImport("kernel32.dll", SetLastError=true)]
-                static extern SafeFileHandle OpenThread(
-                    ThreadAccessRights dwDesiredAccess,
-                    bool bInheritHandle,
-                    int dwThreadId);
-
-                [DllImport("kernel32.dll", SetLastError=true)]
-                static extern int ResumeThread(SafeHandle hThread);
-
-                public static void ResumeThreadById(int threadId)
-                {
-                    var threadHandle = OpenThread(ThreadAccessRights.SUSPEND_RESUME, false, threadId);
-                    if(threadHandle.IsInvalid)
-                        throw new Exception(String.Format("Thread ID {0} is invalid ({1})", threadId,
-                            new Win32Exception(Marshal.GetLastWin32Error()).Message));
-
-                    try
-                    {
-                        if(ResumeThread(threadHandle) == -1)
-                            throw new Exception(String.Format("Thread ID {0} cannot be resumed ({1})", threadId,
-                                new Win32Exception(Marshal.GetLastWin32Error()).Message));
-                    }
-                    finally
-                    {
-                        threadHandle.Dispose();
-                    }
-                }
-
-                public static void ResumeProcessById(int pid)
-                {
-                    var proc = Process.GetProcessById(pid);
-
-                    // wait for at least one suspended thread in the process (this handles possible slow startup race where
-                    // primary thread of created-suspended process has not yet become runnable)
-                    var retryCount = 0;
-                    while(!proc.Threads.OfType<ProcessThread>().Any(t=>t.ThreadState == System.Diagnostics.ThreadState.Wait &&
-                        t.WaitReason == ThreadWaitReason.Suspended))
-                    {
-                        proc.Refresh();
-                        Thread.Sleep(50);
-                        if (retryCount > 100)
-                            throw new InvalidOperationException(String.Format("No threads were suspended in target PID {0} after 5s", pid));
-                    }
-
-                    foreach(var thread in proc.Threads.OfType<ProcessThread>().Where(t => t.ThreadState == System.Diagnostics.ThreadState.Wait &&
-                        t.WaitReason == ThreadWaitReason.Suspended))
-                        ResumeThreadById(thread.Id);
-                }
-            }
-
-            [StructLayout(LayoutKind.Sequential)]
-            public class SECURITY_ATTRIBUTES
-            {
-                public int nLength;
-                public IntPtr lpSecurityDescriptor;
-                public bool bInheritHandle = false;
-
-                public SECURITY_ATTRIBUTES() {
-                    nLength = Marshal.SizeOf(this);
-                }
-            }
-
-            [StructLayout(LayoutKind.Sequential)]
-            public class STARTUPINFO
-            {
-                public Int32 cb;
-                public IntPtr lpReserved;
-                public IntPtr lpDesktop;
-                public IntPtr lpTitle;
-                public Int32 dwX;
-                public Int32 dwY;
-                public Int32 dwXSize;
-                public Int32 dwYSize;
-                public Int32 dwXCountChars;
-                public Int32 dwYCountChars;
-                public Int32 dwFillAttribute;
-                public Int32 dwFlags;
-                public Int16 wShowWindow;
-                public Int16 cbReserved2;
-                public IntPtr lpReserved2;
-                public IntPtr hStdInput;
-                public IntPtr hStdOutput;
-                public IntPtr hStdError;
-
-                public STARTUPINFO() {
-                    cb = Marshal.SizeOf(this);
-                }
-            }
-
-            [StructLayout(LayoutKind.Sequential)]
-            public class STARTUPINFOEX {
-                public STARTUPINFO startupInfo;
-                public IntPtr lpAttributeList;
-
-                public STARTUPINFOEX() {
-                    startupInfo = new STARTUPINFO();
-                    startupInfo.cb = Marshal.SizeOf(this);
-                }
-            }
-
-            [StructLayout(LayoutKind.Sequential)]
-            public struct PROCESS_INFORMATION
-            {
-                public IntPtr hProcess;
-                public IntPtr hThread;
-                public int dwProcessId;
-                public int dwThreadId;
-            }
-
-            [Flags]
-            enum ThreadAccessRights : uint
-            {
-                SUSPEND_RESUME = 0x0002
-            }
-
-            [Flags]
-            public enum StartupInfoFlags : uint
-            {
-                USESTDHANDLES = 0x00000100
-            }
-
-            public enum StandardHandleValues : int
-            {
-                STD_INPUT_HANDLE = -10,
-                STD_OUTPUT_HANDLE = -11,
-                STD_ERROR_HANDLE = -12
-            }
-
-            [Flags]
-            public enum HandleFlags : uint
-            {
-                None = 0,
-                INHERIT = 1
-            }
-        }
-"@ # END Ansible.Async native type definition
+    $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
+    $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
 
     # calculate the result path so we can include it in the worker payload
     $jid = $payload.async_jid
     $local_jid = $jid + "." + $pid
 
-    $results_path = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async", $local_jid)
+    $results_path = [System.IO.Path]::Combine($remote_tmp, ".ansible_async", $local_jid)
 
     $payload.async_results_path = $results_path
 
     [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)) | Out-Null
 
-    Add-Type -TypeDefinition $native_process_util -Debug:$false
-
-    # FUTURE: create under new job to ensure all children die on exit?
-
-    # FUTURE: move these flags into C# enum?
-    # start process suspended + breakaway so we can record the watchdog pid without worrying about a completion race
-    Set-Variable CREATE_BREAKAWAY_FROM_JOB -Value ([uint32]0x01000000) -Option Constant
-    Set-Variable CREATE_SUSPENDED -Value ([uint32]0x00000004) -Option Constant
-    Set-Variable CREATE_UNICODE_ENVIRONMENT -Value ([uint32]0x000000400) -Option Constant
-    Set-Variable CREATE_NEW_CONSOLE -Value ([uint32]0x00000010) -Option Constant
-    Set-Variable EXTENDED_STARTUPINFO_PRESENT -Value ([uint32]0x00080000) -Option Constant
-
-    $pstartup_flags = $CREATE_BREAKAWAY_FROM_JOB -bor $CREATE_UNICODE_ENVIRONMENT -bor $CREATE_NEW_CONSOLE `
-        -bor $CREATE_SUSPENDED -bor $EXTENDED_STARTUPINFO_PRESENT
-
-    # execute the dynamic watchdog as a breakway process to free us from the WinRM job, which will in turn exec the module
-    $si = New-Object Ansible.Async.STARTUPINFOEX
-
-    # setup stdin redirection, we'll leave stdout/stderr as normal
-    $si.startupInfo.dwFlags = [Ansible.Async.StartupInfoFlags]::USESTDHANDLES
-    $si.startupInfo.hStdOutput = [Ansible.Async.NativeProcessUtil]::GetStdHandle([Ansible.Async.StandardHandleValues]::STD_OUTPUT_HANDLE)
-    $si.startupInfo.hStdError = [Ansible.Async.NativeProcessUtil]::GetStdHandle([Ansible.Async.StandardHandleValues]::STD_ERROR_HANDLE)
-
-    $stdin_read = $stdin_write = 0
-
-    $pipesec = New-Object Ansible.Async.SECURITY_ATTRIBUTES
-    $pipesec.bInheritHandle = $true
-
-    If(-not [Ansible.Async.NativeProcessUtil]::CreatePipe([ref]$stdin_read, [ref]$stdin_write, $pipesec, 0)) {
-        throw "Stdin pipe setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
-    }
-    If(-not [Ansible.Async.NativeProcessUtil]::SetHandleInformation($stdin_write, [Ansible.Async.HandleFlags]::INHERIT, 0)) {
-        throw "Stdin handle setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
-    }
-    $si.startupInfo.hStdInput = $stdin_read
-
-    # create an attribute list with our explicit handle inheritance list to pass to CreateProcess
-    [int]$buf_sz = 0
-
-    # determine the buffer size necessary for our attribute list
-    If(-not [Ansible.Async.NativeProcessUtil]::InitializeProcThreadAttributeList([IntPtr]::Zero, 1, 0, [ref]$buf_sz)) {
-        $last_err = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
-        If($last_err -ne 122) { # ERROR_INSUFFICIENT_BUFFER
-            throw "Attribute list size query failed, Win32Error: $last_err"
-        }
-    }
-
-    $si.lpAttributeList = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($buf_sz)
-
-    # initialize the attribute list
-    If(-not [Ansible.Async.NativeProcessUtil]::InitializeProcThreadAttributeList($si.lpAttributeList, 1, 0, [ref]$buf_sz)) {
-        throw "Attribute list init failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
-    }
-
-    $handles_to_inherit = [IntPtr[]]@($stdin_read)
-    $pinned_handles = [System.Runtime.InteropServices.GCHandle]::Alloc($handles_to_inherit, [System.Runtime.InteropServices.GCHandleType]::Pinned)
-
-    # update the attribute list with the handles we want to inherit
-    If(-not [Ansible.Async.NativeProcessUtil]::UpdateProcThreadAttribute($si.lpAttributeList, 0, 0x20002 <# PROC_THREAD_ATTRIBUTE_HANDLE_LIST #>, `
-        $pinned_handles.AddrOfPinnedObject(), [System.Runtime.InteropServices.Marshal]::SizeOf([type][IntPtr]) * $handles_to_inherit.Length, `
-        [System.IntPtr]::Zero, [System.IntPtr]::Zero)) {
-        throw "Attribute list update failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
-    }
-
-    # need to use a preamble-free version of UTF8Encoding
-    $utf8_encoding = New-Object System.Text.UTF8Encoding @($false)
-    $stdin_fs = New-Object System.IO.FileStream @($stdin_write, [System.IO.FileAccess]::Write, $true, 32768)
-    $stdin = New-Object System.IO.StreamWriter @($stdin_fs, $utf8_encoding, 32768)
-
-    $pi = New-Object Ansible.Async.PROCESS_INFORMATION
-
-    $encoded_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($exec_wrapper.ToString()))
-
-    # FUTURE: direct cmdline CreateProcess path lookup fails- this works but is sub-optimal
-    $exec_cmd = [Ansible.Async.NativeProcessUtil]::SearchPath("powershell.exe")
-    $exec_args = New-Object System.Text.StringBuilder @("`"$exec_cmd`" -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded_command")
-
-    # TODO: use proper Win32Exception + error
-    If(-not [Ansible.Async.NativeProcessUtil]::CreateProcess($exec_cmd, $exec_args,
-        [IntPtr]::Zero, [IntPtr]::Zero, $true, $pstartup_flags, [IntPtr]::Zero, $env:windir, $si, [ref]$pi)) {
-        #throw New-Object System.ComponentModel.Win32Exception
-        throw "Worker creation failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
-    }
-
-    # FUTURE: watch process for quick exit, capture stdout/stderr and return failure
-
-    $watchdog_pid = $pi.dwProcessId
-
-    [Ansible.Async.NativeProcessUtil]::ResumeProcessById($watchdog_pid)
-
-    # once process is resumed, we can send payload over stdin
+    # can't use anonymous pipes as the spawned process will not be a child due to
+    # the way WMI works, use a named pipe with a random name instead and set to
+    # only allow current user to read from the pipe
+    $pipe_name = "ansible-async-$jid-$([guid]::NewGuid())"
+    $current_user = ([Security.Principal.WindowsIdentity]::GetCurrent()).User
     $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
-    $stdin.WriteLine($payload_string)
-    $stdin.Close()
+    $payload_bytes = [System.Text.Encoding]::UTF8.GetBytes($payload_string)
 
-    # populate initial results before we resume the process to avoid result race
-    $result = @{
-        started=1;
-        finished=0;
-        results_file=$results_path;
-        ansible_job_id=$local_jid;
-        _ansible_suppress_tmpdir_delete=$true;
-        ansible_async_watchdog_pid=$watchdog_pid
+    $pipe_sec = New-Object -TypeName System.IO.Pipes.PipeSecurity
+    $pipe_ar = New-Object -TypeName System.IO.Pipes.PipeAccessRule -ArgumentList @(
+        $current_user,
+        [System.IO.Pipes.PipeAccessRights]::Read,
+        [System.Security.AccessControl.AccessControlType]::Allow
+    )
+    $pipe_sec.AddAccessRule($pipe_ar)
+    $pipe = New-Object -TypeName System.IO.Pipes.NamedPipeServerStream -ArgumentList @(
+        $pipe_name,
+        [System.IO.Pipes.PipeDirection]::Out,
+        1,
+        [System.IO.Pipes.PipeTransmissionMode]::Byte,
+        [System.IO.Pipes.PipeOptions]::Asynchronous,
+        0,
+        0,
+        $pipe_sec
+    )
+
+    try {
+        $exec_wrapper_str = $exec_wrapper.ToString()
+        $exec_wrapper_str = $exec_wrapper_str.Replace('$pipe_name = ""', "`$pipe_name = `"$pipe_name`"")
+        $exec_wrapper_str = $exec_wrapper_str.Replace('$bytes_length = 0', "`$bytes_length = $($payload_bytes.Count)")
+
+        $encoded_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($exec_wrapper_str))
+        $exec_args = "powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded_command"
+
+        # not all connection plugins support breakaway from job that is required
+        # for async, Win32_Process.Create() is still able to escape so we use
+        # that here
+        $process = Invoke-CimMethod -ClassName Win32_Process -Name Create -Arguments @{CommandLine=$exec_args}
+        $rc = $process.ReturnValue
+        if ($rc -ne 0) {
+            $error_msg = switch($rc) {
+                2 { "Access denied" }
+                3 { "Insufficient privilege" }
+                8 { "Unknown failure" }
+                9 { "Path not found" }
+                21 { "Invalid parameter" }
+                default { "Other" }
+            }
+            throw "Failed to start async process: $rc ($error_msg)"
+        }
+        $watchdog_pid = $process.ProcessId
+
+        # populate initial results before we send the async data to avoid result race
+        $result = @{
+            started = 1;
+            finished = 0;
+            results_file = $results_path;
+            ansible_job_id = $local_jid;
+            _ansible_suppress_tmpdir_delete = $true;
+            ansible_async_watchdog_pid = $watchdog_pid
+        }
+
+        $result_json = ConvertTo-Json $result
+        Set-Content $results_path -Value $result_json
+
+        # wait until the client connects, throw an error if the timeout is reached
+        $wait_async = $pipe.BeginWaitForConnection($null, $null)
+        $wait_async.AsyncWaitHandle.WaitOne(5000) > $null
+        if (-not $wait_async.IsCompleted) {
+            throw "timeout while waiting for child process to connect to named pipe"
+        }
+        $pipe.EndWaitForConnection($wait_async)
+
+        # write the exec manifest to the child process
+        $pipe.Write($payload_bytes, 0, $payload_bytes.Count)
+        $pipe.Flush()
+        $pipe.WaitForPipeDrain()
+    } finally {
+        $pipe.Close()
     }
-
-    $result_json = ConvertTo-Json $result
-    Set-Content $results_path -Value $result_json
 
     return $result_json
 }
@@ -1693,8 +1435,10 @@ Function Run($payload) {
 
 '''  # end async_watchdog
 
+from ansible.plugins import AnsiblePlugin
 
-class ShellModule(object):
+
+class ShellModule(ShellBase):
 
     # Common shell filenames that this plugin handles
     # Powershell is handled differently.  It's selected when winrm is the
@@ -1768,12 +1512,20 @@ class ShellModule(object):
         else:
             return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
-    def mkdtemp(self, basefile, system=False, mode=None, tmpdir=None):
+    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
+        # Windows does not have an equivalent for the system temp files, so
+        # the param is ignored
         basefile = self._escape(self._unquote(basefile))
-        # FIXME: Support system temp path and passed in tmpdir!
-        return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
+        basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
 
-    def expand_user(self, user_home_path):
+        script = '''
+        $tmp_path = [System.Environment]::ExpandEnvironmentVariables('%s')
+        $tmp = New-Item -Type Directory -Path $tmp_path -Name '%s'
+        $tmp.FullName | Write-Host -Separator ''
+        ''' % (basetmpdir, basefile)
+        return self._encode_script(script.strip())
+
+    def expand_user(self, user_home_path, username=''):
         # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
         # not seem to work remotely, though by default we are always starting
         # in the user's home directory.
@@ -1823,7 +1575,7 @@ class ShellModule(object):
         ''' % dict(path=path)
         return self._encode_script(script)
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # pipelining bypass
         if cmd == '':
             return '-'
@@ -1878,10 +1630,6 @@ class ShellModule(object):
                 Exit 1
             }
         ''' % (env_string, ' '.join(cmd_parts))
-        if rm_tmp:
-            rm_tmp = self._escape(self._unquote(rm_tmp))
-            rm_cmd = 'Remove-Item "%s" -Force -Recurse -ErrorAction SilentlyContinue' % rm_tmp
-            script = '%s\nFinally { %s }' % (script, rm_cmd)
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):

@@ -9,10 +9,14 @@ __metaclass__ = type
 DOCUMENTATION = '''
     callback: full_skip
     type: stdout
-    short_description: suppreses tasks if all hosts skipped
+    short_description: suppresses tasks if all hosts skipped
     description:
       - Use this plugin when you dont care about any output for tasks that were completly skipped
     version_added: "2.4"
+    deprecated:
+        why: The 'default' callback plugin now supports this functionality
+        removed_in: '2.11'
+        alternative: "'default' callback plugin with 'display_skipped_hosts = no' option"
     extends_documentation_fragment:
       - default_callback
     requirements:

@@ -112,7 +112,7 @@
   tasks:
     - setup:
         filter: "*env*"
-      register: fact_results
+        # register: fact_results
 
     - name: Test that retrieving all facts filtered to env works
       assert:
@@ -129,7 +129,7 @@
   tasks:
     - setup:
         filter: "ansible_user_id"
-      register: fact_results
+        # register: fact_results
 
     - name: Test that retrieving all facts filtered to specific fact ansible_user_id works
       assert:
@@ -148,7 +148,7 @@
   tasks:
     - setup:
         filter: "*"
-      register: fact_results
+        # register: fact_results
 
     - name: Test that retrieving all facts filtered to splat
       assert:
@@ -165,7 +165,7 @@
   tasks:
     - setup:
         filter: ""
-      register: fact_results
+        # register: fact_results
 
     - name: Test that retrieving all facts filtered to empty filter_spec works
       assert:

@@ -18,12 +18,14 @@ options:
   pre_reboot_delay:
     description:
     - Seconds for shutdown to wait before requesting reboot
+    type: int
     default: 2
     aliases: [ pre_reboot_delay_sec ]
   post_reboot_delay:
     description:
     - Seconds to wait after the reboot was successful and the connection was re-established
     - This is useful if you want wait for something to settle despite your connection already working
+    type: int
     default: 0
     version_added: '2.4'
     aliases: [ post_reboot_delay_sec ]
@@ -32,17 +34,20 @@ options:
     - Maximum seconds to wait for shutdown to occur
     - Increase this timeout for very slow hardware, large update applications, etc
     - This option has been removed since Ansible 2.5 as the win_reboot behavior has changed
+    type: int
     default: 600
     aliases: [ shutdown_timeout_sec ]
   reboot_timeout:
     description:
     - Maximum seconds to wait for machine to re-appear on the network and respond to a test command
     - This timeout is evaluated separately for both network appearance and test command success (so maximum clock time is actually twice this value)
+    type: int
     default: 600
     aliases: [ reboot_timeout_sec ]
   connect_timeout:
     description:
     - Maximum seconds to wait for a single successful TCP connection to the WinRM endpoint before trying again
+    type: int
     default: 5
     aliases: [ connect_timeout_sec ]
   test_command:

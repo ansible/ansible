@@ -27,13 +27,14 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
+import re
 from difflib import Differ
 from copy import deepcopy
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
 
 try:
@@ -48,7 +49,6 @@ try:
 except ImportError:
     HAS_XML = False
 
-_DEVICE_CONFIGS = {}
 _EDIT_OPS = frozenset(['merge', 'create', 'replace', 'delete'])
 
 BASE_1_0 = "{urn:ietf:params:xml:ns:netconf:base:1.0}"
@@ -65,6 +65,10 @@ NS_DICT = {
     'INTERFACE-CONFIGURATIONS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"},
     'INFRA-STATISTICS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-statsd-oper"},
     'INTERFACE-PROPERTIES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-oper"},
+    'IP-DOMAIN_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ip-domain-cfg"},
+    'SYSLOG_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-syslog-cfg"},
+    'AAA_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-lib-cfg"},
+    'AAA_LOCALD_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-locald-cfg"},
 }
 
 iosxr_provider_spec = {
@@ -74,7 +78,7 @@ iosxr_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'transport': dict(),
+    'transport': dict(type='str', default='cli', choices=['cli', 'netconf']),
 }
 
 iosxr_argument_spec = {
@@ -121,8 +125,10 @@ def get_connection(module):
 def get_device_capabilities(module):
     if hasattr(module, 'capabilities'):
         return module.capabilities
-
-    capabilities = Connection(module._socket_path).get_capabilities()
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module.capabilities = json.loads(capabilities)
 
     return module.capabilities
@@ -133,9 +139,7 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
     meta_subtree = list()
 
     for key, meta in xmap.items():
-
         candidates = meta.get('xpath', "").split("/")
-
         if container_ele.tag == candidates[-2]:
             parent = container_ele
         elif sub_root.tag == candidates[-2]:
@@ -146,21 +150,21 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
         if ((opcode in ('delete', 'merge') and meta.get('operation', 'unknown') == 'edit') or
                 meta.get('operation', None) is None):
 
-            if meta.get('tag', False):
+            if meta.get('tag', False) is True:
                 if parent.tag == container_ele.tag:
-                    if meta.get('ns', None) is True:
+                    if meta.get('ns', False) is True:
                         child = etree.Element(candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                     else:
                         child = etree.Element(candidates[-1])
                     meta_subtree.append(child)
                     sub_root = child
                 else:
-                    if meta.get('ns', None) is True:
+                    if meta.get('ns', False) is True:
                         child = etree.SubElement(parent, candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                     else:
                         child = etree.SubElement(parent, candidates[-1])
 
-                if meta.get('attrib', None) and opcode in ('delete', 'merge'):
+                if meta.get('attrib', None) is not None and opcode in ('delete', 'merge'):
                     child.set(BASE_1_0 + meta.get('attrib'), opcode)
 
                 continue
@@ -168,29 +172,34 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
             text = None
             param_key = key.split(":")
             if param_key[0] == 'a':
-                if param.get(param_key[1], None):
+                if param is not None and param.get(param_key[1], None) is not None:
                     text = param.get(param_key[1])
             elif param_key[0] == 'm':
-                if meta.get('value', None):
+                if meta.get('value', None) is not None:
                     text = meta.get('value')
 
             if text:
-                if meta.get('ns', None) is True:
+                if meta.get('ns', False) is True:
                     child = etree.SubElement(parent, candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                 else:
                     child = etree.SubElement(parent, candidates[-1])
                 child.text = text
 
+                if meta.get('attrib', None) is not None and opcode in ('delete', 'merge'):
+                    child.set(BASE_1_0 + meta.get('attrib'), opcode)
+
     if len(meta_subtree) > 1:
         for item in meta_subtree:
             container_ele.append(item)
 
-    return sub_root
+    if sub_root == container_ele:
+        return None
+    else:
+        return sub_root
 
 
 def build_xml(container, xmap=None, params=None, opcode=None):
-
-    '''
+    """
     Builds netconf xml rpc document from meta-data
 
     Args:
@@ -230,8 +239,7 @@ def build_xml(container, xmap=None, params=None, opcode=None):
               </banners>
             </config>
     :returns: xml rpc document as a string
-    '''
-
+    """
     if opcode == 'filter':
         root = etree.Element("filter", type="subtree")
     elif opcode in ('delete', 'merge'):
@@ -239,71 +247,53 @@ def build_xml(container, xmap=None, params=None, opcode=None):
 
     container_ele = etree.SubElement(root, container, nsmap=NS_DICT[container.upper() + "_NSMAP"])
 
-    if xmap:
-        if not params:
-            build_xml_subtree(container_ele, xmap)
+    if xmap is not None:
+        if params is None:
+            build_xml_subtree(container_ele, xmap, opcode=opcode)
         else:
             subtree_list = list()
-
             for param in to_list(params):
-                subtree_list.append(build_xml_subtree(container_ele, xmap, param, opcode=opcode))
+                subtree_ele = build_xml_subtree(container_ele, xmap, param=param, opcode=opcode)
+                if subtree_ele is not None:
+                    subtree_list.append(subtree_ele)
 
             for item in subtree_list:
                 container_ele.append(item)
 
-    return etree.tostring(root)
+    return etree.tostring(root, encoding='unicode')
 
 
 def etree_find(root, node):
     try:
-        element = etree.fromstring(root).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
-    except Exception:
-        element = etree.fromstring(etree.tostring(root)).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+        root = etree.fromstring(to_bytes(root))
+    except (ValueError, etree.XMLSyntaxError):
+        pass
 
-    if element is not None:
-        return element
-
-    return None
+    return root.find('.//%s' % node.strip())
 
 
 def etree_findall(root, node):
     try:
-        element = etree.fromstring(root).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
-    except Exception:
-        element = etree.fromstring(etree.tostring(root)).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+        root = etree.fromstring(to_bytes(root))
+    except (ValueError, etree.XMLSyntaxError):
+        pass
 
-    if element is not None:
-        return element
-
-    return None
+    return root.findall('.//%s' % node.strip())
 
 
 def is_cliconf(module):
     capabilities = get_device_capabilities(module)
-    network_api = capabilities.get('network_api')
-    if network_api not in ('cliconf', 'netconf'):
-        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
-        return False
-
-    if network_api == 'cliconf':
-        return True
-
-    return False
+    return True if capabilities.get('network_api') == 'cliconf' else False
 
 
 def is_netconf(module):
     capabilities = get_device_capabilities(module)
     network_api = capabilities.get('network_api')
-    if network_api not in ('cliconf', 'netconf'):
-        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
-        return False
-
     if network_api == 'netconf':
         if not HAS_NCCLIENT:
-            module.fail_json(msg=('ncclient is not installed'))
+            module.fail_json(msg='ncclient is not installed')
         if not HAS_XML:
-            module.fail_json(msg=('lxml is not installed'))
-
+            module.fail_json(msg='lxml is not installed')
         return True
 
     return False
@@ -313,7 +303,11 @@ def get_config_diff(module, running=None, candidate=None):
     conn = get_connection(module)
 
     if is_cliconf(module):
-        return conn.get('show commit changes diff')
+        try:
+            response = conn.get('show commit changes diff')
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return response
     elif is_netconf(module):
         if running and candidate:
             running_data = running.split("\n", 1)[1].rsplit("\n", 1)[0]
@@ -328,59 +322,74 @@ def get_config_diff(module, running=None, candidate=None):
 
 def discard_config(module):
     conn = get_connection(module)
-    conn.discard_changes()
+    try:
+        conn.discard_changes()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
 
-def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, persist=False, check=False):
+def commit_config(module, comment=None, confirmed=False, confirm_timeout=None,
+                  persist=False, check=False, label=None):
     conn = get_connection(module)
     reply = None
-
-    if check:
-        reply = conn.validate()
-    else:
+    try:
         if is_netconf(module):
-            reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
+            if check:
+                reply = conn.validate()
+            else:
+                reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
         elif is_cliconf(module):
-            reply = conn.commit(comment=comment)
+            if check:
+                module.fail_json(msg="Validate configuration is not supported with network_cli connection type")
+            else:
+                reply = conn.commit(comment=comment, label=label)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
     return reply
 
 
 def get_oper(module, filter=None):
-    global _DEVICE_CONFIGS
-
     conn = get_connection(module)
 
     if filter is not None:
-        response = conn.get(filter)
+        try:
+            response = conn.get(filter)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    else:
+        return None
 
     return to_bytes(etree.tostring(response), errors='surrogate_then_replace').strip()
 
 
 def get_config(module, config_filter=None, source='running'):
-    global _DEVICE_CONFIGS
-
     conn = get_connection(module)
 
-    if config_filter is not None:
-        key = (source + ' ' + ' '.join(config_filter)).strip().rstrip()
-    else:
-        key = source
-    config = _DEVICE_CONFIGS.get(key)
-    if config:
-        return config
-    else:
-        out = conn.get_config(source=source, filter=config_filter)
+    # Note: Does not cache config in favour of latest config on every get operation.
+    try:
         if is_netconf(module):
             out = to_xml(conn.get_config(source=source, filter=config_filter))
-
+        elif is_cliconf(module):
+            out = conn.get_config(source=source, flags=config_filter)
         cfg = out.strip()
-        _DEVICE_CONFIGS.update({key: cfg})
-        return cfg
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return cfg
+
+
+def check_existing_commit_labels(conn, label):
+    out = conn.get(command='show configuration history detail | include %s' % label)
+    label_exist = re.search(label, out, re.M)
+    if label_exist:
+        return True
+    else:
+        return False
 
 
 def load_config(module, command_filter, commit=False, replace=False,
-                comment=None, admin=False, running=None, nc_get_filter=None):
+                comment=None, admin=False, running=None, nc_get_filter=None,
+                label=None):
 
     conn = get_connection(module)
 
@@ -401,48 +410,51 @@ def load_config(module, command_filter, commit=False, replace=False,
                 commit_config(module)
             else:
                 discard_config(module)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         finally:
             # conn.unlock(target = 'candidate')
             pass
 
     elif is_cliconf(module):
-        # to keep the pre-cliconf behaviour, make a copy, avoid adding commands to input list
-        cmd_filter = deepcopy(command_filter)
-        cmd_filter.insert(0, 'configure terminal')
-        if admin:
-            cmd_filter.insert(0, 'admin')
-        conn.edit_config(cmd_filter)
+        try:
+            if label:
+                old_label = check_existing_commit_labels(conn, label)
+                if old_label:
+                    module.fail_json(
+                        msg='commit label {%s} is already used for'
+                        ' an earlier commit, please choose a different label'
+                        ' and rerun task' % label
+                    )
 
-        if module._diff:
-            diff = get_config_diff(module)
-
-        if commit:
-            commit_config(module, comment=comment)
-            conn.edit_config('end')
-        else:
-            conn.discard_changes()
+            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
+            if module._diff:
+                diff = response.get('diff')
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
     return diff
 
 
-def run_command(module, commands):
+def run_commands(module, commands, check_rc=True):
+    connection = get_connection(module)
+    try:
+        return connection.run_commands(commands=commands, check_rc=check_rc)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
+
+
+def copy_file(module, src, dst, proto='scp'):
     conn = get_connection(module)
-    responses = list()
-    for cmd in to_list(commands):
-        try:
-            cmd = json.loads(cmd)
-            command = cmd['command']
-            prompt = cmd['prompt']
-            answer = cmd['answer']
-        except:
-            command = cmd
-            prompt = None
-            answer = None
+    try:
+        conn.copy_file(source=src, destination=dst, proto=proto)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-        out = conn.get(command, prompt, answer)
 
-        try:
-            responses.append(to_text(out, errors='surrogate_or_strict'))
-        except UnicodeError:
-            module.fail_json(msg=u'failed to decode output from {0}:{1}'.format(cmd, to_text(out)))
-    return responses
+def get_file(module, src, dst, proto='scp'):
+    conn = get_connection(module)
+    try:
+        conn.get_file(source=src, destination=dst, proto=proto)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))

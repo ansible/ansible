@@ -1,0 +1,160 @@
+---
+- debug:
+    msg: "START netconf/set_lookup_source.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    lines:
+      - no domain lookup source-interface Loopback10
+      - no domain vrf ansiblevrf lookup source-interface Loopback10
+      - no domain lookup disable
+      - no domain vrf ansiblevrf lookup disable
+    match: none
+    provider: "{{ cli }}"
+  connection: network_cli
+
+- name: configure lookup_source
+  iosxr_system: &lookup
+    lookup_source: Loopback10
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'Loopback10' in result.xml[0]"
+
+- name: verify lookup_source
+  iosxr_system: *lookup
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: disable lookup
+  iosxr_system: &disable
+    lookup_enabled: False
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'lookup' in result.xml[0]"
+
+- name: verify disable lookup
+  iosxr_system: *disable
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: delete lookup_source
+  iosxr_system: &dellookup
+    lookup_source: Loopback10
+    provider: "{{ netconf }}"
+    state: absent
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'Loopback10' in result.xml[0]"
+
+- name: verify lookup_source
+  iosxr_system: *dellookup
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: configure lookup_source with vrf
+  iosxr_system: &lookupvrf
+    lookup_source: Loopback10
+    vrf: ansiblevrf
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'Loopback10' in result.xml[0]"
+      - "'ansiblevrf' in result.xml[0]"
+
+- name: verify lookup_source
+  iosxr_system: *lookupvrf
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: disable lookup
+  iosxr_system: &disablevrf
+    lookup_enabled: False
+    vrf: ansiblevrf
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'lookup' in result.xml[0]"
+      - "'ansiblevrf' in result.xml[0]"
+
+- name: verify disable lookup
+  iosxr_system: *disablevrf
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: delete lookup_source
+  iosxr_system: &dellookupvrf
+    lookup_source: Loopback10
+    vrf: ansiblevrf
+    provider: "{{ netconf }}"
+    state: absent
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'Loopback10' in result.xml[0]"
+      - "'ansiblevrf' in result.xml[0]"
+
+- name: verify lookup_source
+  iosxr_system: *dellookupvrf
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: teardown
+  iosxr_config:
+    lines:
+      - no domain lookup disable
+      - no domain vrf ansiblevrf lookup disable
+    match: none
+    provider: "{{ cli }}"
+  connection: network_cli
+
+- debug:
+    msg: "END netconf/set_lookup_source.yaml on connection={{ ansible_connection }}"

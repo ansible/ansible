@@ -107,7 +107,7 @@
       name: '{{win_stat_user}}'
       state: absent
 
-  - name: ensure testy user profile is deleted
+  - name: ensure test user profile is deleted
     win_shell: rmdir /S /Q {{profile_dir_out.stdout_lines[0]}}
     args:
       executable: cmd.exe

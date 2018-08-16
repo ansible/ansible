@@ -15,6 +15,16 @@ DOCUMENTATION = """
       _terms:
         description: path(s) of files to read
         required: True
+      rstrip:
+        description: whether or not to remove whitespace from the ending of the looked-up file
+        type: bool
+        required: False
+        default: True
+      lstrip:
+        description: whether or not to remove whitespace from the beginning of the looked-up file
+        type: bool
+        required: False
+        default: False
     notes:
       - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globing', use the fileglob lookup instead.
@@ -64,7 +74,11 @@ class LookupModule(LookupBase):
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
                     contents = to_text(b_contents, errors='surrogate_or_strict')
-                    ret.append(contents.rstrip())
+                    if kwargs.get('lstrip', False):
+                        contents = contents.lstrip()
+                    if kwargs.get('rstrip', True):
+                        contents = contents.rstrip()
+                    ret.append(contents)
                 else:
                     raise AnsibleParserError()
             except AnsibleParserError:

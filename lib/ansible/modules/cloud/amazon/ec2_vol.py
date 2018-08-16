@@ -24,90 +24,69 @@ options:
   instance:
     description:
       - instance ID if you wish to attach the volume. Since 1.9 you can set to None to detach.
-    required: false
-    default: null
   name:
     description:
       - volume Name tag if you wish to attach an existing volume (requires instance)
-    required: false
-    default: null
     version_added: "1.6"
   id:
     description:
       - volume id if you wish to attach an existing volume (requires instance) or remove an existing volume
-    required: false
-    default: null
     version_added: "1.6"
   volume_size:
     description:
       - size of volume (in GB) to create.
-    required: false
-    default: null
   volume_type:
     description:
       - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS), st1 (Throughput Optimized HDD), sc1 (Cold HDD).
         "Standard" is the old EBS default and continues to remain the Ansible default for backwards compatibility.
-    required: false
     default: standard
     version_added: "1.9"
   iops:
     description:
       - the provisioned IOPs you want to associate with this volume (integer).
-    required: false
     default: 100
     version_added: "1.3"
   encrypted:
     description:
       - Enable encryption at rest for this volume.
-    default: false
+    default: 'no'
     version_added: "1.8"
   kms_key_id:
     description:
       - Specify the id of the KMS key to use.
-    default: null
     version_added: "2.3"
   device_name:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
-    required: false
-    default: null
   delete_on_termination:
     description:
       - When set to "yes", the volume will be deleted upon instance termination.
-    required: false
-    default: "no"
-    choices: ["yes", "no"]
+    type: bool
+    default: 'no'
     version_added: "2.1"
   zone:
     description:
       - zone in which to create the volume, if unset uses the zone the instance is in (if set)
-    required: false
-    default: null
     aliases: ['aws_zone', 'ec2_zone']
   snapshot:
     description:
       - snapshot ID on which to base the volume
-    required: false
-    default: null
     version_added: "1.5"
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
+    type: bool
+    default: 'yes'
     version_added: "1.5"
   state:
     description:
       - whether to ensure the volume is present or absent, or to list existing volumes (The C(list) option was added in version 1.8).
-    required: false
     default: present
     choices: ['absent', 'present', 'list']
     version_added: "1.6"
   tags:
     description:
       - tag:value pairs to add to the volume after creation
-    required: false
     default: {}
     version_added: "2.3"
 author: "Lester Wade (@lwade)"

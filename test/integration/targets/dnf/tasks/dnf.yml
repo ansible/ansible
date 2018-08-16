@@ -192,7 +192,7 @@
       - sharutils
     state: removed
 
-- name: install non-existent rpm 
+- name: install non-existent rpm
   dnf:
     name: "{{ item }}"
   with_items:
@@ -410,3 +410,19 @@
     that:
         - "'changed' in dnf_result"
         - "'results' in dnf_result"
+
+# https://github.com/ansible/ansible/issues/39704
+- name: install non-existent rpm, state=latest
+  dnf:
+    name: non-existent-rpm
+    state: latest
+  ignore_errors: yes
+  register: dnf_result
+
+- name: verify the result
+  assert:
+    that:
+        - "dnf_result is failed"
+        - "'non-existent-rpm' in dnf_result['failures'][0]"
+        - "'no package matched' in dnf_result['failures'][0]"
+        - "'Failed to install some of the specified packages' in dnf_result['msg']"

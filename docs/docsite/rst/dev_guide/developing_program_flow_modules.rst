@@ -1,8 +1,8 @@
 .. _flow_modules:
 
-=======
-Modules
-=======
+===========================
+Ansible Module Architecture
+===========================
 
 This in-depth dive helps you understand Ansible's program flow to execute
 modules. It is written for people working on the portions of the Core Ansible
@@ -33,11 +33,11 @@ a playbook satisfy certain criteria.)
 More often, Action Plugins set up some values on the controller, then invoke an
 actual module on the managed node that does something with these values.  An
 easy to understand version of this is the :ref:`template Action Plugin
-<template>`.  The :ref:`template Action Plugin <template>` takes values from
+<template_module>`.  The :ref:`template Action Plugin <template_module>` takes values from
 the user to construct a file in a temporary location on the controller using
 variables from the playbook environment.  It then transfers the temporary file
 to a temporary file on the remote system.  After that, it invokes the
-:ref:`copy module <copy>` which operates on the remote system to move the file
+:ref:`copy module <copy_module>` which operates on the remote system to move the file
 into its final location, sets file permissions, and so on.
 
 .. _flow_new_style_modules:
@@ -211,7 +211,7 @@ the managed machine.
   complications around Windows modules that must have the same names as Python
   modules, so that internal calling of modules from other Action Plugins work.)
 
-Much of this functionality comes from the :class:`BaseAction` class,
+Much of this functionality comes from the `BaseAction` class,
 which lives in :file:`plugins/action/__init__.py`.  It makes use of
 ``Connection`` and ``Shell`` objects to do its work.
 
@@ -278,18 +278,18 @@ substitutions:
   - :code:`"<<ANSIBLE_VERSION>>"` is substituted with the Ansible version.  In
     :ref:`new-style Python modules <flow_python_modules>` under the
     :ref:`Ansiballz` framework the proper way is to instead instantiate an
-    :class:`AnsibleModule` and then access the version from
+    `AnsibleModule` and then access the version from
     :attr:``AnsibleModule.ansible_version``.
   - :code:`"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"` is substituted with
     a string which is the Python ``repr`` of the :term:`JSON` encoded module
     parameters.  Using ``repr`` on the JSON string makes it safe to embed in
     a Python file.  In new-style Python modules under the Ansiballz framework
-    this is better accessed by instantiating an :class:`AnsibleModule` and
+    this is better accessed by instantiating an `AnsibleModule` and
     then using :attr:`AnsibleModule.params`.
   - :code:`<<SELINUX_SPECIAL_FILESYSTEMS>>` substitutes a string which is
     a comma separated list of file systems which have a file system dependent
     security context in SELinux.  In new-style Python modules, if you really
-    need this you should instantiate an :class:`AnsibleModule` and then use
+    need this you should instantiate an `AnsibleModule` and then use
     :attr:`AnsibleModule._selinux_special_fs`.  The variable has also changed
     from a comma separated string of file system names to an actual python
     list of filesystem names.
@@ -302,7 +302,7 @@ substitutions:
     ``syslog_facility`` which was named in :file:`ansible.cfg` or any
     ``ansible_syslog_facility`` inventory variable that applies to this host.  In
     new-style Python modules this has changed slightly.  If you really need to
-    access it, you should instantiate an :class:`AnsibleModule` and then use
+    access it, you should instantiate an `AnsibleModule` and then use
     :attr:`AnsibleModule._syslog_facility` to access it.  It is no longer the
     actual syslog facility and is now the name of the syslog facility.  See
     the :ref:`documentation on internal arguments <flow_internal_arguments>`
@@ -365,7 +365,7 @@ it parses this string and places the args into
 other code.
 
 .. note::
-    Internally, the :class:`AnsibleModule` uses the helper function,
+    Internally, the `AnsibleModule` uses the helper function,
     :py:func:`ansible.module_utils.basic._load_params`, to load the parameters
     from stdin and save them into an internal global variable.  Very dynamic
     custom modules which need to parse the parameters prior to instantiating
@@ -395,7 +395,7 @@ This is a boolean.  If it's True then the playbook specified ``no_log`` (in
 a task's parameters or as a play parameter).  This automatically affects calls
 to :py:meth:`AnsibleModule.log`.  If a module implements its own logging then
 it needs to check this value.  The best way to look at this is for the module
-to instantiate an :class:`AnsibleModule` and then check the value of
+to instantiate an `AnsibleModule` and then check the value of
 :attr:`AnsibleModule.no_log`.
 
 .. note::
@@ -410,7 +410,7 @@ the messages are only logged if this is True.  This also turns on logging of
 external commands that the module executes.  This can be changed via
 the ``debug`` setting in :file:`ansible.cfg` or the environment variable
 :envvar:`ANSIBLE_DEBUG`.  If, for some reason, a module must access this, it
-should do so by instantiating an :class:`AnsibleModule` and accessing
+should do so by instantiating an `AnsibleModule` and accessing
 :attr:`AnsibleModule._debug`.
 
 _ansible_diff
@@ -419,7 +419,7 @@ _ansible_diff
 This boolean is turned on via the ``--diff`` command line option.  If a module
 supports it, it will tell the module to show a unified diff of changes to be
 made to templated files.  The proper way for a module to access this is by
-instantiating an :class:`AnsibleModule` and accessing
+instantiating an `AnsibleModule` and accessing
 :attr:`AnsibleModule._diff`.
 
 _ansible_verbosity
@@ -432,7 +432,7 @@ _ansible_selinux_special_fs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is a list of names of filesystems which should have a special selinux
-context.  They are used by the :class:`AnsibleModule` methods which operate on
+context.  They are used by the `AnsibleModule` methods which operate on
 files (changing attributes, moving, and copying).  The list of names is set
 via a comma separated string of filesystem names from :file:`ansible.cfg`::
 
@@ -458,7 +458,7 @@ This parameter controls which syslog facility ansible module logs to.  It may
 be set by changing the ``syslog_facility`` value in :file:`ansible.cfg`.  Most
 modules should just use :meth:`AnsibleModule.log` which will then make use of
 this.  If a module has to use this on its own, it should instantiate an
-:class:`AnsibleModule` and then retrieve the name of the syslog facility from
+`AnsibleModule` and then retrieve the name of the syslog facility from
 :attr:`AnsibleModule._syslog_facility`.  The code will look slightly different
 than it did under :ref:`module_replacer` due to how hacky the old way was
 
@@ -480,7 +480,7 @@ _ansible_version
 ~~~~~~~~~~~~~~~~
 
 This parameter passes the version of ansible that runs the module.  To access
-it, a module should instantiate an :class:`AnsibleModule` and then retrieve it
+it, a module should instantiate an `AnsibleModule` and then retrieve it
 from :attr:`AnsibleModule.ansible_version`.  This replaces
 :attr:`ansible.module_utils.basic.ANSIBLE_VERSION` from
 :ref:`module_replacer`.
@@ -517,7 +517,7 @@ Why pass args over stdin?
 
 Passing arguments via stdin was chosen for the following reasons:
 
-* When combined with :ref:`pipelining`, this keeps the module's arguments from
+* When combined with :ref:`ANSIBLE_PIPELINING`, this keeps the module's arguments from
   temporarily being saved onto disk on the remote machine.  This makes it
   harder (but not impossible) for a malicious user on the remote machine to
   steal any sensitive information that may be present in the arguments.
@@ -527,3 +527,111 @@ Passing arguments via stdin was chosen for the following reasons:
   systems limit the total size of the environment.  This could lead to
   truncation of the parameters if we hit that limit.
 
+
+.. _ansiblemodule:
+
+AnsibleModule
+-------------
+
+.. _argument_spec:
+
+Argument Spec
+^^^^^^^^^^^^^
+
+The ``argument_spec`` provided to ``AnsibleModule`` defines the supported arguments for a module, as well as their type, defaults and more.
+
+Example ``argument_spec``:
+
+.. code-block:: python
+
+    module = AnsibleModule(argument_spec=dict(
+        top_level=dict(
+            type='dict',
+            options=dict(
+                second_level=dict(
+                    default=True,
+                    type='bool',
+                )
+            )
+        )
+    ))
+
+This section will discss the behavioral attributes for arguments
+
+type
+~~~~
+
+``type`` allows you to define the type of the value accepted for the argument. The default value for ``type`` is ``str``. Possible values are:
+
+* str
+* list
+* dict
+* bool
+* int
+* float
+* path
+* raw
+* jsonarg
+* json
+* bytes
+* bits
+
+The ``raw`` type, performs no type validation or type casing, and maintains the type of the passed value.
+
+elements
+~~~~~~~~
+
+``elements`` works in combination with ``type`` when ``type='list'``. ``elements`` can then be defined as ``elements='int'`` or any other type, indicating that each element of the specified list should be of that type.
+
+default
+~~~~~~~
+
+The ``default`` option allows sets a default value for the argument for the scenario when the argument is not provided to the module. When not specified, the default value is ``None``.
+
+fallback
+~~~~~~~~
+
+``fallback`` accepts a ``tuple`` where the first argument is a callable (function) that will be used to perform the lookup, based on the second argument. The second argument is a list of values to be accepted by the callable.
+
+The most common callable used is ``env_fallback`` which will allow an argument to optionally use an environment variable when the argument is not supplied.
+
+Example::
+
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']))
+
+choices
+~~~~~~~
+
+``choices`` accepts a list of choices that the argument will accept. The types of ``choices`` should match the ``type``.
+
+required
+~~~~~~~~
+
+``required`` accepts a boolean, either ``True`` or ``False`` that indicates that the argument is required. This should not be used in combination with ``default``.
+
+no_log
+~~~~~~
+
+``no_log`` indicates that the value of the argument should not be logged or displayed.
+
+aliases
+~~~~~~~
+
+``aliases`` accepts a list of alternative argument names for the argument, such as the case where the argument is ``name`` but the module accepts ``aliases=['pkg']`` to allow ``pkg`` to be interchangably with ``name``
+
+options
+~~~~~~~
+
+``options`` implements the ability to create a sub-argument_spec, where the sub options of the top level argument are also validated using the attributes discussed in this section. The example at the top of this section demonstrates use of ``options``. ``type`` or ``elements`` should be ``dict`` is this case.
+
+apply_defaults
+~~~~~~~~~~~~~~
+
+``apply_defaults`` works alongside ``options`` and allows the ``default`` of the sub-options to be applied even when the top-level argument is not supplied.
+
+In the example of the ``argument_spec`` at the top of this section, it would allow ``module.params['top_level']['second_level']`` to be defined, even if the user does not provide ``top_level`` when calling the module.
+
+removed_in_version
+~~~~~~~~~~~~~~~~~~
+
+``removed_in_version`` indicates which version of Ansible a deprecated argument will be removed in.

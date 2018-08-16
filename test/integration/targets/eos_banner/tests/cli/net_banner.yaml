@@ -1,0 +1,32 @@
+---
+- debug: msg="START eos cli/net_banner.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Remove previous motd banner (setup)
+  eos_config:
+    lines: no banner motd
+  become: yes
+
+- name: create motd
+  net_banner:
+    banner: motd
+    text: this is my motd banner configure by net_banner
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my motd banner configure by net_banner' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Remove previous motd banner (teardown)
+  eos_config:
+    lines: no banner motd
+  become: yes
+
+- debug: msg="END eos cli/net_banner.yaml on connection={{ ansible_connection }}"

@@ -18,23 +18,24 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_selfip import Parameters
-    from library.bigip_selfip import ApiParameters
-    from library.bigip_selfip import ModuleManager
-    from library.bigip_selfip import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.modules.bigip_selfip import ApiParameters
+    from library.modules.bigip_selfip import ModuleParameters
+    from library.modules.bigip_selfip import ModuleManager
+    from library.modules.bigip_selfip import ArgumentSpec
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_selfip import Parameters
         from ansible.modules.network.f5.bigip_selfip import ApiParameters
+        from ansible.modules.network.f5.bigip_selfip import ModuleParameters
         from ansible.modules.network.f5.bigip_selfip import ModuleManager
         from ansible.modules.network.f5.bigip_selfip import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -78,9 +79,9 @@ class TestParameters(unittest.TestCase):
             traffic_group='traffic-group-local-only',
             vlan='net1'
         )
-        p = Parameters(args)
+        p = ModuleParameters(params=args)
         assert p.address == '10.10.10.10%1/24'
-        assert p.allow_service == set(['tcp:80', 'udp:53', 'gre:0'])
+        assert p.allow_service == ['gre:0', 'tcp:80', 'udp:53']
         assert p.name == 'net1'
         assert p.netmask == 24
         assert p.route_domain == 1
@@ -95,9 +96,9 @@ class TestParameters(unittest.TestCase):
                 'grp'
             ]
         )
-        p = Parameters(args)
+        p = ModuleParameters(params=args)
         with pytest.raises(F5ModuleError) as ex:
-            assert p.allow_service == set(['tcp:80', 'udp:53', 'grp'])
+            assert p.allow_service == ['grp', 'tcp:80', 'udp:53']
         assert 'The provided protocol' in str(ex)
 
     def test_api_parameters(self):
@@ -113,18 +114,15 @@ class TestParameters(unittest.TestCase):
             trafficGroup='/Common/traffic-group-local-only',
             vlan='net1'
         )
-        p = ApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.address == '10.10.10.10%1/24'
-        assert p.allow_service == set(['tcp:80', 'udp:53', 'gre'])
+        assert p.allow_service == ['gre', 'tcp:80', 'udp:53']
         assert p.name == 'net1'
         assert p.netmask == 24
-        assert p.route_domain == 1
         assert p.traffic_group == '/Common/traffic-group-local-only'
         assert p.vlan == '/Common/net1'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -150,12 +148,11 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[False, True])
@@ -185,14 +182,13 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = ApiParameters(load_fixture('load_tm_net_self.json'))
+        current = ApiParameters(params=load_fixture('load_tm_net_self.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[True, True])

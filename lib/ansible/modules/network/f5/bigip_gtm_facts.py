@@ -18,7 +18,7 @@ module: bigip_gtm_facts
 short_description: Collect facts from F5 BIG-IP GTM devices
 description:
   - Collect facts from F5 BIG-IP GTM devices.
-version_added: "2.3"
+version_added: 2.3
 options:
   include:
     description:
@@ -27,18 +27,13 @@ options:
     choices:
       - pool
       - wide_ip
-      - virtual_server
+      - server
   filter:
     description:
       - Perform regex filter of response. Filtering is done on the name of
         the resource. Valid filters are anything that can be provided to
         Python's C(re) module.
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as
-    pip install f5-sdk
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -122,13 +117,13 @@ pool:
         ttl: 30
         type: naptr
         verify_member_availability: disabled
-virtual_server:
+server:
   description:
     Contains the virtual server enabled and availability status, and address.
   returned: changed
   type: list
   sample:
-    virtual_server:
+    server:
       - addresses:
           - device_name: /Common/qweqwe
             name: 10.10.10.10
@@ -173,30 +168,43 @@ virtual_server:
 
 import re
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from collections import defaultdict
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from distutils.version import LooseVersion
 
 try:
-    from f5.utils.responses.handlers import Stats
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.utils.responses.handlers import Stats
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.utils.responses.handlers import Stats
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
+
         self.types = dict(
             a_s='a',
             aaaas='aaaa',
@@ -205,10 +213,6 @@ class BaseManager(object):
             naptrs='naptr',
             srvs='srv'
         )
-
-    def exec_module(self):
-        result = self.read_current_from_device()
-        return result
 
     def filter_matches_name(self, name):
         if self.want.filter is None:
@@ -245,7 +249,8 @@ class UntypedManager(BaseManager):
         results = []
         facts = self.read_facts()
         for item in facts:
-            filtered = [(k, v) for k, v in iteritems(item) if self.filter_matches_name(k)]
+            attrs = item.to_return()
+            filtered = [(k, v) for k, v in iteritems(attrs) if self.filter_matches_name(k)]
             if filtered:
                 results.append(dict(filtered))
         return results
@@ -269,25 +274,14 @@ class TypedManager(BaseManager):
 
 
 class Parameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        super(Parameters, self).__init__(params)
-        self._values['__warnings'] = []
-
     @property
     def include(self):
         requested = self._values['include']
-        valid = ['pool', 'wide_ip', 'virtual_server', 'server', 'all']
+        valid = ['pool', 'wide_ip', 'server', 'all']
 
         if any(x for x in requested if x not in valid):
             raise F5ModuleError(
                 "The valid 'include' choices are {0}".format(', '.join(valid))
-            )
-        if any(x for x in requested if x == 'virtual_server'):
-            self._values['__warnings'].append(
-                dict(
-                    msg="The 'virtual_server' param is deprecated. Use 'server' instead",
-                    version='2.5'
-                )
             )
 
         if 'all' in requested:
@@ -296,36 +290,7 @@ class Parameters(AnsibleF5Parameters):
             return requested
 
 
-class BaseParameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-        self._values['__warnings'] = []
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
+class BaseParameters(Parameters):
     @property
     def enabled(self):
         if self._values['enabled'] is None:
@@ -345,9 +310,11 @@ class BaseParameters(AnsibleF5Parameters):
             return False
 
     def _remove_internal_keywords(self, resource):
-        del resource['kind']
-        del resource['generation']
-        del resource['selfLink']
+        resource.pop('kind', None)
+        resource.pop('generation', None)
+        resource.pop('selfLink', None)
+        resource.pop('isSubcollection', None)
+        resource.pop('fullPath', None)
 
     def to_return(self):
         result = {}
@@ -616,6 +583,14 @@ class ServerParameters(BaseParameters):
     ]
 
     @property
+    def product(self):
+        if self._values['product'] is None:
+            return None
+        if self._values['product'] in ['single-bigip', 'redundant-bigip']:
+            return 'bigip'
+        return self._values['product']
+
+    @property
     def devices(self):
         result = []
         if self._values['devices'] is None or 'items' not in self._values['devices']:
@@ -661,7 +636,7 @@ class ServerParameters(BaseParameters):
             if 'translationAddress' in item:
                 item['translation_address'] = item.pop('translationAddress')
             if 'translationPort' in item:
-                item['translation_port'] = int(item.pop('translation_port'))
+                item['translation_port'] = int(item.pop('translationPort'))
             result.append(item)
         return result
 
@@ -697,6 +672,12 @@ class ServerParameters(BaseParameters):
 
 
 class PoolFactManager(BaseManager):
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        super(PoolFactManager, self).__init__(**kwargs)
+        self.kwargs = kwargs
+
     def exec_module(self):
         if self.version_is_less_than_12():
             manager = self.get_manager('untyped')
@@ -708,15 +689,17 @@ class PoolFactManager(BaseManager):
 
     def get_manager(self, type):
         if type == 'typed':
-            return TypedPoolFactManager(self.client)
+            return TypedPoolFactManager(**self.kwargs)
         elif type == 'untyped':
-            return UntypedPoolFactManager(self.client)
+            return UntypedPoolFactManager(**self.kwargs)
 
 
 class TypedPoolFactManager(TypedManager):
-    def __init__(self, client):
-        super(TypedPoolFactManager, self).__init__(client)
-        self.want = PoolParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        super(TypedPoolFactManager, self).__init__(**kwargs)
+        self.want = PoolParameters(params=self.module.params)
 
     def read_facts(self, collection):
         results = []
@@ -724,7 +707,7 @@ class TypedPoolFactManager(TypedManager):
         for resource in collection:
             attrs = resource.attrs
             attrs['stats'] = self.read_stats_from_device(resource)
-            params = PoolParameters(attrs)
+            params = PoolParameters(params=attrs)
             results.append(params)
         return results
 
@@ -740,9 +723,11 @@ class TypedPoolFactManager(TypedManager):
 
 
 class UntypedPoolFactManager(UntypedManager):
-    def __init__(self, client):
-        super(UntypedPoolFactManager, self).__init__(client)
-        self.want = PoolParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(UntypedPoolFactManager, self).__init__(**kwargs)
+        self.want = PoolParameters(params=self.module.params)
 
     def read_facts(self):
         results = []
@@ -750,7 +735,7 @@ class UntypedPoolFactManager(UntypedManager):
         for resource in collection:
             attrs = resource.attrs
             attrs['stats'] = self.read_stats_from_device(resource)
-            params = PoolParameters(attrs)
+            params = PoolParameters(params=attrs)
             results.append(params)
         return results
 
@@ -775,22 +760,24 @@ class WideIpFactManager(BaseManager):
 
     def get_manager(self, type):
         if type == 'typed':
-            return TypedWideIpFactManager(self.client)
+            return TypedWideIpFactManager(**self.kwargs)
         elif type == 'untyped':
-            return UntypedWideIpFactManager(self.client)
+            return UntypedWideIpFactManager(**self.kwargs)
 
 
 class TypedWideIpFactManager(TypedManager):
-    def __init__(self, client):
-        super(TypedWideIpFactManager, self).__init__(client)
-        self.want = WideIpParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(TypedWideIpFactManager, self).__init__(**kwargs)
+        self.want = WideIpParameters(params=self.module.params)
 
     def read_facts(self, collection):
         results = []
         collection = self.read_collection_from_device(collection)
         for resource in collection:
             attrs = resource.attrs
-            params = WideIpParameters(attrs)
+            params = WideIpParameters(params=attrs)
             results.append(params)
         return results
 
@@ -806,16 +793,18 @@ class TypedWideIpFactManager(TypedManager):
 
 
 class UntypedWideIpFactManager(UntypedManager):
-    def __init__(self, client):
-        super(UntypedWideIpFactManager, self).__init__(client)
-        self.want = WideIpParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(UntypedWideIpFactManager, self).__init__(**kwargs)
+        self.want = WideIpParameters(params=self.module.params)
 
     def read_facts(self):
         results = []
         collection = self.read_collection_from_device()
         for resource in collection:
             attrs = resource.attrs
-            params = WideIpParameters(attrs)
+            params = WideIpParameters(params=attrs)
             results.append(params)
         return results
 
@@ -829,13 +818,15 @@ class UntypedWideIpFactManager(UntypedManager):
 
 
 class ServerFactManager(UntypedManager):
-    def __init__(self, client):
-        super(ServerFactManager, self).__init__(client)
-        self.want = ServerParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(ServerFactManager, self).__init__(**kwargs)
+        self.want = ServerParameters(params=self.module.params)
 
     def exec_module(self):
         facts = super(ServerFactManager, self).exec_module()
-        result = dict(server=facts, virtual_server=facts)
+        result = dict(server=facts)
         return result
 
     def read_facts(self):
@@ -843,7 +834,7 @@ class ServerFactManager(UntypedManager):
         collection = self.read_collection_from_device()
         for resource in collection:
             attrs = resource.attrs
-            params = WideIpParameters(attrs)
+            params = ServerParameters(params=attrs)
             results.append(params)
         return results
 
@@ -857,9 +848,11 @@ class ServerFactManager(UntypedManager):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
+        self.want = Parameters(params=self.module.params)
 
     def exec_module(self):
         if not self.gtm_provisioned():
@@ -871,10 +864,6 @@ class ModuleManager(object):
             names = ['pool', 'wide_ip', 'server']
         else:
             names = self.want.include
-            # The virtual_server parameter is deprecated
-            if 'virtual_server' in names:
-                names.append('server')
-                names.remove('virtual_server')
         managers = [self.get_manager(name) for name in names]
         result = self.execute_managers(managers)
         if result:
@@ -889,7 +878,7 @@ class ModuleManager(object):
         if self.want:
             warnings += self.want._values.get('__warnings', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
@@ -903,11 +892,11 @@ class ModuleManager(object):
 
     def get_manager(self, which):
         if 'pool' == which:
-            return PoolFactManager(self.client)
+            return PoolFactManager(**self.kwargs)
         if 'wide_ip' == which:
-            return WideIpFactManager(self.client)
+            return WideIpFactManager(**self.kwargs)
         if 'server' == which:
-            return ServerFactManager(self.client)
+            return ServerFactManager(**self.kwargs)
 
     def gtm_provisioned(self):
         resource = self.client.api.tm.sys.dbs.db.load(
@@ -921,31 +910,42 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = False
-        self.argument_spec = dict(
-            include=dict(type='list', required=True),
-            filter=dict(type='str', required=False)
+        argument_spec = dict(
+            include=dict(
+                type='list',
+                choices=[
+                    'pool',
+                    'wide_ip',
+                    'server',
+                ],
+                required=True
+            ),
+            filter=dict()
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

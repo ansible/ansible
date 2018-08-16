@@ -32,47 +32,39 @@ options:
         on the remote device.  The list of users will be compared against
         the current users and only changes will be added or removed from
         the device configuration.  This argument is mutually exclusive with
-        the name argument. alias C(users).
+        the name argument.
     version_added: "2.4"
-    required: False
-    default: null
+    aliases: ['users', 'collection']
   name:
     description:
       - The C(name) argument defines the username of the user to be created
         on the system.  This argument must follow appropriate usernaming
         conventions for the target device running JUNOS.  This argument is
         mutually exclusive with the C(aggregate) argument.
-    required: false
-    default: null
   full_name:
     description:
       - The C(full_name) argument provides the full name of the user
         account to be created on the remote device.  This argument accepts
         any text string value.
-    required: false
-    default: null
   role:
     description:
       - The C(role) argument defines the role of the user account on the
         remote system.  User accounts can have more than one role
         configured.
-    required: false
     choices: ['operator', 'read-only', 'super-user', 'unauthorized']
   sshkey:
     description:
       - The C(sshkey) argument defines the public SSH key to be configured
         for the user account on the remote system.  This argument must
         be a valid SSH key
-    required: false
-    default: null
   purge:
     description:
       - The C(purge) argument instructs the module to consider the
         users definition absolute.  It will remove any previously configured
         users on the device with the exception of the current defined
         set of aggregate.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   state:
     description:
       - The C(state) argument configures the state of the user definitions
@@ -80,14 +72,13 @@ options:
         to I(present), the user should be configured in the device active
         configuration and when set to I(absent) the user should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
   active:
     description:
       - Specifies whether or not the configuration is active or deactivated
-    default: True
-    choices: [True, False]
+    type: bool
+    default: 'yes'
     version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
@@ -95,6 +86,8 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
 """
 
 EXAMPLES = """
@@ -145,17 +138,19 @@ from functools import partial
 
 from copy import deepcopy
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection, tostring
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
 from ansible.module_utils.network.junos.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
 USE_PERSISTENT_CONNECTION = True
@@ -167,7 +162,11 @@ def handle_purge(module, want):
     login = SubElement(element, 'login')
 
     conn = get_connection(module)
-    reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    try:
+        reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     users = reply.xpath('configuration/system/login/user/name')
     if users:
         for item in users:
@@ -209,7 +208,14 @@ def map_obj_to_ele(module, want):
 
             if item.get('sshkey'):
                 auth = SubElement(user, 'authentication')
-                ssh_rsa = SubElement(auth, 'ssh-rsa')
+                if 'ssh-rsa' in item['sshkey']:
+                    ssh_rsa = SubElement(auth, 'ssh-rsa')
+                elif 'ssh-dss' in item['sshkey']:
+                    ssh_rsa = SubElement(auth, 'ssh-dsa')
+                elif 'ecdsa-sha2' in item['sshkey']:
+                    ssh_rsa = SubElement(auth, 'ssh-ecdsa')
+                elif 'ssh-ed25519' in item['sshkey']:
+                    ssh_rsa = SubElement(auth, 'ssh-ed25519')
                 key = SubElement(ssh_rsa, 'name').text = item['sshkey']
 
     return element
@@ -336,6 +342,7 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

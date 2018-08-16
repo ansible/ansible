@@ -1,0 +1,3 @@
+test_packages:
+  - "devel/ruby-gems"
+  - "ruby"

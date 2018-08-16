@@ -40,6 +40,7 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
 
         if self._play_context.connection != 'local':
             return dict(
@@ -57,10 +58,11 @@ class ActionModule(_ActionModule):
         pc.port = int(provider['port'] or self._play_context.port or 22)
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
-        pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+        command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
-        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+        display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+        connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
@@ -83,5 +85,6 @@ class ActionModule(_ActionModule):
             self._play_context.become = False
             self._play_context.become_method = None
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
+
         return result

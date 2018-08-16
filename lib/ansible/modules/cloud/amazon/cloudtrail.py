@@ -36,7 +36,7 @@ options:
   name:
     description:
       - Name for the CloudTrail.
-      - Names are unique per-region unless the CloudTrail is a mulit-region trail, in which case it is unique per-account.
+      - Names are unique per-region unless the CloudTrail is a multi-region trail, in which case it is unique per-account.
     required: true
   enable_logging:
     description:
@@ -62,39 +62,33 @@ options:
     description:
       - Specifies whether log file integrity validation is enabled.
       - CloudTrail will create a hash for every log file delivered and produce a signed digest file that can be used to ensure log files have not been tampered.
-    default: false
     version_added: "2.4"
+    aliases: [ "log_file_validation_enabled" ]
   include_global_events:
     description:
       - Record API calls from global services such as IAM and STS.
     default: true
+    aliases: [ "include_global_service_events" ]
   sns_topic_name:
     description:
       - SNS Topic name to send notifications to when a log file is delivered
     version_added: "2.4"
   cloudwatch_logs_role_arn:
     description:
-      - Specifies a full ARN for an IAM role that assigns the proper permissions for CloudTrail to create and write to the log group listed below.
+      - Specifies a full ARN for an IAM role that assigns the proper permissions for CloudTrail to create and write to the log group.
       - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html)
-      - "Example arn:aws:iam::123456789012:role/CloudTrail_CloudWatchLogs_Role"
       - Required when C(cloudwatch_logs_log_group_arn)
     version_added: "2.4"
   cloudwatch_logs_log_group_arn:
     description:
       - A full ARN specifying a valid CloudWatch log group to which CloudTrail logs will be delivered. The log group should already exist.
       - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html)
-      - "Example arn:aws:logs:us-east-1:123456789012:log-group:CloudTrail/DefaultLogGroup:*"
       - Required when C(cloudwatch_logs_role_arn)
     version_added: "2.4"
   kms_key_id:
     description:
       - Specifies the KMS key ID to use to encrypt the logs delivered by CloudTrail. This also has the effect of enabling log file encryption.
       - The value can be an alias name prefixed by "alias/", a fully specified ARN to an alias, a fully specified ARN to a key, or a globally unique identifier.
-      - Examples
-      - alias/MyAliasName
-      - "arn:aws:kms:us-east-1:123456789012:alias/MyAliasName"
-      - "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
-      - 12345678-1234-1234-1234-123456789012
       - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html)
     version_added: "2.4"
   tags:
@@ -126,9 +120,20 @@ EXAMPLES = '''
     region: us-east-1
     is_multi_region_trail: true
     enable_log_file_validation: true
+    cloudwatch_logs_role_arn: "arn:aws:iam::123456789012:role/CloudTrail_CloudWatchLogs_Role"
+    cloudwatch_logs_log_group_arn: "arn:aws:logs:us-east-1:123456789012:log-group:CloudTrail/DefaultLogGroup:*"
+    kms_key_id: "alias/MyAliasName"
     tags:
       environment: dev
       Name: default
+
+- name: show another valid kms_key_id
+  cloudtrail:
+    state: present
+    name: default
+    s3_bucket_name: mylogbucket
+    kms_key_id: "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+    # simply "12345678-1234-1234-1234-123456789012" would be valid too.
 
 - name: pause logging the trail we just created
   cloudtrail:
@@ -438,8 +443,8 @@ def main():
         s3_key_prefix=dict(),
         sns_topic_name=dict(),
         is_multi_region_trail=dict(default=False, type='bool'),
-        enable_log_file_validation=dict(default=False, type='bool'),
-        include_global_events=dict(default=True, type='bool'),
+        enable_log_file_validation=dict(type='bool', aliases=['log_file_validation_enabled']),
+        include_global_events=dict(default=True, type='bool', aliases=['include_global_service_events']),
         cloudwatch_logs_role_arn=dict(),
         cloudwatch_logs_log_group_arn=dict(),
         kms_key_id=dict(),
@@ -466,12 +471,6 @@ def main():
         S3BucketName=module.params['s3_bucket_name'],
         IncludeGlobalServiceEvents=module.params['include_global_events'],
         IsMultiRegionTrail=module.params['is_multi_region_trail'],
-        EnableLogFileValidation=module.params['enable_log_file_validation'],
-        S3KeyPrefix='',
-        SnsTopicName='',
-        CloudWatchLogsRoleArn='',
-        CloudWatchLogsLogGroupArn='',
-        KmsKeyId=''
     )
 
     if module.params['s3_key_prefix']:
@@ -485,6 +484,9 @@ def main():
 
     if module.params['cloudwatch_logs_log_group_arn']:
         ct_params['CloudWatchLogsLogGroupArn'] = module.params['cloudwatch_logs_log_group_arn']
+
+    if module.params['enable_log_file_validation'] is not None:
+        ct_params['EnableLogFileValidation'] = module.params['enable_log_file_validation']
 
     if module.params['kms_key_id']:
         ct_params['KmsKeyId'] = module.params['kms_key_id']
@@ -593,7 +595,9 @@ def main():
                 pass
             trail = dict()
             trail.update(ct_params)
-            trail['LogFileValidationEnabled'] = ct_params['EnableLogFileValidation']
+            if 'EnableLogFileValidation' not in ct_params:
+                ct_params['EnableLogFileValidation'] = False
+            trail['EnableLogFileValidation'] = ct_params['EnableLogFileValidation']
             trail.pop('EnableLogFileValidation')
             fake_arn = 'arn:aws:cloudtrail:' + region + ':' + acct_id + ':trail/' + ct_params['Name']
             trail['HasCustomEventSelectors'] = False

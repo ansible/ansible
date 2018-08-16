@@ -64,8 +64,7 @@ class Play(Base, Taggable, Become):
 
     # Variable Attributes
     _vars_files = FieldAttribute(isa='list', default=[], priority=99)
-    _vars_prompt = FieldAttribute(isa='list', default=[], always_post_validate=True)
-    _vault_password = FieldAttribute(isa='string', always_post_validate=True)
+    _vars_prompt = FieldAttribute(isa='list', default=[], always_post_validate=False)
 
     # Role Attributes
     _roles = FieldAttribute(isa='list', default=[], priority=90)
@@ -101,13 +100,15 @@ class Play(Base, Taggable, Become):
         return self._attributes.get('name')
 
     @staticmethod
-    def load(data, variable_manager=None, loader=None):
+    def load(data, variable_manager=None, loader=None, vars=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
                 data['name'] = data['hosts']
         p = Play()
+        if vars:
+            p.vars = vars.copy()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
@@ -169,7 +170,11 @@ class Play(Base, Taggable, Become):
         Bare handlers outside of a block are given an implicit block.
         '''
         try:
-            return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
+            return self._extend_value(
+                self.handlers,
+                load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
+                prepend=True
+            )
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
 
@@ -195,22 +200,23 @@ class Play(Base, Taggable, Become):
     def _load_vars_prompt(self, attr, ds):
         new_ds = preprocess_vars(ds)
         vars_prompts = []
-        for prompt_data in new_ds:
-            if 'name' not in prompt_data:
-                display.deprecated("Using the 'short form' for vars_prompt has been deprecated", version="2.7")
-                for vname, prompt in prompt_data.items():
-                    vars_prompts.append(dict(
-                        name=vname,
-                        prompt=prompt,
-                        default=None,
-                        private=None,
-                        confirm=None,
-                        encrypt=None,
-                        salt_size=None,
-                        salt=None,
-                    ))
-            else:
-                vars_prompts.append(prompt_data)
+        if new_ds is not None:
+            for prompt_data in new_ds:
+                if 'name' not in prompt_data:
+                    display.deprecated("Using the 'short form' for vars_prompt has been deprecated", version="2.7")
+                    for vname, prompt in prompt_data.items():
+                        vars_prompts.append(dict(
+                            name=vname,
+                            prompt=prompt,
+                            default=None,
+                            private=None,
+                            confirm=None,
+                            encrypt=None,
+                            salt_size=None,
+                            salt=None,
+                        ))
+                else:
+                    vars_prompts.append(prompt_data)
         return vars_prompts
 
     def _compile_roles(self):
@@ -226,6 +232,10 @@ class Play(Base, Taggable, Become):
 
         if len(self.roles) > 0:
             for r in self.roles:
+                # Don't insert tasks from ``import/include_role``, preventing
+                # duplicate execution at the wrong time
+                if r.from_include:
+                    continue
                 block_list.extend(r.compile(play=self))
 
         return block_list
@@ -279,6 +289,8 @@ class Play(Base, Taggable, Become):
     def get_vars_files(self):
         if self.vars_files is None:
             return []
+        elif not isinstance(self.vars_files, list):
+            return [self.vars_files]
         return self.vars_files
 
     def get_handlers(self):

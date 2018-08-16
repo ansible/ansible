@@ -2,12 +2,6 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
-  when: "{{ ansible_user_id == 'root' }}"
-
 - name: store the vcenter container ip
   set_fact:
     vcsim: "{{ lookup('env', 'vcenter_host') }}"
@@ -83,7 +77,7 @@
 - name: ensure host system is present
   assert:
     that:
-        - add_host_result | changed
+        - add_host_result is changed
         - "{% for host in host_list.json if ((host | basename) == 'test_host_system_0001') -%} True {%- else -%} False {%- endfor %}"
 
 # Testcase: Add Host again
@@ -104,7 +98,7 @@
 - name: ensure precend task didn't changed anything
   assert:
     that:
-        - not (readd_host_result|changed)
+        - not ( readd_host_result is changed)
 
 # Testcase: Add Host via add_or_reconnect state
 - name: add host via add_or_reconnect
@@ -129,7 +123,7 @@
 - name: ensure host system is present
   assert:
     that:
-        - add_or_reconnect_host_result | changed
+        - add_or_reconnect_host_result is changed
         - "{% for host in host_list.json if ((host | basename) == 'test_host_system_0002') -%} True {%- else -%} False {%- endfor %}"
 
 ## Testcase: Reconnect Host
@@ -152,7 +146,7 @@
 #- name: ensure host system has been reconnected
 #  assert:
 #    that:
-#        - reconnect_host_result | changed
+#        - reconnect_host_result is changed
 #        # it would be a good idea to check the events on the host to see the reconnect
 #        # https://github.com/vmware/govmomi/blob/master/govc/USAGE.md#events
 #        # "govc events ..." need to be callable from
@@ -183,7 +177,7 @@
 #- name: ensure host system is absent
 #  assert:
 #    that:
-#        - remove_host_result | changed
+#        - remove_host_result is changed
 #        - "{% for host in host_list.json if ((host | basename) == 'test_host_system_0001') -%} False {%- else -%} True {%- endfor %}"
 
 ## Testcase: Remove Host again
@@ -206,4 +200,4 @@
 #- name: ensure precend task didn't changed anything
 #  assert:
 #    that:
-#        - not (reremove_host_result|changed)
+#        - not ( reremove_host_result is changed)

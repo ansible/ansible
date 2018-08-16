@@ -46,7 +46,7 @@ options:
     - Name of the absolute path of the filename that includes the body
       of the http request being sent to the Cisco IMC REST API.
     - Parameter C(path) is mutual exclusive with parameter C(content).
-    aliases: [ src ]
+    aliases: [ 'src', 'config_file' ]
   content:
     description:
     - When used instead of C(path), sets the content of the API requests directly.
@@ -421,6 +421,7 @@ def main():
     # Report success
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

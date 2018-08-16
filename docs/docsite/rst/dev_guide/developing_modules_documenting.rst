@@ -43,15 +43,14 @@ code.
 
     #!/usr/bin/python
     
-    # Copyright: (c) 2017, Ansible Project
+    # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Every file should have a copyright line with the original copyright holder.
-Major additions to the module (for instance, rewrites)  may add additional
-copyright lines. Code from the Ansible community should typically be assigned
-as "Copyright (c) 2017 Ansible Project" which covers all contributors. Any
-legal questions need to review the source control history, so an exhaustive
-copyright header is not necessary.
+Every file should have a copyright line (see `The copyright notice <https://www.gnu.org/licenses/gpl-howto.en.html>`_)
+with the original copyright holder. Major additions to the module (for
+instance, rewrites) may add additional copyright lines. Any legal questions
+need to review the source control history, so an exhaustive copyright header is
+not necessary.
 
 The license declaration should be ONLY one line, not the full GPL prefix. If
 you notice a module with the full prefix, feel free to switch it to the
@@ -68,6 +67,7 @@ add the newer line above the older one, like so:
     # Copyright: (c) 2015, [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+.. _ansible_metadata_block:
 
 ANSIBLE_METADATA Block
 ----------------------
@@ -130,7 +130,7 @@ Fields
      certified instead)
 
    For information on what the support level values entail, please see
-   `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
+   :ref:`Modules Support <modules_support>`.
 
 :status: This field records information about the module that is
    important to the end user. It's a list of strings. The default value
@@ -189,7 +189,7 @@ The following fields can be used and are all required unless specified otherwise
 :module:
   The name of the module. This must be the same as the filename, without the ``.py`` extension.
 :short_description:
-  * A short description which is displayed on the :doc:`../list_of_all_modules` page and ``ansible-doc -l``.
+  * A short description which is displayed on the :ref:`all_modules` page and ``ansible-doc -l``.
   * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain its purpose without the context of the directory structure in which it lives.
   * Unlike ``description:`` this field should not have a trailing full stop.
 :description:
@@ -202,9 +202,17 @@ The following fields can be used and are all required unless specified otherwise
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
 :deprecated:
-  If this module is deprecated, detail when that happened, and what to use instead, e.g.
-  `Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.`
-  Ensure `CHANGELOG.md` is updated to reflect this.
+  If a module is deprecated it must be:
+
+  * Mentioned in ``CHANGELOG``
+  * Referenced in the ``porting_guide_x.y.rst``
+  * File should be renamed to start with an ``_``
+  * ``ANSIBLE_METADATA`` must contain ``status: ['deprecated']``
+  * Following values must be set:
+
+  :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will replaced with docs only module stub.
+  :why: Optional string that used to detail why this has been removed.
+  :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 :options:
   One per module argument:
 
@@ -231,7 +239,9 @@ The following fields can be used and are all required unless specified otherwise
   :choices:
     List of option values. Should be absent if empty.
   :type:
-    If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
+
+    * Specifies the data type that option accepts, must match the ``argspec``.
+    * If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
   :aliases:
     List of option name aliases; generally not needed.
   :version_added:
@@ -382,10 +392,17 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 
    The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
 
-Formatting options
-------------------
+Formatting functions
+--------------------
 
-These formatting functions are ``U()`` for URLs, ``I()`` for option names, ``C()`` for files and option values and ``M()`` for module names.
+The formatting functions are:
+
+* ``L()`` for Links with a heading
+* ``U()`` for URLs
+* ``I()`` for option names
+* ``C()`` for files and option values
+* ``M()`` for module names.
+
 Module names should be specified as ``M(module)`` to create a link to the online documentation for that module.
 
 
@@ -399,7 +416,10 @@ Example usage::
     ...
     See also M(win_copy) or M(win_template).
     ...
-    See U(https://www.ansible.com/tower) for an overview.
+    Time zone names are from the L(tz database,https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+    See U(https://www.ansible.com/products/tower) for an overview.
+    ...
+    See L(IOS Platform Options guide, ../network/user_guide/platform_ios.html)
 
 
 .. note::
@@ -422,6 +442,9 @@ Examples can be found by searching for ``extends_documentation_fragment`` under 
 Testing documentation
 ---------------------
 
+The simplest way to check if your documentation works is to use ``ansible-doc`` to view it. Any parsing errors will be apparent, and details can be obtained by adding ``-vvv``.
+
+If you are going to submit the module for inclusion in the main Ansible repo you should make sure that it renders correctly as HTML.
 Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` directory and then
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.

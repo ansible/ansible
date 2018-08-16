@@ -43,7 +43,8 @@ options:
       - The set of username objects to be configured on the remote
         VyOS device. The list entries can either be the username or
         a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument. alias C(users).
+        exclusive with the C(name) argument.
+    aliases: ['users', 'collection']
   name:
     description:
       - The username to be configured on the VyOS device.
@@ -74,6 +75,7 @@ options:
     description:
       - The C(level) argument configures the level of the user when logged
         into the system. This argument accepts string values admin or operator.
+    aliases: ['role']
   purge:
     description:
       - Instructs the module to consider the
@@ -91,6 +93,7 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -331,6 +334,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

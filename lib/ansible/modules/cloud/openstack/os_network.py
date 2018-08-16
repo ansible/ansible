@@ -30,35 +30,30 @@ options:
    shared:
      description:
         - Whether this network is shared or not.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    admin_state_up:
      description:
         - Whether the state should be marked as up or down.
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
    external:
      description:
         - Whether this network is externally accessible.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    state:
      description:
         - Indicate desired state of the resource.
      choices: ['present', 'absent']
-     required: false
      default: present
    provider_physical_network:
      description:
         - The physical network where this network object is implemented.
-     required: false
-     default: None
      version_added: "2.1"
    provider_network_type:
      description:
         - The type of physical network that maps to this network resource.
-     required: false
-     default: None
      version_added: "2.1"
    provider_segmentation_id:
      description:
@@ -66,20 +61,15 @@ options:
           attribute defines the segmentation model. For example, if the
           I(network_type) value is vlan, this ID is a vlan identifier. If
           the I(network_type) value is gre, this ID is a gre key.
-     required: false
-     default: None
      version_added: "2.1"
    project:
      description:
         - Project name or ID containing the network (name admin-only)
-     required: false
-     default: None
      version_added: "2.1"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -151,16 +141,8 @@ network:
             sample: 101
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -179,14 +161,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
-    if (module.params['project'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.6.0')):
-        module.fail_json(msg="To utilize project, the installed version of"
-                             "the shade library MUST be >=1.6.0")
-
     state = module.params['state']
     name = module.params['name']
     shared = module.params['shared']
@@ -195,10 +169,10 @@ def main():
     provider_physical_network = module.params['provider_physical_network']
     provider_network_type = module.params['provider_network_type']
     provider_segmentation_id = module.params['provider_segmentation_id']
-    project = module.params.pop('project')
+    project = module.params.get('project')
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if project is not None:
             proj = cloud.get_project(project)
             if proj is None:
@@ -220,9 +194,6 @@ def main():
                 if provider_segmentation_id:
                     provider['segmentation_id'] = provider_segmentation_id
 
-                if provider and StrictVersion(shade.__version__) < StrictVersion('1.5.0'):
-                    module.fail_json(msg="Shade >= 1.5.0 required to use provider options")
-
                 if project_id is not None:
                     net = cloud.create_network(name, shared, admin_state_up,
                                                external, provider, project_id)
@@ -241,7 +212,7 @@ def main():
                 cloud.delete_network(name)
                 module.exit_json(changed=True)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

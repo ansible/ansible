@@ -23,34 +23,46 @@ author:
     - "Ryan Sydnor (@ryansydnor)"
     - "Artem Kazakov (@akazakov)"
 options:
+    encrypt:
+        description:
+            - A boolean value that, if true, creates an encrypted file system. This can not be modfied after the file
+              system is created.
+        type: bool
+        default: 'no'
+        version_added: 2.5
+    kms_key_id:
+        description:
+            - The id of the AWS KMS CMK that will be used to protect the encrypted file system. This parameter is only
+              required if you want to use a non-default CMK. If this parameter is not specified, the default CMK for
+              Amazon EFS is used. The key id can be Key ID, Key ID ARN, Key Alias or Key Alias ARN.
+        version_added: 2.5
+    purge_tags:
+        description:
+            - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter
+              is not set then tags will not be modified.
+        type: bool
+        default: 'yes'
+        version_added: 2.5
     state:
         description:
             - Allows to create, search and destroy Amazon EFS file system
-        required: false
         default: 'present'
         choices: ['present', 'absent']
     name:
         description:
-            - Creation Token of Amazon EFS file system. Required for create. Either name or ID required for delete.
-        required: false
-        default: None
+            - Creation Token of Amazon EFS file system. Required for create and update. Either name or ID required for delete.
     id:
         description:
             - ID of Amazon EFS. Either name or ID required for delete.
-        required: false
-        default: None
     performance_mode:
         description:
             - File system's performance mode to use. Only takes effect during creation.
-        required: false
         default: 'general_purpose'
         choices: ['general_purpose', 'max_io']
     tags:
         description:
             - "List of tags of Amazon EFS. Should be defined as dictionary
               In case of 'present' state with list of tags and existing EFS (matched by 'name'), tags of EFS will be replaced with provided data."
-        required: false
-        default: None
     targets:
         description:
             - "List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
@@ -58,22 +70,19 @@ options:
                    - ip_address - Optional. A valid IPv4 address within the address range of the specified subnet.
                    - security_groups - Optional. List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified
                This data may be modified for existing EFS using state 'present' and new list of mount targets."
-        required: false
-        default: None
     wait:
         description:
             - "In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted')
                In case of 'absent' state should wait for EFS 'deleted' life cycle state"
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
+        type: bool
+        default: 'no'
     wait_timeout:
         description:
             - How long the module should wait (in seconds) for desired state before returning. Zero means wait as long as necessary.
-        required: false
         default: 0
 extends_documentation_fragment:
     - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -126,10 +135,15 @@ life_cycle_state:
     type: string
     sample: "creating, available, deleting, deleted"
 mount_point:
-    description: url of file system
+    description: url of file system with leading dot from the time when AWS EFS required to add a region suffix to the address
     returned: always
     type: string
     sample: ".fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
+filesystem_address:
+    description: url of file system valid for use with mount
+    returned: always
+    type: string
+    sample: "fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
 mount_targets:
     description: list of mount targets
     returned: always
@@ -193,15 +207,18 @@ tags:
 
 from time import sleep
 from time import time as timestamp
+import traceback
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError as e:
     pass  # Taken care of by ec2.HAS_BOTO3
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info)
+                                      ec2_argument_spec, get_aws_connection_info, ansible_dict_to_boto3_tag_list,
+                                      compare_aws_tags, boto3_tag_list_to_ansible_dict)
 
 
 def _index_by_key(key, items):
@@ -221,6 +238,8 @@ class EFSConnection(object):
         self.connection = boto3_conn(module, conn_type='client',
                                      resource='efs', region=region,
                                      **aws_connect_params)
+
+        self.module = module
         self.region = region
         self.wait = module.params.get('wait')
         self.wait_timeout = module.params.get('wait_timeout')
@@ -238,10 +257,14 @@ class EFSConnection(object):
             item['Name'] = item['CreationToken']
             item['CreationTime'] = str(item['CreationTime'])
             """
-            Suffix of network path to be used as NFS device for mount. More detail here:
+            In the time when MountPoint was introduced there was a need to add a suffix of network path before one could use it
+            AWS updated it and now there is no need to add a suffix. MountPoint is left for back-compatibility purpose
+            And new FilesystemAddress variable is introduced for direct use with other modules (e.g. mount)
+            AWS documentation is available here:
             http://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html
             """
             item['MountPoint'] = '.%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
+            item['FilesystemAddress'] = '%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
             if 'Timestamp' in item['SizeInBytes']:
                 item['SizeInBytes']['Timestamp'] = str(item['SizeInBytes']['Timestamp'])
             if item['LifeCycleState'] == self.STATE_AVAILABLE:
@@ -256,12 +279,8 @@ class EFSConnection(object):
         """
          Returns tag list for selected instance of EFS
         """
-        tags = iterate_all(
-            'Tags',
-            self.connection.describe_tags,
-            **kwargs
-        )
-        return dict((tag['Key'], tag['Value']) for tag in tags)
+        tags = self.connection.describe_tags(**kwargs)['Tags']
+        return tags
 
     def get_mount_targets(self, **kwargs):
         """
@@ -331,19 +350,34 @@ class EFSConnection(object):
 
         return list(targets)
 
-    def create_file_system(self, name, performance_mode):
+    def create_file_system(self, name, performance_mode, encrypt, kms_key_id):
         """
          Creates new filesystem with selected name
         """
         changed = False
         state = self.get_file_system_state(name)
+        params = {}
+        params['CreationToken'] = name
+        params['PerformanceMode'] = performance_mode
+        if encrypt:
+            params['Encrypted'] = encrypt
+        if kms_key_id is not None:
+            params['KmsKeyId'] = kms_key_id
+
         if state in [self.STATE_DELETING, self.STATE_DELETED]:
             wait_for(
                 lambda: self.get_file_system_state(name),
                 self.STATE_DELETED
             )
-            self.connection.create_file_system(CreationToken=name, PerformanceMode=performance_mode)
-            changed = True
+            try:
+                self.connection.create_file_system(**params)
+                changed = True
+            except ClientError as e:
+                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
+                                      exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except BotoCoreError as e:
+                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
+                                      exception=traceback.format_exc())
 
         # we always wait for the state to be available when creating.
         # if we try to take any actions on the file system before it's available
@@ -356,7 +390,7 @@ class EFSConnection(object):
 
         return changed
 
-    def converge_file_system(self, name, tags, targets):
+    def converge_file_system(self, name, tags, purge_tags, targets):
         """
          Change attributes (mount targets and tags) of filesystem by name
         """
@@ -364,20 +398,36 @@ class EFSConnection(object):
         fs_id = self.get_file_system_id(name)
 
         if tags is not None:
-            tags_to_create, _, tags_to_delete = dict_diff(self.get_tags(FileSystemId=fs_id), tags)
+            tags_need_modify, tags_to_delete = compare_aws_tags(boto3_tag_list_to_ansible_dict(self.get_tags(FileSystemId=fs_id)), tags, purge_tags)
 
             if tags_to_delete:
-                self.connection.delete_tags(
-                    FileSystemId=fs_id,
-                    TagKeys=[item[0] for item in tags_to_delete]
-                )
+                try:
+                    self.connection.delete_tags(
+                        FileSystemId=fs_id,
+                        TagKeys=tags_to_delete
+                    )
+                except ClientError as e:
+                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                except BotoCoreError as e:
+                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc())
+
                 result = True
 
-            if tags_to_create:
-                self.connection.create_tags(
-                    FileSystemId=fs_id,
-                    Tags=[{'Key': item[0], 'Value': item[1]} for item in tags_to_create]
-                )
+            if tags_need_modify:
+                try:
+                    self.connection.create_tags(
+                        FileSystemId=fs_id,
+                        Tags=ansible_dict_to_boto3_tag_list(tags_need_modify)
+                    )
+                except ClientError as e:
+                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                except BotoCoreError as e:
+                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc())
+
                 result = True
 
         if targets is not None:
@@ -561,7 +611,10 @@ def main():
     """
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
+        encrypt=dict(required=False, type="bool", default=False),
         state=dict(required=False, type='str', choices=["present", "absent"], default="present"),
+        kms_key_id=dict(required=False, type='str', default=None),
+        purge_tags=dict(default=True, type='bool'),
         id=dict(required=False, type='str', default=None),
         name=dict(required=False, type='str', default=None),
         tags=dict(required=False, type="dict", default={}),
@@ -592,7 +645,10 @@ def main():
         'general_purpose': 'generalPurpose',
         'max_io': 'maxIO'
     }
+    encrypt = module.params.get('encrypt')
+    kms_key_id = module.params.get('kms_key_id')
     performance_mode = performance_mode_translations[module.params.get('performance_mode')]
+    purge_tags = module.params.get('purge_tags')
     changed = False
 
     state = str(module.params.get('state')).lower()
@@ -601,8 +657,8 @@ def main():
         if not name:
             module.fail_json(msg='Name parameter is required for create')
 
-        changed = connection.create_file_system(name, performance_mode)
-        changed = connection.converge_file_system(name=name, tags=tags, targets=targets) or changed
+        changed = connection.create_file_system(name, performance_mode, encrypt, kms_key_id)
+        changed = connection.converge_file_system(name=name, tags=tags, purge_tags=purge_tags, targets=targets) or changed
         result = first_or_default(connection.get_file_systems(CreationToken=name))
 
     elif state == 'absent':

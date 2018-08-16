@@ -51,11 +51,11 @@ options:
 '''
 
 EXAMPLES = '''
-name: Create 'vlan42' VLAN over 'bnx0' link
-dladm_vlan: name=vlan42 link=bnx0 vlan_id=42 state=present
+- name: Create 'vlan42' VLAN over 'bnx0' link
+  dladm_vlan: name=vlan42 link=bnx0 vlan_id=42 state=present
 
-name: Remove 'vlan1337' VLAN interface
-dladm_vlan: name=vlan1337 state=absent
+- name: Remove 'vlan1337' VLAN interface
+  dladm_vlan: name=vlan1337 state=absent
 '''
 
 RETURN = '''

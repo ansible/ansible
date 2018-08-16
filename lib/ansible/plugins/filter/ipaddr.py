@@ -176,6 +176,7 @@ def _ip_netmask_query(v):
         if v.ip != v.network:
             return str(v.ip) + ' ' + str(v.netmask)
 
+
 '''
 def _ip_wildcard_query(v):
     if v.size == 2:
@@ -413,6 +414,38 @@ def _win_query(v):
 
 
 # ---- IP address and network filters ----
+
+# Returns a minified list of subnets or a single subnet that spans all of
+# the inputs.
+def cidr_merge(value, action='merge'):
+    if not hasattr(value, '__iter__'):
+        raise errors.AnsibleFilterError('cidr_merge: expected iterable, got ' + repr(value))
+
+    if action == 'merge':
+        try:
+            return [str(ip) for ip in netaddr.cidr_merge(value)]
+        except Exception as e:
+            raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+
+    elif action == 'span':
+        # spanning_cidr needs at least two values
+        if len(value) == 0:
+            return None
+        elif len(value) == 1:
+            try:
+                return str(netaddr.IPNetwork(value[0]))
+            except Exception as e:
+                raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+        else:
+            try:
+                return str(netaddr.spanning_cidr(value))
+            except Exception as e:
+                raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+
+    else:
+        raise errors.AnsibleFilterError("cidr_merge: invalid action '%s'" % action)
+
+
 def ipaddr(value, query='', version=False, alias='ipaddr'):
     ''' Check if string is an IP address or network and filter it '''
 
@@ -638,6 +671,23 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     return False
 
 
+def ipmath(value, amount):
+    try:
+        ip = netaddr.IPAddress(value)
+    except netaddr.AddrFormatError:
+        msg = 'You must pass a valid IP address; {0} is invalid'.format(value)
+        raise errors.AnsibleFilterError(msg)
+
+    if not isinstance(amount, int):
+        msg = (
+            'You must pass an integer for arithmetic; '
+            '{0} is not a valid integer'
+        ).format(amount)
+        raise errors.AnsibleFilterError(msg)
+
+    return str(ip + amount)
+
+
 def ipwrap(value, query=''):
     try:
         if isinstance(value, (list, tuple, types.GeneratorType)):
@@ -785,7 +835,7 @@ def next_nth_usable(value, offset):
         return False
 
     if type(offset) != int:
-        raise errors.AnsibleFilterError('Must pass in an interger')
+        raise errors.AnsibleFilterError('Must pass in an integer')
     if v.size > 1:
         first_usable, last_usable = _first_last(v)
         nth_ip = int(netaddr.IPAddress(int(v.ip) + offset))
@@ -807,7 +857,7 @@ def previous_nth_usable(value, offset):
         return False
 
     if type(offset) != int:
-        raise errors.AnsibleFilterError('Must pass in an interger')
+        raise errors.AnsibleFilterError('Must pass in an integer')
     if v.size > 1:
         first_usable, last_usable = _first_last(v)
         nth_ip = int(netaddr.IPAddress(int(v.ip) - offset))
@@ -900,6 +950,39 @@ def network_in_network(value, test):
         return False
 
 
+def reduce_on_network(value, network):
+    '''
+    Reduces a list of addresses to only the addresses that match a given network.
+
+    :param: value: The list of addresses to filter on.
+    :param: network: The network to validate against.
+
+    :return: The reduced list of addresses.
+    '''
+    # normalize network variable into an ipaddr
+    n = _address_normalizer(network)
+
+    # get first and last addresses as integers to compare value and test; or cathes value when case is /32
+    n_first = ipaddr(ipaddr(n, 'network') or ipaddr(n, 'address'), 'int')
+    n_last = ipaddr(ipaddr(n, 'broadcast') or ipaddr(n, 'address'), 'int')
+
+    # create an empty list to fill and return
+    r = []
+
+    for address in value:
+        # normalize address variables into an ipaddr
+        a = _address_normalizer(address)
+
+        # get first and last addresses as integers to compare value and test; or cathes value when case is /32
+        a_first = ipaddr(ipaddr(a, 'network') or ipaddr(a, 'address'), 'int')
+        a_last = ipaddr(ipaddr(a, 'broadcast') or ipaddr(a, 'address'), 'int')
+
+        if _range_checker(a_first, n_first, n_last) and _range_checker(a_last, n_first, n_last):
+            r.append(address)
+
+    return r
+
+
 # Returns the SLAAC address within a network for a given HW/MAC address.
 # Usage:
 #
@@ -982,10 +1065,10 @@ def _need_netaddr(f_name, *args, **kwargs):
                                     'installed on the ansible controller' % f_name)
 
 
-def ip4_hex(arg):
+def ip4_hex(arg, delimiter=''):
     ''' Convert an IPv4 address to Hexadecimal notation '''
     numbers = list(map(int, arg.split('.')))
-    return '{:02x}{:02x}{:02x}{:02x}'.format(*numbers)
+    return '{0:02x}{sep}{1:02x}{sep}{2:02x}{sep}{3:02x}'.format(*numbers, sep=delimiter)
 
 
 # ---- Ansible filters ----
@@ -993,7 +1076,9 @@ class FilterModule(object):
     ''' IP address and network manipulation filters '''
     filter_map = {
         # IP addresses and networks
+        'cidr_merge': cidr_merge,
         'ipaddr': ipaddr,
+        'ipmath': ipmath,
         'ipwrap': ipwrap,
         'ip4_hex': ip4_hex,
         'ipv4': ipv4,
@@ -1002,6 +1087,7 @@ class FilterModule(object):
         'next_nth_usable': next_nth_usable,
         'network_in_network': network_in_network,
         'network_in_usable': network_in_usable,
+        'reduce_on_network': reduce_on_network,
         'nthhost': nthhost,
         'previous_nth_usable': previous_nth_usable,
         'slaac': slaac,

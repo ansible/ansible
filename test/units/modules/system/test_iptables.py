@@ -1,4 +1,3 @@
-from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
 from ansible.modules.system import iptables
@@ -578,3 +577,62 @@ class TestIptables(ModuleTestCase):
             '--reject-with',
             'tcp-reset',
         ])
+
+    def test_tcp_flags(self):
+        """ Test various ways of inputting tcp_flags """
+        args = [
+            {
+                'chain': 'OUTPUT',
+                'protocol': 'tcp',
+                'jump': 'DROP',
+                'tcp_flags': 'flags=ALL flags_set="ACK,RST,SYN,FIN"'
+            },
+            {
+                'chain': 'OUTPUT',
+                'protocol': 'tcp',
+                'jump': 'DROP',
+                'tcp_flags': {
+                    'flags': 'ALL',
+                    'flags_set': 'ACK,RST,SYN,FIN'
+                }
+            },
+            {
+                'chain': 'OUTPUT',
+                'protocol': 'tcp',
+                'jump': 'DROP',
+                'tcp_flags': {
+                    'flags': ['ALL'],
+                    'flags_set': ['ACK', 'RST', 'SYN', 'FIN']
+                }
+            },
+
+        ]
+
+        for item in args:
+            set_module_args(item)
+
+            commands_results = [
+                (0, '', ''),
+            ]
+
+            with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+                run_command.side_effect = commands_results
+                with self.assertRaises(AnsibleExitJson) as result:
+                    iptables.main()
+                    self.assertTrue(result.exception.args[0]['changed'])
+
+            self.assertEqual(run_command.call_count, 1)
+            self.assertEqual(run_command.call_args_list[0][0][0], [
+                '/sbin/iptables',
+                '-t',
+                'filter',
+                '-C',
+                'OUTPUT',
+                '-p',
+                'tcp',
+                '--tcp-flags',
+                'ALL',
+                'ACK,RST,SYN,FIN',
+                '-j',
+                'DROP'
+            ])

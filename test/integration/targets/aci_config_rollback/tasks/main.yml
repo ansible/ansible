@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright 2017, Jacob McGill <jmcgill298
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -10,12 +10,15 @@
 
 - name: ensure tenant does not exist for tests to kick off
   aci_tenant: &aci_tenant_absent
-    hostname: "{{ aci_hostname }}"
+    host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
-    tenant: anstest
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     state: absent
+    tenant: anstest
 
 - name: create a snapshot
   aci_config_snapshot: &create_snapshot
@@ -46,15 +49,15 @@
     <<: *create_snapshot
     state: preview
     compare_export_policy: anstest
-    compare_snapshot: "{{ snapshots.existing.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
-    snapshot: "{{ snapshots.existing.0.configSnapshotCont.children[-2].configSnapshot.attributes.name }}"
+    compare_snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
+    snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-2].configSnapshot.attributes.name }}"
   register: rollback_preview
 
 - name: rollback to snapshot
   aci_config_rollback: &aci_rollback
     <<: *create_snapshot
     state: rollback
-    snapshot: "{{ snapshots.existing.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
+    snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
   ignore_errors: yes
   register: rollback_missing_param
 
@@ -66,7 +69,7 @@
     import_mode: atomic
   register: rollback_rollback
 
-- name: pause execution to let rollback take affect
+- name: pause execution to let rollback take effect
   pause:
     seconds: 15
 
@@ -78,14 +81,14 @@
 - name: rollback assertions
   assert:
     that:
-      - rollback_preview.changed == false
+      - rollback_preview is not changed
       - '"<fvTenant name=\"anstest\" rn=\"tn-anstest\" status=\"deleted\">" in rollback_preview.diff'
       - '"snapshots.diff.xml" in rollback_preview.url'
-      - rollback_missing_param.failed == true
-      - 'rollback_missing_param.msg == "state is rollback but the following are missing: import_policy"'
-      - rollback_rollback.changed == true
-      - '"ce2_" in rollback_rollback.config.configImportP.attributes.fileName'
-      - '".tar.gz" in rollback_rollback.config.configImportP.attributes.fileName'
+      - rollback_missing_param is failed
+      - 'rollback_missing_param.msg == "state is rollback but all of the following are missing: import_policy"'
+      - rollback_rollback is changed
+      - '"ce2_" in rollback_rollback.sent.configImportP.attributes.fileName'
+      - '".tar.gz" in rollback_rollback.sent.configImportP.attributes.fileName'
       - '"fabric/configimp-anstest.json" in rollback_rollback.url'
-      - tenant_removed.changed == false
-      - tenant_removed.existing == []
+      - tenant_removed is not changed
+      - tenant_removed.previous == []

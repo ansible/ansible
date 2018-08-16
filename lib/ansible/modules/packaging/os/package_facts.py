@@ -151,7 +151,7 @@ def rpm_package_list():
     try:
         import rpm
     except ImportError:
-        module.fail_json('Unable to use the rpm python bindings, please ensure they are installed under the python the module runs under')
+        module.fail_json(msg='Unable to use the rpm python bindings, please ensure they are installed under the python the module runs under')
 
     trans_set = rpm.TransactionSet()
     installed_packages = {}
@@ -174,7 +174,7 @@ def apt_package_list():
     try:
         import apt
     except ImportError:
-        module.fail_json('Unable to use the apt python bindings, please ensure they are installed under the python the module runs under')
+        module.fail_json(msg='Unable to use the apt python bindings, please ensure they are installed under the python the module runs under')
 
     apt_cache = apt.Cache()
     installed_packages = {}
@@ -192,7 +192,7 @@ def apt_package_list():
 # FIXME: add more listing methods
 def main():
     global module
-    module = AnsibleModule(argument_spec=dict(manager=dict()))
+    module = AnsibleModule(argument_spec=dict(manager=dict()), supports_check_mode=True)
     manager = module.params['manager']
     packages = {}
     results = {}

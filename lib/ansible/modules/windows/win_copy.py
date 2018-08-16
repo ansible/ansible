@@ -1,17 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -27,13 +23,13 @@ options:
     - When used instead of C(src), sets the contents of a file directly to the
       specified value. This is for simple values, for anything complex or with
       formatting please switch to the template module.
-    version_added: "2.3"
+    version_added: '2.3'
   decrypt:
     description:
     - This option controls the autodecryption of source files using vault.
     type: bool
     default: 'yes'
-    version_added: "2.5"
+    version_added: '2.5'
   dest:
     description:
     - Remote absolute path where the file should be copied to. If src is a
@@ -45,9 +41,9 @@ options:
       with "/" or "\", or C(src) is a directory.
     - If C(src) and C(dest) are files and if the parent directory of C(dest)
       doesn't exist, then the task will fail.
-    required: true
+    required: yes
+    type: path
   force:
-    version_added: "2.3"
     description:
     - If set to C(yes), the file will only be transferred if the content
       is different than destination.
@@ -55,22 +51,23 @@ options:
       destination does not exist.
     - If set to C(no), no checksuming of the content is performed which can
       help improve performance on larger files.
-    default: 'yes'
     type: bool
+    default: 'yes'
+    version_added: '2.3'
   local_follow:
-    version_added: '2.4'
     description:
     - This flag indicates that filesystem links in the source tree, if they
       exist, should be followed.
-    default: 'yes'
     type: bool
+    default: 'yes'
+    version_added: '2.4'
   remote_src:
     description:
-    - If False, it will search for src at originating/master machine, if True
-      it will go to the remote/target machine for the src.
-    default: 'no'
+    - If C(no), it will search for src at originating/master machine.
+    - If C(yes), it will go to the remote/target machine for the src.
     type: bool
-    version_added: "2.3"
+    default: 'no'
+    version_added: '2.3'
   src:
     description:
     - Local path to a file to copy to the remote server; can be absolute or
@@ -82,7 +79,8 @@ options:
       end with "/", the directory itself with all contents is copied.
     - If path is a file and dest ends with "\", the file is copied to the
       folder with the same filename.
-    required: true
+    required: yes
+    type: path
 notes:
 - For non-Windows targets, use the M(copy) module instead.
 - Currently win_copy does not support copying symbolic links from both local to
@@ -101,39 +99,39 @@ EXAMPLES = r'''
 - name: Copy a single file
   win_copy:
     src: /srv/myfiles/foo.conf
-    dest: c:\Temp\renamed-foo.conf
+    dest: C:\Temp\renamed-foo.conf
 
 - name: Copy a single file keeping the filename
   win_copy:
     src: /src/myfiles/foo.conf
-    dest: c:\temp\
+    dest: C:\Temp\
 
-- name: Copy folder to c:\temp (results in C:\Temp\temp_files)
+- name: Copy folder to C:\Temp (results in C:\Temp\temp_files)
   win_copy:
     src: files/temp_files
-    dest: c:\Temp
+    dest: C:\Temp
 
 - name: Copy folder contents recursively
   win_copy:
     src: files/temp_files/
-    dest: c:\Temp
+    dest: C:\Temp
 
 - name: Copy a single file where the source is on the remote host
   win_copy:
-    src: C:\temp\foo.txt
+    src: C:\Temp\foo.txt
     dest: C:\ansible\foo.txt
-    remote_src: True
+    remote_src: yes
 
 - name: Copy a folder recursively where the source is on the remote host
   win_copy:
-    src: C:\temp
+    src: C:\Temp
     dest: C:\ansible
-    remote_src: True
+    remote_src: yes
 
 - name: Set the contents of a file
   win_copy:
-    dest: C:\temp\foo.txt
     content: abc123
+    dest: C:\Temp\foo.txt
 '''
 
 RETURN = r'''

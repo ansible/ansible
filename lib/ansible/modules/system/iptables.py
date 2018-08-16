@@ -106,11 +106,15 @@ options:
     description:
       - TCP flags specification.
       - C(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
-        - The C(flags) list is the mask, a list of flags you want to examine.
-        - The C(flags_set) list tells which one(s) should be set.
-        If one of the two values is missing, the --tcp-flags option will be ignored.
     default: {}
     version_added: "2.4"
+    suboptions:
+        flags:
+            description:
+                - List of flags you want to examine.
+        flags_set:
+            description:
+                - Flags to be set.
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -238,7 +242,9 @@ options:
     version_added: "2.1"
   uid_owner:
     description:
-      - Specifies the UID or username to use in match by owner rule.
+      - Specifies the UID or username to use in match by owner rule. From
+        Ansible 2.6 when the C(!) argument is prepended then the it inverts
+        the rule to apply instead to all users except that one specified.
     version_added: "2.1"
   reject_with:
     description:
@@ -340,6 +346,19 @@ EXAMPLES = '''
     protocol: tcp
     reject_with: tcp-reset
     ip_version: ipv4
+
+# Set tcp flags
+- iptables:
+    chain: OUTPUT
+    jump: DROP
+    protocol: tcp
+    tcp_flags:
+      flags: ALL
+      flags_set:
+        - ACK
+        - RST
+        - SYN
+        - FIN
 '''
 
 import re
@@ -437,6 +456,7 @@ def construct_rule(params):
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
     append_match(rule, params['uid_owner'], 'owner')
+    append_match_flag(rule, params['uid_owner'], '--uid-owner', True)
     append_param(rule, params['uid_owner'], '--uid-owner', False)
     if params['jump'] is None:
         append_jump(rule, params['reject_with'], 'REJECT')
@@ -518,7 +538,11 @@ def main():
             destination=dict(type='str'),
             to_destination=dict(type='str'),
             match=dict(type='list', default=[]),
-            tcp_flags=dict(type='dict', default={}),
+            tcp_flags=dict(type='dict',
+                           options=dict(
+                                flags=dict(type='list'),
+                                flags_set=dict(type='list'))
+                           ),
             jump=dict(type='str'),
             log_prefix=dict(type='str'),
             goto=dict(type='str'),
@@ -604,6 +628,7 @@ def main():
                 remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
+
 
 if __name__ == '__main__':
     main()

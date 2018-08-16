@@ -18,14 +18,15 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_profile_client_ssl import ModuleParameters
-    from library.bigip_profile_client_ssl import ApiParameters
-    from library.bigip_profile_client_ssl import ModuleManager
-    from library.bigip_profile_client_ssl import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.modules.bigip_profile_client_ssl import ModuleParameters
+    from library.modules.bigip_profile_client_ssl import ApiParameters
+    from library.modules.bigip_profile_client_ssl import ModuleManager
+    from library.modules.bigip_profile_client_ssl import ArgumentSpec
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
@@ -33,7 +34,8 @@ except ImportError:
         from ansible.modules.network.f5.bigip_profile_client_ssl import ApiParameters
         from ansible.modules.network.f5.bigip_profile_client_ssl import ModuleManager
         from ansible.modules.network.f5.bigip_profile_client_ssl import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -75,20 +77,18 @@ class TestParameters(unittest.TestCase):
             ]
         )
 
-        p = ModuleParameters(args)
+        p = ModuleParameters(params=args)
         assert p.name == 'foo'
         assert p.parent == '/Common/bar'
         assert p.ciphers == '!SSLv3:!SSLv2:ECDHE+AES-GCM+SHA256:ECDHE-RSA-AES128-CBC-SHA'
 
     def test_api_parameters(self):
         args = load_fixture('load_ltm_profile_clientssl.json')
-        p = ApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.name == 'foo'
         assert p.ciphers == 'DEFAULT'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -107,17 +107,16 @@ class TestManager(unittest.TestCase):
                     chain='bigip_ssl_cert1'
                 )
             ],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(return_value=False)

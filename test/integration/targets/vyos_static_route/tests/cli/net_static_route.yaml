@@ -1,0 +1,33 @@
+---
+- debug: msg="START vyos cli/net_static_route.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: delete static route - setup
+  net_static_route:
+    prefix: 172.24.0.0/24
+    next_hop: 192.168.42.64
+    state: absent
+  register: result
+
+- name: create static route using platform agnostic module
+  net_static_route:
+    prefix: 172.24.0.0/24
+    next_hop: 192.168.42.64
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set protocols static route 172.24.0.0/24 next-hop 192.168.42.64" in result.commands'
+
+- name: delete static route - teardown
+  net_static_route:
+    prefix: 172.24.0.0/24
+    next_hop: 192.168.42.64
+    state: absent
+  register: result
+
+- debug: msg="END vyos cli/net_static_route.yaml on connection={{ ansible_connection }}"

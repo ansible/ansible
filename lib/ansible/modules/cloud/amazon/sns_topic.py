@@ -29,30 +29,22 @@ options:
   state:
     description:
       - Whether to create or destroy an SNS topic
-    required: False
     default: present
     choices: ["absent", "present"]
   display_name:
     description:
       - Display name of the topic
-    required: False
-    default: None
   policy:
     description:
       - Policy to apply to the SNS topic
-    required: False
-    default: None
   delivery_policy:
     description:
       - Delivery policy to apply to the SNS topic
-    required: False
-    default: None
   subscriptions:
     description:
       - List of subscriptions to apply to the topic. Note that AWS requires
         subscriptions to be confirmed, so you will need to confirm any new
         subscriptions.
-    required: False
     default: []
   purge_subscriptions:
     description:
@@ -61,9 +53,10 @@ options:
         exist and would be purged, they are silently skipped. This means that
         somebody could come back later and confirm the subscription. Sorry.
         Blame Amazon."
-    required: False
-    default: True
-extends_documentation_fragment: aws
+    default: 'yes'
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements: [ "boto" ]
 """
 

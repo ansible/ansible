@@ -30,51 +30,46 @@ options:
       - The shell module takes a free form command to run, as a string.  There's not an actual
         option named "free form".  See the examples!
     required: true
-    default: null
   creates:
     description:
       - a filename, when it already exists, this step will B(not) be run.
-    required: no
-    default: null
   removes:
     description:
       - a filename, when it does not exist, this step will B(not) be run.
     version_added: "0.8"
-    required: no
-    default: null
   chdir:
     description:
       - cd into this directory before running the command
-    required: false
-    default: null
     version_added: "0.6"
   executable:
     description:
       - change the shell used to execute the command. Should be an absolute path to the executable.
-    required: false
-    default: null
     version_added: "0.9"
   warn:
     description:
       - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
-    required: false
-    default: True
+    type: bool
+    default: 'yes'
     version_added: "1.8"
   stdin:
     version_added: "2.4"
     description:
       - Set the stdin of the command directly to the specified value.
-    required: false
-    default: null
 notes:
-   -  If you want to execute a command securely and predictably, it may be
-      better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless the C(shell)
-      module is explicitly required. When running ad-hoc commands, use your best
-      judgement.
-   -  To sanitize any variables passed to the shell module, you should use
-      "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-   - For Windows targets, use the M(win_shell) module instead.
+  -  If you want to execute a command securely and predictably, it may be
+     better to use the M(command) module instead. Best practices when writing
+     playbooks will follow the trend of using M(command) unless the C(shell)
+     module is explicitly required. When running ad-hoc commands, use your best
+     judgement.
+  -  Check mode is supported when passing C(creates) or C(removes). If running
+     in check mode and either of these are specified, the module will check for
+     the existence of the file and report the correct changed status. If these
+     are not supplied, the task will be skipped.
+  -  To sanitize any variables passed to the shell module, you should use
+     "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
+  - For Windows targets, use the M(win_shell) module instead.
+  - Rather than using here documents to create multi-line scripts inside playbooks,
+    use the M(script) module instead.
 requirements: [ ]
 author:
     - Ansible Core Team

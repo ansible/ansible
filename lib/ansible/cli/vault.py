@@ -14,7 +14,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ansible-vault is a script that encrypts/decrypts YAML files. See
-# http://docs.ansible.com/playbooks_vault.html for more details.
+# https://docs.ansible.com/playbooks_vault.html for more details.
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -106,6 +106,12 @@ class VaultCLI(CLI):
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
+        # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
+        if self.action in ['create', 'encrypt', 'encrypt_string', 'rekey', 'edit']:
+            self.parser.add_option('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
+                                   action='store', type='string',
+                                   help='the vault id used to encrypt (required if more than vault-id is provided)')
+
     def parse(self):
 
         self.parser = CLI.base_parser(
@@ -119,6 +125,7 @@ class VaultCLI(CLI):
         self.set_action()
 
         super(VaultCLI, self).parse()
+        self.validate_conflicts(vault_opts=True, vault_rekey_opts=True)
 
         display.verbosity = self.options.verbosity
 
@@ -175,8 +182,11 @@ class VaultCLI(CLI):
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
         if self.action in ['encrypt', 'encrypt_string', 'create']:
-            if len(vault_ids) > 1:
-                raise AnsibleOptionsError("Only one --vault-id can be used for encryption")
+
+            encrypt_vault_id = None
+            # no --encrypt-vault-id self.options.encrypt_vault_id for 'edit'
+            if self.action not in ['edit']:
+                encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
 
             vault_secrets = None
             vault_secrets = \
@@ -186,36 +196,52 @@ class VaultCLI(CLI):
                                          ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
 
-            if len(vault_secrets) > 1:
-                raise AnsibleOptionsError("Only one --vault-id can be used for encryption. This includes passwords from configuration and cli.")
+            if len(vault_secrets) > 1 and not encrypt_vault_id:
+                raise AnsibleOptionsError("The vault-ids %s are available to encrypt. Specify the vault-id to encrypt with --encrypt-vault-id" %
+                                          ','.join([x[0] for x in vault_secrets]))
 
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
-            encrypt_secret = match_encrypt_secret(vault_secrets)
+            encrypt_secret = match_encrypt_secret(vault_secrets,
+                                                  encrypt_vault_id=encrypt_vault_id)
+
             # only one secret for encrypt for now, use the first vault_id and use its first secret
-            # self.encrypt_vault_id = list(vault_secrets.keys())[0]
-            # self.encrypt_secret = vault_secrets[self.encrypt_vault_id][0]
+            # TODO: exception if more than one?
             self.encrypt_vault_id = encrypt_secret[0]
             self.encrypt_secret = encrypt_secret[1]
 
         if self.action in ['rekey']:
+            encrypt_vault_id = self.options.encrypt_vault_id or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            # print('encrypt_vault_id: %s' % encrypt_vault_id)
+            # print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
+
+            # new_vault_ids should only ever be one item, from
+            # load the default vault ids if we are using encrypt-vault-id
             new_vault_ids = []
+            if encrypt_vault_id:
+                new_vault_ids = default_vault_ids
             if self.options.new_vault_id:
                 new_vault_ids.append(self.options.new_vault_id)
+
+            new_vault_password_files = []
+            if self.options.new_vault_password_file:
+                new_vault_password_files.append(self.options.new_vault_password_file)
 
             new_vault_secrets = \
                 self.setup_vault_secrets(loader,
                                          vault_ids=new_vault_ids,
-                                         vault_password_files=self.options.new_vault_password_files,
+                                         vault_password_files=new_vault_password_files,
                                          ask_vault_pass=self.options.ask_vault_pass,
                                          create_new_password=True)
 
             if not new_vault_secrets:
                 raise AnsibleOptionsError("A new vault password is required to use Ansible's Vault rekey")
 
-            # There is only one new_vault_id currently and one new_vault_secret
-            new_encrypt_secret = match_encrypt_secret(new_vault_secrets)
+            # There is only one new_vault_id currently and one new_vault_secret, or we
+            # use the id specified in --encrypt-vault-id
+            new_encrypt_secret = match_encrypt_secret(new_vault_secrets,
+                                                      encrypt_vault_id=encrypt_vault_id)
 
             self.new_encrypt_vault_id = new_encrypt_secret[0]
             self.new_encrypt_secret = new_encrypt_secret[1]

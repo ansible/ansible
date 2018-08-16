@@ -27,13 +27,11 @@ options:
      description:
         - Indicate desired state of the resource
      choices: ['present', 'absent']
-     required: false
      default: present
    network_name:
      description:
         - Name of the network to which the subnet should be attached
         - Required when I(state) is 'present'
-     required: false
    name:
      description:
        - The name of the subnet that should be created. Although Neutron
@@ -45,81 +43,67 @@ options:
         - The CIDR representation of the subnet that should be assigned to
           the subnet. Required when I(state) is 'present' and a subnetpool
           is not specified.
-     required: false
-     default: None
    ip_version:
      description:
         - The IP version of the subnet 4 or 6
-     required: false
      default: 4
    enable_dhcp:
      description:
         - Whether DHCP should be enabled for this subnet.
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
    gateway_ip:
      description:
         - The ip that would be assigned to the gateway for this subnet
-     required: false
-     default: None
    no_gateway_ip:
      description:
         - The gateway IP would not be assigned for this subnet
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.2"
    dns_nameservers:
      description:
         - List of DNS nameservers for this subnet.
-     required: false
-     default: None
    allocation_pool_start:
      description:
         - From the subnet pool the starting address from which the IP should
           be allocated.
-     required: false
-     default: None
    allocation_pool_end:
      description:
         - From the subnet pool the last IP that should be assigned to the
           virtual machines.
-     required: false
-     default: None
    host_routes:
      description:
         - A list of host route dictionaries for the subnet.
-     required: false
-     default: None
    ipv6_ra_mode:
      description:
         - IPv6 router advertisement mode
      choices: ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
-     required: false
-     default: None
    ipv6_address_mode:
      description:
         - IPv6 address mode
      choices: ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
-     required: false
-     default: None
    use_default_subnetpool:
      description:
         - Use the default subnetpool for I(ip_version) to obtain a CIDR.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    project:
      description:
         - Project name or ID containing the subnet (name admin-only)
-     required: false
-     default: None
      version_added: "2.1"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+   extra_specs:
+     description:
+        - Dictionary with extra key/value pairs passed to the API
      required: false
+     default: {}
+     version_added: "2.7"
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -157,16 +141,8 @@ EXAMPLES = '''
     ipv6_address_mode: dhcpv6-stateless
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _can_update(subnet, module, cloud):
@@ -261,6 +237,7 @@ def main():
         ipv6_ra_mode=dict(default=None, choice=ipv6_mode_choices),
         ipv6_address_mode=dict(default=None, choice=ipv6_mode_choices),
         use_default_subnetpool=dict(default=False, type='bool'),
+        extra_specs=dict(required=False, default=dict(), type='dict'),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None)
     )
@@ -269,9 +246,6 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
                            **module_kwargs)
-
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
 
     state = module.params['state']
     network_name = module.params['network_name']
@@ -289,11 +263,7 @@ def main():
     ipv6_a_mode = module.params['ipv6_address_mode']
     use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
-
-    if (use_default_subnetpool and
-            StrictVersion(shade.__version__) < StrictVersion('1.16.0')):
-        module.fail_json(msg="To utilize use_default_subnetpool, the installed"
-                             " version of the shade library MUST be >=1.16.0")
+    extra_specs = module.params['extra_specs']
 
     # Check for required parameters when state == 'present'
     if state == 'present':
@@ -313,8 +283,8 @@ def main():
     if no_gateway_ip and gateway_ip:
         module.fail_json(msg='no_gateway_ip is not allowed with gateway_ip')
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if project is not None:
             proj = cloud.get_project(project)
             if proj is None:
@@ -334,6 +304,7 @@ def main():
         if state == 'present':
             if not subnet:
                 kwargs = dict(
+                    cidr=cidr,
                     ip_version=ip_version,
                     enable_dhcp=enable_dhcp,
                     subnet_name=subnet_name,
@@ -345,9 +316,14 @@ def main():
                     ipv6_ra_mode=ipv6_ra_mode,
                     ipv6_address_mode=ipv6_a_mode,
                     tenant_id=project_id)
+                dup_args = set(kwargs.keys()) & set(extra_specs.keys())
+                if dup_args:
+                    raise ValueError('Duplicate key(s) {0} in extra_specs'
+                                     .format(list(dup_args)))
                 if use_default_subnetpool:
                     kwargs['use_default_subnetpool'] = use_default_subnetpool
-                subnet = cloud.create_subnet(network_name, cidr, **kwargs)
+                kwargs = dict(kwargs, **extra_specs)
+                subnet = cloud.create_subnet(network_name, **kwargs)
                 changed = True
             else:
                 if _needs_update(subnet, module, cloud):
@@ -374,7 +350,7 @@ def main():
                 cloud.delete_subnet(subnet_name)
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

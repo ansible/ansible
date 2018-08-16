@@ -34,14 +34,14 @@ class TestIosxrFacts(TestIosxrModule):
     def setUp(self):
         super(TestIosxrFacts, self).setUp()
 
-        self.mock_run_command = patch(
-            'ansible.modules.network.iosxr.iosxr_facts.run_command')
-        self.run_command = self.mock_run_command.start()
+        self.mock_run_commands = patch(
+            'ansible.modules.network.iosxr.iosxr_facts.run_commands')
+        self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
         super(TestIosxrFacts, self).tearDown()
 
-        self.mock_run_command.stop()
+        self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
 
@@ -57,10 +57,11 @@ class TestIosxrFacts(TestIosxrModule):
                     command = item
                 filename = str(command).replace(' ', '_')
                 filename = filename.replace('/', '7')
+                filename = filename.replace('|', '_')
                 output.append(load_fixture(filename))
             return output
 
-        self.run_command.side_effect = load_from_file
+        self.run_commands.side_effect = load_from_file
 
     def test_iosxr_facts_gather_subset_default(self):
         set_module_args(dict())

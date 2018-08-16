@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import re
 
 from ansible import constants as C
 from ansible.compat.tests import unittest
@@ -229,11 +230,23 @@ class TestActionBase(unittest.TestCase):
         # create our fake task
         mock_task = MagicMock()
 
+        def get_shell_opt(opt):
+
+            ret = None
+            if opt == 'admin_users':
+                ret = ['root', 'toor', 'Administrator']
+            elif opt == 'remote_tmp':
+                ret = '~/.ansible/tmp'
+
+            return ret
+
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
         mock_connection.transport = 'ssh'
         mock_connection._shell.mkdtemp.return_value = 'mkdir command'
         mock_connection._shell.join_path.side_effect = os.path.join
+        mock_connection._shell.get_option = get_shell_opt
+        mock_connection._shell.HOMES_RE = re.compile(r'(\'|\")?(~|\$HOME)(.*)')
 
         # we're using a real play context here
         play_context = PlayContext()
@@ -395,19 +408,22 @@ class TestActionBase(unittest.TestCase):
         mock_task.args = dict(a=1, b=2, c=3)
 
         # create a mock connection, so we don't actually try and connect to things
-        def build_module_command(env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+        def build_module_command(env_string, shebang, cmd, arg_path=None):
             to_run = [env_string, cmd]
             if arg_path:
                 to_run.append(arg_path)
-            if rm_tmp:
-                to_run.append(rm_tmp)
             return " ".join(to_run)
+
+        def get_option(option):
+            return {'admin_users': ['root', 'toor']}.get(option)
 
         mock_connection = MagicMock()
         mock_connection.build_module_command.side_effect = build_module_command
         mock_connection.socket_path = None
         mock_connection._shell.get_remote_filename.return_value = 'copy.py'
         mock_connection._shell.join_path.side_effect = os.path.join
+        mock_connection._shell.tmpdir = '/var/tmp/mytempdir'
+        mock_connection._shell.get_option = get_option
 
         # we're using a real play context here
         play_context = PlayContext()

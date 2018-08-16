@@ -1,0 +1,61 @@
+---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  vyos_config:
+    lines:
+      - delete system name-server 192.0.2.1
+      - delete system name-server 192.0.2.2
+      - delete system name-server 192.0.2.3
+    match: none
+
+- name: configure name servers
+  vyos_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 3
+      - result.commands[0]  is search("set system name-server '192.0.2.1'")
+      - result.commands[1]  is search("set system name-server '192.0.2.2'")
+      - result.commands[2]  is search("set system name-server '192.0.2.3'")
+
+- name: verify name_servers
+  vyos_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: remove one
+  vyos_system:
+    name_servers:
+      - 192.0.2.3
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 1
+      - result.commands[0]  is search("delete system name-server '192.0.2.3'")
+
+- name: teardown
+  vyos_config:
+    lines:
+      - delete system name-server name-server 192.0.2.1
+      - delete system name-server name-server 192.0.2.2
+      - delete system name-server name-server 192.0.2.3
+    match: none
+
+- debug: msg="END cli/basic.yaml on connection={{ ansible_connection }}"

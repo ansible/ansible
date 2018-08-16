@@ -7,67 +7,102 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
 module: vmware_guest
 short_description: Manages virtual machines in vCenter
-description:
-- Create new virtual machines (from templates or not).
-- Power on/power off/restart a virtual machine.
-- Modify, rename or remove a virtual machine.
+description: >
+   This module can be used to create new virtual machines from templates or other virtual machines,
+   manage power state of virtual machine such as power on, power off, suspend, shutdown, reboot, restart etc.,
+   modify various virtual machine components like network, disk, customization etc.,
+   rename a virtual machine and remove a virtual machine with associated components.
 version_added: '2.2'
 author:
-- James Tanner (@jctanner) <tanner.jc@gmail.com>
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
-notes:
-- Tested on vSphere 5.5 and 6.0
+- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 requirements:
 - python >= 2.6
 - PyVmomi
+notes:
+    - Please make sure the user used for vmware_guest should have correct level of privileges.
+    - For example, following is the list of minimum privileges required by users to create virtual machines.
+    - "   DataStore > Allocate Space"
+    - "   Virtual Machine > Configuration > Add New Disk"
+    - "   Virtual Machine > Configuration > Add or Remove Device"
+    - "   Virtual Machine > Inventory > Create New"
+    - "   Network > Assign Network"
+    - "   Resource > Assign Virtual Machine to Resource Pool"
+    - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
+    - Tested on vSphere 5.5, 6.0 and 6.5
+    - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
     description:
-    - What state should the virtual machine be in?
-    - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments.
-    required: yes
-    choices: [ 'present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest' ]
+    - Specify state of the virtual machine be in.
+    - 'If C(state) is set to C(present) and virtual machine exists, ensure the virtual machine
+       configurations conforms to task arguments.'
+    - 'If C(state) is set to C(absent) and virtual machine exists, then the specified virtual machine
+      is removed with its associated components.'
+    - 'If C(state) is set to one of the following C(poweredon), C(poweredoff), C(present), C(restarted), C(suspended)
+      and virtual machine does not exists, then virtual machine is deployed with given parameters.'
+    - 'If C(state) is set to C(poweredon) and virtual machine exists with powerstate other than powered on,
+      then the specified virtual machine is powered on.'
+    - 'If C(state) is set to C(poweredoff) and virtual machine exists with powerstate other than powered off,
+      then the specified virtual machine is powered off.'
+    - 'If C(state) is set to C(restarted) and virtual machine exists, then the virtual machine is restarted.'
+    - 'If C(state) is set to C(suspended) and virtual machine exists, then the virtual machine is set to suspended mode.'
+    - 'If C(state) is set to C(shutdownguest) and virtual machine exists, then the virtual machine is shutdown.'
+    - 'If C(state) is set to C(rebootguest) and virtual machine exists, then the virtual machine is rebooted.'
+    default: present
+    choices: [ present, absent, poweredon, poweredoff, restarted, suspended, shutdownguest, rebootguest ]
   name:
     description:
-    - Name of the VM to work with.
-    - VM names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
+    - Name of the virtual machine to work with.
+    - Virtual machine names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
+    - 'If multiple virtual machines with same name exists, then C(folder) is required parameter to
+       identify uniqueness of the virtual machine.'
+    - This parameter is required, if C(state) is set to C(poweredon), C(poweredoff), C(present), C(restarted), C(suspended)
+      and virtual machine does not exists.
+    - This parameter is case sensitive.
     required: yes
   name_match:
     description:
-    - If multiple VMs matching the name, use the first or last found.
+    - If multiple virtual machines matching the name, use the first or last found.
     default: 'first'
-    choices: [ 'first', 'last' ]
+    choices: [ first, last ]
   uuid:
     description:
-    - UUID of the instance to manage if known, this is VMware's unique identifier.
-    - This is required if name is not supplied.
-    - Please note that a supplied UUID will be ignored on VM creation, as VMware creates the UUID internally.
+    - UUID of the virtual machine to manage if known, this is VMware's unique identifier.
+    - This is required if C(name) is not supplied.
+    - If virtual machine does not exists, then this parameter is ignored.
+    - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
   template:
     description:
-    - Template used to create VM.
-    - If this value is not set, VM is created without using a template.
-    - If the VM exists already this setting will be ignored.
+    - Template or existing virtual machine used to create new virtual machine.
+    - If this value is not set, virtual machine is created without using a template.
+    - If the virtual machine already exists, this parameter will be ignored.
+    - This parameter is case sensitive.
+    aliases: [ 'template_src' ]
   is_template:
     description:
     - Flag the instance as a template.
+    - This will mark the given virtual machine as template.
     default: 'no'
     type: bool
     version_added: '2.3'
   folder:
     description:
     - Destination folder, absolute path to find an existing guest or create the new guest.
-    - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+    - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
+    - This parameter is case sensitive.
+    - This parameter is required, while deploying new virtual machine. version_added 2.5.
+    - 'If multiple machines are found with same name, this parameter is used to identify
+       uniqueness of the virtual machine. version_added 2.5'
     - 'Examples:'
     - '   folder: /ha-datacenter/vm'
     - '   folder: ha-datacenter/vm'
@@ -78,104 +113,165 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
-    default: /vm
   hardware:
     description:
-    - Manage some VM hardware attributes.
+    - Manage virtual machine's hardware attributes.
+    - All parameters case sensitive.
     - 'Valid attributes are:'
-    - ' - C(hotadd_cpu) (boolean): Allow virtual CPUs to be added while the VM is running.'
-    - ' - C(hotremove_cpu) (boolean): Allow virtual CPUs to be removed while the VM is running. version_added: 2.5'
-    - ' - C(hotadd_memory) (boolean): Allow memory to be added while the VM is running.'
+    - ' - C(hotadd_cpu) (boolean): Allow virtual CPUs to be added while the virtual machine is running.'
+    - ' - C(hotremove_cpu) (boolean): Allow virtual CPUs to be removed while the virtual machine is running.
+          version_added: 2.5'
+    - ' - C(hotadd_memory) (boolean): Allow memory to be added while the virtual machine is running.'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(nested_virt) (bool): Enable nested virtualization. version_added: 2.5'
     - ' - C(num_cpus) (integer): Number of CPUs.'
     - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. Value should be multiple of C(num_cpus).'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
     - ' - C(memory_reservation) (integer): Amount of memory in MB to set resource limits for memory. version_added: 2.5'
-    - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for VM
-          will always be equal to the VM's memory size. version_added: 2.5"
-    - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines. version_added: 2.5.'
+    - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for the virtual machine
+          will always be equal to the virtual machine's memory size. version_added: 2.5"
+    - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines.
+          version_added: 2.5.'
+    - ' - C(mem_limit) (integer): The memory utilization of a virtual machine will not exceed this limit. Unit is MB.
+          version_added: 2.5'
+    - ' - C(mem_reservation) (integer): The amount of memory resource that is guaranteed available to the virtual
+          machine. Unit is MB. version_added: 2.5'
+    - ' - C(cpu_limit) (integer): The CPU utilization of a virtual machine will not exceed this limit. Unit is MHz.
+          version_added: 2.5'
+    - ' - C(cpu_reservation) (integer): The amount of CPU resource that is guaranteed available to the virtual machine.
+          Unit is MHz. version_added: 2.5'
+    - ' - C(version) (integer): The Virtual machine hardware versions. Default is 10 (ESXi 5.5 and onwards).
+          Please check VMware documentation for correct virtual machine hardware version.
+          Incorrect hardware version may lead to failure in deployment. If hardware version is already equal to the given
+          version then no action is taken. version_added: 2.6'
+    - ' - C(boot_firmware) (string): Choose which firmware should be used to boot the virtual machine.
+          Allowed values are "bios" and "efi". version_added: 2.7'
+
   guest_id:
     description:
-    - Set the guest ID (Debian, RHEL, Windows...).
-    - This field is required when creating a VM.
+    - Set the guest ID.
+    - This parameter is case sensitive.
+    - 'Examples:'
+    - "  virtual machine with RHEL7 64 bit, will be 'rhel7_64Guest'"
+    - "  virtual machine with CensOS 64 bit, will be 'centos64Guest'"
+    - "  virtual machine with Ubuntu 64 bit, will be 'ubuntu64Guest'"
+    - This field is required when creating a virtual machine.
     - >
          Valid values are referenced here:
-         https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+         U(http://pubs.vmware.com/vsphere-6-5/topic/com.vmware.wssdk.apiref.doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
     version_added: '2.3'
   disk:
     description:
     - A list of disks to add.
+    - This parameter is case sensitive.
+    - Resizing disks is not supported.
+    - Removing existing disks of the virtual machine is not supported.
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
     - ' - C(type) (string): Valid values are:'
-    - '   C(thin) thin disk, C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5, Default: C(None) thick disk, no eagerzero.'
+    - '     - C(thin) thin disk'
+    - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
+    - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
-    - ' - C(autoselect_datastore) (bool): select the less used datastore.'
+    - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
+    - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
+    - '     - Available options are :'
+    - '     - C(persistent): Changes are immediately and permanently written to the virtual disk. This is default.'
+    - '     - C(independent_persistent): Same as persistent, but not affected by snapshots.'
+    - '     - C(independent_nonpersistent): Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
   cdrom:
     description:
-    - A CD-ROM configuration for the VM.
+    - A CD-ROM configuration for the virtual machine.
     - 'Valid attributes are:'
     - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
-    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is iso.'
+    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is set C(iso).'
     version_added: '2.5'
   resource_pool:
     description:
-    - Affect machine to the given resource pool.
+    - Use the given resource pool for virtual machine operation.
+    - This parameter is case sensitive.
     - Resource pool should be child of the selected host parent.
     version_added: '2.3'
   wait_for_ip_address:
     description:
-    - Wait until vCenter detects an IP address for the VM.
+    - Wait until vCenter detects an IP address for the virtual machine.
     - This requires vmware-tools (vmtoolsd) to properly work after creation.
+    - "vmware-tools needs to be installed on the given virtual machine in order to work with this parameter."
     default: 'no'
     type: bool
+  state_change_timeout:
+    description:
+    - If the C(state) is set to C(shutdownguest), by default the module will return immediately after sending the shutdown signal.
+    - If this argument is set to a positive integer, the module will instead wait for the virtual machine to reach the poweredoff state.
+    - The value sets a timeout in seconds for the module to wait for the state change.
+    default: 0
+    version_added: '2.6'
   snapshot_src:
     description:
-    - Name of an existing snapshot to use to create a clone of a VM.
+    - Name of the existing snapshot to use to create a clone of a virtual machine.
+    - This parameter is case sensitive.
+    - While creating linked clone using C(linked_clone) parameter, this parameter is required.
     version_added: '2.4'
   linked_clone:
     description:
-    - Whether to create a Linked Clone from the snapshot specified.
+    - Whether to create a linked clone from the snapshot specified.
+    - If specified, then C(snapshot_src) is required parameter.
     default: 'no'
     type: bool
     version_added: '2.4'
   force:
     description:
     - Ignore warnings and complete the actions.
+    - This parameter is useful while removing virtual machine which is powered on state.
+    - 'This module reflects the VMware vCenter API and UI workflow, as such, in some cases the `force` flag will
+       be mandatory to perform the action to ensure you are certain the action has to be taken, no matter what the consequence.
+       This is specifically the case for removing a powered on the virtual machine when C(state) is set to C(absent).'
     default: 'no'
     type: bool
   datacenter:
     description:
     - Destination datacenter for the deploy operation.
+    - This parameter is case sensitive.
     default: ha-datacenter
   cluster:
     description:
-    - The cluster name where the VM will run.
+    - The cluster name where the virtual machine will run.
+    - This is a required parameter, if C(esxi_hostname) is not set.
+    - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
+    - This parameter is case sensitive.
     version_added: '2.3'
   esxi_hostname:
     description:
-    - The ESXi hostname where the VM will run.
+    - The ESXi hostname where the virtual machine will run.
+    - This is a required parameter, if C(cluster) is not set.
+    - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
+    - This parameter is case sensitive.
   annotation:
     description:
-    - A note or annotation to include in the VM.
+    - A note or annotation to include in the virtual machine.
     version_added: '2.3'
   customvalues:
     description:
-    - Define a list of customvalues to set on VM.
-    - A customvalue object takes 2 fields C(key) and C(value).
+    - Define a list of custom values to set on virtual machine.
+    - A custom value object takes two fields C(key) and C(value).
+    - Incorrect key and values will be ignored.
     version_added: '2.3'
   networks:
     description:
     - A list of networks (in the order of the NICs).
+    - Removing NICs is not allowed, while reconfiguring the virtual machine.
+    - All parameters and VMware object names are case sensetive.
     - 'One of the below parameters is required per entry:'
-    - ' - C(name) (string): Name of the portgroup for this interface.'
+    - ' - C(name) (string): Name of the portgroup or distributed virtual portgroup for this interface.
+          When specifying distributed virtual portgroup make sure given C(esxi_hostname) or C(cluster) is associated with it.'
     - ' - C(vlan) (integer): VLAN number for this interface.'
     - 'Optional parameters per entry (used for virtual hardware):'
     - ' - C(device_type) (string): Virtual network device (one of C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov)).'
-    - ' - C(mac) (string): Customize mac address.'
+    - ' - C(mac) (string): Customize MAC address.'
+    - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
+          This value is required if multiple distributed portgroups exists with the same name. version_added 2.7'
     - 'Optional parameters per entry (used for OS customization):'
-    - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
+    - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)). C(dhcp) is default.'
     - ' - C(ip) (string): Static IP address (implies C(type: static)).'
     - ' - C(netmask) (string): Static netmask required for C(ip).'
     - ' - C(gateway) (string): Static gateway.'
@@ -187,14 +283,20 @@ options:
     version_added: '2.3'
   customization:
     description:
-    - Parameters for OS customization when cloning from template.
+    - Parameters for OS customization when cloning from the template or the virtual machine.
+    - Not all operating systems are supported for customization with respective vCenter version,
+      please check VMware documentation for respective OS customization.
+    - For supported customization operating system matrix, (see U(http://partnerweb.vmware.com/programs/guestOS/guest-os-customization-matrix.pdf))
+    - All parameters and VMware object names are case sensitive.
+    - Linux based OSes requires Perl package to be installed for OS customizations.
     - 'Common parameters (Linux/Windows):'
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
-    - ' - C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter).'
+    - ' - C(dns_suffix) (list): List of domain suffixes, also known as DNS search path (default: C(domain) parameter).'
     - ' - C(domain) (string): DNS domain name to use.'
-    - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter).'
+    - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter). Allowed characters are alphanumeric (uppercase and lowercase)
+          and minus, rest of the characters are dropped as per RFC 952.'
     - 'Parameters related to Windows customization:'
-    - ' - C(autologon) (bool): Auto logon after VM customization (default: False).'
+    - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False).'
     - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
     - ' - C(domainadmin) (string): User used to join in AD domain (mandatory with C(joindomain)).'
     - ' - C(domainadminpassword) (string): Password used to join in AD domain (mandatory with C(joindomain)).'
@@ -207,15 +309,69 @@ options:
     - ' - C(runonce) (list): List of commands to run at first user logon.'
     - ' - C(timezone) (int): Timezone (See U(https://msdn.microsoft.com/en-us/library/ms912391.aspx)).'
     version_added: '2.3'
+  vapp_properties:
+    description:
+    - A list of vApp properties
+    - 'For full list of attributes and types refer to: U(https://github.com/vmware/pyvmomi/blob/master/docs/vim/vApp/PropertyInfo.rst)'
+    - 'Basic attributes are:'
+    - ' - C(id) (string): Property id - required.'
+    - ' - C(value) (string): Property value.'
+    - ' - C(type) (string): Value type, string type by default.'
+    - ' - C(operation): C(remove): This attribute is required only when removing properties.'
+    version_added: '2.6'
+  customization_spec:
+    description:
+    - Unique name identifying the requested customization specification.
+    - This parameter is case sensitive.
+    - If set, then overrides C(customization) parameter values.
+    version_added: '2.6'
+  datastore:
+    description:
+    - Specify datastore or datastore cluster to provision virtual machine.
+    - 'This will take precendence over "disk.datastore" parameter.'
+    - This parameter is useful to override datastore or datastore cluster setting.
+    - For example, when user has different datastore or datastore cluster for templates and virtual machines.
+    - Please see example for more usage.
+    version_added: '2.7'
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
-- name: Create a VM from a template
+- name: Create a virtual machine on given ESXi hostname
   vmware_guest:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    folder: /DC1/vm/
+    name: test_vm_0001
+    state: poweredon
+    guest_id: centos64Guest
+    # This is hostname of particular ESXi server on which user wants VM to be deployed
+    esxi_hostname: "{{ esxi_hostname }}"
+    disk:
+    - size_gb: 10
+      type: thin
+      datastore: datastore1
+    hardware:
+      memory_mb: 512
+      num_cpus: 4
+      scsi: paravirtual
+    networks:
+    - name: VM Network
+      mac: aa:bb:dd:aa:00:14
+      ip: 10.10.10.100
+      netmask: 255.255.255.0
+      device_type: vmxnet3
+    wait_for_ip_address: yes
+  delegate_to: localhost
+  register: deploy_vm
+
+- name: Create a virtual machine from a template
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     folder: /testvms
     name: testvm_2
@@ -232,10 +388,16 @@ EXAMPLES = r'''
       scsi: paravirtual
       memory_reservation: 512
       memory_reservation_lock: True
+      mem_limit: 8096
+      mem_reservation: 4096
+      cpu_limit: 8096
+      cpu_reservation: 4096
       max_connections: 5
       hotadd_cpu: True
       hotremove_cpu: True
       hotadd_memory: False
+      version: 12 # Hardware version of virtual machine
+      boot_firmware: "efi"
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -246,11 +408,11 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: deploy
 
-- name: Clone a VM from Template and customize
+- name: Clone a virtual machine from Windows template and customize
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: datacenter1
     cluster: cluster
@@ -279,53 +441,102 @@ EXAMPLES = r'''
       - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
   delegate_to: localhost
 
-- name: Create a VM template
+- name:  Clone a virtual machine from Linux template and customize
   vmware_guest:
-    hostname: 192.0.2.88
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
-    datacenter: datacenter1
-    cluster: vmware_cluster_esx
-    resource_pool: highperformance_pool
-    folder: /testvms
-    name: testvm_6
-    is_template: yes
-    guest_id: debian6_64Guest
-    disk:
-    - size_gb: 10
-      type: thin
-      datastore: g73_datastore
-    hardware:
-      memory_mb: 512
-      num_cpus: 1
-      scsi: lsilogic
+    datacenter: "{{ datacenter }}"
+    state: present
+    folder: /DC1/vm
+    template: "{{ template }}"
+    name: "{{ vm_name }}"
+    cluster: DC1_C1
+    networks:
+      - name: VM Network
+        ip: 192.168.10.11
+        netmask: 255.255.255.0
+    wait_for_ip_address: True
+    customization:
+      domain: "{{ guest_domain }}"
+      dns_servers:
+        - 8.9.9.9
+        - 7.8.8.9
+      dns_suffix:
+        - example.com
+        - example2.com
   delegate_to: localhost
-  register: deploy
 
-- name: Rename a VM (requires the VM's uuid)
+- name: Rename a virtual machine (requires the virtual machine's uuid)
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    uuid: "{{ vm_uuid }}"
     name: new_name
     state: present
   delegate_to: localhost
 
-- name: Remove a VM by uuid
+- name: Remove a virtual machine by uuid
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    uuid: "{{ vm_uuid }}"
     state: absent
+  delegate_to: localhost
+
+- name: Manipulate vApp properties
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: vm_name
+    state: present
+    vapp_properties:
+      - id: remoteIP
+        category: Backup
+        label: Backup server IP
+        type: string
+        value: 10.10.10.1
+      - id: old_property
+        operation: remove
+  delegate_to: localhost
+
+- name: Set powerstate of a virtual machine to poweroff by using UUID
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    uuid: "{{ vm_uuid }}"
+    state: poweredoff
+  delegate_to: localhost
+
+- name: Deploy a virtual machine in a datastore different from the datastore of the template
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ vm_name }}"
+    state: present
+    template: "{{ template_name }}"
+    # Here datastore can be different which holds template
+    datastore: "{{ virtual_machine_datastore }}"
+    hardware:
+      memory_mb: 512
+      num_cpus: 2
+      scsi: paravirtual
   delegate_to: localhost
 '''
 
 RETURN = r'''
 instance:
-    description: metadata about the new virtualmachine
+    description: metadata about the new virtual machine
     returned: always
     type: dict
     sample: None
@@ -336,9 +547,7 @@ import time
 
 HAS_PYVMOMI = False
 try:
-    import pyVmomi
     from pyVmomi import vim, vmodl
-
     HAS_PYVMOMI = True
 except ImportError:
     pass
@@ -347,7 +556,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
-                                         vmware_argument_spec, set_vm_power_state, PyVmomi)
+                                         vmware_argument_spec, set_vm_power_state, PyVmomi,
+                                         find_dvs_by_name, find_dvspg_by_name)
 
 
 class PyVmomiDeviceHelper(object):
@@ -441,7 +651,6 @@ class PyVmomiDeviceHelper(object):
         diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-        diskspec.device.backing.diskMode = 'persistent'
         diskspec.device.controllerKey = scsi_ctl.device.key
 
         if self.next_disk_unit_number == 7:
@@ -464,23 +673,23 @@ class PyVmomiDeviceHelper(object):
 
         return diskspec
 
+    def get_device(self, device_type, name):
+        nic_dict = dict(pcnet32=vim.vm.device.VirtualPCNet32(),
+                        vmxnet2=vim.vm.device.VirtualVmxnet2(),
+                        vmxnet3=vim.vm.device.VirtualVmxnet3(),
+                        e1000=vim.vm.device.VirtualE1000(),
+                        e1000e=vim.vm.device.VirtualE1000e(),
+                        sriov=vim.vm.device.VirtualSriovEthernetCard(),
+                        )
+        if device_type in nic_dict:
+            return nic_dict[device_type]
+        else:
+            self.module.fail_json(msg='Invalid device_type "%s"'
+                                      ' for network "%s"' % (device_type, name))
+
     def create_nic(self, device_type, device_label, device_infos):
         nic = vim.vm.device.VirtualDeviceSpec()
-        if device_type == 'pcnet32':
-            nic.device = vim.vm.device.VirtualPCNet32()
-        elif device_type == 'vmxnet2':
-            nic.device = vim.vm.device.VirtualVmxnet2()
-        elif device_type == 'vmxnet3':
-            nic.device = vim.vm.device.VirtualVmxnet3()
-        elif device_type == 'e1000':
-            nic.device = vim.vm.device.VirtualE1000()
-        elif device_type == 'e1000e':
-            nic.device = vim.vm.device.VirtualE1000e()
-        elif device_type == 'sriov':
-            nic.device = vim.vm.device.VirtualSriovEthernetCard()
-        else:
-            self.module.fail_json(msg='Invalid device_type "%s" for network "%s"' % (device_type, device_infos['name']))
-
+        nic.device = self.get_device(device_type, device_infos['name'])
         nic.device.wakeOnLanEnabled = bool(device_infos.get('wake_on_lan', True))
         nic.device.deviceInfo = vim.Description()
         nic.device.deviceInfo.label = device_label
@@ -506,11 +715,8 @@ class PyVmomiDeviceHelper(object):
 
         Returns: (Boolean) True if string is valid MAC address, otherwise False
         """
-        ret = False
         mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
-        if mac_addr_regex.match(mac_addr):
-            ret = True
-        return ret
+        return bool(mac_addr_regex.match(mac_addr))
 
 
 class PyVmomiCache(object):
@@ -528,11 +734,11 @@ class PyVmomiCache(object):
         """ Wrapper around find_obj to set datacenter context """
         result = find_obj(content, types, name)
         if result and confine_to_datacenter:
-            if self.get_parent_datacenter(result).name != self.dc_name:
+            if to_text(self.get_parent_datacenter(result).name) != to_text(self.dc_name):
                 result = None
                 objects = self.get_all_objs(content, types, confine_to_datacenter=True)
                 for obj in objects:
-                    if name is None or obj.name == name:
+                    if name is None or to_text(obj.name) == to_text(name):
                         return obj
         return result
 
@@ -605,6 +811,10 @@ class PyVmomiHelper(PyVmomi):
 
     def remove_vm(self, vm):
         # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.ManagedEntity.html#destroy
+        if vm.summary.runtime.powerState.lower() == 'poweredon':
+            self.module.fail_json(msg="Virtual machine %s found in 'powered on' state, "
+                                      "please use 'force' parameter to remove or poweroff VM "
+                                      "and try removing VM again." % vm.name)
         task = vm.Destroy()
         self.wait_for_task(task)
 
@@ -622,9 +832,69 @@ class PyVmomiHelper(PyVmomi):
         if vm_creation and self.params['guest_id'] is None:
             self.module.fail_json(msg="guest_id attribute is mandatory for VM creation")
 
-        if self.params['guest_id'] and (vm_obj is None or self.params['guest_id'] != vm_obj.summary.config.guestId):
+        if self.params['guest_id'] and \
+                (vm_obj is None or self.params['guest_id'].lower() != vm_obj.summary.config.guestId.lower()):
             self.change_detected = True
             self.configspec.guestId = self.params['guest_id']
+
+    def configure_resource_alloc_info(self, vm_obj):
+        """
+        Function to configure resource allocation information about virtual machine
+        :param vm_obj: VM object in case of reconfigure, None in case of deploy
+        :return: None
+        """
+        rai_change_detected = False
+        memory_allocation = vim.ResourceAllocationInfo()
+        cpu_allocation = vim.ResourceAllocationInfo()
+
+        if 'hardware' in self.params:
+            if 'mem_limit' in self.params['hardware']:
+                mem_limit = None
+                try:
+                    mem_limit = int(self.params['hardware'].get('mem_limit'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.mem_limit attribute should be an integer value.")
+                memory_allocation.limit = mem_limit
+                if vm_obj is None or memory_allocation.limit != vm_obj.config.memoryAllocation.limit:
+                    rai_change_detected = True
+
+            if 'mem_reservation' in self.params['hardware']:
+                mem_reservation = None
+                try:
+                    mem_reservation = int(self.params['hardware'].get('mem_reservation'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
+
+                memory_allocation.reservation = mem_reservation
+                if vm_obj is None or \
+                        memory_allocation.reservation != vm_obj.config.memoryAllocation.reservation:
+                    rai_change_detected = True
+
+            if 'cpu_limit' in self.params['hardware']:
+                cpu_limit = None
+                try:
+                    cpu_limit = int(self.params['hardware'].get('cpu_limit'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.cpu_limit attribute should be an integer value.")
+                cpu_allocation.limit = cpu_limit
+                if vm_obj is None or cpu_allocation.limit != vm_obj.config.cpuAllocation.limit:
+                    rai_change_detected = True
+
+            if 'cpu_reservation' in self.params['hardware']:
+                cpu_reservation = None
+                try:
+                    cpu_reservation = int(self.params['hardware'].get('cpu_reservation'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.cpu_reservation should be an integer value.")
+                cpu_allocation.reservation = cpu_reservation
+                if vm_obj is None or \
+                        cpu_allocation.reservation != vm_obj.config.cpuAllocation.reservation:
+                    rai_change_detected = True
+
+        if rai_change_detected:
+            self.configspec.memoryAllocation = memory_allocation
+            self.configspec.cpuAllocation = cpu_allocation
+            self.change_detected = True
 
     def configure_cpu_and_memory(self, vm_obj, vm_creation=False):
         # set cpu/memory/etc
@@ -657,7 +927,12 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="hardware.num_cpus attribute is mandatory for VM creation")
 
             if 'memory_mb' in self.params['hardware']:
-                self.configspec.memoryMB = int(self.params['hardware']['memory_mb'])
+                try:
+                    self.configspec.memoryMB = int(self.params['hardware']['memory_mb'])
+                except ValueError:
+                    self.module.fail_json(msg="Failed to parse hardware.memory_mb value."
+                                              " Please refer the documentation and provide"
+                                              " correct value.")
                 if vm_obj is None or self.configspec.memoryMB != vm_obj.config.hardware.memoryMB:
                     self.change_detected = True
             # memory_mb is mandatory for VM creation
@@ -696,6 +971,15 @@ class PyVmomiHelper(PyVmomi):
             if 'memory_reservation_lock' in self.params['hardware']:
                 self.configspec.memoryReservationLockedToMax = bool(self.params['hardware']['memory_reservation_lock'])
                 if vm_obj is None or self.configspec.memoryReservationLockedToMax != vm_obj.config.memoryReservationLockedToMax:
+                    self.change_detected = True
+
+            if 'boot_firmware' in self.params['hardware']:
+                boot_firmware = self.params['hardware']['boot_firmware'].lower()
+                if boot_firmware not in ('bios', 'efi'):
+                    self.module.fail_json(msg="hardware.boot_firmware value is invalid [%s]."
+                                              " Need one of ['bios', 'efi']." % boot_firmware)
+                self.configspec.firmware = boot_firmware
+                if vm_obj is None or self.configspec.firmware != vm_obj.config.firmware:
                     self.change_detected = True
 
     def configure_cdrom(self, vm_obj):
@@ -754,9 +1038,9 @@ class PyVmomiHelper(PyVmomi):
         Args:
             vm_obj: virtual machine object
         """
-        # maxMksConnections == max_connections
         if 'hardware' in self.params:
             if 'max_connections' in self.params['hardware']:
+                # maxMksConnections == max_connections
                 self.configspec.maxMksConnections = int(self.params['hardware']['max_connections'])
                 if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.hardware.maxMksConnections:
                     self.change_detected = True
@@ -765,6 +1049,46 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.nestedHVEnabled = bool(self.params['hardware']['nested_virt'])
                 if vm_obj is None or self.configspec.nestedHVEnabled != bool(vm_obj.config.nestedHVEnabled):
                     self.change_detected = True
+
+            if 'version' in self.params['hardware']:
+                hw_version_check_failed = False
+                temp_version = self.params['hardware'].get('version', 10)
+                try:
+                    temp_version = int(temp_version)
+                except ValueError:
+                    hw_version_check_failed = True
+
+                if temp_version not in range(3, 15):
+                    hw_version_check_failed = True
+
+                if hw_version_check_failed:
+                    self.module.fail_json(msg="Failed to set hardware.version '%s' value as valid"
+                                              " values range from 3 (ESX 2.x) to 14 (ESXi 6.5 and greater)." % temp_version)
+                # Hardware version is denoted as "vmx-10"
+                version = "vmx-%02d" % temp_version
+                self.configspec.version = version
+                if vm_obj is None or self.configspec.version != vm_obj.config.version:
+                    self.change_detected = True
+                if vm_obj is not None:
+                    # VM exists and we need to update the hardware version
+                    current_version = vm_obj.config.version
+                    # current_version = "vmx-10"
+                    version_digit = int(current_version.split("-", 1)[-1])
+                    if temp_version < version_digit:
+                        self.module.fail_json(msg="Current hardware version '%d' which is greater than the specified"
+                                                  " version '%d'. Downgrading hardware version is"
+                                                  " not supported. Please specify version greater"
+                                                  " than the current version." % (version_digit,
+                                                                                  temp_version))
+                    new_version = "vmx-%02d" % temp_version
+                    try:
+                        task = vm_obj.UpgradeVM_Task(new_version)
+                        self.wait_for_task(task)
+                        if task.info.state != 'error':
+                            self.change_detected = True
+                    except vim.fault.AlreadyUpgraded:
+                        # Don't fail if VM is already upgraded.
+                        pass
 
     def get_vm_cdrom_device(self, vm=None):
         if vm is None:
@@ -802,58 +1126,103 @@ class PyVmomiHelper(PyVmomi):
 
         return device_list
 
+    def sanitize_network_params(self):
+        """
+        Sanitize user provided network provided params
+
+        Returns: A sanitized list of network params, else fails
+
+        """
+        network_devices = list()
+        # Clean up user data here
+        for network in self.params['networks']:
+            if 'name' not in network and 'vlan' not in network:
+                self.module.fail_json(msg="Please specify at least a network name or"
+                                          " a VLAN name under VM network list.")
+
+            if 'name' in network and self.cache.get_network(network['name']) is None:
+                self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
+            elif 'vlan' in network:
+                dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
+                for dvp in dvps:
+                    if hasattr(dvp.config.defaultPortConfig, 'vlan') and \
+                            isinstance(dvp.config.defaultPortConfig.vlan.vlanId, int) and \
+                            str(dvp.config.defaultPortConfig.vlan.vlanId) == str(network['vlan']):
+                        network['name'] = dvp.config.name
+                        break
+                    if 'dvswitch_name' in network and \
+                            dvp.config.distributedVirtualSwitch.name == network['dvswitch_name'] and \
+                            dvp.config.name == network['vlan']:
+                        network['name'] = dvp.config.name
+                        break
+
+                    if dvp.config.name == network['vlan']:
+                        network['name'] = dvp.config.name
+                        break
+                else:
+                    self.module.fail_json(msg="VLAN '%(vlan)s' does not exist." % network)
+
+            if 'type' in network:
+                if network['type'] not in ['dhcp', 'static']:
+                    self.module.fail_json(msg="Network type '%(type)s' is not a valid parameter."
+                                              " Valid parameters are ['dhcp', 'static']." % network)
+                if network['type'] != 'static' and ('ip' in network or 'netmask' in network):
+                    self.module.fail_json(msg='Static IP information provided for network "%(name)s",'
+                                              ' but "type" is set to "%(type)s".' % network)
+            else:
+                # Type is optional parameter, if user provided IP or Subnet assume
+                # network type as 'static'
+                if 'ip' in network or 'netmask' in network:
+                    network['type'] = 'static'
+                else:
+                    # User wants network type as 'dhcp'
+                    network['type'] = 'dhcp'
+
+            if network.get('type') == 'static':
+                if 'ip' in network and 'netmask' not in network:
+                    self.module.fail_json(msg="'netmask' is required if 'ip' is"
+                                              " specified under VM network list.")
+                if 'ip' not in network and 'netmask' in network:
+                    self.module.fail_json(msg="'ip' is required if 'netmask' is"
+                                              " specified under VM network list.")
+
+            validate_device_types = ['pcnet32', 'vmxnet2', 'vmxnet3', 'e1000', 'e1000e', 'sriov']
+            if 'device_type' in network and network['device_type'] not in validate_device_types:
+                self.module.fail_json(msg="Device type specified '%s' is not valid."
+                                          " Please specify correct device"
+                                          " type from ['%s']." % (network['device_type'],
+                                                                  "', '".join(validate_device_types)))
+
+            if 'mac' in network and not PyVmomiDeviceHelper.is_valid_mac_addr(network['mac']):
+                self.module.fail_json(msg="Device MAC address '%s' is invalid."
+                                          " Please provide correct MAC address." % network['mac'])
+
+            network_devices.append(network)
+
+        return network_devices
+
     def configure_network(self, vm_obj):
         # Ignore empty networks, this permits to keep networks when deploying a template/cloning a VM
         if len(self.params['networks']) == 0:
             return
 
-        network_devices = list()
-        for network in self.params['networks']:
-            if 'ip' in network or 'netmask' in network:
-                if 'ip' not in network or 'netmask' not in network:
-                    self.module.fail_json(msg="Both 'ip' and 'netmask' are required together.")
-
-            if 'name' in network:
-                if find_obj(self.content, [vim.Network], network['name']) is None:
-                    self.module.fail_json(msg="Network '%(name)s' does not exists" % network)
-
-            elif 'vlan' in network:
-                dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
-                for dvp in dvps:
-                    if hasattr(dvp.config.defaultPortConfig, 'vlan') and dvp.config.defaultPortConfig.vlan.vlanId == network['vlan']:
-                        network['name'] = dvp.config.name
-                        break
-                    if dvp.config.name == network['vlan']:
-                        network['name'] = dvp.config.name
-                        break
-                else:
-                    self.module.fail_json(msg="VLAN '%(vlan)s' does not exist" % network)
-            else:
-                self.module.fail_json(msg="You need to define a network name or a vlan")
-
-            network_devices.append(network)
+        network_devices = self.sanitize_network_params()
 
         # List current device for Clone or Idempotency
         current_net_devices = self.get_vm_network_interfaces(vm=vm_obj)
         if len(network_devices) < len(current_net_devices):
-            self.module.fail_json(msg="given network device list is lesser than current VM device list (%d < %d). "
+            self.module.fail_json(msg="Given network device list is lesser than current VM device list (%d < %d). "
                                       "Removing interfaces is not allowed"
                                       % (len(network_devices), len(current_net_devices)))
 
         for key in range(0, len(network_devices)):
-            # Default device type is vmxnet3, VMWare best practice
-            device_type = network_devices[key].get('device_type', 'vmxnet3')
-            nic = self.device_helper.create_nic(device_type,
-                                                'Network Adapter %s' % (key + 1),
-                                                network_devices[key])
-
             nic_change_detected = False
+            network_name = network_devices[key]['name']
             if key < len(current_net_devices) and (vm_obj or self.params['template']):
+                # We are editing existing network devices, this is either when
+                # are cloning from VM or Template
+                nic = vim.vm.device.VirtualDeviceSpec()
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                # Changing mac address has no effect when editing interface
-                if 'mac' in network_devices[key] and nic.device.macAddress != current_net_devices[key].macAddress:
-                    self.module.fail_json(msg="Changing MAC address has not effect when interface is already present. "
-                                              "The failing new MAC address is %s" % nic.device.macAddress)
 
                 nic.device = current_net_devices[key]
                 if ('wake_on_lan' in network_devices[key] and
@@ -869,45 +1238,175 @@ class PyVmomiHelper(PyVmomi):
                     nic.device.connectable.allowGuestControl = network_devices[key].get('allow_guest_control')
                     nic_change_detected = True
 
-                nic.device.deviceInfo = vim.Description()
+                if nic.device.deviceInfo.summary != network_name:
+                    nic.device.deviceInfo.summary = network_name
+                    nic_change_detected = True
+                if 'device_type' in network_devices[key]:
+                    device = self.device_helper.get_device(network_devices[key]['device_type'], network_name)
+                    device_class = type(device)
+                    if not isinstance(nic.device, device_class):
+                        self.module.fail_json(msg="Changing the device type is not possible when interface is already present. "
+                                                  "The failing device type is %s" % network_devices[key]['device_type'])
+                # Changing mac address has no effect when editing interface
+                if 'mac' in network_devices[key] and nic.device.macAddress != current_net_devices[key].macAddress:
+                    self.module.fail_json(msg="Changing MAC address has not effect when interface is already present. "
+                                              "The failing new MAC address is %s" % nic.device.macAddress)
+
             else:
+                # Default device type is vmxnet3, VMWare best practice
+                device_type = network_devices[key].get('device_type', 'vmxnet3')
+                nic = self.device_helper.create_nic(device_type,
+                                                    'Network Adapter %s' % (key + 1),
+                                                    network_devices[key])
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 nic_change_detected = True
 
-            if hasattr(self.cache.get_network(network_devices[key]['name']), 'portKeys'):
+            if hasattr(self.cache.get_network(network_name), 'portKeys'):
                 # VDS switch
-                pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if (nic.device.backing and not hasattr(nic.device.backing, 'port')):
-                    nic_change_detected = True
-                elif (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
-                                              nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
+                pg_obj = None
+                if 'dvswitch_name' in network_devices[key]:
+                    dvs_name = network_devices[key]['dvswitch_name']
+                    dvs_obj = find_dvs_by_name(self.content, dvs_name)
+                    if dvs_obj is None:
+                        self.module.fail_json(msg="Unable to find distributed virtual switch %s" % dvs_name)
+                    pg_obj = find_dvspg_by_name(dvs_obj, network_name)
+                    if pg_obj is None:
+                        self.module.fail_json(msg="Unable to find distributed port group %s" % network_name)
+                else:
+                    pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
+
+                if (nic.device.backing and
+                   (not hasattr(nic.device.backing, 'port') or
+                    (nic.device.backing.port.portgroupKey != pg_obj.key or
+                     nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid))):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
                 dvs_port_connection.portgroupKey = pg_obj.key
+                # If user specifies distributed port group without associating to the hostsystem on which
+                # virtual machine is going to be deployed then we get error. We can infer that there is no
+                # association between given distributed port group and host system.
+                host_system = self.params.get('esxi_hostname')
+                if host_system and host_system not in [host.config.host.name for host in pg_obj.config.distributedVirtualSwitch.config.host]:
+                    self.module.fail_json(msg="It seems that host system '%s' is not associated with distributed"
+                                              " virtual portgroup '%s'. Please make sure host system is associated"
+                                              " with given distributed virtual portgroup" % (host_system, pg_obj.name))
+                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
+                # For now, check if we are able to find distributed virtual switch
+                if not pg_obj.config.distributedVirtualSwitch:
+                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
+                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
+                                              " the given distributed virtual portgroup." % pg_obj.name)
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                 nic.device.backing.port = dvs_port_connection
-                nic_change_detected = True
+
+            elif isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
+                # NSX-T Logical Switch
+                nic.device.backing = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo()
+                network_id = self.cache.get_network(network_name).summary.opaqueNetworkId
+                nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
+                nic.device.backing.opaqueNetworkId = network_id
+                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
                     nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
                     nic_change_detected = True
 
-                net_obj = self.cache.get_network(network_devices[key]['name'])
+                net_obj = self.cache.get_network(network_name)
                 if nic.device.backing.network != net_obj:
                     nic.device.backing.network = net_obj
                     nic_change_detected = True
 
-                if nic.device.backing.deviceName != network_devices[key]['name']:
-                    nic.device.backing.deviceName = network_devices[key]['name']
+                if nic.device.backing.deviceName != network_name:
+                    nic.device.backing.deviceName = network_name
                     nic_change_detected = True
 
             if nic_change_detected:
                 self.configspec.deviceChange.append(nic)
                 self.change_detected = True
+
+    def configure_vapp_properties(self, vm_obj):
+        if len(self.params['vapp_properties']) == 0:
+            return
+
+        for x in self.params['vapp_properties']:
+            if not x.get('id'):
+                self.module.fail_json(msg="id is required to set vApp property")
+
+        new_vmconfig_spec = vim.vApp.VmConfigSpec()
+
+        # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
+        orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
+
+        vapp_properties_current = dict((x.id, x) for x in orig_spec.property)
+        vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
+
+        # each property must have a unique key
+        # init key counter with max value + 1
+        all_keys = [x.key for x in orig_spec.property]
+        new_property_index = max(all_keys) + 1 if all_keys else 0
+
+        for property_id, property_spec in vapp_properties_to_change.items():
+            is_property_changed = False
+            new_vapp_property_spec = vim.vApp.PropertySpec()
+
+            if property_id in vapp_properties_current:
+                if property_spec.get('operation') == 'remove':
+                    new_vapp_property_spec.operation = 'remove'
+                    new_vapp_property_spec.removeKey = vapp_properties_current[property_id].key
+                    is_property_changed = True
+                else:
+                    # this is 'edit' branch
+                    new_vapp_property_spec.operation = 'edit'
+                    new_vapp_property_spec.info = vapp_properties_current[property_id]
+                    try:
+                        for property_name, property_value in property_spec.items():
+
+                            if property_name == 'operation':
+                                # operation is not an info object property
+                                # if set to anything other than 'remove' we don't fail
+                                continue
+
+                            # Updating attributes only if needed
+                            if getattr(new_vapp_property_spec.info, property_name) != property_value:
+                                setattr(new_vapp_property_spec.info, property_name, property_value)
+                                is_property_changed = True
+
+                    except Exception as e:
+                        self.module.fail_json(msg="Failed to set vApp property field='%s' and value='%s'. Error: %s"
+                                              % (property_name, property_value, to_text(e)))
+            else:
+                if property_spec.get('operation') == 'remove':
+                    # attemp to delete non-existent property
+                    continue
+
+                # this is add new property branch
+                new_vapp_property_spec.operation = 'add'
+
+                property_info = vim.vApp.PropertyInfo()
+                property_info.classId = property_spec.get('classId')
+                property_info.instanceId = property_spec.get('instanceId')
+                property_info.id = property_spec.get('id')
+                property_info.category = property_spec.get('category')
+                property_info.label = property_spec.get('label')
+                property_info.type = property_spec.get('type', 'string')
+                property_info.userConfigurable = property_spec.get('userConfigurable', True)
+                property_info.defaultValue = property_spec.get('defaultValue')
+                property_info.value = property_spec.get('value', '')
+                property_info.description = property_spec.get('description')
+
+                new_vapp_property_spec.info = property_info
+                new_vapp_property_spec.info.key = new_property_index
+                new_property_index += 1
+                is_property_changed = True
+            if is_property_changed:
+                new_vmconfig_spec.property.append(new_vapp_property_spec)
+        if new_vmconfig_spec.property:
+            self.configspec.vAppConfig = new_vmconfig_spec
+            self.change_detected = True
 
     def customize_customvalues(self, vm_obj, config_spec):
         if len(self.params['customvalues']) == 0:
@@ -935,6 +1434,19 @@ class PyVmomiHelper(PyVmomi):
             self.change_detected = True
 
     def customize_vm(self, vm_obj):
+
+        # User specified customization specification
+        custom_spec_name = self.params.get('customization_spec')
+        if custom_spec_name:
+            cc_mgr = self.content.customizationSpecManager
+            if cc_mgr.DoesCustomizationSpecExist(name=custom_spec_name):
+                temp_spec = cc_mgr.GetCustomizationSpec(name=custom_spec_name)
+                self.customspec = temp_spec.spec
+                return
+            else:
+                self.module.fail_json(msg="Unable to find customization specification"
+                                          " '%s' in given configuration." % custom_spec_name)
+
         # Network settings
         adaptermaps = []
         for network in self.params['networks']:
@@ -943,17 +1455,11 @@ class PyVmomiHelper(PyVmomi):
             guest_map.adapter = vim.vm.customization.IPSettings()
 
             if 'ip' in network and 'netmask' in network:
-                if 'type' in network and network['type'] != 'static':
-                    self.module.fail_json(msg='Static IP information provided for network "%(name)s", but "type" is set to "%(type)s".' % network)
                 guest_map.adapter.ip = vim.vm.customization.FixedIp()
                 guest_map.adapter.ip.ipAddress = str(network['ip'])
                 guest_map.adapter.subnetMask = str(network['netmask'])
-            elif 'type' in network and network['type'] == 'static':
-                self.module.fail_json(msg='Network "%(name)s" was set to type "%(type)s", but "ip" and "netmask" are missing.' % network)
             elif 'type' in network and network['type'] == 'dhcp':
                 guest_map.adapter.ip = vim.vm.customization.DhcpIpGenerator()
-            else:
-                self.module.fail_json(msg='Network "%(name)s" was set to unknown type "%(type)s".' % network)
 
             if 'gateway' in network:
                 guest_map.adapter.gateway = network['gateway']
@@ -979,7 +1485,11 @@ class PyVmomiHelper(PyVmomi):
 
         # TODO: Maybe list the different domains from the interfaces here by default ?
         if 'dns_suffix' in self.params['customization']:
-            globalip.dnsSuffixList = self.params['customization']['dns_suffix']
+            dns_suffix = self.params['customization']['dns_suffix']
+            if isinstance(dns_suffix, list):
+                globalip.dnsSuffixList = " ".join(dns_suffix)
+            else:
+                globalip.dnsSuffixList = dns_suffix
         elif 'domain' in self.params['customization']:
             globalip.dnsSuffixList = self.params['customization']['domain']
 
@@ -1039,7 +1549,7 @@ class PyVmomiHelper(PyVmomi):
                 ident.guiRunOnce.commandList = self.params['customization']['runonce']
 
         else:
-            # FIXME: We have no clue whether this non-Windows OS is actually Linux, hence it might fail !
+            # FIXME: We have no clue whether this non-Windows OS is actually Linux, hence it might fail!
 
             # For Linux guest OS, use LinuxPrep
             # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.LinuxPrep.html
@@ -1050,7 +1560,10 @@ class PyVmomiHelper(PyVmomi):
                 ident.domain = str(self.params['customization']['domain'])
 
             ident.hostName = vim.vm.customization.FixedName()
-            ident.hostName.name = str(self.params['customization'].get('hostname', self.params['name'].split('.')[0]))
+            hostname = str(self.params['customization'].get('hostname', self.params['name'].split('.')[0]))
+            # Remove all characters except alphanumeric and minus which is allowed by RFC 952
+            valid_hostname = re.sub(r"[^a-zA-Z0-9\-]", "", hostname)
+            ident.hostName.name = valid_hostname
 
         self.customspec = vim.vm.customization.Specification()
         self.customspec.nicSettingMap = adaptermaps
@@ -1058,7 +1571,7 @@ class PyVmomiHelper(PyVmomi):
         self.customspec.identity = ident
 
     def get_vm_scsi_controller(self, vm_obj):
-        # If vm_obj doesn't exists no SCSI controller to find
+        # If vm_obj doesn't exist there is no SCSI controller to find
         if vm_obj is None:
             return None
 
@@ -1073,28 +1586,45 @@ class PyVmomiHelper(PyVmomi):
     def get_configured_disk_size(self, expected_disk_spec):
         # what size is it?
         if [x for x in expected_disk_spec.keys() if x.startswith('size_') or x == 'size']:
-            # size_tb, size_gb, size_mb, size_kb, size_b ...?
+            # size, size_tb, size_gb, size_mb, size_kb
             if 'size' in expected_disk_spec:
-                expected = ''.join(c for c in expected_disk_spec['size'] if c.isdigit())
-                unit = expected_disk_spec['size'].replace(expected, '').lower()
-                expected = int(expected)
+                size_regex = re.compile(r'(\d+(?:\.\d+)?)([tgmkTGMK][bB])')
+                disk_size_m = size_regex.match(expected_disk_spec['size'])
+                try:
+                    if disk_size_m:
+                        expected = disk_size_m.group(1)
+                        unit = disk_size_m.group(2)
+                    else:
+                        raise ValueError
+
+                    if re.match(r'\d+\.\d+', expected):
+                        # We found float value in string, let's typecast it
+                        expected = float(expected)
+                    else:
+                        # We found int value in string, let's typecast it
+                        expected = int(expected)
+
+                    if not expected or not unit:
+                        raise ValueError
+
+                except (TypeError, ValueError, NameError):
+                    # Common failure
+                    self.module.fail_json(msg="Failed to parse disk size please review value"
+                                              " provided using documentation.")
             else:
                 param = [x for x in expected_disk_spec.keys() if x.startswith('size_')][0]
                 unit = param.split('_')[-1].lower()
                 expected = [x[1] for x in expected_disk_spec.items() if x[0].startswith('size_')][0]
                 expected = int(expected)
 
-            if unit == 'tb':
-                return expected * 1024 * 1024 * 1024
-            elif unit == 'gb':
-                return expected * 1024 * 1024
-            elif unit == 'mb':
-                return expected * 1024
-            elif unit == 'kb':
-                return expected
-
-            self.module.fail_json(
-                msg='%s is not a supported unit for disk size. Supported units are kb, mb, gb or tb' % unit)
+            disk_units = dict(tb=3, gb=2, mb=1, kb=0)
+            if unit in disk_units:
+                unit = unit.lower()
+                return expected * (1024 ** disk_units[unit])
+            else:
+                self.module.fail_json(msg="%s is not a supported unit for disk size."
+                                          " Supported units are ['%s']." % (unit,
+                                                                            "', '".join(disk_units.keys())))
 
         # No size found but disk, fail
         self.module.fail_json(
@@ -1133,6 +1663,19 @@ class PyVmomiHelper(PyVmomi):
                 diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
 
+            if 'disk_mode' in expected_disk_spec:
+                disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
+                valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
+                if disk_mode not in valid_disk_mode:
+                    self.module.fail_json(msg="disk_mode specified is not valid."
+                                              " Should be one of ['%s']" % "', '".join(valid_disk_mode))
+
+                if (vm_obj and diskspec.device.backing.diskMode != disk_mode) or (vm_obj is None):
+                    diskspec.device.backing.diskMode = disk_mode
+                    disk_modified = True
+            else:
+                diskspec.device.backing.diskMode = "persistent"
+
             # is it thin?
             if 'type' in expected_disk_spec:
                 disk_type = expected_disk_spec.get('type', '').lower()
@@ -1168,21 +1711,11 @@ class PyVmomiHelper(PyVmomi):
                 self.change_detected = True
 
     def select_host(self):
-        # if the user wants a cluster, get the list of hosts for the cluster and use the first one
-        if self.params['cluster']:
-            cluster = self.cache.get_cluster(self.params['cluster'])
-            if not cluster:
-                self.module.fail_json(msg='Failed to find cluster "%(cluster)s"' % self.params)
-            hostsystems = [x for x in cluster.host]
-            if not hostsystems:
-                self.module.fail_json(msg='No hosts found in cluster "%(cluster)s. Maybe you lack the right privileges ?"' % self.params)
-            # TODO: add a policy to select host
-            hostsystem = hostsystems[0]
-        else:
-            hostsystem = self.cache.get_esx_host(self.params['esxi_hostname'])
-            if not hostsystem:
-                self.module.fail_json(msg='Failed to find ESX host "%(esxi_hostname)s"' % self.params)
-
+        hostsystem = self.cache.get_esx_host(self.params['esxi_hostname'])
+        if not hostsystem:
+            self.module.fail_json(msg='Failed to find ESX host "%(esxi_hostname)s"' % self.params)
+        if hostsystem.runtime.connectionState != 'connected' or hostsystem.runtime.inMaintenanceMode:
+            self.module.fail_json(msg='ESXi "%(esxi_hostname)s" is in invalid state or in maintenance mode.' % self.params)
         return hostsystem
 
     def autoselect_datastore(self):
@@ -1199,6 +1732,45 @@ class PyVmomiHelper(PyVmomi):
                 datastore_freespace = ds.summary.freeSpace
 
         return datastore
+
+    def get_recommended_datastore(self, datastore_cluster_obj=None):
+        """
+        Function to return Storage DRS recommended datastore from datastore cluster
+        Args:
+            datastore_cluster_obj: datastore cluster managed object
+
+        Returns: Name of recommended datastore from the given datastore cluster
+
+        """
+        if datastore_cluster_obj is None:
+            return None
+        # Check if Datastore Cluster provided by user is SDRS ready
+        sdrs_status = datastore_cluster_obj.podStorageDrsEntry.storageDrsConfig.podConfig.enabled
+        if sdrs_status:
+            # We can get storage recommendation only if SDRS is enabled on given datastorage cluster
+            pod_sel_spec = vim.storageDrs.PodSelectionSpec()
+            pod_sel_spec.storagePod = datastore_cluster_obj
+            storage_spec = vim.storageDrs.StoragePlacementSpec()
+            storage_spec.podSelectionSpec = pod_sel_spec
+            storage_spec.type = 'create'
+
+            try:
+                rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
+                rec_action = rec.recommendations[0].action[0]
+                return rec_action.destination.name
+            except Exception as e:
+                # There is some error so we fall back to general workflow
+                pass
+        datastore = None
+        datastore_freespace = 0
+        for ds in datastore_cluster_obj.childEntity:
+            if isinstance(ds, vim.Datastore) and ds.summary.freeSpace > datastore_freespace:
+                # If datastore field is provided, filter destination datastores
+                datastore = ds
+                datastore_freespace = ds.summary.freeSpace
+        if datastore:
+            return datastore.name
+        return None
 
     def select_datastore(self, vm_obj=None):
         datastore = None
@@ -1227,6 +1799,12 @@ class PyVmomiHelper(PyVmomi):
 
             elif 'datastore' in self.params['disk'][0]:
                 datastore_name = self.params['disk'][0]['datastore']
+                # Check if user has provided datastore cluster first
+                datastore_cluster = self.cache.find_obj(self.content, [vim.StoragePod], datastore_name)
+                if datastore_cluster:
+                    # If user specified datastore cluster so get recommended datastore
+                    datastore_name = self.get_recommended_datastore(datastore_cluster_obj=datastore_cluster)
+                # Check if get_recommended_datastore or user specified datastore exists or not
                 datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
@@ -1245,6 +1823,11 @@ class PyVmomiHelper(PyVmomi):
                     datastore_name = datastore.name
 
         if not datastore:
+            if len(self.params['disk']) != 0 or self.params['template'] is None:
+                self.module.fail_json(msg="Unable to find the datastore with given parameters."
+                                          " This could mean, %s is a non-existent virtual machine and module tried to"
+                                          " deploy it as new virtual machine with no disk. Please specify disks parameter"
+                                          " or specify template to clone from." % self.params['name'])
             self.module.fail_json(msg="Failed to find a matching datastore")
 
         return datastore, datastore_name
@@ -1350,6 +1933,8 @@ class PyVmomiHelper(PyVmomi):
         # next priority, cluster given, take the root of the pool
         elif self.params['cluster']:
             cluster = self.cache.get_cluster(self.params['cluster'])
+            if cluster is None:
+                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
             resource_pool = cluster.resourcePool
         # fallback, pick any RP
         else:
@@ -1367,18 +1952,20 @@ class PyVmomiHelper(PyVmomi):
         # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
 
         # FIXME:
-        #   - multiple templates by the same name
         #   - static IPs
 
-        # datacenters = get_all_objs(self.content, [vim.Datacenter])
+        self.folder = self.params.get('folder', None)
+        if self.folder is None:
+            self.module.fail_json(msg="Folder is required parameter while deploying new virtual machine")
+
+        # Prepend / if it was missing from the folder path, also strip trailing slashes
+        if not self.folder.startswith('/'):
+            self.folder = '/%(folder)s' % self.params
+        self.folder = self.folder.rstrip('/')
+
         datacenter = self.cache.find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
         if datacenter is None:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
-
-        # Prepend / if it was missing from the folder path, also strip trailing slashes
-        if not self.params['folder'].startswith('/'):
-            self.params['folder'] = '/%(folder)s' % self.params
-        self.params['folder'] = self.params['folder'].rstrip('/')
 
         dcpath = compile_folder_path_for_object(datacenter)
 
@@ -1387,15 +1974,15 @@ class PyVmomiHelper(PyVmomi):
             dcpath += '/'
 
         # Check for full path first in case it was already supplied
-        if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm') or
-                self.params['folder'].startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
-            fullpath = self.params['folder']
-        elif self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm':
-            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.params['folder'])
-        elif self.params['folder'].startswith('/'):
-            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+        if (self.folder.startswith(dcpath + self.params['datacenter'] + '/vm') or
+                self.folder.startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
+            fullpath = self.folder
+        elif self.folder.startswith('/vm/') or self.folder == '/vm':
+            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.folder)
+        elif self.folder.startswith('/'):
+            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.folder)
         else:
-            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.folder)
 
         f_obj = self.content.searchIndex.FindByInventoryPath(fullpath)
 
@@ -1405,34 +1992,45 @@ class PyVmomiHelper(PyVmomi):
             details = {
                 'datacenter': datacenter.name,
                 'datacenter_path': dcpath,
-                'folder': self.params['folder'],
+                'folder': self.folder,
                 'full_search_path': fullpath,
             }
-            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.params['folder'], fullpath),
+            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.folder, fullpath),
                                   details=details)
 
         destfolder = f_obj
 
         if self.params['template']:
-            # FIXME: need to search for this in the same way as guests to ensure accuracy
-            vm_obj = find_obj(self.content, [vim.VirtualMachine], self.params['template'])
+            vm_obj = self.get_vm_or_template(template_name=self.params['template'])
             if vm_obj is None:
                 self.module.fail_json(msg="Could not find a template named %(template)s" % self.params)
         else:
             vm_obj = None
 
-        # need a resource pool if cloning from template
-        if self.params['resource_pool'] or self.params['template']:
-            resource_pool = self.get_resource_pool()
+        # always get a resource_pool
+        resource_pool = self.get_resource_pool()
 
         # set the destination datastore for VM & disks
-        (datastore, datastore_name) = self.select_datastore(vm_obj)
+        if self.params['datastore']:
+            # Give precendence to datastore value provided by user
+            # User may want to deploy VM to specific datastore.
+            datastore_name = self.params['datastore']
+            # Check if user has provided datastore cluster first
+            datastore_cluster = self.cache.find_obj(self.content, [vim.StoragePod], datastore_name)
+            if datastore_cluster:
+                # If user specified datastore cluster so get recommended datastore
+                datastore_name = self.get_recommended_datastore(datastore_cluster_obj=datastore_cluster)
+            # Check if get_recommended_datastore or user specified datastore exists or not
+            datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
+        else:
+            (datastore, datastore_name) = self.select_datastore(vm_obj)
 
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
+        self.configure_resource_alloc_info(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
@@ -1465,17 +2063,25 @@ class PyVmomiHelper(PyVmomi):
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
                 relospec.pool = resource_pool
 
-                if self.params['snapshot_src'] is not None and self.params['linked_clone']:
-                    relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+                linked_clone = self.params.get('linked_clone')
+                snapshot_src = self.params.get('snapshot_src', None)
+                if linked_clone:
+                    if snapshot_src is not None:
+                        relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+                    else:
+                        self.module.fail_json(msg="Parameter 'linked_src' and 'snapshot_src' are"
+                                                  " required together for linked clone operation.")
 
                 clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
                 if self.customspec:
                     clonespec.customization = self.customspec
 
-                if self.params['snapshot_src'] is not None:
-                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList, snapname=self.params['snapshot_src'])
+                if snapshot_src is not None:
+                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
+                                                                      snapname=snapshot_src)
                     if len(snapshot) != 1:
-                        self.module.fail_json(msg='virtual machine "%(template)s" does not contain snapshot named "%(snapshot_src)s"' % self.params)
+                        self.module.fail_json(msg='virtual machine "%(template)s" does not contain'
+                                                  ' snapshot named "%(snapshot_src)s"' % self.params)
 
                     clonespec.snapshot = snapshot[0].snapshot
 
@@ -1498,9 +2104,11 @@ class PyVmomiHelper(PyVmomi):
                                                         vmPathName="[" + datastore_name + "]")
 
                 clone_method = 'CreateVM_Task'
-                resource_pool = self.get_resource_pool()
                 try:
                     task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
+                except vmodl.fault.InvalidRequest as e:
+                    self.module.fail_json(msg="Failed to create virtual machine due to invalid configuration "
+                                              "parameter %s" % to_native(e.msg))
                 except vim.fault.RestrictedVersion as e:
                     self.module.fail_json(msg="Failed to create virtual machine due to "
                                               "product versioning restrictions: %s" % to_native(e.msg))
@@ -1570,6 +2178,8 @@ class PyVmomiHelper(PyVmomi):
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
+        self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
+        self.configure_vapp_properties(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
@@ -1625,27 +2235,44 @@ class PyVmomiHelper(PyVmomi):
 
         # Mark Template as VM
         elif not self.params['is_template'] and self.current_vm_obj.config.template:
-            if self.params['resource_pool']:
-                resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+            resource_pool = self.get_resource_pool()
+            kwargs = dict(pool=resource_pool)
 
-                if resource_pool is None:
-                    self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
+            if self.params.get('esxi_hostname', None):
+                host_system_obj = self.select_host()
+                kwargs.update(host=host_system_obj)
 
-                self.current_vm_obj.MarkAsVirtualMachine(pool=resource_pool)
+            try:
+                self.current_vm_obj.MarkAsVirtualMachine(**kwargs)
+            except vim.fault.InvalidState as invalid_state:
+                self.module.fail_json(msg="Virtual machine is not marked"
+                                          " as template : %s" % to_native(invalid_state.msg))
+            except vim.fault.InvalidDatastore as invalid_ds:
+                self.module.fail_json(msg="Converting template to virtual machine"
+                                          " operation cannot be performed on the"
+                                          " target datastores: %s" % to_native(invalid_ds.msg))
+            except vim.fault.CannotAccessVmComponent as cannot_access:
+                self.module.fail_json(msg="Failed to convert template to virtual machine"
+                                          " as operation unable access virtual machine"
+                                          " component: %s" % to_native(cannot_access.msg))
+            except vmodl.fault.InvalidArgument as invalid_argument:
+                self.module.fail_json(msg="Failed to convert template to virtual machine"
+                                          " due to : %s" % to_native(invalid_argument.msg))
+            except Exception as generic_exc:
+                self.module.fail_json(msg="Failed to convert template to virtual machine"
+                                          " due to generic error : %s" % to_native(generic_exc))
 
-                # Automatically update VMWare UUID when converting template to VM.
-                # This avoids an interactive prompt during VM startup.
-                uuid_action = [x for x in self.current_vm_obj.config.extraConfig if x.key == "uuid.action"]
-                if not uuid_action:
-                    uuid_action_opt = vim.option.OptionValue()
-                    uuid_action_opt.key = "uuid.action"
-                    uuid_action_opt.value = "create"
-                    self.configspec.extraConfig.append(uuid_action_opt)
-                    self.change_detected = True
+            # Automatically update VMWare UUID when converting template to VM.
+            # This avoids an interactive prompt during VM startup.
+            uuid_action = [x for x in self.current_vm_obj.config.extraConfig if x.key == "uuid.action"]
+            if not uuid_action:
+                uuid_action_opt = vim.option.OptionValue()
+                uuid_action_opt.key = "uuid.action"
+                uuid_action_opt.value = "create"
+                self.configspec.extraConfig.append(uuid_action_opt)
+                self.change_detected = True
 
-                change_applied = True
-            else:
-                self.module.fail_json(msg="Resource pool must be specified when converting template to VM!")
+            change_applied = True
 
         vm_facts = self.gather_facts(self.current_vm_obj)
         return {'changed': change_applied, 'failed': False, 'instance': vm_facts}
@@ -1683,10 +2310,10 @@ def main():
         is_template=dict(type='bool', default=False),
         annotation=dict(type='str', aliases=['notes']),
         customvalues=dict(type='list', default=[]),
-        name=dict(type='str', required=True),
+        name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
         cdrom=dict(type='dict', default={}),
@@ -1696,11 +2323,15 @@ def main():
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
         wait_for_ip_address=dict(type='bool', default=False),
+        state_change_timeout=dict(type='int', default=0),
         snapshot_src=dict(type='str'),
         linked_clone=dict(type='bool', default=False),
         networks=dict(type='list', default=[]),
         resource_pool=dict(type='str'),
         customization=dict(type='dict', default={}, no_log=True),
+        customization_spec=dict(type='str', default=None),
+        vapp_properties=dict(type='list', default=[]),
+        datastore=dict(type='str'),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -1708,13 +2339,12 @@ def main():
                            mutually_exclusive=[
                                ['cluster', 'esxi_hostname'],
                            ],
+                           required_one_of=[
+                               ['name', 'uuid'],
+                           ],
                            )
 
     result = {'failed': False, 'changed': False}
-
-    # FindByInventoryPath() does not require an absolute path
-    # so we should leave the input folder path unmodified
-    module.params['folder'] = module.params['folder'].rstrip('/')
 
     pyv = PyVmomiHelper(module)
 
@@ -1725,25 +2355,55 @@ def main():
     if vm:
         if module.params['state'] == 'absent':
             # destroy it
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    current_powerstate=vm.summary.runtime.powerState.lower(),
+                    desired_operation='remove_vm',
+                )
+                module.exit_json(**result)
             if module.params['force']:
                 # has to be poweredoff first
                 set_vm_power_state(pyv.content, vm, 'poweredoff', module.params['force'])
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    desired_operation='reconfigure_vm',
+                )
+                module.exit_json(**result)
             result = pyv.reconfigure_vm()
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    current_powerstate=vm.summary.runtime.powerState.lower(),
+                    desired_operation='set_vm_power_state',
+                )
+                module.exit_json(**result)
             # set powerstate
-            tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
+            tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
             if tmp_result['changed']:
                 result["changed"] = True
             if not tmp_result["failed"]:
                 result["failed"] = False
+            result['instance'] = tmp_result['instance']
         else:
             # This should not happen
             raise AssertionError()
     # VM doesn't exist
     else:
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
+            if module.check_mode:
+                result.update(
+                    changed=True,
+                    desired_operation='deploy_vm',
+                )
+                module.exit_json(**result)
             result = pyv.deploy_vm()
             if result['failed']:
                 module.fail_json(msg='Failed to create a virtual machine : %s' % result['msg'])

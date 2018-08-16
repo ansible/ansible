@@ -40,107 +40,90 @@ options:
     description:
       - Username of the user to be created if account did not exist.
       - Required on C(state=present).
-    required: false
-    default: null
   password:
     description:
       - Password of the user to be created if account did not exist.
       - Required on C(state=present).
-    required: false
-    default: null
   first_name:
     description:
       - First name of the user to be created if account did not exist.
       - Required on C(state=present).
-    required: false
-    default: null
   last_name:
     description:
       - Last name of the user to be created if account did not exist.
       - Required on C(state=present).
-    required: false
-    default: null
   email:
     description:
       - Email of the user to be created if account did not exist.
       - Required on C(state=present).
-    required: false
-    default: null
   timezone:
     description:
       - Timezone of the user to be created if account did not exist.
-    required: false
-    default: null
   network_domain:
     description:
       - Network domain of the account.
-    required: false
-    default: null
   account_type:
     description:
       - Type of the account.
-    required: false
     default: 'user'
     choices: [ 'user', 'root_admin', 'domain_admin' ]
   domain:
     description:
       - Domain the account is related to.
-    required: false
     default: 'ROOT'
   state:
     description:
       - State of the account.
       - C(unlocked) is an alias for C(enabled).
-    required: false
     default: 'present'
     choices: [ 'present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked' ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 # create an account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  username: customer_xy
-  password: S3Cur3
-  last_name: Doe
-  first_name: John
-  email: john.doe@example.com
-  domain: CUSTOMERS
+- local_action:
+    module: cs_account
+    name: customer_xy
+    username: customer_xy
+    password: S3Cur3
+    last_name: Doe
+    first_name: John
+    email: john.doe@example.com
+    domain: CUSTOMERS
 
 # Lock an existing account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  domain: CUSTOMERS
-  state: locked
+- local_action:
+    module: cs_account
+    name: customer_xy
+    domain: CUSTOMERS
+    state: locked
 
 # Disable an existing account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  domain: CUSTOMERS
-  state: disabled
+- local_action:
+    module: cs_account
+    name: customer_xy
+    domain: CUSTOMERS
+    state: disabled
 
 # Enable an existing account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  domain: CUSTOMERS
-  state: enabled
+- local_action:
+    module: cs_account
+    name: customer_xy
+    domain: CUSTOMERS
+    state: enabled
 
 # Remove an account in domain 'CUSTOMERS'
-local_action:
-  module: cs_account
-  name: customer_xy
-  domain: CUSTOMERS
-  state: absent
+- local_action:
+    module: cs_account
+    name: customer_xy
+    domain: CUSTOMERS
+    state: absent
 '''
 
 RETURN = '''
@@ -209,11 +192,12 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
             args = {
                 'listall': True,
                 'domainid': self.get_domain(key='id'),
+                'fetch_list': True,
             }
             accounts = self.query_api('listAccounts', **args)
             if accounts:
                 account_name = self.module.params.get('name')
-                for a in accounts['account']:
+                for a in accounts:
                     if account_name == a['name']:
                         self.account = a
                         break

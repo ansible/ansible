@@ -1,0 +1,160 @@
+---
+# nxos_config -> NetworkConfig, dumps
+# nxos_static_route -> CustomNetworkConfig
+
+# hit NetworkConfig
+# Select interface for test
+- debug: msg="START connection={{ ansible_connection }} common/common_config.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: intname="{{ nxos_int1 }}"
+
+- name: setup
+  nxos_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - "interface {{ intname }}"
+    match: none
+    provider: "{{ connection }}"
+
+- name: collect any backup files
+  find: &backups
+    paths: "{{ role_path }}/backup"
+    pattern: "{{ inventory_hostname_short }}_config*"
+  connection: local
+  register: backup_files
+
+- name: delete backup files
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{backup_files.files|default([])}}"
+
+- name: configure device with config
+  nxos_config:
+    commands:
+      - description this is a test
+      - shutdown
+    parents:
+      - "interface {{ intname }}"
+    backup: yes
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.updates is defined"
+
+- name: collect any backup files
+  find: *backups
+  connection: local
+  register: backup_files
+
+- assert:
+    that:
+      - "backup_files.files is defined"
+
+# hit block/sublevel sections
+- name: setup
+  nxos_config: &clear
+    lines: no ip access-list test
+    provider: "{{ connection }}"
+    match: none
+  ignore_errors: yes
+
+# hit NetworkConfig._diff_exact
+- name: configure sub level command using block replace - exact
+  nxos_config:
+    lines:
+      - 10 permit ip 192.0.2.1/32 any log
+      - 20 permit ip 192.0.2.2/32 any log
+      - 30 permit ip 192.0.2.3/32 any log
+      - 40 permit ip 192.0.2.4/32 any log
+    parents: ip access-list test
+    replace: block
+    provider: "{{ connection }}"
+    match: exact
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list test' in result.updates"
+      - "'10 permit ip 192.0.2.1/32 any log' in result.updates"
+      - "'20 permit ip 192.0.2.2/32 any log' in result.updates"
+      - "'30 permit ip 192.0.2.3/32 any log' in result.updates"
+      - "'40 permit ip 192.0.2.4/32 any log' in result.updates"
+
+# hit NetworkConfig._diff_strict
+- name: configure sub level command using block replace strict
+  nxos_config:
+    lines:
+      - 10 permit ip 192.0.2.1/32 any log
+      - 20 permit ip 192.0.2.2/32 any log
+      - 30 permit ip 192.0.2.3/32 any log
+      - 40 permit ip 192.0.2.4/32 any log
+    parents: ip access-list test
+    replace: block
+    provider: "{{ connection }}"
+    match: strict
+  register: result
+
+- name: teardown
+  nxos_config: *clear
+
+# hit CustomNetworkConfig
+- block:
+  - name: create static route
+    nxos_static_route: &configure
+      prefix: "192.168.20.64/24"
+      next_hop: "192.0.2.3"
+      route_name: testing
+      pref: 100
+      tag: 5500
+      vrf: testing
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: remove static route
+    nxos_static_route: &remove
+      prefix: "192.168.20.64/24"
+      next_hop: "192.0.2.3"
+      route_name: testing
+      pref: 100
+      tag: 5500
+      vrf: testing
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  always:
+  - name: remove static route
+    nxos_static_route:
+      prefix: "192.168.20.64/24"
+      next_hop: "192.0.2.3"
+      route_name: testing
+      pref: 100
+      tag: 5500
+      vrf: testing
+      state: absent
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: remove static route aggregate
+    nxos_static_route:
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
+      state: absent
+      provider: "{{ connection }}"
+    ignore_errors: yes

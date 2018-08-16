@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 DOCUMENTATION = r'''
 ---
@@ -17,13 +17,15 @@ module: bigip_gtm_wide_ip
 short_description: Manages F5 BIG-IP GTM wide ip
 description:
   - Manages F5 BIG-IP GTM wide ip.
-version_added: "2.0"
+version_added: 2.0
 options:
   pool_lb_method:
     description:
       - Specifies the load balancing method used to select a pool in this wide
         IP. This setting is relevant only when multiple pools are configured
         for a wide IP.
+      - The C(round_robin) value is deprecated and will be removed in Ansible 2.9.
+      - The C(global_availability) value is deprecated and will be removed in Ansible 2.9.
     required: True
     aliases: ['lb_method']
     choices:
@@ -31,6 +33,8 @@ options:
       - ratio
       - topology
       - global-availability
+      - global_availability
+      - round_robin
     version_added: 2.5
   name:
     description:
@@ -80,23 +84,23 @@ options:
     suboptions:
       name:
         description:
-          - The name of the pool to include
-        required: true
+          - The name of the pool to include.
+        required: True
       ratio:
         description:
           - Ratio for the pool.
           - The system uses this number with the Ratio load balancing method.
     version_added: 2.5
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
+  irules:
+    version_added: 2.6
+    description:
+      - List of rules to be applied.
+      - If you want to remove all existing iRules, specify a single empty value; C("").
+        See the documentation for an example.
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
-
 
 EXAMPLES = r'''
 - name: Set lb method
@@ -104,8 +108,53 @@ EXAMPLES = r'''
     server: lb.mydomain.com
     user: admin
     password: secret
-    lb_method: round-robin
+    pool_lb_method: round-robin
     name: my-wide-ip.example.com
+  delegate_to: localhost
+
+- name: Add iRules to the Wide IP
+  bigip_gtm_wide_ip:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    pool_lb_method: round-robin
+    name: my-wide-ip.example.com
+    irules:
+      - irule1
+      - irule2
+  delegate_to: localhost
+
+- name: Remove one iRule from the Virtual Server
+  bigip_gtm_wide_ip:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    pool_lb_method: round-robin
+    name: my-wide-ip.example.com
+    irules:
+      - irule1
+  delegate_to: localhost
+
+- name: Remove all iRules from the Virtual Server
+  bigip_gtm_wide_ip:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    pool_lb_method: round-robin
+    name: my-wide-ip.example.com
+    irules: ""
+  delegate_to: localhost
+
+- name: Assign a pool with ratio to the Wide IP
+  bigip_gtm_wide_ip:
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    pool_lb_method: round-robin
+    name: my-wide-ip.example.com
+    pools:
+      - name: pool1
+        ratio: 100
   delegate_to: localhost
 '''
 
@@ -120,45 +169,64 @@ state:
   returned: changed
   type: string
   sample: disabled
+irules:
+  description: iRules set on the Wide IP.
+  returned: changed
+  type: list
+  sample: ['/Common/irule1', '/Common/irule2']
 '''
 
-import re
-
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
 from distutils.version import LooseVersion
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import is_valid_fqdn
+    from library.module_utils.network.f5.common import f5_argument_spec
+
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import is_valid_fqdn
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'poolLbMode': 'pool_lb_method'
+        'poolLbMode': 'pool_lb_method',
+        'rules': 'irules',
     }
-    updatables = ['pool_lb_method', 'state', 'pools']
-    returnables = ['name', 'pool_lb_method', 'state', 'pools']
-    api_attributes = ['poolLbMode', 'enabled', 'disabled', 'pools']
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+    updatables = [
+        'pool_lb_method', 'state', 'pools', 'irules', 'enabled', 'disabled'
+    ]
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
+    returnables = [
+        'name', 'pool_lb_method', 'state', 'pools', 'irules'
+    ]
+
+    api_attributes = [
+        'poolLbMode', 'enabled', 'disabled', 'pools', 'rules'
+    ]
 
 
 class ApiParameters(Parameters):
@@ -196,25 +264,15 @@ class ApiParameters(Parameters):
 class ModuleParameters(Parameters):
     @property
     def pool_lb_method(self):
-        deprecated = [
-            'return_to_dns', 'null', 'static_persist', 'vs_capacity',
-            'least_conn', 'lowest_rtt', 'lowest_hops', 'packet_rate', 'cpu',
-            'hit_ratio', 'qos', 'bps', 'drop_packet', 'explicit_ip',
-            'connection_rate', 'vs_score'
-        ]
-        if self._values['lb_method'] is None:
+        if self._values['pool_lb_method'] is None:
             return None
-        lb_method = str(self._values['lb_method'])
-        if lb_method in deprecated:
-            raise F5ModuleError(
-                "The provided lb_method is not supported"
-            )
-        elif lb_method == 'global_availability':
+        lb_method = str(self._values['pool_lb_method'])
+        if lb_method == 'global_availability':
             if self._values['__warnings'] is None:
                 self._values['__warnings'] = []
             self._values['__warnings'].append(
                 dict(
-                    msg='The provided lb_method is deprecated',
+                    msg='The provided pool_lb_method is deprecated',
                     version='2.4'
                 )
             )
@@ -224,7 +282,7 @@ class ModuleParameters(Parameters):
                 self._values['__warnings'] = []
             self._values['__warnings'].append(
                 dict(
-                    msg='The provided lb_method is deprecated',
+                    msg='The provided pool_lb_method is deprecated',
                     version='2.4'
                 )
             )
@@ -241,7 +299,7 @@ class ModuleParameters(Parameters):
     def name(self):
         if self._values['name'] is None:
             return None
-        if not re.search(r'.*\..*\..*', self._values['name']):
+        if not is_valid_fqdn(self._values['name']):
             raise F5ModuleError(
                 "The provided name must be a valid FQDN"
             )
@@ -278,11 +336,27 @@ class ModuleParameters(Parameters):
             return None
         for item in self._values['pools']:
             pool = dict()
+            if 'name' not in item:
+                raise F5ModuleError(
+                    "'name' is a required key for items in the list of pools."
+                )
             if 'ratio' in item:
                 pool['ratio'] = item['ratio']
-            pool['name'] = self._fqdn_name(item['name'])
+            pool['name'] = fq_name(self.partition, item['name'])
             result.append(pool)
         return result
+
+    @property
+    def irules(self):
+        results = []
+        if self._values['irules'] is None:
+            return None
+        if len(self._values['irules']) == 1 and self._values['irules'][0] == '':
+            return ''
+        for irule in self._values['irules']:
+            result = fq_name(self.partition, irule)
+            results.append(result)
+        return results
 
 
 class Changes(Parameters):
@@ -302,7 +376,13 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-    pass
+    @property
+    def irules(self):
+        if self._values['irules'] is None:
+            return None
+        if self._values['irules'] == '':
+            return []
+        return self._values['irules']
 
 
 class ReportableChanges(Changes):
@@ -367,10 +447,23 @@ class Difference(object):
         result = self._diff_complex_items(self.want.pools, self.have.pools)
         return result
 
+    @property
+    def irules(self):
+        if self.want.irules is None:
+            return None
+        if self.want.irules == '' and self.have.irules is None:
+            return None
+        if self.want.irules == '' and len(self.have.irules) > 0:
+            return []
+        if sorted(set(self.want.irules)) != sorted(set(self.have.irules)):
+            return self.want.irules
+
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
 
     def exec_module(self):
         if self.version_is_less_than_12():
@@ -381,9 +474,9 @@ class ModuleManager(object):
 
     def get_manager(self, type):
         if type == 'typed':
-            return TypedManager(self.client)
+            return TypedManager(**self.kwargs)
         elif type == 'untyped':
-            return UntypedManager(self.client)
+            return UntypedManager(**self.kwargs)
 
     def version_is_less_than_12(self):
         version = self.client.api.tmos_version
@@ -394,9 +487,10 @@ class ModuleManager(object):
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = ModuleParameters(params=self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
 
@@ -406,7 +500,7 @@ class BaseManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = UsableChanges(changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -422,7 +516,7 @@ class BaseManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = UsableChanges(changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -439,7 +533,7 @@ class BaseManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        reportable = ReportableChanges(self.changes.to_return())
+        reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
@@ -449,24 +543,24 @@ class BaseManager(object):
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
 
     def present(self):
-        if self.want.lb_method is None:
-            raise F5ModuleError(
-                "The 'lb_method' option is required when state is 'present'"
-            )
         if self.exists():
             return self.update()
         else:
             return self.create()
 
     def create(self):
+        if self.want.pool_lb_method is None:
+            raise F5ModuleError(
+                "The 'pool_lb_method' option is required when state is 'present'"
+            )
         self._set_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         return True
@@ -481,7 +575,7 @@ class BaseManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -492,7 +586,7 @@ class BaseManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -508,7 +602,7 @@ class UntypedManager(BaseManager):
         )
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         result = self.client.api.tm.gtm.wideips.wipeip.load(
             name=self.want.name,
             partition=self.want.partition
@@ -521,10 +615,10 @@ class UntypedManager(BaseManager):
             partition=self.want.partition
         )
         result = resource.attrs
-        return ApiParameters(result)
+        return ApiParameters(params=result)
 
     def create_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         self.client.api.tm.gtm.wideips.wideip.create(
             name=self.want.name,
             partition=self.want.partition,
@@ -541,8 +635,8 @@ class UntypedManager(BaseManager):
 
 
 class TypedManager(BaseManager):
-    def __init__(self, client):
-        super(TypedManager, self).__init__(client)
+    def __init__(self, *args, **kwargs):
+        super(TypedManager, self).__init__(**kwargs)
         if self.want.type is None:
             raise F5ModuleError(
                 "The 'type' option is required for BIG-IP instances "
@@ -569,7 +663,7 @@ class TypedManager(BaseManager):
         return result
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         wideips = self.client.api.tm.gtm.wideips
         collection = getattr(wideips, self.collection)
         resource = getattr(collection, self.want.type)
@@ -588,10 +682,10 @@ class TypedManager(BaseManager):
             partition=self.want.partition
         )
         result = result.attrs
-        return ApiParameters(result)
+        return ApiParameters(params=result)
 
     def create_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         wideips = self.client.api.tm.gtm.wideips
         collection = getattr(wideips, self.collection)
         resource = getattr(collection, self.want.type)
@@ -615,18 +709,14 @@ class TypedManager(BaseManager):
 
 class ArgumentSpec(object):
     def __init__(self):
-        deprecated = [
-            'return_to_dns', 'null', 'round_robin', 'static_persist',
-            'global_availability', 'vs_capacity', 'least_conn', 'lowest_rtt',
-            'lowest_hops', 'packet_rate', 'cpu', 'hit_ratio', 'qos', 'bps',
-            'drop_packet', 'explicit_ip', 'connection_rate', 'vs_score'
+        lb_method_choices = [
+            'round-robin', 'topology', 'ratio', 'global-availability',
+
+            # TODO(Remove in Ansible 2.9)
+            'round_robin', 'global_availability'
         ]
-        supported = [
-            'round-robin', 'topology', 'ratio', 'global-availability'
-        ]
-        lb_method_choices = deprecated + supported
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             pool_lb_method=dict(
                 choices=lb_method_choices,
                 aliases=['lb_method']
@@ -650,29 +740,39 @@ class ArgumentSpec(object):
                     name=dict(required=True),
                     ratio=dict(type='int')
                 )
-            )
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            ),
+            irules=dict(
+                type='list',
+            ),
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
+        cleanup_tokens(client)
+        module.exit_json(**results)
     except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.fail_json(msg=str(e))
 
 
 if __name__ == '__main__':

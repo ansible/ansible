@@ -32,7 +32,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_image
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Perform firmware upgrade/download from a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch firmware images. It provides a way to download a firmware image
@@ -55,35 +55,28 @@ options:
              to download the firmware image. The choices are FTP, SFTP, TFTP, or SCP. Any other protocols will
              result in error. If this parameter is not specified, there is no default value to be used.
         required: true
-        default: null
         choices: [SFTP, SCP, FTP, TFTP]
     serverip:
         description:
             - This specifies the IP Address of the remote server from where the software image will be downloaded.
         required: true
-        default: null
     imgpath:
         description:
             - This specifies the full file path of the image located on the remote server. In case the relative path
              is used as the variable value, the root folder for the user of the server needs to be specified.
         required: true
-        default: null
     imgtype:
         description:
             - This specifies the firmware image type to be downloaded
         required: true
-        default: null
         choices: [all, boot, os, onie]
     serverusername:
         description:
             - Specify the username for the server relating to the protocol used.
         required: true
-        default: null
     serverpassword:
         description:
             - Specify the password for the server relating to the protocol used.
-        required: false
-        default: null
 '''
 EXAMPLES = '''
 Tasks : The following are examples of using the module cnos_image. These are written in the main.yml file of the tasks directory.
@@ -91,8 +84,8 @@ Tasks : The following are examples of using the module cnos_image. These are wri
 - name: Test Image transfer
   cnos_image:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_image_{{ inventory_hostname }}_output.txt"
@@ -106,8 +99,8 @@ Tasks : The following are examples of using the module cnos_image. These are wri
 - name: Test Image tftp
   cnos_image:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_image_{{ inventory_hostname }}_output.txt"
@@ -196,7 +189,7 @@ def main():
     remote_conn = remote_conn_pre.invoke_shell()
     time.sleep(2)
 
-    # Enable and enter configure terminal then send command
+    # Enable and then send command
     output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
 
     output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
@@ -226,6 +219,7 @@ def main():
         module.exit_json(changed=True, msg="Image file tranferred to device")
     else:
         module.fail_json(msg=errorMsg)
+
 
 if __name__ == '__main__':
     main()

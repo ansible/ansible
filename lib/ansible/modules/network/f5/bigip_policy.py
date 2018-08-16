@@ -23,7 +23,7 @@ description:
     the description, and things unrelated to the policy rules themselves.
     It is also the first module that should be used when creating rules as
     the C(bigip_policy_rule) module requires a policy parameter.
-version_added: "2.5"
+version_added: 2.5
 options:
   description:
     description:
@@ -47,6 +47,7 @@ options:
       - present
       - absent
       - draft
+    default: present
   strategy:
     description:
       - Specifies the method to determine which actions get executed in the
@@ -72,11 +73,6 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as
-    pip install f5-sdk
-requirements:
-  - f5-sdk
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -166,68 +162,47 @@ rules:
   type: list
   sample: ['/Common/rule1', '/Common/rule2']
 '''
+
 import re
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from distutils.version import LooseVersion
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+except ImportError:
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+
+try:
     from f5.sdk_exception import NonExtantPolicyRule
 except ImportError:
     HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-        self._values['__warning'] = []
-        self._values['__deprecated'] = []
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
     def to_return(self):
         result = {}
         for returnable in self.returnables:
             result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
         result = self._filter_params(result)
         return result
 
@@ -261,9 +236,7 @@ class Parameters(AnsibleF5Parameters):
                 return self._get_custom_strategy_name()
 
     def _get_builtin_strategy(self, strategy):
-        return '/{0}/{1}-match'.format(
-            self.partition, strategy
-        )
+        return '/Common/{0}-match'.format(strategy)
 
     def _get_custom_strategy_name(self):
         strategy = self._values['strategy']
@@ -314,9 +287,11 @@ class ComplexParameters(Parameters):
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
+        self.want = Parameters(params=self.module.params)
 
     def _announce_deprecations(self):
         warnings = []
@@ -325,7 +300,7 @@ class BaseManager(object):
         if self.have:
             warnings += self.have._values.get('__deprecated', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
@@ -337,7 +312,7 @@ class BaseManager(object):
         if self.have:
             warnings += self.have._values.get('__warning', [])
         for warning in warnings:
-            self.client.module.warn(warning['msg'])
+            self.module.warn(warning['msg'])
 
     def present(self):
         if self.exists():
@@ -386,9 +361,9 @@ class BaseManager(object):
 
 
 class SimpleManager(BaseManager):
-    def __init__(self, client):
-        super(SimpleManager, self).__init__(client)
-        self.want = SimpleParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        super(SimpleManager, self).__init__(**kwargs)
+        self.want = SimpleParameters(params=self.module.params)
         self.have = SimpleParameters()
         self.changes = SimpleChanges()
 
@@ -398,7 +373,7 @@ class SimpleManager(BaseManager):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = SimpleChanges(changed)
+            self.changes = SimpleChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -411,7 +386,7 @@ class SimpleManager(BaseManager):
             else:
                 changed[k] = change
         if changed:
-            self.changes = SimpleChanges(changed)
+            self.changes = SimpleChanges(params=changed)
             return True
         return False
 
@@ -445,7 +420,7 @@ class SimpleManager(BaseManager):
             partition=self.want.partition
         )
         rules = self._get_rule_names(resource)
-        result = SimpleParameters(resource.attrs)
+        result = SimpleParameters(params=resource.attrs)
         result.update(dict(rules=rules))
         return result
 
@@ -470,7 +445,7 @@ class SimpleManager(BaseManager):
     def create(self):
         self._validate_creation_parameters()
         self._set_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         return True
@@ -491,7 +466,7 @@ class SimpleManager(BaseManager):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -503,7 +478,7 @@ class SimpleManager(BaseManager):
         return changed
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -519,9 +494,9 @@ class SimpleManager(BaseManager):
 
 
 class ComplexManager(BaseManager):
-    def __init__(self, client):
-        super(ComplexManager, self).__init__(client)
-        self.want = ComplexParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        super(ComplexManager, self).__init__(**kwargs)
+        self.want = ComplexParameters(params=self.module.params)
         self.have = ComplexParameters()
         self.changes = ComplexChanges()
 
@@ -531,7 +506,7 @@ class ComplexManager(BaseManager):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = ComplexChanges(changed)
+            self.changes = ComplexChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -544,7 +519,7 @@ class ComplexManager(BaseManager):
             else:
                 changed[k] = change
         if changed:
-            self.changes = ComplexChanges(changed)
+            self.changes = ComplexChanges(params=changed)
             return True
         return False
 
@@ -595,7 +570,7 @@ class ComplexManager(BaseManager):
         return changed
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.draft_exists() or self.policy_exists():
@@ -631,7 +606,7 @@ class ComplexManager(BaseManager):
             )
 
         rules = self._get_rule_names(resource)
-        result = ComplexParameters(resource.attrs)
+        result = ComplexParameters(params=resource.attrs)
         result.update(dict(rules=rules))
         return result
 
@@ -697,7 +672,7 @@ class ComplexManager(BaseManager):
         self._validate_creation_parameters()
 
         self._set_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         if not self.draft_exists():
@@ -716,7 +691,7 @@ class ComplexManager(BaseManager):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         if not self.draft_exists():
@@ -787,8 +762,10 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
 
     def exec_module(self):
         if self.version_is_less_than_12():
@@ -799,9 +776,9 @@ class ModuleManager(object):
 
     def get_manager(self, type):
         if type == 'simple':
-            return SimpleManager(self.client)
+            return SimpleManager(**self.kwargs)
         elif type == 'complex':
-            return ComplexManager(self.client)
+            return ComplexManager(**self.kwargs)
 
     def version_is_less_than_12(self):
         version = self.client.api.tmos_version
@@ -814,7 +791,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(
                 required=True
             ),
@@ -824,32 +801,38 @@ class ArgumentSpec(object):
                 choices=['first', 'all', 'best']
             ),
             state=dict(
-                required=False,
                 default='present',
                 choices=['absent', 'present', 'draft']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

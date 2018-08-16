@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -11,12 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_whoami
 version_added: "2.5"
-short_description: Returns information about the current user and process
+short_description: Get information about the current user and process
 description:
 - Designed to return the same information as the C(whoami /all) command.
 - Also includes information missing from C(whoami) such as logon metadata like
@@ -133,31 +132,6 @@ groups:
           "type": "Alias"
       }
   ]
-logon_sid:
-  description: The logon SID details.
-  returned: success
-  type: complex
-  contains:
-    domain_name:
-      description: The domain name of the logon SID.
-      returned: success
-      type: str
-      sample: NT AUTHORITY
-    sid:
-      description: The SID in string form.
-      returned: success
-      type: str
-      sample: S-1-5-5-0-4163312
-    account_name:
-      description: The account name of the logon SID.
-      returned: success
-      type: str
-      sample: LogonSessionId_0_4163312
-    type:
-      description: The type of SID.
-      returned: success
-      type: str
-      sample: Logon
 account:
   description: The running account SID details.
   returned: success

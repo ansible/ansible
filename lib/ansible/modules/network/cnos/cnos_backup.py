@@ -32,7 +32,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_backup
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Backup the current running or startup configuration to a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch configurations. It provides a
@@ -103,8 +103,8 @@ Tasks : The following are examples of using the module cnos_backup. These are wr
 - name: Test Running Config Backup
   cnos_backup:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_backup_{{ inventory_hostname }}_output.txt"
@@ -118,8 +118,8 @@ Tasks : The following are examples of using the module cnos_backup. These are wr
 - name: Test Startup Config Backup
   cnos_backup:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_backup_{{ inventory_hostname }}_output.txt"
@@ -133,8 +133,8 @@ Tasks : The following are examples of using the module cnos_backup. These are wr
 - name: Test Running Config Backup -TFTP
   cnos_backup:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_backup_{{ inventory_hostname }}_output.txt"
@@ -148,8 +148,8 @@ Tasks : The following are examples of using the module cnos_backup. These are wr
 - name: Test Startup Config Backup - TFTP
   cnos_backup:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_backup_{{ inventory_hostname }}_output.txt"
@@ -243,7 +243,7 @@ def main():
     time.sleep(2)
 
     #
-    # Enable and enter configure terminal then send command
+    # Enable and then send command
     output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
 
     output = output + \

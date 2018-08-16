@@ -1,0 +1,2 @@
+bugfixes:
+- win_updates - Fixed issue where running win_updates on async fails without any error

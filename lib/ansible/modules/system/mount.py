@@ -89,7 +89,7 @@ options:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "no"
     version_added: '2.5'
 notes:
@@ -128,7 +128,6 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils.ismount import ismount
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -219,7 +218,13 @@ def set_mount(module, args):
             ) = line.split()
 
         # Check if we found the correct line
-        if ld['name'] != escaped_args['name']:
+        if (
+                ld['name'] != escaped_args['name'] or (
+                    # In the case of swap, check the src instead
+                    'src' in args and
+                    ld['name'] == 'none' and
+                    ld['fstype'] == 'swap' and
+                    ld['src'] != args['src'])):
             to_write.append(line)
 
             continue
@@ -300,7 +305,13 @@ def unset_mount(module, args):
                 ld['passno']
             ) = line.split()
 
-        if ld['name'] != escaped_name:
+        if (
+                ld['name'] != escaped_name or (
+                    # In the case of swap, check the src instead
+                    'src' in args and
+                    ld['name'] == 'none' and
+                    ld['fstype'] == 'swap' and
+                    ld['src'] != args['src'])):
             to_write.append(line)
 
             continue
@@ -653,9 +664,8 @@ def main():
             if os.path.exists(name):
                 try:
                     os.rmdir(name)
-                except (OSError, IOError):
-                    e = get_exception()
-                    module.fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
+                except (OSError, IOError) as e:
+                    module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
     elif state == 'unmounted':
         if ismount(name) or is_bind_mounted(module, linux_mounts, name):
             if not module.check_mode:
@@ -670,10 +680,9 @@ def main():
         if not os.path.exists(name) and not module.check_mode:
             try:
                 os.makedirs(name)
-            except (OSError, IOError):
-                e = get_exception()
+            except (OSError, IOError) as e:
                 module.fail_json(
-                    msg="Error making dir %s: %s" % (name, str(e)))
+                    msg="Error making dir %s: %s" % (name, to_native(e)))
 
         name, changed = set_mount(module, args)
         res = 0

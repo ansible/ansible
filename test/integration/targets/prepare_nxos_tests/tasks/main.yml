@@ -1,14 +1,21 @@
 ---
-- name: Toggle feature nxapi - Enable
+- name: Enable Feature Privilage
   nxos_config:
     lines:
-      - feature nxapi
-    provider: "{{ cli }}"
+      - feature privilege
+  connection: network_cli
   ignore_errors: yes
 
-- name: Set nxapi to default state
+- name: Enable Feature NXAPI
   nxos_nxapi:
-      provider: "{{ cli }}"
+    state: present
+  connection: network_cli
+
+- name: Enable lldp
+  nxos_config:
+    lines:
+      - feature lldp
+  ignore_errors: yes
 
 # Gather the list of interfaces on this device and make the list
 # available for integration tests that need them.
@@ -23,8 +30,8 @@
 - name: "Collect interface list"
   nxos_command:
     commands: ['show interface brief | json']
-    provider: "{{ nxapi }}"
     timeout: 60
+  connection: network_cli
   register: intout
 
 - set_fact: intdataraw="{{ intout.stdout_lines[0]['TABLE_interface']['ROW_interface'] }}"
@@ -36,7 +43,7 @@
 - name: "Gather image version info"
   nxos_command:
     commands: ['sh version | json']
-    provider: "{{ cli }}"
+  connection: network_cli
   register: nxos_version_output
 
 - set_fact: image_version="{{ nxos_version_output.stdout[0]['kickstart_ver_str'] }}"
@@ -51,7 +58,7 @@
 - name: "Gather platform info"
   nxos_command:
     commands: ['sh inventory | json']
-    provider: "{{ cli }}"
+  connection: network_cli
   register: nxos_inventory_output
 
 - set_fact: platform="{{ nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'][0]['productid'].split('-')[0] }}"
@@ -79,24 +86,38 @@
 - set_fact: platform="N35NG"
   when: ( chassis_type is search("C35")) and image_version is search("7.0\(3\)I7")
 
+# Set platform to N3L(N3K Legacy) for C3048 platform.
+- set_fact: platform="N3L"
+  when: ( chassis_type is search("C3048"))
+
 # Create matrix of simple keys based on platform
 # and image version for use within test playbooks.
 - set_fact: imagetag=""
-- set_fact: imagetag="I2"
-  when: image_version is search("7.0\(3\)I2")
-- set_fact: imagetag="I3"
-  when: image_version is search("7.0\(3\)I3")
-- set_fact: imagetag="I4"
-  when: image_version is search("7.0\(3\)I4")
-- set_fact: imagetag="I5"
-  when: image_version is search("7.0\(3\)I5")
-- set_fact: imagetag="I6"
-  when: image_version is search("7.0\(3\)I6")
-- set_fact: imagetag="I7"
-  when: image_version is search("7.0\(3\)I7")
-- set_fact: imagetag="F1"
-  when: image_version is search("7.0\(3\)F1")
-- set_fact: imagetag="F2"
-  when: image_version is search("7.0\(3\)F2")
-- set_fact: imagetag="F3"
-  when: image_version is search("7.0\(3\)F3")
+- set_fact: imagemr=""
+
+# Examples
+# 8.0(1)
+# 7.3(0)D1(1)
+# 7.0(3)IHD8(1)
+- set_fact: major_version="{{ image_version[0:3] }}"
+- set_fact: imagetag="{{ image_version[0:3] }}"
+  when: image_version is search("\d\.\d\(\d\)")
+- set_fact: imagetag="{{ image_version[6:8] }}"
+  when: image_version is search("\d\.\d\(\d\)\S\S\(\d\)")
+- set_fact: imagetag="{{ image_version[6:10] }}"
+  when: image_version is search("\d\.\d\(\d\)\S\S\S\S\(\d\)")
+
+- set_fact: imagemr="{{ image_version[4:5] }}"
+  when: image_version is search("\d\.\d\(\d\)")
+- set_fact: imagemr="{{ image_version[9:10] }}"
+  when: image_version is search("\d\.\d\(\d\)\S\S\(\d\)")
+- set_fact: imagemr="{{ image_version[11:12] }}"
+  when: image_version is search("\d\.\d\(\d\)\S\S\S\S\(\d\)")
+
+- debug: msg="IMAGE VERSION {{ image_version }}"
+- debug: msg="IMAGE TAG {{ imagetag }}"
+- debug: msg="IMAGE MR {{ imagemr }}"
+
+- set_fact: ipv6_supported="true"
+- set_fact: ipv6_supported="false"
+  when: platform is match("N35")

@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -18,7 +18,11 @@ module: bigip_iapp_service
 short_description: Manages TCL iApp services on a BIG-IP
 description:
   - Manages TCL iApp services on a BIG-IP.
-version_added: "2.4"
+  - If you are looking for the API that is communicated with on the BIG-IP,
+    the one the is used is C(/mgmt/tm/sys/application/service/). There are a
+    couple of APIs in a BIG-IP that might seem like they are relevant to iApp
+    Services, but the API mentioned here is the one that is used.
+version_added: 2.4
 options:
   name:
     description:
@@ -46,6 +50,7 @@ options:
         This option is equivalent to re-configuring the iApp if that template
         has changed.
     default: no
+    type: bool
   state:
     description:
       - When C(present), ensures that the iApp service is created and running.
@@ -72,6 +77,7 @@ options:
         over any similar setting in the iApp Server payload that you provide in
         the C(parameters) field.
     default: yes
+    type: bool
     version_added: 2.5
   traffic_group:
     description:
@@ -82,11 +88,6 @@ options:
         over any similar setting in the iApp Server payload that you provide in
         the C(parameters) field.
     version_added: 2.5
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-requirements:
-  - f5-sdk
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -215,17 +216,34 @@ RETURN = r'''
 # only common fields returned
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
-from collections import defaultdict
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -233,62 +251,21 @@ class Parameters(AnsibleF5Parameters):
         'strictUpdates': 'strict_updates',
         'trafficGroup': 'traffic_group',
     }
+
     returnables = []
+
     api_attributes = [
         'tables', 'variables', 'template', 'lists', 'deviceGroup',
         'inheritedDevicegroup', 'inheritedTrafficGroup', 'trafficGroup',
         'strictUpdates'
     ]
+
     updatables = ['tables', 'variables', 'lists', 'strict_updates', 'traffic_group']
-
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-        self._values['__warnings'] = []
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
 
     def to_return(self):
         result = {}
         for returnable in self.returnables:
             result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
         result = self._filter_params(result)
         return result
 
@@ -410,7 +387,7 @@ class Parameters(AnsibleF5Parameters):
     def template(self):
         if self._values['template'] is None:
             return None
-        return self._fqdn_name(self._values['template'])
+        return fq_name(self.partition, self._values['template'])
 
     @template.setter
     def template(self, value):
@@ -441,14 +418,14 @@ class Parameters(AnsibleF5Parameters):
 
         # Specifying the value overrides any associated value in the payload
         elif self._values['traffic_group']:
-            result = self._fqdn_name(self._values['traffic_group'])
+            result = fq_name(self.partition, self._values['traffic_group'])
 
         # This will be automatically `None` if it was not set by the
         # `parameters` setter
         elif self.trafficGroup:
-            result = self._fqdn_name(self.trafficGroup)
+            result = fq_name(self.partition, self.trafficGroup)
         else:
-            result = self._fqdn_name(self._values['traffic_group'])
+            result = fq_name(self.partition, self._values['traffic_group'])
         if result.startswith('/Common/'):
             return result
         else:
@@ -489,10 +466,11 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
+        self.want = Parameters(params=self.module.params)
         self.changes = Changes()
 
     def _set_changed_options(self):
@@ -501,7 +479,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(changed)
+            self.changes = Changes(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -517,7 +495,7 @@ class ModuleManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = Changes(changed)
+            self.changes = Changes(params=changed)
             return True
         return False
 
@@ -556,7 +534,7 @@ class ModuleManager(object):
         self._set_changed_options()
         if self.want.traffic_group is None and self.want.trafficGroup is None:
             self.want.update({'traffic_group': '/Common/traffic-group-1'})
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         return True
@@ -565,7 +543,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update() and not self.want.force:
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -591,7 +569,7 @@ class ModuleManager(object):
             partition=self.want.partition
         ).to_dict()
         result.pop('_meta_data', None)
-        return Parameters(result)
+        return Parameters(params=result)
 
     def create_on_device(self):
         params = self.want.api_params()
@@ -607,7 +585,7 @@ class ModuleManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -626,7 +604,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(required=True),
             template=dict(),
             parameters=dict(
@@ -641,31 +619,39 @@ class ArgumentSpec(object):
                 type='bool'
             ),
             strict_updates=dict(
-                type='bool'
+                type='bool',
+                default='yes'
             ),
-            traffic_group=dict()
+            traffic_group=dict(),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
+        cleanup_tokens(client)
+        module.exit_json(**results)
     except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.fail_json(msg=str(e))
 
 
 if __name__ == '__main__':

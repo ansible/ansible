@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Matt Martz <matt@sivel.net>, and others
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, Matt Martz <matt@sivel.net>, and others
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -29,7 +15,10 @@ DOCUMENTATION = r'''
 ---
 module: win_msi
 version_added: '1.7'
-deprecated: In 2.4 and will be removed in 2.8, use M(win_package) instead.
+deprecated:
+  removed_in: "2.8"
+  why: The win_msi module has a number of issues, the M(win_package) module is easier to maintain and use.
+  alternative: Use M(win_package) instead.
 short_description: Installs and uninstalls Windows MSI files
 description:
     - Installs or uninstalls a Windows MSI file that is already located on the
@@ -37,8 +26,9 @@ description:
 options:
     path:
         description:
-            - File system path to the MSI file to install
-        required: true
+            - File system path to the MSI file to install.
+        required: yes
+        type: path
     extra_args:
         description:
             - Additional arguments to pass to the msiexec.exe command.
@@ -51,10 +41,12 @@ options:
         description:
             - Path to a file created by installing the MSI to prevent from
               attempting to reinstall the package on every run.
+        type: path
     removes:
         description:
             - Path to a file removed by uninstalling the MSI to prevent from
               attempting to re-uninstall the package on every run.
+        type: path
         version_added: '2.4'
     wait:
         description:

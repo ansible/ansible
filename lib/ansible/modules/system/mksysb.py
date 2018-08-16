@@ -27,32 +27,32 @@ options:
   backup_crypt_files:
     description:
       - Backup encrypted files.
-    choices: ["yes", "no"]
+    type: bool
     default: "yes"
   backup_dmapi_fs:
     description:
       - Back up DMAPI filesystem files.
-    choices: ["yes", "no"]
+    type: bool
     default: "yes"
   create_map_files:
     description:
       - Creates a new MAP files.
-    choices: ["yes", "no"]
+    type: bool
     default: "no"
   exclude_files:
     description:
       - Excludes files using C(/etc/rootvg.exclude).
-    choices: ["yes", "no"]
+    type: bool
     default: "no"
   exclude_wpar_files:
     description:
       - Excludes WPAR files.
-    choices: ["yes", "no"]
+    type: bool
     default: "no"
   extended_attrs:
     description:
       - Backup extended attributes.
-    choices: ["yes", "no"]
+    type: bool
     default: "yes"
   name:
     description:
@@ -61,13 +61,13 @@ options:
   new_image_data:
     description:
       - Creates a new file data.
-    choices: ["yes", "no"]
+    type: bool
     default: "yes"
   software_packing:
     description:
       - Exclude files from packing option listed in
         C(/etc/exclude_packing.rootvg).
-    choices: ["yes", "no"]
+    type: bool
     default: "no"
   storage_path:
     description:
@@ -76,7 +76,7 @@ options:
   use_snapshot:
     description:
       - Creates backup using snapshots.
-    choices: ["yes", "no"]
+    type: bool
     default: "no"
 '''
 

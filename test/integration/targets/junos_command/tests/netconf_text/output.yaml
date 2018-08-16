@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf_text/output.yaml"
+- debug: msg="START netconf_text/output.yaml on connection={{ ansible_connection }}"
 
 - name: get output for single command
   junos_command:
@@ -59,4 +59,4 @@
       - "result.stdout is defined"
       - "result.stdout_lines is defined"
 
-- debug: msg="END netconf_text/output.yaml"
+- debug: msg="END netconf_text/output.yaml on connection={{ ansible_connection }}"

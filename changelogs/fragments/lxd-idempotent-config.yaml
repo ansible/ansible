@@ -1,0 +1,4 @@
+---
+bugfixes:
+- Fix lxd module to be idempotent when the given configuration for the lxd
+  container has not changed (https://github.com/ansible/ansible/pull/38166)

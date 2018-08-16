@@ -25,9 +25,8 @@ from collections import MutableMapping, MutableSet, MutableSequence
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
-from ansible.parsing.plugin_docs import read_docstring
+from ansible.parsing.plugin_docs import read_docstring, read_docstub
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins.loader import fragment_loader
 
 try:
     from __main__ import display
@@ -59,7 +58,7 @@ def merge_fragment(target, source):
         target[key] = value
 
 
-def add_fragments(doc, filename):
+def add_fragments(doc, filename, fragment_loader):
 
     fragments = doc.pop('extends_documentation_fragment', [])
 
@@ -99,6 +98,8 @@ def add_fragments(doc, filename):
                 merge_fragment(doc['options'], fragment.pop('options'))
             except Exception as e:
                 raise AnsibleError("%s options (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+        else:
+            doc['options'] = fragment.pop('options')
 
         # merge rest of the sections
         try:
@@ -107,15 +108,28 @@ def add_fragments(doc, filename):
             raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
 
 
-def get_docstring(filename, verbose=False):
+def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
     """
     DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the module_docs_fragments directory.
     """
 
-    data = read_docstring(filename, verbose=verbose)
+    data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
     # add fragments to documentation
     if data.get('doc', False):
-        add_fragments(data['doc'], filename)
+        add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
+
+    return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
+
+
+def get_docstub(filename, fragment_loader, verbose=False, ignore_errors=False):
+    """
+    When only short_description is needed, load a stub of the full DOCUMENTATION string to speed up operation.
+    """
+
+    data = read_docstub(filename, verbose=verbose, ignore_errors=ignore_errors)
+
+    if data.get('doc', False):
+        add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']

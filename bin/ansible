@@ -41,6 +41,15 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_text
 
 
+# Used for determining if the system is running a new enough python version
+# and should only restrict on our documented minimum versions
+_PY3_MIN = sys.version_info[:2] >= (3, 5)
+_PY2_MIN = (2, 6) <= sys.version_info[:2] < (3,)
+_PY_MIN = _PY3_MIN or _PY2_MIN
+if not _PY_MIN:
+    raise SystemExit('ERROR: Ansible requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s' % ''.join(sys.version.splitlines()))
+
+
 class LastResort(object):
     # OUTPUT OF LAST RESORT
     def display(self, msg, log_only=None):
@@ -148,7 +157,7 @@ if __name__ == '__main__':
         display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()), log_only=log_only)
         exit_code = 250
     finally:
-        # Remove ansible tempdir
+        # Remove ansible tmpdir
         shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
     sys.exit(exit_code)

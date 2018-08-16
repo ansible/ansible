@@ -114,6 +114,7 @@ EXAMPLES = '''
 '''
 
 import glob
+import json
 import os
 import platform
 import re
@@ -123,11 +124,6 @@ import string
 import subprocess
 import tempfile
 import time
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -206,7 +202,10 @@ class Service(object):
 
         # Most things don't need to be daemonized
         if not daemonize:
-            return self.module.run_command(cmd)
+            # chkconfig localizes messages and we're screen scraping so make
+            # sure we use the C locale
+            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            return self.module.run_command(cmd, environ_update=lang_env)
 
         # This is complex because daemonization is hard for people.
         # What we do is daemonize a part of this module, the daemon runs the
@@ -248,7 +247,10 @@ class Service(object):
                 cmd = [to_bytes(c, errors='surrogate_or_strict') for c in shlex.split(cmd)]
             # In either of the above cases, pass a list of byte strings to Popen
 
-            p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
+            # chkconfig localizes messages and we're screen scraping so make
+            # sure we use the C locale
+            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=lang_env, preexec_fn=lambda: os.close(pipe[1]))
             stdout = b("")
             stderr = b("")
             fds = [p.stdout, p.stderr]
@@ -1071,6 +1073,32 @@ class FreeBsdService(Service):
             time.sleep(self.sleep)
 
         return ret
+
+
+class DragonFlyBsdService(FreeBsdService):
+    """
+    This is the DragonFly BSD Service manipulation class - it uses the /etc/rc.conf
+    file for controlling services started at boot and the 'service' binary to
+    check status and perform direct service manipulation.
+    """
+
+    platform = 'DragonFly'
+    distribution = None
+
+    def service_enable(self):
+        if self.enable:
+            self.rcconf_value = "YES"
+        else:
+            self.rcconf_value = "NO"
+
+        rcfiles = ['/etc/rc.conf']  # Overkill?
+        for rcfile in rcfiles:
+            if os.path.isfile(rcfile):
+                self.rcconf_file = rcfile
+
+        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+
+        return self.service_enable_rcconf()
 
 
 class OpenBsdService(Service):

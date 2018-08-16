@@ -32,13 +32,11 @@ options:
     description:
       - Specifies the type of banner to configure on remote device.
     required: true
-    default: null
     choices: ['login', 'motd']
   text:
     description:
       - Banner text to be configured. Accepts multiline string,
         without empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Existential state of the configuration on the device.
@@ -242,7 +240,9 @@ def main():
     elif is_netconf(module):
         config_object = NCConfiguration(module)
 
-    result = config_object.run()
+    result = None
+    if config_object is not None:
+        result = config_object.run()
     module.exit_json(**result)
 
 

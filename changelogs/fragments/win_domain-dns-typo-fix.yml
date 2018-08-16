@@ -1,0 +1,2 @@
+bugfixes:
+- win_domain - fixes typo in one of the AD cmdlets https://github.com/ansible/ansible/issues/41536

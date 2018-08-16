@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright 2017, Jacob McGill <jmcgill298
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -13,9 +13,12 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
-    state: present
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: anstest
+    state: present
   register: tenant_present
 
 - name: ensure filter exists for tests to kick off
@@ -81,19 +84,19 @@
 - name: present assertions
   assert:
     that:
-      - subject_filter_present_check_mode.changed == true
-      - subject_filter_present_check_mode.existing == []
-      - 'subject_filter_present_check_mode.config == {"vzRsSubjFiltAtt": {"attributes": {"directives": "log", "tnVzFilterName": "anstest"}}}'
-      - subject_filter_present.changed == true
-      - subject_filter_present.existing == []
-      - subject_filter_present.config == subject_filter_present_check_mode.config
-      - subject_filter_present_2.changed == true
-      - subject_filter_present_idempotent.changed == false
-      - subject_filter_present_idempotent.existing != []
-      - subject_filter_update.changed == true
-      - 'subject_filter_update.config.vzRsSubjFiltAtt.attributes == {"directives": ""}'
-      - present_missing_param.failed == true
-      - 'present_missing_param.msg == "state is present but the following are missing: contract,filter,subject"'
+      - subject_filter_present_check_mode is changed
+      - subject_filter_present_check_mode.previous == []
+      - 'subject_filter_present_check_mode.sent == {"vzRsSubjFiltAtt": {"attributes": {"directives": "log", "tnVzFilterName": "anstest"}}}'
+      - subject_filter_present is changed
+      - subject_filter_present.previous == []
+      - subject_filter_present.sent == subject_filter_present_check_mode.sent
+      - subject_filter_present_2 is changed
+      - subject_filter_present_idempotent is not changed
+      - subject_filter_present_idempotent.previous != []
+      - subject_filter_update is changed
+      - 'subject_filter_update.sent.vzRsSubjFiltAtt.attributes == {"directives": ""}'
+      - present_missing_param is failed
+      - 'present_missing_param.msg == "state is present but all of the following are missing: contract, filter, subject"'
 
 - name: query all
   aci_contract_subject_to_filter:
@@ -111,11 +114,11 @@
 - name: query assertions
   assert:
     that:
-      - query_all.changed == false
-      - query_all.existing | length > 1
-      - query_all.existing.0.vzRsSubjFiltAtt is defined
-      - query_binding.changed == false
-      - query_binding.existing != []
+      - query_all is not changed
+      - query_all.current | length > 1
+      - query_all.current.0.vzRsSubjFiltAtt is defined
+      - query_binding is not changed
+      - query_binding.current != []
 
 - name: delete subject filter binding - check mode works
   aci_contract_subject_to_filter: &aci_subject_filter_absent
@@ -149,42 +152,42 @@
 - name: absent assertions
   assert:
     that:
-      - subject_filter_absent_check_mode.changed == true
+      - subject_filter_absent_check_mode is changed
       - subject_filter_absent_check_mode.proposed == {}
-      - subject_filter_absent_check_mode.existing != []
-      - subject_filter_absent.changed == true
-      - subject_filter_absent.existing != []
-      - subject_filter_absent_idempotent.changed == false
-      - subject_filter_absent_idempotent.existing == []
-      - absent_missing_param.failed == true
-      - 'absent_missing_param.msg == "state is absent but the following are missing: filter"'
+      - subject_filter_absent_check_mode.previous != []
+      - subject_filter_absent is changed
+      - subject_filter_absent.previous != []
+      - subject_filter_absent_idempotent is not changed
+      - subject_filter_absent_idempotent.previous == []
+      - absent_missing_param is failed
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: filter"'
 
 - name: cleanup subject
   aci_contract_subject:
     <<: *aci_subject_present
     state: absent
-  when: subject_present.changed == true
+  when: subject_present is changed
 
 - name: cleanup contract
   aci_contract:
     <<: *aci_contract_present
     state: absent
-  when: contract_present.changed == true
+  when: contract_present is changed
 
 - name: cleanup filter
   aci_filter:
     <<: *aci_filter_present
     state: absent
-  when: filter_present.changed == true
+  when: filter_present is changed
 
 - name: cleanup filter
   aci_filter:
     <<: *aci_filter_present_2
     state: absent
-  when: filter_present_2.changed == true
+  when: filter_present_2 is changed
 
 - name: cleanup tenant
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

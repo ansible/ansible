@@ -20,6 +20,7 @@ description:
 version_added: "2.2"
 extends_documentation_fragment:
   - aws
+  - ec2
 author: "Jim Dalton (@jsdalton) <jim.dalton@gmail.com>"
 requirements:
   - python >= 2.6
@@ -89,7 +90,7 @@ EXAMPLES = '''
 
 - cloudwatchevent_rule:
     name: MyDisabledCronTask
-    schedule_expression: "cron(5 minutes)"
+    schedule_expression: "rate(5 minutes)"
     description: Run my disabled scheduled task
     state: disabled
     targets:

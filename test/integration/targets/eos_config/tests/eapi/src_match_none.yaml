@@ -9,13 +9,13 @@
     parents:
       - interface Ethernet2
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure device with config
   eos_config:
     src: basic/config.j2
-    provider: "{{ eapi }}"
     match: none
+  become: yes
   register: result
 
 - assert:
@@ -27,7 +27,7 @@
 - name: check device with config
   eos_config:
     src: basic/config.j2
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:

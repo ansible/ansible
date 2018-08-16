@@ -1,7 +1,6 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -17,7 +16,7 @@ $exclude_hosts = Get-AnsibleParam -obj $params -name "exclude_hosts" -type "list
 $hostname = Get-AnsibleParam -obj $params -name "host" -type "str" -default "127.0.0.1"
 $path = Get-AnsibleParam -obj $params -name "path" -type "path"
 $port = Get-AnsibleParam -obj $params -name "port" -type "int"
-$search_regex = Get-AnsibleParam -obj $params -name "search_regex" -type "string"
+$search_regex = Get-AnsibleParam -obj $params -name "search_regex" -type "str"
 $sleep = Get-AnsibleParam -obj $params -name "sleep" -type "int" -default 1
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "started" -validateset "present","started","stopped","absent","drained"
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 300
@@ -54,17 +53,9 @@ if ($port -ne $null) {
 }
 
 Function Test-Port($hostname, $port) {
-    # try and resolve the IP/Host, if it fails then just use the host passed in
-    try {
-        $resolve_hostname = ([System.Net.Dns]::GetHostEntry($hostname)).HostName
-    } catch {
-        # oh well just use the IP addres
-        $resolve_hostname = $hostname
-    }
-
     $timeout = $connect_timeout * 1000
     $socket = New-Object -TypeName System.Net.Sockets.TcpClient
-    $connect = $socket.BeginConnect($resolve_hostname, $port, $null, $null)
+    $connect = $socket.BeginConnect($hostname, $port, $null, $null)
     $wait = $connect.AsyncWaitHandle.WaitOne($timeout, $false)
 
     if ($wait) {
@@ -119,7 +110,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
         $complete = $false
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
-            if (Test-FilePath -path $path) {
+            if (Test-AnsiblePath -Path $path) {
                 if ($search_regex -eq $null) {
                     $complete = $true
                     break
@@ -136,7 +127,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             if ($search_regex -eq $null) {
                 Fail-Json $result "timeout while waiting for file $path to be present"
@@ -150,7 +141,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
         $complete = $false
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
-            if (Test-FilePath -path $path) {
+            if (Test-AnsiblePath -Path $path) {
                 if ($search_regex -ne $null) {
                     $file_contents = Get-Content -Path $path -Raw
                     if ($file_contents -notmatch $search_regex) {
@@ -168,7 +159,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             if ($search_regex -eq $null) {
                 Fail-Json $result "timeout while waiting for file $path to be absent"
@@ -195,7 +186,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to start listening"
         }
@@ -216,7 +207,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to stop listening"
         }
@@ -257,14 +248,14 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to drain"
         }
     }  
 }
 
-$result.attempts = $attempts
+$result.wait_attempts = $attempts
 $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 Exit-Json $result

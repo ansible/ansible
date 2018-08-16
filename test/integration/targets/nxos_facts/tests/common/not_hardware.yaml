@@ -1,13 +1,15 @@
 ---
-- debug: msg="START {{ connection.transport }}/not_hardware_facts.yaml"
+- debug: msg="START connection={{ ansible_connection }}/not_hardware_facts.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 
 - name: test not hardware
   nxos_facts:
-    provider: "{{ connection }}"
     gather_subset:
       - "!hardware"
     timeout: 30
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -29,4 +31,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
 
-- debug: msg="END {{ connection.transport }}/not_hardware_facts.yaml"
+- debug: msg="END connection={{ ansible_connection }}/not_hardware_facts.yaml"

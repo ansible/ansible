@@ -1,0 +1,3 @@
+- debug:
+    msg: In role1
+  register: _role1_result

@@ -46,9 +46,10 @@ class TestIosBannerModule(TestIosModule):
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_ios_banner_create(self):
-        set_module_args(dict(banner='login', text='test\nbanner\nstring'))
-        commands = ['banner login @\ntest\nbanner\nstring\n@']
-        self.execute_module(changed=True, commands=commands)
+        for banner_type in ('login', 'motd', 'exec', 'incoming', 'slip-ppp'):
+            set_module_args(dict(banner=banner_type, text='test\nbanner\nstring'))
+            commands = ['banner {0} @\ntest\nbanner\nstring\n@'.format(banner_type)]
+            self.execute_module(changed=True, commands=commands)
 
     def test_ios_banner_remove(self):
         set_module_args(dict(banner='login', state='absent'))

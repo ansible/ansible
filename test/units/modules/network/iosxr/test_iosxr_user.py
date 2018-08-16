@@ -38,15 +38,20 @@ class TestIosxrUserModule(TestIosxrModule):
         self.mock_load_config = patch('ansible.modules.network.iosxr.iosxr_user.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_is_cliconf = patch('ansible.modules.network.iosxr.iosxr_user.is_cliconf')
+        self.is_cliconf = self.mock_is_cliconf.start()
+
     def tearDown(self):
         super(TestIosxrUserModule, self).tearDown()
 
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_is_cliconf.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.get_config.return_value = load_fixture('iosxr_user_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
+        self.is_cliconf.return_value = True
 
     def test_iosxr_user_delete(self):
         set_module_args(dict(name='ansible', state='absent'))

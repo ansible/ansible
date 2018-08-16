@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_interface netconf/basic.yaml"
+- debug: msg="START junos_interface netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup remove interface
   junos_interface:
@@ -295,3 +295,5 @@
 - assert:
     that:
       - 'result.changed == false'
+
+- debug: msg="END junos_interface netconf/basic.yaml on connection={{ ansible_connection }}"

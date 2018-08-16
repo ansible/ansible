@@ -51,6 +51,8 @@ class AnsibleError(Exception):
     '''
 
     def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None):
+        super(AnsibleError, self).__init__(message)
+
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
@@ -246,15 +248,45 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
                 message += "\n"
             message += "Searched in:\n\t%s" % searched
 
+        message += " on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option"
+
         super(AnsibleFileNotFound, self).__init__(message=message, obj=obj, show_content=show_content,
                                                   suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
 
 
-class AnsibleActionSkip(AnsibleRuntimeError):
+# These Exceptions are temporary, using them as flow control until we can get a better solution.
+# DO NOT USE as they will probably be removed soon.
+# We will port the action modules in our tree to use a context manager instead.
+class AnsibleAction(AnsibleRuntimeError):
+    ''' Base Exception for Action plugin flow control '''
+
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
+
+        super(AnsibleAction, self).__init__(message=message, obj=obj, show_content=show_content,
+                                            suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
+        if result is None:
+            self.result = {}
+        else:
+            self.result = result
+
+
+class AnsibleActionSkip(AnsibleAction):
     ''' an action runtime skip'''
-    pass
+
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
+        super(AnsibleActionSkip, self).__init__(message=message, obj=obj, show_content=show_content,
+                                                suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
+        self.result.update({'skipped': True, 'msg': message})
 
 
-class AnsibleActionFail(AnsibleRuntimeError):
+class AnsibleActionFail(AnsibleAction):
     ''' an action runtime failure'''
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
+        super(AnsibleActionFail, self).__init__(message=message, obj=obj, show_content=show_content,
+                                                suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
+        self.result.update({'failed': True, 'msg': message})
+
+
+class _AnsibleActionDone(AnsibleAction):
+    ''' an action runtime early exit'''
     pass

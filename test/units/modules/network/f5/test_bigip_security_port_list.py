@@ -18,24 +18,24 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_security_port_list import ApiParameters
-    from library.bigip_security_port_list import ModuleParameters
-    from library.bigip_security_port_list import ModuleManager
-    from library.bigip_security_port_list import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.modules.bigip_security_port_list import ApiParameters
+    from library.modules.bigip_security_port_list import ModuleParameters
+    from library.modules.bigip_security_port_list import ModuleManager
+    from library.modules.bigip_security_port_list import ArgumentSpec
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_security_port_list import Parameters
         from ansible.modules.network.f5.bigip_security_port_list import ApiParameters
         from ansible.modules.network.f5.bigip_security_port_list import ModuleParameters
         from ansible.modules.network.f5.bigip_security_port_list import ModuleManager
         from ansible.modules.network.f5.bigip_security_port_list import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -72,7 +72,7 @@ class TestParameters(unittest.TestCase):
             port_lists=['/Common/foo', 'foo']
         )
 
-        p = ModuleParameters(args)
+        p = ModuleParameters(params=args)
         assert p.name == 'foo'
         assert p.description == 'this is a description'
         assert len(p.ports) == 4
@@ -82,7 +82,7 @@ class TestParameters(unittest.TestCase):
     def test_api_parameters(self):
         args = load_fixture('load_security_port_list_1.json')
 
-        p = ApiParameters(args)
+        p = ApiParameters(params=args)
         assert len(p.ports) == 4
         assert len(p.port_ranges) == 3
         assert len(p.port_lists) == 1
@@ -91,8 +91,6 @@ class TestParameters(unittest.TestCase):
         assert p.port_lists[0] == '/Common/_sys_self_allow_tcp_defaults'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -105,17 +103,16 @@ class TestManager(unittest.TestCase):
             ports=[1, 2, 3, 4],
             port_ranges=['10-20', '30-40', '50-60'],
             port_lists=['/Common/foo', 'foo'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[False, True])

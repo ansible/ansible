@@ -17,24 +17,25 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 try:
-    from library.bigip_gtm_facts import Parameters
-    from library.bigip_gtm_facts import ServerParameters
-    from library.bigip_gtm_facts import PoolParameters
-    from library.bigip_gtm_facts import WideIpParameters
-    from library.bigip_gtm_facts import ModuleManager
-    from library.bigip_gtm_facts import ServerFactManager
-    from library.bigip_gtm_facts import PoolFactManager
-    from library.bigip_gtm_facts import TypedPoolFactManager
-    from library.bigip_gtm_facts import UntypedPoolFactManager
-    from library.bigip_gtm_facts import WideIpFactManager
-    from library.bigip_gtm_facts import TypedWideIpFactManager
-    from library.bigip_gtm_facts import UntypedWideIpFactManager
-    from library.bigip_gtm_facts import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.modules.bigip_gtm_facts import Parameters
+    from library.modules.bigip_gtm_facts import ServerParameters
+    from library.modules.bigip_gtm_facts import PoolParameters
+    from library.modules.bigip_gtm_facts import WideIpParameters
+    from library.modules.bigip_gtm_facts import ModuleManager
+    from library.modules.bigip_gtm_facts import ServerFactManager
+    from library.modules.bigip_gtm_facts import PoolFactManager
+    from library.modules.bigip_gtm_facts import TypedPoolFactManager
+    from library.modules.bigip_gtm_facts import UntypedPoolFactManager
+    from library.modules.bigip_gtm_facts import WideIpFactManager
+    from library.modules.bigip_gtm_facts import TypedWideIpFactManager
+    from library.modules.bigip_gtm_facts import UntypedWideIpFactManager
+    from library.modules.bigip_gtm_facts import ArgumentSpec
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from f5.bigip.tm.gtm.pool import A
     from f5.utils.responses.handlers import Stats
     from test.unit.modules.utils import set_module_args
@@ -53,7 +54,8 @@ except ImportError:
         from ansible.modules.network.f5.bigip_gtm_pool import TypedWideIpFactManager
         from ansible.modules.network.f5.bigip_gtm_pool import UntypedWideIpFactManager
         from ansible.modules.network.f5.bigip_gtm_pool import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.bigip.tm.gtm.pool import A
         from f5.utils.responses.handlers import Stats
         from units.modules.utils import set_module_args
@@ -100,13 +102,11 @@ class TestParameters(unittest.TestCase):
             include=['pool'],
             filter='name.*'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.include == ['pool']
         assert p.filter == 'name.*'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -125,23 +125,22 @@ class TestManager(unittest.TestCase):
         collection = [FakeARecord(attrs=x) for x in fixture1['items']]
         stats = Stats(FakeStatResource(fixture2['entries']))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        tfm = TypedPoolFactManager(client)
+        tfm = TypedPoolFactManager(module=module)
         tfm.read_collection_from_device = Mock(return_value=collection)
         tfm.read_stats_from_device = Mock(return_value=stats.stat)
 
-        tm = PoolFactManager(client)
+        tm = PoolFactManager(module=module)
         tm.version_is_less_than_12 = Mock(return_value=False)
         tm.get_manager = Mock(return_value=tfm)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.get_manager = Mock(return_value=tm)
         mm.gtm_provisioned = Mock(return_value=True)
 

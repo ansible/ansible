@@ -1,0 +1,3 @@
+---
+bugfixes:
+- fix default SSL version for docker modules https://github.com/ansible/ansible/issues/42897

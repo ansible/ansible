@@ -288,6 +288,184 @@
     that:
     - trigger_monthlydow_again is not changed
 
+- name: create trigger repetition (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
+  register: create_trigger_repetition_check
+  check_mode: yes
+
+- name: get result of create trigger repetition (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: create_trigger_repetition_result_check
+
+- name: assert results of create trigger repetition (check mode)
+  assert:
+    that:
+    - create_trigger_repetition_check is changed
+    - create_trigger_repetition_result_check.task_exists == True
+    - create_trigger_repetition_result_check.triggers|count == 1
+    - create_trigger_repetition_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
+    - create_trigger_repetition_result_check.triggers[0].enabled == True
+    - create_trigger_repetition_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - create_trigger_repetition_result_check.triggers[0].end_boundary == None
+    - create_trigger_repetition_result_check.triggers[0].weeks_of_month == "1,2"
+    - create_trigger_repetition_result_check.triggers[0].days_of_week == "monday,wednesday"
+    - create_trigger_repetition_result_check.triggers[0].repetition.interval == None
+    - create_trigger_repetition_result_check.triggers[0].repetition.duration == None
+    - create_trigger_repetition_result_check.triggers[0].repetition.stop_at_duration_end == False
+
+- name: create trigger repetition
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
+  register: create_trigger_repetition
+
+- name: get result of create trigger repetition
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: create_trigger_repetition_result
+
+- name: assert results of create trigger repetition
+  assert:
+    that:
+    - create_trigger_repetition is changed
+    - create_trigger_repetition_result.task_exists == True
+    - create_trigger_repetition_result.triggers|count == 1
+    - create_trigger_repetition_result.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - create_trigger_repetition_result.triggers[0].enabled == True
+    - create_trigger_repetition_result.triggers[0].start_boundary == None
+    - create_trigger_repetition_result.triggers[0].end_boundary == None
+    - create_trigger_repetition_result.triggers[0].repetition.interval == "PT1M"
+    - create_trigger_repetition_result.triggers[0].repetition.duration == "PT5M"
+    - create_trigger_repetition_result.triggers[0].repetition.stop_at_duration_end == True
+
+- name: create trigger repetition (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
+  register: create_trigger_repetition_again
+
+- name: assert results of create trigger repetition (idempotent)
+  assert:
+    that:
+    - create_trigger_repetition_again is not changed
+
+- name: change trigger repetition (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT10M
+        duration: PT20M
+        stop_at_duration_end: no
+  register: change_trigger_repetition_check
+  check_mode: yes
+
+- name: get result of change trigger repetition (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: change_trigger_repetition_result_check
+
+- name: assert results of change trigger repetition (check mode)
+  assert:
+    that:
+    - change_trigger_repetition_check is changed
+    - change_trigger_repetition_result_check.task_exists == True
+    - change_trigger_repetition_result_check.triggers|count == 1
+    - change_trigger_repetition_result_check.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - change_trigger_repetition_result_check.triggers[0].enabled == True
+    - change_trigger_repetition_result_check.triggers[0].start_boundary == None
+    - change_trigger_repetition_result_check.triggers[0].end_boundary == None
+    - change_trigger_repetition_result_check.triggers[0].repetition.interval == "PT1M"
+    - change_trigger_repetition_result_check.triggers[0].repetition.duration == "PT5M"
+    - change_trigger_repetition_result_check.triggers[0].repetition.stop_at_duration_end == True
+
+- name: change trigger repetition
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT10M
+        duration: PT20M
+        stop_at_duration_end: no
+  register: change_trigger_repetition
+
+- name: get result of change trigger repetition
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: change_trigger_repetition_result
+
+- name: assert results of change trigger repetition
+  assert:
+    that:
+    - change_trigger_repetition is changed
+    - change_trigger_repetition_result.task_exists == True
+    - change_trigger_repetition_result.triggers|count == 1
+    - change_trigger_repetition_result.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - change_trigger_repetition_result.triggers[0].enabled == True
+    - change_trigger_repetition_result.triggers[0].start_boundary == None
+    - change_trigger_repetition_result.triggers[0].end_boundary == None
+    - change_trigger_repetition_result.triggers[0].repetition.interval == "PT10M"
+    - change_trigger_repetition_result.triggers[0].repetition.duration == "PT20M"
+    - change_trigger_repetition_result.triggers[0].repetition.stop_at_duration_end == False
+
+- name: change trigger repetition (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT10M
+        duration: PT20M
+        stop_at_duration_end: no
+  register: change_trigger_repetition_again
+
+- name: assert results of change trigger repetition (idempotent)
+  assert:
+    that:
+    - change_trigger_repetition_again is not changed
+
 - name: create task with multiple triggers (check mode)
   win_scheduled_task:
     name: '{{test_scheduled_task_name}}'
@@ -321,12 +499,13 @@
     - create_multiple_triggers_check is changed
     - create_multiple_triggers_result_check.task_exists == True
     - create_multiple_triggers_result_check.triggers|count == 1
-    - create_multiple_triggers_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
+    - create_multiple_triggers_result_check.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
     - create_multiple_triggers_result_check.triggers[0].enabled == True
-    - create_multiple_triggers_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - create_multiple_triggers_result_check.triggers[0].start_boundary == None
     - create_multiple_triggers_result_check.triggers[0].end_boundary == None
-    - create_multiple_triggers_result_check.triggers[0].weeks_of_month == "1,2"
-    - create_multiple_triggers_result_check.triggers[0].days_of_week == "monday,wednesday"
+    - create_multiple_triggers_result_check.triggers[0].repetition.interval == "PT10M"
+    - create_multiple_triggers_result_check.triggers[0].repetition.duration == "PT20M"
+    - create_multiple_triggers_result_check.triggers[0].repetition.stop_at_duration_end == False
 
 - name: create task with multiple triggers
   win_scheduled_task:

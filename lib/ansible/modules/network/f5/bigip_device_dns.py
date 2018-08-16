@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -18,7 +18,7 @@ module: bigip_device_dns
 short_description: Manage BIG-IP device DNS settings
 description:
   - Manage BIG-IP device DNS settings
-version_added: "2.2"
+version_added: 2.2
 options:
   cache:
     description:
@@ -26,17 +26,14 @@ options:
         operation each time a lookup is needed. Please note that this applies
         only to Access Policy Manager features, such as ACLs, web application
         rewrites, and authentication.
-    default: disable
     choices:
        - enabled
        - disabled
+       - enable
+       - disable
   name_servers:
     description:
       - A list of name servers that the system uses to validate DNS lookups
-  forwarders:
-    description:
-      - A list of BIND servers that the system can use to perform DNS lookups
-      - Deprecated in 2.4. Use the GUI or edit named.conf.
   search:
     description:
       - A list of domains that the system searches for local domain lookups,
@@ -55,12 +52,7 @@ options:
     choices:
       - absent
       - present
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -109,15 +101,30 @@ warnings:
   sample: ['...', '...']
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -148,16 +155,6 @@ class Parameters(AnsibleF5Parameters):
         result = {}
         for returnable in self.returnables:
             result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
         result = self._filter_params(result)
         return result
 
@@ -192,15 +189,6 @@ class Parameters(AnsibleF5Parameters):
         return True if self._values['dhcp'] in valid else False
 
     @property
-    def forwarders(self):
-        if self._values['forwarders'] is None:
-            return None
-        else:
-            raise F5ModuleError(
-                "The modifying of forwarders is not supported."
-            )
-
-    @property
     def ip_version(self):
         if self._values['ip_version'] in [6, '6', 'options inet6']:
             return "options inet6"
@@ -211,10 +199,11 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = Parameters(params=self.module.params)
         self.have = None
-        self.want = Parameters(self.client.module.params)
         self.changes = Parameters()
 
     def _update_changed_options(self):
@@ -226,7 +215,7 @@ class ModuleManager(object):
                 if attr1 != attr2:
                     changed[key] = attr1
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
             return True
         return False
 
@@ -260,13 +249,13 @@ class ModuleManager(object):
         if 'include' not in attrs:
             attrs['include'] = 4
         result.update(attrs)
-        return Parameters(result)
+        return Parameters(params=result)
 
     def update(self):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -299,7 +288,7 @@ class ModuleManager(object):
                 if set_new != set_have:
                     changed[key] = list(set_new)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
             return True
         return False
 
@@ -313,7 +302,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_absent():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.absent_on_device()
         return True
@@ -327,64 +316,54 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             cache=dict(
-                required=False,
-                choices=['disabled', 'enabled', 'disable', 'enable'],
-                default=None
+                choices=['disabled', 'enabled', 'disable', 'enable']
             ),
             name_servers=dict(
-                required=False,
-                default=None,
-                type='list'
-            ),
-            forwarders=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             search=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             ip_version=dict(
-                required=False,
-                default=None,
                 choices=[4, 6],
                 type='int'
             ),
             state=dict(
-                required=False,
                 default='present',
                 choices=['absent', 'present']
             )
         )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.required_one_of = [
-            ['name_servers', 'search', 'forwarders', 'ip_version', 'cache']
+            ['name_servers', 'search', 'ip_version', 'cache']
         ]
-        self.f5_product_name = 'bigip'
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
         required_one_of=spec.required_one_of
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
+
 
 if __name__ == '__main__':
     main()

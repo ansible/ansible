@@ -18,7 +18,7 @@ module: bigip_asm_policy
 short_description: Manage BIG-IP ASM policies
 description:
    - Manage BIG-IP ASM policies.
-version_added: "2.5"
+version_added: 2.5
 options:
   active:
     description:
@@ -26,9 +26,7 @@ options:
         deactivate existing active policy. Generally should be C(yes) only in cases where
         you want to activate new or existing policy.
     default: no
-    choices:
-      - yes
-      - no
+    type: bool
   name:
     description:
       - The ASM policy to manage or create.
@@ -44,6 +42,7 @@ options:
     choices:
       - present
       - absent
+    default: present
   file:
     description:
       - Full path to a policy file to be imported into the BIG-IP ASM.
@@ -98,8 +97,6 @@ options:
       - Device partition to manage resources on.
     default: Common
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk >= 3.0.4
 author:
   - Wojciech Wypior (@wojtek0806)
   - Tim Rupp (@caphrim007)
@@ -219,50 +216,37 @@ name:
 import os
 import time
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from distutils.version import LooseVersion
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
     updatables = [
         'active'
     ]
@@ -290,31 +274,16 @@ class Parameters(AnsibleF5Parameters):
 
     @property
     def full_path(self):
-        return self._fqdn_name(self.name)
+        return fqdn_name(self.name)
 
     def _templates_from_device(self):
         collection = self.client.api.tm.asm.policy_templates_s.get_collection()
         return collection
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
-
     def to_return(self):
         result = {}
         for returnable in self.returnables:
             result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
         result = self._filter_params(result)
         return result
 
@@ -483,8 +452,9 @@ class Difference(object):
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
         self.have = None
         self.changes = Changes()
 
@@ -512,7 +482,7 @@ class BaseManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(changed)
+            self.changes = Changes(params=changed)
 
     def should_update(self):
         result = self._update_changed_options()
@@ -534,7 +504,7 @@ class BaseManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = Changes(changed)
+            self.changes = Changes(params=changed)
             return True
         return False
 
@@ -557,12 +527,13 @@ class BaseManager(object):
         return False
 
     def _file_is_missing(self):
+        if self.want.template and self.want.file is None:
+            return False
         if not os.path.exists(self.want.file):
             return True
         return False
 
     def create(self):
-        task = None
         if self.want.active is None:
             self.want.update(dict(active=False))
         if self._file_is_missing():
@@ -570,20 +541,16 @@ class BaseManager(object):
                 "The specified ASM policy file does not exist"
             )
         self._set_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         if self.want.template is None and self.want.file is None:
             self.create_blank()
         else:
             if self.want.template is not None:
-                task = self.create_from_template_on_device()
+                self.create_from_template()
             elif self.want.file is not None:
-                task = self.import_to_device()
-            if not task:
-                return False
-            if not self.wait_for_task(task):
-                raise F5ModuleError('Import policy task failed.')
+                self.create_from_file()
 
         if self.want.active:
             self.activate()
@@ -595,7 +562,7 @@ class BaseManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         if self.changes.active:
@@ -641,7 +608,7 @@ class BaseManager(object):
             )
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -662,7 +629,7 @@ class BaseManager(object):
             if policy.name == self.want.name and policy.partition == self.want.partition:
                 params = policy.attrs
                 params.update(dict(self_link=policy.selfLink))
-                return Parameters(params)
+                return Parameters(params=params)
         raise F5ModuleError("The policy was not found")
 
     def import_to_device(self):
@@ -691,6 +658,7 @@ class BaseManager(object):
             partition=self.want.partition,
             policyTemplateReference=self.want.template_link
         )
+        time.sleep(2)
         return result
 
     def create_on_device(self):
@@ -710,8 +678,9 @@ class BaseManager(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
 
     def exec_module(self):
         if self.version_is_less_than_13():
@@ -722,9 +691,9 @@ class ModuleManager(object):
 
     def get_manager(self, type):
         if type == 'v1':
-            return V1Manager(self.client)
+            return V1Manager(**self.kwargs)
         elif type == 'v2':
-            return V2Manager(self.client)
+            return V2Manager(**self.kwargs)
 
     def version_is_less_than_13(self):
         version = self.client.api.tmos_version
@@ -735,19 +704,65 @@ class ModuleManager(object):
 
 
 class V1Manager(BaseManager):
-    def __init__(self, client):
-        super(V1Manager, self).__init__(client)
-        self.want = V1Parameters()
-        self.want.client = self.client
-        self.want.update(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        client = kwargs.get('client', None)
+        module = kwargs.get('module', None)
+        super(V1Manager, self).__init__(client=client, module=module)
+        self.want = V1Parameters(params=module.params, client=client)
+
+    def create_from_file(self):
+        self.import_to_device()
+        self.remove_temp_policy_from_device()
+
+    def create_from_template(self):
+        self.create_from_template_on_device()
+
+    def create_from_template_on_device(self):
+        full_name = fqdn_name(self.want.partition, self.want.name)
+        cmd = 'tmsh create asm policy {0} policy-template {1}'.format(full_name, self.want.template)
+        self.client.api.tm.util.bash.exec_cmd(
+            'run',
+            utilCmdArgs='-c "{0}"'.format(cmd)
+        )
+
+    def remove_temp_policy_from_device(self):
+        name = os.path.split(self.want.file)[1]
+        tpath_name = '/var/config/rest/downloads/{0}'.format(name)
+        self.client.api.tm.util.unix_rm.exec_cmd('run', utilCmdArgs=tpath_name)
+
+    def import_to_device(self):
+        self.client.api.shared.file_transfer.uploads.upload_file(self.want.file)
+        time.sleep(2)
+        name = os.path.split(self.want.file)[1]
+        full_name = fqdn_name(self.want.partition, self.want.name)
+        cmd = 'tmsh load asm policy {0} file /var/config/rest/downloads/{1}'.format(full_name, name)
+        self.client.api.tm.util.bash.exec_cmd(
+            'run',
+            utilCmdArgs='-c "{0}"'.format(cmd)
+        )
+        return True
 
 
 class V2Manager(BaseManager):
-    def __init__(self, client):
-        super(V2Manager, self).__init__(client)
-        self.want = V2Parameters()
-        self.want.client = self.client
-        self.want.update(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        client = kwargs.get('client', None)
+        module = kwargs.get('module', None)
+        super(V2Manager, self).__init__(client=client, module=module)
+        self.want = V2Parameters(params=module.params, client=client)
+
+    def create_from_template(self):
+        task = self.create_from_template_on_device()
+        if not task:
+            return False
+        if not self.wait_for_task(task):
+            raise F5ModuleError('Import policy task failed.')
+
+    def create_from_file(self):
+        task = self.import_to_device()
+        if not task:
+            return False
+        if not self.wait_for_task(task):
+            raise F5ModuleError('Import policy task failed.')
 
 
 class ArgumentSpec(object):
@@ -790,7 +805,7 @@ class ArgumentSpec(object):
             'Wordpress',
         ]
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(
                 required=True,
             ),
@@ -800,44 +815,44 @@ class ArgumentSpec(object):
             ),
             active=dict(
                 type='bool'
+            ),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
-        self.f5_product_name = 'bigip'
-
-
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
         mutually_exclusive=[
             ['file', 'template']
         ]
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
+        module.exit_json(**results)
     except F5ModuleError as e:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

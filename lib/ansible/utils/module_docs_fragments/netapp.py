@@ -1,5 +1,5 @@
 #
-# (c) 2016, Sumit Kumar <sumit4@netapp.com>
+# (c) 2018, Sumit Kumar <sumit4@netapp.com>, chris Archibald <carchi@netapp.com>
 #
 # This file is part of Ansible
 #
@@ -28,7 +28,53 @@ notes:
   - Ansible modules are available for the following NetApp Storage Platforms: E-Series, ONTAP, SolidFire
 """
 
-    # Documentation fragment for ONTAP
+    # Documentation fragment for ONTAP (na_ontap)
+    NA_ONTAP = """
+options:
+  hostname:
+      required: true
+      description:
+      - The hostname or IP address of the ONTAP instance.
+  username:
+      required: true
+      description:
+      - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
+        For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
+      aliases: ['user']
+  password:
+      required: true
+      description:
+      - Password for the specified user.
+      aliases: ['pass']
+  https:
+      description:
+      - Enable and disable https
+      type: bool
+      default: false
+  validate_certs:
+      description:
+      - If set to C(False), the SSL certificates will not be validated.
+      - This should only set to C(False) used on personally controlled sites using self-signed certificates.
+      default: true
+      type: bool
+  http_port:
+      description:
+      - Override the default port (80 or 443) with this port
+      type: int
+
+
+requirements:
+  - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 9.3
+  - Ansible 2.6
+  - netapp-lib (2017.10.30). Install using 'pip install netapp-lib'
+  - To enable http on the cluster you must run the following commands 'set -privilege advanced;' 'system services web modify -http-enabled true;'
+
+notes:
+  - The modules prefixed with na\\_ontap are built to support the ONTAP storage platform.
+
+    """
+
+    # Documentation fragment for ONTAP (na_cdot)
     ONTAP = """
 options:
   hostname:
@@ -39,19 +85,20 @@ options:
       required: true
       description:
       - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
-        For more information, please read the documentation U(https://goo.gl/BRu78Z).
+        For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
+      aliases: ['user']
   password:
       required: true
       description:
       - Password for the specified user.
-
+      aliases: ['pass']
 requirements:
   - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3
   - Ansible 2.2
   - netapp-lib (2015.9.25). Install using 'pip install netapp-lib'
 
 notes:
-  - The modules prefixed with C(netapp\\_cdot) are built to support the ONTAP storage platform.
+  - The modules prefixed with na\\_cdot are built to support the ONTAP storage platform.
 
 """
 
@@ -65,17 +112,21 @@ options:
   username:
       required: true
       description:
-      - Please ensure that the user has the adequate permissions. For more information, please read the official documentation U(https://goo.gl/ddJa4Q).
+      - Please ensure that the user has the adequate permissions. For more information, please read the official documentation
+        U(https://mysupport.netapp.com/documentation/docweb/index.html?productID=62636&language=en-US).
+      aliases: ['user']
   password:
       required: true
       description:
       - Password for the specified user.
+      aliases: ['pass']
 
 requirements:
-  - solidfire-sdk-python (1.1.0.92)
+  - The modules were developed with SolidFire 10.1
+  - solidfire-sdk-python (1.1.0.92) or greater. Install using 'pip install solidfire-sdk-python'
 
 notes:
-  - The modules prefixed with C(sf\\_) are built to support the SolidFire storage platform.
+  - The modules prefixed with na\\_elementsw are built to support the SolidFire storage platform.
 
 """
 

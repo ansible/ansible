@@ -13,22 +13,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_vrf
-short_description: Manage VRF (private networks aka. contexts) on Cisco ACI fabrics (fv:Ctx)
+short_description: Manage contexts or VRFs (fv:Ctx)
 description:
-- Manage VRF (private networks aka. contexts) on Cisco ACI fabrics.
+- Manage contexts or VRFs on Cisco ACI fabrics.
 - Each context is a private network associated to a tenant, i.e. VRF.
-- More information from the internal APIC class
-  I(fv:Ctx) at U(https://developer.cisco.com/media/mim-ref/MO-fvCtx.html).
-author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
-requirements:
-- Tested with ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
+- More information about the internal APIC class B(fv:Ctx) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   tenant:
     description:
@@ -44,11 +40,12 @@ options:
     choices: [ egress, ingress ]
   policy_control_preference:
     description:
-    - Determines if the Fabric should enforce Contrac Policies.
+    - Determines if the fabric should enforce contract policies to allow routing and packet forwarding.
     choices: [ enforced, unenforced ]
   description:
     description:
     - The description for the VRF.
+    aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -61,7 +58,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new VRF to a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
@@ -70,44 +67,152 @@ EXAMPLES = r'''
     policy_control_preference: enforced
     policy_control_direction: ingress
     state: present
+  delegate_to: localhost
 
 - name: Remove a VRF for a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
     tenant: lab_tenant
     state: absent
+  delegate_to: localhost
 
 - name: Query a VRF of a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
     tenant: lab_tenant
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VRFs
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
-RETURN = r''' # '''
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         policy_control_direction=dict(choices=['ingress', 'egress'], type='str'),
         policy_control_preference=dict(choices=['enforced', 'unenforced'], type='str'),
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
@@ -135,21 +240,21 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvCtx',
-            aci_rn='ctx-{}'.format(vrf),
-            filter_target='eq(fvCtx.name, "{}")'.format(vrf),
+            aci_rn='ctx-{0}'.format(vrf),
             module_object=vrf,
+            target_filter={'name': vrf},
         ),
     )
+
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='fvCtx',
             class_config=dict(
@@ -160,16 +265,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvCtx')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

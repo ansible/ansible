@@ -17,15 +17,16 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_policy_rule import Parameters
-    from library.bigip_policy_rule import ModuleParameters
-    from library.bigip_policy_rule import ApiParameters
-    from library.bigip_policy_rule import ModuleManager
-    from library.bigip_policy_rule import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.modules.bigip_policy_rule import Parameters
+    from library.modules.bigip_policy_rule import ModuleParameters
+    from library.modules.bigip_policy_rule import ApiParameters
+    from library.modules.bigip_policy_rule import ModuleManager
+    from library.modules.bigip_policy_rule import ArgumentSpec
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
@@ -34,7 +35,8 @@ except ImportError:
         from ansible.modules.network.f5.bigip_policy_rule import ApiParameters
         from ansible.modules.network.f5.bigip_policy_rule import ModuleManager
         from ansible.modules.network.f5.bigip_policy_rule import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -107,8 +109,6 @@ class TestParameters(unittest.TestCase):
         assert len(p.conditions) == 1
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -136,14 +136,13 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=False)
         mm.publish_on_device = Mock(return_value=True)
         mm.draft_exists = Mock(return_value=False)
@@ -176,15 +175,14 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = ApiParameters(load_fixture('load_ltm_policy_draft_rule_http-uri_forward.json'))
-        client = AnsibleF5Client(
+        current = ApiParameters(params=load_fixture('load_ltm_policy_draft_rule_http-uri_forward.json'))
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=True)
         mm.read_current_from_device = Mock(return_value=current)
         mm.draft_exists = Mock(return_value=False)

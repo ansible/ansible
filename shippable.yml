@@ -8,16 +8,38 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=other
+    - env: T=sanity/1
+    - env: T=sanity/2
 
     - env: T=units/2.6
     - env: T=units/2.7
     - env: T=units/3.5
     - env: T=units/3.6
+    - env: T=units/3.7
 
-    - env: T=windows/1
-    - env: T=windows/2
-    - env: T=windows/3
+    - env: T=windows/2008/1
+    - env: T=windows/2008-R2/1
+    - env: T=windows/2012/1
+    - env: T=windows/2012-R2/1
+    - env: T=windows/2016/1
+
+    - env: T=windows/2008/2
+    - env: T=windows/2008-R2/2
+    - env: T=windows/2012/2
+    - env: T=windows/2012-R2/2
+    - env: T=windows/2016/2
+
+    - env: T=windows/2008/3
+    - env: T=windows/2008-R2/3
+    - env: T=windows/2012/3
+    - env: T=windows/2012-R2/3
+    - env: T=windows/2016/3
+
+    - env: T=windows/2008/4
+    - env: T=windows/2008-R2/4
+    - env: T=windows/2012/4
+    - env: T=windows/2012-R2/4
+    - env: T=windows/2016/4
 
     - env: T=network
 
@@ -29,7 +51,6 @@ matrix:
     - env: T=linux/centos7/1
     - env: T=linux/fedora24/1
     - env: T=linux/fedora25/1
-    - env: T=linux/opensuse42.2/1
     - env: T=linux/opensuse42.3/1
     - env: T=linux/ubuntu1404/1
     - env: T=linux/ubuntu1604/1
@@ -43,7 +64,6 @@ matrix:
     - env: T=linux/centos7/2
     - env: T=linux/fedora24/2
     - env: T=linux/fedora25/2
-    - env: T=linux/opensuse42.2/2
     - env: T=linux/opensuse42.3/2
     - env: T=linux/ubuntu1404/2
     - env: T=linux/ubuntu1604/2
@@ -57,23 +77,40 @@ matrix:
     - env: T=linux/centos7/3
     - env: T=linux/fedora24/3
     - env: T=linux/fedora25/3
-    - env: T=linux/opensuse42.2/3
     - env: T=linux/opensuse42.3/3
     - env: T=linux/ubuntu1404/3
     - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1604py3/3
 
-    - env: T=cloud/default/2.7/1
-    - env: T=cloud/default/3.6/1
+    - env: T=aws/2.7/1
+    - env: T=aws/3.6/1
 
-    - env: T=cloud/default/2.7/2
-    - env: T=cloud/default/3.6/2
+    - env: T=aws/2.7/2
+    - env: T=aws/3.6/2
 
-    - env: T=cloud/default/2.7/3
-    - env: T=cloud/default/3.6/3
+    - env: T=azure/2.7/1
+    - env: T=azure/3.6/1
 
-    - env: T=cloud/default/2.7/4
-    - env: T=cloud/default/3.6/4
+    - env: T=azure/2.7/2
+    - env: T=azure/3.6/2
+
+    - env: T=azure/2.7/3
+    - env: T=azure/3.6/3
+
+    - env: T=azure/2.7/4
+    - env: T=azure/3.6/4
+
+    - env: T=vcenter/2.7/1
+    - env: T=vcenter/3.6/1
+
+    - env: T=cs/2.7/1
+    - env: T=cs/3.6/1
+
+    - env: T=tower/2.7/1
+    - env: T=tower/3.6/1
+
+    - env: T=cloud/2.7/1
+    - env: T=cloud/3.6/1
 branches:
   except:
     - "*-patch-*"

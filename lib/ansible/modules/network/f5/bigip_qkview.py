@@ -22,7 +22,7 @@ description:
     when dealing with F5 support. It may be required that you upload this
     qkview to the supported channels during resolution of an SRs that you
     may have opened.
-version_added: "2.4"
+version_added: 2.4
 options:
   filename:
     description:
@@ -37,9 +37,7 @@ options:
       - When C(True), includes the ASM request log data. When C(False),
         excludes the ASM request log data.
     default: no
-    choices:
-      - yes
-      - no
+    type: bool
   max_file_size:
     description:
       - Max file size, in bytes, of the qkview to create. By default, no max
@@ -48,17 +46,13 @@ options:
   complete_information:
     description:
       - Include complete information in the qkview.
-    default: yes
-    choices:
-      - yes
-      - no
+    default: no
+    type: bool
   exclude_core:
     description:
       - Exclude core files from the qkview.
     default: no
-    choices:
-      - yes
-      - no
+    type: bool
   exclude:
     description:
       - Exclude various file from the qkview.
@@ -72,15 +66,9 @@ options:
       - If C(no), the file will only be transferred if the destination does not
         exist.
     default: yes
-    choices:
-      - yes
-      - no
+    type: bool
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - This module does not include the "max time" or "restrict to blade" options.
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -110,20 +98,35 @@ stdout_lines:
   sample: [['...', '...'], ['...'], ['...']]
 '''
 
-import re
 import os
+import re
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
 from distutils.version import LooseVersion
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -207,8 +210,10 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
 
     def exec_module(self):
         if self.is_version_less_than_14():
@@ -219,9 +224,9 @@ class ModuleManager(object):
 
     def get_manager(self, type):
         if type == 'madm':
-            return MadmLocationManager(self.client)
+            return MadmLocationManager(**self.kwargs)
         elif type == 'bulk':
-            return BulkLocationManager(self.client)
+            return BulkLocationManager(**self.kwargs)
 
     def is_version_less_than_14(self):
         """Checks to see if the TMOS version is less than 14
@@ -239,9 +244,11 @@ class ModuleManager(object):
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.have = None
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def _set_changed_options(self):
@@ -250,7 +257,7 @@ class BaseManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
 
     def _to_lines(self, stdout):
         lines = []
@@ -342,8 +349,8 @@ class BaseManager(object):
 
 
 class BulkLocationManager(BaseManager):
-    def __init__(self, client):
-        super(BulkLocationManager, self).__init__(client)
+    def __init__(self, *args, **kwargs):
+        super(BulkLocationManager, self).__init__(**kwargs)
         self.remote_dir = '/var/config/rest/bulk'
 
     def _move_qkview_to_download(self):
@@ -368,8 +375,8 @@ class BulkLocationManager(BaseManager):
 
 
 class MadmLocationManager(BaseManager):
-    def __init__(self, client):
-        super(MadmLocationManager, self).__init__(client)
+    def __init__(self, *args, **kwargs):
+        super(MadmLocationManager, self).__init__(**kwargs)
         self.remote_dir = '/var/config/rest/madm'
 
     def _move_qkview_to_download(self):
@@ -396,7 +403,7 @@ class MadmLocationManager(BaseManager):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             filename=dict(
                 default='localhost.localdomain.qkview'
             ),
@@ -420,34 +427,40 @@ class ArgumentSpec(object):
                 type='bool'
             ),
             exclude=dict(
-                type='list'
+                type='list',
+                choices=[
+                    'all', 'audit', 'secure', 'bash_history'
+                ]
             ),
             dest=dict(
                 type='path',
                 required=True
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

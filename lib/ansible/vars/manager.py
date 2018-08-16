@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 import sys
 
-from collections import defaultdict, MutableMapping
+from collections import defaultdict, MutableMapping, Sequence
 
 try:
     from hashlib import sha1
@@ -36,14 +36,14 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems, text_type
+from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.vars.clean import namespace_facts
+from ansible.vars.clean import namespace_facts, clean_facts
 
 try:
     from __main__ import display
@@ -90,6 +90,7 @@ class VariableManager:
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self._options_vars = defaultdict(dict)
+        self.safe_basedir = False
 
         # bad cache plugin is not fatal error
         try:
@@ -110,6 +111,7 @@ class VariableManager:
             omit_token=self._omit_token,
             options_vars=self._options_vars,
             inventory=self._inventory,
+            safe_basedir=self.safe_basedir,
         )
         return data
 
@@ -123,6 +125,7 @@ class VariableManager:
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
+        self.safe_basedir = data.get('safe_basedir', False)
 
     @property
     def extra_vars(self):
@@ -150,26 +153,6 @@ class VariableManager:
         if not isinstance(value, dict):
             raise AnsibleAssertionError("the type of 'value' for options_vars should be a dict, but is a %s" % type(value))
         self._options_vars = value.copy()
-
-    def _preprocess_vars(self, a):
-        '''
-        Ensures that vars contained in the parameter passed in are
-        returned as a list of dictionaries, to ensure for instance
-        that vars loaded from a file conform to an expected state.
-        '''
-
-        if a is None:
-            return None
-        elif not isinstance(a, list):
-            data = [a]
-        else:
-            data = a
-
-        for item in data:
-            if not isinstance(item, MutableMapping):
-                raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
-
-        return data
 
     def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
@@ -203,7 +186,9 @@ class VariableManager:
         )
 
         # default for all cases
-        basedirs = [self._loader.get_basedir()]
+        basedirs = []
+        if self.safe_basedir:  # avoid adhoc/console loading cwd
+            basedirs = [self._loader.get_basedir()]
 
         if play:
             # first we compile any vars specified in defaults/main.yml
@@ -255,12 +240,13 @@ class VariableManager:
                 ''' merges all entities by inventory source '''
                 data = {}
                 for inventory_dir in self._inventory._sources:
-                    if ',' in inventory_dir:  # skip host lists
+                    if ',' in inventory_dir and not os.path.exists(inventory_dir):  # skip host lists
                         continue
                     elif not os.path.isdir(inventory_dir):  # always pass 'inventory directory'
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
+
                         data = combine_vars(data, _get_plugin_vars(plugin, inventory_dir, entities))
                 return data
 
@@ -268,6 +254,7 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
+
                     for path in basedirs:
                         data = combine_vars(data, _get_plugin_vars(plugin, path, entities))
                 return data
@@ -321,12 +308,12 @@ class VariableManager:
 
             # finally, the facts caches for this host, if it exists
             try:
-                facts = self._fact_cache.get(host.name, {})
+                facts = wrap_var(self._fact_cache.get(host.name, {}))
                 all_vars.update(namespace_facts(facts))
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
-                    all_vars = combine_vars(all_vars, wrap_var(facts))
+                    all_vars = combine_vars(all_vars, wrap_var(clean_facts(facts)))
                 else:
                     # always 'promote' ansible_local
                     all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}))
@@ -358,6 +345,12 @@ class VariableManager:
                     try:
                         for vars_file in vars_file_list:
                             vars_file = templar.template(vars_file)
+                            if not (isinstance(vars_file, Sequence)):
+                                raise AnsibleError(
+                                    "Invalid vars_files entry found: %r\n"
+                                    "vars_files entries should be either a string type or "
+                                    "a list of string types after template expansion" % vars_file
+                                )
                             try:
                                 data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                                 if data is not None:
@@ -519,6 +512,7 @@ class VariableManager:
 
         delegated_host_vars = dict()
         item_var = getattr(task.loop_control, 'loop_var', 'item')
+        cache_items = False
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
@@ -526,8 +520,14 @@ class VariableManager:
 
             templar.set_available_variables(vars_copy)
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
+            if delegated_host_name != task.delegate_to:
+                cache_items = True
             if delegated_host_name is None:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
+            if not isinstance(delegated_host_name, string_types):
+                raise AnsibleError(message="the field 'delegate_to' has an invalid type (%s), and could not be"
+                                           " converted to a string type." % type(delegated_host_name),
+                                   obj=task._ds)
             if delegated_host_name in delegated_host_vars:
                 # no need to repeat ourselves, as the delegate_to value
                 # does not appear to be tied to the loop item variable
@@ -581,6 +581,16 @@ class VariableManager:
                 include_delegate_to=False,
                 include_hostvars=False,
             )
+
+        if cache_items:
+            # delegate_to templating produced a change, update task.loop with templated items,
+            # this ensures that delegate_to+loop doesn't produce different results than TaskExecutor
+            # which may reprocess the loop
+            # Set loop_with to None, so we don't do extra unexpected processing on the cached items later
+            # in TaskExecutor
+            task.loop_with = None
+            task.loop = items
+
         return delegated_host_vars
 
     def clear_facts(self, hostname):

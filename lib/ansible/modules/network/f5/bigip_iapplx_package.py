@@ -19,7 +19,7 @@ short_description: Manages Javascript iApp packages on a BIG-IP
 description:
   - Manages Javascript iApp packages on a BIG-IP. This module will allow
     you to deploy iAppLX packages to the BIG-IP and manage their lifecycle.
-version_added: "2.5"
+version_added: 2.5
 options:
   package:
     description:
@@ -37,16 +37,13 @@ options:
       - present
       - absent
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires the rpm tool be installed on the host. This can be accomplished through
     different ways on each platform. On Debian based systems with C(apt);
     C(apt-get install rpm). On Mac with C(brew); C(brew install rpm).
     This command is already present on RedHat based systems.
-  - Requires BIG-IP < 12.1.0 because the required functionality is missing
-    on versions  earlier than that.
+  - Requires BIG-IP >= 12.1.0 because the required functionality is missing
+    on versions earlier than that.
 requirements:
-  - f5-sdk >= 2.2.3
   - Requires BIG-IP >= 12.1.0
   - The 'rpm' tool installed on the Ansible controller
 extends_documentation_fragment: f5
@@ -91,16 +88,31 @@ import os
 import subprocess
 import time
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 from distutils.version import LooseVersion
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -136,11 +148,10 @@ class Parameters(AnsibleF5Parameters):
         :return:
         """
         cmd = ['rpm', '-qp', '--queryformat', '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}', self.package]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        if not stdout:
+        rc, out, err = self._module.run_command(cmd)
+        if not out:
             return str(self.package_file)
-        return stdout.decode('utf-8')
+        return out
 
     @property
     def package_root(self):
@@ -162,9 +173,10 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = Parameters(module=self.module, params=self.module.params)
         self.changes = Parameters()
 
     def exec_module(self):
@@ -230,12 +242,17 @@ class ModuleManager(object):
         )
 
     def create(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         if not os.path.exists(self.want.package):
-            raise F5ModuleError(
-                "The specified iAppLX package was not found."
-            )
+            if self.want.package.startswith('/'):
+                raise F5ModuleError(
+                    "The specified iAppLX package was not found at {0}.".format(self.want.package)
+                )
+            else:
+                raise F5ModuleError(
+                    "The specified iAppLX package was not found in {0}.".format(os.getcwd())
+                )
         self.upload_to_device()
         self.create_on_device()
         self.enable_iapplx_on_device()
@@ -271,7 +288,7 @@ class ModuleManager(object):
             raise F5ModuleError(task.errorMessage)
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -307,38 +324,42 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             state=dict(
                 default='present',
                 choices=['present', 'absent']
             ),
             package=dict()
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.required_if = [
             ['state', 'present', ['package']]
         ]
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
         required_if=spec.required_if
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
+        cleanup_tokens(client)
+        module.exit_json(**results)
     except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

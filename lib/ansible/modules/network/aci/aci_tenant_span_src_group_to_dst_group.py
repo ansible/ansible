@@ -13,21 +13,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_tenant_span_src_group_to_dst_group
-short_description: Manage SPAN source group to destination group bindings on Cisco ACI fabrics (span:SpanLbl)
+short_description: Bind SPAN source groups to destination groups (span:SpanLbl)
 description:
-- Manage SPAN source groups' associated destinaton group on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(span:SrcGrp) at U(https://developer.cisco.com/media/mim-ref/MO-spanSpanLbl.html).
-author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
+- Bind SPAN source groups to associated destinaton groups on Cisco ACI fabrics.
 notes:
 - The C(tenant), C(src_group), and C(dst_group) must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_tenant_span_src_group), and M(aci_tenant_span_dst_group) modules can be used for this.
+- More information about the internal APIC class B(span:SrcGrp) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   description:
     description:
@@ -54,17 +50,119 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_tenant_span_src_group_to_dst_group:
-    tenant:"{{ tenant }}"
-    src_group:"{{ src_group }}"
-    dst_group:"{{ dst_group }}"
-    description:"{{ description }}"
-    host:"{{ inventory_hostname }}"
-    username:"{{ username }}"
-    password:"{{ password }}"
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    src_group: "{{ src_group }}"
+    dst_group: "{{ dst_group }}"
+    description: "{{ description }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -72,14 +170,13 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
-        dst_group=dict(type='str'),
-        src_group=dict(type='str'),
+        dst_group=dict(type='str'),  # Not required for querying all objects
+        src_group=dict(type='str'),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
     )
 
     module = AnsibleModule(
@@ -101,28 +198,27 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='spanSrcGrp',
-            aci_rn='srcgrp-{}'.format(src_group),
-            filter_target='eq(spanSrcGrp.name, "{}")'.format(src_group),
+            aci_rn='srcgrp-{0}'.format(src_group),
             module_object=src_group,
+            target_filter={'name': src_group},
         ),
         subclass_2=dict(
             aci_class='spanSpanLbl',
-            aci_rn='spanlbl-{}'.format(dst_group),
-            filter_target='eq(spanSpanLbl.name, "{}")'.format(dst_group),
+            aci_rn='spanlbl-{0}'.format(dst_group),
             module_object=dst_group,
+            target_filter={'name': dst_group},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='spanSpanLbl',
             class_config=dict(
@@ -131,16 +227,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='spanSpanLbl')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

@@ -93,7 +93,7 @@ options:
               I(domain_name_alias) to be specified.
         required: false
         default: false
-    streaming_distribution_configuration:
+    streaming_distribution_config:
         description:
             - Get the configuration information about a specified RTMP distribution.
               Requires I(distribution_id) or I(domain_name_alias) to be specified.
@@ -214,11 +214,11 @@ streaming_distribution:
       I(distribution_id) or I(domain_name_alias) to be specified.
     returned: only if I(streaming_distribution) is true
     type: dict
-streaming_distribution_configuration:
+streaming_distribution_config:
     description: >
       Describes the streaming configuration information for the distribution.
       Requires I(distribution_id) or I(domain_name_alias) to be specified.
-    returned: only if I(streaming_distribution_configuration) is true
+    returned: only if I(streaming_distribution_config) is true
     type: dict
 summary:
     description: Gives a summary of distributions, streaming distributions and origin access identities.
@@ -509,8 +509,12 @@ class CloudFrontServiceManager:
             else:
                 result = response.get(result_key)
             results.update(result)
-            args['NextToken'] = response.get('NextToken')
-            loop = args['NextToken'] is not None
+            args['Marker'] = response.get('NextMarker')
+            for key in response.keys():
+                if key.endswith('List'):
+                    args['Marker'] = response[key].get('NextMarker')
+                    break
+            loop = args['Marker'] is not None
         return results
 
     def keyed_list_helper(self, list_to_key):
@@ -669,6 +673,7 @@ def main():
     result['changed'] = False
     result['cloudfront'].update(facts)
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
+
 
 if __name__ == '__main__':
     main()

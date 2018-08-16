@@ -23,9 +23,9 @@ description:
 author: "Ivan Bojer (@ivanbojer), Robert Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
-    - xmltodict can be obtained from PyPi U(https://pypi.python.org/pypi/xmltodict)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
+    - xmltodict can be obtained from PyPi U(https://pypi.org/project/xmltodict/)
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -60,11 +60,9 @@ options:
     description:
         description:
             - Description for the security rule.
-        default: "None"
     tag_name:
         description:
             - Administrative tags that can be added to the rule. Note, tags must be already defined.
-        default: "None"
     source_zone:
         description:
             - List of source zones.
@@ -102,7 +100,6 @@ options:
     log_start:
         description:
             - Whether to log at session start.
-        default: false
     log_end:
         description:
             - Whether to log at session end.
@@ -115,44 +112,36 @@ options:
         description: >
             - Security profile group that is already defined in the system. This property supersedes antivirus,
             vulnerability, spyware, url_filtering, file_blocking, data_filtering, and wildfire_analysis properties.
-        default: None
     antivirus:
         description:
             - Name of the already defined antivirus profile.
-        default: None
     vulnerability:
         description:
             - Name of the already defined vulnerability profile.
-        default: None
     spyware:
         description:
             - Name of the already defined spyware profile.
-        default: None
     url_filtering:
         description:
             - Name of the already defined url_filtering profile.
-        default: None
     file_blocking:
         description:
             - Name of the already defined file_blocking profile.
-        default: None
     data_filtering:
         description:
             - Name of the already defined data_filtering profile.
-        default: None
     wildfire_analysis:
         description:
             - Name of the already defined wildfire_analysis profile.
-        default: None
     devicegroup:
         description: >
             - Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.
             If device group is not define we assume that we are contacting Firewall.
-        default: None
     commit:
         description:
             - Commit configuration if changed.
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''
@@ -167,9 +156,9 @@ EXAMPLES = '''
     tag_name: ['ProjectX']
     source_zone: ['public']
     destination_zone: ['private']
-    source: ['any']
+    source_ip: ['any']
     source_user: ['any']
-    destination: ['1.1.1.1']
+    destination_ip: ['1.1.1.1']
     category: ['any']
     application: ['ssh']
     service: ['application-default']
@@ -187,9 +176,9 @@ EXAMPLES = '''
     description: 'Allow HTTP multimedia only to host at 1.1.1.1'
     source_zone: ['public']
     destination_zone: ['private']
-    source: ['any']
+    source_ip: ['any']
     source_user: ['any']
-    destination: ['1.1.1.1']
+    destination_ip: ['1.1.1.1']
     category: ['content-delivery-networks']
     application: ['http-video', 'http-audio']
     service: ['service-http', 'service-https']
@@ -236,7 +225,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -479,9 +468,8 @@ def main():
             try:
                 if commit:
                     match.delete()
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
 
             module.exit_json(changed=True, msg='Rule \'%s\' successfully deleted' % rule_name)
         else:
@@ -525,9 +513,8 @@ def main():
                 changed = add_rule(rulebase, new_rule)
                 if changed and commit:
                     device.commit(sync=True)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
             module.exit_json(changed=changed, msg='Rule \'%s\' successfully added' % rule_name)
     elif operation == 'update':
         # Search for the rule. Update if found.
@@ -563,9 +550,8 @@ def main():
                 changed = update_rule(rulebase, new_rule)
                 if changed and commit:
                     device.commit(sync=True)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
             module.exit_json(changed=changed, msg='Rule \'%s\' successfully updated' % rule_name)
         else:
             module.fail_json(msg='Rule \'%s\' does not exist. Use operation: \'add\' to add it.' % rule_name)
