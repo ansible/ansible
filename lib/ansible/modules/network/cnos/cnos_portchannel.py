@@ -498,7 +498,7 @@ def main():
                                                "port-channel", None)
 
     # Save it into the file
-    path = outputfile.rsplit('/',1)
+    path = outputfile.rsplit('/', 1)
     # cnos.debugOutput(path[0])
     if not os.path.exists(path[0]):
         os.makedirs(path[0])
