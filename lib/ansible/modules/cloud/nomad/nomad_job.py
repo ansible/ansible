@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -27,13 +26,17 @@ DOCUMENTATION = '''
 module: nomad_job
 short_description: submit or delete a job to Hashicorps nomad
 description:
-    - The M(nomad_job) module manages submitting and deleting of jobs in the Hashicorp nomad scheduler and cluster manager.
+    - The M(nomad_job) module manages submitting and deleting of jobs in the
+      Hashicorp nomad scheduler and cluster manager.
     - This module uses the nomad API (https://www.nomadproject.io/api/).
     - Supported nomad versions are 0.5.* and 0.6.* .
-    - This module takes a json input describing a nomad job (https://www.nomadproject.io/api/json-jobs.html) when the desired state is C(present)'.
-    - By default the module will wait for all allocations of a submited job to be in 'running' state unless specified otherwise (I(wait_for_completion=False)),
+    - This module takes a json input describing a nomad job
+      (https://www.nomadproject.io/api/json-jobs.html) when the desired state is C(present)'.
+    - By default the module will wait for all allocations of a submited job to
+      be in 'running' state unless specified otherwise (I(wait_for_completion=False)),g374
       the count is 0 or the type is 'batch'.
-    - The module will fail if a job (all its allocations) does not enter the 'running' state within the specified I(timeout) (default 120 sec).
+    - The module will fail if a job (all its allocations) does not enter the
+      'running' state within the specified I(timeout) (default 120 sec).
 version_added: "2.5"
 author:
     - Sirk Johannsen (sirkjohannsen)
@@ -41,13 +44,15 @@ author:
 options:
     state:
         description:
-            - If C(present), the job is submitted to the nomad API, if C(absent) the job is deleted via the nomad API, if C(status) the health of the job is checked.
+            - If C(present), the job is submitted to the nomad API, if C(absent)
+              the job is deleted via the nomad API, if C(status) the health of the job is checked.
         required: no
         default: present
         choices: [present, absent, status]
     name:
         description:
-            - The name of the job to be handled (needs to match the Job-ID in the jobs definition I(jobjson) or I(jobhcl) when the desired I(state=present)).
+            - The name of the job to be handled (needs to match the Job-ID in
+              the jobs definition I(jobjson) or I(jobhcl) when the desired I(state=present)).
         required: yes
         aliases: ['job']
     jobjson:
@@ -70,36 +75,42 @@ options:
         aliases: ['server']
     timeout:
         description:
-            - The timeout in I(retry_delay) for the allocations created by a job to enter the 'running' state.
+            - The timeout in I(retry_delay) for the allocations created by a job
+              to enter the 'running' state.
         required: no
         default: 120
     retry_delay:
         description:
-            - The time in seconds to wait between api requests. This times I(timeout) equals the total number of seconds.
+            - The time in seconds to wait between api requests. This times
+              I(timeout) equals the total number of seconds.
         required: no
         default: 1
     wait_for_healthy:
         description:
-            - If set to C(False) (default C(True)) this module will not wait for the allocations of a job to enter the 'healthy' state.
+            - If set to C(False) (default C(True)) this module will not wait for
+              the allocations of a job to enter the 'healthy' state.
         required: no
         type: bool
         default: True
     wait_for_completion:
         description:
-            - If set to C(False) (default C(True)) this module will not wait for the job to enter the 'running' state.
+            - If set to C(False) (default C(True)) this module will not wait for
+              the job to enter the 'running' state.
         required: no
         type: bool
         default: True
     check_deploy_health:
         description:
-            - If set to C(True) (default C(False)) this module will check the deployment-health instead of the status of each allocation (>= 0.6)
+            - If set to C(True) (default C(False)) this module will check the
+              deployment-health instead of the status of each allocation (>= 0.6)
         required: no
         type: bool
         default: False
 notes:
     - check_mode is not supported yet.
     - the I(purge) option on deletion of a job is not implemented yet.
-    - The returned value of "changed" is C(True) even if the job submittid is identical to the job already registered in Nomad.
+    - The returned value of "changed" is C(True) even if the job submittid is
+      identical to the job already registered in Nomad.
 '''
 
 EXAMPLES = '''
@@ -155,23 +166,23 @@ info:
     type: list
 '''
 
-# Import Ansible module
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-
 # Import other modules
 import json
 import signal
 from collections import Counter
 from time import sleep
 
+# Import Ansible module
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 class NomadJobException(Exception):
     """Base exception for errors raised by ansible nomad job module"""
-    def __init__(self, message, meta=None, *args):
+    def __init__(self, message, *args, **kwargs):
         super(NomadJobException, self).__init__(*args)
         self.message = message
-        self.meta = meta
+        self.meta = kwargs.pop('meta', None)
 
 
 class NomadException(NomadJobException):
@@ -205,7 +216,7 @@ class JobNameMismatch(NomadJobException):
 class EvaluationError(NomadException):
     def __init__(self, msg, meta):
         super(EvaluationError, self).__init__(
-            "Evaluation failure! nomad response: {}".format(msg),
+            "Evaluation failure! nomad response: {0}".format(msg),
             meta=meta
         )
 
@@ -213,7 +224,7 @@ class EvaluationError(NomadException):
 class JobListError(NomadException):
     def __init__(self, msg, meta):
         super(JobListError, self).__init__(
-            "Error on getting the current job-list from Nomad. nomad response: {}".format(msg),
+            "Error on getting the current job-list from Nomad. nomad response: {0}".format(msg),
             meta=meta
         )
 
@@ -221,7 +232,7 @@ class JobListError(NomadException):
 class DeleteError(NomadException):
     def __init__(self, msg, meta):
         super(DeleteError, self).__init__(
-            "Deleting job failed!. nomad response: {}".format(msg),
+            "Deleting job failed!. nomad response: {0}".format(msg),
             meta=meta
         )
 
@@ -229,7 +240,7 @@ class DeleteError(NomadException):
 class SubmissionError(NomadException):
     def __init__(self, msg, meta):
         super(SubmissionError, self).__init__(
-            "Failed to submit job!. nomad response: {}".format(msg),
+            "Failed to submit job!. nomad response: {0}".format(msg),
             meta=meta
         )
 
@@ -237,7 +248,7 @@ class SubmissionError(NomadException):
 class HCLConversionError(NomadException):
     def __init__(self, msg, meta):
         super(HCLConversionError, self).__init__(
-            "Failed to convert job from HCL to JSON!. nomad response: {}".format(msg),
+            "Failed to convert job from HCL to JSON!. nomad response: {0}".format(msg),
             meta=meta
         )
 
@@ -245,7 +256,7 @@ class HCLConversionError(NomadException):
 class JobStatusError(NomadException):
     def __init__(self, msg, meta):
         super(JobStatusError, self).__init__(
-            "Failed to get job status! nomad response: {}".format(msg),
+            "Failed to get job status! nomad response: {0}".format(msg),
             meta=meta
         )
 
@@ -253,7 +264,7 @@ class JobStatusError(NomadException):
 class AllocationFailureError(NomadException):
     def __init__(self, msg, meta):
         super(AllocationFailureError, self).__init__(
-            "Allocation failed! nomad response: {}".format(msg),
+            "Allocation failed! nomad response: {0}".format(msg),
             meta=meta
         )
 
@@ -261,12 +272,12 @@ class AllocationFailureError(NomadException):
 class AllocationTimeoutError(NomadException):
     def __init__(self, msg, meta):
         super(AllocationTimeoutError, self).__init__(
-            "Timeout while waiting for allocations to be running. Please check the jobs logs! {}".format(msg),
+            "Timeout while waiting for allocations to be running. Please check the jobs logs! {0}".format(msg),
             meta=meta
         )
 
 
-class Endpoint(object):
+class Endpoint:
     """This class is used by Nomad class to send requests to nomad and get the
     response from nomad."""
     def __init__(self, ansible_module, base_url):
@@ -296,14 +307,15 @@ class Endpoint(object):
     def get(self, *args):
         return self._request(path=args)
 
-    def post(self, data, headers=None, *args):
+    def post(self, data, *args, **kwargs):
+        headers = kwargs.pop('headers', None)
         return self._request(data=data, headers=headers, method='POST', path=args)
 
     def delete(self, *args):
         return self._request(method='DELETE', path=args)
 
 
-class Nomad(object):
+class Nomad:
     """This class is a Wrapper for nomad restful api."""
 
     def __init__(self, ansible_module, url='http://127.0.0.1', token=None, timeout=5, version='v1', verify=False, cert=()):
@@ -326,7 +338,7 @@ class Nomad(object):
         ]
 
     def _endpoint_builder(self, *args):
-        addr=""
+        addr = ""
         if args:
             addr = "/".join(args)
         return "{version}/{addr}".format(version=self.version, addr=addr)
@@ -341,7 +353,7 @@ class Nomad(object):
     def __getattr__(self, name):
         if name not in self._endpoints:
             # default behaviour
-            raise AttributeError('attribute with name: "{}" is not defined'.format(name))
+            raise AttributeError('attribute with name: "{0}" is not defined'.format(name))
 
         return Endpoint(self.ansible_module, self._url_builder(name))
 
@@ -357,7 +369,7 @@ class Nomad(object):
 
         while count > 1:
             status, info, body = self.job.get(name)
-            if status == 200 and type(body) == dict:
+            if status == 200 and isinstance(body, dict):
                 status_list.append(body['Status'])
 
             count -= 1
@@ -438,10 +450,7 @@ def run_module(ansible_module):
             raise JobStatusError(job, info['body'])
 
     elif status != 200:
-        if type(body) == dict:
-            raise JobListError(job, info['body'])
-        else:
-            raise JobListError(job, info)
+        raise JobListError(job, info)
 
     # Delete job if requested (TODO: implement purge option)
     if state == 'absent':
@@ -465,18 +474,18 @@ def run_module(ansible_module):
         # Get job in correct format:
         if jobjson:
             # already json format
-            jobdesc=jobjson
+            jobdesc = jobjson
         elif jobhcl:
             # hcl that needs to be converted via the API
-            jobdescrequest=json.dumps({"Canonicalize": True, "JobHCL": jobhcl})
+            jobdescrequest = json.dumps({"Canonicalize": True, "JobHCL": jobhcl})
             status, evaluation_response, convertedjob = nomad_cli.jobs.post(
                 jobdescrequest, {}, 'parse')
             if status != 200:
                 raise HCLConversionError(evaluation_response, convertedjob)
-            jobdesc=json.dumps({ "Job": convertedjob})
+            jobdesc = json.dumps({"Job": convertedjob})
         else:
             raise JobDescriptionError()
-        
+
         # Check if the Jobs ID matches the specified name
         if name != json.loads(jobdesc)["Job"]["ID"]:
             raise JobNameMismatch()
@@ -565,7 +574,7 @@ def run_module(ansible_module):
             with Timeout(timeout):
                 while True:
                     status, info, allocation_info = nomad_cli.allocation.get(allocation_id)
-                    if status == 200 and type(allocation_info) == dict:
+                    if status == 200 and isinstance(allocation_info, dict):
                         num_tasks = 0
                         if check_deploy_health:
                             if allocation_info['DeploymentStatus']:
@@ -588,7 +597,7 @@ def run_module(ansible_module):
                     sleep(retry_delay)
         except Timeout.Timeout:
             if is_running < 2:
-                raise AllocationTimeoutError("timeout: {}".format(timeout), allocation_info)
+                raise AllocationTimeoutError("timeout: {0}".format(timeout), allocation_info)
 
     # Get new allocations
     status, info, new_job_allocations = nomad_cli.job.get(name, 'allocations')
@@ -626,7 +635,7 @@ class Timeout:
         signal.alarm(0)  # disable alarm
 
     def raise_timeout(self, *args):
-        raise Timeout.Timeout("Time out! {} seconds passed and nothing happened".format(self.sec))
+        raise Timeout.Timeout("Time out! {0} seconds passed and nothing happened".format(self.sec))
 
 
 def main():
