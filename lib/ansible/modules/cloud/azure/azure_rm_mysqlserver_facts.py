@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlserver_facts
 version_added: "2.7"
-short_description: Get MySQL Server facts.
+short_description: Get Azure MySQL Server facts.
 description:
     - Get facts of MySQL Server.
 
@@ -29,6 +29,9 @@ options:
     name:
         description:
             - The name of the server.
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -139,23 +142,23 @@ class AzureRMServersFacts(AzureRMModuleBase):
             ),
             name=dict(
                 type='str'
+            ),
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
         self.results = dict(
-            changed=False,
-            ansible_facts=dict()
+            changed=False
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.name = None
+        self.tags = None
         super(AzureRMServersFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
                 self.name is not None):
@@ -168,13 +171,13 @@ class AzureRMServersFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.servers.get(resource_group_name=self.resource_group,
-                                                    server_name=self.name)
+            response = self.mysql_client.servers.get(resource_group_name=self.resource_group,
+                                                          server_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for MySQL Server.')
 
-        if response is not None:
+        if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_item(response))
 
         return results
@@ -183,14 +186,15 @@ class AzureRMServersFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
+            response = self.mysql_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for MySQL Servers.')
 
         if response is not None:
             for item in response:
-                results.append(self.format_item(item))
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_item(item))
 
         return results
 
