@@ -41,8 +41,8 @@
 - name: assert is_linux is True
   assert:
     that:
-      - output.azure_appserviceplans | length == 1
-      - output.azure_appserviceplans[0].is_linux == True
+      - output.appserviceplans | length == 1
+      - output.appserviceplans[0].is_linux == True
 
 - name: create linux app service plan idempotent
   azure_rm_appserviceplan:

@@ -22,7 +22,7 @@ version_added: "2.7"
 short_description: Get azure app service plan facts.
 
 description:
-    - Get facts for a specific app service plan or all app service plan in a resource group, or all app service plan in current subscription.
+    - Get facts for a specific app service plan or all app service plans in a resource group, or all app service plan in current subscription.
 
 options:
     name:
@@ -60,7 +60,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-azure_appserviceplan:
+appserviceplans:
     description: List of app service plans.
     returned: always
     type: complex
@@ -160,11 +160,11 @@ class AzureRMAppServicePlanFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.name:
-            self.results['azure_appserviceplans'] = self.list_by_name()
+            self.results['appserviceplans'] = self.list_by_name()
         elif self.resource_group:
-            self.results['azure_appserviceplans'] = self.list_by_resource_group()
+            self.results['appserviceplans'] = self.list_by_resource_group()
         else:
-            self.results['azure_appserviceplans'] = self.list_all()
+            self.results['appserviceplans'] = self.list_all()
 
         return self.results
 
