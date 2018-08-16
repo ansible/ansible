@@ -97,6 +97,7 @@ import array
 import json
 import time
 import re
+import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
@@ -135,6 +136,10 @@ def main():
     cmd.extend(save_cmd)
     output = output + str(cnos.run_cnos_commands(module, cmd))
     # Write output to file
+    path = outputfile.rsplit('/', 1)
+    # cnos.debugOutput(path[0])
+    if not os.path.exists(path[0]):
+        os.makedirs(path[0])
     file = open(outputfile, "a")
     file.write(output)
     file.close()
