@@ -248,18 +248,18 @@ RETURN = '''
               sizeGb must not be less than the size of the sourceImage or the size of the snapshot.
         returned: success
         type: int
-    type:
-        description:
-            - URL of the disk type resource describing which disk type to use to create the disk.
-              Provide this when creating the disk.
-        returned: success
-        type: str
     users:
         description:
             - 'Links to the users of the disk (attached instances) in form: project/zones/zone/instances/instance
               .'
         returned: success
         type: list
+    type:
+        description:
+            - URL of the disk type resource describing which disk type to use to create the disk.
+              Provide this when creating the disk.
+        returned: success
+        type: str
     source_image:
         description:
             - The source image used to create this disk. If the source image is deleted, this
@@ -548,8 +548,8 @@ def response_to_hash(module, response):
         u'licenses': response.get(u'licenses'),
         u'name': module.params.get('name'),
         u'sizeGb': response.get(u'sizeGb'),
-        u'type': response.get(u'type'),
         u'users': response.get(u'users'),
+        u'type': response.get(u'type'),
         u'sourceImage': module.params.get('source_image')
     }
 
