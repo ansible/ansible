@@ -44,7 +44,7 @@ name:
     returned: success
 state:
     description: imported or exported value
-    returned success
+    returned: success
 '''
 
 from ansible.module_utils.basic import AnsibleModule
