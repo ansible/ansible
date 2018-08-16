@@ -27,7 +27,6 @@ options:
     description:
     - state the volume group should be.
     choices: [ imported, exported ]
-    default: None
 '''
 
 EXAMPLES = '''
