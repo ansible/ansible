@@ -31,6 +31,7 @@ options:
     description:
     - state the volume group should be.
     choices: [ imported, exported ]
+    required: True
 '''
 
 EXAMPLES = '''
@@ -61,6 +62,7 @@ def main():
             vg=dict(type='str', required=True),
             state=dict(
                 type='str',
+                required=True,
                 default=None,
                 choices=['imported', 'exported']
             ),
