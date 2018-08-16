@@ -16,14 +16,14 @@ DOCUMENTATION = '''
 
 module: na_ontap_lun
 
-short_description: Manage  NetApp Ontap luns
+short_description: Manage  NetApp ONTAP luns
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Sumit Kumar (sumit4@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
-- Create, destroy, resize luns on NetApp Ontap.
+- Create, destroy, resize luns on NetApp ONTAP.
 
 options:
 
@@ -91,6 +91,14 @@ options:
     - This can be set to "false" which will create a LUN without any space being reserved.
     type: bool
     default: True
+
+  space_allocation:
+    description:
+    - This enables support for the SCSI Thin Provisioning features.  If the Host and file system do
+      not support this do not enable it.
+    type: bool
+    default: False
+    version_added: '2.7'
 
 '''
 
@@ -168,6 +176,7 @@ class NetAppOntapLUN(object):
             vserver=dict(required=True, type='str'),
             ostype=dict(required=False, type='str', default='image'),
             space_reserve=dict(required=False, type='bool', default=True),
+            space_allocation=dict(required=False, type='bool', default=False),
         ))
 
         self.module = AnsibleModule(
@@ -195,6 +204,7 @@ class NetAppOntapLUN(object):
         self.vserver = parameters['vserver']
         self.ostype = parameters['ostype']
         self.space_reserve = parameters['space_reserve']
+        self.space_allocation = parameters['space_allocation']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -283,7 +293,8 @@ class NetAppOntapLUN(object):
             'lun-create-by-size', **{'path': path,
                                      'size': str(self.size),
                                      'ostype': self.ostype,
-                                     'space-reservation-enabled': str(self.space_reserve)})
+                                     'space-reservation-enabled': str(self.space_reserve),
+                                     'space-allocation-enabled': str(self.space_allocation)})
 
         try:
             self.server.invoke_successfully(lun_create, enable_tunneling=True)
