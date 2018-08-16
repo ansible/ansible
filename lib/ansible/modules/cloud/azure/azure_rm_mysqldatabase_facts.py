@@ -57,45 +57,41 @@ EXAMPLES = '''
 
 RETURN = '''
 databases:
-    description: A list of dict results where the key is the name of the MySQL Database and the values are the facts for that MySQL Database.
+    description: A list of dictionaries containing facts for MySQL Databases.
     returned: always
     type: complex
     contains:
-        mysqldatabase_name:
-            description: The key is the name of the server that the values relate to.
-            type: complex
-            contains:
-                id:
-                    description:
-                        - Resource ID
-                    returned: always
-                    type: str
-                    sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testser
-                            ver/databases/db1"
-                name:
-                    description:
-                        - Resource name.
-                    returned: always
-                    type: str
-                    sample: db1
-                type:
-                    description:
-                        - Resource type.
-                    returned: always
-                    type: str
-                    sample: Microsoft.DBforMySQL/servers/databases
-                charset:
-                    description:
-                        - The charset of the database.
-                    returned: always
-                    type: str
-                    sample: UTF8
-                collation:
-                    description:
-                        - The collation of the database.
-                    returned: always
-                    type: str
-                    sample: English_United States.1252
+        id:
+            description:
+                - Resource ID
+            returned: always
+            type: str
+            sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testser
+                    ver/databases/db1"
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: db1
+        type:
+            description:
+                - Resource type.
+            returned: always
+            type: str
+            sample: Microsoft.DBforMySQL/servers/databases
+        charset:
+            description:
+                - The charset of the database.
+            returned: always
+            type: str
+            sample: UTF8
+        collation:
+            description:
+                - The collation of the database.
+            returned: always
+            type: str
+            sample: English_United States.1252
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -173,7 +169,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
                                                                   server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Databases.')
+            self.fail("Error listing for server {0} - {1}".format(self.server_name, str(e))) 
 
         if response is not None:
             for item in response:
