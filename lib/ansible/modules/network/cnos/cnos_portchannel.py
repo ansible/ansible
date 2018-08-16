@@ -498,9 +498,6 @@ def main():
                                                "port-channel", None)
 
     # Save it into the file
-    path = outputfile.rsplit('/', 1)
-    if not os.path.exists(path[0]):
-        os.makedirs(path[0])
     file = open(outputfile, "a")
     file.write(output)
     file.close()
