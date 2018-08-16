@@ -45,9 +45,11 @@ RETURN = '''
 name:
     description: name of vg
     returned: success
+    type: string
 state:
     description: imported or exported value
     returned: success
+    type: string
 '''
 
 from ansible.module_utils.basic import AnsibleModule
