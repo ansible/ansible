@@ -166,7 +166,8 @@ class TestConnectionClass(unittest.TestCase):
         new_stdin = StringIO()
         conn = network_cli.Connection(pc, new_stdin)
         pc.network_os = 'ios'
-        pc.timeout = 1
+        timeout = 1
+        conn.set_option('persistent_command_timeout', timeout)
 
         conn.ssh = MagicMock()
         mock__terminal = MagicMock()
@@ -180,7 +181,7 @@ class TestConnectionClass(unittest.TestCase):
 
         # test that trickled response data with overall duration over the timeout is ok
         # this works fine down to 1x, but 1.5x chosen as safer multiple
-        duration = 1.5 * pc.timeout
+        duration = 1.5 * timeout
         mock__shell.recv.side_effect = trickle(duration / len(response), response)
 
         try:

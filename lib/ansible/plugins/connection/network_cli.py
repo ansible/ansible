@@ -351,6 +351,7 @@ class Connection(NetworkConnectionBase):
         self._matched_cmd_prompt = None
         matched_prompt_window = window_count = 0
 
+        command_timeout = self.get_option('persistent_command_timeout')
         signal_handler = signal.getsignal(signal.SIGALRM)
         if signal_handler == signal.SIG_DFL:
             signal_handler = None
@@ -363,8 +364,8 @@ class Connection(NetworkConnectionBase):
                 break
 
             if signal_handler and self._first_matched_prompt:
-                display.debug("cli command_timeout extended on new data")
-                signal.alarm(self._play_context.timeout)
+                display.debug("cli command_timeout extended on new data [%d]" % command_timeout)
+                signal.alarm(command_timeout)
 
             recv.write(data)
             offset = recv.tell() - 256 if recv.tell() > 256 else 0

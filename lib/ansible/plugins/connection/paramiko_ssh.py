@@ -139,7 +139,6 @@ import re
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 
-from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
