@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_vnics
+module: ovirt_vnic_profile
 short_description: Module to manage vNIC profile of network in oVirt/RHV
 version_added: "2.7"
 author:
@@ -21,13 +21,16 @@ description:
 options:
     name:
         description:
-            - "Name of the vNIC to manage."
+            - "A human-readable name in plain text."
         required: true
     state:
         description:
             - "Should the vNIC be absent/present."
         choices: ['absent', 'present']
         default: present
+    description:
+        description:
+            - "A human-readable description in plain text."
     data_center:
         description:
             - "Datacenter name where network reside."
@@ -38,28 +41,28 @@ options:
         required: true
     network_filter:
         description:
-            - "Name of network filter."
+            - "The network filter enables to filter packets send to/from the VM’s nic according to defined rules."
     custom_properties:
         description:
-            - "Properties sent to VDSM to configure various hooks."
+            - "Custom properties applied to the vNIC profile."
             - "Custom properties is a list of dictionary which can have following values:"
             - "C(name) - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
             - "C(regexp) - Regular expression to set for custom property."
             - "C(value) - Value to set for custom property."
     qos:
         description:
-            - "Name of Quality of Service."
+            - "Quality of Service attributes regulate inbound and outbound network traffic of the NIC."
     port_mirroring:
         description:
-            - "Boolean, sets usage of port mirroring."
+            - "Enables port mirroring."
         type: bool
     pass_through:
         description:
-            - "String which enables being directly attached to a VF."
+            - "Enables passthrough to an SR-IOV-enabled host NIC."
         choices: ['disabled', 'enabled']
     migratable:
         description:
-            - "Boolean which can be set only when pass_through is True."
+            - "Marks whether pass_through NIC is migratable or not."
         type: bool
 
 extends_documentation_fragment: ovirt
@@ -83,7 +86,7 @@ EXAMPLES = '''
     qos: myqos
     custom_properties:
       - name: SecurityGroups
-        value: uuid
+        value: 9bd9bde9-39da-44a8-9541-aa39e1a81c9d
     network_filter: allow-dhcp
 
 - name: Editing vNICs network_filter, custom_properties, qos
@@ -94,7 +97,7 @@ EXAMPLES = '''
     qos: myqos
     custom_properties:
       - name: SecurityGroups
-        value: uuid
+        value: 9bd9bde9-39da-44a8-9541-aa39e1a81c9d
     network_filter: allow-dhcp
 
 - name: Dont use migratable
@@ -115,14 +118,14 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: ID of the network interface which is managed
-    returned: On success if network interface is found.
+    description: ID of the vNIC profile which is managed
+    returned: On success if vNIC profile is found.
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vnic:
-    description: "Dictionary of all the network interface attributes. Network interface attributes can be found on your oVirt/RHV instance
+    description: "Dictionary of all the vNIC profile attributes. Network interface attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/nic."
-    returned: On success if network interface is found.
+    returned: On success if vNIC profile is found.
     type: dict
 '''
 
@@ -151,16 +154,18 @@ class EntityVnicPorfileModule(BaseModule):
     def __init__(self, *args, **kwargs):
         super(EntityVnicPorfileModule, self).__init__(*args, **kwargs)
 
+    def __get_dcs_service(self):
+        return self._connection.system_service().data_centers_service()
+
+    def __get_dcs_id(self):
+        return get_id_by_name(self.__get_dcs_service(), self.param('data_center'))
+
     def __get_network_id(self):
-        dcs_service = self._connection.system_service().data_centers_service()
-        dc_id = get_id_by_name(dcs_service, self.param('data_center'))
-        networks_service = dcs_service.service(dc_id).networks_service()
+        networks_service = self.__get_dcs_service().service(self.__get_dcs_id()).networks_service()
         return get_id_by_name(networks_service, self.param('network'))
 
     def __get_qos_id(self):
-        dcs_service = self._connection.system_service().data_centers_service()
-        dc_id = get_id_by_name(dcs_service, self.param('data_center'))
-        qoss_service = dcs_service.service(dc_id).qoss_service()
+        qoss_service = self.__get_dcs_service().service(self.__get_dcs_id()).qoss_service()
         return get_id_by_name(qoss_service, self.param('qos'))
 
     def __get_network_filter_id(self):
@@ -173,12 +178,10 @@ class EntityVnicPorfileModule(BaseModule):
             network=otypes.Network(id=self.__get_network_id()),
             description=self.param('description')
             if self.param('description') else None,
-            port_mirroring=self.param('port_mirroring')
-            if self.param('port_mirroring') is not None else None,
+            port_mirroring=self.param('port_mirroring'),
             pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(self.param('pass_through')))
             if self.param('pass_through') else None,
-            migratable=self.param('migratable')
-            if self.param('migratable') is not None else None,
+            migratable=self.param('migratable'),
             custom_properties=[
                 otypes.CustomProperty(
                     name=cp.get('name'),
@@ -193,14 +196,24 @@ class EntityVnicPorfileModule(BaseModule):
 
         )
 
+   
     def update_check(self, entity):
+        def check_custom_properties():
+            if self.param('custom_properties'):
+                current = []
+                if entity.custom_properties:
+                    current = [(cp.name, cp.regexp, str(cp.value)) for cp in entity.custom_properties]
+                passed = [(cp.get('name'), cp.get('regexp'), str(cp.get('value'))) for cp in self.param('custom_properties') if cp]
+                return sorted(current) == sorted(passed)
+            return True
+
         return (
+            check_custom_properties() and
             equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
-            equal(self.param('pass_through'), entity.pass_through.mode) and
+            equal(self.param('pass_through'), entity.pass_through.mode.name) and
             equal(self.param('description'), entity.description) and
-            equal(self.param('network_filter'), entity.network_filter) and
-            equal(self.param('qos'), entity.qos) and
-            equal(self.param('custom_properties'), entity.custom_properties) and
+            equal(self.param('network_filter'), entity.network_filter.name) and
+            equal(self.param('qos'), entity.qos.name) and
             equal(self.param('port_mirroring'), getattr(entity, 'port_mirroring', None))
 
         )
@@ -209,14 +222,14 @@ class EntityVnicPorfileModule(BaseModule):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(type='str', default='present', choices=['absent', 'present']),
-        network=dict(type='str'),
-        data_center=dict(type='str'),
+        network=dict(type='str', required=True),
+        data_center=dict(type='str', required=True),
         description=dict(type='str'),
         name=dict(type='str', required=True),
         network_filter=dict(type='str'),
         custom_properties=dict(type='list'),
         qos=dict(type='str'),
-        pass_through=dict(type='str', default='disabled', choices=['disabled', 'enabled']),
+        pass_through=dict(type='str', choices=['disabled', 'enabled']),
         port_mirroring=dict(type='bool'),
         migratable=dict(type='bool'),
     )
