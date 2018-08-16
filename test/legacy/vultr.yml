@@ -16,6 +16,7 @@
     - { role: vultr_plan_facts, tags: test_vultr_plan_facts }
     - { role: vultr_region_facts, tags: test_vultr_region_facts }
     - { role: vultr_server, tags: test_vultr_server }
+    - { role: vultr_server_facts, tags: test_vultr_server_facts }
     - { role: vultr_ssh_key, tags: test_vultr_ssh_key }
     - { role: vultr_ssh_key_facts, tags: test_vultr_ssh_key_facts }
     - { role: vultr_startup_script, tags: test_vultr_startup_script }

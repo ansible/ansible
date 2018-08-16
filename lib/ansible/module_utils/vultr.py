@@ -251,6 +251,9 @@ class Vultr:
                     elif config['convert_to'] == 'bool':
                         resource[search_key] = True if resource[search_key] == 'yes' else False
 
+                if 'transform' in config:
+                    resource[search_key] = config['transform'](resource[search_key])
+
                 if 'key' in config:
                     resource[config['key']] = resource[search_key]
                     del resource[search_key]
@@ -265,3 +268,34 @@ class Vultr:
                 self.result[self.namespace] = self.normalize_result(resource)
 
         return self.result
+
+    def get_plan(self, plan=None, key='name'):
+        value = plan or self.module.params.get('plan')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='plans',
+            use_cache=True
+        )
+
+    def get_firewallgroup(self, firewallgroup=None, key='description'):
+        value = firewallgroup or self.module.params.get('firewallgroup')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='firewall',
+            query_by='group_list',
+            use_cache=True
+        )
+
+    def get_application(self, application=None, key='name'):
+        value = application or self.module.params.get('application')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='app',
+            use_cache=True
+        )
