@@ -14,31 +14,31 @@ module: ovirt_vnics
 short_description: Module to manage vNIC profile of network in oVirt/RHV
 version_added: "2.7"
 author:
-- Ondra Machacek (@machacekondra)
-- Martin Necas (@mnecas)
+- "Ondra Machacek (@machacekondra)"
+- "Martin Necas (@mnecas)"
 description:
-    - Module to manage vNIC profile of network in oVirt/RHV
+    - "Module to manage vNIC profile of network in oVirt/RHV"
 options:
     name:
         description:
-            - Name of the vNIC to manage.
+            - "Name of the vNIC to manage."
         required: true
     state:
         description:
-            - Should the vNIC be absent/present.
-        choices: [ absent, present]
+            - "Should the vNIC be absent/present."
+        choices: ['absent', 'present']
         default: present
     data_center:
         description:
-            - Datacenter name where network reside.
+            - "Datacenter name where network reside."
         required: true
     network:
         description:
-            - Name of network to which is vNIC attached.
+            - "Name of network to which is vNIC attached."
         required: true
     network_filter:
         description:
-            - Name of network filter.
+            - "Name of network filter."
     custom_properties:
         description:
             - "Properties sent to VDSM to configure various hooks."
@@ -48,16 +48,19 @@ options:
             - "C(value) - Value to set for custom property."
     qos:
         description:
-            - Name of Quality of Service.
+            - "Name of Quality of Service."
     port_mirroring:
         description:
-            - Boolean, sets usage of port mirroring.
+            - "Boolean, sets usage of port mirroring."
+        type: bool
     pass_through:
         description:
-            - Boolean which enables being directly attached to a VF.
+            - "String which enables being directly attached to a VF."
+        choices: ['disabled', 'enabled']
     migratable:
         description:
-            - Boolean which can be set only when pass_through is True.
+            - "Boolean which can be set only when pass_through is True."
+        type: bool
 
 extends_documentation_fragment: ovirt
 '''
@@ -65,49 +68,49 @@ extends_documentation_fragment: ovirt
 EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
-  - name: Add vNIC
-    ovirt_vnics_profile:
-        name: myvnic
-        network: mynetwork
-        state:  present
-        data_center: datacenter
+- name: Add vNIC
+  ovirt_vnics_profile:
+    name: myvnic
+    network: mynetwork
+    state: present
+    data_center: datacenter
 
-  - name: Editing vNICs network_filter, custom_properties, qos
-    ovirt_vnics_profile:
-        name: myvnic
-        network: mynetwork
-        data_center: datacenter
-        qos: myqos
-        custom_properties:
-          - name: SecurityGroups
-            value: uuid
-        network_filter: allow-dhcp
+- name: Editing vNICs network_filter, custom_properties, qos
+  ovirt_vnics_profile:
+    name: myvnic
+    network: mynetwork
+    data_center: datacenter
+    qos: myqos
+    custom_properties:
+      - name: SecurityGroups
+        value: uuid
+    network_filter: allow-dhcp
 
-  - name: Editing vNICs network_filter, custom_properties, qos
-    ovirt_vnics_profile:
-        name: myvnic
-        network: mynetwork
-        data_center: datacenter
-        qos: myqos
-        custom_properties:
-          - name: SecurityGroups
-            value: uuid
-        network_filter: allow-dhcp
+- name: Editing vNICs network_filter, custom_properties, qos
+  ovirt_vnics_profile:
+    name: myvnic
+    network: mynetwork
+    data_center: datacenter
+    qos: myqos
+    custom_properties:
+      - name: SecurityGroups
+        value: uuid
+    network_filter: allow-dhcp
 
-  - name: Dont use migratable
-    ovirt_vnics_profile:
-        name: myvnic
-        network: mynetwork
-        data_center: datacenter
-        migratable: False
-        pass_through: True
+- name: Dont use migratable
+  ovirt_vnics_profile:
+    name: myvnic
+    network: mynetwork
+    data_center: datacenter
+    migratable: False
+    pass_through: enabled
 
-  - name: Remove vNIC
-    ovirt_vnics_profile:
-        name: myvnic
-        network: mynetwork
-        state:  absent
-        data_center: datacenter
+- name: Remove vNIC
+  ovirt_vnics_profile:
+    name: myvnic
+    network: mynetwork
+    state: absent
+    data_center: datacenter
 '''
 
 RETURN = '''
@@ -213,7 +216,7 @@ def main():
         network_filter=dict(type='str'),
         custom_properties=dict(type='list'),
         qos=dict(type='str'),
-        pass_through=dict(type='str'),
+        pass_through=dict(type='str', default='disabled', choices=['disabled', 'enabled']),
         port_mirroring=dict(type='bool'),
         migratable=dict(type='bool'),
     )
