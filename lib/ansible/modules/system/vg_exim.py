@@ -26,7 +26,6 @@ options:
     description:
     - The name of the volume group.
     required: True
-    alias: name
   state:
     description:
     - state the volume group should be.
@@ -45,7 +44,7 @@ EXAMPLES = '''
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            vg=dict(type='str', required=True, aliases=['name']),
+            vg=dict(type='str', required=True),
             state=dict(
                 type='str',
                 default=None,
