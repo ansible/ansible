@@ -41,7 +41,7 @@ options:
         required: true
     network_filter:
         description:
-            - "The network filter enables to filter packets send to/from the VM’s nic according to defined rules."
+            - "The network filter enables to filter packets send to/from the VM's nic according to defined rules."
     custom_properties:
         description:
             - "Custom properties applied to the vNIC profile."
@@ -193,10 +193,8 @@ class EntityVnicPorfileModule(BaseModule):
             if self.param('qos') else None,
             network_filter=otypes.NetworkFilter(id=self.__get_network_filter_id())
             if self.param('network_filter') else None
-
         )
 
-   
     def update_check(self, entity):
         def check_custom_properties():
             if self.param('custom_properties'):
@@ -215,7 +213,6 @@ class EntityVnicPorfileModule(BaseModule):
             equal(self.param('network_filter'), entity.network_filter.name) and
             equal(self.param('qos'), entity.qos.name) and
             equal(self.param('port_mirroring'), getattr(entity, 'port_mirroring', None))
-
         )
 
 
