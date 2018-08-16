@@ -60,7 +60,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-azure_webapps:
+webapps:
     description: List of web apps.
     returned: always
     type: complex
@@ -105,6 +105,34 @@ azure_webapps:
                 - Other useful properties of the web app, which is not curated to module input.
             return: always
             type: complex
+            contains:
+                availabilityState:
+                    description: Availability of this web app.
+                    type: str
+                defaultHostName:
+                    description: Host name of the web app.
+                    type: str
+                enabled:
+                    description: Indicate the web app enabled or not.
+                    type: bool
+                enabledHostNames:
+                    description: Enabled host names of the web app.
+                    type: list
+                hostNameSslStates:
+                    description: SSL state per host names of the web app.
+                    type: list
+                hostNames:
+                    description: host names of the web app.
+                    type: list
+                lastModifiedTimeUtc:
+                    description: Last modified date  of the web app.
+                    type: str
+                outboundIpAddresses:
+                    description: outbound ip address of the web app.
+                    type: str
+                state:
+                    description: state of the web app.  eg. running.
+                    type: str
 '''
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -130,7 +158,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_webapps=[])
+            webapps=[]
         )
 
         self.name = None
@@ -150,11 +178,11 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.name:
-            self.results['ansible_facts']['azure_webapps'] = self.list_by_name()
+            self.results['webapps'] = self.list_by_name()
         elif self.resource_group:
-            self.results['ansible_facts']['azure_webapps'] = self.list_by_resource_group()
+            self.results['webapps'] = self.list_by_resource_group()
         else:
-            self.results['ansible_facts']['azure_webapps'] = self.list_all()
+            self.results['webapps'] = self.list_all()
 
         return self.results
 

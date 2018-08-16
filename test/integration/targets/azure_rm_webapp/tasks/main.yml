@@ -43,7 +43,7 @@
 
 - assert:
     that:
-      - output.ansible_facts.azure_webapps | length == 1
+      - output.webapps | length == 1
 
 - name: Create a win web app with java run time specific
   azure_rm_webapp:
@@ -72,9 +72,9 @@
 
 - assert:
     that:
-      - output.ansible_facts.azure_webapps | length == 1
-      - output.ansible_facts.azure_webapps[0].app_settings | length == 1
-      - output.ansible_facts.azure_webapps[0].frameworks | length > 1 # there's default frameworks eg net_framework
+      - output.webapps | length == 1
+      - output.webapps[0].app_settings | length == 1
+      - output.webapps[0].frameworks | length > 1 # there's default frameworks eg net_framework
 
 - name: Update app settings
   azure_rm_webapp:
