@@ -262,13 +262,13 @@ class Pkcs(crypto_utils.OpenSSLObject):
                                           p12.get_privatekey())
             crt = crypto.dump_certificate(crypto.FILETYPE_PEM,
                                           p12.get_certificate())
-            os.close(p12)
 
             pkcs12_file = os.open(self.path,
                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
                                   self.mode)
             os.write(pkcs12_file, '%s%s' % (pkey, crt))
             os.close(pkcs12_file)
+
         except IOError as exc:
             self.remove()
             raise PkcsError(exc)
