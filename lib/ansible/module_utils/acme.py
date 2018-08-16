@@ -514,7 +514,9 @@ class ACMEAccount(object):
         self.key_content = module.params['account_key_content']
         self.directory = ACMEDirectory(module)
 
-        self.uri = None
+        # Grab account URI from module parameters.
+        # Make sure empty string is treated as None.
+        self.uri = module.params.get('account_uri') or None
 
         self._openssl_bin = module.get_bin_path('openssl', True)
 
@@ -527,6 +529,9 @@ class ACMEAccount(object):
                 "alg": self.key_data['alg'],
                 "jwk": self.jwk,
             }
+            if self.uri:
+                # Make sure self.jws_header is updated
+                self.set_account_uri(self.uri)
 
     def get_keyauthorization(self, token):
         '''
@@ -709,6 +714,10 @@ class ACMEAccount(object):
         changed = False
         if self.uri is not None:
             new_account = False
+            if not update_contact:
+                # Verify that the account key belongs to the URI.
+                # (If update_contact is True, this will be done below.)
+                self.get_account_data()
         else:
             new_account = self._new_reg(
                 contact,
