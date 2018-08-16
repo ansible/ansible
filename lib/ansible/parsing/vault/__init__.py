@@ -1241,14 +1241,18 @@ class VaultAES256:
         # assert b_plaintext
 
         b_secret = secret.bytes
-        b_plaintextAndSecret = b_plaintext + b_secret
+        b_plaintextAndSecret = b_secret + b_plaintext
 
         if HAS_CRYPTOGRAPHY:
             digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
             digest.update(b_plaintextAndSecret)
+            b_hash = digest.finalize()
+            digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
+            digest.update(b_hash)
             b_salt = digest.finalize()
         elif HAS_PYCRYPTO:
-            b_salt = SHA256_pycrypto.new(b_plaintextAndSecret).digest()
+            b_hash = SHA256_pycrypto.new(b_plaintextAndSecret).digest()
+            b_salt = SHA256_pycrypto.new(b_hash).digest()
         else:
             b_salt = os.urandom(32)
         return b_salt
