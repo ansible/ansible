@@ -6,8 +6,8 @@
 - name: Remove snmp user
   nxos_snmp_user: &remove
     user: ntc
-    state: absent
     provider: "{{ connection }}"
+    state: absent
 
 - pause:
     seconds: 5
@@ -49,8 +49,8 @@
     nxos_snmp_user: &remg
       user: ntc
       group: network-admin
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -68,8 +68,8 @@
     nxos_snmp_user: &remove1
       user: ntc
       group: network-operator
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true

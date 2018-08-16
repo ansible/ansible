@@ -228,19 +228,20 @@ def main():
         changed = True
 
     if state != runtime_state:
-        if module.check_mode:
-            module.exit_json(changed=True)
         if runtime_enabled:
             if state == 'disabled':
                 if runtime_state != 'permissive':
                     # Temporarily set state to permissive
-                    set_state(module, 'permissive')
+                    if not module.check_mode:
+                        set_state(module, 'permissive')
                     module.warn('SELinux state temporarily changed from \'%s\' to \'permissive\'. State change will take effect next reboot.' % (runtime_state))
+                    changed = True
                 else:
                     module.warn('SELinux state change will take effect next reboot')
                 reboot_required = True
             else:
-                set_state(module, state)
+                if not module.check_mode:
+                    set_state(module, state)
                 msgs.append('SELinux state changed from \'%s\' to \'%s\'' % (runtime_state, state))
 
                 # Only report changes if the file is changed.
@@ -251,10 +252,9 @@ def main():
             reboot_required = True
 
     if state != config_state:
-        if module.check_mode:
-            module.exit_json(changed=True)
+        if not module.check_mode:
+            set_config_state(module, state, configfile)
         msgs.append('Config SELinux state changed from \'%s\' to \'%s\'' % (config_state, state))
-        set_config_state(module, state, configfile)
         changed = True
 
     module.exit_json(changed=changed, msg=', '.join(msgs), configfile=configfile, policy=policy, state=state, reboot_required=reboot_required)

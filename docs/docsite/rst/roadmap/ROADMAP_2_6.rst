@@ -7,18 +7,30 @@ Ansible 2.6
 Release Schedule
 ----------------
 
-Proposed
+Actual
+======
+
+- 2018-05-17 Core Freeze (Engine and Core Modules/Plugins)
+- 2018-05-21 Alpha Release 1
+- 2018-05-25 Community Freeze (Non-Core Modules/Plugins)
+- 2018-05-25 Branch stable-2.6
+- 2018-05-30 Alpha Release 2
+- 2018-06-05 Release Candidate 1
+- 2018-06-08 Release Candidate 2
+- 2018-06-18 Release Candidate 3
+- 2018-06-25 Release Candidate 4
+- 2018-06-26 Release Candidate 5
+
+Expected
 ========
 
-- 2018-05-17 Core Freeze (Core Engine and Non-Community Modules)
-- 2018-05-17 Alpha Release 1
-- 2018-05-24 Alpha Release 2
-- 2018-05-25 Community Freeze (Community Modules)
-- 2018-05-31 Branch stable-2.6
-- 2018-05-31 Release Candidate 1
-- 2018-06-07 Release Candidate 2
-- 2018-06-14 Release Candidate 3
 - 2018-06-28 Final Release
+
+
+Release Manager
+---------------
+Matt Clay (IRC/GitHub: @mattclay)
+
 
 Engine improvements
 -------------------
@@ -55,10 +67,9 @@ Connection work
 Modules
 =======
 
-* New ``network_config`` - platform agnostic module for sending text based config over network_cli
-* New ``network_command`` - platform agnostic command module
-* New ``network_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
-* New ``network_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
+* New ``net_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli
+* New ``net_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli
+* New ``netconf_get`` - Netconf module to fetch configuration and state data `proposal#104 <https://github.com/ansible/proposals/issues/104>`_
 
 Other Features
 ================

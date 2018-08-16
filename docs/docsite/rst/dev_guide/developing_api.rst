@@ -3,8 +3,6 @@
 Python API
 ==========
 
-.. note:: This document is out of date; 'ansible.parsing.dataloader' and 'ansible.runner' are not available in the current version of Ansible.
-
 .. contents:: Topics
 
 .. note:: This API is intended for internal Ansible use. Ansible may make changes to this API at any time that could break backward compatibility with older versions of the API. Because of this, external use is not supported by Ansible. 
@@ -120,7 +118,7 @@ command line tools (``lib/ansible/cli/``) is `available on Github <https://githu
        How to develop modules
    :doc:`developing_plugins`
        How to develop plugins
-   `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -11,7 +11,7 @@ if [ "${COVERAGE}" ]; then
     echo "coverage" > /tmp/network.txt
 fi
 
-target="network/ci/"
+target="shippable/network/"
 
 stage="${S:-prod}"
 provider="${P:-default}"

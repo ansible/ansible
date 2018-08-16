@@ -20,6 +20,7 @@ options:
     description:
       - Path to be used for changing owner
     required: yes
+    type: path
   user:
     description:
       - Name to be used for changing owner

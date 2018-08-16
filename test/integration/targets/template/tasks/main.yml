@@ -619,5 +619,28 @@
       - 'template_results.mode == "0547"'
       - 'stat_results.stat["mode"] == "0547"'
 
+# Test output_encoding
+- name: Prepare the list of encodings we want to check, including empty string for defaults
+  set_fact:
+    template_encoding_1252_encodings: ['', 'utf-8', 'windows-1252']
+
+- name: Copy known good encoding_1252_*.expected into place
+  copy:
+    src: 'encoding_1252_{{ item | default("utf-8", true) }}.expected'
+    dest: '{{ output_dir }}/encoding_1252_{{ item }}.expected'
+  loop: '{{ template_encoding_1252_encodings }}'
+
+- name: Generate the encoding_1252_* files from templates using various encoding combinations
+  template:
+    src: 'encoding_1252.j2'
+    dest: '{{ output_dir }}/encoding_1252_{{ item }}.txt'
+    output_encoding: '{{ item }}'
+  loop: '{{ template_encoding_1252_encodings }}'
+
+- name: Compare the encoding_1252_* templated files to known good
+  command: diff -u {{ output_dir }}/encoding_1252_{{ item }}.expected {{ output_dir }}/encoding_1252_{{ item }}.txt
+  register: encoding_1252_diff_result
+  loop: '{{ template_encoding_1252_encodings }}'
+
 # aliases file requires root for template tests so this should be safe
 - include: backup_test.yml

@@ -9,9 +9,9 @@
     key_id: 32
     prefer: disabled
     vrf_name: management
-    source_addr: 5.5.5.5
-    state: absent
+    source_addr: 192.0.2.5
     provider: "{{ connection }}"
+    state: absent
   ignore_errors: yes
 
 - block:
@@ -22,9 +22,9 @@
       key_id: 32
       prefer: enabled
       vrf_name: management
-      source_addr: 5.5.5.5
-      state: present
+      source_addr: 192.0.2.5
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -46,8 +46,8 @@
       prefer: enabled
       vrf_name: default
       source_addr: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -75,8 +75,8 @@
       source_int: Ethernet1/3
       peer: 1.2.3.4
       prefer: enabled
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -90,8 +90,8 @@
   - name: Remove source interface
     nxos_ntp: &config3
       source_int: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true

@@ -31,6 +31,7 @@ try:
     from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
+    import ovirtsdk4.types as otypes
     HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
 except ImportError:
     HAS_SDK = False
@@ -135,8 +136,12 @@ def create_connection(auth):
     :return: Python SDK connection
     """
 
+    url = auth.get('url')
+    if url is None and auth.get('hostname') is not None:
+        url = 'https://{0}/ovirt-engine/api'.format(auth.get('hostname'))
+
     return sdk.Connection(
-        url=auth.get('url'),
+        url=url,
         username=auth.get('username'),
         password=auth.get('password'),
         ca_file=auth.get('ca_file', None),
@@ -338,6 +343,7 @@ def wait(
 
 def __get_auth_dict():
     OVIRT_URL = os.environ.get('OVIRT_URL')
+    OVIRT_HOSTNAME = os.environ.get('OVIRT_HOSTNAME')
     OVIRT_USERNAME = os.environ.get('OVIRT_USERNAME')
     OVIRT_PASSWORD = os.environ.get('OVIRT_PASSWORD')
     OVIRT_TOKEN = os.environ.get('OVIRT_TOKEN')
@@ -345,6 +351,8 @@ def __get_auth_dict():
     OVIRT_INSECURE = OVIRT_CAFILE is None
 
     env_vars = None
+    if OVIRT_URL is None and OVIRT_HOSTNAME is not None:
+        OVIRT_URL = 'https://{0}/ovirt-engine/api'.format(OVIRT_HOSTNAME)
     if OVIRT_URL and ((OVIRT_USERNAME and OVIRT_PASSWORD) or OVIRT_TOKEN):
         env_vars = {
             'url': OVIRT_URL,
@@ -779,3 +787,17 @@ class BaseModule(object):
             entity = search_by_attributes(self._service, list_params=list_params, name=self._module.params['name'])
 
         return entity
+
+    def _get_major(self, full_version):
+        if full_version is None:
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.major)
+        return int(full_version.split('.')[0])
+
+    def _get_minor(self, full_version):
+        if full_version is None:
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.minor)
+        return int(full_version.split('.')[1])

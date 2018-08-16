@@ -135,6 +135,14 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  label:
+    description:
+      - Allows a commit label to be specified to be included when the
+        configuration is committed. A valid label must begin with an alphabet
+        and not exceed 30 characters, only alphabets, digits, hyphens and
+        underscores are allowed. If the configuration is not changed or
+        committed, this argument is ignored.
+    version_added: "2.7"
 """
 
 EXAMPLES = """
@@ -186,7 +194,38 @@ from ansible.module_utils.network.common.config import NetworkConfig, dumps
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
 CONFIG_MISPLACED_CHILDREN = [
-    re.compile(r'end-\s*(.+)$')
+    re.compile(r'^end-\s*(.+)$')
+]
+
+# Objects defined in Route-policy Language guide of IOS_XR.
+# Reconfiguring these objects replace existing configurations.
+# Hence these objects should be played direcly from candidate
+# configurations
+CONFIG_BLOCKS_FORCED_IN_DIFF = [
+    {
+        'start': re.compile(r'route-policy'),
+        'end': re.compile(r'end-policy')
+    },
+    {
+        'start': re.compile(r'prefix-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'as-path-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'community-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'rd-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'extcommunity-set'),
+        'end': re.compile(r'end-set')
+    }
 ]
 
 
@@ -208,50 +247,109 @@ def check_args(module, warnings):
     if module.params['comment']:
         if len(module.params['comment']) > 60:
             module.fail_json(msg='comment argument cannot be more than 60 characters')
+    if module.params['label']:
+        label = module.params['label']
+        if len(label) > 30:
+            module.fail_json(msg='label argument cannot be more than 30 characters')
+        if not label[0].isalpha():
+            module.fail_json(msg='label argument must begin with an alphabet')
+        valid_chars = re.match(r'[\w-]*$', label)
+        if not valid_chars:
+            module.fail_json(
+                msg='label argument must only contain alphabets,' +
+                'digits, underscores or hyphens'
+            )
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
 
 
+# A list of commands like {end-set, end-policy, ...} are part of configuration
+# block like { prefix-set, as-path-set , ... } but they are not indented properly
+# to be included with their parent. sanitize_config will add indentation to
+# end-* commands so they are included with their parents
+def sanitize_config(config, force_diff_prefix=None):
+    conf_lines = config.split('\n')
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(conf_lines):
+            m = regex.search(line)
+            if m and m.group(0):
+                if force_diff_prefix:
+                    conf_lines[index] = '  ' + m.group(0) + force_diff_prefix
+                else:
+                    conf_lines[index] = '  ' + m.group(0)
+    conf = ('\n').join(conf_lines)
+    return conf
+
+
+def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
+    conf_lines = config.split('\n')
+    candidate_lines = candidate.split('\n')
+
+    for regex in CONFIG_BLOCKS_FORCED_IN_DIFF:
+        block_index_start_end = []
+        for index, line in enumerate(candidate_lines):
+            startre = regex['start'].search(line)
+            if startre and startre.group(0):
+                start_index = index
+            else:
+                endre = regex['end'].search(line)
+                if endre and endre.group(0):
+                    end_index = index
+                    new_block = True
+                    for prev_start, prev_end in block_index_start_end:
+                        if start_index == prev_start:
+                            # This might be end-set of another regex
+                            # otherwise we would be having new start
+                            new_block = False
+                            break
+                    if new_block:
+                        block_index_start_end.append((start_index, end_index))
+
+        for start, end in block_index_start_end:
+            diff = False
+            if candidate_lines[start] in conf_lines:
+                run_conf_start_index = conf_lines.index(candidate_lines[start])
+            else:
+                diff = False
+                continue
+            for i in range(start, end + 1):
+                if conf_lines[run_conf_start_index] == candidate_lines[i]:
+                    run_conf_start_index = run_conf_start_index + 1
+                else:
+                    diff = True
+                    break
+            if diff:
+                run_conf_start_index = conf_lines.index(candidate_lines[start])
+                for i in range(start, end + 1):
+                    conf_lines[run_conf_start_index] = conf_lines[run_conf_start_index] + force_diff_prefix
+                    run_conf_start_index = run_conf_start_index + 1
+
+    conf = ('\n').join(conf_lines)
+    return conf
+
+
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
         contents = get_config(module)
+    if module.params['src']:
+        contents = mask_config_blocks_from_diff(contents, module.params['src'], "ansible")
+        contents = sanitize_config(contents)
     return NetworkConfig(indent=1, contents=contents)
 
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        config = module.params['src']
+        config = sanitize_config(config)
+        candidate.load(config)
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
-
-
-def sanitize_candidate_config(config):
-    last_parents = None
-    for regex in CONFIG_MISPLACED_CHILDREN:
-        for index, line in enumerate(config):
-            if line._parents:
-                last_parents = line._parents
-            m = regex.search(line.text)
-            if m and m.group(0):
-                config[index]._parents = last_parents
-
-
-def sanitize_running_config(config):
-    last_parents = None
-    for regex in CONFIG_MISPLACED_CHILDREN:
-        for index, line in enumerate(config):
-            if line._parents:
-                last_parents = line._parents
-            m = regex.search(line.text)
-            if m and m.group(0):
-                config[index].text = ' ' + m.group(0)
-                config[index]._parents = last_parents
 
 
 def run(module, result):
@@ -262,14 +360,14 @@ def run(module, result):
     comment = module.params['comment']
     admin = module.params['admin']
     check_mode = module.check_mode
+    label = module.params['label']
 
     candidate_config = get_candidate(module)
     running_config = get_running_config(module)
 
-    sanitize_candidate_config(candidate_config.items)
-    sanitize_running_config(running_config.items)
-
     commands = None
+    replace_file_path = None
+
     if match != 'none' and replace != 'config':
         commands = candidate_config.difference(running_config, path=path, match=match, replace=replace)
     elif replace_config:
@@ -284,6 +382,7 @@ def run(module, result):
                 module.fail_json(msg='Copy of config file to the node failed')
 
             commands = ['load harddisk:/ansible_config.txt']
+            replace_file_path = 'harddisk:/ansible_config.txt'
     else:
         commands = candidate_config.items
 
@@ -301,7 +400,11 @@ def run(module, result):
             result['commands'] = commands
 
         commit = not check_mode
-        diff = load_config(module, commands, commit=commit, replace=replace_config, comment=comment, admin=admin)
+        diff = load_config(
+            module, commands, commit=commit,
+            replace=replace_file_path, comment=comment, admin=admin,
+            label=label
+        )
         if diff:
             result['diff'] = dict(prepared=diff)
 
@@ -330,7 +433,8 @@ def main():
         config=dict(),
         backup=dict(type='bool', default=False),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
-        admin=dict(type='bool', default=False)
+        admin=dict(type='bool', default=False),
+        label=dict()
     )
 
     argument_spec.update(iosxr_argument_spec)

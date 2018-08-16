@@ -30,6 +30,7 @@ options:
   value:
     description:
     - The value to store in the environment variable.
+    - Must be set when C(state=present) and cannot be an empty string.
     - Can be omitted for C(state=absent).
   level:
     description:

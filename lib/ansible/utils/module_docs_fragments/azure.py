@@ -54,6 +54,12 @@ options:
               the C(AZURE_CLOUD_ENVIRONMENT) environment variable.
         default: AzureCloud
         version_added: 2.4
+    adfs_authority_url:
+        description:
+            - Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+        required: false
+        default: null
+        version_added: 2.6
     cert_validation_mode:
         description:
             - Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but
@@ -64,6 +70,7 @@ options:
     auth_source:
         description:
             - Controls the source of the credentials to use for authentication.
+            - If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to C(auto) if variable is not defined.
             - C(auto) will follow the default precedence of module parameters -> environment variables -> default profile in credential file
               C(~/.azure/credentials).
             - When set to C(cli), the credentials will be sources from the default Azure CLI profile.
@@ -78,7 +85,6 @@ options:
         - credential_file
         - env
         - msi
-        default: auto
         version_added: 2.5
     api_profile:
         description:

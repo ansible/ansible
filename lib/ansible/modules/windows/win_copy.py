@@ -42,6 +42,7 @@ options:
     - If C(src) and C(dest) are files and if the parent directory of C(dest)
       doesn't exist, then the task will fail.
     required: yes
+    type: path
   force:
     description:
     - If set to C(yes), the file will only be transferred if the content
@@ -79,6 +80,7 @@ options:
     - If path is a file and dest ends with "\", the file is copied to the
       folder with the same filename.
     required: yes
+    type: path
 notes:
 - For non-Windows targets, use the M(copy) module instead.
 - Currently win_copy does not support copying symbolic links from both local to

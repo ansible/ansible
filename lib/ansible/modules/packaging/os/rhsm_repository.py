@@ -88,7 +88,8 @@ def run_subscription_manager(module, arguments):
     if not rhsm_bin:
         module.fail_json(msg='The executable file subscription-manager was not found in PATH')
 
-    rc, out, err = module.run_command("%s %s" % (rhsm_bin, " ".join(arguments)))
+    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    rc, out, err = module.run_command("%s %s" % (rhsm_bin, " ".join(arguments)), environ_update=lang_env)
 
     if rc == 1 and (err == 'The password you typed is invalid.\nPlease try again.\n' or os.getuid() != 0):
         module.fail_json(msg='The executable file subscription-manager must be run using root privileges')

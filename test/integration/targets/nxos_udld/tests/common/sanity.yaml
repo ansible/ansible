@@ -13,8 +13,8 @@
   - name: "Enable feature udld"
     nxos_feature: 
       feature: udld
-      state: enabled
       provider: "{{ connection }}"
+      state: enabled
 
   - name: Configure udld
     nxos_udld: &conf1
@@ -76,8 +76,8 @@
 
   - name: Remove udld config
     nxos_udld: &conf4
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -94,8 +94,8 @@
   - name: "Disable udld"
     nxos_feature: 
       feature: udld
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_udld sanity test"

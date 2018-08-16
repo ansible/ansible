@@ -88,7 +88,7 @@ options:
 EXAMPLES = '''
 # ensure snmp host is configured
 - nxos_snmp_host:
-    snmp_host: 3.3.3.3
+    snmp_host: 192.0.2.3
     community: TESTING
     state: present
 '''
@@ -98,7 +98,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["snmp-server host 3.3.3.3 filter-vrf another_test_vrf"]
+    sample: ["snmp-server host 192.0.2.3 filter-vrf another_test_vrf"]
 '''
 
 

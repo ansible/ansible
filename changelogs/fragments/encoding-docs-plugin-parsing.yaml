@@ -1,3 +1,0 @@
----
-bugfixes:
-- Fix an encoding issue when parsing the examples from a plugins' documentation

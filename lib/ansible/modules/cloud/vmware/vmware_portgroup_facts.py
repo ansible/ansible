@@ -21,7 +21,7 @@ description:
 - This module can be used to gather facts about an ESXi host's portgroup configuration when ESXi hostname or Cluster name is given.
 version_added: '2.6'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -46,7 +46,8 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
+  delegate_to: localhost
 
 - name: Gather portgroup facts about ESXi Host system
   vmware_portgroup_facts:
@@ -54,6 +55,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''

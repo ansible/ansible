@@ -29,7 +29,7 @@ DOCUMENTATION = """
 ---
 module: slxos_l2_interface
 version_added: "2.6"
-short_description: Manage Layer-2 interface on Extreme Networks SLXOS devices.
+short_description: Manage Layer-2 interface on Extreme Networks SLX-OS devices.
 description:
   - This module provides declarative management of Layer-2 interface on
     Extreme slxos devices.

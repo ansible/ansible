@@ -1,5 +1,4 @@
 #!powershell
-# This file is part of Ansible
 
 # Copyright: (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 # Copyright: (c) 2017, Ansible Project
@@ -25,7 +24,7 @@ $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($cop
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 
 # used in single mode
-$original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str"
+$original_basename = Get-AnsibleParam -obj $params -name "_original_basename" -type "str"
 
 # used in query and remote mode
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true

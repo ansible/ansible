@@ -427,6 +427,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
             except (TypeError, ValueError) as e:
+                value = getattr(self, name)
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
@@ -578,7 +579,6 @@ class Base(FieldAttributeBase):
     # flags and misc. settings
     _environment = FieldAttribute(isa='list', extend=True, prepend=True)
     _no_log = FieldAttribute(isa='bool')
-    _always_run = FieldAttribute(isa='bool')
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
     _check_mode = FieldAttribute(isa='bool')

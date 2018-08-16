@@ -95,6 +95,7 @@ notes:
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
   - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
+  - When more then one block should be handled in **one** file you **must** change the I(marker) per task
 """
 
 EXAMPLES = r"""
@@ -159,7 +160,7 @@ from ansible.module_utils._text import to_bytes
 
 def write_changes(module, contents, path):
 
-    tmpfd, tmpfile = tempfile.mkstemp(dir=getattr(module, 'tmpdir', None))
+    tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
     f = os.fdopen(tmpfd, 'wb')
     f.write(contents)
     f.close()

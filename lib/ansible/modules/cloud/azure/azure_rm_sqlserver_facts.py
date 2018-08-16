@@ -32,6 +32,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -199,5 +200,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
 def main():
     AzureRMServersFacts()
+
+
 if __name__ == '__main__':
     main()

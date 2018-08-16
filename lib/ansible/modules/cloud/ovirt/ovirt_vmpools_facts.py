@@ -56,7 +56,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_vm_pools:
-    description: "List of dictionaries describing the vmpools. Vm pool attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the vmpools. Vm pool attributes are mapped to dictionary keys,
                   all vmpools attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm_pool."
     returned: On success.
     type: list
@@ -102,6 +102,7 @@ def main():
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         connection.close(logout=auth.get('token') is None)
+
 
 if __name__ == '__main__':
     main()

@@ -1,10 +1,10 @@
 #!powershell
-# Copyright (c) 2017 Artem Zinenko <zinenkoartem@gmail.com>
-# Copyright (c) 2014 Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+
+# Copyright: (c) 2014, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+# Copyright: (c) 2017, Artem Zinenko <zinenkoartem@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 function Parse-ProtocolType {
     param($protocol)

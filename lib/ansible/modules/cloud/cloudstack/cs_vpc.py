@@ -4,6 +4,9 @@
 # Copyright (c) 2016, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
@@ -30,7 +33,7 @@ options:
     description:
       - "CIDR of the VPC, e.g. 10.1.0.0/16"
       - "All VPC guest networks' CIDRs must be within this CIDR."
-      - "Required on C(state=present)."
+      - "Required on I(state=present)."
   network_domain:
     description:
       - "Network domain for the VPC."
@@ -42,15 +45,19 @@ options:
       - "If not set, default VPC offering is used."
   clean_up:
     description:
-      - "Whether to redeploy a VPC router or not when C(state=restarted)"
+      - "Whether to redeploy a VPC router or not when I(state=restarted)"
     version_added: "2.5"
+    type: bool
   state:
     description:
       - "State of the VPC."
+      - "The state C(present) creates a started VPC."
+      - "The state C(stopped) is only considered while creating the VPC, added in version 2.6."
     default: present
     choices:
       - present
       - absent
+      - stopped
       - restarted
   domain:
     description:
@@ -68,18 +75,27 @@ options:
   tags:
     description:
       - "List of tags. Tags are a list of dictionaries having keys C(key) and C(value)."
-      - "For deleting all tags, set an empty list e.g. C(tags: [])."
+      - "For deleting all tags, set an empty list e.g. I(tags: [])."
     aliases:
       - tag
   poll_async:
     description:
       - "Poll async jobs until job has finished."
-    default: true
+    default: yes
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: Ensure a VPC is present
+- name: Ensure a VPC is present but not started after creating
+  local_action:
+    module: cs_vpc
+    name: my_vpc
+    display_text: My example VPC
+    cidr: 10.10.0.0/16
+    state: stopped
+
+- name: Ensure a VPC is present and started after creating
   local_action:
     module: cs_vpc
     name: my_vpc
@@ -96,7 +112,7 @@ EXAMPLES = '''
   local_action:
     module: cs_vpc
     name: my_vpc
-    clean_up: true
+    clean_up: yes
     state: restarted
 '''
 
@@ -203,16 +219,28 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
 
     def get_vpc_offering(self, key=None):
         vpc_offering = self.module.params.get('vpc_offering')
-        args = {}
+        args = {
+            'state': 'Enabled',
+        }
         if vpc_offering:
             args['name'] = vpc_offering
+            fail_msg = "VPC offering not found or not enabled: %s" % vpc_offering
         else:
             args['isdefault'] = True
+            fail_msg = "No enabled default VPC offering found"
 
         vpc_offerings = self.query_api('listVPCOfferings', **args)
         if vpc_offerings:
-            return self._get_by_key(key, vpc_offerings['vpcoffering'][0])
-        self.module.fail_json(msg="VPC offering not found: %s" % vpc_offering)
+            # The API name argument filter also matches substrings, we have to
+            # iterate over the results to get an exact match
+            for vo in vpc_offerings['vpcoffering']:
+                if 'name' in args:
+                    if args['name'] == vo['name']:
+                        return self._get_by_key(key, vo)
+                #  Return the first offering found, if not queried for the name
+                else:
+                    return self._get_by_key(key, vo)
+        self.module.fail_json(msg=fail_msg)
 
     def get_vpc(self):
         if self.vpc:
@@ -222,11 +250,12 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'fetch_list': True,
         }
         vpcs = self.query_api('listVPCs', **args)
         if vpcs:
             vpc_name = self.module.params.get('name')
-            for v in vpcs['vpc']:
+            for v in vpcs:
                 if vpc_name in [v['name'], v['displaytext'], v['id']]:
                     # Fail if the identifyer matches more than one VPC
                     if self.vpc:
@@ -273,6 +302,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'start': self.module.params.get('state') != 'stopped'
         }
         self.result['diff']['after'] = args
         if not self.module.check_mode:
@@ -321,7 +351,7 @@ def main():
         vpc_offering=dict(),
         network_domain=dict(),
         clean_up=dict(type='bool'),
-        state=dict(choices=['present', 'absent', 'restarted'], default='present'),
+        state=dict(choices=['present', 'absent', 'stopped', 'restarted'], default='present'),
         domain=dict(),
         account=dict(),
         project=dict(),

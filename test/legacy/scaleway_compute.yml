@@ -16,7 +16,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
 
     register: server_creation_check_task
 
@@ -34,7 +34,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
 
     register: server_creation_task
@@ -53,7 +53,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
 
     register: server_creation_confirmation_task
@@ -73,7 +73,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       tags:
         - test
         - www
@@ -93,7 +93,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -114,7 +114,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -136,7 +136,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       tags:
         - test
         - www
@@ -156,7 +156,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -177,7 +177,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -199,7 +199,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       tags:
         - test
         - www
@@ -219,7 +219,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -241,7 +241,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       tags:
         - test
         - www
@@ -261,7 +261,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -282,7 +282,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -304,7 +304,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       tags:
         - test
         - www
@@ -324,7 +324,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -345,7 +345,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
       wait: true
       tags:
         - test
@@ -367,7 +367,7 @@
       image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
       organization: this-organization-does-not-exists
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
     register: unauthorized_organization_task
 
   - debug: var=unauthorized_organization_task
@@ -385,7 +385,7 @@
       image: this-image-does-not-exists
       organization: 951df375-e094-4d26-97c1-ba548eeb9c42
       region: ams1
-      commercial_type: VC1S
+      commercial_type: START1-S
     register: unexisting_image_check
 
   - debug: var=unexisting_image_check

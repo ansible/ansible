@@ -21,7 +21,7 @@ description:
 - This module can be used to gather VMKernel facts about an ESXi host from given ESXi hostname or cluster name.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -48,6 +48,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
+  delegate_to: localhost
   register: cluster_host_vmks
 
 - name: Gather VMKernel facts about ESXi Host
@@ -56,6 +57,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
   register: host_vmks
 '''
 

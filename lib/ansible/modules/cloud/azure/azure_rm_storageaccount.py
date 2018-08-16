@@ -42,7 +42,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     account_type:
         description:
             - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
@@ -68,16 +67,20 @@ options:
         default: 'Storage'
         choices:
             - Storage
+            - StorageV2
             - BlobStorage
         version_added: "2.2"
     access_tier:
         description:
             - The access tier for this storage account. Required for a storage account of kind 'BlobStorage'.
-        default: 'Storage'
         choices:
             - Hot
             - Cool
         version_added: "2.4"
+    force:
+        description:
+            - Attempt deletion if resource already exists and cannot be updated
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -102,8 +105,8 @@ EXAMPLES = '''
         name: clh0002
         type: Standard_RAGRS
         tags:
-          - testing: testing
-          - delete: on-exit
+          testing: testing
+          delete: on-exit
 '''
 
 
@@ -163,7 +166,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             state=dict(default='present', choices=['present', 'absent']),
             force=dict(type='bool', default=False),
             tags=dict(type='dict'),
-            kind=dict(type='str', default='Storage', choices=['Storage', 'BlobStorage']),
+            kind=dict(type='str', default='Storage', choices=['Storage', 'StorageV2', 'BlobStorage']),
             access_tier=dict(type='str', choices=['Hot', 'Cool'])
         )
 
@@ -448,6 +451,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
 def main():
     AzureRMStorageAccount()
+
 
 if __name__ == '__main__':
     main()

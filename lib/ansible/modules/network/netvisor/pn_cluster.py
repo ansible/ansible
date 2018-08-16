@@ -112,6 +112,9 @@ changed:
 
 import shlex
 
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
+
 NAME_EXISTS = None
 NODE1_EXISTS = None
 NODE2_EXISTS = None
@@ -310,8 +313,6 @@ def main():
 
     run_cli(module, cli)
 
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

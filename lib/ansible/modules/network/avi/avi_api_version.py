@@ -85,5 +85,6 @@ def main():
     except Exception as e:
         module.fail_json(msg="Unable to get an AVI session. {}".format(e))
 
+
 if __name__ == '__main__':
     main()

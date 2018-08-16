@@ -12,10 +12,12 @@ except Exception:
     pass
 
 import fcntl
+import hashlib
 import os
 import signal
 import socket
 import sys
+import time
 import traceback
 import errno
 import json
@@ -23,7 +25,7 @@ import json
 from contextlib import contextmanager
 
 from ansible import constants as C
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
@@ -33,6 +35,23 @@ from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
+
+
+def read_stream(byte_stream):
+    size = int(byte_stream.readline().strip())
+
+    data = byte_stream.read(size)
+    if len(data) < size:
+        raise Exception("EOF found before data was complete")
+
+    data_hash = to_text(byte_stream.readline().strip())
+    if data_hash != hashlib.sha1(data).hexdigest():
+        raise Exception("Read {0} bytes, but data did not match checksum".format(size))
+
+    # restore escaped loose \r characters
+    data = data.replace(br'\r', b'\r')
+
+    return data
 
 
 @contextmanager
@@ -69,7 +88,7 @@ class ConnectionProcess(object):
         self.connection = None
         self._ansible_playbook_pid = ansible_playbook_pid
 
-    def start(self):
+    def start(self, variables):
         try:
             messages = list()
             result = {}
@@ -83,8 +102,13 @@ class ConnectionProcess(object):
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     ansible_playbook_pid=self._ansible_playbook_pid)
-            self.connection.set_options()
+            self.connection.set_options(var_options=variables)
             self.connection._connect()
+
+            # implementation plugins are updated while connection initialization
+            if hasattr(self.connection, 'set_implementation_plugin_options'):
+                self.connection.set_implementation_plugin_options(var_options=variables)
+
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
             messages.extend(sys.stdout.getvalue().splitlines())
@@ -107,7 +131,7 @@ class ConnectionProcess(object):
             while self.connection.connected:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
-                signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
+                signal.alarm(self.connection.get_option('persistent_connect_timeout'))
 
                 self.exception = None
                 (s, addr) = self.sock.accept()
@@ -119,7 +143,7 @@ class ConnectionProcess(object):
                     if not data:
                         break
 
-                    signal.alarm(self.connection._play_context.timeout)
+                    signal.alarm(self.connection.get_option('persistent_command_timeout'))
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
@@ -136,21 +160,28 @@ class ConnectionProcess(object):
                 self.exception = traceback.format_exc()
 
         finally:
-            # when done, close the connection properly and cleanup
-            # the socket file so it can be recreated
+            # allow time for any exception msg send over socket to receive at other end before shutting down
+            time.sleep(0.1)
+
+            # when done, close the connection properly and cleanup the socket file so it can be recreated
             self.shutdown()
 
     def connect_timeout(self, signum, frame):
-        display.display('persistent connection idle timeout triggered, timeout value is %s secs' % C.PERSISTENT_CONNECT_TIMEOUT, log_only=True)
-        self.shutdown()
+        msg = 'persistent connection idle timeout triggered, timeout value is %s secs.\nSee the timeout setting options in the Network Debug and ' \
+              'Troubleshooting Guide.' % self.connection.get_option('persistent_connect_timeout')
+        display.display(msg, log_only=True)
+        raise Exception(msg)
 
     def command_timeout(self, signum, frame):
-        display.display('command timeout triggered, timeout value is %s secs' % self.play_context.timeout, log_only=True)
-        self.shutdown()
+        msg = 'command timeout triggered, timeout value is %s secs.\nSee the timeout setting options in the Network Debug and Troubleshooting Guide.'\
+              % self.connection.get_option('persistent_command_timeout')
+        display.display(msg, log_only=True)
+        raise Exception(msg)
 
     def handler(self, signum, frame):
-        display.display('signal handler called with signal %s' % signum, log_only=True)
-        self.shutdown()
+        msg = 'signal handler called with signal %s.' % signum
+        display.display(msg, log_only=True)
+        raise Exception(msg)
 
     def shutdown(self):
         """ Shuts down the local domain socket
@@ -191,19 +222,15 @@ def main():
 
     try:
         # read the play context data via stdin, which means depickling it
-        cur_line = stdin.readline()
-        init_data = b''
-
-        while cur_line.strip() != b'#END_INIT#':
-            if cur_line == b'':
-                raise Exception("EOF found before init data was complete")
-            init_data += cur_line
-            cur_line = stdin.readline()
+        vars_data = read_stream(stdin)
+        init_data = read_stream(stdin)
 
         if PY3:
             pc_data = cPickle.loads(init_data, encoding='bytes')
+            variables = cPickle.loads(vars_data, encoding='bytes')
         else:
             pc_data = cPickle.loads(init_data)
+            variables = cPickle.loads(vars_data)
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
@@ -241,7 +268,7 @@ def main():
                         os.close(r)
                         wfd = os.fdopen(w, 'w')
                         process = ConnectionProcess(wfd, play_context, socket_path, original_path, ansible_playbook_pid)
-                        process.start()
+                        process.start(variables)
                     except Exception:
                         messages.append(traceback.format_exc())
                         rc = 1
@@ -261,6 +288,7 @@ def main():
             else:
                 messages.append('found existing local domain socket, using it!')
                 conn = Connection(socket_path)
+                conn.set_options(var_options=variables)
                 pc_data = to_text(init_data)
                 try:
                     messages.extend(conn.update_play_context(pc_data))

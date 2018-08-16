@@ -1,0 +1,58 @@
+- name: delete dns view instance
+  nios_dns_view:
+    name: ansible-dns
+    state: absent
+    provider: "{{ nios_provider }}"
+
+- name: configure a new dns view instance
+  nios_dns_view:
+    name: ansible-dns
+    state: present
+    provider: "{{ nios_provider }}"
+  register: nios_dns_create1
+
+- name: configure a new dns view instance
+  nios_dns_view:
+    name: ansible-dns
+    state: present
+    provider: "{{ nios_provider }}"
+  register: nios_dns_create2
+
+- name: update the comment for dns view
+  nios_dns_view:
+    name: ansible-dns
+    comment: this is an example comment
+    state: present
+    provider: "{{ nios_provider }}"
+  register: nios_dns_update1
+
+- name: update the comment for dns view
+  nios_dns_view:
+    name: ansible-dns
+    comment: this is an example comment
+    state: present
+    provider: "{{ nios_provider }}"
+  register: nios_dns_update2
+
+- name: delete dns view instance
+  nios_dns_view:
+    name: ansible-dns
+    state: absent
+    provider: "{{ nios_provider }}"
+  register: nios_dns_delete1
+
+- name: delete dns view instance
+  nios_dns_view:
+    name: ansible-dns
+    state: absent
+    provider: "{{ nios_provider }}"
+  register: nios_dns_delete2
+
+- assert:
+    that:
+      - "nios_dns_create1.changed"
+      - "not nios_dns_create2.changed"
+      - "nios_dns_update1.changed"
+      - "not nios_dns_update2.changed"
+      - "nios_dns_delete1.changed"
+      - "not nios_dns_delete2.changed"

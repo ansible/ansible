@@ -13,16 +13,16 @@
   when: (platform is not match("N35|N7K")) and ((imagetag != 'I2'))
 
 - set_fact: vnind="5000"
-  when: platform is not match("N35|N7K")
+  when: platform is not match("N35|N7K|N3L")
 
 - set_fact: vnid="default"
-  when: platform is not match("N35|N7K")
+  when: platform is not match("N35|N7K|N3L")
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - block:
@@ -75,8 +75,8 @@
   - name: Ensure ntc VRF does not exist on switch
     nxos_vrf: &remove
       vrf: ntc
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -94,8 +94,8 @@
   - name: "Disable feature BGP"
     nxos_feature:
       feature: bgp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_vrf sanity test"

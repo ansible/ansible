@@ -90,6 +90,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Obezimnaka Boms (@ozboms)"
@@ -386,6 +387,7 @@ def gethash(self):
 
 def main():
     AzureRMRecordSet()
+
 
 if __name__ == '__main__':
     main()

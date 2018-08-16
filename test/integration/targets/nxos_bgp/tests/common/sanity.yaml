@@ -15,15 +15,15 @@
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - name: "Setup"
   nxos_bgp: &remove
     asn: 65535
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   ignore_errors: yes
   register: result
 
@@ -31,9 +31,9 @@
   - name: "Configure BGP defaults"
     nxos_bgp: &configure_default
       asn: 65535
-      router_id: 1.1.1.1
-      state: present
+      router_id: 192.0.2.1
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -63,7 +63,7 @@
   - name: "Configure BGP non defaults"
     nxos_bgp: &configure_non_default
       asn: 65535
-      router_id: 1.1.1.1
+      router_id: 192.0.2.1
       bestpath_always_compare_med: true
       bestpath_aspath_multipath_relax: true
       bestpath_compare_routerid: true
@@ -94,8 +94,8 @@
       event_history_events: size_medium
       event_history_periodic: size_small
       suppress_fib_pending: true
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -121,8 +121,8 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
 
   rescue:
   - name: "Cleanup BGP"
@@ -132,8 +132,8 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
   always:

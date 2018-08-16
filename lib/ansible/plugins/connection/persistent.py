@@ -6,24 +6,40 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    author: Ansible Core Team
-    connection: persistent
-    short_description: Use a persistent unix socket for connection
+author: Ansible Core Team
+connection: persistent
+short_description: Use a persistent unix socket for connection
+description:
+  - This is a helper plugin to allow making other connections persistent.
+version_added: "2.3"
+options:
+  persistent_command_timeout:
+    type: int
     description:
-        - This is a helper plugin to allow making other connections persistent.
-    version_added: "2.3"
+      - Configures, in seconds, the amount of time to wait for a command to
+        return from the remote device.  If this timer is exceeded before the
+        command returns, the connection plugin will raise an exception and
+        close
+    default: 10
+    ini:
+      - section: persistent_connection
+        key: command_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 import os
 import pty
 import json
 import subprocess
 import sys
+import termios
 
 from ansible import constants as C
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.connection import Connection as SocketConnection
+from ansible.module_utils.connection import Connection as SocketConnection, write_to_file_descriptor
 from ansible.errors import AnsibleError
 
 try:
@@ -93,22 +109,24 @@ class Connection(ConnectionBase):
             [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
             stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
-        # Need to force a protocol that is compatible with both py2 and py3.
-        # That would be protocol=2 or less.
-        # Also need to force a protocol that excludes certain control chars as
-        # stdin in this case is a pty and control chars will cause problems.
-        # that means only protocol=0 will work.
-        src = cPickle.dumps(self._play_context.serialize(), protocol=0)
-        stdin.write(src)
+        # We need to set the pty into noncanonical mode. This ensures that we
+        # can receive lines longer than 4095 characters (plus newline) without
+        # truncating.
+        old = termios.tcgetattr(master)
+        new = termios.tcgetattr(master)
+        new[3] = new[3] & ~termios.ICANON
 
-        stdin.write(b'\n#END_INIT#\n')
-        stdin.flush()
+        try:
+            termios.tcsetattr(master, termios.TCSANOW, new)
+            write_to_file_descriptor(master, {'ansible_command_timeout': self.get_option('persistent_command_timeout')})
+            write_to_file_descriptor(master, self._play_context.serialize())
 
-        (stdout, stderr) = p.communicate()
-        stdin.close()
+            (stdout, stderr) = p.communicate()
+        finally:
+            termios.tcsetattr(master, termios.TCSANOW, old)
+        os.close(master)
 
         if p.returncode == 0:
             result = json.loads(to_text(stdout, errors='surrogate_then_replace'))

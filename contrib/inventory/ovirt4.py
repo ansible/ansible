@@ -70,10 +70,7 @@ try:
 except ImportError:
     import configparser
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import ovirtsdk4 as sdk
@@ -257,6 +254,7 @@ def main():
             indent=args.pretty * 2,
         )
     )
+
 
 if __name__ == '__main__':
     main()

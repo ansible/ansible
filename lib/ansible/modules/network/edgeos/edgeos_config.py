@@ -25,6 +25,9 @@ description:
     configuration file and state of the active configuration. All
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
+  - "This is a network module and requires the C(connection: network_cli) in order
+    to work properly."
+  - For more information please see the L(Network Guide,../network/getting_started/index.html).
 notes:
   - Tested against EdgeOS 1.9.7
   - Setting C(ANSIBLE_PERSISTENT_COMMAND_TIMEOUT) to 30 is recommended since
@@ -54,10 +57,12 @@ options:
     choices: ['line', 'none']
   backup:
     description:
-      - The C(backup) argument will backup the current devices active
+      - The C(backup) argument will backup the current device's active
         configuration to the Ansible control host prior to making any
         changes. The backup file will be located in the backup folder
-        in the root of the playbook
+        in the playbook root directory or role root directory if the
+        playbook is part of an ansible role. If the directory does not
+        exist, it is created.
     type: bool
     default: 'no'
   comment:
@@ -116,9 +121,11 @@ backup_path:
 
 import re
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.edgeos.edgeos import load_config, get_config, run_commands
+
 
 DEFAULT_COMMENT = 'configured by edgeos_config'
 
@@ -144,7 +151,7 @@ def config_to_commands(config):
         commands = ['set %s' % cmd.replace(' {', '') for cmd in commands]
 
     else:
-        commands = str(candidate).split('\n')
+        commands = to_native(candidate).split('\n')
 
     return commands
 
@@ -159,19 +166,30 @@ def get_candidate(module):
 
 
 def diff_config(commands, config):
-    config = [str(c).replace("'", '') for c in config.splitlines()]
+    config = [to_native(c).replace("'", '') for c in config.splitlines()]
 
     updates = list()
     visited = set()
+    delete_commands = [line for line in commands if line.startswith('delete')]
 
     for line in commands:
-        item = str(line).replace("'", '')
+        item = to_native(line).replace("'", '')
 
         if not item.startswith('set') and not item.startswith('delete'):
             raise ValueError('line must start with either `set` or `delete`')
 
-        elif item.startswith('set') and item not in config:
-            updates.append(line)
+        elif item.startswith('set'):
+
+            if item not in config:
+                updates.append(line)
+
+            # If there is a corresponding delete command in the desired config, make sure to append
+            # the set command even though it already exists in the running config
+            else:
+                ditem = re.sub('set', 'delete', item)
+                for line in delete_commands:
+                    if ditem.startswith(line):
+                        updates.append(item)
 
         elif item.startswith('delete'):
             if not config:

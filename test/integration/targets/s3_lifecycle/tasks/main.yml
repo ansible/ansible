@@ -1,0 +1,436 @@
+---
+
+- block:
+
+    # ============================================================
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: true
+
+    # ============================================================
+    - name: Create simple s3_bucket
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.name == '{{ resource_prefix }}-testbucket-ansible'
+          - not output.requester_pays
+  # ============================================================
+    - name: Create a lifecycle policy
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        expiration_days: 300
+        prefix: /pre
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        expiration_days: 300
+        prefix: /pre
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a second lifecycle policy
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 30
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a second lifecycle policy (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 30
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Disable the second lifecycle policy
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        status: disabled
+        transition_days: 30
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Disable the second lifecycle policy (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        status: disabled
+        transition_days: 30
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Re-enable the second lifecycle policy
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        status: enabled
+        transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Re-enable the second lifecycle policy (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        status: enabled
+        transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Delete the second lifecycle policy
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        state: absent
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Delete the second lifecycle policy (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        state: absent
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a second lifecycle policy, with infrequent access
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 30
+        storage_class: standard_ia
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a second lifecycle policy, with infrequent access (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        storage_class: standard_ia
+        transition_days: 30
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a second lifecycle policy, with glacier
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a second lifecycle policy, with glacier (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy with infrequent access
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 30
+        storage_class: standard_ia
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - name: Create a second lifecycle policy, with glacier
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 300
+        prefix: /something
+        purge_transitions: false
+        <<: *aws_connection_info
+      register: output
+
+    - name: Create a lifecycle policy with infrequent access (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        storage_class: standard_ia
+        transition_days: 30
+        prefix: /something
+        purge_transitions: false
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+
+    - name: Create a second lifecycle policy, with glacier (idempotency)
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 300
+        prefix: /something
+        purge_transitions: false
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent expiration
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_expiration_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent expiration
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_expiration_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transition
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transitions and expirations
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transition
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transition_days: 300
+        noncurrent_version_storage_class: standard_ia
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transitions and expirations
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_storage_class: standard_ia
+        noncurrent_version_transition_days: 300
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transitions
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transitions:
+          - transition_days: 30
+            storage_class: standard_ia
+          - transition_days: 60
+            storage_class: onezone_ia
+          - transition_days: 90
+            storage_class: glacier
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+  # ============================================================
+    - name: Create a lifecycle policy, with noncurrent transitions
+      s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        noncurrent_version_transitions:
+          - transition_days: 30
+            storage_class: standard_ia
+          - transition_days: 60
+            storage_class: onezone_ia
+          - transition_days: 90
+            storage_class: glacier
+        prefix: /something
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+  # ============================================================
+  # test all the examples
+  # Configure a lifecycle rule on a bucket to expire (delete) items with a prefix of /logs/ after 30 days
+    - s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        expiration_days: 30
+        prefix: /logs/
+        status: enabled
+        <<: *aws_connection_info
+        state: present
+
+    # Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier after 7 days and then delete after 90 days
+    - s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_days: 7
+        expiration_days: 90
+        prefix: /logs/
+        status: enabled
+        <<: *aws_connection_info
+        state: present
+
+    # Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier on 31 Dec 2020 and then delete on 31 Dec 2030.
+    # Note that midnight GMT must be specified.
+    # Be sure to quote your date strings
+    - s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        transition_date: "2020-12-30T00:00:00.000Z"
+        expiration_date: "2030-12-30T00:00:00.000Z"
+        prefix: /logs/
+        status: enabled
+        <<: *aws_connection_info
+        state: present
+
+    # Disable the rule created above
+    - s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        prefix: /logs/
+        status: disabled
+        <<: *aws_connection_info
+        state: present
+
+    # Delete the lifecycle rule created above
+    - s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        <<: *aws_connection_info
+        prefix: /logs/
+        state: absent
+
+    # Configure a lifecycle rule to transition all backup files older than 31 days in /backups/ to standard infrequent access class.
+    - s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        prefix: /backups/
+        storage_class: standard_ia
+        transition_days: 31
+        state: present
+        <<: *aws_connection_info
+        status: enabled
+
+    # Configure a lifecycle rule to transition files to infrequent access after 30 days and glacier after 90
+    - s3_lifecycle:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        prefix: /other_logs/
+        state: present
+        <<: *aws_connection_info
+        status: enabled
+        transitions:
+          - transition_days: 30
+            storage_class: standard_ia
+          - transition_days: 90
+            storage_class: glacier
+ # ============================================================
+  always:
+    - name: Ensure all buckets are deleted
+      s3_bucket:
+        name: "{{item}}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+      with_items:
+        - "{{ resource_prefix }}-testbucket-ansible"

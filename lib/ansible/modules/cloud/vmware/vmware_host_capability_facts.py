@@ -21,7 +21,7 @@ description:
 - This module can be used to gather facts about an ESXi host's capability information when ESXi hostname or Cluster name is given.
 version_added: 2.6
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -46,6 +46,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
+  delegate_to: localhost
   register: all_cluster_hosts_facts
 
 - name: Gather capability facts about ESXi Host
@@ -54,6 +55,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
   register: hosts_facts
 '''
 

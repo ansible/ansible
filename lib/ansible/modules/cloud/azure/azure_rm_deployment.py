@@ -30,6 +30,8 @@ options:
     description:
       - The resource group name to use or create to host the deployed template
     required: true
+    aliases:
+      - resource_group
   location:
     description:
       - The geo-locations in which the resource group will be located.
@@ -54,6 +56,7 @@ options:
     description:
       - A hash containing the templates inline. This parameter is mutually exclusive with 'template_link'.
         Either one of them is required if "state" parameter is "present".
+    type: dict
   template_link:
     description:
       - Uri of file containing the template body. This parameter is mutually exclusive with 'template'. Either one
@@ -62,6 +65,7 @@ options:
     description:
       - A hash of all the required template variables for the deployment template. This parameter is mutually exclusive
         with 'parameters_link'. Either one of them is required if "state" parameter is "present".
+    type: dict
   parameters_link:
     description:
       - Uri of file containing the parameters body. This parameter is mutually exclusive with 'parameters'. Either
@@ -83,6 +87,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - David Justice (@devigned)
@@ -411,6 +416,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         self.wait_for_deployment_completion = None
         self.wait_for_deployment_polling_period = None
         self.tags = None
+        self.append_tags = None
 
         self.results = dict(
             deployment=dict(),
@@ -424,7 +430,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['append_tags', 'tags']:
             setattr(self, key, kwargs[key])
 
         if self.state == 'present':
@@ -449,10 +455,14 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             self.results['changed'] = True
             self.results['msg'] = 'deployment succeeded'
         else:
-            if self.resource_group_exists(self.resource_group_name):
-                self.destroy_resource_group()
-                self.results['changed'] = True
-                self.results['msg'] = "deployment deleted"
+            try:
+                if self.get_resource_group(self.resource_group_name):
+                    self.destroy_resource_group()
+                    self.results['changed'] = True
+                    self.results['msg'] = "deployment deleted"
+            except CloudError:
+                # resource group does not exist
+                pass
 
         return self.results
 
@@ -478,6 +488,15 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             deploy_parameter.template_link = self.rm_models.TemplateLink(
                 uri=self.template_link
             )
+
+        if self.append_tags and self.tags:
+            try:
+                rg = self.get_resource_group(self.resource_group_name)
+                if rg.tags:
+                    self.tags = dict(self.tags, **rg.tags)
+            except CloudError:
+                # resource group does not exist
+                pass
 
         params = self.rm_models.ResourceGroup(location=self.location, tags=self.tags)
 
@@ -525,19 +544,6 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             else:
                 self.fail("Delete resource group and deploy failed with status code: %s and message: %s" %
                           (e.status_code, e.message))
-
-    def resource_group_exists(self, resource_group):
-        '''
-        Return True/False based on existence of requested resource group.
-
-        :param resource_group: string. Name of a resource group.
-        :return: boolean
-        '''
-        try:
-            self.rm_client.resource_groups.get(resource_group)
-        except CloudError:
-            return False
-        return True
 
     def _get_failed_nested_operations(self, current_operations):
         new_operations = []

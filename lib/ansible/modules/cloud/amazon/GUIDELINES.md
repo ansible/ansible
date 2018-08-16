@@ -207,14 +207,30 @@ extends_documentation_fragment:
 You should wrap any boto3 or botocore call in a try block. If an exception is thrown, then there
 are a number of possibilities for handling it.
 
-* use aws_module.fail_json_aws() to report the module failure in a standard way
-* retry using AWSRetry
-* use fail_json() to report the failure without using `ansible.module_utils.aws.core`
-* do something custom in the case where you know how to handle the exception
+* Catch the general `ClientError` or look for a specific error code with
+    `is_boto3_error_code`.
+* Use aws_module.fail_json_aws() to report the module failure in a standard way
+* Retry using AWSRetry
+* Use fail_json() to report the failure without using `ansible.module_utils.aws.core`
+* Do something custom in the case where you know how to handle the exception
 
-For more information on botocore exception handling see [the botocore error documentation](http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling).
+For more information on botocore exception handling see [the botocore error documentation](https://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling).
 
-#### using fail_json_aws()
+### Using is_boto3_error_code
+
+To use `ansible.module_utils.aws.core.is_boto3_error_code` to catch a single
+AWS error code, call it in place of `ClientError` in your except clauses. In
+this case, *only* the `InvalidGroup.NotFound` error code will be caught here,
+and any other error will be raised for handling elsewhere in the program.
+
+```python
+try:
+    return connection.describe_security_groups(**kwargs)
+except is_boto3_error_code('InvalidGroup.NotFound'):
+    return {'SecurityGroups': []}
+```
+
+#### Using fail_json_aws()
 
 In the AnsibleAWSModule there is a special method, `module.fail_json_aws()` for nice reporting of
 exceptions.  Call this on your exception and it will report the error together with a traceback for

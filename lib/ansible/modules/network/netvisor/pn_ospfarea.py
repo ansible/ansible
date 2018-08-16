@@ -116,6 +116,9 @@ changed:
 
 import shlex
 
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
+
 
 def get_command_from_state(state):
     """
@@ -214,8 +217,6 @@ def main():
             changed=True
         )
 
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

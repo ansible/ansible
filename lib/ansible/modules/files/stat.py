@@ -424,7 +424,7 @@ def format_output(module, path, st):
             ('st_ftype', 'file_type'),
             ('st_attrs', 'attrs'),
             ('st_obtype', 'object_type'),
-            # OS X
+            # macOS
             ('st_rsize', 'real_size'),
             ('st_creator', 'creator'),
             ('st_type', 'file_type'),

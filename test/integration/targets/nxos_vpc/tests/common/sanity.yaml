@@ -7,8 +7,8 @@
   - name: enable feature vpc
     nxos_feature:
       feature: vpc
-      state: enabled
       provider: "{{ connection }}"
+      state: enabled
 
   - name: Ensure ntc VRF exists on switch
     nxos_vrf:
@@ -17,12 +17,12 @@
 
   - name: Configure vpc
     nxos_vpc: &conf_vpc
+      provider: "{{ connection }}"
       state: present
       domain: 100
       pkl_dest: 192.168.100.4
       pkl_src: 10.1.100.20
       pkl_vrf: ntc
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -39,13 +39,13 @@
 
   - name: Configure vpc1
     nxos_vpc: &conf_vpc1
+      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: 500
       system_priority: 2000
       peer_gw: True
       delay_restore: 5
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -59,10 +59,10 @@
   - block:
     - name: Configure auto1
       nxos_vpc: &auto_false
+        provider: "{{ connection }}"
         state: present
         domain: 100
         auto_recovery: False
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -75,10 +75,10 @@
 
     - name: Configure auto2
       nxos_vpc: &auto_true
+        provider: "{{ connection }}"
         state: present
         domain: 100
         auto_recovery: True
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -94,10 +94,10 @@
   - block:
     - name: Configure auto1
       nxos_vpc: &auto_true1
+        provider: "{{ connection }}"
         state: present
         domain: 100
         auto_recovery: True
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -110,10 +110,10 @@
 
     - name: Configure auto2
       nxos_vpc: &auto_false1
+        provider: "{{ connection }}"
         state: present
         domain: 100
         auto_recovery: False
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -128,13 +128,13 @@
 
   - name: Configure vpc2
     nxos_vpc: &conf_vpc2
+      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: default
       system_priority: default
       peer_gw: True
       delay_restore: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -147,10 +147,10 @@
 
   - name: Configure vpc3
     nxos_vpc: &conf_vpc3
+      provider: "{{ connection }}"
       state: present
       domain: 100
       peer_gw: False
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -163,9 +163,9 @@
 
   - name: remove vpc
     nxos_vpc: &rem_vpc
+      provider: "{{ connection }}"
       state: absent
       domain: 100
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -180,15 +180,15 @@
   - name: remove vrf
     nxos_vrf:
       vrf: ntc
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     ignore_errors: yes
 
   - name: disable feature vpc
     nxos_feature:
       feature: vpc
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vpc sanity test"

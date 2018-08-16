@@ -61,8 +61,7 @@ options:
             - tls_client_key
     ssl_version:
         description:
-            - Provide a valid SSL version number. Default value determined by docker-py, currently 1.0.
-        default: "1.0"
+            - Provide a valid SSL version number. Default value determined by ssl.py module.
     tls:
         description:
             -  Secure the connection to the API by using TLS without verifying the authenticity of the Docker host
@@ -85,5 +84,5 @@ notes:
       You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION, DOCKER_CERT_PATH, DOCKER_SSL_VERSION,
       DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped
       with the product that sets up the environment. It will set these variables for you. See
-      https://docker-py.readthedocs.org/en/stable/machine/ for more details.
+      https://docker-py.readthedocs.io/en/stable/machine/ for more details.
 '''

@@ -70,13 +70,10 @@ class AnsibleCoreCI(object):
                 'junos',
                 'ios',
                 'tower',
+                'rhel',
             ),
             azure=(
                 'azure',
-                'rhel',
-                'windows/2012',
-                'windows/2012-R2',
-                'windows/2016',
             ),
             parallels=(
                 'osx',
@@ -118,12 +115,11 @@ class AnsibleCoreCI(object):
                 region = 'us-east-1'
 
             self.endpoints = AWS_ENDPOINTS[region],
+            self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
-                self.ssh_key = None
                 self.port = 5986
             else:
-                self.ssh_key = SshKey(args)
                 self.port = 22
         elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()

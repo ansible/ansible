@@ -1,0 +1,34 @@
+---
+- name: Add a Tower credential
+  tower_credential:
+    description: Credentials for Openstack Test project
+    name: openstack-test-credential
+    kind: openstack
+    organization: Default
+    project: Test
+    username: admin
+    host: https://example.org:5000
+    password: passw0rd
+    domain: test
+
+- name: Add a Tower inventory
+  tower_inventory:
+    description: Test inventory
+    name: openstack-test-inventory
+    organization: Default
+
+- name: Create a source inventory
+  tower_inventory_source:
+    name: source-test-inventory
+    description: Source for Test inventory
+    inventory: openstack-test-inventory
+    credential: openstack-test-credential
+    overwrite: True
+    update_on_launch: True
+    source_vars: "---\nprivate: false"
+    source: openstack
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

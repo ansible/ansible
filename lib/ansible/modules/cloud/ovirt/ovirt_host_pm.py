@@ -61,13 +61,10 @@ options:
     port:
         description:
             - "Power management interface port."
-    slot:
-        description:
-            - "Power management slot."
     options:
         description:
-            - "Dictionary of additional fence agent options."
-            - "Additional information about options can be found at U(https://fedorahosted.org/cluster/wiki/FenceArguments)."
+            - "Dictionary of additional fence agent options (including Power Management slot)."
+            - "Additional information about options can be found at U(https://github.com/ClusterLabs/fence-agents/blob/master/doc/FenceAgentAPI.md)."
     encrypt_options:
         description:
             - "If (true) options will be encrypted when send to agent."
@@ -94,6 +91,20 @@ EXAMPLES = '''
     password: admin
     port: 3333
     type: ipmilan
+
+# Add fence agent to host 'myhost' using 'slot' option
+- ovirt_host_pm:
+    name: myhost
+    address: 1.2.3.4
+    options:
+      myoption1: x
+      myoption2: y
+      slot: myslot
+    username: admin
+    password: admin
+    port: 3333
+    type: ipmilan
+
 
 # Remove ipmilan fence agent with address 1.2.3.4 on host 'myhost'
 - ovirt_host_pm:
@@ -190,7 +201,6 @@ def main():
         type=dict(default=None),
         port=dict(default=None, type='int'),
         order=dict(default=None, type='int'),
-        slot=dict(default=None),
         options=dict(default=None, type='dict'),
         encrypt_options=dict(default=None, type='bool', aliases=['encrypt']),
     )

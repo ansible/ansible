@@ -114,8 +114,16 @@ DOCUMENTATION = """
             version_added: '2.5'
           - name: ansible_paramiko_host_key_checking
             version_added: '2.5'
+      use_persistent_connections:
+        description: 'Toggles the use of persistence for connections'
+        type: boolean
+        default: False
+        env:
+          - name: ANSIBLE_USE_PERSISTENT_CONNECTIONS
+        ini:
+          - section: defaults
+            key: use_persistent_connections
 # TODO:
-#C.USE_PERSISTENT_CONNECTIONS:
 #timeout=self._play_context.timeout,
 """
 
@@ -188,7 +196,7 @@ class MyAddPolicy(object):
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
 
-            if C.USE_PERSISTENT_CONNECTIONS or self.connection.force_persistence:
+            if self.connection.get_option('use_persistent_connections') or self.connection.force_persistence:
                 # don't print the prompt string since the user cannot respond
                 # to the question anyway
                 raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
@@ -378,7 +386,7 @@ class Connection(ConnectionBase):
             raise AnsibleConnectionFailure(msg)
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
-        # we give it one by default (pty=True in ansble.cfg), and we try
+        # we give it one by default (pty=True in ansible.cfg), and we try
         # to initialise from the calling environment when sudoable is enabled
         if self.get_option('pty') and sudoable:
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))

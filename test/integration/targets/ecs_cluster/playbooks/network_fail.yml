@@ -1,5 +1,7 @@
 - hosts: localhost
   connection: local
+  vars:
+     resource_prefix: 'ansible-testing'
 
   tasks:
     - block:
@@ -42,6 +44,26 @@
             <<: *aws_connection_info
           register: ecs_taskdefinition_creation_vpc
 
+        - name: create ecs_taskdefinition and execution_role_arn (expected to fail)
+          ecs_taskdefinition:
+            containers:
+              - name: my_container
+                image: ubuntu
+                memory: 128
+            family: "{{ resource_prefix }}-vpc"
+            execution_role_arn: not_a_real_arn
+            state: present
+            network_mode: awsvpc
+            <<: *aws_connection_info
+          ignore_errors: yes
+          register: ecs_taskdefinition_arn
+
+        - name: check that graceful failure message is returned from ecs_taskdefinition_arn
+          assert:
+            that:
+              - ecs_taskdefinition_arn.failed
+              - 'ecs_taskdefinition_arn.msg == "botocore needs to be version 1.10.44 or higher to use execution_role_arn"'
+
         - name: ecs_taskdefinition works fine even when older botocore is used
           assert:
             that:
@@ -61,12 +83,12 @@
           ecs_service:
             name: "{{ resource_prefix }}-vpc"
             cluster: "{{ resource_prefix }}"
-            task_definition: "{{ resource_prefix }}"
+            task_definition: "{{ resource_prefix }}-vpc"
             desired_count: 1
             network_configuration:
               subnets:
                 - subnet-abcd1234
-              groups:
+              security_groups:
                 - sg-abcd1234
             state: present
             <<: *aws_connection_info
@@ -79,6 +101,47 @@
               - ecs_service_creation_vpc.failed
               - 'ecs_service_creation_vpc.msg == "botocore needs to be version 1.7.44 or higher to use network configuration"'
 
+        - name: create ecs_service using awsvpc network_configuration and launch_type
+          ecs_service:
+            name: "{{ resource_prefix }}-vpc"
+            cluster: "{{ resource_prefix }}"
+            task_definition: "{{ resource_prefix }}-vpc"
+            desired_count: 1
+            network_configuration:
+              subnets:
+                - subnet-abcd1234
+              security_groups:
+                - sg-abcd1234
+            launch_type: FARGATE
+            state: present
+            <<: *aws_connection_info
+          register: ecs_service_creation_vpc_launchtype
+          ignore_errors: yes
+
+        - name: check that graceful failure message is returned from ecs_service
+          assert:
+            that:
+              - ecs_service_creation_vpc_launchtype.failed
+              - 'ecs_service_creation_vpc_launchtype.msg == "botocore needs to be version 1.7.44 or higher to use network configuration"'
+
+        - name: create ecs_service with launchtype and missing network_configuration
+          ecs_service:
+            name: "{{ resource_prefix }}-vpc"
+            cluster: "{{ resource_prefix }}"
+            task_definition: "{{ resource_prefix }}-vpc"
+            desired_count: 1
+            launch_type: FARGATE
+            state: present
+            <<: *aws_connection_info
+          register: ecs_service_creation_vpc_launchtype_nonet
+          ignore_errors: yes
+
+        - name: check that graceful failure message is returned from ecs_service
+          assert:
+            that:
+              - ecs_service_creation_vpc_launchtype_nonet.failed
+              - 'ecs_service_creation_vpc_launchtype_nonet.msg == "launch_type is FARGATE but all of the following are missing: network_configuration"'
+
         - name: create ecs_task using awsvpc network_configuration
           ecs_task:
             cluster: "{{ resource_prefix }}-vpc"
@@ -89,7 +152,7 @@
             network_configuration:
               subnets:
                 - subnet-abcd1234
-              groups:
+              security_groups:
                 - sg-abcd1234
             <<: *aws_connection_info
           register: ecs_task_creation_vpc
@@ -100,6 +163,7 @@
             that:
               - ecs_task_creation_vpc.failed
               - 'ecs_task_creation_vpc.msg == "botocore needs to be version 1.7.44 or higher to use network configuration"'
+
 
       always:
         - name: scale down ecs service
@@ -134,6 +198,18 @@
                 memory: 128
             family: "{{ resource_prefix }}"
             revision: "{{ ecs_taskdefinition_creation.taskdefinition.revision }}"
+            state: absent
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: remove ecs task definition vpc
+          ecs_taskdefinition:
+            containers:
+              - name: my_container
+                image: ubuntu
+                memory: 128
+            family: "{{ resource_prefix }}-vpc"
+            revision: "{{ ecs_taskdefinition_creation_vpc.taskdefinition.revision }}"
             state: absent
             <<: *aws_connection_info
           ignore_errors: yes

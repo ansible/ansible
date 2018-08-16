@@ -4,14 +4,13 @@
 - name: Make sure LLDP is running (setup)
   eos_config:
     lines: lldp run
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: test getting all facts
   eos_facts:
-    provider: "{{ eapi }}"
     gather_subset:
       - all
+  become: yes
   register: result
 
 - assert:
@@ -30,11 +29,5 @@
       # Check that these facts not only are present, but are valid (positive integers)
       - "result.ansible_facts.ansible_net_memfree_mb > 1"
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"
-
-- name: Make sure LLDP is running (teardown)
-  eos_config:
-    lines: no lldp run
-    authorize: yes
-    provider: "{{ eapi }}"
 
 - debug: msg="END eapi/all_facts.yaml"

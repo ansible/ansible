@@ -123,12 +123,24 @@
         <<: *aws_connection_info
       register: setup_sg
 
+    - name: find a suitable AMI
+      ec2_ami_facts:
+        owner: amazon
+        filters:
+          description: "Amazon Linux AMI* ECS *"
+        <<: *aws_connection_info
+      register: ec2_ami_facts
+
+    - name: set image id fact
+      set_fact:
+        ecs_image_id: "{{ (ec2_ami_facts.images|first).image_id }}"
+
     - name: provision ec2 instance to create an image
       ec2:
         key_name: '{{ ec2_keypair|default(setup_key.key.name) }}'
         instance_type: t2.micro
         state: present
-        image: '{{ ecs_agent_images[aws_region] }}'
+        image: '{{ ecs_image_id }}'
         wait: yes
         user_data: "{{ user_data }}"
         instance_profile_name: ecsInstanceRole
@@ -344,6 +356,11 @@
         that:
           - delete_ecs_service.changed
 
+    - name: assert that deleting ECS service worked
+      assert:
+        that:
+          - delete_ecs_service.changed
+
     - name: create VPC-networked task definition with host port set to 0 (expected to fail)
       ecs_taskdefinition:
         containers: "{{ ecs_task_containers }}"
@@ -382,6 +399,17 @@
         that:
           - "ecs_taskdefinition_facts.network_mode == 'awsvpc'"
 
+    - name: pause to allow service to scale down
+      pause:
+        seconds: 60
+
+    - name: delete ECS service definition
+      ecs_service:
+        state: absent
+        name: "{{ ecs_service_name }}4"
+        cluster: "{{ ecs_cluster_name }}"
+        <<: *aws_connection_info
+      register: delete_ecs_service
 
     - name: create ECS service definition with network configuration
       ecs_service:
@@ -448,7 +476,6 @@
           - "update_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.subnets|length == 2"
           - "update_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.securityGroups|length == 1"
 
-
     - name: obtain facts for all ECS services in the cluster
       ecs_service_facts:
         cluster: "{{ ecs_cluster_name }}"
@@ -511,6 +538,136 @@
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition.taskdefinition.revision + 1}}"
         <<: *aws_connection_info
 
+    # ============================================================
+    # Begin tests for Fargate
+
+    - name: ensure AmazonECSTaskExecutionRolePolicy exists
+      iam_role:
+        name: ecsTaskExecutionRole
+        assume_role_policy_document: "{{ lookup('file','ecs-trust-policy.json') }}"
+        description: "Allows ECS containers to make calls to ECR"
+        state: present
+        create_instance_profile: no
+        managed_policy:
+        - AmazonEC2ContainerServiceRole
+        <<: *aws_connection_info
+      register: iam_execution_role
+
+    - name: create Fargate VPC-networked task definition with host port set to 8080 and unsupported network mode (expected to fail)
+      ecs_taskdefinition:
+        containers: "{{ ecs_fargate_task_containers }}"
+        family: "{{ ecs_task_name }}-vpc"
+        network_mode: bridge
+        launch_type: FARGATE
+        cpu: 512
+        memory: 1024
+        state: present
+        <<: *aws_connection_info
+      vars:
+        ecs_task_host_port: 8080
+      ignore_errors: yes
+      register: ecs_fargate_task_definition_bridged_with_host_port
+
+    - name: check that fargate task definition with bridged networking fails gracefully
+      assert:
+        that:
+          - ecs_fargate_task_definition_bridged_with_host_port is failed
+          - 'ecs_fargate_task_definition_bridged_with_host_port.msg == "To use FARGATE launch type, network_mode must be awsvpc"' 
+
+    - name: create Fargate VPC-networked task definition without CPU or Memory (expected to Fail)
+      ecs_taskdefinition:
+        containers: "{{ ecs_fargate_task_containers }}"
+        family: "{{ ecs_task_name }}-vpc"
+        network_mode: awsvpc
+        launch_type: FARGATE
+        state: present
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: ecs_fargate_task_definition_vpc_no_mem
+
+    - name: check that fargate task definition without memory or cpu fails gracefully
+      assert:
+        that:
+          - ecs_fargate_task_definition_vpc_no_mem is failed
+          - 'ecs_fargate_task_definition_vpc_no_mem.msg == "launch_type is FARGATE but all of the following are missing: cpu, memory"' 
+
+    - name: create Fargate VPC-networked task definition with CPU or Memory and execution role
+      ecs_taskdefinition:
+        containers: "{{ ecs_fargate_task_containers }}"
+        family: "{{ ecs_task_name }}-vpc"
+        network_mode: awsvpc
+        launch_type: FARGATE
+        cpu: 512
+        memory: 1024
+        execution_role_arn: "{{ iam_execution_role.arn }}"
+        state: present
+        <<: *aws_connection_info
+      vars:
+        ecs_task_host_port: 8080
+      register: ecs_fargate_task_definition
+
+    - name: obtain ECS task definition facts
+      ecs_taskdefinition_facts:
+        task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_fargate_task_definition.taskdefinition.revision }}"
+        <<: *aws_connection_info
+
+    - name: create fargate ECS service without network config (expected to fail)
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}4"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_fargate_task_definition.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        launch_type: FARGATE
+        <<: *aws_connection_info
+      register: ecs_fargate_service_network_without_awsvpc
+      ignore_errors: yes
+     
+    - name: assert that using Fargate ECS service fails
+      assert:
+        that:
+          - ecs_fargate_service_network_without_awsvpc is failed
+
+    - name: create fargate ECS service with network config 
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}4"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_fargate_task_definition.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        launch_type: FARGATE
+        network_configuration:
+          subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+          security_groups:
+            - '{{ setup_sg.group_id }}'
+          assign_public_ip: true
+        <<: *aws_connection_info
+      register: ecs_fargate_service_network_with_awsvpc
+
+    - name: assert that public IP assignment is enabled
+      assert:
+        that:
+          - 'ecs_fargate_service_network_with_awsvpc.service.networkConfiguration.awsvpcConfiguration.assignPublicIp == "ENABLED"'
+
+    # ============================================================
+    # End tests for Fargate
+
+    - name: create task definition for absent with arn regression test
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}-absent"
+        state: present
+        <<: *aws_connection_info
+      register: ecs_task_definition_absent_with_arn
+
+    - name: absent task definition by arn
+      ecs_taskdefinition:
+        arn: "{{ ecs_task_definition_absent_with_arn.taskdefinition.taskDefinitionArn }}"
+        state: absent
+        <<: *aws_connection_info
+
   always:
     # TEAR DOWN: snapshot, ec2 instance, ec2 key pair, security group, vpc
     - name: Announce teardown start
@@ -568,6 +725,18 @@
       ignore_errors: yes
       register: ecs_service_scale_down
 
+    - name: scale down Fargate ECS service
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}4"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_fargate_task_definition.taskdefinition.revision }}"
+        desired_count: 0
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: ecs_service_scale_down
+
     - name: pause to allow services to scale down
       pause:
         seconds: 60
@@ -589,11 +758,31 @@
         <<: *aws_connection_info
       ignore_errors: yes
 
+    - name: remove fargate ECS service 
+      ecs_service:
+        state: absent
+        name: "{{ ecs_service_name }}4"
+        cluster: "{{ ecs_cluster_name }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: ecs_fargate_service_network_with_awsvpc
+ 
     - name: remove ecs task definition
       ecs_taskdefinition:
         containers: "{{ ecs_task_containers }}"
         family: "{{ ecs_task_name }}"
         revision: "{{ ecs_task_definition.taskdefinition.revision }}"
+        state: absent
+        <<: *aws_connection_info
+      vars:
+        ecs_task_host_port: 8080
+      ignore_errors: yes
+
+    - name: remove ecs task definition again
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}"
+        revision: "{{ ecs_task_definition_again.taskdefinition.revision }}"
         state: absent
         <<: *aws_connection_info
       vars:
@@ -609,6 +798,24 @@
         <<: *aws_connection_info
       vars:
         ecs_task_host_port: 8080
+      ignore_errors: yes
+
+    - name: remove fargate ecs task definition
+      ecs_taskdefinition:
+        containers: "{{ ecs_fargate_task_containers }}"
+        family: "{{ ecs_task_name }}-vpc"
+        revision: "{{ ecs_fargate_task_definition.taskdefinition.revision }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove ecs task definition for absent with arn
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}-absent"
+        revision: "{{ ecs_task_definition_absent_with_arn.taskdefinition.revision }}"
+        state: absent
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: remove load balancer

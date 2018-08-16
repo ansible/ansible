@@ -15,11 +15,16 @@ DOCUMENTATION = '''
         - The JInja2 exprpessions are calculated and assigned to the variables
         - Only variables already available from previous inventories or the fact cache can be used for templating.
         - When I(strict) is False, failed expressions will be ignored (assumes vars were missing).
+    options:
+        plugin:
+            description: token that ensures this is a source file for the 'constructed' plugin.
+            required: True
+            choices: ['constructed']
     extends_documentation_fragment:
       - constructed
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
     # inventory.config file in YAML format
     plugin: constructed
     strict: False
@@ -65,7 +70,7 @@ from ansible.utils.vars import combine_vars
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
-    """ constructs groups and vars using Jinaj2 template expressions """
+    """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'constructed'
 

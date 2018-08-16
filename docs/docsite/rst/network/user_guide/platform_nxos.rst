@@ -4,7 +4,7 @@
 NXOS Platform Options
 ***************************************
 
-Cisco NXOS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it.
+Cisco NXOS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it.
 
 .. contents:: Topics
 
@@ -21,18 +21,22 @@ Connections Available
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                         |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: local``         |
-| |                         | |                                             | | Requires ``transport: nxapi``         |
+| | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: httpapi``       |
+| |                         | |                                             | | OR                                    |
+| |                         | |                                             | | ``ansible_connection: local``         |
+| |                         | |                                             | | with ``transport: nxapi``             |
 | |                         | |                                             | | in the ``provider`` dictionary        |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Enable Mode**         | | not supported by NXOS                       | | not supported by NXOS                 |
-| | (Privilege Escalation)  | |                                             |                                         |
+| | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | not supported by NX-API               |
+| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | |                                       |
+| | supported as of 2.5.3   | | and ``ansible_become_pass:``                | |                                       |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 
+For legacy playbooks, NXOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` as soon as possible.
 
-Using CLI in Ansible 2.5
+Using CLI in Ansible 2.6
 ================================================================================
 
 Example CLI ``group_vars/nxos.yml``
@@ -44,6 +48,9 @@ Example CLI ``group_vars/nxos.yml``
    ansible_network_os: nxos
    ansible_user: myuser
    ansible_ssh_pass: !vault...
+   ansible_become: yes
+   ansible_become_method: enable
+   ansible_become_pass: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
@@ -64,7 +71,7 @@ Example CLI Task
 
 
 
-Using NX-API in Ansible 2.5
+Using NX-API in Ansible 2.6
 ================================================================================
 
 Enabling NX-API
@@ -89,13 +96,10 @@ Example NX-API ``group_vars/nxos.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: local
+   ansible_connection: httpapi
    ansible_network_os: nxos
    ansible_user: myuser
    ansible_ssh_pass: !vault... 
-   nxapi:
-     host: "{{ inventory_hostname }}"
-     transport: nxapi
    proxy_env:
      http_proxy: http://proxy.example.com:8080
 
@@ -111,15 +115,10 @@ Example NX-API Task
    - name: Backup current switch config (nxos)
      nxos_config:
        backup: yes
-       provider: "{{ nxapi }}"
      register: backup_nxos_location
      environment: "{{ proxy_env }}"
      when: ansible_network_os == 'nxos'
 
-In this example two variables defined in ``group_vars`` get passed to the module of the task: 
+In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module used in the task.
 
-- the ``nxapi`` variable gets passed to the ``provider`` option of the module
-- the ``proxy_env`` variable gets passed to the ``environment`` option of the module
-
-
-.. include:: shared_snippets/SSH_warning.rst
+.. include:: shared_snippets/SSH_warning.txt

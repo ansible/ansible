@@ -35,8 +35,8 @@ options:
        - Ignored. Present for backwards compatibility
      required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -95,9 +95,8 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-
         role = cloud.get_role(name)
 
         if module.check_mode:
@@ -118,7 +117,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

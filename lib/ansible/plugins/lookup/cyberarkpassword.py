@@ -11,6 +11,7 @@ DOCUMENTATION = """
     requirements:
       - CyberArk AIM tool installed
     description:
+      - Get secrets from CyberArk AIM.
     options :
       _command:
         description: Cyberark CLI utility.
@@ -167,7 +168,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        display.vvvv(terms)
+        display.vvvv("%s" % terms)
         if isinstance(terms, list):
             return_values = []
             for term in terms:

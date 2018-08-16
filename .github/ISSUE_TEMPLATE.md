@@ -5,6 +5,9 @@ Also test if the latest release, and devel branch are affected too.
 ALWAYS add information AFTER (OUTSIDE) these html comments.
 Otherwise it may end up being automatically closed by our bot. -->
 
+##### SUMMARY
+<!--- Explain the problem briefly -->
+
 ##### ISSUE TYPE
 <!--- Pick one below and delete the rest -->
  - Bug Report
@@ -31,9 +34,6 @@ Otherwise, mention any settings you have changed/added/removed in ansible.cfg
 managing, or say "N/A" for anything that is not platform-specific.
 Also mention the specific version of what you are trying to control,
 e.g. if this is a network bug the version of firmware on the network device.-->
-
-##### SUMMARY
-<!--- Explain the problem briefly -->
 
 ##### STEPS TO REPRODUCE
 <!--- For bugs, show exactly how to reproduce the problem, using a minimal test-case.

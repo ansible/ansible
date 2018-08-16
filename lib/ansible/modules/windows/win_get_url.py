@@ -33,6 +33,7 @@ options:
     - The location to save the file at the URL.
     - Be sure to include a filename and extension as appropriate.
     required: yes
+    type: path
   force:
     description:
     - If C(yes), will always download the file. If C(no), will only
@@ -47,6 +48,7 @@ options:
   headers:
     description:
     - Add custom HTTP headers to a request (as a dictionary).
+    type: dict
     version_added: '2.4'
   url_username:
     description:
@@ -100,6 +102,7 @@ options:
   timeout:
     description:
     - Timeout in seconds for URL request.
+    type: int
     default: 10
     version_added : '2.4'
 '''

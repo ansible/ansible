@@ -35,6 +35,12 @@ matrix:
     - env: T=windows/2012-R2/3
     - env: T=windows/2016/3
 
+    - env: T=windows/2008/4
+    - env: T=windows/2008-R2/4
+    - env: T=windows/2012/4
+    - env: T=windows/2012-R2/4
+    - env: T=windows/2016/4
+
     - env: T=network
 
     - env: T=osx/10.11/1
@@ -76,20 +82,35 @@ matrix:
     - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1604py3/3
 
-    - env: T=cloud/default/2.7/1
-    - env: T=cloud/default/3.6/1
+    - env: T=aws/2.7/1
+    - env: T=aws/3.6/1
 
-    - env: T=cloud/default/2.7/2
-    - env: T=cloud/default/3.6/2
+    - env: T=aws/2.7/2
+    - env: T=aws/3.6/2
 
-    - env: T=cloud/default/2.7/3
-    - env: T=cloud/default/3.6/3
+    - env: T=azure/2.7/1
+    - env: T=azure/3.6/1
 
-    - env: T=cloud/default/2.7/4
-    - env: T=cloud/default/3.6/4
+    - env: T=azure/2.7/2
+    - env: T=azure/3.6/2
 
-    - env: T=cloud/default/2.7/5
-    - env: T=cloud/default/3.6/5
+    - env: T=azure/2.7/3
+    - env: T=azure/3.6/3
+
+    - env: T=azure/2.7/4
+    - env: T=azure/3.6/4
+
+    - env: T=vcenter/2.7/1
+    - env: T=vcenter/3.6/1
+
+    - env: T=cs/2.7/1
+    - env: T=cs/3.6/1
+
+    - env: T=tower/2.7/1
+    - env: T=tower/3.6/1
+
+    - env: T=cloud/2.7/1
+    - env: T=cloud/3.6/1
 branches:
   except:
     - "*-patch-*"

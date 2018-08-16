@@ -43,12 +43,15 @@ def import_mock(name, *args):
         return mock_ncclient
     return builtin_import(name, *args)
 
+
 if PY3:
     with patch('builtins.__import__', side_effect=import_mock):
         from ansible.plugins.connection import netconf
+        from ansible.plugins.loader import connection_loader
 else:
     with patch('__builtin__.__import__', side_effect=import_mock):
         from ansible.plugins.connection import netconf
+        from ansible.plugins.loader import connection_loader
 
 
 class TestNetconfConnectionClass(unittest.TestCase):
@@ -68,7 +71,7 @@ class TestNetconfConnectionClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = netconf.Connection(pc, new_stdin)
+        conn = connection_loader.get('netconf', pc, new_stdin)
 
         mock_manager = MagicMock()
         mock_manager.session_id = '123456789'

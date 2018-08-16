@@ -201,10 +201,10 @@ class AzureRMStorageBlob(AzureRMModuleBase):
             blob=dict(type='str', aliases=['blob_name']),
             blob_type=dict(type='str', default='block', choices=['block', 'page']),
             container=dict(required=True, type='str', aliases=['container_name']),
-            dest=dict(type='path'),
+            dest=dict(type='path', aliases=['destination']),
             force=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
-            src=dict(type='str'),
+            src=dict(type='str', aliases=['source']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             public_access=dict(type='str', choices=['container', 'blob']),
             content_type=dict(type='str'),
@@ -429,7 +429,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                 else:
                     try:
                         self.log('Attempting to makedirs {0}'.format(self.dest))
-                        os.makddirs(self.dest)
+                        os.makedirs(self.dest)
                     except IOError as exc:
                         self.fail("Failed to create directory {0} - {1}".format(self.dest, str(exc)))
                     self.dest += self.blob
@@ -544,6 +544,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
 def main():
     AzureRMStorageBlob()
+
 
 if __name__ == '__main__':
     main()

@@ -12,16 +12,16 @@
 - name: "Enable feature PIM"
   nxos_feature:
     feature: pim
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - name: Put interface in default mode
   nxos_config:
     commands:
     - "default interface {{ intname }}"
-    provider: "{{ connection }}"
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -53,9 +53,9 @@
       group_timeout: 300
       # deprecated
       oif_prefix: 239.255.255.2
-      oif_source: 1.1.1.1
-      state: present
+      oif_source: 192.0.2.1
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -86,9 +86,9 @@
       oif_ps:
         - {'prefix': '238.2.2.6'}
         - {'prefix': '238.2.2.5'}
-        - {'source': '1.1.1.1', 'prefix': '238.2.2.5'}
-      state: present
+        - {'source': '192.0.2.1', 'prefix': '238.2.2.5'}
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -109,8 +109,8 @@
     nxos_igmp_interface: &defoif
       interface: "{{ intname }}"
       oif_ps: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -129,8 +129,8 @@
       startup_query_count: 5
       robustness: 6
       oif_routemap: abcd
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -144,8 +144,8 @@
   - name: Configure igmp interface with default state
     nxos_igmp_interface: &default
       interface: "{{ intname }}"
-      state: default
       provider: "{{ connection }}"
+      state: default
     register: result
 
   - assert: *true
@@ -159,8 +159,8 @@
   - name: Configure igmp interface with absent state
     nxos_igmp_interface: &absent
       interface: "{{ intname }}"
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -180,13 +180,13 @@
     nxos_config:
       commands:
       - "default interface {{ intname }}"
-      provider: "{{ connection }}"
       match: none
+      provider: "{{ connection }}"
 
   - name: "Disable feature PIM"
     nxos_feature:
       feature: pim
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
 
   - debug: msg="END connection={{ ansible_connection }} nxos_igmp_interface sanity test"

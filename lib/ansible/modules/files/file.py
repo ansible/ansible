@@ -33,7 +33,7 @@ author:
 options:
   path:
     description:
-      - 'path to the file being managed.  Aliases: I(dest), I(name)'
+      - Path to the file being managed.
     required: true
     aliases: [ dest, name ]
   state:
@@ -159,8 +159,26 @@ def _ansible_excepthook(exc_type, exc_value, tb):
 
 def additional_parameter_handling(params):
     """Additional parameter validation and reformatting"""
+    # When path is a directory, rewrite the pathname to be the file inside of the directory
+    # TODO: Why do we exclude link?  Why don't we exclude directory?  Should we exclude touch?
+    # I think this is where we want to be in the future:
+    # when isdir(path):
+    # if state == absent:  Remove the directory
+    # if state == touch:   Touch the directory
+    # if state == directory: Assert the directory is the same as the one specified
+    # if state == file:    place inside of the directory (use _original_basename)
+    # if state == link:    place inside of the directory (use _original_basename.  Fallback to src?)
+    # if state == hard:    place inside of the directory (use _original_basename.  Fallback to src?)
+    if (params['state'] not in ("link", "absent") and os.path.isdir(to_bytes(params['path'], errors='surrogate_or_strict'))):
+        basename = None
 
-    params['b_src'] = to_bytes(params['src'], errors='surrogate_or_strict', nonstring='passthru')
+        if params['_original_basename']:
+            basename = params['_original_basename']
+        elif params['src']:
+            basename = os.path.basename(params['src'])
+
+        if basename:
+            params['path'] = os.path.join(params['path'], basename)
 
     # state should default to file, but since that creates many conflicts,
     # default state to 'current' when it exists.
@@ -179,23 +197,39 @@ def additional_parameter_handling(params):
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
                                       "path": params["path"]})
 
+    # Make sure that src makes sense with the state
+    if params['src'] and params['state'] not in ('link', 'hard'):
+        params['src'] = None
+        module.warn("The src option requires state to be 'link' or 'hard'.  This will become an"
+                    " error in Ansible 2.10")
+
+        # In 2.10, switch to this
+        # raise ParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
+        #                               "path": params["path"]})
+
 
 def get_state(path):
     ''' Find out current state '''
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    if os.path.lexists(b_path):
-        if os.path.islink(b_path):
-            return 'link'
-        elif os.path.isdir(b_path):
-            return 'directory'
-        elif os.stat(b_path).st_nlink > 1:
-            return 'hard'
+    try:
+        if os.path.lexists(b_path):
+            if os.path.islink(b_path):
+                return 'link'
+            elif os.path.isdir(b_path):
+                return 'directory'
+            elif os.stat(b_path).st_nlink > 1:
+                return 'hard'
 
-        # could be many other things, but defaulting to file
-        return 'file'
+            # could be many other things, but defaulting to file
+            return 'file'
 
-    return 'absent'
+        return 'absent'
+    except OSError as e:
+        if e.errno == errno.ENOENT:  # It may already have been removed
+            return 'absent'
+        else:
+            raise
 
 
 # This should be moved into the common file utilities
@@ -294,6 +328,9 @@ def execute_touch(path, follow):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
 
+    # Unfortunately, touch always changes the file because it updates file's timestamp
+    result = {'dest': path, 'changed': True}
+
     if not module.check_mode:
         if prev_state == 'absent':
             # Create an empty file if the filename did not already exist
@@ -314,6 +351,7 @@ def execute_touch(path, follow):
                                                   'path': path})
 
         elif prev_state == 'link' and follow:
+            # Update the timestamp of the pointed to file
             b_link_target = os.readlink(b_path)
             try:
                 os.utime(b_link_target, None)
@@ -327,7 +365,7 @@ def execute_touch(path, follow):
                                                      ' hardlinks (%s is %s)' % (path, prev_state)})
 
         # Update the attributes on the file
-        diff = initial_diff(path, 'absent', prev_state)
+        diff = initial_diff(path, 'touch', prev_state)
         file_args = module.load_file_common_arguments(module.params)
         try:
             module.set_fs_attributes_if_different(file_args, True, diff, expand=False)
@@ -340,8 +378,8 @@ def execute_touch(path, follow):
                     os.remove(b_path)
             raise
 
-    # Unfortunately, touch always changes the file because it updates file's timestamp
-    return {'dest': path, 'changed': True}
+        result['diff'] = diff
+    return result
 
 
 def ensure_file_attributes(path, follow):
@@ -370,17 +408,20 @@ def ensure_file_attributes(path, follow):
 def ensure_directory(path, follow, recurse):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
+    file_args = module.load_file_common_arguments(module.params)
 
+    # For followed symlinks, we need to operate on the target of the link
     if follow and prev_state == 'link':
         b_path = os.path.realpath(b_path)
         path = to_native(b_path, errors='strict')
+        file_args['path'] = path
         prev_state = get_state(b_path)
 
     changed = False
-    file_args = module.load_file_common_arguments(module.params)
     diff = initial_diff(path, 'directory', prev_state)
 
     if prev_state == 'absent':
+        # Create directory and assign permissions to it
         if module.check_mode:
             return {'changed': True, 'diff': diff}
         curpath = ''
@@ -390,6 +431,7 @@ def ensure_directory(path, follow, recurse):
             # from the root (/) directory for absolute paths or the base path
             # of a relative path.  We can then walk the appropriate directory
             # path to apply attributes.
+            # Something like mkdir -p with mode applied to all of the newly created directories
             for dirname in path.strip('/').split('/'):
                 curpath = '/'.join([curpath, dirname])
                 # Remove leading slash if we're creating a relative path
@@ -412,22 +454,28 @@ def ensure_directory(path, follow, recurse):
             raise AnsibleModuleError(results={'msg': 'There was an issue creating %s as requested:'
                                                      ' %s' % (curpath, to_native(e)),
                                               'path': path})
+        return {'path': path, 'changed': changed, 'diff': diff}
 
-    # We already know prev_state is not 'absent', therefore it exists in some form.
     elif prev_state != 'directory':
+        # We already know prev_state is not 'absent', therefore it exists in some form.
         raise AnsibleModuleError(results={'msg': '%s already exists as a %s' % (path, prev_state),
                                           'path': path})
+
+    #
+    # previous state == directory
+    #
 
     changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
 
     if recurse:
-        changed |= recursive_set_attributes(to_bytes(file_args['path'], errors='surrogate_or_strict'), follow, file_args)
+        changed |= recursive_set_attributes(b_path, follow, file_args)
 
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
-def ensure_symlink(path, src, b_src, follow, force):
+def ensure_symlink(path, src, follow, force):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
 
@@ -437,7 +485,7 @@ def ensure_symlink(path, src, b_src, follow, force):
         if follow:
             # use the current target of the link as the source
             src = to_native(os.path.realpath(b_path), errors='strict')
-            b_src = to_bytes(os.path.realpath(b_path), errors='strict')
+            b_src = to_bytes(src, errors='surrogate_or_strict')
 
     if not os.path.islink(b_path) and os.path.isdir(b_path):
         relpath = path
@@ -481,18 +529,18 @@ def ensure_symlink(path, src, b_src, follow, force):
     elif prev_state == 'hard':
         changed = True
         if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
+            raise AnsibleModuleError(results={'msg': 'Cannot link because a hard link exists at destination',
                                               'dest': path, 'src': src})
     elif prev_state == 'file':
         changed = True
         if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link, %s exists at destination' % prev_state,
+            raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
                                               'dest': path, 'src': src})
     elif prev_state == 'directory':
         changed = True
         if os.path.exists(b_path):
             if not force:
-                raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
+                raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
                                                   'dest': path, 'src': src})
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
@@ -537,32 +585,41 @@ def ensure_symlink(path, src, b_src, follow, force):
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
-def ensure_hardlink(path, src, b_src, follow, force):
+def ensure_hardlink(path, src, follow, force):
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
 
-    # source is both the source of a symlink or an informational passing of the src for a template module
-    # or copy module, even if this module never uses it, it is needed to key off some things
-    if src is None:
-        # Note: Bug: if hard link exists, we shouldn't need to check this
-        raise AnsibleModuleError(results={'msg': 'src and dest are required for creating hardlinks'})
+    # src is the source of a hardlink.  We require it if we are creating a new hardlink
+    if src is None and not os.path.exists(b_path):
+        raise AnsibleModuleError(results={'msg': 'src and dest are required for creating new hardlinks'})
 
+    # Toshio: Begin suspect block
+    # I believe that this block of code is wrong for hardlinks.
+    # src may be relative.
+    # If it is relative, it should be relative to the cwd (so just use abspath).
+    # This is different from symlinks where src is relative to the symlink's path.
+
+    # Why must src be an absolute path?
     if not os.path.isabs(b_src):
-        raise AnsibleModuleError(results={'msg': "absolute paths are required"})
+        raise AnsibleModuleError(results={'msg': "src must be an absolute path"})
 
+    # If this is a link, then it can't be a dir so why is it in the conditional?
     if not os.path.islink(b_path) and os.path.isdir(b_path):
         relpath = path
     else:
         b_relpath = os.path.dirname(b_path)
         relpath = to_native(b_relpath, errors='strict')
 
+    # Why? This does nothing because src was checked to be absolute above?
     absrc = os.path.join(relpath, src)
     b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
     if not force and not os.path.exists(b_absrc):
         raise AnsibleModuleError(results={'msg': 'src file does not exist, use "force=yes" if you'
                                                  ' really want to create the link: %s' % absrc,
                                           'path': path, 'src': src})
+    # Toshio: end suspect block
 
     diff = initial_diff(path, 'hard', prev_state)
     changed = False
@@ -643,7 +700,7 @@ def main():
         argument_spec=dict(
             state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent'], default=None),
             path=dict(aliases=['dest', 'name'], required=True, type='path'),
-            original_basename=dict(required=False),  # Internal use only, for recursive ops
+            _original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),  # Note: Should not be in file_common_args in future
             follow=dict(required=False, default=True, type='bool'),  # Note: Different default than file_common_args
@@ -665,31 +722,20 @@ def main():
     follow = params['follow']
     path = params['path']
     src = params['src']
-    b_src = params['b_src']
 
     # short-circuit for diff_peek
     if params['_diff_peek'] is not None:
         appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
-    # original_basename is used by other modules that depend on file.
-    if state not in ("link", "absent") and os.path.isdir(to_bytes(path, errors='surrogate_or_strict')):
-        basename = None
-        if params['original_basename']:
-            basename = params['original_basename']
-        elif b_src is not None:
-            basename = os.path.basename(b_src)
-        if basename:
-            params['path'] = path = os.path.join(path, basename)
-
     if state == 'file':
         result = ensure_file_attributes(path, follow)
     elif state == 'directory':
         result = ensure_directory(path, follow, recurse)
     elif state == 'link':
-        result = ensure_symlink(path, src, b_src, follow, force)
+        result = ensure_symlink(path, src, follow, force)
     elif state == 'hard':
-        result = ensure_hardlink(path, src, b_src, follow, force)
+        result = ensure_hardlink(path, src, follow, force)
     elif state == 'touch':
         result = execute_touch(path, follow)
     elif state == 'absent':

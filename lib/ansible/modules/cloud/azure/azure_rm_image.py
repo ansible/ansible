@@ -316,5 +316,6 @@ class AzureRMImage(AzureRMModuleBase):
 def main():
     AzureRMImage()
 
+
 if __name__ == '__main__':
     main()

@@ -2,7 +2,6 @@ lib/ansible/module_utils/network/iosxr/iosxr.py ansible-format-automatic-specifi
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/aws_kms.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/ec2_eip.py ansible-format-automatic-specification
-lib/ansible/modules/cloud/amazon/ec2_group.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/ecs_ecr.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/sns.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/azure/azure_rm_acs.py ansible-format-automatic-specification
@@ -47,7 +46,6 @@ lib/ansible/modules/network/eos/eos_linkagg.py ansible-format-automatic-specific
 lib/ansible/modules/network/eos/eos_logging.py ansible-format-automatic-specification
 lib/ansible/modules/network/eos/eos_static_route.py ansible-format-automatic-specification
 lib/ansible/modules/network/ios/ios_l3_interface.py ansible-format-automatic-specification
-lib/ansible/modules/network/ios/ios_vlan.py ansible-format-automatic-specification
 lib/ansible/modules/network/iosxr/iosxr_banner.py ansible-format-automatic-specification
 lib/ansible/modules/network/iosxr/iosxr_interface.py ansible-format-automatic-specification
 lib/ansible/modules/network/nxos/nxos_logging.py ansible-format-automatic-specification

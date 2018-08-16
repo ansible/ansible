@@ -44,8 +44,8 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -96,10 +96,14 @@ def main():
     wait = module.params['wait']
     timeout = module.params['timeout']
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         server = cloud.get_server(module.params['server'])
         volume = cloud.get_volume(module.params['volume'])
+
+        if not volume:
+            module.fail_json(msg='volume %s is not found' % module.params['volume'])
+
         dev = cloud.get_volume_attach_device(volume, server.id)
 
         if module.check_mode:
@@ -135,7 +139,7 @@ def main():
                 result='Detached volume from server'
             )
 
-    except (shade.OpenStackCloudException, shade.OpenStackCloudTimeout) as e:
+    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.OpenStackCloudTimeout) as e:
         module.fail_json(msg=str(e))
 
 

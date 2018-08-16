@@ -1,0 +1,5 @@
+---
+deprecated_features:
+- Modules will no longer be able to rely on the __file__ attribute pointing to
+  a real file.  If your third party module is using __file__ for something it
+  should be changed before 2.8.  See the 2.7 porting guide for more information.

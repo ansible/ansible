@@ -25,7 +25,7 @@ description:
 - All variables and VMware object names are case sensitive.
 version_added: '2.6'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -39,19 +39,19 @@ extends_documentation_fragment: vmware_rest_client.documentation
 EXAMPLES = r'''
 - name: Get facts about tag
   vmware_tag_facts:
-    hostname: 10.65.223.91
-    username: administrator@vsphere.local
-    password: Esxi@123$
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+  delegate_to: localhost
 
 - name: Get category id from the given tag
   vmware_tag_facts:
-    hostname: 10.65.223.91
-    username: administrator@vsphere.local
-    password: Esxi@123$
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+  delegate_to: localhost
   register: tag_details
-
 - debug:
     msg: "{{ tag_details.tag_facts['fedora_machines']['tag_category_id'] }}"
 

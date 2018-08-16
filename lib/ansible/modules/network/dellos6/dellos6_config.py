@@ -262,7 +262,7 @@ def main():
             commands = dumps(configobjs, 'commands')
             if ((isinstance(module.params['lines'], list)) and
                     (isinstance(module.params['lines'][0], dict)) and
-                    ['prompt', 'answer'].issubset(module.params['lines'][0])):
+                    set(['prompt', 'answer']).issubset(module.params['lines'][0])):
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],
                        'answer': module.params['lines'][0]['answer']}
@@ -287,7 +287,7 @@ def main():
         result['changed'] = True
         if not module.check_mode:
                 cmd = {'command': 'copy running-config startup-config',
-                       'prompt': r'\(y/n\)$', 'answer': 'yes'}
+                       'prompt': r'\(y/n\)\s?$', 'answer': 'yes'}
                 run_commands(module, [cmd])
                 result['saved'] = True
         else:

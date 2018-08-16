@@ -24,11 +24,13 @@ options:
   executable:
     description:
     - The location of the PsExec utility (in case it is not located in your PATH).
+    type: path
     default: psexec.exe
   hostnames:
     description:
     - The hostnames to run the command.
     - If not provided, the command is run locally.
+    type: list
   username:
     description:
     - The (remote) user to run the command as.
@@ -40,6 +42,7 @@ options:
   chdir:
     description:
     - Run the command from this (remote) directory.
+    type: path
   nobanner:
     description:
     - Do not display the startup banner and copyright message.
@@ -85,6 +88,7 @@ options:
   timeout:
     description:
     - The connection timeout in seconds
+    type: int
   wait:
     description:
     - Wait for the application to terminate.

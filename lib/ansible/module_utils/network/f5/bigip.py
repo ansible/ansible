@@ -37,7 +37,7 @@ class F5Client(F5BaseClient):
         if self._client:
             return self._client
 
-        for x in range(0, 60):
+        for x in range(0, 10):
             try:
                 result = ManagementRoot(
                     self.provider['server'],
@@ -53,7 +53,7 @@ class F5Client(F5BaseClient):
                 exc = ex
                 time.sleep(1)
         error = 'Unable to connect to {0} on port {1}.'.format(
-            self.params['server'], self.params['server_port']
+            self.provider['server'], self.provider['server_port']
         )
 
         if exc is not None:
@@ -71,7 +71,6 @@ class F5RestClient(F5BaseClient):
         exc = None
         if self._client:
             return self._client
-
         for x in range(0, 10):
             try:
                 url = "https://{0}:{1}/mgmt/shared/authn/login".format(
@@ -88,7 +87,7 @@ class F5RestClient(F5BaseClient):
 
                 if response.status not in [200]:
                     raise F5ModuleError('Status code: {0}. Unexpected Error: {1} for uri: {2}\nText: {3}'.format(
-                        response.status, response.reason, response.url, response._content
+                        response.status, response.reason, response.url, response.content
                     ))
 
                 session.headers['X-F5-Auth-Token'] = response.json()['token']['token']

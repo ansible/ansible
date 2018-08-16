@@ -18,6 +18,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: ansible
     state: absent
 
@@ -31,6 +32,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: ansible
     description: Ansible test user
     email: ansible@ansible.lan
@@ -62,8 +64,10 @@
 - name: Verify add user
   assert:
     that:
-    - cm_add_user.changed == nm_add_user.changed == true
-    - cm_add_user_again.changed == nm_add_user_again.changed == false
+    - cm_add_user is changed
+    - nm_add_user is changed
+    - cm_add_user_again is not changed
+    - nm_add_user_again is not changed
 
 
 # MODIFY USER
@@ -75,6 +79,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: ansible
     description: Ansible test user for integration tests
     email: aci-ansible@ansible.lan
@@ -100,8 +105,10 @@
 - name: Verify modify user
   assert:
     that:
-    - cm_modify_user.changed == nm_modify_user.changed == true
-    - cm_modify_user_again.changed == nm_modify_user_again.changed == false
+    - cm_modify_user is changed
+    - nm_modify_user is changed
+    - cm_modify_user_again is not changed
+    - nm_modify_user_again is not changed
 
 
 # QUERY ALL USERS
@@ -113,6 +120,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: ansible
     state: query
   check_mode: yes
@@ -125,7 +133,8 @@
 - name: Verify query_all_users
   assert:
     that:
-    - cm_query_all_users.changed == nm_query_all_users.changed == false
+    - cm_query_all_users is not changed
+    - nm_query_all_users is not changed
     # NOTE: Order of users is not stable between calls
     #- cm_query_all_users == nm_query_all_users
 
@@ -145,7 +154,8 @@
 - name: Verify query_user
   assert:
     that:
-    - cm_query_user.changed == nm_query_user.changed == false
+    - cm_query_user is not changed
+    - nm_query_user is not changed
     - cm_query_user == nm_query_user
 
 
@@ -171,5 +181,7 @@
 - name: Verify remove_user
   assert:
     that:
-    - cm_remove_user.changed == nm_remove_user.changed == true
-    - cm_remove_user_again.changed == nm_remove_user_again.changed == false
+    - cm_remove_user is changed
+    - nm_remove_user is changed
+    - cm_remove_user_again is not changed
+    - nm_remove_user_again is not changed

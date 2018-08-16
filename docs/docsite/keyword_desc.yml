@@ -4,7 +4,6 @@ accelerate_port: "*DEPRECATED*, set to override default port use for accelerate 
 action: "The 'action' to execute for a task, it normally translates into a C(module) or action plugin."
 args: "*DEPRECATED*, A secondary way to add arguments into a task. Takes a dictionary in which keys map to options and values."
 always: List of tasks, in a block, that execute no matter if there is an error in the block or not.
-always_run: "*DEPRECATED*, forces a task to run even in check mode. Use :term:`check_mode` directive instead."
 any_errors_fatal: Force any un-handled task errors on any host to propagate to all hosts and end the play.
 async: Run a task asynchronously if the C(action) supports this; value is maximum runtime in seconds.
 become: Boolean that controls if privilege escalation is used or not on :term:`Task` execution.
@@ -23,6 +22,7 @@ connection: |
 
     .. seealso:: :ref:`using_connection`
 
+debugger: Enable debugging tasks based on state of the task result. See :ref:`playbook_debugger`
 delay: Number of seconds to delay between retries. This setting is only used in combination with :term:`until`.
 delegate_facts: Boolean that allows you to apply facts to a delegated host instead of inventory_hostname.
 delegate_to: Host to execute task instead of the target (inventory_hostname). Connection vars from the delegated host will also be used for the task.
@@ -44,6 +44,7 @@ loop_control: |
     .. seealso:: :ref:`loop_control`
 
 max_fail_percentage: can be used to abort the run after a given percentage of hosts in the current batch has failed.
+module_defaults: Specifies default parameter values for modules.
 name: "Identifier. Can be used for documentation, in or tasks/handlers."
 no_log: Boolean that controls information disclosure.
 notify: "List of handlers to notify when the task returns a 'changed=True' status."
@@ -70,5 +71,4 @@ until: "This keyword implies a ':term:`retries` loop' that will go on until the 
 vars: Dictionary/map of variables
 vars_files: List of files that contain vars to include in the play.
 vars_prompt: list of variables to prompt for.
-vault_password: Secret used to decrypt vaulted files or variables.
 when: Conditional expression, determines if an iteration of a task is run or not.

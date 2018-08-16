@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: digital_ocean_domain
-short_description: Create/delete a DNS record in DigitalOcean
+short_description: Create/delete a DNS domain in DigitalOcean
 description:
-     - Create/delete a DNS record in DigitalOcean.
+     - Create/delete a DNS domain in DigitalOcean.
 version_added: "1.6"
 author: "Michael Gregson (@mgregson)"
 options:
@@ -36,7 +36,7 @@ options:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key, or the name of a domain.
   ip:
     description:
-     - The IP address to point a domain at.
+     - An 'A' record for '@' ($ORIGIN) will be created with the value 'ip'.  'ip' is an IP version 4 address.
 extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Environment variables DO_OAUTH_TOKEN can be used for the oauth_token.
@@ -49,14 +49,14 @@ requirements:
 
 
 EXAMPLES = '''
-# Create a domain record
+# Create a domain
 
 - digital_ocean_domain:
     state: present
     name: my.digitalocean.domain
     ip: 127.0.0.1
 
-# Create a droplet and a corresponding domain record
+# Create a droplet and a corresponding domain
 
 - digital_ocean:
     state: present
@@ -168,7 +168,7 @@ def core(module):
 
     elif state == 'absent':
         if not domain:
-            module.fail_json(changed=False, msg="Domain not found")
+            module.exit_json(changed=False, msg="Domain not found")
         else:
             delete_event = do_manager.destroy_domain()
             if not delete_event:

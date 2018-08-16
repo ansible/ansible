@@ -22,13 +22,13 @@ description:
 notes:
     - Facts are placed in the C(openstack) variable.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    image:
      description:
         - Name or ID of the image
-     required: true
+     required: false
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -47,6 +47,14 @@ EXAMPLES = '''
     image: image1
 
 - name: Show openstack facts
+  debug:
+    var: openstack_image
+
+# Show all available Openstack images
+- name: Retrieve all available Openstack images
+  os_image_facts:
+
+- name: Show images
   debug:
     var: openstack_image
 '''
@@ -134,18 +142,23 @@ from ansible.module_utils.openstack import openstack_full_argument_spec, opensta
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        image=dict(required=True),
+        image=dict(required=False),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        image = cloud.get_image(module.params['image'])
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_image=image))
+        if module.params['image']:
+            image = cloud.get_image(module.params['image'])
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_image=image))
+        else:
+            images = cloud.list_images()
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_image=images))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

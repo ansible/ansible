@@ -218,12 +218,13 @@ class AnsibleCloudStackVpnCustomerGateway(AnsibleCloudStack):
         args = {
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
-            'projectid': self.get_project(key='id')
+            'projectid': self.get_project(key='id'),
+            'fetch_list': True,
         }
         vpn_customer_gateway = self.module.params.get('name')
         vpn_customer_gateways = self.query_api('listVpnCustomerGateways', **args)
         if vpn_customer_gateways:
-            for vgw in vpn_customer_gateways['vpncustomergateway']:
+            for vgw in vpn_customer_gateways:
                 if vpn_customer_gateway.lower() in [vgw['id'], vgw['name'].lower()]:
                     return vgw
 
@@ -288,7 +289,7 @@ class AnsibleCloudStackVpnCustomerGateway(AnsibleCloudStack):
             if 'cidrlist' in vpn_customer_gateway:
                 self.result['cidrs'] = vpn_customer_gateway['cidrlist'].split(',') or [vpn_customer_gateway['cidrlist']]
             # Ensure we return a bool
-            self.result['force_encap'] = True if vpn_customer_gateway['forceencap'] else False
+            self.result['force_encap'] = True if vpn_customer_gateway.get('forceencap') else False
         return self.result
 
 

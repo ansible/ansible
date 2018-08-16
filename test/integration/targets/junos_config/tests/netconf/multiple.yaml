@@ -13,7 +13,7 @@
   junos_config:
     lines:
       - 'set system host-name {{ inventory_hostname_short }}'
-      - 'set interfaces lo0 unit 0 family inet address 1.1.1.1/32'
+      - 'set interfaces lo0 unit 0 family inet address 192.0.2.1/32'
     provider: "{{ netconf }}"
   register: result
 
@@ -23,13 +23,13 @@
       # Ensure host-name *hasn't* been updated
       - "'host-name;' not in result.diff.prepared"
       # Ensure interface has *been* updated
-      - "'address 1.1.1.1/32' in result.diff.prepared"
+      - "'address 192.0.2.1/32' in result.diff.prepared"
 
 - name: check multiple commands idempotent
   junos_config:
     lines:
       - 'set system host-name {{ inventory_hostname_short }}'
-      - 'set interfaces lo0 unit 0 family inet address 1.1.1.1/32'
+      - 'set interfaces lo0 unit 0 family inet address 192.0.2.1/32'
     provider: "{{ netconf }}"
   register: result
 

@@ -71,7 +71,7 @@ options:
      description:
         - Metadata dictionary
      version_added: "2.3"
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -204,7 +204,7 @@ def main():
     name = module.params['name']
     extra_specs = module.params['extra_specs'] or {}
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         flavor = cloud.get_flavor(name)
 
@@ -250,7 +250,7 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=False)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 
