@@ -36,7 +36,7 @@ options:
 
 EXAMPLES = '''
 - name: Import vgtest
-  vgexim:
+  vg_exim:
     vg: vgtest
     state: imported
 
