@@ -929,6 +929,7 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
+  $module_utils/storage/netapp: $team_netapp
   $module_utils/vultr.py:
     maintainers: $team_vultr
     labels:
@@ -1057,6 +1058,9 @@ files:
   lib/ansible/plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/httpapi/ftd.py:
+    maintainers: annikulin $team_networking
+    labels: networking
   lib/ansible/plugins/inventory/openstack.py:
     maintainers: $team_openstack
     keywords:
@@ -1076,6 +1080,10 @@ files:
     maintainers: machacekondra
     labels:
       - ovirt
+      - cloud
+  lib/ansible/plugins/inventory/scaleway.py:
+    maintainers: sieben hekonsek
+    labels:
       - cloud
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking

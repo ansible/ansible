@@ -421,6 +421,39 @@ class PathMapper(object):
                 'units': units_path,
             }
 
+        if path.startswith('lib/ansible/plugins/inventory/'):
+            if name == '__init__':
+                return all_tests(self.args)  # broad impact, run all tests
+
+            # These inventory plugins are enabled by default (see INVENTORY_ENABLED).
+            # Without dedicated integration tests for these we must rely on the incidental coverage from other tests.
+            test_all = [
+                'host_list',
+                'script',
+                'yaml',
+                'ini',
+                'auto',
+            ]
+
+            if name in test_all:
+                posix_integration_fallback = get_integration_all_target(self.args)
+            else:
+                posix_integration_fallback = None
+
+            target = self.integration_targets_by_name.get('inventory_%s' % name)
+            units_path = 'test/units/plugins/inventory/test_%s.py' % name
+
+            if units_path not in self.units_paths:
+                units_path = None
+
+            return {
+                'integration': target.name if target and 'posix/' in target.aliases else posix_integration_fallback,
+                'windows-integration': target.name if target and 'windows/' in target.aliases else None,
+                'network-integration': target.name if target and 'network/' in target.aliases else None,
+                'units': units_path,
+                FOCUSED_TARGET: target is not None,
+            }
+
         if (path.startswith('lib/ansible/plugins/terminal/') or
                 path.startswith('lib/ansible/plugins/cliconf/') or
                 path.startswith('lib/ansible/plugins/netconf/')):

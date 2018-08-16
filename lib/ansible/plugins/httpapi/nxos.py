@@ -79,7 +79,7 @@ class HttpApi(HttpApiBase):
         resp = list()
 
         operations = self.connection.get_device_operations()
-        self.connection.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.connection.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         if replace:
             device_info = self.connection.get_device_info()

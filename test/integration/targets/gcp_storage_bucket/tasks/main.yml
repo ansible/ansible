@@ -15,22 +15,18 @@
 # Pre-test setup
 - name: delete a bucket
   gcp_storage_bucket:
-      name: 'ansible-storage-module'
+      name: ansible-storage-module
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: absent
 #----------------------------------------------------------
 - name: create a bucket
   gcp_storage_bucket:
-      name: 'ansible-storage-module'
+      name: ansible-storage-module
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
   register: result
 - name: assert changed is true
@@ -41,12 +37,10 @@
 # ----------------------------------------------------------------------------
 - name: create a bucket that already exists
   gcp_storage_bucket:
-      name: 'ansible-storage-module'
+      name: ansible-storage-module
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
   register: result
 - name: assert changed is false
@@ -57,12 +51,10 @@
 #----------------------------------------------------------
 - name: delete a bucket
   gcp_storage_bucket:
-      name: 'ansible-storage-module'
+      name: ansible-storage-module
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: absent
   register: result
 - name: assert changed is true
@@ -73,12 +65,10 @@
 # ----------------------------------------------------------------------------
 - name: delete a bucket that does not exist
   gcp_storage_bucket:
-      name: 'ansible-storage-module'
+      name: ansible-storage-module
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: absent
   register: result
 - name: assert changed is false

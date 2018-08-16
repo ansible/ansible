@@ -151,6 +151,8 @@ try:
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from adal.authentication_context import AuthenticationContext
+    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
+    from azure.mgmt.rdbms.mysql import MySQLManagementClient
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -272,6 +274,8 @@ class AzureRMModuleBase(object):
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
+        self._mysql_client = None
+        self._postgresql_client = None
         self._adfs_authority_url = None
         self._resource = None
 
@@ -464,17 +468,20 @@ class AzureRMModuleBase(object):
         :return: bool, dict
         '''
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
+        param_tags = self.module.params.get('tags') if isinstance(self.module.params.get('tags'), dict) else dict()
+        append_tags = self.module.params.get('append_tags') if self.module.params.get('append_tags') is not None else True
         changed = False
-        if isinstance(self.module.params.get('tags'), dict):
-            for key, value in self.module.params['tags'].items():
-                if not new_tags.get(key) or new_tags[key] != value:
+        # check add or update
+        for key, value in param_tags.items():
+            if not new_tags.get(key) or new_tags[key] != value:
+                changed = True
+                new_tags[key] = value
+        # check remove
+        if not append_tags:
+            for key, value in tags.items():
+                if not param_tags.get(key):
+                    new_tags.pop(key)
                     changed = True
-                    new_tags[key] = value
-            if isinstance(tags, dict):
-                for key, value in tags.items():
-                    if not self.module.params['tags'].get(key):
-                        new_tags.pop(key)
-                        changed = True
         return changed, new_tags
 
     def has_tags(self, obj_tags, tag_list):
@@ -1058,3 +1065,19 @@ class AzureRMModuleBase(object):
             self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
                                                                      base_url=self._cloud_environment.endpoints.resource_manager)
         return self._containerservice_client
+
+    @property
+    def postgresql_client(self):
+        self.log('Getting PostgreSQL client')
+        if not self._postgresql_client:
+            self._postgresql_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._postgresql_client
+
+    @property
+    def mysql_client(self):
+        self.log('Getting MySQL client')
+        if not self._mysql_client:
+            self._mysql_client = self.get_mgmt_svc_client(MySQLManagementClient,
+                                                          base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._mysql_client

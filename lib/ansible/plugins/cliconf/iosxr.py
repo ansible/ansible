@@ -85,7 +85,7 @@ class Cliconf(CliconfBase):
 
     def edit_config(self, candidate=None, commit=True, admin=False, replace=None, comment=None, label=None):
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         resp = {}
         results = []

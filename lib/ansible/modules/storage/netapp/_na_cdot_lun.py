@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -21,6 +21,11 @@ extends_documentation_fragment:
     - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
+
+deprecated:
+  removed_in: '2.11'
+  why: Updated modules released with increased functionality
+  alternative: Use M(na_ontap_lun) instead.
 
 description:
 - Create, destroy, resize luns on NetApp cDOT.

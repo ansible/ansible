@@ -553,7 +553,7 @@ the code in Ansible to trigger that failure.
        The documentation of pytest - the framework actually used to run Ansible unit tests
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
-   `Testing Your Code (from The Hitchhiker's Guide to Python!) <https://docs.python-guide.org/en/latest/writing/tests/>`_
+   `Testing Your Code (from The Hitchhiker's Guide to Python!) <https://docs.python-guide.org/writing/tests/>`_
        General advice on testing Python code
    `Uncle Bob's many videos on YouTube <https://www.youtube.com/watch?v=QedpQjxBPMA&list=PLlu0CT-JnSasQzGrGzddSczJQQU7295D2>`_
        Unit testing is a part of the of various philosophies of software development, including

@@ -341,7 +341,7 @@ class Nxapi:
             if response['ins_api'].get('outputs'):
                 output = response['ins_api']['outputs']['output']
                 for item in to_list(output):
-                    if check_status and item['code'] != '200':
+                    if check_status is True and item['code'] != '200':
                         if return_error:
                             result.append(item)
                         else:
