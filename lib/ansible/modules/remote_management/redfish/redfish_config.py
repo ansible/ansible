@@ -19,8 +19,8 @@ short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
     set or update a configuration attribute.
-  - Manages BIOS configuration settings
-  - Manages OOB controller configuration settings
+  - Manages BIOS configuration settings.
+  - Manages OOB controller configuration settings.
 options:
   category:
     required: true
@@ -144,6 +144,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
 
+
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes"],
@@ -226,6 +227,7 @@ def main():
         module.exit_json(result=result)
     else:
         module.fail_json(msg=to_native(result['msg']))
+
 
 if __name__ == '__main__':
     main()
