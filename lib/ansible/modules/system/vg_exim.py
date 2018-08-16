@@ -1,5 +1,8 @@
 #!/usr/bin/python
-# GNU General Public License v3.0+
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -12,10 +15,10 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
+module: vg_exim
 author:
 - Court Campbell
-module: vg_exim
-version_added: 2.7
+version_added: "2.7"
 short_description: Export/Import Linux LVM2 Volume Groups
 description:
   - This module exports/imports volume group
