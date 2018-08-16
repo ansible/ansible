@@ -45,6 +45,23 @@ Function Get-DomainMembershipMatch {
 
         return $domain_match
     }
+    catch [System.Security.Authentication.AuthenticationException] {
+        Write-DebugLog "Checking to see if ansible_user account is local and attempt a different method."
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement            
+        $UserPrincipal = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
+        If ($UserPrincipal.ContextType -eq "Machine") {
+            $current_dns_domain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
+            
+            $domain_match = $current_dns_domain -eq $dns_domain_name
+
+            Write-DebugLog ("current domain {0} matches {1}: {2}" -f $current_dns_domain, $dns_domain_name, $domain_match)
+
+            return $domain_match
+        }
+        Else {
+            Fail-Json -obj $result -message "The ansible_user or ansible_password is incorrect and cannot acccess the domain."
+        }
+    }
     Catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
         Write-DebugLog "not currently joined to a reachable domain"
         return $false
