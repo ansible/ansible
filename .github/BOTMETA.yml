@@ -330,6 +330,7 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: Spredzy
+  $modules/crypto/acme/: mgruener resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/misc/elasticsearch_plugin.py: ThePixelDeveloper
   $modules/database/misc/kibana_plugin.py: barryib
@@ -691,10 +692,6 @@ files:
   $modules/utilities/logic/pause.py: tbielawa samdoran
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
-  $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_account.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_certificate_revoke.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
