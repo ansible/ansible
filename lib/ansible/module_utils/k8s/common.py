@@ -139,17 +139,20 @@ class K8sAnsibleMixin(object):
         auth_params = auth_params or getattr(self, 'params', {})
         auth = copy.deepcopy(auth_params)
 
-        # Pull authorization settings from environment variables
+        # If authorization variables aren't defined, look for them in environment variables
         for key, value in iteritems(auth_params):
             if key in auth_args and value is None:
                 env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
                 if env_value is not None:
                     auth[key] = env_value
 
-        if ((auth.get('username') and auth.get('password') and auth.get('host')) or
-            (auth.get('api_key') and auth.get('host'))):
+        def auth_set(*names):
+            return all([auth.get(name) for name in names])
+
+        if auth_set('username', 'password', 'host') or auth_set('api_key', 'host'):
+            # We have enough in the parameters to authenticate, no need to load incluster or kubeconfig
             pass
-        elif auth.get('kubeconfig') or auth.get('context'):
+        elif auth_set('kubeconfig', 'context'):
             kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
         else:
             # First try to do incluster config, then kubeconfig
@@ -158,7 +161,7 @@ class K8sAnsibleMixin(object):
             except kubernetes.config.ConfigException:
                 kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
 
-
+        # Override any values in the default configuration with Ansible parameters
         configuration = kubernetes.client.Configuration()
         for key, value in iteritems(auth):
             if key in auth_args and value is not None:
@@ -169,18 +172,6 @@ class K8sAnsibleMixin(object):
 
         kubernetes.client.Configuration.set_default(configuration)
         return DynamicClient(kubernetes.client.ApiClient(configuration))
-
-
-    def client_from_kubeconfig(self, config_file, context):
-        try:
-            return kubernetes.config.new_client_from_config(config_file, context)
-        except (IOError, kubernetes.config.ConfigException):
-            # If we failed to load the default config file then we'll return
-            # an empty configuration
-            # If one was specified, we will crash
-            if not config_file:
-                return kubernetes.client.ApiClient()
-            raise
 
     def find_resource(self, kind, api_version, fail=False):
         for attribute in ['kind', 'name', 'singular_name']:
