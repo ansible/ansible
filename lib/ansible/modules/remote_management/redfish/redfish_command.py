@@ -19,9 +19,9 @@ short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
     perform an action.
-  - Manages OOB controller: Reboot, log management
-  - Manages OOB controller users: add, remove, update user properties and status
-  - Manages system power: Power on/off, graceful and forced reboot
+  - Manages OOB controller ex. reboot, log management.
+  - Manages OOB controller users ex. add, remove, update.
+  - Manages system power ex. on, off, graceful and forced reboot.
 options:
   category:
     required: true
@@ -137,6 +137,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
 
+
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["PowerOn", "PowerForceOff", "PowerGracefulRestart",
@@ -251,6 +252,7 @@ def main():
         module.exit_json(result=result)
     else:
         module.fail_json(msg=to_native(result['msg']))
+
 
 if __name__ == '__main__':
     main()
