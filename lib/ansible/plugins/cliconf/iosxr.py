@@ -104,9 +104,9 @@ class Cliconf(CliconfBase):
             requests.append(cmd)
 
         if commit:
-           self.commit(comment=comment, label=label, replace=replace)
+            self.commit(comment=comment, label=label, replace=replace)
         else:
-           self.discard_changes()
+            self.discard_changes()
 
         self.abort(admin=admin)
 
