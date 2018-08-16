@@ -20,7 +20,7 @@ short_description: Manage qtrees
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Sumit Kumar (sumit4@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
 - Create or destroy Qtrees.
@@ -38,9 +38,10 @@ options:
     - The name of the Qtree to manage.
     required: true
 
-  new_name:
+  from_name:
     description:
-    - New name of the Qtree to be renamed.
+    - Name of the Qtree to be renamed.
+    version_added: '2.7'
 
   flexvol_name:
     description:
@@ -96,7 +97,7 @@ class NetAppOntapQTree(object):
             state=dict(required=False, choices=[
                        'present', 'absent'], default='present'),
             name=dict(required=True, type='str'),
-            new_name=dict(required=False, type='str'),
+            from_name=dict(required=False, type='str'),
             flexvol_name=dict(type='str'),
             vserver=dict(required=True, type='str'),
         ))
@@ -114,7 +115,7 @@ class NetAppOntapQTree(object):
         # set up state variables
         self.state = p['state']
         self.name = p['name']
-        self.new_name = p['new_name']
+        self.from_name = p['from_name']
         self.flexvol_name = p['flexvol_name']
         self.vserver = p['vserver']
 
@@ -125,7 +126,7 @@ class NetAppOntapQTree(object):
             self.server = netapp_utils.setup_na_ontap_zapi(
                 module=self.module, vserver=self.vserver)
 
-    def get_qtree(self):
+    def get_qtree(self, name=None):
         """
         Checks if the qtree exists.
 
@@ -134,12 +135,14 @@ class NetAppOntapQTree(object):
             False if qtree is not found
         :rtype: bool
         """
+        if name is None:
+            name = self.name
 
         qtree_list_iter = netapp_utils.zapi.NaElement('qtree-list-iter')
         query_details = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-info', **{'vserver': self.vserver,
                              'volume': self.flexvol_name,
-                             'qtree': self.name})
+                             'qtree': name})
 
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
@@ -179,8 +182,8 @@ class NetAppOntapQTree(object):
                                   exception=traceback.format_exc())
 
     def rename_qtree(self):
-        path = '/vol/%s/%s' % (self.flexvol_name, self.name)
-        new_path = '/vol/%s/%s' % (self.flexvol_name, self.new_name)
+        path = '/vol/%s/%s' % (self.flexvol_name, self.from_name)
+        new_path = '/vol/%s/%s' % (self.flexvol_name, self.name)
         qtree_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-rename', **{'qtree': path,
                                'new-qtree-name': new_path})
@@ -189,7 +192,7 @@ class NetAppOntapQTree(object):
             self.server.invoke_successfully(qtree_rename,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg="Error renaming qtree %s: %s" % (self.name, to_native(e)),
+            self.module.fail_json(msg="Error renaming qtree %s: %s" % (self.from_name, to_native(e)),
                                   exception=traceback.format_exc())
 
     def apply(self):
@@ -202,22 +205,25 @@ class NetAppOntapQTree(object):
             qtree_exists = True
             if self.state == 'absent':  # delete
                 changed = True
-            else:  # rename
-                if self.new_name and self.name != self.new_name:
+        elif self.state == 'present':
+            # create or rename qtree
+            if self.from_name:
+                if self.get_qtree(self.from_name) is None:
+                    self.module.fail_json(msg="Error renaming qtree %s: does not exists" % self.from_name)
+                else:
                     changed = True
                     rename_qtree = True
-        else:
-            if self.state == 'present':  # create
+            else:
                 changed = True
         if changed:
             if self.module.check_mode:
                 pass
             else:
                 if self.state == 'present':
-                    if not qtree_exists:
-                        self.create_qtree()
-                    elif rename_qtree:
+                    if rename_qtree:
                         self.rename_qtree()
+                    else:
+                        self.create_qtree()
                 elif self.state == 'absent':
                     self.delete_qtree()
 
