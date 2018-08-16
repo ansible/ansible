@@ -34,8 +34,8 @@ options:
   domain:
     description:
       - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster
-        resolution
-    required: true
+        resolution. If not specified, will list the domains available and pick one matching the record_name.
+    required: false
 
   record_name:
     description:
@@ -374,15 +374,24 @@ class DME2(object):
         self.api = apikey
         self.secret = secret
         self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
-        self.domain = str(domain)
+        self.domain = domain
         self.domain_map = None      # ["domain_name"] => ID
         self.record_map = None      # ["record_name"] => ID
         self.records = None         # ["record_ID"] => <record>
         self.all_records = None
         self.contactList_map = None  # ["contactList_name"] => ID
 
+        if isinstance(self.domain, int) or (isinstance(self.domain, string_types) and self.domain.isdigit()):
+            self.domain = str(self.domain)
+        # Lookup the domain if none was passed
+        elif self.domain is None:
+            self._instMap('domain')
+            for id, domain in self.domain_map.items():
+                if self.module.params['record_name'].endswith('.' + domain):
+                    self.domain = id
+                    break
         # Lookup the domain ID if passed as a domain name vs. ID
-        if not self.domain.isdigit():
+        else:
             self.domain = self.getDomainByName(self.domain)['id']
 
         self.record_url = 'dns/managed/' + str(self.domain) + '/records'
@@ -536,7 +545,7 @@ def main():
         argument_spec=dict(
             account_key=dict(required=True),
             account_secret=dict(required=True, no_log=True),
-            domain=dict(required=True),
+            domain=dict(required=False),
             state=dict(required=True, choices=['present', 'absent']),
             record_name=dict(required=False),
             record_type=dict(required=False, choices=[
