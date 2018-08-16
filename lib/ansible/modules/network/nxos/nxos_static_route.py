@@ -280,13 +280,11 @@ def main():
         candidate = CustomNetworkConfig(indent=3)
         reconcile_candidate(module, candidate, prefix, w)
 
-        if candidate:
+        if not module.check_mode and candidate:
             candidate = candidate.items_text()
             load_config(module, candidate)
             result['commands'].extend(candidate)
             result['changed'] = True
-        else:
-            result['commands'] = []
 
     module.exit_json(**result)
 
