@@ -330,10 +330,7 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: Spredzy
-  $modules/crypto/_letsencrypt.py: mgruener resmo felixfontein
-  $modules/crypto/acme_account.py: mgruener resmo felixfontein
-  $modules/crypto/acme_certificate.py: mgruener resmo felixfontein
-  $modules/crypto/acme_certificate_revoke.py: mgruener resmo felixfontein
+  $modules/crypto/acme/: mgruener resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/misc/elasticsearch_plugin.py: ThePixelDeveloper
   $modules/database/misc/kibana_plugin.py: barryib
