@@ -2,9 +2,7 @@
 # GNU General Public License v3.0+
 
 from __future__ import (absolute_import, division, print_function)
-from ansible.module_utils.basic import AnsibleModule
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -39,6 +37,17 @@ EXAMPLES = '''
     state: imported
 
 '''
+
+RETURN = '''
+name:
+    description: name of vg
+    returned: success
+state:
+    description: imported or exported value
+    returned success
+'''
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
