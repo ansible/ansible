@@ -45,13 +45,9 @@ options:
     description:
       - VRF to be used while configuring remote logging (when dest is 'server').
     version_added: '2.7'
-  interface_type:
-    description:
-      - Type of interface to be used when configuring Source-Interface for logging (e.g., 'Ethernet', 'mgmt').
-    version_added: '2.7'
   interface:
     description:
-      - Interface number to be used when configuring Source-Interface for logging (e.g., '1/1', '1/3', '0').
+      - Interface to be used while configuring source-interface for logging (e.g., 'Ethernet1/2', 'mgmt0')
     version_added: '2.7'
   name:
     description:
@@ -113,8 +109,7 @@ EXAMPLES = """
     state: present
 - name: Configure Source Interface for Logging
   nxos_logging:
-    interface_type: mgmt
-    interface: 0
+    interface: mgmt0
     state: present
 
 - name: Configure logging using aggregate
