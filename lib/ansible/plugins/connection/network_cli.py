@@ -351,7 +351,11 @@ class Connection(NetworkConnectionBase):
         self._matched_cmd_prompt = None
         matched_prompt_window = window_count = 0
 
-        command_timeout = self.get_option('persistent_command_timeout')
+        try:
+            command_timeout = self.get_option('persistent_command_timeout')
+        except:
+            command_timeout = None
+
         signal_handler = signal.getsignal(signal.SIGALRM)
         if signal_handler == signal.SIG_DFL:
             signal_handler = None
@@ -363,7 +367,7 @@ class Connection(NetworkConnectionBase):
             if not data:
                 break
 
-            if signal_handler and self._first_matched_prompt:
+            if command_timeout and signal_handler and self._first_matched_prompt:
                 display.debug("cli command_timeout extended on new data [%d]" % command_timeout)
                 signal.alarm(command_timeout)
 
