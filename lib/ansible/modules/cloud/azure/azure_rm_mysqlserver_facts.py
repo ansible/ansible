@@ -189,7 +189,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
             response = self.mysql_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for MySQL Servers.')
+            self.fail("Error listing for resource group {0} - {1}".format(self.resource_group, str(e)))
 
         if response is not None:
             for item in response:
