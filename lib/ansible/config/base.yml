@@ -1385,8 +1385,8 @@ HOST_KEY_CHECKING:
   type: boolean
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
-  default: false
-  description: If 'true', invalid attributes for a task will result in errors instead of warnings
+  default: True
+  description: If 'false', invalid attributes for a task will result in warnings instead of errors
   type: boolean
   env:
     - name: ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED
