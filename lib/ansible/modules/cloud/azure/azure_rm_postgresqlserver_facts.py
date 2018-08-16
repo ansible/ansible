@@ -149,8 +149,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
         )
         # store the results of the module operation
         self.results = dict(
-            changed=False,
-            ansible_facts=dict()
+            changed=False
         )
         self.resource_group = None
         self.name = None
