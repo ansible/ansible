@@ -50,10 +50,6 @@ options:
         default: 1
         description:
             - Number of times to repeat the MAC step.
-    mode:
-        default: 0400
-        description:
-            - Default mode for the generated PKCS#12 file.
     passphrase:
         description:
             - The PKCS#12 password.
@@ -76,6 +72,9 @@ options:
     src:
         description:
             - PKCS#12 file path to parse.
+
+extends_documentation_fragment:
+    - files
 '''
 
 EXAMPLES = '''
@@ -139,6 +138,7 @@ privatekey:
     sample: /etc/ssl/private/ansible.com.pem
 '''
 
+import stat
 import os
 
 try:
@@ -361,7 +361,7 @@ def main():
     result = pkcs12.dump()
     result['changed'] = changed
     if os.path.exists(module.params['path']):
-        file_mode = oct(os.stat(module.params['path']).st_mode)[-4:]
+        file_mode = "%04o" % stat.S_IMODE(os.stat(module.params['path']).st_mode)
         result['mode'] = file_mode
 
     module.exit_json(**result)
