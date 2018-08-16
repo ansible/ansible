@@ -13,6 +13,7 @@ DOCUMENTATION = '''
 author:
 - Court Campbell
 module: vg_exim
+version_added: 2.7
 short_description: Export/Import Linux LVM2 Volume Groups
 description:
   - This module exports/imports volume group
@@ -21,6 +22,7 @@ options:
     description:
     - The name of the volume group.
     required: True
+    alias: name
   state:
     description:
     - state the volume group should be.
