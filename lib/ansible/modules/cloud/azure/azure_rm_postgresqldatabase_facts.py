@@ -163,7 +163,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
                                                                        server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail("Error listing for server {0} - {1}".format(self.server_name, str(e))) 
+            self.fail("Error listing for server {0} - {1}".format(self.server_name, str(e)))
 
         if response is not None:
             for item in response:
