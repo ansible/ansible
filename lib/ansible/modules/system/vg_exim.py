@@ -63,6 +63,7 @@ def main():
             state=dict(
                 type='str',
                 required=True,
+                default=None,
                 choices=['imported', 'exported']
             ),
         ),
@@ -76,9 +77,9 @@ def main():
         # check if vg is already imported
         vgs_cmd = module.get_bin_path('vgs', True)
         rc, vg_state, err = module.run_command(
-                            "%s --noheadings -o vg_exported %s"
-                            % (vgs_cmd, vg)
-                            )
+            "%s --noheadings -o vg_exported %s"
+            % (vgs_cmd, vg)
+            )
         if rc != 0:
             module.fail_json(
                 msg="Failed executing vgs command.", rc=rc, err=err
@@ -86,8 +87,8 @@ def main():
         if 'exported' in vg_state:
             vgimport_cmd = module.get_bin_path('vgimport', True)
             rc, vgimport_out, err = module.run_command(
-                                    "%s -v %s" % (vgimport_cmd, vg)
-                                    )
+                "%s -v %s" % (vgimport_cmd, vg)
+                )
             if rc != 0:
                 module.fail_json(
                     msg="Failed executing vgimport command.", rc=rc, err=err
@@ -101,12 +102,12 @@ def main():
         # check if vg is already exported
         vgs_cmd = module.get_bin_path('vgs', True)
         rc, vg_state, err = module.run_command(
-                            "%s --noheadings -o vg_exported %s"
-                            % (vgs_cmd, vg)
-                            )
+            "%s --noheadings -o vg_exported %s"
+            % (vgs_cmd, vg)
+        )
         if rc != 0:
             module.fail_json(
-               msg="Failed executing vgs command.", rc=rc, err=err
+                msg="Failed executing vgs command.", rc=rc, err=err
             )
         if 'exported' in vg_state:
             result['changed'] = False
@@ -114,9 +115,9 @@ def main():
             # check if vg has any active lvs, if so deactivate them
             lvs_cmd = module.get_bin_path('lvs', True)
             rc, lv_active, err = module.run_command(
-                                 "%s --noheadings --rows -o lv_active %s"
-                                 % (lvs_cmd, vg)
-                                 )
+                "%s --noheadings --rows -o lv_active %s"
+                % (lvs_cmd, vg)
+            )
             if rc != 0:
                 module.fail_json(
                     msg="Failed getting lvs info for volume group.",
@@ -125,9 +126,9 @@ def main():
             if 'active' in lv_active:
                 vgchange_cmd = module.get_bin_path('vgchange', True)
                 rc, lv_state, err = module.run_command(
-                                     "%s -a n %s"
-                                     % (vgchange_cmd, vg)
-                                     )
+                    "%s -a n %s"
+                    % (vgchange_cmd, vg)
+                )
                 if rc != 0:
                     module.fail_json(
                         msg="Failed to deactive volume group.",
@@ -135,8 +136,8 @@ def main():
                     )
             vgexport_cmd = module.get_bin_path('vgexport', True)
             rc, vgexport_out, err = module.run_command(
-                                    "%s -v %s" % (vgexport_cmd, vg)
-                                    )
+                "%s -v %s" % (vgexport_cmd, vg)
+            )
             if rc != 0:
                 module.fail_json(
                     msg="Failed executing vgexport command.", rc=rc, err=err
