@@ -174,7 +174,7 @@ def main():
     cmd.extend(save_cmd)
     output = output + str(cnos.run_cnos_commands(module, cmd))
     # Write output to file
-    path = outputfile.rsplit('/',1)
+    path = outputfile.rsplit('/', 1)
     # cnos.debugOutput(path[0])
     if not os.path.exists(path[0]):
         os.makedirs(path[0])
