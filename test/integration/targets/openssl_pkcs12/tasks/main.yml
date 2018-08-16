@@ -55,4 +55,4 @@
       path: '{{ output_dir }}/ansible.p12'
 
   # this is the pyopenssl version on my laptop.
-  when: pyopenssl_version.stdout|version_compare('17.1.0', '>=')
+  when: pyopenssl_version.stdout is version_compare('17.1.0', '>=')

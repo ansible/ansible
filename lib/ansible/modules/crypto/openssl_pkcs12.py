@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: openssl_pkcs12
 author: "Guillaume Delpierre (@gdelpierre)"
-version_added: "2.5"
+version_added: "2.7"
 short_description: Generate OpenSSL PKCS#12 archive.
 description:
     - This module allows one to (re-)generate PKCS#12.
@@ -39,7 +39,7 @@ options:
         description:
             - Should the file be regenerated even it it already exists.
     friendly_name:
-        aliases: 'name'
+        aliases: ['name']
         description:
             - Specifies the friendly name for the certificate and private key.
     iter_size:
@@ -366,6 +366,7 @@ def main():
         result['mode'] = file_mode
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
