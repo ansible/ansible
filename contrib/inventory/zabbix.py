@@ -82,7 +82,7 @@ class ZabbixInventory(object):
         # host interface
         if config.has_option('zabbix', 'use_host_interface'):
             if config.get('zabbix', 'use_host_interface') in ['false', 'False', False]:
-                self.use_host_interface = False        
+                self.use_host_interface = False
 
 
     def read_cli(self):
@@ -114,9 +114,9 @@ class ZabbixInventory(object):
                         else:
                             data['ansible_ssh_host'] = hostsData['interfaces'][0]['ip']
                 if ('inventory' in hostsData) and (hostsData['inventory']):
-                    data.update(hostsData['inventory']) 
+                    data.update(hostsData['inventory'])
             except IndexError:
-                # Host not found in zabbix 
+                # Host not found in zabbix
                 pass
         return data
 
@@ -129,7 +129,7 @@ class ZabbixInventory(object):
 
         hostsData = api.host.get(api_query)
         data = {'_meta':{'hostvars':{}}}
- 
+
         data[self.defaultgroup] = self.hoststub()
         for host in hostsData:
             hostname = host['name']
@@ -150,7 +150,7 @@ class ZabbixInventory(object):
                 else:
                     hostvars['ansible_ssh_host'] = host['interfaces'][0]['ip']
             if ('inventory' in host) and (host['inventory']):
-                hostvars.update(host['inventory']) 
+                hostvars.update(host['inventory'])
             data['_meta']['hostvars'][hostname] = hostvars
 
         return data
