@@ -110,6 +110,28 @@ def main():
         if 'exported' in vg_state:
             result['changed'] = False
         else:
+            # check if vg has any active lvs, if so deactivate them
+            lvs_cmd = module.get_bin_path('lvs', True)
+            rc, lv_active, err = module.run_command(
+                                 "%s --noheadings --rows -o lv_active %s"
+                                 % (lvs_cmd, vg)
+                                 )
+            if rc != 0:
+                module.fail_json(
+                    msg="Failed getting lvs info for volume group.",
+                    rc=rc, err=err
+                )
+            if 'active' in lv_active:
+                vgchange_cmd = module.get_bin_path('vgchange', True)
+                rc, lv_state, err = module.run_command(
+                                     "%s -a n %s"
+                                     % (vgchange_cmd, vg)
+                                     )
+                if rc != 0:
+                    module.fail_json(
+                        msg="Failed to deactive volume group.",
+                        rc=rc, err=err
+                    )
             vgexport_cmd = module.get_bin_path('vgexport', True)
             rc, vgexport_out, err = module.run_command(
                                     "%s -v %s" % (vgexport_cmd, vg)
