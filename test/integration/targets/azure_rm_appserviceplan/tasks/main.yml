@@ -2,7 +2,7 @@
   set_fact:
     linux_plan_resource_group: "{{ resource_group_secondary }}"
     win_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winplan"
-    linux_plan_name: "{{ (resource_group_secondary | replace('-','x'))[-8:] }}linplan"
+    linux_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}linplan"
 
 - name: create a windows plan
   azure_rm_appserviceplan:
