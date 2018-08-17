@@ -1,0 +1,31 @@
+---
+- block:
+  - name: Running tests with OpenSSL backend
+    include_tasks: impl.yml
+    vars:
+      select_crypto_backend: openssl
+
+  - import_tasks: ../tests/validate.yml
+
+  # Old 0.9.8 versions have insufficient CLI support for signing with EC keys
+  when: openssl_version.stdout is version('1.0.0', '>=')
+
+- name: Remove output directory
+  file:
+    path: "{{ output_dir }}"
+    state: absent
+
+- name: Re-create output directory
+  file:
+    path: "{{ output_dir }}"
+    state: directory
+
+- block:
+  - name: Running tests with cryptography backend
+    include_tasks: impl.yml
+    vars:
+      select_crypto_backend: cryptography
+
+  - import_tasks: ../tests/validate.yml
+
+  when: cryptography_version.stdout is version('1.5', '>=')
