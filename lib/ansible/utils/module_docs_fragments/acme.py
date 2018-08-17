@@ -46,6 +46,12 @@ options:
          Ansible in the process of moving the module with its argument to
          the node where it is executed."
     version_added: "2.5"
+  account_uri:
+    description:
+      - "If specified, assumes that the account URI is as given. If the
+         account key does not match this account, or an account with this
+         URI does not exist, the module fails."
+    version_added: "2.7"
   acme_version:
     description:
       - "The ACME version of the endpoint."

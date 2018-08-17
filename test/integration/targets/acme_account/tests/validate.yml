@@ -22,6 +22,11 @@
       - account_modified_idempotent is not changed
       - account_modified_idempotent.account_uri is not none
 
+- name: Make sure that with the wrong account URI, the account cannot be changed
+  assert:
+    that:
+      - account_modified_wrong_uri is failed
+
 - name: Validate that email address was cleared
   assert:
     that:
