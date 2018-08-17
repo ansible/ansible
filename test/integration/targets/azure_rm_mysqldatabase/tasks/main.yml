@@ -8,11 +8,10 @@
     resource_group: "{{ resource_group }}"
     name: mysqlsrv{{ rpfx }}
     sku:
-      name: GP_Gen4_2
-      tier: GeneralPurpose
+        name: GP_Gen4_2
+        tier: GeneralPurpose
     location: westus
     storage_mb: 51200
-    version: 5.6
     enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
@@ -52,6 +51,46 @@
     that:
       - output.changed == false
       - output.name == 'testdatabase'
+
+- name: Create second instance of MySQL Database
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase2
+
+- name: Gather facts MySQL Database
+  azure_rm_mysqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+  register: output 
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0]['server_name'] != None
+      - output.databases[0]['name'] != None
+      - output.databases[0]['charset'] != None
+      - output.databases[0]['collation'] != None
+
+- name: Gather facts MySQL Database
+  azure_rm_mysqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0]['server_name'] != None
+      - output.databases[0]['name'] != None
+      - output.databases[0]['charset'] != None
+      - output.databases[0]['collation'] != None
+      - output.databases[1]['server_name'] != None
+      - output.databases[1]['name'] != None
+      - output.databases[1]['charset'] != None
+      - output.databases[1]['collation'] != None
 
 - name: Delete instance of MySQL Database -- check mode
   azure_rm_mysqldatabase:
