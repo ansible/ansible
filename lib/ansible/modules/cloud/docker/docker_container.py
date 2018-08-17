@@ -1326,7 +1326,7 @@ class Container(DockerBaseClass):
                         self.log("comparing lists: %s" % key)
                         set_a = set(getattr(self.parameters, key))
                         set_b = set(value)
-                        match = (set_b >= set_a)
+                        match = (set_b == set_a)
                 elif isinstance(getattr(self.parameters, key), list) and not len(getattr(self.parameters, key)) \
                         and value is None:
                     # an empty list and None are ==
