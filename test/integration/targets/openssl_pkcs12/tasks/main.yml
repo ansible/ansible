@@ -46,6 +46,13 @@
       mode: 0644
     register: p12_force_and_mode
 
+  - name: 'Dump PKCS#12'
+    openssl_pkcs12:
+      src: "{{ output_dir }}/ansible.p12"
+      path: "{{ output_dir }}/ansible_parse.pem"
+      action: 'parse'
+      state: 'present'
+
   - import_tasks: ../tests/validate.yml
 
   always:
