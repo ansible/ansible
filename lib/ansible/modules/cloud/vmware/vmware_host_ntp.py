@@ -118,6 +118,7 @@ class VmwareNtpConfigManager(PyVmomi):
         host_date_time_manager = host.configManager.dateTimeSystem
         if host_date_time_manager:
             available_ntp_servers = host_date_time_manager.dateTimeInfo.ntpConfig.server
+            available_ntp_servers = list(filter(None, available_ntp_servers))
             if operation == 'add':
                 available_ntp_servers = available_ntp_servers + ntp_servers
             elif operation == 'delete':
