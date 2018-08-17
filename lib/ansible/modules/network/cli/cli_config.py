@@ -207,7 +207,25 @@ def run(module, capabilities, connection, candidate, running):
     elif replace in ('no', 'false', 'False'):
         replace = False
 
-    if capabilities['device_operations']['supports_generate_diff']:
+    if capabilities['device_operations']['supports_onbox_diff']:
+        if diff_replace:
+            module.warn('diff_replace is ignored as the device supports onbox diff')
+        if diff_match:
+            module.warn('diff_mattch is ignored as the device supports onbox diff')
+        if diff_ignore_lines:
+            module.warn('diff_ignore_lines is ignored as the device supports onbox diff')
+
+        if not isinstance(candidate, list):
+            candidate = candidate.strip('\n').splitlines()
+
+        kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
+                  'comment': commit_comment}
+        resp = connection.edit_config(**kwargs)
+
+        if 'diff' in resp:
+            result['changed'] = True
+
+    elif capabilities['device_operations']['supports_generate_diff']:
         kwargs = {'candidate': candidate, 'running': running}
         if diff_match:
             kwargs.update({'diff_match': diff_match})
@@ -239,24 +257,6 @@ def run(module, capabilities, connection, candidate, running):
             if multiline_delimiter:
                 kwargs.update({'multiline_delimiter': multiline_delimiter})
             connection.edit_banner(**kwargs)
-            result['changed'] = True
-
-    elif capabilities['device_operations']['supports_onbox_diff']:
-        if diff_replace:
-            module.warn('diff_replace is ignored as the device supports onbox diff')
-        if diff_match:
-            module.warn('diff_mattch is ignored as the device supports onbox diff')
-        if diff_ignore_lines:
-            module.warn('diff_ignore_lines is ignored as the device supports onbox diff')
-
-        if not isinstance(candidate, list):
-            candidate = candidate.strip('\n').splitlines()
-
-        kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
-                  'comment': commit_comment}
-        resp = connection.edit_config(**kwargs)
-
-        if 'diff' in resp:
             result['changed'] = True
 
     if module._diff:
