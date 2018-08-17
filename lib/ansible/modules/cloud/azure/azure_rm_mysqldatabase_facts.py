@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqldatabase_facts
 version_added: "2.7"
-short_description: Get MySQL Database facts.
+short_description: Get Azure MySQL Database facts.
 description:
     - Get facts of MySQL Database.
 
