@@ -40,7 +40,7 @@ options:
       - "Note that when combined with C(state: absent), specified tags with non-matching values are not purged."
     type: bool
     default: no
-    version_added: '2.7'
+    version_added: '2.6'
 
 author:
   - Lester Wade (@lwade)
