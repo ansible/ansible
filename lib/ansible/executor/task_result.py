@@ -5,10 +5,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from copy import deepcopy
-
 from ansible import constants as C
 from ansible.parsing.dataloader import DataLoader
+from ansible.utils.deepishcopy import deepishcopy
 from ansible.vars.clean import strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
@@ -131,7 +130,7 @@ class TaskResult:
 
             result._result = x
         elif self._result:
-            result._result = deepcopy(self._result)
+            result._result = deepishcopy(self._result)
 
             # actualy remove
             for remove_key in ignore:
