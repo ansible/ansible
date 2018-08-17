@@ -10,4 +10,4 @@ iface eth0 inet static
 iface eth0 inet6 static
   address fc00::1
   post-up echo configuring ipv6
-  mtu 1350
+  post-up XXXX_ipv6
