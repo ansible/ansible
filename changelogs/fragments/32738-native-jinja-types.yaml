@@ -1,0 +1,2 @@
+major_changes:
+- Allow config to enable native jinja types (https://github.com/ansible/ansible/pull/32738)
