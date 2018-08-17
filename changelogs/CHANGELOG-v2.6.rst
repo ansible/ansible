@@ -2,6 +2,39 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.3
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-08-16
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Bugfixes
+--------
+
+- Fix lxd module to be idempotent when the given configuration for the lxd container has not changed (https://github.com/ansible/ansible/pull/38166)
+- Fix setting value type to str to avoid conversion during template read. Fix Idempotency in case of 'no key'.
+- Fix the mount module's handling of swap entries in fstab (https://github.com/ansible/ansible/pull/42837)
+- The fix for `CVE-2018-10875 <https://access.redhat.com/security/cve/cve-2018-10875>`_ prints out a warning message about skipping a config file from a world writable current working directory.  However, if the user explicitly specifies that the config file should be used via the ANSIBLE_CONFIG environment variable then Ansible would honor that but still print out the warning message.  This has been fixed so that Ansible honors the user's explicit wishes and does not print a warning message in that circumstance.
+- To fix the bug where existing host_record was deleted when existing record name is used with different IP. (https://github.com/ansible/ansible/pull/43235)
+- VMware handle pnic in proxyswitch (https://github.com/ansible/ansible/pull/42996)
+- fix azure security group cannot add rules when purge_rule set to false. (https://github.com/ansible/ansible/pull/43699)
+- fix azure_rm_deployment collect tags from existing Resource Group. (https://github.com/ansible/ansible/pull/26104)
+- fix azure_rm_loadbalancer_facts list takes at least 2 arguments. (https://github.com/ansible/ansible/pull/29050)
+- fix for the bundled selectors module (used in the ssh and local connection plugins) when a syscall is restarted after being interrupted by a signal (https://github.com/ansible/ansible/issues/41630)
+- get_url - fix the bug that get_url does not change mode when checksum matches (https://github.com/ansible/ansible/issues/29614)
+- nicer error when multiprocessing breaks https://github.com/ansible/ansible/issues/43090
+- openssl_certificate - Convert valid_date to bytes for conversion
+- openstack_inventory.py dynamic inventory file fixed the plugin to the script so that it will work with current ansible-inventory. Also redirect stdout before dumping the ouptput, because not doing so will cause JSON parse errors in some cases. (https://github.com/ansible/ansible/pull/43432)
+- slack callback - Fix invocation by looking up data from cli.options (https://github.com/ansible/ansible/pull/43542)
+- sysvinit module: handle values of optional parameters (https://github.com/ansible/ansible/pull/42786). Don't disable service when `enabled` parameter isn't set. Fix command when `arguments` parameter isn't set.
+- vars_prompt - properly template play level variables in vars_prompt (https://github.com/ansible/ansible/issues/37984)
+- win_domain - ensure the Netlogon service is up and running after promoting host to controller - https://github.com/ansible/ansible/issues/39235
+- win_domain_controller - ensure the Netlogon service is up and running after promoting host to controller - https://github.com/ansible/ansible/issues/39235
+
 v2.6.2
 ======
 
@@ -15,7 +48,7 @@ Release Summary
 Minor Changes
 -------------
 
-- Sceanrio guide for removing an existing virtual machine is added.
+- Scenario guide for removing an existing virtual machine is added.
 - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
 
 Bugfixes
@@ -111,7 +144,7 @@ Minor Changes
 - PowerShell modules that use Convert-ToSID in Ansible.ModuleUtils.SID.psm1 like win_user_right now accept an actual SID as an input string. This means any local or domain accounts that are named like a SID need to be prefixed with the domain, hostname, or . to ensure it converts to that accounts SID https://github.com/ansible/ansible/issues/38502
 - Raise AnsibleParserError which was missing previously
 - The aws_ses_identity module supports check mode
-- `postgresql_user` module changed `encrypted=yes` to be the default. This shouldn't break any current playbooks, the module will just store passwords hashed by default. This change was done because Postgres 10 dropped support for `UNENCRYPTED` passwords and because all versions since Postgres 7.2 support storing encrypted passwords.
+- ``postgresql_user`` module changed ``encrypted=yes`` to be the default. This shouldn't break any current playbooks, the module will just store passwords hashed by default. This change was done because Postgres 10 dropped support for ``UNENCRYPTED`` passwords and because all versions since Postgres 7.2 support storing encrypted passwords.
 - azure_rm_loadbalancer - add support for sku
 - azure_rm_publicipaddress - add support for sku
 - cloudflare_dns module - Removed restriction from protocol to allow other protocols than tcp and udp to be specified.
@@ -129,7 +162,7 @@ Deprecated Features
 Removed Features (previously deprecated)
 ----------------------------------------
 
-- removed the deprecated always_run task option, please use `check_mode: no` instead
+- removed the deprecated always_run task option, please use ``check_mode: no`` instead
 - win_chocolatey - removed deprecated upgrade option and choco_* output return values
 - win_feature - removed deprecated reboot option
 - win_iis_webapppool - removed the ability to supply attributes as a string in favour of a dictionary
@@ -190,7 +223,7 @@ Bugfixes
 - lineinfile - fix insertbefore when used with BOF to not insert duplicate lines (https://github.com/ansible/ansible/issues/38219)
 - password lookup - Do not load password lookup in network filters, allowing the password lookup to be overriden (https://github.com/ansible/ansible/pull/41907)
 - pause - ensure ctrl+c interrupt works in all cases (https://github.com/ansible/ansible/issues/35372)
-- powershell - use the tmpdir set by `remote_tmp` for become/async tasks instead of the generic $env:TEMP - https://github.com/ansible/ansible/pull/40210
+- powershell - use the tmpdir set by ``remote_tmp`` for become/async tasks instead of the generic $env:TEMP - https://github.com/ansible/ansible/pull/40210
 - selinux - correct check mode behavior to report same changes as normal mode (https://github.com/ansible/ansible/pull/40721)
 - spwd - With python 3.6 spwd.getspnam returns PermissionError instead of KeyError if user does not have privileges (https://github.com/ansible/ansible/issues/39472)
 - synchronize - Ensure the local connection created by synchronize uses _remote_is_local=True, which causes ActionBase to build a local tmpdir (https://github.com/ansible/ansible/pull/40833)
@@ -209,7 +242,7 @@ Bugfixes
 - win_updates - Fixed issue where running win_updates on async fails without any error
 - windows become - Show better error messages when the become process fails
 - winrm - Add better error handling when the kinit process fails
-- winrm - allow `ansible_user` or `ansible_winrm_user` to override `ansible_ssh_user` when both are defined in an inventory - https://github.com/ansible/ansible/issues/39844
+- winrm - allow ``ansible_user`` or ``ansible_winrm_user`` to override ``ansible_ssh_user`` when both are defined in an inventory - https://github.com/ansible/ansible/issues/39844
 - winrm - ensure pexpect is set to not echo the input on a failure and have a manual sanity check afterwards https://github.com/ansible/ansible/issues/41865
 - winrm connection plugin - Fix exception messages sometimes raising a traceback when the winrm connection plugin encounters an unrecoverable error.  https://github.com/ansible/ansible/pull/39333
 - xenserver_facts - ensure module works with newer versions of XenServer (https://github.com/ansible/ansible/pull/35821)

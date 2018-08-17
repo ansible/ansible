@@ -391,3 +391,24 @@ releases:
     - win_unzip_share-discard-cmdlet-output.yaml
     - win_user-validate-fixes.yaml
     release_date: '2018-07-27'
+  2.6.3:
+    codename: Heartbreaker
+    fragments:
+    - 42786-sysvinit-fix-2-issues.yml
+    - 42943_vmware_vmnic_fix.yaml
+    - azure_nsg_deployment_lb.yaml
+    - convert-valid-data-to-bytes-for-conversion.yaml
+    - fix-selectors-error-condition.yaml
+    - fix-swap-mount-module.yaml
+    - fix-world-readable-skip-message.yaml
+    - get_url_bug_fix.yaml
+    - lxd-idempotent-config.yaml
+    - nicer_multi_error.yml
+    - nios_api_duplicate_record-fix.yaml
+    - openstack_inventory-optional-region.yaml
+    - openvswitch_db_column_value_type.yaml
+    - slack_callback_invocation.yaml
+    - v2.6.3_summary.yaml
+    - vars_prompt-allow-prompting-for-play-vars.yaml
+    - win_domain_controller-netlogon.yaml
+    release_date: '2018-08-16'
