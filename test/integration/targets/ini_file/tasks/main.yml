@@ -61,11 +61,11 @@
       - result2.changed == False
       - result2.msg == 'OK'
 
-- name: Ensure "hate=coke" is in section "[drinks]"
+- name: Ensure "beverage=coke" is in section "[drinks]"
   ini_file:
     path: "{{ output_file }}"
     section: drinks
-    option: hate
+    option: beverage
     value: coke
   register: result3
 
@@ -75,7 +75,7 @@
 
       [drinks]
       fav = lemonade
-      hate = coke
+      beverage = coke
     content3: "{{ lookup('file', output_file) }}"
 
 - name: assert 'changed' is true and content is OK
@@ -85,11 +85,11 @@
       - result3.msg == 'option added'
       - content3 == expected3
 
-- name: Remove option "hate=coke"
+- name: Remove option "beverage=coke"
   ini_file:
     path: "{{ output_file }}"
     section: drinks
-    option: hate
+    option: beverage
     state: absent
   register: result4
 
@@ -258,17 +258,17 @@
     dest: "{{ output_file }}"
     force: yes
 
-- name: Ensure "hate=coke" is created within no section
+- name: Ensure "beverage=coke" is created within no section
   ini_file:
     section:
     path: "{{ output_file }}"
-    option: hate
+    option: beverage
     value: coke
   register: result11
 
 - name: set expected content and get current ini file content
   set_fact:
-    expected11: "hate = coke"
+    expected11: "beverage = coke"
     content11: "{{ lookup('file', output_file) }}"
 
 - name: assert 'changed' is true and content is OK (no section)
@@ -278,17 +278,17 @@
       - result11.msg == 'option added'
       - content11 == expected11
 
-- name: Ensure "hate=coke" is modified as "hate=water" within no section
+- name: Ensure "beverage=coke" is modified as "beverage=water" within no section
   ini_file:
     path: "{{ output_file }}"
-    option: hate
+    option: beverage
     value: water
     section:
   register: result12
 
 - name: set expected content and get current ini file content
   set_fact:
-    expected12: "hate = water"
+    expected12: "beverage = water"
 
     content12: "{{ lookup('file', output_file) }}"
 
@@ -299,11 +299,11 @@
       - result12.msg == 'option changed'
       - content12 == expected12
 
-- name: remove option 'hate' within no section
+- name: remove option 'beverage' within no section
   ini_file:
     section:
     path: "{{ output_file }}"
-    option: hate
+    option: beverage
     state: absent
   register: result13
 
@@ -324,7 +324,7 @@
       ini_file:
         path: "{{ output_file }}"
         section: drinks
-        option: hate
+        option: beverage
         value: water
     - name: Add option without section
       ini_file:
@@ -339,7 +339,7 @@
       like = tea
 
       [drinks]
-      hate = water
+      beverage = water
     content14: "{{ lookup('file', output_file) }}"
 
 - name: Verify content of ini file is as expected
