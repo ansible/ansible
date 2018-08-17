@@ -1182,6 +1182,8 @@ files:
     keywords:
     - jinja
     - jinja2
+  lib/ansible/utils/module_docs_fragments/acme.py:
+    maintainers: mgruener resmo felixfontein
   test/sanity/validate-modules:
     keywords:
     - validate-modules
