@@ -926,7 +926,7 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
-  $module_utils/storage/netapp: $team_netapp
+  $module_utils/netapp: $team_netapp
   $module_utils/vultr.py:
     maintainers: $team_vultr
     labels:
