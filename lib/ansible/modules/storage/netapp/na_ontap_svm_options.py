@@ -18,7 +18,7 @@ description:
   - Only Options that appear on "vserver options show" are setable
 extends_documentation_fragment:
   - netapp.na_ontap
-module: na_ontap_svn_options
+module: na_ontap_svm_options
 version_added: "2.7"
 options:
   name:
@@ -36,7 +36,7 @@ options:
 
 EXAMPLES = """
     - name: Set Options
-      na_ontap_svn_options:
+      na_ontap_svm_options:
         vserver: "{{ netapp_vserver_name }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -135,7 +135,7 @@ class NetAppONTAPSvnOptions(object):
 
     def apply(self):
         changed = False
-        netapp_utils.ems_log_event("na_ontap_svn_options", self.server)
+        netapp_utils.ems_log_event("na_ontap_svm_options", self.server)
         is_set = self.is_option_set()
         if not is_set:
             self.set_options()
