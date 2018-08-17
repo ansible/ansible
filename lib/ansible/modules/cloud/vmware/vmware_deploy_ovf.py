@@ -405,6 +405,9 @@ class VMwareDeployOvf:
         return urlunparse(url_parts.as_list())
 
     def upload(self):
+        if self.params['ovf'] is None:
+            self.module.fail_json(msg="OVF path is required for upload operation.")
+
         ovf_dir = os.path.dirname(self.params['ovf'])
 
         lease, import_spec = self.get_lease()
@@ -426,6 +429,7 @@ class VMwareDeployOvf:
                     msg='Failed to find deviceUrl for file %s' % file_item.path
                 )
 
+            vmdk_tarinfo = None
             if self.tar:
                 vmdk = self.tar
                 try:
@@ -448,7 +452,6 @@ class VMwareDeployOvf:
                     self.module.fail_json(
                         msg='Failed to find VMDK file at %s' % vmdk
                     )
-                vmdk_tarinfo = None
 
             uploaders.append(
                 VMDKUploader(
