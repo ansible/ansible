@@ -23,7 +23,7 @@ short_description: ONTAP LIF configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: chhaya gunawat (chhayag@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
     - Creating / deleting and modifying the LIF.
