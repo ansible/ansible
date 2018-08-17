@@ -62,12 +62,14 @@ import os
 import time
 import threading
 
+from abc import ABCMeta, abstractmethod
+
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import with_metaclass
 from ansible.plugins.callback import CallbackBase
 
 
-class MemProf(threading.Thread):
-    """Python thread for recording memory usage"""
+class BaseProf(with_metaclass(ABCMeta, threading.Thread)):
     def __init__(self, path, obj=None, csvwriter=None):
         threading.Thread.__init__(self)
         self.obj = obj
@@ -78,47 +80,66 @@ class MemProf(threading.Thread):
 
     def run(self):
         while self.running:
-            with open(self.path) as f:
-                val = int(f.read().strip())
-            if val > self.max:
-                self.max = val
-            if self.csvwriter:
-                try:
-                    self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
-                except ValueError:
-                    # We may be profiling after the playbook has ended
-                    break
-            time.sleep(0.001)
+            self.poll()
+
+    @abstractmethod
+    def poll(self):
+        pass
 
 
-class CpuProf(threading.Thread):
+class MemoryProf(BaseProf):
+    """Python thread for recording memory usage"""
+    def poll(self):
+        with open(self.path) as f:
+            val = int(f.read().strip()) / 1024**2
+        if val > self.max:
+            self.max = val
+        if self.csvwriter:
+            try:
+                self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
+            except ValueError:
+                # We may be profiling after the playbook has ended
+                self.running = False
+        time.sleep(0.001)
+
+
+class CpuProf(BaseProf):
     def __init__(self, path, poll_interval=0.25, obj=None, csvwriter=None):
-        threading.Thread.__init__(self)
-        self.obj = obj
-        self.path = path
-        self.max = 0
-        self.running = True
-        self.csvwriter = csvwriter
+        super(CpuProf, self).__init__(path, obj=obj, csvwriter=csvwriter)
         self._poll_interval = poll_interval
 
-    def run(self):
-        while self.running:
-            with open(self.path) as f:
-                start_time = time.time() * 1000**2
-                start_usage = int(f.read().strip()) / 1000
-            time.sleep(self._poll_interval)
-            with open(self.path) as f:
-                end_time = time.time() * 1000**2
-                end_usage = int(f.read().strip()) / 1000
-            val = (end_usage - start_usage) / (end_time - start_time) * 100
-            if val > self.max:
-                self.max = val
-            if self.csvwriter:
-                try:
-                    self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
-                except ValueError:
-                    # We may be profiling after the playbook has ended
-                    break
+    def poll(self):
+        with open(self.path) as f:
+            start_time = time.time() * 1000**2
+            start_usage = int(f.read().strip()) / 1000
+        time.sleep(self._poll_interval)
+        with open(self.path) as f:
+            end_time = time.time() * 1000**2
+            end_usage = int(f.read().strip()) / 1000
+        val = (end_usage - start_usage) / (end_time - start_time) * 100
+        if val > self.max:
+            self.max = val
+        if self.csvwriter:
+            try:
+                self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
+            except ValueError:
+                # We may be profiling after the playbook has ended
+                self.running = False
+
+
+class PidsProf(BaseProf):
+    def poll(self):
+        with open(self.path) as f:
+            val = int(f.read().strip())
+        if val > self.max:
+            self.max = val
+        if self.csvwriter:
+            try:
+                self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
+            except ValueError:
+                # We may be profiling after the playbook has ended
+                self.running = False
+        time.sleep(0.001)
 
 
 class CallbackModule(CallbackBase):
@@ -130,16 +151,22 @@ class CallbackModule(CallbackBase):
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
 
-        self._task_memprof = None
-        self._task_cpuprof = None
 
-        self._features = ('memory', 'cpu')
+        self._features = ('memory', 'cpu', 'pids')
+
+        self._units = {
+            'memory': 'MB',
+            'cpu': '%',
+            'pids': '',
+        }
 
         self.task_results = {
             'memory': [],
             'cpu': [],
+            'pids': [],
         }
 
+        self._profilers = dict.fromkeys(self._features)
         self._csv_files = dict.fromkeys(self._features)
         self._csv_writers = dict.fromkeys(self._features)
 
@@ -152,8 +179,9 @@ class CallbackModule(CallbackBase):
         self.mem_max_file = b'/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
         self.mem_current_file = b'/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % self.control_group
         self.cpu_usage_file = b'/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % self.control_group
+        self.pid_current_file = b'/sys/fs/cgroup/pids/%s/pids.current' % self.control_group
 
-        for path in (self.mem_max_file, self.mem_current_file, self.cpu_usage_file):
+        for path in (self.mem_max_file, self.mem_current_file, self.cpu_usage_file, self.pid_current_file):
             try:
                 with open(path) as f:
                     pass
@@ -199,34 +227,31 @@ class CallbackModule(CallbackBase):
 
     def _profile(self, obj=None):
         prev_task = None
-        mem = None
-        cpu = None
+        results = dict.fromkeys(self._features)
         try:
-            self._task_memprof.running = False
-            self._task_cpuprof.running = False
-            mem = self._task_memprof.max
-            cpu = self._task_cpuprof.max
-            prev_task = self._task_memprof.obj
+            for name, prof in self._profilers.items():
+                prof.running = False
+
+            for name, prof in self._profilers.items():
+                results[name] = prof.max
+            prev_task = prof.obj
         except AttributeError:
             pass
 
-        if obj is not None:
-            self._task_memprof = MemProf(self.mem_current_file, obj=obj, csvwriter=self._csv_writers['memory'])
-            self._task_memprof.start()
-            self._task_cpuprof = CpuProf(self.cpu_usage_file, poll_interval=self._cpu_poll_interval, obj=obj,
-                                         csvwriter=self._csv_writers['cpu'])
-            self._task_cpuprof.start()
+        for name, result in results.items():
+            if result is not None:
+                try:
+                    self.task_results[name].append((prev_task, result))
+                except ValueError:
+                    pass
 
-        if mem is not None:
-            try:
-                self.task_results['memory'].append((prev_task, mem / 1024 / 1024))
-            except ValueError:
-                pass
-        if cpu is not None:
-            try:
-                self.task_results['cpu'].append((prev_task, cpu))
-            except ValueError:
-                pass
+        if obj is not None:
+            self._profilers['memory'] = MemoryProf(self.mem_current_file, obj=obj, csvwriter=self._csv_writers['memory'])
+            self._profilers['cpu'] = CpuProf(self.cpu_usage_file, poll_interval=self._cpu_poll_interval, obj=obj,
+                                             csvwriter=self._csv_writers['cpu'])
+            self._profilers['pids'] = PidsProf(self.pid_current_file,  obj=obj, csvwriter=self._csv_writers['pids'])
+            for name, prof in self._profilers.items():
+                prof.start()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._profile(task)
@@ -239,19 +264,21 @@ class CallbackModule(CallbackBase):
 
         self._display.banner('CGROUP PERF RECAP')
         self._display.display('Memory Execution Maximum: %0.2fMB\n' % max_results)
-        try:
-            self._display.display('CPU Execution Maximum: %0.2f%%\n\n' % max((t[1] for t in self.task_results['cpu'])))
-        except:
-            self._display.display('CPU profiling error: no results collected\n\n')
+        for name, data in self.task_results.items():
+            if name == 'memory':
+                continue
+            try:
+                self._display.display('%s Execution Maximum: %0.2f%s\n' % (name, max((t[1] for t in data)), self._units[name]))
+            except Exception as e:
+                self._display.display('%s profiling error: no results collected: %s\n' % (name, e))
 
-        self._display.display('Memory:\n')
-        for task, memory in self.task_results['memory']:
-            self._display.display('%s (%s): %0.2fMB' % (task.get_name(), task._uuid, memory))
+        self._display.display('\n')
 
-        if self.task_results['cpu']:
-            self._display.display('CPU:\n')
-        for task, cpu in self.task_results['cpu']:
-            self._display.display('%s (%s): %0.2f%%' % (task.get_name(), task._uuid, cpu))
+        for name, data in self.task_results.items():
+            if data:
+                self._display.display('%s:\n' % name)
+            for task, value in data:
+                self._display.display('%s (%s): %0.2f%s' % (task.get_name(), task._uuid, value, self._units[name]))
 
         for dummy, f in self._csv_files.items():
             try:
