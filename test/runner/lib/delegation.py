@@ -173,7 +173,7 @@ def delegate_docker(args, exclude, require):
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
-            image_label = re.sub('^ansible/ansible:', '', args.docker)
+            image_label = args.docker_raw
             image_label = re.sub('[^a-zA-Z0-9]+', '-', image_label)
             cmd += ['--coverage-label', 'docker-%s' % image_label]
 
