@@ -45,9 +45,25 @@ def get_docker_completion():
         with open('test/runner/completion/docker.txt', 'r') as completion_fd:
             images = completion_fd.read().splitlines()
 
-        DOCKER_COMPLETION.update(dict((i.split('@')[0], i) for i in images))
+        DOCKER_COMPLETION.update(dict(kvp for kvp in [parse_docker_completion(i) for i in images] if kvp))
 
     return DOCKER_COMPLETION
+
+
+def parse_docker_completion(value):
+    """
+    :type value: str
+    :rtype: tuple[str, dict[str, str]]
+    """
+    values = value.split()
+
+    if not values:
+        return None
+
+    name = values[0]
+    data = dict((kvp[0], kvp[1] if len(kvp) > 1 else '') for kvp in [item.split('=', 1) for item in values[1:]])
+
+    return name, data
 
 
 def is_shippable():
@@ -700,12 +716,9 @@ def docker_qualify_image(name):
     :type name: str
     :rtype: str
     """
-    if not name or any((c in name) for c in ('/', ':')):
-        return name
+    config = get_docker_completion().get(name, {})
 
-    name = get_docker_completion().get(name, name)
-
-    return 'ansible/ansible:%s' % name
+    return config.get('name', name)
 
 
 def parse_to_dict(pattern, value):
