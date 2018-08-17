@@ -84,7 +84,6 @@ class ZabbixInventory(object):
             if config.get('zabbix', 'use_host_interface') in ['false', 'False', False]:
                 self.use_host_interface = False
 
-
     def read_cli(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--host')
@@ -97,24 +96,24 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
-        api_query = {'output': 'extend', 'selectGroups': 'extend',"filter": {"host":[name]}}
+        api_query = {'output': 'extend', 'selectGroups': 'extend', "filter": {"host": [name]}}
         if self.use_host_interface:
-            api_query['selectInterfaces'] = ['useip','ip','dns']
+            api_query['selectInterfaces'] = ['useip', 'ip', 'dns']
         if self.read_host_inventory:
             api_query['selectInventory'] = "extend"
 
         data = {'ansible_ssh_host': name}
         if self.use_host_interface or self.read_host_inventory:
             try:
-                hostsData = api.host.get(api_query)[0]
-                if 'interfaces' in hostsData:
-                        # use first interface only
-                        if hostsData['interfaces'][0]['useip'] == 0:
-                            data['ansible_ssh_host'] = hostsData['interfaces'][0]['dns']
-                        else:
-                            data['ansible_ssh_host'] = hostsData['interfaces'][0]['ip']
-                if ('inventory' in hostsData) and (hostsData['inventory']):
-                    data.update(hostsData['inventory'])
+                hosts_data = api.host.get(api_query)[0]
+                if 'interfaces' in hosts_data:
+                    # use first interface only
+                    if hosts_data['interfaces'][0]['useip'] == 0:
+                        data['ansible_ssh_host'] = hosts_data['interfaces'][0]['dns']
+                    else:
+                        data['ansible_ssh_host'] = hosts_data['interfaces'][0]['ip']
+                if ('inventory' in hosts_data) and (hosts_data['inventory']):
+                    data.update(hosts_data['inventory'])
             except IndexError:
                 # Host not found in zabbix
                 pass
@@ -123,15 +122,15 @@ class ZabbixInventory(object):
     def get_list(self, api):
         api_query = {'output': 'extend', 'selectGroups': 'extend'}
         if self.use_host_interface:
-            api_query['selectInterfaces'] = ['useip','ip','dns']
+            api_query['selectInterfaces'] = ['useip', 'ip', 'dns']
         if self.read_host_inventory:
             api_query['selectInventory'] = "extend"
 
-        hostsData = api.host.get(api_query)
-        data = {'_meta':{'hostvars':{}}}
+        hosts_data = api.host.get(api_query)
+        data = {'_meta': {'hostvars': {}}}
 
         data[self.defaultgroup] = self.hoststub()
-        for host in hostsData:
+        for host in hosts_data:
             hostname = host['name']
             hostvars = dict()
             data[self.defaultgroup]['hosts'].append(hostname)
