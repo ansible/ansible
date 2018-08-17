@@ -103,14 +103,10 @@ class Cliconf(CliconfBase):
             results.append(self.send_command(**line))
             requests.append(cmd)
 
-        diff = self.get_diff(admin=admin)
-        config_diff = diff.get('config_diff')
-        if config_diff or replace:
-            resp['diff'] = config_diff
-            if commit:
-                self.commit(comment=comment, label=label, replace=replace)
-            else:
-                self.discard_changes()
+        if commit:
+            self.commit(comment=comment, label=label, replace=replace)
+        else:
+            self.discard_changes()
 
         self.abort(admin=admin)
 
