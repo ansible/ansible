@@ -1,4 +1,4 @@
-# (c) 2018, Red Hat Inc.
+# (c) 2018, Ansible Project
 #
 # This file is part of Ansible
 #
