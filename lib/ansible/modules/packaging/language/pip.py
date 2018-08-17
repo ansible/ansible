@@ -111,6 +111,7 @@ notes:
 requirements:
 - pip
 - virtualenv
+- setuptools
 author:
 - Matt Wright (@mattupstate)
 '''
@@ -232,6 +233,7 @@ import re
 import sys
 import tempfile
 import operator
+import shlex
 from distutils.version import LooseVersion
 
 try:
@@ -649,7 +651,7 @@ def main():
                 extra_args = ' '.join(args_list)
 
         if extra_args:
-            cmd.append(extra_args)
+            cmd.extend(shlex.split(extra_args))
 
         if name:
             cmd.extend(to_native(p) for p in packages)
