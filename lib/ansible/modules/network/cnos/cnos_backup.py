@@ -40,7 +40,7 @@ description:
      way to back up the running or startup configurations of a switch to a
      remote server. This is achieved by periodically saving a copy of the
      startup or running configuration of the network device to a remote server
-     using FTP, SFTP, TFTP, or SCP. The first step is to create directory from
+     using FTP, SFTP, TFTP, or SCP. The first step is to create a directory from
      where the remote server can be reached. The next step is to provide the
      full file path of the location where the configuration will be backed up.
      Authentication details required by the remote server must be provided as
