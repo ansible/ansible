@@ -230,7 +230,7 @@ class TestInterfacesFileModule(unittest.TestCase):
                     # Restore backup
                     move(backupp, path)
 
-    def test_change_address(self):
+    def test_inet_inet6(self):
         testcases = {
             "change_ipv4": [
                 {
@@ -247,6 +247,42 @@ class TestInterfacesFileModule(unittest.TestCase):
                     'address_family': 'inet6',
                     'option': 'address',
                     'value': 'fc00::42',
+                    'state': 'present',
+                }
+            ],
+            "change_ipv4_pre_up": [
+                {
+                    'iface': 'eth0',
+                    'address_family': 'inet',
+                    'option': 'pre-up',
+                    'value': 'XXXX_ipv4',
+                    'state': 'present',
+                }
+            ],
+            "change_ipv6_pre_up": [
+                {
+                    'iface': 'eth0',
+                    'address_family': 'inet6',
+                    'option': 'pre-up',
+                    'value': 'XXXX_ipv6',
+                    'state': 'present',
+                }
+            ],
+            "change_ipv4_post_up": [
+                {
+                    'iface': 'eth0',
+                    'address_family': 'inet',
+                    'option': 'post-up',
+                    'value': 'XXXX_ipv4',
+                    'state': 'present',
+                }
+            ],
+            "change_ipv6_post_up": [
+                {
+                    'iface': 'eth0',
+                    'address_family': 'inet6',
+                    'option': 'post-up',
+                    'value': 'XXXX_ipv6',
                     'state': 'present',
                 }
             ],

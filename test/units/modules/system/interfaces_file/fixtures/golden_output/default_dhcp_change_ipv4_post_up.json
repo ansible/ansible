@@ -1,12 +1,9 @@
 {
     "eth0": {
-        "address": "fc00::1",
-        "address_family": "inet6",
+        "address_family": "inet",
         "down": [],
-        "method": "manual",
-        "post-up": [
-            "echo configuring ipv6"
-        ],
+        "method": "dhcp",
+        "post-up": [],
         "pre-up": [],
         "up": []
     },
