@@ -20,7 +20,7 @@ short_description: Manage NetApp ONTAP protocol and feature licenses
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Sumit Kumar (sumit4@netapp.com), Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
 - Add or remove licenses on NetApp ONTAP.
