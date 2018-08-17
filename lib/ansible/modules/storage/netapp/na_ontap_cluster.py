@@ -17,7 +17,7 @@ short_description: Create/Join ONTAP cluster. Apply license to cluster
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Suhas Bangalore Shekar (bsuhas@netapp.com), Archana Ganesan (garchana@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
 - Create or join or apply licenses to ONTAP clusters
 options:
