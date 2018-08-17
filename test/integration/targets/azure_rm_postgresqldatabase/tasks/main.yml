@@ -52,6 +52,46 @@
       - output.changed == false
       - output.name == 'testdatabase'
 
+- name: Create second instance of PostgreSQL Database
+  azure_rm_postgresqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: testdatabase2
+
+- name: Gather facts PostgreSQL Database
+  azure_rm_postgresqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: testdatabase
+  register: output 
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0]['server_name'] != None
+      - output.databases[0]['name'] != None
+      - output.databases[0]['charset'] != None
+      - output.databases[0]['collation'] != None
+
+- name: Gather facts PostgreSQL Database
+  azure_rm_postgresqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0]['server_name'] != None
+      - output.databases[0]['name'] != None
+      - output.databases[0]['charset'] != None
+      - output.databases[0]['collation'] != None
+      - output.databases[1]['server_name'] != None
+      - output.databases[1]['name'] != None
+      - output.databases[1]['charset'] != None
+      - output.databases[1]['collation'] != None
+
 - name: Delete instance of PostgreSQL Database -- check mode
   azure_rm_postgresqldatabase:
     resource_group: "{{ resource_group }}"
