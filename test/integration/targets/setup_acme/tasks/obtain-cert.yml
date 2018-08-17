@@ -103,6 +103,7 @@
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
     account_key: "{{ output_dir }}/{{ account_key }}.pem"
+    account_uri: "{{ challenge_data.account_uri }}"
     modify_account: "{{ modify_account }}"
     csr: "{{ output_dir }}/{{ certificate_name }}.csr"
     dest: "{{ output_dir }}/{{ certificate_name }}.pem"
@@ -123,6 +124,7 @@
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
     account_key_content: "{{ account_key_content }}"
+    account_uri: "{{ challenge_data.account_uri }}"
     modify_account: "{{ modify_account }}"
     csr: "{{ output_dir }}/{{ certificate_name }}.csr"
     dest: "{{ output_dir }}/{{ certificate_name }}.pem"
