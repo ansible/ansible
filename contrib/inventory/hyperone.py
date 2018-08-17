@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 from time import time
@@ -86,7 +87,7 @@ class HyperOneInventory(object):
         if os.path.exists(conf_path):
             config.read(conf_path)
         else:
-            print("Unable o read {}".format(conf_path), file=sys.stderr)
+            print("Unable o read {0}".format(conf_path), file=sys.stderr)
         if config.has_option('hyperone', 'token'):
             self.token = config.get('hyperone', 'token')
 
@@ -145,7 +146,7 @@ class HyperOneInventory(object):
                 hostvars['ansible_ssh_host'] = vm["private_ips"][0]
                 hostvars['ansible_host'] = vm["private_ips"][0]
 
-            if vm['public_ips'] and ( self.connection_host == 'public_ip' or not vm['private_ips'] ):
+            if vm['public_ips'] and (self.connection_host == 'public_ip' or not vm['private_ips']):
                 hostvars['ansible_ssh_host'] = vm["public_ips"][0]
                 hostvars['ansible_host'] = vm["public_ips"][0]
 
