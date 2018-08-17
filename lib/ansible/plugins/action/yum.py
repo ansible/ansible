@@ -17,7 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleAction, AnsibleActionFail
 from ansible.plugins.action import ActionBase
 
 try:
@@ -61,33 +60,32 @@ class ActionModule(ActionBase):
         except Exception:
             pass  # could not get it from template!
 
-        try:
-            if module not in ["yum", "yum4", "dnf"]:
-                facts = self._execute_module(module_name="setup", module_args=dict(filter="ansible_pkg_mgr", gather_subset="!all"), task_vars=task_vars)
-                display.debug("Facts %s" % facts)
-                module = facts.get("ansible_facts", {}).get("ansible_pkg_mgr", "auto")
+        if module not in ["yum", "yum4", "dnf"]:
+            facts = self._execute_module(module_name="setup", module_args=dict(filter="ansible_pkg_mgr", gather_subset="!all"), task_vars=task_vars)
+            display.debug("Facts %s" % facts)
+            module = facts.get("ansible_facts", {}).get("ansible_pkg_mgr", "auto")
 
-            if module != "auto":
+        if module != "auto":
 
-                if module == "yum4":
-                    module = "dnf"
+            if module == "yum4":
+                module = "dnf"
 
-                if module not in self._shared_loader_obj.module_loader:
-                    raise AnsibleActionFail("Could not find a yum module backend for %s." % module)
-                else:
-                    # run either the yum (yum3) or dnf (yum4) backend module
-                    new_module_args = self._task.args.copy()
-
-                    display.vvvv("Running %s as the backend for the yum action plugin" % module)
-                    result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+            if module not in self._shared_loader_obj.module_loader:
+                result.update({'failed': True, 'msg': "Could not find a yum module backend for %s." % module})
             else:
-                raise AnsibleActionFail("Could not detect which major revision of yum is in use, which is required to determine module backend.")
+                # run either the yum (yum3) or dnf (yum4) backend module
+                new_module_args = self._task.args.copy()
 
-        except AnsibleAction as e:
-            result.update(e.result)
-        finally:
-            if not self._task.async_val:
-                # remove a temporary path we created
-                self._remove_tmp_path(self._connection._shell.tmpdir)
+                display.vvvv("Running %s as the backend for the yum action plugin" % module)
+                result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+                # Now fall through to cleanup
+        else:
+            result.update({'failed': True, 'msg': "Could not detect which major revision of yum is in use, which is required to determine module backend."})
+            # Now fall through to cleanup
+
+        # Cleanup
+        if not self._task.async_val:
+            # remove a temporary path we created
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result
