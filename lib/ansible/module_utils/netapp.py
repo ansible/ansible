@@ -260,4 +260,3 @@ def get_cserver(server):
     attribute_list = result.get_child_by_name('attributes-list')
     vserver_list = attribute_list.get_child_by_name('vserver-info')
     return vserver_list.get_child_content('vserver-name')
-
