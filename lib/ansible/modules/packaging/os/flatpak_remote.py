@@ -120,14 +120,8 @@ stdout:
 
 import subprocess
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 
-
-def compare(a, b, encoding='utf-8'):
-    if isinstance(a, bytes):
-        a = a.decode(encoding)
-    if isinstance(b, bytes):
-        b = b.decode(encoding)
-    return a == b
 
 def add_remote(module, binary, name, flatpakrepo_url, method):
     """Add a new remote."""
@@ -154,7 +148,7 @@ def remote_exists(module, binary, name, method):
     output = _flatpak_command(module, False, command)
     for line in output.splitlines():
         listed_remote = line.split()
-        if compare(listed_remote[0], name):
+        if to_text(listed_remote[0]) == to_text(name):
             return True
     return False
 
