@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqldatabase_facts
 version_added: "2.7"
-short_description: Get PostgreSQL Database facts.
+short_description: Get Azure PostgreSQL Database facts.
 description:
     - Get facts of PostgreSQL Database.
 
@@ -130,8 +130,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         )
         # store the results of the module operation
         self.results = dict(
-            changed=False,
-            ansible_facts=dict()
+            changed=False
         )
         self.resource_group = None
         self.server_name = None
