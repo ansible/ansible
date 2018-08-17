@@ -1,0 +1,2 @@
+bugfixes:
+- flatten filter - use better method of type checking (https://github.com/ansible/ansible/pull/44331)
