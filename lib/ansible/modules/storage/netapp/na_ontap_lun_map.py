@@ -19,14 +19,14 @@ DOCUMENTATION = """
 
 module: na_ontap_lun_map
 
-short_description: Manage NetApp Ontap lun maps
+short_description: Manage NetApp ONTAP lun maps
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: chhaya gunawat (chhayag@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
-- Map and unmap luns on NetApp Ontap.
+- Map and unmap luns on NetApp ONTAP.
 
 options:
 
@@ -44,7 +44,7 @@ options:
   path:
     description:
     - Path of the LUN..
-    - Required when C(state=present).
+    required: true
 
   vserver:
     required: true
@@ -101,7 +101,7 @@ class NetAppOntapLUNMap(object):
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             initiator_group_name=dict(required=True, type='str'),
-            path=dict(type='str'),
+            path=dict(required=True, type='str'),
             vserver=dict(required=True, type='str'),
             lun_id=dict(required=False, type='str', default=None)),
         )
