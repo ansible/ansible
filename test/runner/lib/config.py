@@ -40,6 +40,7 @@ class EnvironmentConfig(CommonConfig):
             self.python = args.tox  # type: str
 
         self.docker = docker_qualify_image(args.docker)  # type: str
+        self.docker_raw = args.docker  # type: str
         self.remote = args.remote  # type: str
 
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
