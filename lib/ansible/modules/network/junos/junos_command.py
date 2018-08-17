@@ -134,6 +134,11 @@ EXAMPLES = """
 - name: run rpc on the remote device
   junos_command:
     rpcs: get-software-information
+
+- name: show LLDP details
+  junos_command:
+    commands: show lldp
+    display: json
 """
 
 RETURN = """
