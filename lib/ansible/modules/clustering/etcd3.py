@@ -45,8 +45,37 @@ options:
             - the state of the value for the key.
             - can be present or absent
         required: true
+    user:
+        description:
+            - The etcd user to authenticate with.
+        version_added: '2.7'
+    password:
+        description:
+            - The password to use for authentication.
+            - Required if I(user) is defined.
+        version_added: '2.7'
+    ca_cert:
+        description:
+            - The Certificate Authority to use to verify the etcd host.
+            - Required if I(client_cert) and I(client_key) are defined.
+        version_added: '2.7'
+    client_cert:
+        description:
+            - PEM formatted certificate chain file to be used for SSL client authentication.
+            - Required if I(client_key) is defined.
+        version_added: '2.7'
+    client_key:
+        description:
+            - PEM formatted file that contains your private key to be used for SSL client authentication.
+            - Required if I(client_cert) is defined.
+        version_added: '2.7'
+    timeout:
+        description:
+            - The socket level timeout in seconds.
+        version_added: '2.7'
 author:
     - Jean-Philippe Evrard (@evrardjp)
+    - Victor Fauth (@Fauth)
 """
 
 EXAMPLES = """
@@ -57,6 +86,24 @@ EXAMPLES = """
     host: "localhost"
     port: 2379
     state: "present"
+
+# Authenticate using user/password combination with a timeout of 10 seconds
+- etcd3:
+    key: "foo"
+    value: "baz3"
+    state: "present"
+    user: "someone"
+    password: "password123"
+    timeout: 10
+
+# Authenticate using TLS certificates
+- etcd3:
+    key: "foo"
+    value: "baz3"
+    state: "present"
+    ca_cert: "/etc/ssl/certs/CA_CERT.pem"
+    client_cert: "/etc/ssl/certs/cert.crt"
+    client_key: "/etc/ssl/private/key.pem"
 """
 
 RETURN = '''
@@ -90,6 +137,12 @@ def run_module():
         host=dict(type='str', default='localhost'),
         port=dict(type='int', default=2379),
         state=dict(type='str', required=True, choices=['present', 'absent']),
+        user=dict(type='str'),
+        password=dict(type='str'),
+        ca_cert=dict(type='path'),
+        client_cert=dict(type='path'),
+        client_key=dict(type='path'),
+        timeout=dict(type='int'),
     )
 
     # seed the result dict in the object
@@ -107,8 +160,12 @@ def run_module():
     # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_together=[['client_cert', 'client_key'], ['user', 'password']],
     )
+
+    if module.params['ca_cert'] is None and module.params['client_cert'] is not None:
+        module.fail_json(msg="The 'ca_cert' parameter must be defined when 'client_cert' and 'key_cert' are present.")
 
     result['key'] = module.params.get('key')
 
