@@ -12,13 +12,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_volume_clone
-short_description: Manage NetApp Ontap volume clones.
+short_description: Manage NetApp ONTAP volume clones.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
-- Create NetApp Ontap volume clones.
+- Create NetApp ONTAP volume clones.
+- A FlexClone License is required to use this module
 options:
   state:
     description:
@@ -147,18 +148,16 @@ class NetAppOntapVolumeClone(object):
     def does_volume_clone_exists(self):
         clone_obj = netapp_utils.zapi.NaElement('volume-clone-get')
         clone_obj.add_new_child("volume", self.volume)
-        attributes_obj = netapp_utils.zapi.NaElement('desired-attributes')
-        info_obj = netapp_utils.zapi.NaElement('volume-clone-info')
-        clone_obj.add_child_elem(attributes_obj)
-        attributes_obj.add_child_elem(info_obj)
-        attributes_obj.add_new_child("volume", self.volume)
-        attributes_obj.add_new_child("vserver", self.vserver)
-        attributes_obj.add_new_child("parent-volume", self.parent_volume)
         try:
-            self.server.invoke_successfully(clone_obj, True)
+            results = self.server.invoke_successfully(clone_obj, True)
         except:
             return False
-        return True
+        attributes = results.get_child_by_name('attributes')
+        info = attributes.get_child_by_name('volume-clone-info')
+        parent_volume = info.get_child_content('parent-volume')
+        if parent_volume == self.parent_volume:
+            return True
+        self.module.fail_json(msg="Error clone %s already exists for parent %s" % (self.volume, parent_volume))
 
     def apply(self):
         """
