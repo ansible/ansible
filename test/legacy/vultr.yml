@@ -7,6 +7,7 @@
   roles:
     - { role: vultr_account_facts, tags: test_vultr_account_facts }
     - { role: vultr_block_storage, tags: test_vultr_block_storage }
+    - { role: vultr_block_storage_facts, tags: test_vultr_block_storage_facts }
     - { role: vultr_dns_domain, tags: test_vultr_dns_domain }
     - { role: vultr_dns_domain_facts, tags: test_vultr_dns_domain_facts }
     - { role: vultr_dns_record, tags: test_vultr_dns_record }
