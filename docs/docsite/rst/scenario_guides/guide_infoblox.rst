@@ -57,7 +57,7 @@ For these examples, you need to set up your NIOS credentials. See `Credentials a
 Configuring an IPv4 network
 ---------------------------
 
-The following example playbook uses ``nios_network`` module to configure an IPv4 network:
+The following example playbook uses the ``nios_network`` module to configure an IPv4 network:
 
 .. code-block:: yaml
 
@@ -75,12 +75,30 @@ The following example playbook uses ``nios_network`` module to configure an IPv4
             state: present
             provider: "{{nios_provider}}"
 
-Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``groupvars`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
+Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``group_vars/`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
 
 You can find other sample playbooks at  `Infoblox playbooks  <https://github.com/network-automation/infoblox_ansible/tree/master/module_playbooks>`_.
 
-Creating a subnet and forward DNS zone
+Creating a forward DNS zone
 --------------------------------------
+
+The following example playbook uses ``nios_zone`` module to configure an IPv4 network:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: localhost
+      connection: local
+      tasks:
+        - name: "Create a forward DNS zone called {{ ansible_zone }}"
+          nios_zone:
+            name: "{{ ansible_zone }}"
+            comment: local DNS zone
+            state: present
+            provider: "{{ nios_provider }}"
+
+
+
 
 Creating a host record for the gateway address
 ----------------------------------------------
