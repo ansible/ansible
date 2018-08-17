@@ -1327,42 +1327,6 @@ def interfaceLevel2Config(module, cmd, prompt, answer):
 # EOM
 
 
-def portChannelConfig(module, prompt, answer):
-    retVal = ''
-    command = ''
-    portChArg1 = module.params['interfaceArg1']
-    portChArg2 = module.params['interfaceArg2']
-    portChArg3 = module.params['interfaceArg3']
-    if(portChArg1 == "port-channel" and prompt == "(config)#"):
-        command = command + portChArg1 + " load-balance ethernet "
-        if(portChArg2 == "destination-ip" or
-           portChArg2 == "destination-mac" or
-           portChArg2 == "destination-port" or
-           portChArg2 == "source-dest-ip" or
-           portChArg2 == "source-dest-mac" or
-           portChArg2 == "source-dest-port" or
-           portChArg2 == "source-interface" or
-           portChArg2 == "source-ip" or
-           portChArg2 == "source-mac" or
-           portChArg2 == "source-port"):
-
-            # debugOutput(portChArg2)
-            command = command + portChArg2 + " "
-            if(portChArg3 is None):
-                command = command + ""
-            elif(portChArg3 == "source-interface"):
-                command = command + portChArg3
-                cmd = [{'command': command, 'prompt': None, 'answer': None}]
-                retVal = retVal + str(run_cnos_commands(module, cmd))
-            else:
-                retVal = "Error-231"
-                return retVal
-        else:
-            retVal = "Error-232"
-            return retVal
-# EOM
-
-
 def doStartUpConfigRollback(
         protocol, timeout, confServerIp, confPath, confServerUser,
         confServerPwd, obj):
