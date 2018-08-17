@@ -54,8 +54,8 @@
   nxos_logging: &con3
     dest: console
     dest_level: 3
+    provider: "{{ connection }}"
   register: result
-  provider: "{{ connection }}"
   ignore_errors: yes
 
 - assert:
