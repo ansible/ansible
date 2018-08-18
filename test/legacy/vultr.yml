@@ -14,6 +14,7 @@
     - { role: vultr_firewall_group, tags: test_vultr_firewall_group }
     - { role: vultr_firewall_group_facts, tags: test_vultr_firewall_group_facts }
     - { role: vultr_firewall_rule, tags: test_vultr_firewall_rule }
+    - { role: vultr_network, tags: test_vultr_network }
     - { role: vultr_os_facts, tags: test_vultr_os_facts }
     - { role: vultr_plan_facts, tags: test_vultr_plan_facts }
     - { role: vultr_region_facts, tags: test_vultr_region_facts }
