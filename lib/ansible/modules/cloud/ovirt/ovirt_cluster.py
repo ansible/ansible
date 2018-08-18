@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -39,7 +24,7 @@ options:
         required: true
     state:
         description:
-            - "Should the cluster be present or absent"
+            - "Should the cluster be present or absent."
         choices: ['present', 'absent']
         default: present
     data_center:
@@ -78,22 +63,22 @@ options:
                outweighs its CPU cost."
     ksm_numa:
         description:
-            - "If I(True) enables KSM C(ksm) for best berformance inside NUMA nodes."
+            - "If I(True) enables KSM C(ksm) for best performance inside NUMA nodes."
     ha_reservation:
         description:
-            - "If I(True) enable the oVirt/RHV to monitor cluster capacity for highly
+            - "If I(True) enables the oVirt/RHV to monitor cluster capacity for highly
                available virtual machines."
     trusted_service:
         description:
-            - "If (True) enable integration with an OpenAttestation server."
+            - "If I(True) enables integration with an OpenAttestation server."
     vm_reason:
         description:
-            - "If I(True) enable an optional reason field when a virtual machine
+            - "If I(True) enables an optional reason field when a virtual machine
                is shut down from the Manager, allowing the administrator to
                provide an explanation for the maintenance."
     host_reason:
         description:
-            - "If I(True) enable an optional reason field when a host is placed
+            - "If I(True) enables an optional reason field when a host is placed
                into maintenance mode from the Manager, allowing the administrator
                to provide an explanation for the maintenance."
     memory_policy:
@@ -207,7 +192,7 @@ options:
     switch_type:
         description:
             - "Type of switch to be used by all networks in given cluster.
-               Either I(legacy) which is using linux brigde or I(ovs) using
+               Either I(legacy) which is using linux bridge or I(ovs) using
                Open vSwitch."
         choices: ['legacy', 'ovs']
     compatibility_version:

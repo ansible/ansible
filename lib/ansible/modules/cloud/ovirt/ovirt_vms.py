@@ -52,7 +52,7 @@ options:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
                vnic_profile is described by the following dictionary:"
             - "C(source_network_name): The network name of the source network."
-            - "C(source_profile_name): The prfile name related to the source network."
+            - "C(source_profile_name): The profile name related to the source network."
             - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
         version_added: "2.5"
     cluster_mappings:
@@ -324,8 +324,8 @@ options:
     disks:
         description:
             - List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary.
-            - C(name) - Name of the disk. Either C(name) or C(id) is reuqired.
-            - C(id) - ID of the disk. Either C(name) or C(id) is reuqired.
+            - C(name) - Name of the disk. Either C(name) or C(id) is required.
+            - C(id) - ID of the disk. Either C(name) or C(id) is required.
             - C(interface) - Interface of the disk, either I(virtio) or I(IDE), default is I(virtio).
             - C(bootable) - I(True) if the disk should be bootable, default is non bootable.
             - C(activate) - I(True) if the disk should be activated, default is activated.
@@ -366,7 +366,7 @@ options:
             - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
     cloud_init_nics:
         description:
-            - List of dictionaries representing network interafaces to be setup by cloud init.
+            - List of dictionaries representing network interfaces to be setup by cloud init.
             - This option is used, when user needs to setup more network interfaces via cloud init.
             - If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
               are merged with C(cloud_init_nics) parameters.

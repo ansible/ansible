@@ -115,7 +115,7 @@ options:
         description:
             - "Dictionary with values for fibre channel storage type:"
             - "C(lun_id) - LUN id."
-            - "C(override_luns) - If I(True) FCP storage domain luns will be overridden before adding."
+            - "C(override_luns) - If I(True) FCP storage domain LUNs will be overridden before adding."
             - "Note that these parameters are not idempotent."
     wipe_after_delete:
         description:
@@ -127,11 +127,11 @@ options:
         version_added: "2.5"
     critical_space_action_blocker:
         description:
-            - "Inidcates the minimal free space the storage domain should contain in percentages."
+            - "Indicates the minimal free space the storage domain should contain in percentages."
         version_added: "2.5"
     warning_low_space:
         description:
-            - "Inidcates the minimum percentage of a free space in a storage domain to present a warning."
+            - "Indicates the minimum percentage of a free space in a storage domain to present a warning."
         version_added: "2.5"
     destroy:
         description:
