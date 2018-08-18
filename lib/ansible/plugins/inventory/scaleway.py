@@ -46,12 +46,20 @@ DOCUMENTATION = '''
                 - public_ipv6
                 - hostname
                 - id
+        variables:
+            description: 'set individual variables: keys are variable names and
+                          values are templates. Any value returned by the
+                          L(Scaleway API, https://developer.scaleway.com/#servers-server-get)
+                          can be used.'
+            type: dict
 '''
 
 EXAMPLES = '''
 # scaleway_inventory.yml file in YAML format
 # Example command line: ansible-inventory --list -i scaleway_inventory.yml
 
+# use hostname as inventory_hostname
+# use the private IP address to connect to the host
 plugin: scaleway
 regions:
   - ams1
@@ -59,13 +67,25 @@ regions:
 tags:
   - foobar
 hostnames:
-  - public_ipv4
+  - hostname
+variables:
+  ansible_host: private_ip
+  state: state
+
+# use hostname as inventory_hostname and public IP address to connect to the host
+plugin: scaleway
+hostnames:
+  - hostname
+regions:
+  - par1
+variables:
+  ansible_host: public_ip.address
 '''
 
 import json
 
 from ansible.errors import AnsibleError
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.scaleway import SCALEWAY_LOCATION
 from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_native
@@ -152,7 +172,7 @@ extractors = {
 }
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable):
     NAME = 'scaleway'
 
     def verify_file(self, path):
@@ -177,7 +197,6 @@ class InventoryModule(BaseInventoryPlugin):
 
         if extract_public_ipv4(server_info=server_info):
             self.inventory.set_variable(host, "public_ipv4", extract_public_ipv4(server_info=server_info))
-            self.inventory.set_variable(host, "ansible_host", extract_public_ipv4(server_info=server_info))
 
     def _get_zones(self, config_zones):
         return set(SCALEWAY_LOCATION.keys()).intersection(config_zones)
@@ -231,6 +250,9 @@ class InventoryModule(BaseInventoryPlugin):
                 self.inventory.add_group(group=group)
                 self.inventory.add_host(group=group, host=hostname)
                 self._fill_host_variables(host=hostname, server_info=host_infos)
+
+                # Composed variables
+                self._set_composite_vars(self.get_option('variables'), host_infos, hostname, strict=False)
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
