@@ -31,6 +31,9 @@ options:
         default: ha-datacenter
         description:
         - Datacenter to deploy to.
+    cluster:
+        description:
+        - Cluster to deploy to.
     datastore:
         default: datastore1
         description:
@@ -138,8 +141,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import generic_urlparse, open_url, urlparse, urlunparse
 from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_datacenter_by_name, find_datastore_by_name,
-                                         find_network_by_name, find_resource_pool_by_name, find_vm_by_name, gather_vm_facts,
-                                         vmware_argument_spec, wait_for_task, wait_for_vm_ip)
+                                         find_network_by_name, find_resource_pool_by_name, find_vm_by_name, find_cluster_by_name,
+                                         gather_vm_facts, vmware_argument_spec, wait_for_task, wait_for_vm_ip)
 try:
     from ansible.module_utils.vmware import vim
     from pyVmomi import vmodl
@@ -282,9 +285,16 @@ class VMwareDeployOvf:
         if not self.datacenter:
             self.module.fail_json(msg='%(datacenter)s could not be located' % self.params)
 
-        self.resource_pool = find_resource_pool_by_name(self.si, self.params['resource_pool'])
-        if not self.resource_pool:
-            self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
+        if self.params['cluster']:
+            cluster = find_cluster_by_name(self.si, self.params['cluster'])
+            if cluster is None:
+                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
+            else:
+                self.resource_pool = cluster.resourcePool
+        else:
+            self.resource_pool = find_resource_pool_by_name(self.si, self.params['resource_pool'])
+            if not self.resource_pool:
+                self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
 
         for key, value in self.params['networks'].items():
             network = find_network_by_name(self.si, value)
@@ -508,6 +518,9 @@ def main():
         },
         'datacenter': {
             'default': 'ha-datacenter',
+        },
+        'cluster': {
+            'default': None,
         },
         'deployment_option': {
             'default': None,
