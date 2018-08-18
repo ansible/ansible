@@ -34,12 +34,12 @@ Alternatively, passwords can be specified with a file or a script (the script ve
 
 The password should be a string stored as a single line in the file.
 
+If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output.  If your script needs to prompt for data, prompts can be sent to standard error.
+
 .. note::
    You can also set :envvar:`ANSIBLE_VAULT_PASSWORD_FILE` environment variable, e.g. ``ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt`` and Ansible will automatically search for the password in that file.
 
-If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output.  If your script needs to prompt for data, prompts can be sent to standard error.
-
-This is something you may wish to do if using Ansible from a continuous integration system like Jenkins.
+   This is something you may wish to do if using Ansible from a continuous integration system like Jenkins.
 
 The :option:`--vault-password-file <ansible-pull --vault-password-file>` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode.
 
