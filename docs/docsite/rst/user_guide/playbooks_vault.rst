@@ -7,16 +7,20 @@ Using Vault in playbooks
 
 The "Vault" is a feature of Ansible that allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plaintext in playbooks or roles. These vault files can then be distributed or placed in source control.
 
-To enable this feature, a command line tool, :ref:`ansible-vault` is used to edit files, and a command line flag :option:`--ask-vault-pass <ansible-vault --ask-vault-pass>` or :option:`--vault-password-file <ansible-vault --vault-password-file>` is used. You can also modify your ``ansible.cfg`` file to specify the location of a password file or configure Ansible to always prompt for the password. These options require no command line flag usage.
+To enable this feature, a command line tool, :ref:`ansible-vault` is used to edit files, and a command line flag :option:`--ask-vault-pass <ansible-vault --ask-vault-pass>`, :option:`--vault-password-file <ansible-vault --vault-password-file>` or :option:`--vault-id <ansible-playbook --vault-id>` is used. You can also modify your ``ansible.cfg`` file to specify the location of a password file or configure Ansible to always prompt for the password. These options require no command line flag usage.
 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
 
+.. note::
+    The :option:`--vault-id <ansible-playbook --vault-id>` flag is only avalibe in Ansible 2.4 or later.
 .. _running_a_playbook_with_vault:
 
 Running a Playbook With Vault
 `````````````````````````````
 
-To run a playbook that contains vault-encrypted data files, you must pass one of two flags.  To specify the vault-password interactively::
+To run a playbook that contains vault-encrypted data files, you must provide the vault password.
+
+To specify the vault-password interactively::
 
     ansible-playbook site.yml --ask-vault-pass
 
