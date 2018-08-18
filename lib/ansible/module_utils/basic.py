@@ -164,7 +164,19 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
-from ansible.module_utils.validators.core import check_type_str
+from ansible.module_utils.validators.core import (
+    check_type_str,
+    check_type_list,
+    check_type_dict,
+    check_type_bool,
+    check_type_int,
+    check_type_float,
+    check_type_path,
+    check_type_jsonarg,
+    check_type_raw,
+    check_type_bytes,
+    check_type_bits,
+)
 
 # Note: When getting Sequence from collections, it matches with strings.  If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -778,6 +790,35 @@ def jsonify(data, **kwargs):
     raise UnicodeError('Invalid unicode encoding encountered')
 
 
+def safe_eval(value, locals=None, include_exceptions=False):
+
+    # do not allow method calls to modules
+    if not isinstance(value, string_types):
+        # already templated to a datavaluestructure, perhaps?
+        if include_exceptions:
+            return (value, None)
+        return value
+    if re.search(r'\w\.\w+\(', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    # do not allow imports
+    if re.search(r'import \w+', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    try:
+        result = literal_eval(value)
+        if include_exceptions:
+            return (result, None)
+        else:
+            return result
+    except Exception as e:
+        if include_exceptions:
+            return (value, e)
+        return value
+
+
 class AnsibleFallbackNotFound(Exception):
     pass
 
@@ -865,17 +906,17 @@ class AnsibleModule(object):
 
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
             'str': check_type_str,
-            'list': self._check_type_list,
-            'dict': self._check_type_dict,
-            'bool': self._check_type_bool,
-            'int': self._check_type_int,
-            'float': self._check_type_float,
-            'path': self._check_type_path,
-            'raw': self._check_type_raw,
-            'jsonarg': self._check_type_jsonarg,
-            'json': self._check_type_jsonarg,
-            'bytes': self._check_type_bytes,
-            'bits': self._check_type_bits,
+            'list': check_type_list,
+            'dict': check_type_dict,
+            'bool': check_type_bool,
+            'int': check_type_int,
+            'float': check_type_float,
+            'path': check_type_path,
+            'raw': check_type_raw,
+            'jsonarg': check_type_jsonarg,
+            'json': check_type_jsonarg,
+            'bytes': check_type_bytes,
+            'bits': check_type_bits,
         }
         if not bypass_checks:
             self._check_required_arguments()
@@ -1845,151 +1886,7 @@ class AnsibleModule(object):
                 self.fail_json(msg=msg)
 
     def safe_eval(self, value, locals=None, include_exceptions=False):
-
-        # do not allow method calls to modules
-        if not isinstance(value, string_types):
-            # already templated to a datavaluestructure, perhaps?
-            if include_exceptions:
-                return (value, None)
-            return value
-        if re.search(r'\w\.\w+\(', value):
-            if include_exceptions:
-                return (value, None)
-            return value
-        # do not allow imports
-        if re.search(r'import \w+', value):
-            if include_exceptions:
-                return (value, None)
-            return value
-        try:
-            result = literal_eval(value)
-            if include_exceptions:
-                return (result, None)
-            else:
-                return result
-        except Exception as e:
-            if include_exceptions:
-                return (value, e)
-            return value
-
-    def _check_type_str(self, value):
-        if isinstance(value, string_types):
-            return value
-        # Note: This could throw a unicode error if value's __str__() method
-        # returns non-ascii.  Have to port utils.to_bytes() if that happens
-        return str(value)
-
-    def _check_type_list(self, value):
-        if isinstance(value, list):
-            return value
-
-        if isinstance(value, string_types):
-            return value.split(",")
-        elif isinstance(value, int) or isinstance(value, float):
-            return [str(value)]
-
-        raise TypeError('%s cannot be converted to a list' % type(value))
-
-    def _check_type_dict(self, value):
-        if isinstance(value, dict):
-            return value
-
-        if isinstance(value, string_types):
-            if value.startswith("{"):
-                try:
-                    return json.loads(value)
-                except:
-                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
-                    if exc is not None:
-                        raise TypeError('unable to evaluate string as dictionary')
-                    return result
-            elif '=' in value:
-                fields = []
-                field_buffer = []
-                in_quote = False
-                in_escape = False
-                for c in value.strip():
-                    if in_escape:
-                        field_buffer.append(c)
-                        in_escape = False
-                    elif c == '\\':
-                        in_escape = True
-                    elif not in_quote and c in ('\'', '"'):
-                        in_quote = c
-                    elif in_quote and in_quote == c:
-                        in_quote = False
-                    elif not in_quote and c in (',', ' '):
-                        field = ''.join(field_buffer)
-                        if field:
-                            fields.append(field)
-                        field_buffer = []
-                    else:
-                        field_buffer.append(c)
-
-                field = ''.join(field_buffer)
-                if field:
-                    fields.append(field)
-                return dict(x.split("=", 1) for x in fields)
-            else:
-                raise TypeError("dictionary requested, could not parse JSON or key=value")
-
-        raise TypeError('%s cannot be converted to a dict' % type(value))
-
-    def _check_type_bool(self, value):
-        if isinstance(value, bool):
-            return value
-
-        if isinstance(value, string_types) or isinstance(value, int):
-            return self.boolean(value)
-
-        raise TypeError('%s cannot be converted to a bool' % type(value))
-
-    def _check_type_int(self, value):
-        if isinstance(value, int):
-            return value
-
-        if isinstance(value, string_types):
-            return int(value)
-
-        raise TypeError('%s cannot be converted to an int' % type(value))
-
-    def _check_type_float(self, value):
-        if isinstance(value, float):
-            return value
-
-        if isinstance(value, (binary_type, text_type, int)):
-            return float(value)
-
-        raise TypeError('%s cannot be converted to a float' % type(value))
-
-    def _check_type_path(self, value):
-        value = self._check_type_str(value)
-        return os.path.expanduser(os.path.expandvars(value))
-
-    def _check_type_jsonarg(self, value):
-        # Return a jsonified string.  Sometimes the controller turns a json
-        # string into a dict/list so transform it back into json here
-        if isinstance(value, (text_type, binary_type)):
-            return value.strip()
-        else:
-            if isinstance(value, (list, tuple, dict)):
-                return self.jsonify(value)
-        raise TypeError('%s cannot be converted to a json string' % type(value))
-
-    def _check_type_raw(self, value):
-        return value
-
-    def _check_type_bytes(self, value):
-        try:
-            self.human_to_bytes(value)
-        except ValueError:
-            raise TypeError('%s cannot be converted to a Byte value' % type(value))
-
-    def _check_type_bits(self, value):
-        try:
-            self.human_to_bytes(value, isbits=True)
-        except ValueError:
-            raise TypeError('%s cannot be converted to a Bit value' % type(value))
+        return safe_eval(value=value, locals=locals, include_exceptions=include_exceptions)
 
     def _handle_options(self, argument_spec=None, params=None):
         ''' deal with options to create sub spec '''
