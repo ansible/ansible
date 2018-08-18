@@ -164,7 +164,7 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
-
+from ansible.module_utils.validators.core import check_type_str
 
 # Note: When getting Sequence from collections, it matches with strings.  If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -864,7 +864,7 @@ class AnsibleModule(object):
         self._set_defaults(pre=True)
 
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
-            'str': self._check_type_str,
+            'str': check_type_str,
             'list': self._check_type_list,
             'dict': self._check_type_dict,
             'bool': self._check_type_bool,
