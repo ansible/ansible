@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: bigip_security_address_list
+module: bigip_firewall_address_list
 short_description: Manage address lists on BIG-IP AFM
 description:
   - Manages the AFM address lists on a BIG-IP. This module can be used to add
@@ -92,7 +92,7 @@ author:
 
 EXAMPLES = r'''
 - name: Create an address list
-  bigip_security_address_list:
+  bigip_firewall_address_list:
     name: foo
     addresses:
       - 3.3.3.3
@@ -161,6 +161,11 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.compat.ipaddress import ip_address
+    from library.module_utils.compat.ipaddress import ip_interface
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import is_valid_ip_interface
+    from library.module_utils.network.f5.ipaddress import is_valid_ip_network
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -173,16 +178,15 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.compat.ipaddress import ip_address
+    from ansible.module_utils.compat.ipaddress import ip_interface
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip_interface
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip_network
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -192,17 +196,29 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'addressLists', 'addresses', 'description', 'fqdns', 'geo'
+        'addressLists',
+        'addresses',
+        'description',
+        'fqdns',
+        'geo',
     ]
 
     returnables = [
-        'addresses', 'address_ranges', 'address_lists', 'description',
-        'fqdns', 'geo_locations'
+        'addresses',
+        'address_ranges',
+        'address_lists',
+        'description',
+        'fqdns',
+        'geo_locations',
     ]
 
     updatables = [
-        'addresses', 'address_ranges', 'address_lists', 'description',
-        'fqdns', 'geo_locations'
+        'addresses',
+        'address_ranges',
+        'address_lists',
+        'description',
+        'fqdns',
+        'geo_locations',
     ]
 
     def to_return(self):
@@ -524,21 +540,16 @@ class ModuleParameters(Parameters):
     def addresses(self):
         if self._values['addresses'] is None:
             return None
+        result = []
         for x in self._values['addresses']:
-            try:
-                netaddr.IPAddress(x)
-            except netaddr.core.AddrFormatError:
+            if is_valid_ip(x):
+                result.append(str(ip_address(u'{0}'.format(x))))
+            elif is_valid_ip_interface(x):
+                result.append(str(ip_interface(u'{0}'.format(x))))
+            else:
                 raise F5ModuleError(
                     "Address {0} must be either an IPv4 or IPv6 address or network.".format(x)
                 )
-            except ValueError:
-                try:
-                    netaddr.IPNetwork(x)
-                except netaddr.core.AddrFormatError:
-                    raise F5ModuleError(
-                        "Address {0} must be either an IPv4 or IPv6 address or network.".format(x)
-                    )
-        result = [str(x) for x in self._values['addresses']]
         result = sorted(result)
         return result
 
@@ -552,13 +563,13 @@ class ModuleParameters(Parameters):
             start = start.strip()
             stop = stop.strip()
 
-            start = netaddr.IPAddress(start)
-            stop = netaddr.IPAddress(stop)
+            start = ip_address(u'{0}'.format(start))
+            stop = ip_address(u'{0}'.format(stop))
             if start.version != stop.version:
                 raise F5ModuleError(
                     "When specifying a range, IP addresses must be of the same type; IPv4 or IPv6."
                 )
-            if start > stop:
+            if int(start) > int(stop):
                 stop, start = start, stop
             item = '{0}-{1}'.format(str(start), str(stop))
             result.append(item)
@@ -638,13 +649,13 @@ class ReportableChanges(Changes):
             start = start.strip()
             stop = stop.strip()
 
-            start = netaddr.IPAddress(start)
-            stop = netaddr.IPAddress(stop)
+            start = ip_address(u'{0}'.format(start))
+            stop = ip_address(u'{0}'.format(stop))
             if start.version != stop.version:
                 raise F5ModuleError(
                     "When specifying a range, IP addresses must be of the same type; IPv4 or IPv6."
                 )
-            if start > stop:
+            if int(start) > int(stop):
                 stop, start = start, stop
             item = '{0}-{1}'.format(str(start), str(stop))
             result.append(item)
@@ -924,8 +935,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)
