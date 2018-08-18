@@ -163,7 +163,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean as parse_boolean
 from ansible.module_utils.validators.core import (
     check_type_str,
     check_type_list,
@@ -817,6 +817,17 @@ def safe_eval(value, locals=None, include_exceptions=False):
         if include_exceptions:
             return (value, e)
         return value
+
+
+def boolean(arg):
+        ''' return a bool for the arg '''
+        if arg is None:
+            return arg
+
+        try:
+            return parse_boolean(arg)
+        except TypeError:
+            raise TypeError('%s cannot be converted to a bool' % type(arg))
 
 
 class AnsibleFallbackNotFound(Exception):
@@ -2170,10 +2181,6 @@ class AnsibleModule(object):
         return bin_path
 
     def boolean(self, arg):
-        ''' return a bool for the arg '''
-        if arg is None:
-            return arg
-
         try:
             return boolean(arg)
         except TypeError as e:

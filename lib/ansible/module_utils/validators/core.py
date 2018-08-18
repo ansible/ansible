@@ -1,7 +1,10 @@
+# Copyright: 2018, Ansible Project
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause )
+
 import json
 import os
 
-from ansible.module_utils.basic import jsonify, human_to_bytes, safe_eval
+from ansible.module_utils.basic import jsonify, human_to_bytes, safe_eval, boolean
 from ansible.module_utils.six import string_types, binary_type, text_type
 
 
@@ -77,7 +80,7 @@ def check_type_bool(self, value):
         return value
 
     if isinstance(value, string_types) or isinstance(value, int):
-        return self.boolean(value)
+        return boolean(value)
 
     raise TypeError('%s cannot be converted to a bool' % type(value))
 
