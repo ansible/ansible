@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: bigip_security_port_list
+module: bigip_firewall_port_list
 short_description: Manage port lists on BIG-IP AFM
 description:
   - Manages the AFM port lists on a BIG-IP. This module can be used to add
@@ -62,7 +62,7 @@ author:
 
 EXAMPLES = r'''
 - name: Create a simple port list
-  bigip_security_port_list:
+  bigip_firewall_port_list:
     name: foo
     ports:
       - 80
@@ -74,7 +74,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Override the above list of ports with a new list
-  bigip_security_port_list:
+  bigip_firewall_port_list:
     name: foo
     ports:
       - 3389
@@ -87,7 +87,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Create port list with series of ranges
-  bigip_security_port_list:
+  bigip_firewall_port_list:
     name: foo
     port_ranges:
       - 25-30
@@ -100,7 +100,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Use multiple types of port arguments
-  bigip_security_port_list:
+  bigip_firewall_port_list:
     name: foo
     port_ranges:
       - 25-30
@@ -116,7 +116,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove port list
-  bigip_security_port_list:
+  bigip_firewall_port_list:
     name: foo
     password: secret
     server: lb.mydomain.com
@@ -125,7 +125,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Create port list from a file with one port per line
-  bigip_security_port_list:
+  bigip_firewall_port_list:
     name: lot-of-ports
     ports: "{{ lookup('file', 'my-large-port-list.txt').split('\n') }}"
     password: secret
