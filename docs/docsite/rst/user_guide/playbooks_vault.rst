@@ -93,6 +93,20 @@ the passwords, but it's generally cleaner to avoid mixing these with :option:`--
     is only used to decrypt data that was encrypted with the same label. See :ref:`specifying_vault_ids`
     for more details.
 
+Vault Password Client Scripts
+`````````````````````````````
+
+Ansible 2.5 and later support using a single executable script to get different passwords depending on the
+vault label. These client scripts must have a file name that ends with :file:`-client`. For example:
+
+To get the dev password from the system keyring using the :file:`contrib/vault/vault-keyring-client.py` script:
+
+.. code-block:: bash
+
+    ansible-playbook --vault-id dev@contrib/vault/vault-keyring-client.py
+
+See :ref:`specifying_vault_ids` for a complete explanation of this topic.
+
 
 .. _single_encrypted_variable:
 
