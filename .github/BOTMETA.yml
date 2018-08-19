@@ -330,7 +330,7 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: Spredzy
-  $modules/crypto/acme/: mgruener resmo felixfontein
+  $modules/crypto/acme/: resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/misc/elasticsearch_plugin.py: ThePixelDeveloper
   $modules/database/misc/kibana_plugin.py: barryib
@@ -430,7 +430,7 @@ files:
   $modules/net_tools/basics/get_url.py: jpmens ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py: $team_ansible
-  $modules/net_tools/cloudflare_dns.py: mgruener andreaso
+  $modules/net_tools/cloudflare_dns.py: andreaso
   $modules/net_tools/dnsimple.py: drcapulet
   $modules/net_tools/dnsmadeeasy.py: briceburg
   $modules/net_tools/exoscale/: resmo
@@ -813,7 +813,7 @@ files:
     labels: networking
     support: community
   $module_utils/acme.py:
-    maintainers: mgruener resmo felixfontein
+    maintainers: resmo felixfontein
   $module_utils/network/aireos:
     maintainers: jmighion
     labels: networking
@@ -1183,7 +1183,7 @@ files:
     - jinja
     - jinja2
   lib/ansible/utils/module_docs_fragments/acme.py:
-    maintainers: mgruener resmo felixfontein
+    maintainers: resmo felixfontein
   test/sanity/validate-modules:
     keywords:
     - validate-modules
@@ -1234,7 +1234,7 @@ files:
     - networking
     - nxos
   test/integration/targets/setup_acme:
-    maintainers: mgruener resmo felixfontein
+    maintainers: resmo felixfontein
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
   test/integration/targets/ucs:
