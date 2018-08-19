@@ -1,0 +1,37 @@
+{
+    "kind": "tm:ltm:profile:http-compression:http-compressionstate",
+    "name": "profile1",
+    "partition": "Common",
+    "fullPath": "/Common/profile1",
+    "generation": 132,
+    "selfLink": "https://localhost/mgmt/tm/ltm/profile/http-compression/~Common~profile1?ver=13.1.0.4",
+    "allowHttp_10": "disabled",
+    "appService": "none",
+    "browserWorkarounds": "disabled",
+    "bufferSize": 4096,
+    "contentTypeExclude": [],
+    "contentTypeInclude": [
+        "text/",
+        "application/(xml|x-javascript)"
+    ],
+    "cpuSaver": "enabled",
+    "cpuSaverHigh": 90,
+    "cpuSaverLow": 75,
+    "defaultsFrom": "/Common/httpcompression",
+    "defaultsFromReference": {
+        "link": "https://localhost/mgmt/tm/ltm/profile/http-compression/~Common~httpcompression?ver=13.1.0.4"
+    },
+    "description": "my profile",
+    "gzipLevel": 1,
+    "gzipMemoryLevel": 8192,
+    "gzipWindowSize": 16384,
+    "keepAcceptEncoding": "disabled",
+    "methodPrefer": "gzip",
+    "minSize": 1024,
+    "selective": "disabled",
+    "uriExclude": [],
+    "uriInclude": [
+        ".*"
+    ],
+    "varyHeader": "enabled"
+}
