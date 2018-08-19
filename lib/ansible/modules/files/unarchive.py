@@ -752,7 +752,7 @@ class TgzArchive(object):
             return False, 'Command "%s" could not handle archive.' % self.cmd_path
         # Errors and no files in archive assume that we weren't able to
         # properly unarchive it
-        return False, 'Command "%s" found no files in archive.' % self.cmd_path
+        return False, 'Command "%s" found no files in archive. Unarchiving empty archive file is not supported yet.' % self.cmd_path
 
 
 # Class to handle tar files that aren't compressed
