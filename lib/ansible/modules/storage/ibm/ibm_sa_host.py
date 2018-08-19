@@ -40,7 +40,7 @@ options:
     domain:
         description:
             - The domains the cluster will be attached to.
-                To include more than one domain, 
+                To include more than one domain,
                 separate domain names with commas.
                 To include all existing domains, use an asterisk ("*").
         required: false
@@ -84,6 +84,7 @@ RETURN = '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ibm_sa_utils import execute_pyxcli_command, \
     connect_ssl, spectrum_accelerate_spec, is_pyxcli_installed
+
 
 def main():
     argument_spec = spectrum_accelerate_spec()
