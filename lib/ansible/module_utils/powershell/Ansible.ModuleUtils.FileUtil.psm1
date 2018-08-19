@@ -507,7 +507,7 @@ namespace Ansible.IO
                     return new NotSupportedException("Illegal characters in path.");
                 case Win32Errors.ERROR_INVALID_PARAMETER:
                 default:
-                    string msg = new Win32Exception(errorCode).Message;
+                    string msg = new System.ComponentModel.Win32Exception(errorCode).Message;
                     return new IOException(
                         string.IsNullOrEmpty(path) ? msg : String.Format("{0} : '{1}'", msg, path), MakeHRFromErrorCode(errorCode));
             }
@@ -566,14 +566,14 @@ namespace Ansible.IO
                 return;
 
             Stack<string> dirsToCreate = new Stack<string>();
-            string directoryRoot = Ansible.IO.Path.GetPathRoot(fullPath);
+            string directoryRoot = Path.GetPathRoot(fullPath);
             string dir = fullPath;
             while (directoryRoot != dir)
             {
                 if (DirectoryExists(dir))
                     break;
                 dirsToCreate.Push(dir);
-                dir = Ansible.IO.Path.GetDirectoryName(dir);
+                dir = Path.GetDirectoryName(dir);
             }
 
             NativeHelpers.SecurityAttributes secAttr = new NativeHelpers.SecurityAttributes(directorySecurity);
@@ -642,7 +642,7 @@ namespace Ansible.IO
         internal static int FillAttributeInfo(string path, ref NativeHelpers.WIN32_FILE_ATTRIBUTE_DATA data, bool returnErrorOnNotFound)
         {
             // Remove any trailing separators
-            path = Ansible.IO.Path.TrimEndingDirectorySeparator(path);
+            path = Path.TrimEndingDirectorySeparator(path);
             int errorCode = Win32Errors.ERROR_SUCCESS;
             if (!NativeMethods.GetFileAttributesExW(path, NativeHelpers.GET_FILEEX_INFO_LEVELS.GetFileExInfoStandard, out data))
             {
@@ -992,7 +992,7 @@ namespace Ansible.IO
             int errorCode;
             Exception exception = null;
 
-            IntPtr handle = NativeMethods.FindFirstFileW(Ansible.IO.Path.Combine(fullPath, "*"), out findData);
+            IntPtr handle = NativeMethods.FindFirstFileW(Path.Combine(fullPath, "*"), out findData);
             if (handle.ToInt64() == -1)
                 throw Win32Marshal.GetExceptionForLastWin32Error(fullPath);
 
@@ -1001,7 +1001,7 @@ namespace Ansible.IO
                 do
                 {
                     if ((findData.dwFileAttributes & FileAttributes.Directory) == 0)
-                        DeleteFile(Ansible.IO.Path.Combine(fullPath, findData.cFileName));
+                        DeleteFile(Path.Combine(fullPath, findData.cFileName));
                     else
                     {
                         string fileName = findData.cFileName;
@@ -1010,7 +1010,7 @@ namespace Ansible.IO
                         if (fileName == "." || fileName == "..")
                             continue;
 
-                        string filePath = Ansible.IO.Path.Combine(fullPath, fileName);
+                        string filePath = Path.Combine(fullPath, fileName);
                         bool isNamedSurrogate = IsNameSurrogateReparsePoint(ref findData);
                         try
                         {
@@ -1330,7 +1330,7 @@ namespace Ansible.IO
 
         public string Extension
         {
-            get { return Ansible.IO.Path.GetExtension(FullPath); }
+            get { return Path.GetExtension(FullPath); }
         }
 
         public virtual string Name
@@ -1347,7 +1347,7 @@ namespace Ansible.IO
                 if (_dataInitialized != 0)
                     // Unable to init data but we don't throw an excp here
                     return false;
-                return (_data.dwFileAttributes != -1) && ((this is Ansible.IO.DirectoryInfo) == ((_data.dwFileAttributes & (int)FileAttributes.Directory) == (int)FileAttributes.Directory));
+                return (_data.dwFileAttributes != -1) && ((this is DirectoryInfo) == ((_data.dwFileAttributes & (int)FileAttributes.Directory) == (int)FileAttributes.Directory));
             }
         }
 
@@ -1368,7 +1368,7 @@ namespace Ansible.IO
             }
             set
             {
-                FileSystem.SetFileTime(FullPath, (this is Ansible.IO.DirectoryInfo), value, null, null);
+                FileSystem.SetFileTime(FullPath, (this is DirectoryInfo), value, null, null);
                 _dataInitialized = -1;
             }
         }
@@ -1388,7 +1388,7 @@ namespace Ansible.IO
             }
             set
             {
-                FileSystem.SetFileTime(FullPath, (this is Ansible.IO.DirectoryInfo), null, value, null);
+                FileSystem.SetFileTime(FullPath, (this is DirectoryInfo), null, value, null);
                 _dataInitialized = -1;
             }
         }
@@ -1408,7 +1408,7 @@ namespace Ansible.IO
             }
             set
             {
-                FileSystem.SetFileTime(FullPath, (this is Ansible.IO.DirectoryInfo), null, null, value);
+                FileSystem.SetFileTime(FullPath, (this is DirectoryInfo), null, null, value);
                 _dataInitialized = -1;
             }
         }
@@ -1474,19 +1474,19 @@ namespace Ansible.IO
 
     public static class Directory
     {
-        public static void Compress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), true); }
+        public static void Compress(string path) { FileSystem.SetCompression(Path.CheckAndGetFullPath(path), true); }
         public static void Copy(string sourceDirPath, string destDirPath) { Copy(sourceDirPath, destDirPath, false); }
         public static void Copy(string sourceDirPath, string destDirPath, bool overwrite) { FileSystem.CopyFile(sourceDirPath, destDirPath, !overwrite); }
         public static DirectoryInfo CreateDirectory(string path) { return CreateDirectory(path, null); }
         public static DirectoryInfo CreateDirectory(string path, DirectorySecurity directorySecurity)
         {
-            string fullPath = Ansible.IO.Path.CheckAndGetFullPath(path);
+            string fullPath = Path.CheckAndGetFullPath(path);
             FileSystem.CreateDirectory(fullPath, directorySecurity);
             return new DirectoryInfo(path, fullPath, isNormalized: true);
         }
-        public static void Decompress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), false); }
+        public static void Decompress(string path) { FileSystem.SetCompression(Path.CheckAndGetFullPath(path), false); }
         public static void Delete(string path) { Delete(path, false); }
-        public static void Delete(string path, bool recursive) { FileSystem.RemoveDirectory(Ansible.IO.Path.GetFullPath(path), recursive); }
+        public static void Delete(string path, bool recursive) { FileSystem.RemoveDirectory(Path.GetFullPath(path), recursive); }
         public static IEnumerable<string> EnumerateDirectories(string path) { return EnumerateDirectories(path, "*", SearchOption.TopDirectoryOnly); }
         public static IEnumerable<string> EnumerateDirectories(string path, string searchPattern) { return EnumerateDirectories(path, searchPattern, SearchOption.TopDirectoryOnly); }
         public static IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption) { return InternalEnumerateFolder<string>(path, searchPattern, searchOption, true, false); }
@@ -1516,21 +1516,21 @@ namespace Ansible.IO
         public static DateTime GetLastWriteTimeUtc(string path) { return File.GetLastWriteTimeUtc(path); }
         public static DirectoryInfo GetParent(string path)
         {
-            string fullPath = Ansible.IO.Path.CheckAndGetFullPath(path);
-            string s = Ansible.IO.Path.GetDirectoryName(fullPath);
+            string fullPath = Path.CheckAndGetFullPath(path);
+            string s = Path.GetDirectoryName(fullPath);
             if (s == null)
                 return null;
             return new DirectoryInfo(s);
         }
         public static void Move(string sourceDirName, string destDirName)
         {
-            string fullSource = Ansible.IO.Path.CheckAndGetFullPath(sourceDirName);
-            string fullDest = Ansible.IO.Path.CheckAndGetFullPath(destDirName);
+            string fullSource = Path.CheckAndGetFullPath(sourceDirName);
+            string fullDest = Path.CheckAndGetFullPath(destDirName);
 
             if (fullSource == fullDest)
                 throw new IOException("Source and destination path must be different.");
 
-            if (Ansible.IO.Path.GetPathRoot(fullSource) != Ansible.IO.Path.GetPathRoot(fullDest))
+            if (Path.GetPathRoot(fullSource) != Path.GetPathRoot(fullDest))
                 throw new IOException("Source and destination path must have identical roots. Move will not work across volumes.");
 
             if (!FileSystem.DirectoryExists(fullSource) && !FileSystem.FileExists(fullSource))
@@ -1541,22 +1541,22 @@ namespace Ansible.IO
         }
         public static void SetAccessControl(string path, DirectorySecurity directorySecurity) { FileSystem.SetAccessControl(path, directorySecurity); }
         public static void SetCreationTime(string path, DateTime creationTime) { SetCreationTimeUtc(path, creationTime.ToUniversalTime()); }
-        public static void SetCreationTimeUtc(string path, DateTime creationTimeUtc) { FileSystem.SetFileTime(Ansible.IO.Path.GetFullPath(path), true, creationTimeUtc, null, null); }
+        public static void SetCreationTimeUtc(string path, DateTime creationTimeUtc) { FileSystem.SetFileTime(Path.GetFullPath(path), true, creationTimeUtc, null, null); }
         public static void SetLastAccessTime(string path, DateTime lastAccessTime) { SetLastAccessTimeUtc(path, lastAccessTime.ToUniversalTime()); }
-        public static void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc) { FileSystem.SetFileTime(Ansible.IO.Path.GetFullPath(path), true, null, lastAccessTimeUtc, null); }
+        public static void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc) { FileSystem.SetFileTime(Path.GetFullPath(path), true, null, lastAccessTimeUtc, null); }
         public static void SetLastWriteTime(string path, DateTime lastWriteTime) { SetLastWriteTimeUtc(path, lastWriteTime.ToUniversalTime()); }
-        public static void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc) { FileSystem.SetFileTime(Ansible.IO.Path.GetFullPath(path), true, null, null, lastWriteTimeUtc); }
+        public static void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc) { FileSystem.SetFileTime(Path.GetFullPath(path), true, null, null, lastWriteTimeUtc); }
 
         internal static IEnumerable<T> InternalEnumerateFolder<T>(string path, string searchPattern, SearchOption searchOption, bool returnFolders, bool returnFiles)
         {
-            Ansible.IO.File.GetAttributes(path);  // verifies the root path exists or throws exception if not
+            File.GetAttributes(path);  // verifies the root path exists or throws exception if not
             Queue<string> dirs = new Queue<string>();
             dirs.Enqueue(path);
 
             while (dirs.Count > 0)
             {
                 string currentPath = dirs.Dequeue();
-                string searchPath = Ansible.IO.Path.Combine(currentPath, Ansible.IO.Path.TrimEndingDirectorySeparator(searchPattern));
+                string searchPath = Path.Combine(currentPath, Path.TrimEndingDirectorySeparator(searchPattern));
 
                 NativeHelpers.WIN32_FIND_DATA findData = new NativeHelpers.WIN32_FIND_DATA();
                 IntPtr findHandle = NativeMethods.FindFirstFileW(searchPath, out findData);
@@ -1566,7 +1566,7 @@ namespace Ansible.IO
                 do
                 {
                     string fileName = findData.cFileName;
-                    string filePath = Ansible.IO.Path.Combine(currentPath, fileName);
+                    string filePath = Path.Combine(currentPath, fileName);
                     FileAttributes attr = findData.dwFileAttributes;
 
                     if (attr.HasFlag(FileAttributes.Directory))
@@ -1600,7 +1600,7 @@ namespace Ansible.IO
 
     public sealed class DirectoryInfo : FileSystemInfo
     {
-        public DirectoryInfo(string path) { Init(originalPath: path, fullPath: Ansible.IO.Path.GetFullPath(path), isNormalized: true); }
+        public DirectoryInfo(string path) { Init(originalPath: path, fullPath: Path.GetFullPath(path), isNormalized: true); }
         internal DirectoryInfo(string originalPath, string fullPath = null, string fileName = null, bool isNormalized = false) { Init(originalPath, fullPath, fileName, isNormalized); }
 
         private void Init(string originalPath, string fullPath = null, string fileName = null, bool isNormalized = false)
@@ -1610,9 +1610,9 @@ namespace Ansible.IO
             OriginalPath = originalPath;
 
             fullPath = fullPath ?? originalPath;
-            fullPath = isNormalized ? fullPath : Ansible.IO.Path.GetFullPath(fullPath);
-            if (fileName == null && (Ansible.IO.Path.GetPathRoot(fullPath) != fullPath))
-                _name = Ansible.IO.Path.GetFileName(Ansible.IO.Path.TrimEndingDirectorySeparator(fullPath));
+            fullPath = isNormalized ? fullPath : Path.GetFullPath(fullPath);
+            if (fileName == null && (Path.GetPathRoot(fullPath) != fullPath))
+                _name = Path.GetFileName(Path.TrimEndingDirectorySeparator(fullPath));
             else if (fileName == null)
                 _name = fullPath;
             else
@@ -1624,7 +1624,7 @@ namespace Ansible.IO
         {
             get
             {
-                string parentName = Ansible.IO.Path.GetDirectoryName(Ansible.IO.Path.TrimEndingDirectorySeparator(FullPath));
+                string parentName = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(FullPath));
                 return parentName != null
                     ? new DirectoryInfo(parentName, isNormalized: true)
                     : null;
@@ -1634,7 +1634,7 @@ namespace Ansible.IO
         {
             get
             {
-                return new DirectoryInfo(Ansible.IO.Path.GetPathRoot(FullPath));
+                return new DirectoryInfo(Path.GetPathRoot(FullPath));
             }
         }
 
@@ -1645,12 +1645,12 @@ namespace Ansible.IO
         {
             if (path == null)
                 throw new ArgumentNullException("path");
-            if (Ansible.IO.Path.IsEffectivelyEmpty(path))
+            if (Path.IsEffectivelyEmpty(path))
                 throw new ArgumentException("Path cannot be the empty string or all whitespace.", "path");
-            if (Ansible.IO.Path.IsPathRooted(path))
+            if (Path.IsPathRooted(path))
                 throw new ArgumentException("Second path fragment must not be a drive or UNC name.", "path");
 
-            string newPath = Ansible.IO.Path.GetFullPath(Ansible.IO.Path.Combine(FullPath, path));
+            string newPath = Path.GetFullPath(Path.Combine(FullPath, path));
             DirectoryInfo subDir = new DirectoryInfo(newPath);
             subDir.Create(directorySecurity);
             return subDir;
@@ -1684,7 +1684,7 @@ namespace Ansible.IO
             if (destDirName.Length == 0)
                 throw new ArgumentException("Empty file name is not legal.", "destDirName");
 
-            string destination = Ansible.IO.Path.GetFullPath(destDirName);
+            string destination = Path.GetFullPath(destDirName);
             if (!Exists && !FileSystem.FileExists(FullPath))
                 throw new DirectoryNotFoundException(String.Format("Could not find a part of the path '{0}'.", FullPath));
             if (FileSystem.DirectoryExists(destination))
@@ -1732,12 +1732,12 @@ namespace Ansible.IO
                 throw;
             }
         }
-        public static void Compress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), true); }
+        public static void Compress(string path) { FileSystem.SetCompression(Path.CheckAndGetFullPath(path), true); }
         public static void Copy(string sourceFileName, string destFileName) { Copy(sourceFileName, destFileName, false); }
         public static void Copy(string sourceFileName, string destFileName, bool overwrite)
         {
-            string fullSource = Ansible.IO.Path.CheckAndGetFullPath(sourceFileName);
-            string fullDest = Ansible.IO.Path.CheckAndGetFullPath(destFileName);
+            string fullSource = Path.CheckAndGetFullPath(sourceFileName);
+            string fullDest = Path.CheckAndGetFullPath(destFileName);
             FileSystem.CopyFile(fullSource, fullDest, overwrite);
         }
         public static FileStream Create(string path) { return Open(path, FileMode.Create, FileAccess.ReadWrite); }
@@ -1749,30 +1749,30 @@ namespace Ansible.IO
                 return new FileStream(handle, FileAccess.ReadWrite, DefaultBuffer, options.HasFlag(FileOptions.Asynchronous));
         }
         public static StreamWriter CreateText(string path) { return new StreamWriter(Open(path, FileMode.Create, FileAccess.ReadWrite)); }
-        public static void Decompress(string path) { FileSystem.SetCompression(Ansible.IO.Path.CheckAndGetFullPath(path), false); }
-        public static void Decrypt(string path) { FileSystem.Decrypt(Ansible.IO.Path.CheckAndGetFullPath(path)); }
+        public static void Decompress(string path) { FileSystem.SetCompression(Path.CheckAndGetFullPath(path), false); }
+        public static void Decrypt(string path) { FileSystem.Decrypt(Path.CheckAndGetFullPath(path)); }
         public static void Delete(string path)
         {
             if (path == null)
                 throw new ArgumentNullException("path");
-            FileSystem.DeleteFile(Ansible.IO.Path.GetFullPath(path));
+            FileSystem.DeleteFile(Path.GetFullPath(path));
         }
-        public static void Encrypt(string path) { FileSystem.Encrypt(Ansible.IO.Path.CheckAndGetFullPath(path)); }
+        public static void Encrypt(string path) { FileSystem.Encrypt(Path.CheckAndGetFullPath(path)); }
         public static bool Exists(string path) { return new FileInfo(path).Exists; }
         public static FileSecurity GetAccessControl(string path) { return GetAccessControl(path, AccessControlSections.Access | AccessControlSections.Group | AccessControlSections.Owner); }
         public static FileSecurity GetAccessControl(string path, AccessControlSections includeSections) { return FileSystem.GetAccessControl<FileSecurity>(path, includeSections); }
-        public static FileAttributes GetAttributes(string path) { return FileSystem.GetAttributes(Ansible.IO.Path.GetFullPath(path)); }
-        public static DateTime GetCreationTime(string path) { return FileSystem.GetCreationTime(Ansible.IO.Path.GetFullPath(path)).LocalDateTime; }
-        public static DateTime GetCreationTimeUtc(string path) { return FileSystem.GetCreationTime(Ansible.IO.Path.GetFullPath(path)).UtcDateTime; }
-        public static DateTime GetLastAccessTime(string path) { return FileSystem.GetLastAccessTime(Ansible.IO.Path.GetFullPath(path)).LocalDateTime; }
-        public static DateTime GetLastAccessTimeUtc(string path) { return FileSystem.GetLastAccessTime(Ansible.IO.Path.GetFullPath(path)).UtcDateTime; }
-        public static DateTime GetLastWriteTime(string path) { return FileSystem.GetLastWriteTime(Ansible.IO.Path.GetFullPath(path)).LocalDateTime; }
-        public static DateTime GetLastWriteTimeUtc(string path) { return FileSystem.GetLastWriteTime(Ansible.IO.Path.GetFullPath(path)).UtcDateTime; }
-        public static List<StreamInformation> GetStreamInfo(string path) { return FileSystem.GetStreamInfo(Ansible.IO.Path.CheckAndGetFullPath(path)); }
+        public static FileAttributes GetAttributes(string path) { return FileSystem.GetAttributes(Path.GetFullPath(path)); }
+        public static DateTime GetCreationTime(string path) { return FileSystem.GetCreationTime(Path.GetFullPath(path)).LocalDateTime; }
+        public static DateTime GetCreationTimeUtc(string path) { return FileSystem.GetCreationTime(Path.GetFullPath(path)).UtcDateTime; }
+        public static DateTime GetLastAccessTime(string path) { return FileSystem.GetLastAccessTime(Path.GetFullPath(path)).LocalDateTime; }
+        public static DateTime GetLastAccessTimeUtc(string path) { return FileSystem.GetLastAccessTime(Path.GetFullPath(path)).UtcDateTime; }
+        public static DateTime GetLastWriteTime(string path) { return FileSystem.GetLastWriteTime(Path.GetFullPath(path)).LocalDateTime; }
+        public static DateTime GetLastWriteTimeUtc(string path) { return FileSystem.GetLastWriteTime(Path.GetFullPath(path)).UtcDateTime; }
+        public static List<StreamInformation> GetStreamInfo(string path) { return FileSystem.GetStreamInfo(Path.CheckAndGetFullPath(path)); }
         public static void Move(string sourceFileName, string destFileName)
         {
-            string fullSourceFileName = Ansible.IO.Path.CheckAndGetFullPath(sourceFileName);
-            string fullDestFileName = Ansible.IO.Path.CheckAndGetFullPath(destFileName);
+            string fullSourceFileName = Path.CheckAndGetFullPath(sourceFileName);
+            string fullDestFileName = Path.CheckAndGetFullPath(destFileName);
 
             if (!FileSystem.FileExists(fullSourceFileName))
                 throw new FileNotFoundException(String.Format("Could not find file '{0}'.", fullSourceFileName), fullSourceFileName);
@@ -1844,25 +1844,25 @@ namespace Ansible.IO
         public static void Replace(string sourceFileName, string destinationFileName, string destinationBackupFileName) { Replace(sourceFileName, destinationFileName, destinationBackupFileName, false); }
         public static void Replace(string sourceFileName, string destinationFileName, string destinationBackupFileName, bool ignoreMetadataErrors)
         {
-            string fullSource = Ansible.IO.Path.CheckAndGetFullPath(sourceFileName);
-            string fullDest = Ansible.IO.Path.CheckAndGetFullPath(destinationFileName);
+            string fullSource = Path.CheckAndGetFullPath(sourceFileName);
+            string fullDest = Path.CheckAndGetFullPath(destinationFileName);
             FileSystem.ReplaceFile(fullSource, fullDest,
-                destinationBackupFileName != null ? Ansible.IO.Path.GetFullPath(destinationBackupFileName) : null,
+                destinationBackupFileName != null ? Path.GetFullPath(destinationBackupFileName) : null,
                 ignoreMetadataErrors);
         }
         public static void SetAccessControl(string path, FileSecurity fileSecurity) { FileSystem.SetAccessControl(path, fileSecurity); }
         public static void SetAttributes(string path, FileAttributes fileAttributes)
         {
-            string fullPath = Ansible.IO.Path.GetFullPath(path);
+            string fullPath = Path.GetFullPath(path);
             FileAttributes existingAttributes = File.GetAttributes(fullPath);
             FileSystem.SetAttributes(fullPath, fileAttributes, existingAttributes);
         }
         public static void SetCreationTime(string path, DateTime creationTime) { SetCreationTimeUtc(path, creationTime.ToUniversalTime()); }
-        public static void SetCreationTimeUtc(string path, DateTime creationTimeUtc) { FileSystem.SetFileTime(Ansible.IO.Path.GetFullPath(path), false, creationTimeUtc, null, null); }
+        public static void SetCreationTimeUtc(string path, DateTime creationTimeUtc) { FileSystem.SetFileTime(Path.GetFullPath(path), false, creationTimeUtc, null, null); }
         public static void SetLastAccessTime(string path, DateTime lastAccessTime) { SetLastAccessTimeUtc(path, lastAccessTime.ToUniversalTime()); }
-        public static void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc) { FileSystem.SetFileTime(Ansible.IO.Path.GetFullPath(path), false, null, lastAccessTimeUtc, null); }
+        public static void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc) { FileSystem.SetFileTime(Path.GetFullPath(path), false, null, lastAccessTimeUtc, null); }
         public static void SetLastWriteTime(string path, DateTime lastWriteTime) { SetLastWriteTimeUtc(path, lastWriteTime.ToUniversalTime()); }
-        public static void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc) { FileSystem.SetFileTime(Ansible.IO.Path.GetFullPath(path), false, null, null, lastWriteTimeUtc); }
+        public static void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc) { FileSystem.SetFileTime(Path.GetFullPath(path), false, null, null, lastWriteTimeUtc); }
         public static void WriteAllBytes(string path, byte[] bytes)
         {
             using (FileStream fs = Open(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
@@ -1904,8 +1904,8 @@ namespace Ansible.IO
                 throw new ArgumentNullException("fileName");
             OriginalPath = originalPath;
             fullpath = fullpath ?? originalPath;
-            FullPath = isNormalized ? fullpath ?? originalPath : Ansible.IO.Path.GetFullPath(fullpath);
-            _name = fileName ?? Ansible.IO.Path.GetFileName(originalPath);
+            FullPath = isNormalized ? fullpath ?? originalPath : Path.GetFullPath(fullpath);
+            _name = fileName ?? Path.GetFileName(originalPath);
         }
 
         public DirectoryInfo Directory
@@ -1914,7 +1914,7 @@ namespace Ansible.IO
         }
         public string DirectoryName
         {
-            get { return Ansible.IO.Path.GetDirectoryName(FullPath); }
+            get { return Path.GetDirectoryName(FullPath); }
         }
         public bool IsReadOnly
         {
@@ -1951,7 +1951,7 @@ namespace Ansible.IO
         public FileInfo CopyTo(string destFileName) { return CopyTo(destFileName, false); }
         public FileInfo CopyTo(string destFileName, bool overwrite)
         {
-            string destinationPath = Ansible.IO.Path.CheckAndGetFullPath(destFileName);
+            string destinationPath = Path.CheckAndGetFullPath(destFileName);
             FileSystem.CopyFile(FullPath, destinationPath, overwrite);
             return new FileInfo(destinationPath, isNormalized: true);
         }
@@ -1965,7 +1965,7 @@ namespace Ansible.IO
         public List<StreamInformation> GetStreamInfo() { return FileSystem.GetStreamInfo(FullPath); }
         public void MoveTo(string destFileName)
         {
-            string fullDestFileName = Ansible.IO.Path.CheckAndGetFullPath(destFileName);
+            string fullDestFileName = Path.CheckAndGetFullPath(destFileName);
 
             if (!Directory.Exists)
                 throw new DirectoryNotFoundException(String.Format("Could not find a part of the path '{0}'.", FullName));
@@ -1975,7 +1975,7 @@ namespace Ansible.IO
 
             FullPath = fullDestFileName;
             OriginalPath = destFileName;
-            _name = Ansible.IO.Path.GetFileName(fullDestFileName);
+            _name = Path.GetFileName(fullDestFileName);
             Invalidate();
         }
         public FileStream Open(FileMode mode) { return Open(mode, FileAccess.Read, FileShare.None); }
@@ -1989,8 +1989,8 @@ namespace Ansible.IO
         {
             if (destinationFileName == null)
                 throw new ArgumentNullException("destinationFileName");
-            FileSystem.ReplaceFile(FullPath, Ansible.IO.Path.GetFullPath(destinationFileName),
-                destinationBackupFileName != null ? Ansible.IO.Path.GetFullPath(destinationBackupFileName) : null,
+            FileSystem.ReplaceFile(FullPath, Path.GetFullPath(destinationFileName),
+                destinationBackupFileName != null ? Path.GetFullPath(destinationBackupFileName) : null,
                 ignoreMetadataErrors);
             return new FileInfo(destinationFileName);
         }
@@ -2171,19 +2171,19 @@ namespace Ansible.IO
 
     public static class SparseFile
     {
-        public static void AddSparseAttribute(string path) { FileSystem.SetSparseFlag(Ansible.IO.Path.CheckAndGetFullPath(path), true); }
+        public static void AddSparseAttribute(string path) { FileSystem.SetSparseFlag(Path.CheckAndGetFullPath(path), true); }
         public static List<SparseAllocations> GetAllAllocations(string path)
         {
-            Ansible.IO.FileInfo fileInfo = new Ansible.IO.FileInfo(path);
+            FileInfo fileInfo = new FileInfo(path);
             return FileSystem.QuerySparseAllocatedRanges(fileInfo.FullName, 0, fileInfo.Length);
         }
-        public static List<SparseAllocations> GetAllocations(string path, Int64 offset, Int64 length) { return FileSystem.QuerySparseAllocatedRanges(Ansible.IO.Path.CheckAndGetFullPath(path), offset, length); }
-        public static long GetDiskSize(string path) { return new Ansible.IO.FileInfo(path).DiskLength; }
-        public static long GetFileSize(string path) { return new Ansible.IO.FileInfo(path).Length; }
+        public static List<SparseAllocations> GetAllocations(string path, Int64 offset, Int64 length) { return FileSystem.QuerySparseAllocatedRanges(Path.CheckAndGetFullPath(path), offset, length); }
+        public static long GetDiskSize(string path) { return new FileInfo(path).DiskLength; }
+        public static long GetFileSize(string path) { return new FileInfo(path).Length; }
 
-        public static bool IsSparseFile(string path) { return File.GetAttributes(Ansible.IO.Path.CheckAndGetFullPath(path)).HasFlag(FileAttributes.SparseFile); }
-        public static void RemoveSparseAttribute(string path) { FileSystem.SetSparseFlag(Ansible.IO.Path.CheckAndGetFullPath(path), false); }
-        public static void ZeroData(string path, Int64 offset, Int64 length) { FileSystem.SetSparseZeroData(Ansible.IO.Path.CheckAndGetFullPath(path), offset, length); }
+        public static bool IsSparseFile(string path) { return File.GetAttributes(Path.CheckAndGetFullPath(path)).HasFlag(FileAttributes.SparseFile); }
+        public static void RemoveSparseAttribute(string path) { FileSystem.SetSparseFlag(Path.CheckAndGetFullPath(path), false); }
+        public static void ZeroData(string path, Int64 offset, Int64 length) { FileSystem.SetSparseZeroData(Path.CheckAndGetFullPath(path), offset, length); }
     }
 }
 '@
@@ -2210,23 +2210,15 @@ Function Import-FileUtil {
 
         'C:\temp' == '\\?\C:\temp'
         '\\server\share\path' == '\\?\UNC\server\share\path'
-
-    This module util is reliant on Ansible.ModuleUtils.PrivilegeUtil. Do not
-    call the Import-PrivilegeUtil function as this relies on that namespace
-    not being used upon loading.
     #>
-
-    # check if Ansible.IO is already loaded before trying again, this check is
-    # required because it could already be loaded from calling Import-LinkUtil
-    $namespace_loaded = [System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { "Ansible.IO" -in $_.ExportedTypes.Namespace }
-    if ($namespace_loaded) {
-        return
-    }
-
     # build the C# code to compile
     $namespaces = $ansible_privilege_util_namespaces + $ansible_file_util_namespaces | Select-Object -Unique
     $namespace_import = ($namespaces | ForEach-Object { "using $_;" }) -join "`r`n"
-    $platform_util = "$namespace_import`r`n`r`n$ansible_privilege_util_code`r`n`r`n$ansible_file_util_code"
+
+    $file_util = $ansible_file_util_code.Split([String[]]@("`r`n", "`r", "`n"), [System.StringSplitOptions]::None)
+    $file_util_code = "$($file_util[0])`r`n`r`n$($file_util[1])`r`n`r`n$ansible_privilege_util_code`r`n`r`n$($file_util[2..$file_util.Length] -join "`r`n")"
+
+    $platform_util = "$namespace_import`r`n`r`n$file_util_code"
 
     # FUTURE: find a better way to get the _ansible_remote_tmp variable
     $original_tmp = $env:TMP

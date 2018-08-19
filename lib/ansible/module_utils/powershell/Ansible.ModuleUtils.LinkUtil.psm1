@@ -461,13 +461,17 @@ Function Import-LinkUtil {
         New-Link
 
     This module util is reliant on Ansible.ModuleUtils.PrivilegeUtil and
-    Ansible.ModuleUtils.FileUtil. Do not call the Import-* functions as this
-    relies on those namspaces not being used upon loading.
+    Ansible.ModuleUtils.FileUtil. During the import it calls Import-FileUtil
+    so a manual call to that is not necessary.
     #>
     # build the C# code to compile
     $namespaces = $ansible_privilege_util_namespaces + $ansible_file_util_namespaces + $ansible_link_util_namespaces | Select-Object -Unique
     $namespace_import = ($namespaces | ForEach-Object { "using $_;" }) -join "`r`n"
-    $platform_util = "$namespace_import`r`n`r`n$ansible_privilege_util_code`r`n`r`n$ansible_file_util_code`r`n`r`n$ansible_link_util_code"
+
+    $link_util = $ansible_link_util_code.Split([String[]]@("`r`n", "`r", "`n"), [System.StringSplitOptions]::None)
+    $link_util_code = "$($link_util[0])`r`n`r`n$($link_util[1])`r`n`r`n$ansible_privilege_util_code`r`n`r`n$ansible_file_util_code`r`n`r`n$($link_util[2..$link_util.Length] -join "`r`n")"
+
+    $platform_util = "$namespace_import`r`n`r`n$link_util_code"
 
     # FUTURE: find a better way to get the _ansible_remote_tmp variable
     $original_tmp = $env:TMP
@@ -484,6 +488,10 @@ Function Import-LinkUtil {
     $env:TMP = $remote_tmp
     Add-Type -TypeDefinition $platform_util
     $env:TMP = $original_tmp
+
+    # cmdlets below call the Ansible.ModuleUtils.FileUtil namespace directly
+    # so we also load that here
+    Import-FileUtil
 }
 
 Function Get-Link($link_path) {
