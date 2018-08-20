@@ -447,10 +447,11 @@ class ConfigManager(object):
         mod_defs_file = '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
         module_default_groups = self._read_config_yaml_file(mod_defs_file).get('groupings', {})
 
-        if self.get_config_value('MODULE_DEFAULTS_CFG') is not None and os.path.exists(
-                to_bytes(self.get_config_value('MODULE_DEFAULTS_CFG'))):
-            with open(to_bytes(self.get_config_value('MODULE_DEFAULTS_CFG')), 'rb') as config_def:
-                user_def_groups = yaml_load(config_def, Loader=SafeLoader).get('groupings', {})
+        if self.get_config_value('MODULE_DEFAULTS_CFG') is not None:
+            try:
+                user_def_groups = self._read_config_yaml_file(
+                    self.get_config_value('MODULE_DEFAULTS_CFG')
+                ).get('groupings', {})
                 for k, v in user_def_groups.items():
                     module_default_groups[k] = v + module_default_groups.get(k, [])
                     for group in v:
@@ -459,9 +460,9 @@ class ConfigManager(object):
                                 module_default_groups[k].remove(group[1:])
                             except ValueError:
                                 pass
-        elif self.get_config_value('MODULE_DEFAULTS_CFG') is not None:
-            raise AnsibleError("Missing user-specified MODULE_DEFAULTS_CFG file: %s" % to_native(
-                self.get_config_value('MODULE_DEFAULTS_CFG')))
+            except AnsibleError:
+                raise AnsibleError("Missing user-specified MODULE_DEFAULTS_CFG file: %s" % to_native(
+                    self.get_config_value('MODULE_DEFAULTS_CFG')))
         self.module_defaults_groups = module_default_groups
 
     def update_config_data(self, defs=None, configfile=None):
