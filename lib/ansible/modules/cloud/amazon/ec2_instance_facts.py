@@ -113,6 +113,21 @@ instances:
                             returned: always
                             type: string
                             sample: vol-12345678
+        cpu_options:
+            description: The CPU options set for the instance.
+            returned: always if botocore version >= 1.10.16
+            type: complex
+            contains:
+                core_count:
+                     description: The number of CPU cores for the instance.
+                     returned: always
+                     type: int
+                     sample: 1
+                threads_per_core:
+                     description: The number of threads per CPU core. On supported instance, a value of 1 means Intel Hyper-Threading Technology is disabled.
+                     returned: always
+                     type: int
+                     sample: 1
         client_token:
             description: The idempotency token you provided when you launched the instance, if applicable.
             returned: always
