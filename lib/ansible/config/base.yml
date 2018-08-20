@@ -1555,8 +1555,8 @@ MODULE_DEFAULTS_CFG:
   default: null
   version_added: "2.7.0"
   description:
-    - "A path to configuration for filtering which plugins installed on the system are allowed to be used."
-    - "See :ref:`module_defaults_config` for details of the filter file's format."
+    - "A path to configuration for grouping together modules that share similar parameters, such as cloud modules or others that use parameters for choosing authentication credentials."
+    - "See :ref:`module_defaults_config` for details of the grouping file's format."
   ini:
   - key: module_defaults_cfg
     section: defaults
