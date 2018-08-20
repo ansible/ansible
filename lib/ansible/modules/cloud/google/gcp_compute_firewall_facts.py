@@ -93,10 +93,46 @@ items:
                 - Creation timestamp in RFC3339 text format.
             returned: success
             type: str
+        denied:
+            description:
+                - The list of DENY rules specified by this firewall. Each rule specifies a protocol
+                  and port-range tuple that describes a denied connection.
+            returned: success
+            type: complex
+            contains:
+                ip_protocol:
+                    description:
+                        - The IP protocol to which this rule applies. The protocol type is required when creating
+                          a firewall rule. This value can either be one of the following well known protocol
+                          strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol number.
+                    returned: success
+                    type: str
+                ports:
+                    description:
+                        - An optional list of ports to which this rule applies. This field is only applicable
+                          for UDP or TCP protocol. Each entry must be either an integer or a range. If not
+                          specified, this rule applies to connections through any port.
+                        - 'Example inputs include: ["22"], ["80","443"], and ["12345-12349"].'
+                    returned: success
+                    type: list
         description:
             description:
                 - An optional description of this resource. Provide this property when you create
                   the resource.
+            returned: success
+            type: str
+        destination_ranges:
+            description:
+                - If destination ranges are specified, the firewall will apply only to traffic that
+                  has destination IP address in these ranges. These ranges must be expressed in CIDR
+                  format. Only IPv4 is supported.
+            returned: success
+            type: list
+        direction:
+            description:
+                - 'Direction of traffic to which this firewall applies; default is INGRESS. Note:
+                  For INGRESS traffic, it is NOT supported to specify destinationRanges; For EGRESS
+                  traffic, it is NOT supported to specify sourceRanges OR sourceTags.'
             returned: success
             type: str
         id:
@@ -124,7 +160,16 @@ items:
                   networks/my-network projects/myproject/global/networks/my-network
                   global/networks/default .'
             returned: success
-            type: str
+            type: dict
+        priority:
+            description:
+                - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
+                  When not specified, the value assumed is 1000. Relative priorities determine precedence
+                  of conflicting rules. Lower value of priority implies higher precedence (eg, a rule
+                  with priority 0 has higher precedence than a rule with priority 1). DENY rules take
+                  precedence over ALLOW rules having equal priority.
+            returned: success
+            type: int
         source_ranges:
             description:
                 - If source ranges are specified, the firewall will apply only to traffic that has
@@ -133,6 +178,19 @@ items:
                   the firewall will apply to traffic that has source IP address within sourceRanges
                   OR the source IP that belongs to a tag listed in the sourceTags property. The connection
                   does not need to match both properties for the firewall to apply. Only IPv4 is supported.
+            returned: success
+            type: list
+        source_service_accounts:
+            description:
+                - If source service accounts are specified, the firewall will apply only to traffic
+                  originating from an instance with a service account in this list. Source service
+                  accounts cannot be used to control traffic to an instance's external IP address
+                  because service accounts are associated with an instance, not an IP address. sourceRanges
+                  can be set at the same time as sourceServiceAccounts. If both are set, the firewall
+                  will apply to traffic that has source IP address within sourceRanges OR the source
+                  IP belongs to an instance with service account listed in sourceServiceAccount. The
+                  connection does not need to match both properties for the firewall to apply. sourceServiceAccounts
+                  cannot be used at the same time as sourceTags or targetTags.
             returned: success
             type: list
         source_tags:
@@ -145,6 +203,15 @@ items:
                   address within sourceRanges OR the source IP that belongs to a tag listed in the
                   sourceTags property. The connection does not need to match both properties for the
                   firewall to apply.
+            returned: success
+            type: list
+        target_service_accounts:
+            description:
+                - A list of service accounts indicating sets of instances located in the network that
+                  may make network connections as specified in allowed[].
+                - targetServiceAccounts cannot be used at the same time as targetTags or sourceTags.
+                  If neither targetServiceAccounts nor targetTags are specified, the firewall rule
+                  applies to all instances on the specified network.
             returned: success
             type: list
         target_tags:
