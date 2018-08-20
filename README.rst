@@ -106,7 +106,8 @@ Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
 (michael.dehaan/gmail/com) and has contributions from over 3700 users
 (and growing). Thanks everyone!
 
-Ansible is sponsored by `Ansible, Inc <https://ansible.com>`_
+`Ansible <https://www.ansible.com>`_ is sponsored by `Red Hat, Inc.
+<https://www.redhat.com>`_
 
 License
 =======
