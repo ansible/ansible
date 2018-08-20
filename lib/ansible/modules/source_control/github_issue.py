@@ -38,7 +38,8 @@ options:
     description:
         - Get various details about issue depending upon action specified.
     default: 'get_status'
-    choices: ['get_status']
+    choices:
+        - 'get_status'
 
 author:
     - Abhijeet Kasurde (@Akasurde)
