@@ -8,12 +8,12 @@ Conventions, Best Practices, and Pitfalls
 .. contents:: Topics
    :local:
 
-As you develop your module, follow these basic conventions and best practices:
+As you design and develop modules, follow these basic conventions and best practices:
 
 Scoping your module(s)
 ======================
 
-Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
+Especially if you want to contribute your module(s) back to Ansible Core, make sure each module includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
 * Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 * Do not add ``list`` or ``info`` state options to an existing module - create a new ``_facts`` module.
@@ -21,14 +21,19 @@ Especially if you want to contribute your module back to Ansible Core, make sure
 * Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, :ref:`create multiple modules <developing_modules_in_groups>` that interact with smaller individual pieces of the API.
 * Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role. 
 
+Designing module interfaces
+===========================
+
+* If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
+* Modules accepting boolean status should accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
+* Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
+
 General best practices
 ======================
 
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
 * Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
-* If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
-* Modules accepting boolean status should accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
 * Don't write to files directly; use a temporary file and then use the ``atomic_move`` function from ``ansible.module_utils.basic`` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
@@ -37,7 +42,7 @@ General best practices
 Python best practices
 ======================
 
-* Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
+
 * When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
 * Include a ``main`` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so you can import it into unit tests - for example:
@@ -52,9 +57,9 @@ Python best practices
 Importing and using shared code
 ===============================
 
-* Use shared code whenever possible - don't reinvent the wheel. Ansible offers :ref:`utilities <appendix_module_utilities>` for many common use cases and patterns.
+* Use shared code whenever possible - don't reinvent the wheel. Ansible offers the ``AnsibleModule`` common Python code, plus :ref:`utilities <appendix_module_utilities>` for many common use cases and patterns.
 * Import ``ansible.module_utils`` code in the same place as you import other libraries.
-* Do not use wildcards for importing other python modules (for example, ``from some.other_python_module.basic import *``).
+* Do NOT use wildcards (*) for importing other python modules; instead, list the function(s) you are importing (for example, ``from some.other_python_module.basic import otherFunction``).
 * Import custom packages in ``try``/``except`` and handle them with ``fail_json()`` in ``main()``. For example:
 
 	.. code-block:: python
