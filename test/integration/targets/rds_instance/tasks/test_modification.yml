@@ -83,7 +83,7 @@
 
       - name: Check mode - modify the password
         rds_instance:
-          id: '{{ modified_instance_id }}'
+          id: '{{ instance_id }}'
           state: present
           password: '{{ password }}'
           force_update_password: True
@@ -98,7 +98,7 @@
 
       - name: Modify the password
         rds_instance:
-          id: '{{ modified_instance_id }}'
+          id: '{{ instance_id }}'
           state: present
           password: '{{ password }}'
           force_update_password: True
@@ -110,7 +110,7 @@
           that:
             - result.changed
 
-      # TODO: test modifying db_subnet_group_name, db_security_groups, vpc_security_group_ids, db_parameter_group_name,
+      # TODO: test modifying db_subnet_group_name, db_security_groups, db_parameter_group_name,
       # monitoring_role_arn, monitoring_interval, domain, domain_iam_role_name, cloudwatch_logs_export_configuration
 
       - name: Modify several attributes
@@ -128,7 +128,7 @@
           auto_minor_version_upgrade: false
           option_group_name: default:mariadb-10-1
           port: 1150
-          publically_accessible: False
+          publicly_accessible: False
           apply_immediately: True
           <<: *aws_connection_info
         register: result
@@ -156,17 +156,20 @@
           auto_minor_version_upgrade: false
           option_group_name: default:mariadb-10-1
           port: 1150
-          publically_accessible: False
+          publicly_accessible: False
           <<: *aws_connection_info
         register: result
+        tries: 30
+        delay: 10
+        until: result is not failed
 
       - assert:
           that:
             - not result.changed
-            - result.pending_modified_values.allocated_storage == 30
-            - result.pending_modified_values.port == 1150
-            - 'result.pending_modified_values.db_instance_class == "db.t2.medium"'
-            - 'result.pending_modified_values.engine_version == "10.1.26"'
+            - '"allocated_storage" in result.pending_modified_values or result.allocated_storage == 30'
+            - '"port" in result.pending_modified_values or result.endpoint.port == 1150'
+            - '"db_instance_class" in result.pending_modified_values or result.db_instance_class == "db.t2.medium"'
+            - '"engine_version" in result.pending_modified_values or result.engine_version == "10.1.26"'
 
       - name: Reboot the instance to update the modified values and add tags
         rds_instance:
