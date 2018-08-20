@@ -29,7 +29,7 @@ Every Ansible module written in Python must begin with seven standard sections i
 Python Shebang
 ----------------------
 
-Every Ansible module must begin with ``#! /usr/bin/python`` - this "shebang" allows ``ansible_python_interpreter`` to work.
+Every Ansible module must begin with ``#!/usr/bin/python`` - this "shebang" allows ``ansible_python_interpreter`` to work.
 
 .. _copyright:
 
