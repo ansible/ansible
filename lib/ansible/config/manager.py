@@ -223,18 +223,7 @@ class ConfigManager(object):
         self._config_file = conf_file
         self.data = ConfigData()
 
-        if defs_file is None:
-            # Create configuration definitions from source
-            b_defs_file = to_bytes('%s/base.yml' % os.path.dirname(__file__))
-        else:
-            b_defs_file = to_bytes(defs_file)
-
-        # consume definitions
-        if os.path.exists(b_defs_file):
-            with open(b_defs_file, 'rb') as config_def:
-                self._base_defs = yaml_load(config_def, Loader=SafeLoader)
-        else:
-            raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(b_defs_file))
+        self._base_defs = self._read_config_yaml_file(defs_file or '{0}/base.yml'.format(os.path.dirname(__file__)))
 
         if self._config_file is None:
             # set config using ini
@@ -248,6 +237,16 @@ class ConfigManager(object):
 
         # update constants
         self.update_config_data()
+        self.update_module_defaults_groups()
+
+    def _read_config_yaml_file(self, yml_file):
+        yml_file = to_bytes(yml_file)
+        if os.path.exists(yml_file):
+            with open(yml_file, 'rb') as config_def:
+                return yaml_load(config_def, Loader=SafeLoader) or {}
+        raise AnsibleError(
+            "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
+
 
     def _parse_config_file(self, cfile=None):
         ''' return flat configuration settings from file(s) '''
@@ -443,6 +442,27 @@ class ConfigManager(object):
             self._plugins[plugin_type] = {}
 
         self._plugins[plugin_type][name] = defs
+
+    def update_module_defaults_groups(self):
+        mod_defs_file = '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
+        module_default_groups = self._read_config_yaml_file(mod_defs_file).get('groupings', {})
+
+        if self.get_config_value('MODULE_DEFAULTS_CFG') is not None and os.path.exists(
+                to_bytes(self.get_config_value('MODULE_DEFAULTS_CFG'))):
+            with open(to_bytes(self.get_config_value('MODULE_DEFAULTS_CFG')), 'rb') as config_def:
+                user_def_groups = yaml_load(config_def, Loader=SafeLoader).get('groupings', {})
+                for k, v in user_def_groups.items():
+                    module_default_groups[k] = v + module_default_groups.get(k, [])
+                    for group in v:
+                        if group.startswith('-'):
+                            try:
+                                module_default_groups[k].remove(group[1:])
+                            except ValueError:
+                                pass
+        elif self.get_config_value('MODULE_DEFAULTS_CFG') is not None:
+            raise AnsibleError("Missing user-specified MODULE_DEFAULTS_CFG file: %s" % to_native(
+                self.get_config_value('MODULE_DEFAULTS_CFG')))
+        self.module_defaults_groups = module_default_groups
 
     def update_config_data(self, defs=None, configfile=None):
         ''' really: update constants '''
