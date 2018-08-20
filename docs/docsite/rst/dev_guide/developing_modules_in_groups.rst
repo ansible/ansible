@@ -16,7 +16,7 @@ This document is intended for both companies wishing to add modules for their ow
 
 It's based on module development best practices that the Ansible core team and community have accumulated.
 
-.. include:: shared_snippets/Licensing.txt
+.. include:: shared_snippets/licensing.txt
 
 Before you start coding
 ```````````````````````
