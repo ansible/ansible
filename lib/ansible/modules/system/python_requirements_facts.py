@@ -20,8 +20,10 @@ version_added: "2.7"
 options:
   dependencies:
     description: >
-      A list of version-likes or module names to check for installation. Supported operators: <, >, <=, >=, or ==
-    example: '[ansible, boto3>=1.6, requests>2]'
+      A list of version-likes or module names to check for installation.
+      Supported operators: <, >, <=, >=, or ==. The bare module name like
+      I(ansible), the module with a specific version like I(boto3==1.6.1), or a
+      partial version like I(requests>2) are all valid specifications.
 author:
 - Will Thames (@willthames)
 - Ryan Scott Brown (@ryan_sb)
