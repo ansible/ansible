@@ -324,7 +324,7 @@ def _extract_param(template, root, attrs, value):
 
 def parse_xml(output, tmpl):
     if not os.path.exists(tmpl):
-        raise AnsibleError('unable to locate parse_cli template: %s' % tmpl)
+        raise AnsibleError('unable to locate parse_xml template: %s' % tmpl)
 
     if not isinstance(output, string_types):
         raise AnsibleError('parse_xml works on string input, but given input of : %s' % type(output))
