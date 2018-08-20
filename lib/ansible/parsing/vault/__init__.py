@@ -856,16 +856,17 @@ class VaultEditor:
         fd, tmp_path = tempfile.mkstemp(suffix=ext)
         os.close(fd)
 
+        cmd = self._editor_shell_command(tmp_path)
         try:
             if existing_data:
                 self.write_data(existing_data, tmp_path, shred=False)
 
             # drop the user into an editor on the tmp file
-            subprocess.call(self._editor_shell_command(tmp_path))
-        except:
+            subprocess.call(cmd)
+        except Exception as e:
             # whatever happens, destroy the decrypted file
             self._shred_file(tmp_path)
-            raise
+            raise AnsibleError('Unable to execute the command "%s": %s' % (' '.join(cmd), to_native(e)))
 
         b_tmpdata = self.read_data(tmp_path)
 
