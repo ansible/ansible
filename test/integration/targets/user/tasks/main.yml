@@ -64,6 +64,46 @@
       - user_test0_1 is not changed
       - '"ansibulluser" in user_names.stdout_lines'
 
+# test user add with password
+- name: add an encrypted password for user
+  user:
+    name: ansibulluser
+    password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+    state: present
+    update_password: always
+  register: test_user_encrypt0
+
+- name: there should not be warnings
+  assert:
+    that: "'warnings' not in test_user_encrypt0"
+
+- block:
+    - name: add an plaintext password for user
+      user:
+        name: ansibulluser
+        password: "plaintextpassword"
+        state: present
+        update_password: always
+      register: test_user_encrypt1
+
+    - name: there should be a warning complains that the password is plaintext
+      assert:
+        that: "'warnings' in test_user_encrypt1"
+
+    - name: add an invalid hashed password
+      user:
+        name: ansibulluser
+        password: "$6$rounds=656000$tgK3gYTyRLUmhyv2$lAFrYUQwn7E6VsjPOwQwoSx30lmpiU9r/E0Al7tzKrR9mkodcMEZGe9OXD0H/clOn6qdsUnaL4zefy5fG+++++"
+        state: present
+        update_password: always
+      register: test_user_encrypt2
+
+    - name: there should be a warning complains about the character set of password
+      assert:
+        that: "'warnings' in test_user_encrypt2"
+  when: ansible_system != 'Darwin'
+
+
 # https://github.com/ansible/ansible/issues/42484
 # Skipping macOS for now since there is a bug when changing home directory
 - block:
@@ -346,3 +386,26 @@
         that:
           - bsd_account_expiration.stdout == '0'
   when: ansible_os_family == 'FreeBSD'
+
+
+## shadow backup
+- block:
+    - name: Create a user to test shadow file backup
+      user:
+        name: ansibulluser
+        state: present
+      register: result
+
+    - name: Find shadow backup files
+      find:
+        path: /etc
+        patterns: 'shadow\..*~$'
+        use_regex: yes
+      register: shadow_backups
+
+    - name: Assert that a backup file was created
+      assert:
+        that:
+          - result.bakup
+          - shadow_backups.files | map(attribute='path') | list | length > 0
+  when: ansible_os_family == 'Solaris'

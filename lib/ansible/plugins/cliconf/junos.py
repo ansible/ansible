@@ -90,7 +90,7 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
 
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         resp = {}
         results = []
@@ -167,6 +167,11 @@ class Cliconf(CliconfBase):
         if rollback_id is not None:
             command += ' rollback %s' % int(rollback_id)
         resp = self.send_command(command)
+
+        r = resp.splitlines()
+        if len(r) == 1 and r[0] == '[edit]':
+            resp = ''
+
         return resp
 
     def get_diff(self, rollback_id=None):

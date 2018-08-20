@@ -128,7 +128,7 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
         requests = []
@@ -188,7 +188,7 @@ class Cliconf(CliconfBase):
             'supports_defaults': True,
             'supports_onbox_diff': False,
             'supports_commit_comment': False,
-            'supports_multiline_delimiter': False,
+            'supports_multiline_delimiter': True,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
             'supports_generate_diff': True,

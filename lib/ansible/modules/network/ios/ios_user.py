@@ -121,6 +121,14 @@ EXAMPLES = """
   ios_user:
     purge: yes
 
+- name: remove all users except admin and these listed users
+  ios_user:
+    aggregate:
+      - name: testuser1
+      - name: testuser2
+      - name: testuser3
+    purge: yes
+
 - name: set multiple users to privilege level 15
   ios_user:
     aggregate:

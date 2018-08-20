@@ -87,7 +87,7 @@
   when: "challenge_data is changed and challenge == 'dns-01'"
 - name: ({{ certgen_title }}) Create TLS ALPN challenges
   uri:
-    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}"
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}/der-value-b64"
     method: PUT
     body_format: raw
     body: "{{ item.value['tls-alpn-01'].resource_value }}"
@@ -103,6 +103,7 @@
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
     account_key: "{{ output_dir }}/{{ account_key }}.pem"
+    account_uri: "{{ challenge_data.account_uri }}"
     modify_account: "{{ modify_account }}"
     csr: "{{ output_dir }}/{{ certificate_name }}.csr"
     dest: "{{ output_dir }}/{{ certificate_name }}.pem"
@@ -123,6 +124,7 @@
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
     account_key_content: "{{ account_key_content }}"
+    account_uri: "{{ challenge_data.account_uri }}"
     modify_account: "{{ modify_account }}"
     csr: "{{ output_dir }}/{{ certificate_name }}.csr"
     dest: "{{ output_dir }}/{{ certificate_name }}.pem"
@@ -154,4 +156,8 @@
     method: DELETE
   with_dict: "{{ challenge_data.challenge_data }}"
   when: "challenge_data is changed and challenge == 'tls-alpn-01'"
+- name: ({{ certgen_title }}) Get root certificate
+  get_url:
+    url: "http://{{ acme_host }}:5000/root-certificate-for-ca"
+    dest: "{{ output_dir }}/{{ certificate_name }}-root.pem"
 ###############################################################################################

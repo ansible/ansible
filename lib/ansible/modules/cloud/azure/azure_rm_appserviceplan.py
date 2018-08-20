@@ -191,6 +191,8 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
         self.is_linux = None
         self.number_of_workers = 1
 
+        self.tags = None
+
         self.results = dict(
             changed=False,
             ansible_facts=dict(azure_appserviceplan=None)
@@ -237,11 +239,11 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
             if self.state == 'present':
                 self.log('Result: {0}'.format(old_response))
 
-                update_tags, old_response['tags'] = self.update_tags(
-                    old_response.get('tags', dict()))
+                update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
 
                 if update_tags:
                     to_be_updated = True
+                    self.tags = newtags
 
                 # check if sku changed
                 if self.sku and _normalize_sku(self.sku) != old_response['sku']['size']:
@@ -312,7 +314,7 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
             sku_def = SkuDescription(tier=get_sku_name(
                 sku), name=sku, capacity=self.number_of_workers)
             plan_def = AppServicePlan(
-                location=self.location, app_service_plan_name=self.name, sku=sku_def, reserved=self.is_linux)
+                location=self.location, app_service_plan_name=self.name, sku=sku_def, reserved=self.is_linux, tags=self.tags if self.tags else None)
 
             poller = self.web_client.app_service_plans.create_or_update(self.resource_group, self.name, plan_def)
 

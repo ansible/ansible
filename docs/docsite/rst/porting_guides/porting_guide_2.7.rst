@@ -14,6 +14,28 @@ This document is part of a collection on porting. The complete list of porting g
 
 .. contents:: Topics
 
+Python Compatibility
+====================
+
+Ansible has dropped compatibility with Python-2.6 on the controller (The host where :command:`/usr/bin/ansible`
+or :command:`/usr/bin/ansible-playbook` is run).  Modules shipped with Ansible can still be used to
+manage hosts which only have Python-2.6.  You just need to have a host with Python-2.7 or Python-3.5
+or greater to manage those hosts from.
+
+One thing that this does affect is the ability to use :command:`/usr/bin/ansible-pull` to manage
+a host which has Python-2.6.  ``ansible-pull`` runs on the host being managed but it is a controller
+script, not a module so it will need an updated Python.  Actively developed Linux distros which ship
+with Python-2.6 have some means to install newer Python versions (For instance, you can install
+Python-2.7 via an SCL on RHEL-6) but you may need to also install Python bindings for many common
+modules to work (For RHEL-6, for instance, selinux bindings and yum would have to be installed for
+the updated Python install).
+
+The decision to drop Python-2.6 support on the controller was made because many dependent libraries
+are becoming unavailable there.  In particular, python-cryptography is no longer available for Python-2.6
+and the last release of pycrypto (the alternative to python-cryptography) has known security bugs
+which will never be fixed.
+
+
 Playbook
 ========
 
@@ -114,8 +136,16 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-The following modules will be removed in Ansible 2.10. Please update your playbooks accordingly.
+The following modules will be removed in Ansible 2.11. Please update your playbooks accordingly.
 
+* ``na_cdot_aggregate`` use :ref:`na_ontap_aggregate <na_ontap_aggregate_module>` instead.
+* ``na_cdot_license`` use :ref:`na_ontap_license <na_ontap_license_module>` instead.
+* ``na_cdot_lun`` use :ref:`na_ontap_lun <na_ontap_lun_module>` instead.
+* ``na_cdot_qtree`` use :ref:`na_ontap_qtree <na_ontap_qtree_module>` instead.
+* ``na_cdot_svm`` use :ref:`na_ontap_svm <na_ontap_svm_module>` instead.
+* ``na_cdot_user`` use :ref:`na_ontap_user <na_ontap_user_module>` instead.
+* ``na_cdot_user_role`` use :ref:`na_ontap_user_role <na_ontap_user_role_module>` instead.
+* ``na_cdot_volume`` use :ref:`na_ontap_volume <na_ontap_volume_module>` instead.
 
 Noteworthy module changes
 -------------------------

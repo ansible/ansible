@@ -158,7 +158,11 @@ class WapiBase(object):
 
 class WapiLookup(WapiBase):
     ''' Implements WapiBase for lookup plugins '''
-    pass
+    def handle_exception(self, method_name, exc):
+        if ('text' in exc.response):
+            raise Exception(exc.response['text'])
+        else:
+            raise Exception(exc)
 
 
 class WapiInventory(WapiBase):
@@ -245,6 +249,8 @@ class WapiModule(WapiBase):
                     self.create_object(ib_obj_type, proposed_object)
                 result['changed'] = True
             elif modified:
+                self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
+
                 if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     res = self.update_object(ref, proposed_object)
@@ -262,6 +268,23 @@ class WapiModule(WapiBase):
                 result['changed'] = True
 
         return result
+
+    def check_if_recordname_exists(self, obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object):
+        ''' Send POST request if host record input name and retrieved ref name is same,
+            but input IP and retrieved IP is different'''
+
+        if 'name' in (obj_filter and ib_obj_ref[0]) and ib_obj_type == NIOS_HOST_RECORD:
+            obj_host_name = obj_filter['name']
+            ref_host_name = ib_obj_ref[0]['name']
+            if 'ipv4addrs' in (current_object and proposed_object):
+                current_ip_addr = current_object['ipv4addrs'][0]['ipv4addr']
+                proposed_ip_addr = proposed_object['ipv4addrs'][0]['ipv4addr']
+            elif 'ipv6addrs' in (current_object and proposed_object):
+                current_ip_addr = current_object['ipv6addrs'][0]['ipv6addr']
+                proposed_ip_addr = proposed_object['ipv6addrs'][0]['ipv6addr']
+
+            if obj_host_name == ref_host_name and current_ip_addr != proposed_ip_addr:
+                self.create_object(ib_obj_type, proposed_object)
 
     def issubset(self, item, objects):
         ''' Checks if item is a subset of objects

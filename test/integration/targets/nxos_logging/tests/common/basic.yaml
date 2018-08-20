@@ -194,8 +194,7 @@
 
 - name: Configure Source Interface for Logging
   nxos_logging: &srcint
-    interface_type: mgmt
-    interface: 0
+    interface: mgmt0
   register: result
 
 - assert:
@@ -220,7 +219,7 @@
       - { dest: logfile, dest_level: 1, name: test }
       - { facility: daemon, facility_level: 4 }
       - { dest: server, remote_server: test-syslogserver.com, facility: auth, facility_level: 1, use_vrf: management }
-      - { interface_type: mgmt, interface: 0 }
+      - { interface: mgmt0 }
     provider: "{{ connection }}"
     state: absent
   register: result

@@ -41,7 +41,7 @@ Release status
 Ansible Release   Latest Version               Status
 ===============   ==========================   =================================================
 devel             2.7 (unreleased, trunk)      In development
-`2.6`-            2.6.1 (2018-07-05)           Supported (security **and** general bug fixes)
+`2.6`_            2.6.1 (2018-07-05)           Supported (security **and** general bug fixes)
 `2.5`_            2.5.6 (2018-07-05)           Supported (security **and** critical bug fixes)
 `2.4`_            2.4.6 (2018-07-05)           Supported (security fixes)
 `2.3`_            2.3.3 (2017-12-20)           Unsupported (end of life)

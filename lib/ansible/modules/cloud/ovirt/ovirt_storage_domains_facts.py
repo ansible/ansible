@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_storage_domains:
-    description: "List of dictionaries describing the storage domains. Storage_domain attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the storage domains. Storage_domain attributes are mapped to dictionary keys,
                   all storage domains attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/storage_domain."
     returned: On success.
     type: list

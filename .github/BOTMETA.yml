@@ -330,6 +330,7 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: Spredzy
+  $modules/crypto/acme/: mgruener resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/misc/elasticsearch_plugin.py: ThePixelDeveloper
   $modules/database/misc/kibana_plugin.py: barryib
@@ -426,7 +427,7 @@ files:
   $modules/monitoring/zabbix/zabbix_maintenance.py: abulimov
   $modules/monitoring/zabbix/zabbix_screen.py: cove harrisongu
   $modules/monitoring/zabbix/zabbix_template.py: eikef Logan2211 sookido
-  $modules/net_tools/basics/get_url.py: jpmens
+  $modules/net_tools/basics/get_url.py: jpmens ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py: $team_ansible
   $modules/net_tools/cloudflare_dns.py: mgruener andreaso
@@ -691,10 +692,6 @@ files:
   $modules/utilities/logic/pause.py: tbielawa samdoran
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
-  $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_account.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_certificate_revoke.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
@@ -929,6 +926,7 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
+  $module_utils/storage/netapp: $team_netapp
   $module_utils/vultr.py:
     maintainers: $team_vultr
     labels:
@@ -1057,6 +1055,9 @@ files:
   lib/ansible/plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/httpapi/ftd.py:
+    maintainers: annikulin $team_networking
+    labels: networking
   lib/ansible/plugins/inventory/openstack.py:
     maintainers: $team_openstack
     keywords:
@@ -1076,6 +1077,10 @@ files:
     maintainers: machacekondra
     labels:
       - ovirt
+      - cloud
+  lib/ansible/plugins/inventory/scaleway.py:
+    maintainers: sieben hekonsek
+    labels:
       - cloud
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking
@@ -1177,6 +1182,8 @@ files:
     keywords:
     - jinja
     - jinja2
+  lib/ansible/utils/module_docs_fragments/acme.py:
+    maintainers: mgruener resmo felixfontein
   test/sanity/validate-modules:
     keywords:
     - validate-modules
