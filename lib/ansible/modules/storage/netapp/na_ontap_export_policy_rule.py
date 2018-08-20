@@ -450,15 +450,11 @@ class NetAppontapExportRule(object):
         export_rule_superuser_changed = False
         netapp_utils.ems_log_event("na_ontap_export_policy_rules", self.server)
         export_policy_details = self.get_export_policy()
-        with open('/tmp/policydetails', 'w') as somefile:
-            somefile.write(str(export_policy_details))
 
         if not export_policy_details:
             if self.state == 'present':
                 self.create_export_policy()
         export_policy_rule_exists = self.get_export_policy_rule()
-        with open('/tmp/policyrule', 'w') as somefile:
-            somefile.write(str(export_policy_rule_exists))
         if self.state == 'absent':
             if export_policy_rule_exists:  # delete
                 changed = True
@@ -483,9 +479,6 @@ class NetAppontapExportRule(object):
                     if self.allow_suid is not None and \
                             export_policy_rule_exists['is-allow-set-uid-enabled'] != self.allow_suid:
                         export_rule_allow_suid_enabled = True
-                        with open('/tmp/policymodifytrue', 'w') as somefile:
-                            somefile.write(str(export_policy_rule_exists['is-allow-set-uid-enabled']))
-                            somefile.write(str(self.allow_suid))
                         changed = True
                     if self.super_user_security is not None and \
                             export_policy_rule_exists['super-user-security'] != self.super_user_security:
@@ -505,13 +498,6 @@ class NetAppontapExportRule(object):
                     if not export_policy_rule_exists:
                         self.create_export_policy_rule()
                     else:
-                        with open('/tmp/policymodify', 'w') as somefile:
-                            somefile.write(str(export_rule_protocol_changed))
-                            somefile.write(str(export_rule_ro_rule_changed))
-                            somefile.write(str(export_rule_rw_rule_changed))
-                            somefile.write(str(export_rule_allow_suid_enabled))
-                            somefile.write(str(export_rule_clientmatch_changed))
-                            somefile.write(str(export_rule_superuser_changed))
                         if export_rule_protocol_changed:
                             self.modify_protocol(rule_index)
                         if export_rule_ro_rule_changed:
