@@ -496,8 +496,8 @@ options:
         version_added: "2.5"
     ticket:
         description:
-            - "If I(true), in addition return I(remote_vv_file) inside I(vm) dictionary, which contains compatible \
-            content for remote-viewer application. Works only C(state) is I(running)."
+            - "If I(true), in addition return I(remote_vv_file) inside I(vm) dictionary, which contains compatible
+                content for remote-viewer application. Works only C(state) is I(running)."
         version_added: "2.7"
     cpu_pinning:
         description:
