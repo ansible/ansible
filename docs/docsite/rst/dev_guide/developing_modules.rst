@@ -31,7 +31,7 @@ A combination of existing modules may cover the functionality you want. You can 
 
 5. Should you write multiple modules instead of one module?
 
-The functionality you want may be too large for a single module. If you want to connect Ansible to a new cloud provider, database, or network platform, you may need to develop a related group of modules.
+The functionality you want may be too large for a single module. If you want to connect Ansible to a new cloud provider, database, or network platform, you may need to :ref:`develop a related group of modules<developing_modules_in_groups>`.
 
 * Modules should have a concise and well defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 
@@ -39,27 +39,22 @@ The functionality you want may be too large for a single module. If you want to 
 
 * Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
 
-If your use case isn't covered by an existing module, an open PR, an action plugin, or a role, and you don't need to create multiple modules, then you're ready to start developing a new module.
+If your use case isn't covered by an existing module, an open PR, an action plugin, or a role, and you don't need to create multiple modules, then you're ready to start developing a new module. Choose from the topics below for next steps:
 
-I want to :ref:`get started on a new module <developing_modules_general>`
-I want to review :ref:`best practices for developing modules <developing_modules_best_practices>`.
-I want to :ref:`write a Windows module <developing_modules_general_windows>`.
-I want :ref:`an overview of Ansible's architecture <developing_program_flow_modules>`.
-I want to :ref:`document my module <developing_modules_documenting>`.
-I want to :ref:`contribute my module back to Ansible Core <developing_modules_checklist>`.
-I want to :ref:`add unit and integration tests to my module <developing_testing>`.
-I want to :ref:`add Python 3 support to my module <developing_python_3>`.
-I want to :ref:`write multiple modules <developing_modules_in_groups>`.
-
+* I want to :ref:`get started on a new module <developing_modules_general>`.
+* I want to review :ref:`best practices for developing modules <developing_modules_best_practices>`.
+* I want to :ref:`write a Windows module <developing_modules_general_windows>`.
+* I want :ref:`an overview of Ansible's architecture <developing_program_flow_modules>`.
+* I want to :ref:`document my module <developing_modules_documenting>`.
+* I want to :ref:`contribute my module back to Ansible Core <developing_modules_checklist>`.
+* I want to :ref:`add unit and integration tests to my module <developing_testing>`.
+* I want to :ref:`add Python 3 support to my module <developing_python_3>`.
+* I want to :ref:`write multiple modules <developing_modules_in_groups>`.
 
 .. seealso::
 
    :ref:`all_modules`
        Learn about available modules
-   :doc:`developing_plugins`
-       Learn about developing plugins
-   :doc:`developing_api`
-       Learn about the Python API for playbook and task execution
    `GitHub modules directory <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_
        Browse module source code
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
