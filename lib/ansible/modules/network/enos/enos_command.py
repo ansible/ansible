@@ -4,6 +4,8 @@
 # (C) 2017 Red Hat Inc.
 # Copyright (C) 2017 Lenovo.
 #
+#
+# Copyright (C) 2017 Lenovo.
 # GNU General Public License v3.0+
 #
 # This program is distributed in the hope that it will be useful,
