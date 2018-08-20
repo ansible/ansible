@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from ansible.compat.tests import unittest
 
-from ansible.modules.packaging.os import yum
+from ansible.modules.packaging.os.yum import YumModule
 
 
 yum_plugin_load_error = """
@@ -141,34 +141,34 @@ class TestYumUpdateCheckParse(unittest.TestCase):
         self.assertIsInstance(result, dict)
 
     def test_empty_output(self):
-        res = yum.parse_check_update("")
+        res = YumModule.parse_check_update("")
         expected_pkgs = []
         self._assert_expected(expected_pkgs, res)
 
     def test_longname(self):
-        res = yum.parse_check_update(longname)
+        res = YumModule.parse_check_update(longname)
         expected_pkgs = ['xxxxxxxxxxxxxxxxxxxxxxxxxx', 'glibc']
         self._assert_expected(expected_pkgs, res)
 
     def test_plugin_load_error(self):
-        res = yum.parse_check_update(yum_plugin_load_error)
+        res = YumModule.parse_check_update(yum_plugin_load_error)
         expected_pkgs = []
         self._assert_expected(expected_pkgs, res)
 
     def test_wrapped_output_1(self):
-        res = yum.parse_check_update(wrapped_output_1)
+        res = YumModule.parse_check_update(wrapped_output_1)
         expected_pkgs = ["vms-agent"]
         self._assert_expected(expected_pkgs, res)
 
     def test_wrapped_output_2(self):
-        res = yum.parse_check_update(wrapped_output_2)
+        res = YumModule.parse_check_update(wrapped_output_2)
         expected_pkgs = ["empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty",
                          "libtiff"]
 
         self._assert_expected(expected_pkgs, res)
 
     def test_wrapped_output_3(self):
-        res = yum.parse_check_update(wrapped_output_3)
+        res = YumModule.parse_check_update(wrapped_output_3)
         expected_pkgs = ["ceph", "ceph-base", "ceph-common", "ceph-mds",
                          "ceph-mon", "ceph-osd", "ceph-selinux", "libcephfs1",
                          "librados2", "libradosstriper1", "librbd1", "librgw2",
@@ -176,16 +176,16 @@ class TestYumUpdateCheckParse(unittest.TestCase):
         self._assert_expected(expected_pkgs, res)
 
     def test_wrapped_output_4(self):
-        res = yum.parse_check_update(wrapped_output_4)
+        res = YumModule.parse_check_update(wrapped_output_4)
 
         expected_pkgs = ["ipxe-roms-qemu", "quota", "quota-nls", "rdma", "screen",
                          "sos", "sssd-client"]
         self._assert_expected(expected_pkgs, res)
 
     def test_wrapped_output_rhel7(self):
-        res = yum.parse_check_update(unwrapped_output_rhel7)
+        res = YumModule.parse_check_update(unwrapped_output_rhel7)
         self._assert_expected(unwrapped_output_rhel7_expected_pkgs, res)
 
     def test_wrapped_output_rhel7_obsoletes(self):
-        res = yum.parse_check_update(unwrapped_output_rhel7_obsoletes)
+        res = YumModule.parse_check_update(unwrapped_output_rhel7_obsoletes)
         self._assert_expected(unwrapped_output_rhel7_expected_pkgs, res)

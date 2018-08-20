@@ -45,13 +45,9 @@ options:
     description:
       - VRF to be used while configuring remote logging (when dest is 'server').
     version_added: '2.7'
-  interface_type:
-    description:
-      - Type of interface to be used when configuring Source-Interface for logging (e.g., 'Ethernet', 'mgmt').
-    version_added: '2.7'
   interface:
     description:
-      - Interface number to be used when configuring Source-Interface for logging (e.g., '1/1', '1/3', '0').
+      - Interface to be used while configuring source-interface for logging (e.g., 'Ethernet1/2', 'mgmt0')
     version_added: '2.7'
   name:
     description:
@@ -113,8 +109,7 @@ EXAMPLES = """
     state: present
 - name: Configure Source Interface for Logging
   nxos_logging:
-    interface_type: mgmt
-    interface: 0
+    interface: mgmt0
     state: present
 
 - name: Configure logging using aggregate
@@ -140,7 +135,7 @@ commands:
 import re
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args, normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -169,7 +164,7 @@ def map_obj_to_commands(updates):
             if w['dest'] == 'server':
                 commands.append('no logging server {}'.format(w['remote_server']))
 
-            if w['interface_type']:
+            if w['interface']:
                 commands.append('no logging source-interface')
 
         if state == 'present' and w not in have:
@@ -217,10 +212,16 @@ def map_obj_to_commands(updates):
                     commands.append('logging level {} {}'.format(w['facility'],
                                                                  w['facility_level']))
 
-            if w['interface_type']:
-                commands.append('logging source-interface {0} {1}'.format(w['interface_type'],
-                                                                          w['interface']))
+            if w['interface']:
+                commands.append('logging source-interface {0} {1}'.format(*split_interface(w['interface'])))
+
     return commands
+
+
+def split_interface(interface):
+    match = re.search(r'(\D+)(\S*)', interface, re.M)
+    if match:
+        return match.group(1), match.group(2)
 
 
 def parse_name(line, dest):
@@ -315,20 +316,10 @@ def parse_use_vrf(line, dest):
     return use_vrf
 
 
-def parse_interface_type(line):
-    interface_type = None
-
-    match = re.search(r'logging source-interface (\D+)', line, re.M)
-    if match:
-        interface_type = match.group(1)
-
-    return interface_type
-
-
 def parse_interface(line):
     interface = None
 
-    match = re.search(r'logging source-interface (?:\D+)(\d*([/]?\d+))', line, re.M)
+    match = re.search(r'logging source-interface (\S*)', line, re.M)
     if match:
         interface = match.group(1)
 
@@ -367,7 +358,6 @@ def map_config_to_obj(module):
                         'facility': facility,
                         'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
                         'facility_level': parse_facility_level(line, facility, dest),
-                        'interface_type': parse_interface_type(line),
                         'interface': parse_interface(line)})
 
     cmd = [{'command': 'show logging | section enabled | section console', 'output': 'text'},
@@ -393,7 +383,6 @@ def map_config_to_obj(module):
                         'dest_level': dest_level,
                         'facility_level': None,
                         'use_vrf': None,
-                        'interface_type': None,
                         'interface': None})
 
     return obj
@@ -410,7 +399,6 @@ def map_params_to_obj(module):
                 'facility': '',
                 'dest_level': '',
                 'facility_level': '',
-                'interface_type': '',
                 'interface': ''}
 
         for c in module.params['aggregate']:
@@ -426,8 +414,8 @@ def map_params_to_obj(module):
             if d['facility_level'] is not None:
                 d['facility_level'] = str(d['facility_level'])
 
-            if d['interface_type']:
-                d['interface'] = str(d['interface'])
+            if d['interface']:
+                d['interface'] = normalize_interface(d['interface'])
 
             if 'state' not in d:
                 d['state'] = module.params['state']
@@ -452,8 +440,7 @@ def map_params_to_obj(module):
             'facility': module.params['facility'],
             'dest_level': dest_level,
             'facility_level': facility_level,
-            'interface_type': module.params['interface_type'],
-            'interface': module.params['interface'],
+            'interface': normalize_interface(module.params['interface']),
             'state': module.params['state']
         })
     return obj
@@ -470,7 +457,6 @@ def main():
         use_vrf=dict(),
         dest_level=dict(type='int', aliases=['level']),
         facility_level=dict(type='int'),
-        interface_type=dict(),
         interface=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         aggregate=dict(type='list')
@@ -483,7 +469,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
-                           required_together=[['interface_type', 'interface']],
                            supports_check_mode=True)
 
     warnings = list()

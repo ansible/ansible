@@ -514,7 +514,9 @@ class ACMEAccount(object):
         self.key_content = module.params['account_key_content']
         self.directory = ACMEDirectory(module)
 
-        self.uri = None
+        # Grab account URI from module parameters.
+        # Make sure empty string is treated as None.
+        self.uri = module.params.get('account_uri') or None
 
         self._openssl_bin = module.get_bin_path('openssl', True)
 
@@ -527,6 +529,9 @@ class ACMEAccount(object):
                 "alg": self.key_data['alg'],
                 "jwk": self.jwk,
             }
+            if self.uri:
+                # Make sure self.jws_header is updated
+                self.set_account_uri(self.uri)
 
     def get_keyauthorization(self, token):
         '''
@@ -676,13 +681,17 @@ class ACMEAccount(object):
         if self.version == 1:
             data['resource'] = 'reg'
         result, info = self.send_signed_request(self.uri, data)
-        if info['status'] == 403 and result.get('type') == 'urn:ietf:params:acme:error:unauthorized':
+        if info['status'] in (400, 403) and result.get('type') == 'urn:ietf:params:acme:error:unauthorized':
+            # Returned when account is deactivated
+            return None
+        if info['status'] in (400, 404) and result.get('type') == 'urn:ietf:params:acme:error:accountDoesNotExist':
+            # Returned when account does not exist
             return None
         if info['status'] < 200 or info['status'] >= 300:
             raise ModuleFailException("Error getting account data from {2}: {0} {1}".format(info['status'], result, self.uri))
         return result
 
-    def init_account(self, contact, agreement=None, terms_agreed=False, allow_creation=True, update_contact=True):
+    def init_account(self, contact, agreement=None, terms_agreed=False, allow_creation=True, update_contact=True, remove_account_uri_if_not_exists=False):
         '''
         Create or update an account on the ACME server. For ACME v1,
         as the only way (without knowing an account URI) to test if an
@@ -709,6 +718,14 @@ class ACMEAccount(object):
         changed = False
         if self.uri is not None:
             new_account = False
+            if not update_contact:
+                # Verify that the account key belongs to the URI.
+                # (If update_contact is True, this will be done below.)
+                if self.get_account_data() is None:
+                    if remove_account_uri_if_not_exists and not allow_creation:
+                        self.uri = None
+                        return False
+                    raise ModuleFailException("Account is deactivated or does not exist!")
         else:
             new_account = self._new_reg(
                 contact,
@@ -724,7 +741,7 @@ class ACMEAccount(object):
                 if not allow_creation:
                     self.uri = None
                     return False
-                raise ModuleFailException("Account is deactivated!")
+                raise ModuleFailException("Account is deactivated or does not exist!")
 
             # ...and check if update is necessary
             if result.get('contact', []) != contact:
