@@ -35,7 +35,10 @@ except ImportError:
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.api import basic_auth_argument_spec
-from ansible.release import __version__
+try:
+    from ansible.release import __version__ as ansible_version
+except ImportError:
+    ansible_version = 'unknown'
 
 import os
 import ssl
@@ -230,7 +233,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         return resp_code, data
 
 
-def ems_log_event(source, server, name="Ansible", id="12345", version=__version__,
+def ems_log_event(source, server, name="Ansible", id="12345", version=ansible_version,
                   category="Information", event="setup", autosupport="false"):
     ems_log = zapi.NaElement('ems-autosupport-log')
     # Host name invoking the API.
