@@ -53,6 +53,7 @@ options:
      - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
      default: 'bios_uuid'
      choices: ['bios_uuid', 'instance_uuid']
+     version_added: 2.7
    folder:
      description:
      - Absolute path to find an existing guest.
@@ -185,6 +186,10 @@ def main():
         name=dict(required=True, type='str'),
         folder=dict(type='str'),
         uuid=dict(type='str'),
+        uuid_type=dict(
+            choices=['bios_uuid', 'instance_uuid'],
+            default='bios_uuid'
+        ),
         state=dict(type='str', default='present',
                    choices=['absent', 'present']),
         attributes=dict(

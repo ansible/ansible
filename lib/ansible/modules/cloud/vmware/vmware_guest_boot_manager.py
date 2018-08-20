@@ -43,6 +43,7 @@ options:
      - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
      default: 'bios_uuid'
      choices: ['bios_uuid', 'instance_uuid']
+     version_added: 2.7
    boot_order:
      description:
      - List of the boot devices.
@@ -322,7 +323,7 @@ def main():
         uuid=dict(type='str'),
         uuid_type=dict(
             choices=['bios_uuid', 'instance_uuid'],
-            default='uuid'
+            default='bios_uuid'
         ),
         boot_order=dict(
             type='list',

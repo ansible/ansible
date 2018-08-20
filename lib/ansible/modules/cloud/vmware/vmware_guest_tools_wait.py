@@ -61,6 +61,7 @@ options:
      - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
      default: 'bios_uuid'
      choices: ['bios_uuid', 'instance_uuid']
+     version_added: 2.7
 extends_documentation_fragment: vmware.documentation
 '''
 

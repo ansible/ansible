@@ -209,4 +209,3 @@
       - "guest_facts_0005['instance']['guest_consolidation_needed'] is defined"
       - "guest_facts_0005['instance']['instance_uuid'] is defined"
       - "guest_facts_0005['instance']['instance_uuid'] == vm1_instance_uuid"
-

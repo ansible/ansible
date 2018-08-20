@@ -36,6 +36,12 @@ options:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID.
      - This is required if C(name) parameter is not supplied.
+   uuid_type:
+        description:
+            - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
+        default: 'bios_uuid'
+        choices: ['bios_uuid', 'instance_uuid']
+        version_added: 2.7
    datacenter:
      description:
      - Destination datacenter for the find operation.

@@ -42,6 +42,7 @@ options:
             - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
         default: 'bios_uuid'
         choices: ['bios_uuid', 'instance_uuid']
+        version_added: 2.7
    name_match:
         description:
             - If multiple virtual machines matching the name, use the first or last found.

@@ -52,6 +52,7 @@ options:
         - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
      default: 'bios_uuid'
      choices: ['bios_uuid', 'instance_uuid']
+     version_added: 2.7
     destination_host:
       description:
       - Name of the destination host the virtual machine should be running on.
@@ -261,7 +262,10 @@ class VmotionManager(PyVmomi):
         """
         vms = []
         if self.vm_uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.params['vm_uuid'], vm_id_type="uuid",  vm_uuid_type=self.uuid_type)
+            vm_obj = find_vm_by_id(self.content,
+                                   vm_id=self.params['vm_uuid'],
+                                   vm_id_type="uuid",
+                                   vm_uuid_type=self.uuid_type)
             vms = [vm_obj]
 
         elif self.vm_name:
