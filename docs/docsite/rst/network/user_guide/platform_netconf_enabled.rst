@@ -67,10 +67,24 @@ Example NETCONF Task
 
 .. code-block:: yaml
 
-   - name: Backup current switch config (junos)
+   - name: Backup current switch config
      netconf_config:
        backup: yes
      register: backup_junos_location
-     when: ansible_network_os == 'junos'
+
+Example NETCONF Task with configurable variables
+-----------------------------------------------
+
+
+.. code-block:: yaml
+
+   - name: configure interface while providing different private key file pat
+     netconf_config:
+       backup: yes
+     register: backup_junos_location
+     vars:
+       ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile
+
+Note: For nectonf connection plugin configurable variables .. _Refer: https://docs.ansible.com/ansible/latest/plugins/connection/netconf.html
 
 .. include:: shared_snippets/SSH_warning.txt
