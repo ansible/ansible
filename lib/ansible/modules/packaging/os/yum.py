@@ -23,6 +23,16 @@ description:
      - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
      - This module only works on Python 2. If you require Python 3 support see the M(dnf) module.
 options:
+  use_backend:
+    description:
+      - This module supports C(yum) (as it always has), this is known as C(yum3)/C(YUM3)/C(yum-deprecated) by
+        upstream yum developers. As of Ansible 2.7+, this module also supports C(YUM4), which is the
+        "new yum" and it has an C(dnf) backend.
+      - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
+    required: false
+    default: "auto"
+    choices: [ auto, yum, yum4, dnf ]
+    version_added: "2.7"
   name:
     description:
       - A package name or package specifier with version, like C(name-1.0).
@@ -1500,6 +1510,8 @@ def main():
     #   list=available
     #   list=repos
     #   list=pkgspec
+
+    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec

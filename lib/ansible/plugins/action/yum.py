@@ -50,20 +50,23 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Carry-over concept from the package action plugin
-        module = "auto"
+        module = self._task.args.get('use_backend', "auto")
 
-        try:
-            if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                module = self._templar.template("{{hostvars['%s']['ansible_facts']['pkg_mgr']}}" % self._task.delegate_to)
-            else:
-                module = self._templar.template("{{ansible_facts.pkg_mgr}}")
-        except Exception:
-            pass  # could not get it from template!
+        if module == 'auto':
+            try:
+                if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
+                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['pkg_mgr']}}" % self._task.delegate_to)
+                else:
+                    module = self._templar.template("{{ansible_facts.pkg_mgr}}")
+            except Exception:
+                pass  # could not get it from template!
 
         if module not in ["yum", "yum4", "dnf"]:
             facts = self._execute_module(module_name="setup", module_args=dict(filter="ansible_pkg_mgr", gather_subset="!all"), task_vars=task_vars)
             display.debug("Facts %s" % facts)
             module = facts.get("ansible_facts", {}).get("ansible_pkg_mgr", "auto")
+            if not self._task.delegate_to and module in ('dnf', 'yum', 'yum4'):
+                result['ansible_facts'] = {'pkg_mgr': module}
 
         if module != "auto":
 
@@ -75,12 +78,20 @@ class ActionModule(ActionBase):
             else:
                 # run either the yum (yum3) or dnf (yum4) backend module
                 new_module_args = self._task.args.copy()
+                if 'use_backend' in new_module_args:
+                    del new_module_args['use_backend']
 
                 display.vvvv("Running %s as the backend for the yum action plugin" % module)
                 result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
                 # Now fall through to cleanup
         else:
-            result.update({'failed': True, 'msg': "Could not detect which major revision of yum is in use, which is required to determine module backend."})
+            result.update(
+                {
+                    'failed': True,
+                    'msg': ("Could not detect which major revision of yum is in use, which is required to determine module backend.",
+                            "You can manually specify use_backend to tell the module whether to use the yum (yum3) or dnf (yum4) backend})"),
+                }
+            )
             # Now fall through to cleanup
 
         # Cleanup
