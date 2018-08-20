@@ -43,11 +43,10 @@ options:
         description:
             - UUID of the instance to manage if known, this is VMware's unique identifier.
             - This is required if name is not supplied.
-   uuid_type:
+   use_instance_uuid:
         description:
-            - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
-        default: 'bios_uuid'
-        choices: ['bios_uuid', 'instance_uuid']
+            - Use the VMWare instance UUID rather than the BIOS UUID.
+        default: False
         version_added: 2.7
    folder:
      description:
@@ -185,10 +184,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        uuid_type=dict(
-            choices=['bios_uuid', 'instance_uuid'],
-            default='bios_uuid'
-        ),
+        use_instance_uuid=dict(type='bool', default=False, required=False),
         folder=dict(type='str', default='/vm'),
         datacenter=dict(type='str', required=True),
         tags=dict(type='bool', default=False)

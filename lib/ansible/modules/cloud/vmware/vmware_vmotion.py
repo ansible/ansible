@@ -47,12 +47,11 @@ options:
       - This is a required parameter, if C(vm_name) is not set.
       aliases: ['uuid']
       version_added: 2.7
-    vm_uuid_type:
-     description:
-        - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
-     default: 'bios_uuid'
-     choices: ['bios_uuid', 'instance_uuid']
-     version_added: 2.7
+    use_instance_uuid:
+      description:
+      - Use the VMWare instance UUID rather than the BIOS UUID.
+      default: False
+      version_added: 2.7
     destination_host:
       description:
       - Name of the destination host the virtual machine should be running on.
@@ -124,7 +123,7 @@ class VmotionManager(PyVmomi):
         super(VmotionManager, self).__init__(module)
         self.vm = None
         self.vm_uuid = self.params.get('vm_uuid', None)
-        self.vm_uuid_type = self.params.get('vm_uuid_type', None)
+        self.use_instance_uuid = self.params.get('use_instance_uuid', False)
         self.vm_name = self.params.get('vm_name', None)
         result = dict()
 
@@ -261,13 +260,14 @@ class VmotionManager(PyVmomi):
 
         """
         vms = []
-        if self.vm_uuid:
+        if self.vm_uuid and not self.use_instance_uuid:
+            vm_obj = find_vm_by_id(self.content, vm_id=self.params['vm_uuid'], vm_id_type="uuid")
+            vms = [vm_obj]
+        elif self.vm_uuid and self.use_instance_uuid:
             vm_obj = find_vm_by_id(self.content,
                                    vm_id=self.params['vm_uuid'],
-                                   vm_id_type="uuid",
-                                   vm_uuid_type=self.uuid_type)
+                                   vm_id_type="instance_uuid")
             vms = [vm_obj]
-
         elif self.vm_name:
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
             for temp_vm_object in objects:
@@ -290,10 +290,7 @@ def main():
         dict(
             vm_name=dict(aliases=['vm']),
             vm_uuid=dict(aliases=['uuid']),
-            vm_uuid_type=dict(
-                choices=['bios_uuid', 'instance_uuid'],
-                default='bios_uuid'
-            ),
+            use_instance_uuid=dict(type='bool', default=False, required=False),
             destination_host=dict(aliases=['destination']),
             destination_datastore=dict(aliases=['datastore'])
         )

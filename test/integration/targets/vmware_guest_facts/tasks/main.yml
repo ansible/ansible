@@ -188,7 +188,7 @@
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"
     uuid: "{{ vm1_instance_uuid }}"
-    uuid_type: instance_uuid
+    use_instance_id: True
   register: guest_facts_0005
 
 - debug: msg="{{ guest_facts_0005 }}"

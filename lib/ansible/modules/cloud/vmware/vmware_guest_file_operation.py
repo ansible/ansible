@@ -65,15 +65,10 @@ options:
         default: vm_name
         choices:
             - 'uuid'
+            - 'instance_uuid'
             - 'dns_name'
             - 'inventory_path'
             - 'vm_name'
-    vm_uuid_type:
-         description:
-            - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
-         default: 'bios_uuid'
-         choices: ['bios_uuid', 'instance_uuid']
-         version_added: 2.7
     vm_username:
         description:
             - The user to login in to the virtual machine.
@@ -200,8 +195,10 @@ class VmwareGuestFileManager(PyVmomi):
         if module.params['vm_id_type'] == 'inventory_path':
             vm = find_vm_by_id(self.content, vm_id=module.params['vm_id'], vm_id_type="inventory_path", folder=folder)
         else:
-            vm = find_vm_by_id(self.content, vm_id=module.params['vm_id'], vm_id_type=module.params['vm_id_type'],
-                               vm_uuid_type=module.params['vm_uuid_type'], datacenter=datacenter,
+            vm = find_vm_by_id(self.content,
+                               vm_id=module.params['vm_id'],
+                               vm_id_type=module.params['vm_id_type'],
+                               datacenter=datacenter,
                                cluster=cluster)
 
         if not vm:
@@ -398,11 +395,7 @@ def main():
         vm_id_type=dict(
             default='vm_name',
             type='str',
-            choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
-        vm_uuid_type=dict(
-            choices=['bios_uuid', 'instance_uuid'],
-            default='bios_uuid'
-        ),
+            choices=['inventory_path', 'uuid', 'instance_uuid', 'dns_name', 'vm_name']),
         vm_username=dict(type='str', required=True),
         vm_password=dict(type='str', no_log=True, required=True),
         directory=dict(

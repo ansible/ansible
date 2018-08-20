@@ -52,14 +52,13 @@ options:
      choices: ['first', 'last']
    uuid:
      description:
-     - UUID of the instance to manage if known, this is VMware's unique identifier.
-     - This is required parameter, if C(name) is not supplied.
-   uuid_type:
-     description:
-     - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
-     default: 'bios_uuid'
-     choices: ['bios_uuid', 'instance_uuid']
-     version_added: 2.7
+     - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
+     - This is required if C(name) parameter is not supplied.
+   use_instance_uuid:
+        description:
+            - Use the VMWare instance UUID rather than the BIOS UUID.
+        default: False
+        version_added: 2.7
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -373,10 +372,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        uuid_type=dict(
-            choices=['bios_uuid', 'instance_uuid'],
-            default='bios_uuid'
-        ),
+        use_instance_uuid=dict(type='bool', default=False, required=False),
         folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
         snapshot_name=dict(type='str'),

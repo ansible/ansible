@@ -34,13 +34,12 @@ options:
      - This is required if C(uuid) parameter is not supplied.
    uuid:
      description:
-     - UUID of the instance to manage if known, this is VMware's BIOS UUID.
+     - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
      - This is required if C(name) parameter is not supplied.
-   uuid_type:
+   use_instance_uuid:
         description:
-            - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
-        default: 'bios_uuid'
-        choices: ['bios_uuid', 'instance_uuid']
+            - Use the VMWare instance UUID rather than the BIOS UUID.
+        default: False
         version_added: 2.7
    datacenter:
      description:
@@ -96,14 +95,17 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
         self.name = self.params['name']
         self.uuid = self.params['uuid']
-        self.uuid_type = self.params['uuid_type']
+        self.use_instance_uuid = self.params['use_instance_uuid']
 
     def getvm_folder_paths(self):
         results = []
         vms = []
 
         if self.uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid", vm_uuid_type=self.uuid_type)
+            if self.use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="instance_uuid")
+            else:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
             if vm_obj is None:
                 self.module.fail_json(msg="Failed to find the virtual machine with UUID : %s" % self.uuid)
             vms = [vm_obj]
@@ -126,10 +128,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
-        uuid_type=dict(
-            choices=['bios_uuid', 'instance_uuid'],
-            default='bios_uuid'
-        ),
+        use_instance_uuid=dict(type='bool', default=False, required=False),
         datacenter=dict(removed_in_version=2.9, type='str')
     )
 
