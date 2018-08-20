@@ -1,12 +1,19 @@
 - name: Prepare random number
   set_fact:
-    cdnprofilename: "cdnprofile{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    cdnprofilename: "cdnprofile{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}t"
   run_once: yes
 
+- name: get existing CDN in test environment
+  azure_rm_cdnprofile_facts:
+  register: facts
+
+- name: dump existing CDN
+  dump:
+    var: facts
 
 - name: Create a CDN profile(check mode)
   azure_rm_cdnprofile:
-      resource_group: "{{ resource_group_secondary }}"
+      resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
       sku: Standard_Akamai
       tags:
@@ -17,7 +24,7 @@
 
 - name: Check there is no CDN profile created
   azure_rm_cdnprofile_facts:
-      resource_group: "{{ resource_group_secondary }}"
+      resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
   register: fact
 
@@ -26,7 +33,7 @@
 
 - name: Create a CDN profile
   azure_rm_cdnprofile:
-      resource_group: "{{ resource_group_secondary }}"
+      resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
       sku: Standard_Akamai
       tags:
@@ -43,7 +50,7 @@
 
 - name: Gather CDN profile facts
   azure_rm_cdnprofile_facts:
-      resource_group: "{{ resource_group_secondary }}"
+      resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
   register: fact
 
@@ -56,7 +63,7 @@
 
 - name: Create a CDN profile (idempotent)
   azure_rm_cdnprofile:
-      resource_group: "{{ resource_group_secondary }}"
+      resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
       sku: Standard_Akamai
       tags:
@@ -72,7 +79,7 @@
 
 - name: Update the CDN profile
   azure_rm_cdnprofile:
-      resource_group: "{{ resource_group_secondary }}"
+      resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
       sku: Standard_Akamai
       tags:
@@ -90,14 +97,14 @@
 
 - name: Delete the CDN profile(check mode)
   azure_rm_cdnprofile:
-    resource_group: "{{ resource_group_secondary }}"
+    resource_group: "{{ resource_group }}"
     name: "{{ cdnprofilename }}"
     state: absent
   check_mode: yes
 
 - name: Gather CDN profile facts
   azure_rm_cdnprofile_facts:
-      resource_group: "{{ resource_group_secondary }}"
+      resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
   register: fact
 
@@ -111,7 +118,7 @@
 
 - name: Delete the CDN profile
   azure_rm_cdnprofile:
-    resource_group: "{{ resource_group_secondary }}"
+    resource_group: "{{ resource_group }}"
     name: "{{ cdnprofilename }}"
     state: absent
   register: output
@@ -123,7 +130,7 @@
 
 - name: Delete the CDN profile (idempotent)
   azure_rm_cdnprofile:
-    resource_group: "{{ resource_group_secondary }}"
+    resource_group: "{{ resource_group }}"
     name: "{{ cdnprofilename }}"
     state: absent
   register: output
@@ -135,7 +142,7 @@
 
 - name: Get CDN profile fact
   azure_rm_cdnprofile_facts:
-      resource_group: "{{ resource_group_secondary }}"
+      resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
   register: fact
 
