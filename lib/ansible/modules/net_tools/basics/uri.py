@@ -537,7 +537,6 @@ def main():
     removes = module.params['removes']
     status_code = [int(x) for x in list(module.params['status_code'])]
     socket_timeout = module.params['timeout']
-    unix_socket = module.params['unix_socket']
 
     dict_headers = module.params['headers']
 
