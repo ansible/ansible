@@ -1,3 +1,4 @@
+version: '1.0'
 groupings:
   aws_acm_facts:
   - aws

@@ -237,7 +237,12 @@ class ConfigManager(object):
 
         # update constants
         self.update_config_data()
-        self.update_module_defaults_groups()
+        try:
+            self.update_module_defaults_groups()
+        except Exception as e:
+            # Since this is a 2.7 preview feature, we want to have it fail as gracefully as possible when there are issues.
+            sys.stderr.write('Could not load module_defaults_groups: %s: %s\n\n' % (type(e).__name__, e))
+            self.module_defaults_groups = {}
 
     def _read_config_yaml_file(self, yml_file):
         yml_file = to_bytes(yml_file)
@@ -444,8 +449,12 @@ class ConfigManager(object):
         self._plugins[plugin_type][name] = defs
 
     def update_module_defaults_groups(self):
-        mod_defs_file = '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
-        module_default_groups = self._read_config_yaml_file(mod_defs_file).get('groupings', {})
+        defaults_config = self._read_config_yaml_file(
+            '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
+        )
+        if defaults_config.get('version') not in ('1', '1.0', 1, 1.0):
+            raise AnsibleError('module_defaults.yml has an invalid version "%s" for configuration. Could be a bad install.' % defaults_config.get('version'))
+        module_default_groups = defaults_config.get('groupings', {})
 
         if self.get_config_value('MODULE_DEFAULTS_CFG') is not None:
             try:
