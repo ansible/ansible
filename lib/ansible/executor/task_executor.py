@@ -561,7 +561,7 @@ class TaskExecutor:
             self._task.args = tmp_args
         if self._task.action in C.config.module_defaults_groups:
             for group in C.config.module_defaults_groups.get(self._task.action, []):
-                tmp_args = module_defaults.get('group/{0}'.format(group), {}).copy()
+                tmp_args = (module_defaults.get('group/{0}'.format(group)) or {}).copy()
                 tmp_args.update(self._task.args)
                 self._task.args = tmp_args
 
