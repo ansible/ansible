@@ -221,7 +221,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
 :requirements:
   
-  * List of requirements(if applicable).
+  * List of requirements (if applicable).
   * Include minimum versions.
 
 :notes:
