@@ -213,10 +213,8 @@ class WapiModule(WapiBase):
 
         obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
 
-        if('name' in obj_filter):
-            ib_obj_ref, update, new_name = self.get_object_ref(ib_obj_type, obj_filter, ib_spec)
-        else:
-            ib_obj_ref = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+        # get object reference
+        ib_obj_ref, update, new_name = self.get_object_ref(self.module, ib_obj_type, obj_filter, ib_spec)
 
         if ib_obj_ref:
             current_object = ib_obj_ref[0]
@@ -324,40 +322,53 @@ class WapiModule(WapiBase):
 
         return True
 
-    def get_object_ref(self, ib_obj_type, obj_filter, ib_spec):
-        ''' this function gets and returns the current object based on name/old_name passed'''
+    def get_object_ref(self, module, ib_obj_type, obj_filter, ib_spec):
+        ''' this function gets the reference object of pre-existing nios objects '''
+
         update = False
         old_name = new_name = None
-        try:
-            name_obj = self.module._check_type_dict(obj_filter['name'])
-            old_name = name_obj['old_name']
-            new_name = name_obj['new_name']
-        except TypeError:
-            name = obj_filter['name']
+        if ('name' in obj_filter):
+            # gets and returns the current object based on name/old_name passed
+            try:
+                name_obj = self.module._check_type_dict(obj_filter['name'])
+                old_name = name_obj['old_name']
+                new_name = name_obj['new_name']
+            except TypeError:
+                name = obj_filter['name']
 
-        if old_name and new_name:
-            if (ib_obj_type == NIOS_HOST_RECORD):
-                test_obj_filter = dict([('name', old_name), ('view', obj_filter['view'])])
-            else:
-                test_obj_filter = dict([('name', old_name)])
-            # get the object reference
-            ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
-            if ib_obj:
-                obj_filter['name'] = new_name
-            else:
-                test_obj_filter['name'] = new_name
+            if old_name and new_name:
+                if (ib_obj_type == NIOS_HOST_RECORD):
+                    test_obj_filter = dict([('name', old_name), ('view', obj_filter['view'])])
+                else:
+                    test_obj_filter = dict([('name', old_name)])
+                # get the object reference
                 ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
-            update = True
-            return ib_obj, update, new_name
-        if (ib_obj_type == NIOS_HOST_RECORD):
-            # to check only by name if dns bypassing is set
-            if not obj_filter['configure_for_dns']:
-                test_obj_filter = dict([('name', name)])
+                if ib_obj:
+                    obj_filter['name'] = new_name
+                else:
+                    test_obj_filter['name'] = new_name
+                    ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
+                update = True
+                return ib_obj, update, new_name
+            if (ib_obj_type == NIOS_HOST_RECORD):
+                # to check only by name if dns bypassing is set
+                if not obj_filter['configure_for_dns']:
+                    test_obj_filter = dict([('name', name)])
+                else:
+                    test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
             else:
-                test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
+                test_obj_filter = dict([('name', name)])
+            ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
+        elif (ib_obj_type == NIOS_ZONE):
+            # del key 'restart_if_needed' as nios_zone get_object fails with the key present
+            temp = ib_spec['restart_if_needed']
+            del ib_spec['restart_if_needed']
+            ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+            # reinstate restart_if_needed key if it's set to true in play
+            if module.params['restart_if_needed']:
+                ib_spec['restart_if_needed'] = temp
         else:
-            test_obj_filter = dict([('name', name)])
-        ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
+            ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
         return ib_obj, update, new_name
 
     def on_update(self, proposed_object, ib_spec):
