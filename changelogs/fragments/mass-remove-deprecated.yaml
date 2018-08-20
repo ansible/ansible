@@ -1,0 +1,8 @@
+minor_changes:
+- roles - removed deprecated functionality for non YAML role specs (https://github.com/ansible/ansible/pull/44320)
+- vault - removed deprecated functionality for insecure VaultAES class (https://github.com/ansible/ansible/pull/44320)
+- gather_subset - removed deprecated functionality for using comma separated list with gather_subset (https://github.com/ansible/ansible/pull/44320)
+- vars_prompt - removed deprecated functionality supporting 'short form' for vars_prompt (https://github.com/ansible/ansible/pull/44320)
+- roles - removed deprecated special casing functionality of connection, port, and remote_user for role params (https://github.com/ansible/ansible/pull/44320)
+- ActionBase - removed deprecated _fixup_perms method (https://github.com/ansible/ansible/pull/44320)
+- service - removed deprecated state=running (https://github.com/ansible/ansible/pull/44320)

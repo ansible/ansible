@@ -65,11 +65,6 @@ class ActionModule(ActionBase):
                 if 'use' in new_module_args:
                     del new_module_args['use']
 
-                # for backwards compatibility
-                if 'state' in new_module_args and new_module_args['state'] == 'running':
-                    self._display.deprecated(msg="state=running is deprecated. Please use state=started", version="2.7")
-                    new_module_args['state'] = 'started'
-
                 if module in self.UNUSED_PARAMS:
                     for unused in self.UNUSED_PARAMS[module]:
                         if unused in new_module_args:
