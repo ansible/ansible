@@ -551,7 +551,7 @@ files:
   $modules/packaging/os/apt_key.py: jvantuyl
   $modules/packaging/os/apt_repository.py: $team_ansible sashka
   $modules/packaging/os/apt_rpm.py: evgkrsk
-  $modules/packaging/os/dnf.py: DJMuggs berenddeschouwer ignatenkobrain
+  $modules/packaging/os/dnf.py: DJMuggs berenddeschouwer ignatenkobrain maxamillion
   $modules/packaging/os/dpkg_selections.py: brian-brazil
   $modules/packaging/os/homebrew.py: andrew-d danieljaouen indrajitr
   $modules/packaging/os/homebrew_cask.py: danieljaouen enriclluelles indrajitr
@@ -586,7 +586,7 @@ files:
   $modules/packaging/os/swdepot.py: melodous
   $modules/packaging/os/swupd.py: albertomurillo
   $modules/packaging/os/urpmi.py: pmakowski
-  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 kustodian
+  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 kustodian maxamillion
   $modules/packaging/os/yum_repository.py: jtyr
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
