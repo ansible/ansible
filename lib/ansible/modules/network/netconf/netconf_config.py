@@ -15,6 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: netconf_config
+version_added: "2.2"
 author: "Leandro Lisboa Penz (@lpenz)"
 short_description: netconf device configuration
 description:
@@ -24,7 +25,6 @@ description:
     - This module allows the user to send a configuration XML file to a netconf
       device, and detects if there was a configuration change.
 extends_documentation_fragment: netconf
-version_added: "2.2"
 options:
   content:
     description:

@@ -71,10 +71,6 @@ options:
         description:
           - If set to true, the ssh host key of the device must match a ssh key present on
             the host if false, the ssh host key of the device is not checked.
-      hostkey_verify:
-        description:
-          - If set to true, the ssh host key of the device must match a ssh key present on
-            the host if false, the ssh host key of the device is not checked.
 notes:
   - For information on using netconf see the :ref:`Platform Options guide using Netconf<netconf_platform_enabled_options>`
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
