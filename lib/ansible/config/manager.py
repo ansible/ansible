@@ -223,7 +223,7 @@ class ConfigManager(object):
         self._config_file = conf_file
         self.data = ConfigData()
 
-        self._base_defs = self._read_config_yaml_file(defs_file or '{0}/base.yml'.format(os.path.dirname(__file__)))
+        self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
 
         if self._config_file is None:
             # set config using ini
@@ -461,8 +461,7 @@ class ConfigManager(object):
                             except ValueError:
                                 pass
             except AnsibleError:
-                raise AnsibleError("Missing user-specified MODULE_DEFAULTS_CFG file: %s" % to_native(
-                    self.get_config_value('MODULE_DEFAULTS_CFG')))
+                raise AnsibleError("Missing user-specified MODULE_DEFAULTS_CFG file: %s" % self.get_config_value('MODULE_DEFAULTS_CFG'))
         self.module_defaults_groups = module_default_groups
 
     def update_config_data(self, defs=None, configfile=None):
