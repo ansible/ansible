@@ -174,7 +174,8 @@ def find_network_by_name(content, network_name):
     return find_object_by_name(content, network_name, [vim.Network])
 
 
-def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None, folder=None, match_first=False):
+def find_vm_by_id(content, vm_id, vm_id_type="vm_name", vm_uuid_type="bios_uuid", datacenter=None,
+                  cluster=None, folder=None, match_first=False):
     """ UUID is unique to a VM, every other id returns the first match. """
     si = content.searchIndex
     vm = None
@@ -183,7 +184,10 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
         vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
     elif vm_id_type == 'uuid':
         # Search By BIOS UUID rather than instance UUID
-        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=False, uuid=vm_id, vmSearch=True)
+        if vm_uuid_type == 'bios_uuid':
+            vm = si.FindByUuid(datacenter=datacenter, instanceUuid=False, uuid=vm_id, vmSearch=True)
+        elif vm_uuid_type == 'instance_uuid':
+            vm = si.FindByUuid(datacenter=datacenter, instanceUuid=True, uuid=vm_id, vmSearch=True)
     elif vm_id_type == 'ip':
         vm = si.FindByIp(datacenter=datacenter, ip=vm_id, vmSearch=True)
     elif vm_id_type == 'vm_name':
@@ -862,7 +866,8 @@ class PyVmomi(object):
         user_desired_path = None
 
         if self.params['uuid']:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
+            vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid",
+                                   vm_uuid_type=self.params['uuid_type'])
 
         elif self.params['name']:
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
