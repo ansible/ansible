@@ -11,20 +11,32 @@ If you want to extend Ansible by using a non-core module or plugin locally, crea
 
 Find the task that best describes what you want to do:
 
-* I want to :ref:`use a custom plugin or module locally <developing_locally>`.
-* I want to address a particular use case, and I wonder if :ref:`developing a module is the right approach <module_dev_should_you>`?
-* I want to :ref:`set up my Python development environment <environment_setup>`.
-* I want to :ref:`write a plugin <developing_plugins>`.
-* I want to :ref:`write a module <developing_modules_general>`.
-* I want to :ref:`write a Windows module <developing_modules_general_windows>`.
-* I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
-* I want to :ref:`debug my module code <debugging>`.
-* I want to :ref:`test my module <developing_testing>`.
-* I want to :ref:`document my module <module_documenting>`.
-* I want to :ref:`make sure my code runs on Python-2 and Python-3 <developing_python_3>`.
-* I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`. 
+* I'm looking for a way to address a use case:
+
+   * I want to :ref:`use a custom plugin or module locally <developing_locally>`.
+   * I have a use case, and I wonder if :ref:`developing a module is the right approach <module_dev_should_you>`?
+
+* I'm ready to start developing:
+
+   * I want to :ref:`set up my Python development environment <environment_setup>`.
+   * I want to :ref:`get started writing a module <developing_modules_general>`.
+   * I want to :ref:`write a Windows module <developing_modules_general_windows>`.
+   * I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
+
+* I want to refine my code:
+
+   * I want to :ref:`debug my module code <debugging>`.
+   * I want to :ref:`test my module <developing_testing>`.
+   * I want to :ref:`document my module <module_documenting>`.
+   * I want to :ref:`make sure my code runs on Python-2 and Python-3 <developing_python_3>`.
+
+* I want to work on other development projects:
+
+   * I want to :ref:`write a plugin <developing_plugins>`.
+   * I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`. 
+   * I want to :ref:`deprecate an outdated module <deprecating_modules>`.
+
 * I want to :ref:`contribute my module or plugin to Ansible Core <developing_modules_checklist>`.
-* I want to :ref:`deprecate an outdated module <deprecating_modules>`.
 
 If you prefer to read the entire guide, here's a list of the pages in order.
 
