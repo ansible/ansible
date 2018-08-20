@@ -10,24 +10,29 @@ Conventions, Best Practices, and Pitfalls
 
 As you develop your module, follow these basic conventions and best practices:
 
+Scoping your module(s)
+======================
+
+Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
+
+* Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
+* Do not add ``list`` or ``info`` state options to an existing module - create a new ``_facts`` module.
+* Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
+* Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, :ref:`create multiple modules <developing_modules_in_groups>` that interact with smaller individual pieces of the API.
+* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role. 
+
 General best practices
 ======================
 
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
 * Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
-* Validate upfront--fail fast and return useful and clear error messages.
-* Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
-* Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
 * If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
-* Modules accepting boolean status should generally accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
+* Modules accepting boolean status should accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
-* If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
 * Don't write to files directly; use a temporary file and then use the ``atomic_move`` function from ``ansible.module_utils.basic`` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
-* Handle exceptions (bugs) gracefully
-    * Give out a useful message on what you were doing and add exception messages to that.
-    * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
+* If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
 
 Python best practices
 ======================
@@ -41,17 +46,6 @@ Python best practices
 
 	    if __name__ == '__main__':
 	        main()
-
-Scoping your module(s)
-======================
-
-Especially if you want to contribute your module back to Ansible Core, make sure it includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
-
-* Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
-* Do not add ``list`` or ``info`` state options to an existing module - create a new ``_facts`` module.
-* Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
-* Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, :ref:`create multiple modules <developing_modules_in_groups>` that interact with smaller individual pieces of the API.
-* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role. 
 
 .. _shared_code:
 
@@ -85,11 +79,20 @@ Importing and using shared code
 Handling module failures
 ========================
 
-When you module fails, help users understand what went wrong. If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call ``fail_json``. For polite module failure behavior:
+When your module fails, help users understand what went wrong. If you are using the ``AnsibleModule`` common Python code, the ``failed`` element will be included for you automatically when you call ``fail_json``. For polite module failure behavior:
 
 * Include a key of ``failed`` along with a string explanation in ``msg``. If you don't do this, Ansible will use standard return codes: 0=success and non-zero=failure.
 * Don't raise a traceback (stacktrace). Ansible can deal with stacktraces and automatically converts anything unparseable into a failed result, but raising a stacktrace on module failure is not user-friendly.
 * Do not use ``sys.exit()``. Use ``fail_json()`` from the module object.
+
+Handling exceptions (bugs) gracefully
+===================================
+
+* Validate upfront--fail fast and return useful and clear error messages.
+* Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
+* Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
+* Give out a useful message on what you were doing and add exception messages to that.
+* Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 
 .. _module_output:
 
