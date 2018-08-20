@@ -1,0 +1,43 @@
+# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_volume
+
+- name: Make sure volume is not there before tests
+  scaleway_volume:
+    name: ansible-test-volume
+    state: absent
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+  register: server_creation_check_task
+
+- assert:
+    that:
+      - server_creation_check_task is success
+
+- name: Create volume
+  scaleway_volume:
+    name: ansible-test-volume
+    state: present
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    "size": 10000000000
+    volume_type: l_ssd
+  register: server_creation_check_task
+
+- debug: var=server_creation_check_task
+
+- assert:
+    that:
+      - server_creation_check_task is success
+      - server_creation_check_task is changed
+
+- name: Make sure volume is deleted
+  scaleway_volume:
+    name: ansible-test-volume
+    state: absent
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+  register: server_creation_check_task
+
+- assert:
+    that:
+      - server_creation_check_task is success
+      - server_creation_check_task is changed
