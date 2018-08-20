@@ -629,6 +629,7 @@ class TaskExecutor:
                 if self._task.action in ('set_fact', 'include_vars'):
                     vars_copy.update(result['ansible_facts'])
                 else:
+                    # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     vars_copy.update(namespace_facts(result['ansible_facts']))
                     if C.INJECT_FACTS_AS_VARS:
                         vars_copy.update(clean_facts(result['ansible_facts']))
@@ -690,6 +691,7 @@ class TaskExecutor:
             if self._task.action in ('set_fact', 'include_vars'):
                 variables.update(result['ansible_facts'])
             else:
+                # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                 variables.update(namespace_facts(result['ansible_facts']))
                 if C.INJECT_FACTS_AS_VARS:
                     variables.update(clean_facts(result['ansible_facts']))
