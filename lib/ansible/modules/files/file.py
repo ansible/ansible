@@ -79,12 +79,13 @@ options:
 '''
 
 EXAMPLES = '''
-# change file ownership, group and mode. When specifying mode using octal numbers, first digit should always be 0.
+# change file ownership, group and mode
 - file:
     path: /etc/foo.conf
     owner: foo
     group: foo
     mode: 0644
+# when specifying mode using octal numbers, add a leading 0
 - file:
     path: /work
     owner: root
