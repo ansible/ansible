@@ -143,6 +143,12 @@ items:
                 - Labels to apply to this VpnTunnel.
             returned: success
             type: dict
+        label_fingerprint:
+            description:
+                - The fingerprint used for optimistic locking of this resource.  Used internally during
+                  updates.
+            returned: success
+            type: str
         region:
             description:
                 - The region where the tunnel is located.

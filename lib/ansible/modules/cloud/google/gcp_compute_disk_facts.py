@@ -71,6 +71,12 @@ items:
     returned: always
     type: complex
     contains:
+        label_fingerprint:
+            description:
+                - The fingerprint used for optimistic locking of this resource.  Used internally during
+                  updates.
+            returned: success
+            type: str
         creation_timestamp:
             description:
                 - Creation timestamp in RFC3339 text format.

@@ -236,6 +236,12 @@ RETURN = '''
             - Labels to apply to this VpnTunnel.
         returned: success
         type: dict
+    label_fingerprint:
+        description:
+            - The fingerprint used for optimistic locking of this resource.  Used internally during
+              updates.
+        returned: success
+        type: str
     region:
         description:
             - The region where the tunnel is located.
@@ -288,7 +294,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                fetch = update(module, self_link(module), kind, fetch)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -297,6 +303,7 @@ def main():
     else:
         if state == 'present':
             fetch = create(module, collection(module), kind)
+            labels_update(module, module.params, fetch)
             changed = True
         else:
             fetch = {}
@@ -311,8 +318,29 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
-    module.fail_json(msg="VpnTunnel cannot be edited")
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('labels') != request.get('labels'):
+        labels_update(module, request, response)
+
+
+def labels_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/vpnTunnels/{name}/setLabels"
+        ]).format(**module.params),
+        {
+            u'labels': module.params.get('labels'),
+            u'labelFingerprint': response.get('labelFingerprint')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -411,7 +439,8 @@ def response_to_hash(module, response):
         u'ikeVersion': response.get(u'ikeVersion'),
         u'localTrafficSelector': response.get(u'localTrafficSelector'),
         u'remoteTrafficSelector': response.get(u'remoteTrafficSelector'),
-        u'labels': response.get(u'labels')
+        u'labels': response.get(u'labels'),
+        u'labelFingerprint': response.get(u'labelFingerprint')
     }
 
 

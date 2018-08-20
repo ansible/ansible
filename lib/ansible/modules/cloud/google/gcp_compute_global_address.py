@@ -115,6 +115,12 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
+    label_fingerprint:
+        description:
+            - The fingerprint used for optimistic locking of this resource.  Used internally during
+              updates.
+        returned: success
+        type: str
     ip_version:
         description:
             - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
@@ -166,7 +172,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                fetch = update(module, self_link(module), kind, fetch)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -189,8 +195,27 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
-    module.fail_json(msg="GlobalAddress cannot be edited")
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    pass
+
+
+def label_fingerprint_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/addresses/{name}/setLabels"
+        ]).format(**module.params),
+        {
+            u'labelFingerprint': response.get('labelFingerprint')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -276,6 +301,7 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
+        u'labelFingerprint': response.get(u'labelFingerprint'),
         u'ipVersion': response.get(u'ipVersion'),
         u'region': response.get(u'region')
     }
