@@ -1,0 +1,2 @@
+minor_changes:
+- replace copy.deepcopy in high workload areas with a custom function to improve performance (https://github.com/ansible/ansible/pull/44337)

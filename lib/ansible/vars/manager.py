@@ -307,6 +307,7 @@ class VariableManager:
             all_vars = combine_vars(all_vars, _plugins_play([host]))
 
             # finally, the facts caches for this host, if it exists
+            # TODO: cleaning of facts should eventually become part of taskresults instead of vars
             try:
                 facts = wrap_var(self._fact_cache.get(host.name, {}))
                 all_vars.update(namespace_facts(facts))
