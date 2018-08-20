@@ -19,7 +19,10 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_nxos
    platform_routeros
    platform_slxos
+
    platform_voss
+   platform_netconf_enabled
+
 
 .. _settings_by_platform:
 
@@ -63,5 +66,7 @@ Settings by Platform
 +-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
 | VyOS*             | ``vyos``                | in v. >=2.5          | N/A                  | N/A              |  in v. >=2.4     |
 +-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
-
+| OS that supports  | ``<network-os>``        | N/A                  | in v. >=2.6          | N/A              | in v. >=2.2      |
+| Netconf*          |                         |                      |                      |                  |                  |
++-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
 `*` Maintained by Ansible Network Team

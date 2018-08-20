@@ -273,13 +273,20 @@ class NetconfBase(AnsiblePlugin):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def locked(self, target):
+    def delete_config(self, target):
         """
-        Returns a context manager for a lock on a datastore
-        :param target: Name of the configuration datastore to lock
-        :return: Locked context object
+        delete a configuration datastore
+        :param target: specifies the  name or URL of configuration datastore to delete
+        :return: Returns xml string containing the RPC response received from remote host
         """
-        return self.m.locked(target)
+        resp = self.m.delete_config(target)
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+
+    @ensure_connected
+    def locked(self, *args, **kwargs):
+        resp = self.m.locked(*args, **kwargs)
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+
 
     @abstractmethod
     def get_capabilities(self):
@@ -339,6 +346,7 @@ class NetconfBase(AnsiblePlugin):
         operations['supports_startup'] = ':startup' in capabilities
         operations['supports_xpath'] = ':xpath' in capabilities
         operations['supports_writable_running'] = ':writable-running' in capabilities
+        operations['supports_validate'] = ':writable-validate' in capabilities
 
         operations['lock_datastore'] = []
         if operations['supports_writable_running']:

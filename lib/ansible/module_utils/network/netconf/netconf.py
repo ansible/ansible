@@ -18,11 +18,48 @@
 #
 import json
 
+from copy import deepcopy
 from contextlib import contextmanager
 
-from ansible.module_utils._text import to_text
+try:
+    from lxml.etree import fromstring, tostring
+except ImportError:
+    from xml.etree.ElementTree import fromstring, tostring
+
+from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
+
+
+netconf_provider_spec = {
+    'host': dict(),
+    'port': dict(type='int', default=830),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), no_log=True),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'hostkey_verify': dict(type='bool', default=True),
+    'look_for_keys': dict(type='bool', default=True),
+    'allow_agent': dict(type='bool', default=True),
+    'timeout': dict(type='int'),
+}
+netconf_argument_spec = {
+    'provider': dict(type='dict', options=netconf_provider_spec),
+}
+netconf_top_spec = {
+    'host': dict(removed_in_version=2.9, default=830),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9, no_log=True),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+    'hostkey_verify': dict(removed_in_version=2.9, type='bool', default=True),
+    'look_for_keys': dict(removed_in_version=2.9, type='bool', default=True),
+    'allow_agent': dict(removed_in_version=2.9, type='bool', default=True),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+}
+netconf_argument_spec.update(netconf_top_spec)
+
+IGNORE_XML_ATTRIBUTE = ()
 
 
 def get_connection(module):
@@ -114,3 +151,15 @@ def dispatch(module, request):
         module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
 
     return response
+
+
+def sanitize_xml(data):
+    tree = fromstring(to_bytes(deepcopy(data), errors='surrogate_then_replace'))
+    for element in tree.getiterator():
+        # remove attributes
+        attribute = element.attrib
+        if attribute:
+            for key in attribute:
+                if key not in IGNORE_XML_ATTRIBUTE:
+                    attribute.pop(key)
+    return to_text(tostring(tree), errors='surrogate_then_replace').strip()
