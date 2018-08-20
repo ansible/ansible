@@ -327,6 +327,9 @@ options:
     source_engine_version:
         description:
           - The version of the database that the backup files were created from.
+    source_region:
+        description:
+          - The region of the DB instance from which the replica is created.
     storage_encrypted:
         description:
           - Whether the DB instance is encrypted.
@@ -693,6 +696,7 @@ vpc_security_groups:
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code, get_boto3_client_method_parameters
+from ansible.module_utils.aws.rds import ensure_tags, arg_spec_to_rds_params, get_tags, call_method, get_rds_method_attribute, get_tags, get_final_identifier
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.common.dict_transformations import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import compare_aws_tags, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, AWSRetry
@@ -706,19 +710,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 
-def arg_spec_to_rds_params(options_dict):
-    tags = options_dict.pop('tags')
-    camel_options = snake_dict_to_camel_dict(options_dict, capitalize_first=True)
-    for key, value in camel_options.items():
-        for old, new in (('Db', 'DB'), ('Iam', 'IAM'), ('Az', 'AZ')):
-            del camel_options[key]
-            key = key.replace(old, new)
-            camel_options[key] = value
-    camel_options['Tags'] = tags
-    return camel_options
-
-
-def get_method_name(instance, state, creation_source, read_replica):
+def get_rds_method_attribute_name(instance, state, creation_source, read_replica):
     method_name = None
     if state == 'absent' or state == 'terminated':
         if instance and instance['DBInstanceStatus'] not in ['deleting', 'deleted']:
@@ -739,54 +731,17 @@ def get_method_name(instance, state, creation_source, read_replica):
     return method_name
 
 
-def get_operation_err(method_name):
-    return {
-        'create_db_instance': 'create a new DB instance',
-        'restore_db_instance_from_db_snapshot': 'restore a DB instance from a snapshot',
-        'restore_db_instance_from_s3': 'restore a DB instance from S3',
-        'restore_db_instance_to_point_in_time': 'restore a DB instance from a point in time',
-        'modify_db_instance': 'modify DB instance',
-        'delete_db_instance': 'delete DB instance',
-        'add_tags_to_resource': 'add tags to DB instance',
-        'remove_tags_from_resource': 'remove tags from DB instance',
-        'list_tags_for_resource': 'list tags for DB instance',
-        'promote_read_replica': 'promote DB instance',
-    }.get(method_name, '')
-
-
-def get_waiter_name(method_name):
-    if method_name == 'delete_db_instance':
-        waiter_name = 'db_instance_deleted'
-    elif method_name == 'stop_db_instance':
-        waiter_name = 'db_instance_stopped'
-    else:
-        waiter_name = 'db_instance_available'
-    return waiter_name
-
-
 def get_instance(client, module, db_instance_id):
     try:
         instance = client.describe_db_instances(DBInstanceIdentifier=db_instance_id)['DBInstances'][0]
-        instance['Tags'] = boto3_tag_list_to_ansible_dict(
-            client.list_tags_for_resource(ResourceName=instance['DBInstanceArn']).get('TagList', [])
-        )
+        instance['Tags'] = get_tags(client, module, instance['DBInstanceArn'])
         if instance.get('ProcessorFeatures'):
             instance['ProcessorFeatures'] = dict((feature['Name'], feature['Value']) for feature in instance['ProcessorFeatures'])
     except is_boto3_error_code('DBInstanceNotFound'):
         instance = {}
     except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
-        module.fail_json_aws(e, msg='Failed to describe DB instances or the tags of the instances')
+        module.fail_json_aws(e, msg='Failed to describe DB instances')
     return instance
-
-
-def get_final_instance_identifier(module, parameters):
-    instance_id = module.params['db_instance_identifier']
-    updated_identifier = parameters.get('NewDBInstanceIdentifier')
-    apply_immediately = parameters.get('ApplyImmediately')
-
-    if not module.check_mode and updated_identifier and apply_immediately:
-        instance_id = updated_identifier
-    return instance_id
 
 
 def get_final_snapshot(client, module, snapshot_identifier):
@@ -804,7 +759,8 @@ def get_final_snapshot(client, module, snapshot_identifier):
 def get_parameters(client, module, parameters, method_name):
     required_options = get_boto3_client_method_parameters(client, method_name, required=True)
     if any([parameters[k] is None for k in required_options]):
-        module.fail_json(msg='To {0} requires the parameters: {1}'.format(get_operation_err(method_name), required_options))
+        module.fail_json(msg='To {0} requires the parameters: {1}'.format(
+            get_rds_method_attribute(method_name, module).operation_description, required_options))
     options = get_boto3_client_method_parameters(client, method_name)
     parameters = dict((k, v) for k, v in parameters.items() if k in options and v is not None)
 
@@ -865,7 +821,7 @@ def get_current_attributes_with_inconsistent_keys(instance):
     if instance.get('PendingModifiedValues', {}).get('Port'):
         options['DBPortNumber'] = instance['PendingModifiedValues']['Port']
     else:
-        options['DBPortNumber'] = instance['DbInstancePort']
+        options['DBPortNumber'] = instance['Endpoint']['Port']
     if instance.get('PendingModifiedValues', {}).get('DBSubnetGroupName'):
         options['DBSubnetGroupName'] = instance['PendingModifiedValues']['DBSubnetGroupName']
     else:
@@ -966,91 +922,8 @@ def validate_options(client, module, instance):
         module.fail_json(msg='Cannot create a read replica from {0}. You must use a source DB instance'.format(creation_source))
     if read_replica is True and not instance and not source_instance:
         module.fail_json(msg='read_replica is true and the instance does not exist yet but all of the following are missing: source_db_instance_identifier')
-
-
-def call_method(client, module, method_name, parameters):
-    result = {}
-    changed = True
-    if not module.check_mode:
-        wait = module.params['wait']
-        method = getattr(client, method_name)
-        try:
-            result = AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidDBInstanceState'])(method)(**parameters)
-        except is_boto3_error_code('InvalidParameterCombination') as e:
-            # There isn't a way to see the current value of 'AllowMajorVersionUpgrade' before attempting to modify it
-            if method_name == 'modify_db_instance' and 'No modifications were requested' in e.response['Error']['Message']:
-                changed = False
-            elif method_name == 'modify_db_instance' and 'ModifyDbCluster API' in e.response['Error']['Message']:
-                module.fail_json_aws(e, msg='It appears you are trying to modify attributes that are managed at the cluster level. Please see rds_cluster')
-            else:
-                module.fail_json_aws(e, msg='Unable to {0}'.format(get_operation_err(method_name)))
-        except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
-            module.fail_json_aws(e, msg='Unable to {0}'.format(get_operation_err(method_name)))
-
-        if wait and changed:
-            db_instance_id = get_final_instance_identifier(module, parameters)
-            waiter_name = get_waiter_name(method_name)
-            wait_for_status(client, module, db_instance_id, waiter_name)
-    return result, changed
-
-
-def wait(client, db_instance_id, waiter_name, extra_retry_codes):
-    retry = AWSRetry.jittered_backoff(catch_extra_error_codes=extra_retry_codes)
-    try:
-        waiter = client.get_waiter(waiter_name)
-    except ValueError:
-        # using a waiter in ansible.module_utils.aws.waiters
-        waiter = get_waiter(client, waiter_name)
-    retry(waiter.wait)(WaiterConfig={'Delay': 20, 'MaxAttempts': 160}, DBInstanceIdentifier=db_instance_id)
-
-
-def wait_for_status(client, module, db_instance_id, waiter_name):
-    waiter_expected_status = {
-        'db_instance_deleted': 'deleted',
-        'db_instance_stopped': 'stopped',
-    }
-    expected_status = waiter_expected_status.get(waiter_name, 'available')
-
-    if expected_status == 'available':
-        extra_retry_codes = ['DBInstanceNotFound']
-    else:
-        extra_retry_codes = []
-
-    for attempt_to_wait in range(0, 10):
-        try:
-            wait(client, db_instance_id, waiter_name, extra_retry_codes)
-            break
-        except WaiterError as e:
-            # Instance may be renamed and AWSRetry doesn't handle WaiterError
-            if e.last_response.get('Error', {}).get('Code') == 'DBInstanceNotFound':
-                sleep(10)
-                continue
-            module.fail_json_aws(e, msg='Error while waiting for DB instance {0} to be {1}'.format(db_instance_id, expected_status))
-        except (BotoCoreError, ClientError) as e:
-            module.fail_json_aws(e, msg='Unexpected error while waiting for DB instance {0} to be {1}'.format(
-                db_instance_id, expected_status)
-            )
-
-
-def ensure_tags(client, module, resource_arn, existing_tags, tags, purge_tags):
-    if tags is None:
-        return False
-
-    tags_to_add, tags_to_remove = compare_aws_tags(existing_tags, tags, purge_tags)
-    changed = bool(tags_to_add or tags_to_remove)
-
-    if tags_to_add:
-        call_method(
-            client, module, method_name='add_tags_to_resource',
-            parameters={'ResourceName': resource_arn, 'Tags': ansible_dict_to_boto3_tag_list(tags_to_add)}
-        )
-    if tags_to_remove:
-        call_method(
-            client, module, method_name='remove_tags_from_resource',
-            parameters={'ResourceName': resource_arn, 'TagKeys': tags_to_remove}
-        )
-
-    return changed
+    if read_replica is True and not instance and not get_instance(client, module, source_instance):
+        module.fail_json(msg='read_replica is true but the source DB instance {0} does not exist'.format(source_instance))
 
 
 def update_instance(client, module, instance, instance_id):
@@ -1071,13 +944,17 @@ def update_instance(client, module, instance, instance_id):
 
 
 def promote_replication_instance(client, module, instance, read_replica):
-    if read_replica is False and (instance.get('ReadReplicaSourceDBInstanceIdentifier') or instance.get('StatusInfos')):
-        call_method(
-            client, module, method_name='promote_read_replica',
-            parameters={'DBInstanceIdentifier': instance['DBInstanceIdentifier']}
-        )
-        return True
-    return False
+    changed = False
+    if read_replica is False:
+        try:
+            call_method(client, module, method_name='promote_read_replica', parameters={'DBInstanceIdentifier': instance['DBInstanceIdentifier']})
+            changed = True
+        except is_boto3_error_code('InvalidDBInstanceState') as e:
+            if 'DB Instance is not a read replica' in e.response['Error']['Message']:
+                pass
+            else:
+                raise e
+    return changed
 
 
 def update_instance_state(client, module, instance, state):
@@ -1191,6 +1068,7 @@ def main():
         source_db_instance_identifier=dict(),
         source_engine=dict(choices=['mysql']),
         source_engine_version=dict(),
+        source_region=dict(),
         storage_encrypted=dict(type='bool'),
         storage_type=dict(choices=['standard', 'gp2', 'io1']),
         tags=dict(type='dict'),
@@ -1239,7 +1117,7 @@ def main():
     instance_id = module.params['db_instance_identifier']
     instance = get_instance(client, module, instance_id)
     validate_options(client, module, instance)
-    method_name = get_method_name(instance, state, module.params['creation_source'], module.params['read_replica'])
+    method_name = get_rds_method_attribute_name(instance, state, module.params['creation_source'], module.params['read_replica'])
 
     if method_name:
         raw_parameters = arg_spec_to_rds_params(dict((k, module.params[k]) for k in module.params if k in parameter_options))
@@ -1248,7 +1126,7 @@ def main():
         if parameters:
             result, changed = call_method(client, module, method_name, parameters)
 
-        instance_id = get_final_instance_identifier(module, parameters)
+        instance_id = get_final_identifier(method_name, module)
 
         # Check tagging/promoting/rebooting/starting/stopping instance
         if state != 'absent' and (not module.check_mode or instance):
@@ -1256,6 +1134,13 @@ def main():
 
         if changed:
             instance = get_instance(client, module, instance_id)
+            if state != 'absent' and (instance or not module.check_mode):
+                for attempt_to_wait in range(0, 10):
+                    instance = get_instance(client, module, instance_id)
+                    if instance:
+                        break
+                    else:
+                        sleep(5)
 
         if state == 'absent' and changed and not module.params['skip_final_snapshot']:
             instance.update(FinalSnapshot=get_final_snapshot(client, module, module.params['final_db_snapshot_identifier']))
