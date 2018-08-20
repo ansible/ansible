@@ -72,7 +72,7 @@ options:
             - Namespace of the authorization provider, where user/group resides.
     quota_name:
         description:
-            - Name of the quota which you want to work with.
+            - Name of the quota to assign permission. Works only with C(object_type) I(data_center).
         version_added: "2.7"
 extends_documentation_fragment: ovirt
 '''
