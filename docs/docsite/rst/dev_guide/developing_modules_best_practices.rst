@@ -91,7 +91,7 @@ When your module fails, help users understand what went wrong. If you are using 
 * Do not use ``sys.exit()``. Use ``fail_json()`` from the module object.
 
 Handling exceptions (bugs) gracefully
-===================================
+=====================================
 
 * Validate upfront--fail fast and return useful and clear error messages.
 * Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
