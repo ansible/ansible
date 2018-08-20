@@ -102,6 +102,7 @@
 - name: Purge tags
   azure_rm_virtualnetwork:
     name: "{{ vnetname }}"
+    append_tags: no
     tags:
       testing: 'always'
     resource_group: "{{ resource_group }}"

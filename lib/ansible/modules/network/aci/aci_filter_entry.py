@@ -105,6 +105,7 @@ EXAMPLES = r'''
     icmp_msg_type: "{{ icmp_msg_type }}"
     filter: "{{ filter }}"
     descr: "{{ descr }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -247,7 +248,7 @@ def main():
         ip_protocol=dict(choices=VALID_IP_PROTOCOLS, type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         stateful=dict(type='bool'),
-        tenant=dict(type="str", aliases=['tenant_name']),  # Not required for querying all objects
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
     )
 
     module = AnsibleModule(
@@ -299,20 +300,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzFilter',
             aci_rn='flt-{0}'.format(filter_name),
-            filter_target='eq(vzFilter.name, "{0}")'.format(filter_name),
             module_object=filter_name,
+            target_filter={'name': filter_name},
         ),
         subclass_2=dict(
             aci_class='vzEntry',
             aci_rn='e-{0}'.format(entry),
-            filter_target='eq(vzEntry.name, "{0}")'.format(entry),
-            module_object=entry
+            module_object=entry,
+            target_filter={'name': entry},
         ),
     )
 

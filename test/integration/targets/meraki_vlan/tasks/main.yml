@@ -66,6 +66,24 @@
         - create_vlan.data.id == 2
         - create_vlan.changed == True
 
+  - name: Create VLAN in template configuration
+    meraki_vlan:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_template_name}}'
+      vlan_id: 2
+      name: TestVLAN
+      subnet: 192.168.250.0/24
+      appliance_ip: 192.168.250.1
+    delegate_to: localhost
+    register: create_vlan_template
+
+  - assert:
+      that:
+        - create_vlan_template.data.id == 2
+        - create_vlan_template.changed == True
+
   - name: Update VLAN
     meraki_vlan:
       auth_key: '{{auth_key}}'
@@ -160,7 +178,7 @@
       that:
         - update_vlan_add_ip.changed == True
         - update_vlan_add_ip.data.fixedIpAssignments | length == 2
-        - update_vlan_add_ip.data.reservedIpRange | length == 2
+        - update_vlan_add_ip.data.reservedIpRanges | length == 2
 
   - name: Remove IP assignments and reserved IP ranges
     meraki_vlan:
@@ -191,7 +209,7 @@
       that:
         - update_vlan_remove_ip.changed == True
         - update_vlan_remove_ip.data.fixedIpAssignments | length == 1
-        - update_vlan_remove_ip.data.reservedIpRange | length == 1
+        - update_vlan_remove_ip.data.reservedIpRanges | length == 1
 
   - name: Update VLAN with idempotency
     meraki_vlan:
@@ -305,3 +323,16 @@
 
   - debug:
       msg: '{{delete_vlan}}'
+
+  - name: Delete VLAN using template ID
+    meraki_vlan:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_id: '{{test_template_id}}'
+      vlan_id: 2
+    delegate_to: localhost
+    register: delete_vlan_template
+
+  - debug:
+      msg: '{{delete_vlan_template}}'

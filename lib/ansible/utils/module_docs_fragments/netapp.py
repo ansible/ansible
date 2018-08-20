@@ -39,7 +39,7 @@ options:
       required: true
       description:
       - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
-        For more information, please read the documentation U(https://goo.gl/BRu78Z).
+        For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
       aliases: ['user']
   password:
       required: true
@@ -48,9 +48,20 @@ options:
       aliases: ['pass']
   https:
       description:
-      - Enable and disabled https
+      - Enable and disable https
       type: bool
       default: false
+  validate_certs:
+      description:
+      - If set to C(False), the SSL certificates will not be validated.
+      - This should only set to C(False) used on personally controlled sites using self-signed certificates.
+      default: true
+      type: bool
+  http_port:
+      description:
+      - Override the default port (80 or 443) with this port
+      type: int
+
 
 requirements:
   - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 9.3
@@ -74,7 +85,7 @@ options:
       required: true
       description:
       - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
-        For more information, please read the documentation U(https://goo.gl/BRu78Z).
+        For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
       aliases: ['user']
   password:
       required: true
@@ -101,17 +112,21 @@ options:
   username:
       required: true
       description:
-      - Please ensure that the user has the adequate permissions. For more information, please read the official documentation U(https://goo.gl/ddJa4Q).
+      - Please ensure that the user has the adequate permissions. For more information, please read the official documentation
+        U(https://mysupport.netapp.com/documentation/docweb/index.html?productID=62636&language=en-US).
+      aliases: ['user']
   password:
       required: true
       description:
       - Password for the specified user.
+      aliases: ['pass']
 
 requirements:
-  - solidfire-sdk-python (1.1.0.92)
+  - The modules were developed with SolidFire 10.1
+  - solidfire-sdk-python (1.1.0.92) or greater. Install using 'pip install solidfire-sdk-python'
 
 notes:
-  - The modules prefixed with C(sf\\_) are built to support the SolidFire storage platform.
+  - The modules prefixed with na\\_elementsw are built to support the SolidFire storage platform.
 
 """
 

@@ -1,0 +1,2 @@
+---
+- { include: nxapi.yaml, tags: ['nxapi'] }

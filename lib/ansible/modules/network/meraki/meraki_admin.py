@@ -121,20 +121,60 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data:
-    description: Information about the created or manipulated object.
-    returned: info
-    type: list
-    sample:
-        [
-            {
-                "email": "john@doe.com",
-                "id": "12345677890",
-                "name": "John Doe",
-                "networks": [],
-                "orgAccess": "full",
-                "tags": []
-            }
-        ]
+    description: List of administrators.
+    returned: success
+    type: complex
+    contains:
+        email:
+            description: Email address of administrator.
+            returned: success
+            type: string
+            sample: your@email.com
+        id:
+            description: Unique identification number of administrator.
+            returned: success
+            type: string
+            sample: 1234567890
+        name:
+            description: Given name of administrator.
+            returned: success
+            type: string
+            sample: John Doe
+        networks:
+            description: List of networks administrator has access on.
+            returned: success
+            type: complex
+            contains:
+                id:
+                     description: The network ID.
+                     returned: when network permissions are set
+                     type: string
+                     sample: N_0123456789
+                access:
+                     description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                     returned: when network permissions are set
+                     type: string
+                     sample: read-only
+        tags:
+            description: Tags the adminsitrator has access on.
+            returned: success
+            type: complex
+            contains:
+                tag:
+                    description: Tag name.
+                    returned: when tag permissions are set
+                    type: string
+                    sample: production
+                access:
+                    description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                    returned: when tag permissions are set
+                    type: string
+                    sample: full
+        orgAccess:
+            description: The privilege of the dashboard administrator on the organization. Options are 'full', 'read-only', or 'none'.
+            returned: success
+            type: string
+            sample: full
 '''
 
 import os
@@ -209,13 +249,6 @@ def network_factory(meraki, networks, nets):
     return networks_new
 
 
-def get_nets_temp(meraki, org_id):  # Function won't be needed when get_nets is added to util
-    path = meraki.construct_path('get_all', function='network', org_id=org_id)
-    response = meraki.request(path, method='GET')
-    if meraki.status == 200:
-        return response
-
-
 def create_admin(meraki, org_id, name, email):
     payload = dict()
     payload['name'] = name
@@ -228,7 +261,7 @@ def create_admin(meraki, org_id, name, email):
     if meraki.params['tags'] is not None:
         payload['tags'] = json.loads(meraki.params['tags'])
     if meraki.params['networks'] is not None:
-        nets = get_nets_temp(meraki, org_id)
+        nets = meraki.get_nets(org_id=org_id)
         networks = network_factory(meraki, meraki.params['networks'], nets)
         # meraki.fail_json(msg=str(type(networks)), data=networks)
         payload['networks'] = networks

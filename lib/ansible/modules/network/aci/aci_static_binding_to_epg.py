@@ -38,17 +38,24 @@ options:
     description:
     - The name of the end point group.
     aliases: [ epg_name ]
+  description:
+    description:
+    - Description for the static path to EPG binding.
+    aliases: [ descr ]
+    version_added: '2.7'
   encap_id:
     description:
     - The encapsulation ID associating the C(epg) with the interface path.
     - This acts as the secondary C(encap_id) when using micro-segmentation.
     - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
+    type: int
     aliases: [ vlan, vlan_id ]
   primary_encap_id:
     description:
     - Determines the primary encapsulation ID associating the C(epg)
       with the interface path when using micro-segmentation.
     - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
+    type: int
     aliases: [ primary_vlan, primary_vlan_id ]
   deploy_immediacy:
     description:
@@ -72,7 +79,8 @@ options:
   pod_id:
     description:
     - The pod number part of the tDn.
-    - C(pod_id) is usually an integer below 10.
+    - C(pod_id) is usually an integer below C(10).
+    type: int
     aliases: [ pod, pod_number ]
   leafs:
     description:
@@ -84,12 +92,13 @@ options:
   interface:
     description:
     - The C(interface) string value part of the tDn.
-    - Usually a policy group like "test-IntPolGrp" or an interface of the following format "1/7" depending on C(interface_type).
+    - Usually a policy group like C(test-IntPolGrp) or an interface of the following format C(1/7) depending on C(interface_type).
   extpaths:
     description:
     - The C(extpaths) integer value part of the tDn.
     - C(extpaths) is only used if C(interface_type) is C(fex).
     - Usually something like C(1011).
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -116,6 +125,7 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: present
+  delegate_to: localhost
 
 - name: Remove Static Path binding for given EPG
   aci_static_binding_to_epg:
@@ -130,6 +140,7 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: absent
+  delegate_to: localhost
 
 - name: Get specific Static Path binding for given EPG
   aci_static_binding_to_epg:
@@ -144,6 +155,8 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -263,6 +276,7 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         epg=dict(type='str', aliases=['epg_name']),  # Not required for querying all objects
+        description=dict(type='str', aliases=['descr']),
         encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
@@ -289,15 +303,20 @@ def main():
     tenant = module.params['tenant']
     ap = module.params['ap']
     epg = module.params['epg']
+    description = module.params['description']
     encap_id = module.params['encap_id']
     primary_encap_id = module.params['primary_encap_id']
     deploy_immediacy = module.params['deploy_immediacy']
     interface_mode = module.params['interface_mode']
     interface_type = module.params['interface_type']
     pod_id = module.params['pod_id']
-    # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
-    leafs = [str(leaf) for leaf in module.params['leafs']]
+    leafs = module.params['leafs']
     if leafs is not None:
+        # Process leafs, and support dash-delimited leafs
+        leafs = []
+        for leaf in module.params['leafs']:
+            # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
+            leafs.extend(str(leaf).split('-'))
         if len(leafs) == 1:
             if interface_type != 'vpc':
                 leafs = leafs[0]
@@ -346,6 +365,11 @@ def main():
     )
 
     static_path = INTERFACE_TYPE_MAPPING[interface_type]
+
+    path_target_filter = {}
+    if pod_id is not None and leafs is not None and interface is not None and (interface_type != 'fex' or extpaths is not None):
+        path_target_filter = {'tDn': static_path}
+
     if interface_mode is not None:
         interface_mode = INTERFACE_MODE_MAPPING[interface_mode]
 
@@ -354,26 +378,26 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class='fvRsPathAtt',
             aci_rn='rspathAtt-[{0}]'.format(static_path),
-            filter_target='eq(fvRsPathAtt.tDn, "{0}"'.format(static_path),
             module_object=static_path,
+            target_filter=path_target_filter,
         ),
     )
 
@@ -383,6 +407,7 @@ def main():
         aci.payload(
             aci_class='fvRsPathAtt',
             class_config=dict(
+                descr=description,
                 encap=encap_id,
                 primaryEncap=primary_encap_id,
                 instrImedcy=deploy_immediacy,

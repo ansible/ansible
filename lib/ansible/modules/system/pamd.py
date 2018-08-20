@@ -796,5 +796,6 @@ def main():
 
     module.exit_json(changed=changes > 0, ansible_facts=facts)
 
+
 if __name__ == '__main__':
     main()

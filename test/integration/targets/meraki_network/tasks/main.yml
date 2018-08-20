@@ -79,7 +79,7 @@
     delegate_to: localhost
     register: create_net_wireless_idempotent
 
-  - name: Create network with type combined
+  - name: Create network with type combined and disable my.meraki.com
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
@@ -87,8 +87,19 @@
       net_name: IntTestNetworkCombined
       type: combined
       timezone: America/Chicago
+      disable_my_meraki: yes
     delegate_to: localhost
     register: create_net_combined
+
+  - name: Reenable my.meraki.com
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      disable_my_meraki: no
+    delegate_to: localhost
+    register: enable_meraki_com
     
   - name: Create network with one tag
     meraki_network:
@@ -148,6 +159,9 @@
     assert:
       that:
         - create_net_no_type.status == 500
+        - create_net_combined.data.type == 'combined'
+        - create_net_combined.data.disableMyMerakiCom == True
+        - enable_meraki_com.data.disableMyMerakiCom == False
         - '"org_name or org_id parameters are required" in create_net_no_org.msg'
         - '"IntTestNetworkAppliance" in create_net_appliance_no_tz.data.name'
         - create_net_appliance_no_tz.changed == True
@@ -169,6 +183,15 @@
     delegate_to: localhost
     register: net_query_all
       
+  - name: Query a configuration template
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_template_name}}'
+    delegate_to: localhost
+    register: query_config_template
+
   - name: Query one network
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -182,6 +205,7 @@
     assert:
       that:
         - 'net_query_one.data.name == "IntTestNetworkSwitch"'
+        - 'query_config_template.data.name == "DevConfigTemplate"'
         
 
 #############################################################################

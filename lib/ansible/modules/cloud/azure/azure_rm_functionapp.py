@@ -271,7 +271,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             function_app_settings.append(NameValuePair(name=key, value=self.storage_connection_string))
         function_app_settings.append(NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~1'))
         function_app_settings.append(NameValuePair(name='WEBSITE_NODE_DEFAULT_VERSION', value='6.5.0'))
-        function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.storage_account))
+        function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.name))
         return function_app_settings
 
     def aggregated_app_settings(self):
@@ -308,6 +308,7 @@ def main():
     """Main function execution"""
 
     AzureRMFunctionApp()
+
 
 if __name__ == '__main__':
     main()

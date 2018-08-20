@@ -34,14 +34,16 @@ options:
     aliases: [ descr ]
   max_links:
     description:
-    - Maximum links (range 1-16).
+    - Maximum links.
     - Accepted values range between 1 and 16.
     - The APIC defaults to C(16) when unset during creation.
+    type: int
   min_links:
     description:
-    - Minimum links (range 1-16).
+    - Minimum links.
     - Accepted values range between 1 and 16.
     - The APIC defaults to C(1) when unset during creation.
+    type: int
   mode:
     description:
     - Port channel interface policy mode.
@@ -102,6 +104,7 @@ EXAMPLES = r'''
     min_links: '{{ min_links }}'
     max_links: '{{ max_links }}'
     mode: '{{ mode }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -271,8 +274,8 @@ def main():
         root_class=dict(
             aci_class='lacpLagPol',
             aci_rn='infra/lacplagp-{0}'.format(port_channel),
-            filter_target='eq(lacpLagPol.name, "{0}")'.format(port_channel),
             module_object=port_channel,
+            target_filter={'name': port_channel},
         ),
     )
 

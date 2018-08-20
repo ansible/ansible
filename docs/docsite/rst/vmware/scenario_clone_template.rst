@@ -4,10 +4,12 @@
 Deploy a virtual machine from a template
 ****************************************
 
+.. contents:: Topics
+
 Introduction
 ============
 
-This guide will show you how to utilize Ansible to clone a virtual machine from already existing VMware template.
+This guide will show you how to utilize Ansible to clone a virtual machine from already existing VMware template or existing VMware guest.
 
 Scenario Requirements
 =====================
@@ -16,9 +18,9 @@ Scenario Requirements
 
     * Ansible 2.5 or later must be installed
 
-    * The Python module *Pyvmomi* must be installed on the Ansible (or Target host if not executing against localhost)
+    * The Python module ``Pyvmomi`` must be installed on the Ansible (or Target host if not executing against localhost)
 
-    * Installing the latest *Pyvmomi* via pip is recommended [as the OS packages are usually out of date and incompatible]
+    * Installing the latest ``Pyvmomi`` via ``pip`` is recommended [as the OS provided packages are usually out of date and incompatible]
 
 * Hardware
 
@@ -36,26 +38,26 @@ Scenario Requirements
 
         - Virtual machine.Provisioning.Clone virtual machine on the virtual machine you are cloning
         - Virtual machine.Inventory.Create from existing on the datacenter or virtual machine folder
-        - Virtual machine.Configuration.Add new disk on the datacenter or virtual machine folder.
-        - Resource.Assign virtual machine to resource pool on the destination host, cluster, or resource pool.
-        - Datastore.Allocate space on the destination datastore or datastore folder.
-        - Network.Assign network on the network to which the virtual machine will be assigned.
-        - Virtual machine.Provisioning.Customize on the virtual machine or virtual machine folder if you are customizing the guest operating system.
-        - Virtual machine.Provisioning.Read customization specifications on the root vCenter Server if you are customizing the guest operating system.
+        - Virtual machine.Configuration.Add new disk on the datacenter or virtual machine folder
+        - Resource.Assign virtual machine to resource pool on the destination host, cluster, or resource pool
+        - Datastore.Allocate space on the destination datastore or datastore folder
+        - Network.Assign network on the network to which the virtual machine will be assigned
+        - Virtual machine.Provisioning.Customize on the virtual machine or virtual machine folder if you are customizing the guest operating system
+        - Virtual machine.Provisioning.Read customization specifications on the root vCenter Server if you are customizing the guest operating system
 
 Assumptions
 ===========
 
 - All variable names and VMware object names are case sensitive
-- VMware allows creation of virtual machine and templates with same name across datacenters and within datacenters.
-- You need to use Python 2.7.9 version in order to use *validate_certs* option, as this version is capable of changing the SSL verification behaviours.
+- VMware allows creation of virtual machine and templates with same name across datacenters and within datacenters
+- You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours
 
 Caveats
 =======
 
 - Hosts in the ESXi cluster must have access to the datastore that the template resides on.
 - Multiple templates with the same name will cause module failures.
-- In order to utilize Guest Customization, VMWare Tools must be installed on the template. For Linux, the open-vm-tools package is recommended, and it requires that Perl be installed.
+- In order to utilize Guest Customization, VMWare Tools must be installed on the template. For Linux, the ``open-vm-tools`` package is recommended, and it requires that ``Perl`` be installed.
 
 
 Example Description
@@ -73,23 +75,24 @@ In this use case / example, we will be selecting a virtual machine template and 
       tasks:
       - name: Clone the template
         vmware_guest:
-          hostname: 192.0.2.44
-          username: administrator@vsphere.local
-          password: vmware
+          hostname: "{{ vcenter_ip }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
           validate_certs: False
           name: testvm_2
           template: template_el7
-          datacenter: DC1
+          datacenter: "{{ datacenter_name }}"
           folder: /DC1/vm
           state: poweredon
+          cluster: "{{ cluster_name }}"
           wait_for_ip_address: yes
 
 
-Since Ansible utilizes the VMware API to perform actions, in this use case we will be connecting directly to the API from our localhost. This means that our playbooks will not be running from the vCenter or ESXi Server. We do not necessarily need to collect facts about our localhost, so the *gather_facts* parameter will be disabled. You can run these modules against another server that would then connect to the API if your localhost does not have access to vCenter. If so, the required Python modules will need to be installed on that target server.
+Since Ansible utilizes the VMware API to perform actions, in this use case we will be connecting directly to the API from our localhost. This means that our playbooks will not be running from the vCenter or ESXi Server. We do not necessarily need to collect facts about our localhost, so the ``gather_facts`` parameter will be disabled. You can run these modules against another server that would then connect to the API if your localhost does not have access to vCenter. If so, the required Python modules will need to be installed on that target server.
 
-To begin, there are a few bits of information we will need. First and foremost is the hostname of the ESXi server or vCenter server. After this, you will need the username and password for this server. For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion [1][2]. If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the *validate_certs* parameter. To do this you need to set ``validate_certs=False`` in your playbook.
+To begin, there are a few bits of information we will need. First and foremost is the hostname of the ESXi server or vCenter server. After this, you will need the username and password for this server. For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion using  :ref:`ansible-vault` or using `Ansible Tower credentials <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html>`_. If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the ``validate_certs`` parameter. To do this you need to set ``validate_certs=False`` in your playbook.
 
-Now you need to supply the information about the virtual machine which will be created. Give your virtual machine a name, one that conforms to all VMware requirements for naming conventions.  Next, select the display name of the template from which you want to clone new virtual machine. This must match what's displayed in VMware Web UI exactly. Then you can specify a folder to place this new virtual machine in. This path can either be a relative path or a full path to the folder including the Datacenter. You may need to specify a state for the virtual machine.  This simply tells the module which action you want to take, in this case you will be ensure that the virtual machine exists and is powered on.  An optional parameter is *wait_for_ip_address*, this will tell Ansible to wait for the virtual machine to fully boot up and VMware Tools is running before completing this task.
+Now you need to supply the information about the virtual machine which will be created. Give your virtual machine a name, one that conforms to all VMware requirements for naming conventions.  Next, select the display name of the template from which you want to clone new virtual machine. This must match what's displayed in VMware Web UI exactly. Then you can specify a folder to place this new virtual machine in. This path can either be a relative path or a full path to the folder including the Datacenter. You may need to specify a state for the virtual machine.  This simply tells the module which action you want to take, in this case you will be ensure that the virtual machine exists and is powered on.  An optional parameter is ``wait_for_ip_address``, this will tell Ansible to wait for the virtual machine to fully boot up and VMware Tools is running before completing this task.
 
 
 What to expect
@@ -186,9 +189,9 @@ What to expect
         }
     }
 
-- State is changed to *True* which notifies that the virtual machine is built using given template. The module will not complete until the clone task in VMware is finished. This can take some time depending on your environment.
+- State is changed to ``True`` which notifies that the virtual machine is built using given template. The module will not complete until the clone task in VMware is finished. This can take some time depending on your environment.
 
-- If you utilize the *wait_for_ip_address* parameter, then it will also increase the clone time as it will wait until virtual machine boots into the OS and an IP Address has been assigned to the given NIC.
+- If you utilize the ``wait_for_ip_address`` parameter, then it will also increase the clone time as it will wait until virtual machine boots into the OS and an IP Address has been assigned to the given NIC.
 
 
 
@@ -200,14 +203,5 @@ Things to inspect
 - Check if the values provided for username and password are correct
 - Check if the datacenter you provided is available
 - Check if the template specified exists and you have permissions to access the datastore
-- Ensure the full folder path you specified already exists. It will not create folders automatically for you.
-
-
-
-Appendix
---------
-
-- [1] - https://docs.ansible.com/ansible/latest/vault.html
-
-- [2] - https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html
+- Ensure the full folder path you specified already exists. It will not create folders automatically for you
 

@@ -342,6 +342,17 @@ class NetworkConnectionBase(ConnectionBase):
             self._connected = False
         self._implementation_plugins = []
 
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        self.set_implementation_plugin_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+    def set_implementation_plugin_options(self, task_keys=None, var_options=None, direct=None):
+        '''
+        initialize implementation plugin options
+        '''
+        for plugin in self._implementation_plugins:
+            plugin.set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
     def _update_connection_state(self):
         '''
         Reconstruct the connection socket_path and check if it exists

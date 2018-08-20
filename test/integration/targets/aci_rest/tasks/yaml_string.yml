@@ -13,6 +13,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     path: /api/mo/uni/tn-[ansible_test].json
     method: delete
 
@@ -25,6 +26,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     path: /api/mo/uni.json
     method: post
     content: |
@@ -40,8 +42,8 @@
 - name: Verify add_tenant
   assert:
     that:
-    - nm_add_tenant.changed == true
-    - nm_add_tenant_again.changed == false
+    - nm_add_tenant is changed
+    - nm_add_tenant_again is not changed
 
 # CHANGE TENANT
 - name: Change description of tenant (normal mode)
@@ -52,6 +54,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     path: /api/mo/uni.json
     method: post
     content: |
@@ -68,8 +71,8 @@
 - name: Verify add_tenant_descr
   assert:
     that:
-    - nm_add_tenant_descr.changed == true
-    - nm_add_tenant_descr_again.changed == false
+    - nm_add_tenant_descr is changed
+    - nm_add_tenant_descr_again is not changed
 
 # ADD TENANT AGAIN
 - name: Add tenant again with no description (normal mode)
@@ -79,7 +82,7 @@
 - name: Verify add_tenant_again_no_descr
   assert:
     that:
-    - nm_add_tenant_again_no_descr.changed == false
+    - nm_add_tenant_again_no_descr is not changed
 
 # QUERY ALL TENANTS
 - name: Query all tenants (normal mode)
@@ -90,6 +93,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     path: /api/mo/uni/tn-[ansible_test].json
     method: get
   register: nm_query_all_tenants
@@ -97,7 +101,7 @@
 - name: Verify query_all_tenants
   assert:
     that:
-    - nm_query_all_tenants.changed == false
+    - nm_query_all_tenants is not changed
 
 # QUERY A TENANT
 - name: Query our tenant
@@ -108,6 +112,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     path: /api/mo/uni/tn-[ansible_test].json
     method: get
   register: nm_query_tenant
@@ -115,7 +120,7 @@
 - name: Verify query_tenant
   assert:
     that:
-    - nm_query_tenant.changed == false
+    - nm_query_tenant is not changed
 
 # REMOVE TENANT
 - name: Remove tenant (normal mode)
@@ -129,8 +134,8 @@
 - name: Verify remove_tenant
   assert:
     that:
-    - nm_remove_tenant.changed == true
-    - nm_remove_tenant_again.changed == false
+    - nm_remove_tenant is changed
+    - nm_remove_tenant_again is not changed
 
 # QUERY NON-EXISTING TENANT
 - name: Query non-existing tenant (normal mode)
@@ -140,4 +145,4 @@
 - name: Verify query_non_tenant
   assert:
     that:
-    - nm_query_non_tenant.changed == false
+    - nm_query_non_tenant is not changed

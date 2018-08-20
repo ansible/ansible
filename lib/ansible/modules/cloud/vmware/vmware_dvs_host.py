@@ -54,17 +54,17 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 - name: Add Host to dVS
-  local_action:
-    module: vmware_dvs_host
-    hostname: vcenter_ip_or_hostname
-    username: vcenter_username
-    password: vcenter_password
-    esxi_hostname: esxi_hostname_as_listed_in_vcenter
+  vmware_dvs_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
     switch_name: dvSwitch
     vmnics:
         - vmnic0
         - vmnic1
     state: present
+  delegate_to: localhost
 '''
 
 try:

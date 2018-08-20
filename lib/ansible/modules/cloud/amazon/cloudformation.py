@@ -53,7 +53,7 @@ options:
       - This must be the full path to the file, relative to the working directory. If using roles this may look
         like "roles/cloudformation/files/cloudformation-example.json".
       - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        must be specified (but only one of them). If 'state' is 'present', the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
   notification_arns:
     description:

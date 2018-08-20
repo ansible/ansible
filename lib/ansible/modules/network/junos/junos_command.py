@@ -164,6 +164,7 @@ import shlex
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities, tostring
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
@@ -373,7 +374,10 @@ def main():
             if ('display json' not in cmd) and ('display xml' not in cmd):
                 if display and display != 'text':
                     cmd += ' | display {0}'.format(display)
-            output.append(conn.get(command=cmd))
+            try:
+                output.append(conn.get(command=cmd))
+            except ConnectionError as exc:
+                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
         lines = [out.split('\n') for out in output]
         result = {'changed': False, 'stdout': output, 'stdout_lines': lines}
@@ -441,6 +445,7 @@ def main():
         result['output'] = output
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -61,7 +61,7 @@ EXAMPLES = """
     src: running_cfg_ios1.txt
 
 - name: copy file from ios to common location at /tmp
-  network_put:
+  net_get:
     src: running_cfg_sw1.txt
     dest : /tmp/ios1.txt
 """

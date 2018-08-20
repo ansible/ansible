@@ -31,7 +31,11 @@ options:
   key:
     description:
       - The SSH public host key, as a string (required if state=present, optional when state=absent, in which case all keys for the host are removed).
-        The key must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT")
+        The key must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT").
+
+        Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
+        line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
+        the value of the name parameter.
   path:
     description:
       - The known_hosts file to edit

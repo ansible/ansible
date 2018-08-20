@@ -25,7 +25,7 @@ class ModuleDocFragment(object):
 options:
   resource_definition:
     description:
-    - "Provide a valid YAML definition (either as a string or a dict) for an object when creating or updating. NOTE: I(kind), I(api_version), I(name),
+    - "Provide a valid YAML definition (either as a string, list, or dict) for an object when creating or updating. NOTE: I(kind), I(api_version), I(name),
       and I(namespace) will be overwritten by corresponding values found in the provided I(resource_definition)."
     aliases:
     - definition

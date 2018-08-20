@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -64,14 +49,14 @@ options:
     clusters:
         description:
             - "List of dictionary of cluster limits, which is valid to specific cluster."
-            - "If cluster isn't spefied it's valid to all clusters in system:"
+            - "If cluster isn't specified it's valid to all clusters in system:"
             - "C(cluster) - Name of the cluster."
             - "C(memory) - Memory limit (in GiB)."
             - "C(cpu) - CPU limit."
     storages:
         description:
             - "List of dictionary of storage limits, which is valid to specific storage."
-            - "If storage isn't spefied it's valid to all storages in system:"
+            - "If storage isn't specified it's valid to all storages in system:"
             - "C(storage) - Name of the storage."
             - "C(size) - Size limit (in GiB)."
 extends_documentation_fragment: ovirt

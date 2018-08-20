@@ -1,4 +1,4 @@
 cloud/azure
-posix/ci/cloud/group2/azure
-posix/ci/cloud/group2/smoketest
+shippable/azure/group1
+shippable/azure/smoketest
 destructive

@@ -25,6 +25,7 @@ options:
             - The full path of the file/object to get the facts of; both forward and
               back slashes are accepted.
         required: yes
+        type: path
     get_md5:
         description:
             - Whether to return the checksum sum of the file. Between Ansible 1.9

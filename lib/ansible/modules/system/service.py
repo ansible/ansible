@@ -114,6 +114,7 @@ EXAMPLES = '''
 '''
 
 import glob
+import json
 import os
 import platform
 import re
@@ -123,11 +124,6 @@ import string
 import subprocess
 import tempfile
 import time
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files

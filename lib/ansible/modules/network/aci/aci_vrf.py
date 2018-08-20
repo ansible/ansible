@@ -67,6 +67,7 @@ EXAMPLES = r'''
     policy_control_preference: enforced
     policy_control_direction: ingress
     state: present
+  delegate_to: localhost
 
 - name: Remove a VRF for a tenant
   aci_vrf:
@@ -76,6 +77,7 @@ EXAMPLES = r'''
     vrf: vrf_lab
     tenant: lab_tenant
     state: absent
+  delegate_to: localhost
 
 - name: Query a VRF of a tenant
   aci_vrf:
@@ -85,6 +87,8 @@ EXAMPLES = r'''
     vrf: vrf_lab
     tenant: lab_tenant
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VRFs
   aci_vrf:
@@ -92,6 +96,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -235,14 +241,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvCtx',
             aci_rn='ctx-{0}'.format(vrf),
-            filter_target='eq(fvCtx.name, "{0}")'.format(vrf),
             module_object=vrf,
+            target_filter={'name': vrf},
         ),
     )
 

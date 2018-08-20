@@ -54,11 +54,13 @@ options:
   route_control:
     description:
     - Route Control enforcement direction. The only allowed values are export or import,export.
-    choices: [ 'export', 'import' ]
+    type: list
+    choices: [ export, import ]
     aliases: [ route_control_enforcement ]
   l3protocol:
     description:
     - Routing protocol for the L3Out
+    type: list
     choices: [ static, bgp, ospf, pim ]
   description:
     description:
@@ -85,6 +87,8 @@ EXAMPLES = r'''
     domain: l3dom_prod
     vrf: prod
     l3protocol: ospf
+    state: present
+  delegate_to: localhost
 
 - name: Delete L3Out
   aci_l3out:
@@ -94,6 +98,7 @@ EXAMPLES = r'''
     tenant: production
     name: prod_l3out
     state: absent
+  delegate_to: localhost
 
 - name: Query L3Out information
   aci_l3out:
@@ -103,6 +108,8 @@ EXAMPLES = r'''
     tenant: production
     name: prod_l3out
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -267,14 +274,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='l3extOut',
             aci_rn='out-{0}'.format(l3out),
-            filter_target='eq(l3extOut.name, "{0}")'.format(l3out),
             module_object=l3out,
+            target_filter={'name': l3out},
         ),
         child_classes=child_classes,
     )

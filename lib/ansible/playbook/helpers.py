@@ -159,7 +159,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
-                                       "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion")
+                                       "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion", version='2.12')
                     is_static = t.static
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
@@ -260,7 +260,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             "later. In the future, this will be an error unless 'static: no' is used "
                             "on the include task. If you do not want missing includes to be considered "
                             "dynamic, use 'static: yes' on the include or set the global ansible.cfg "
-                            "options to make all includes static for tasks and/or handlers" % include_file, version="2.7"
+                            "options to make all includes static for tasks and/or handlers" % include_file, version="2.12"
                         )
                         task_list.append(t)
                         continue
@@ -297,7 +297,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 suppress_extended_error=True,
                             )
                         display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
-                                           version="2.7")
+                                           version="2.12")
                     else:
                         tags = ti_copy.tags[:]
 
@@ -335,7 +335,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 elif ir.static is not None:
                     display.deprecated("The use of 'static' for 'include_role' has been deprecated. "
-                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
+                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion", version='2.12')
                     is_static = ir.static
 
                 if is_static:

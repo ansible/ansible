@@ -47,7 +47,8 @@ class TerminalModule(TerminalBase):
         re.compile(br"syntax error"),
         re.compile(br"unknown command"),
         re.compile(br"user not present"),
-        re.compile(br"invalid (.+?)at '\^' marker", re.I)
+        re.compile(br"invalid (.+?)at '\^' marker", re.I),
+        re.compile(br"baud rate of console should be (\d*) to increase severity level", re.I),
     ]
 
     def on_become(self, passwd=None):

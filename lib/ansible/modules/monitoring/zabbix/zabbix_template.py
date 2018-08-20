@@ -125,7 +125,7 @@ EXAMPLES = '''
     server_url: http://127.0.0.1
     template_name: Test Template
     template_json:
-        zabbix_export:
+      zabbix_export:
         version: '3.2'
         templates:
           - name: Template for Testing
@@ -417,7 +417,8 @@ class Template(object):
             # old api version support here
             api_version = self._zapi.api_version()
             # updateExisting for application removed from zabbix api after 3.2
-            if LooseVersion(api_version) <= LooseVersion('3.2.x'):
+            if LooseVersion(api_version).version[:2] <= LooseVersion(
+                    '3.2').version:
                 update_rules['applications']['updateExisting'] = True
 
             self._zapi.configuration.import_({

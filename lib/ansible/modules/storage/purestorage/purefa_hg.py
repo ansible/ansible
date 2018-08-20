@@ -254,5 +254,6 @@ def main():
     else:
         make_hostgroup(module, array)
 
+
 if __name__ == '__main__':
     main()

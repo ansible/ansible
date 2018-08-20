@@ -847,8 +847,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
 
 
 def download(module, deb):
-    tempdir = os.path.dirname(__file__)
-    package = os.path.join(tempdir, str(deb.rsplit('/', 1)[1]))
+    package = os.path.join(module.tmpdir, to_native(deb.rsplit('/', 1)[1], errors='surrogate_or_strict'))
     # When downloading a deb, how much of the deb to download before
     # saving to a tempfile (64k)
     BUFSIZE = 65536

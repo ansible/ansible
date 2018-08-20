@@ -31,8 +31,11 @@ options:
       default: query
     net_name:
       description:
-      - Name of network which VLAN is or should be in.
+      - Name of network which VLAN is in or should be in.
       aliases: [network]
+    net_id:
+      description:
+      - ID of network which VLAN is in or should be in.
     vlan_id:
       description:
       - ID number of VLAN.
@@ -128,21 +131,82 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+
 response:
-    description: Data returned from Meraki dashboard about VLAN.
-    type: dict
-    returned: success
-    example:
-        {
-            "applianceIp": "192.0.1.1",
-            "dnsNameservers": "upstream_dns",
-            "fixedIpAssignments": {},
-            "id": 2,
-            "name": "TestVLAN",
-            "networkId": "N_12345",
-            "reservedIpRanges": [],
-            "subnet": "192.0.1.0/24"
-        }
+  description: Information about the organization which was created or modified
+  returned: success
+  type: complex
+  contains:
+    applianceIp:
+      description: IP address of Meraki appliance in the VLAN
+      returned: success
+      type: string
+      sample: 192.0.1.1
+    dnsnamservers:
+      description: IP address or Meraki defined DNS servers which VLAN should use by default
+      returned: success
+      type: string
+      sample: upstream_dns
+    fixedIpAssignments:
+      description: List of MAC addresses which have IP addresses assigned.
+      returned: success
+      type: complex
+      contains:
+        macaddress:
+          description: MAC address which has IP address assigned to it. Key value is the actual MAC address.
+          returned: success
+          type: complex
+          contains:
+            ip:
+              description: IP address which is assigned to the MAC address.
+              returned: success
+              type: string
+              sample: 192.0.1.4
+            name:
+              description: Descriptive name for binding.
+              returned: success
+              type: string
+              sample: fixed_ip
+    reservedIpRanges:
+      description: List of IP address ranges which are reserved for static assignment.
+      returned: success
+      type: complex
+      contains:
+        comment:
+          description: Description for IP address reservation.
+          returned: success
+          type: string
+          sample: reserved_range
+        end:
+          description: Last IP address in reservation range.
+          returned: success
+          type: string
+          sample: 192.0.1.10
+        start:
+          description: First IP address in reservation range.
+          returned: success
+          type: string
+          sample: 192.0.1.5
+    id:
+      description: VLAN ID number.
+      returned: success
+      type: int
+      sample: 2
+    name:
+      description: Descriptive name of VLAN
+      returned: success
+      type: string
+      sample: TestVLAN
+    networkId:
+      description: ID number of Meraki network which VLAN is associated to.
+      returned: success
+      type: string
+      sample: N_12345
+    subnet:
+      description: CIDR notation IP subnet of VLAN.
+      returned: success
+      type: string
+      sample: 192.0.1.0/24
 '''
 
 import os
@@ -200,6 +264,7 @@ def main():
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'present', 'query'], default='query'),
                          net_name=dict(type='str', aliases=['network']),
+                         net_id=dict(type='str'),
                          vlan_id=dict(type='int'),
                          name=dict(type='str', aliases=['vlan_name']),
                          subnet=dict(type='str'),
@@ -230,7 +295,7 @@ def main():
     meraki.params['follow_redirects'] = 'all'
 
     query_urls = {'vlan': '/networks/{net_id}/vlans'}
-    query_url = {'vlan': '/networks/{net_id}/vlans/'}
+    query_url = {'vlan': '/networks/{net_id}/vlans/{vlan_id}'}
     create_url = {'vlan': '/networks/{net_id}/vlans'}
     update_url = {'vlan': '/networks/{net_id}/vlans/'}
     delete_url = {'vlan': '/networks/{net_id}/vlans/'}
@@ -243,7 +308,10 @@ def main():
 
     payload = None
 
-    nets = temp_get_nets(meraki, meraki.params['org_name'])
+    org_id = meraki.params['org_id']
+    if org_id is None:
+        org_id = meraki.get_org_id(meraki.params['org_name'])
+    nets = meraki.get_nets(org_id=org_id)
     net_id = None
     if meraki.params['net_name']:
         net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
@@ -254,7 +322,7 @@ def main():
         if not meraki.params['vlan_id']:
             meraki.result['data'] = get_vlans(meraki, net_id)
         else:
-            path = meraki.construct_path('get_one', net_id=net_id) + str(meraki.params['vlan_id'])
+            path = meraki.construct_path('get_one', net_id=net_id, custom={'vlan_id': meraki.params['vlan_id']})
             response = meraki.request(path, method='GET')
             meraki.result['data'] = response
     elif meraki.params['state'] == 'present':
@@ -269,7 +337,7 @@ def main():
             meraki.result['changed'] = True
             meraki.result['data'] = response
         else:
-            path = meraki.construct_path('get_one', net_id=net_id) + str(meraki.params['vlan_id'])
+            path = meraki.construct_path('get_one', net_id=net_id, custom={'vlan_id': meraki.params['vlan_id']})
             original = meraki.request(path, method='GET')
             if meraki.params['dns_nameservers']:
                 if meraki.params['dns_nameservers'] not in ('opendns', 'google_dns', 'upstream_dns'):

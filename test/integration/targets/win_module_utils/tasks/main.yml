@@ -48,6 +48,14 @@
     - bogus_utils is failed
     - bogus_utils.msg is search("Could not find")
 
+- name: call module that imports module_utils with further imports
+  recursive_requires:
+  register: recursive_requires
+
+- assert:
+    that:
+    - 'recursive_requires.value == "Get-Test3: 2: Get-Test2, 1: Get-Test1, 3: Get-NewTest3"'
+
 - name: call module with camel conversion tests
   camel_conversion_test:
   register: camel_conversion
@@ -127,3 +135,11 @@
 - assert:
     that:
     - file_util_test.data == 'success'
+
+- name: call module with PrivilegeUtil tests
+  privilege_util_test:
+  register: privilege_util_test
+
+- assert:
+    that:
+    - privilege_util_test.data == 'success'

@@ -32,24 +32,37 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'cnos'
-        reply = self.get(b'display version')
+        reply = self.get(b'show sys-info')
         data = to_text(reply, errors='surrogate_or_strict').strip()
-
-        match = re.search(r'^System version: (.*?) ', data, re.M | re.I)
-        if match:
-            device_info['network_os_version'] = match.group(1)
-
-        match = re.search(r'^Lenovo RackSwitch (\S+)', data, re.M | re.I)
-        if match:
-            device_info['network_os_model'] = match.group(1)
-
-        match = re.search(r'^Device name: (.*?) ', data, re.M | re.I)
-        if match:
-            device_info['network_os_hostname'] = match.group(1)
-        else:
-            device_info['network_os_hostname'] = "NA"
+        host = self.get(b'show hostname')
+        hostname = to_text(host, errors='surrogate_or_strict').strip()
+        if data:
+            device_info['network_os_version'] = self.parse_version(data)
+            device_info['network_os_model'] = self.parse_model(data)
+            device_info['network_os_hostname'] = hostname
 
         return device_info
+
+    def parse_version(self, data):
+        for line in data.split('\n'):
+            line = line.strip()
+            match = re.match(r'System Software Revision (.*?)',
+                             line, re.M | re.I)
+            if match:
+                vers = line.split(':')
+                ver = vers[1].strip()
+                return ver
+        return "NA"
+
+    def parse_model(self, data):
+        for line in data.split('\n'):
+            line = line.strip()
+            match = re.match(r'System Model (.*?)', line, re.M | re.I)
+            if match:
+                mdls = line.split(':')
+                mdl = mdls[1].strip()
+                return mdl
+        return "NA"
 
     @enable_mode
     def get_config(self, source='running', format='text'):
@@ -57,14 +70,14 @@ class Cliconf(CliconfBase):
             msg = "fetching configuration from %s is not supported"
             return self.invalid_params(msg % source)
         if source == 'running':
-            cmd = b'display running-config'
+            cmd = b'show running-config'
         else:
-            cmd = b'display startup-config'
+            cmd = b'show startup-config'
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure device'], to_list(command), [b'end']):
+        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):

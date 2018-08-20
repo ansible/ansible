@@ -55,6 +55,7 @@ EXAMPLES = r'''
     port_mode: '{{ port_mode }}'
     description: '{{ description }}'
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -194,8 +195,8 @@ def main():
         root_class=dict(
             aci_class='fcIfPol',
             aci_rn='infra/fcIfPol-{0}'.format(fc_policy),
-            filter_target='eq(fcIfPol.name, "{0}")'.format(fc_policy),
             module_object=fc_policy,
+            target_filter={'name': fc_policy},
         ),
     )
 

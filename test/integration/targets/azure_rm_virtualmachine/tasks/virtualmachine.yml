@@ -116,29 +116,29 @@
       timeout: 60
       state: started
 
-- block:
-  # TODO: figure out how to make this work under ansible-test with the coverage injector
-  #- name: wait for host to answer on SSH
-  #  delegate_to: new_azure_vm
-  #  wait_for_connection:
-  - name: get content from custom_data script
-    raw: cat /tmp/custom_data.txt
-    register: custom_data_content
+#- block:
+#   TODO: figure out how to make this work under ansible-test with the coverage injector
+#  - name: wait for host to answer on SSH
+#    delegate_to: new_azure_vm
+#    wait_for_connection:
+#  - name: get content from custom_data script
+#    raw: cat /tmp/custom_data.txt
+#    register: custom_data_content
 
-  - name: assert contents
-    assert:
-        that: custom_data_content.stdout | regex_search('custom_data was executed')
-  delegate_to: new_azure_vm
+#  - name: assert contents
+#    assert:
+#        that: custom_data_content.stdout | regex_search('custom_data was executed')
+#  delegate_to: new_azure_vm
 
-  # TODO: figure out how to make this work under ansible-test with the coverage injector
-  #- name: wait for file/content created by custom_data script
-  #  delegate_to: new_azure_vm
-  #  vars:
-  #    ansible_python_interpreter: python
-  #  wait_for:
-  #    path: /tmp/custom_data.txt
-  #    search_regex: ^custom_data was executed$
-  #    timeout: 20
+#   TODO: figure out how to make this work under ansible-test with the coverage injector
+#  - name: wait for file/content created by custom_data script
+#    delegate_to: new_azure_vm
+#    vars:
+#      ansible_python_interpreter: python
+#    wait_for:
+#      path: /tmp/custom_data.txt
+#      search_regex: ^custom_data was executed$
+#      timeout: 20
 
 - name: Restart the virtual machine
   azure_rm_virtualmachine:
@@ -256,23 +256,38 @@
       state: absent
       vm_size: Standard_A0
 
+- set_fact:
+      niclist:
+         - name: testvm011
+           resource_group: "{{ resource_group_secondary }}"
+         - name: testvm012
+           resource_group: "{{ resource_group_secondary  }}"
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group_secondary }}"
+      name: testvm001
+      address_prefixes: "10.10.0.0/16"
+  register: vn
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group_secondary }}"
+      name: testvm001
+      address_prefix: "10.10.0.0/24"
+      virtual_network: testvm001
+
 - name: Create NICs for dual nic VM
   azure_rm_networkinterface:
-      resource_group: "{{ resource_group }}"
-      name: "{{ item }}"
-      virtual_network: testvm001
+      resource_group: "{{ item.resource_group }}"
+      name: "{{ item.name }}"
+      virtual_network: "{{ vn.state.id }}"
       subnet: testvm001
       security_group: testvm001
-  loop:
-    - testvm011
-    - testvm012
+  loop: "{{ niclist }}"
 
 - name: Create virtual machine with two NICs
   register: output
-  vars:
-    niclist:
-      - testvm011
-      - testvm012
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm003
@@ -296,11 +311,25 @@
       that:
         - azure_vm.properties.availabilitySet.id
 
+- name: Retrieve vms facts (filtering by name)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: testvm003
+  register: results
+
+- name: Just dump output
+  debug:
+    var: results
+
+- name: Assert that facts module returned the second vm
+  assert:
+    that: 
+      - results.vms | length == 1
+      - results.vms[0].name == 'testvm003'
+      - results.vms[0].location == 'eastus'
+      - results.vms[0].admin_username == 'adminuser'
+
 - name: Should be idempotent with a dual NICs
-  vars:
-    niclist:
-      - testvm011
-      - testvm012
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm003

@@ -52,7 +52,7 @@ options:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
                vnic_profile is described by the following dictionary:"
             - "C(source_network_name): The network name of the source network."
-            - "C(source_profile_name): The prfile name related to the source network."
+            - "C(source_profile_name): The profile name related to the source network."
             - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
         version_added: "2.5"
     cluster_mappings:
@@ -270,6 +270,13 @@ options:
             - Name of the storage domain this virtual machine lease reside on.
             - NOTE - Supported since oVirt 4.1.
         version_added: "2.4"
+    custom_compatibility_version:
+        description:
+            - "Enables a virtual machine to be customized to its own compatibility version. If
+            `C(custom_compatibility_version)` is set, it overrides the cluster's compatibility version
+            for this particular virtual machine."
+        version_added: "2.7"
+
     delete_protected:
         description:
             - If I(yes) Virtual Machine will be set as delete protected.
@@ -317,8 +324,8 @@ options:
     disks:
         description:
             - List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary.
-            - C(name) - Name of the disk. Either C(name) or C(id) is reuqired.
-            - C(id) - ID of the disk. Either C(name) or C(id) is reuqired.
+            - C(name) - Name of the disk. Either C(name) or C(id) is required.
+            - C(id) - ID of the disk. Either C(name) or C(id) is required.
             - C(interface) - Interface of the disk, either I(virtio) or I(IDE), default is I(virtio).
             - C(bootable) - I(True) if the disk should be bootable, default is non bootable.
             - C(activate) - I(True) if the disk should be activated, default is activated.
@@ -359,7 +366,7 @@ options:
             - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
     cloud_init_nics:
         description:
-            - List of dictionaries representing network interafaces to be setup by cloud init.
+            - List of dictionaries representing network interfaces to be setup by cloud init.
             - This option is used, when user needs to setup more network interfaces via cloud init.
             - If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
               are merged with C(cloud_init_nics) parameters.
@@ -916,7 +923,9 @@ class VmsModule(BaseModule):
         template = None
         templates_service = self._connection.system_service().templates_service()
         if self.param('template'):
-            templates = templates_service.list(search='name=%s' % self.param('template'))
+            templates = templates_service.list(
+                search='name=%s and cluster=%s' % (self.param('template'), self.param('cluster'))
+            )
             if self.param('template_version'):
                 templates = [
                     t for t in templates
@@ -924,9 +933,10 @@ class VmsModule(BaseModule):
                 ]
             if not templates:
                 raise ValueError(
-                    "Template with name '%s' and version '%s' was not found'" % (
+                    "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
                         self.param('template'),
-                        self.param('template_version')
+                        self.param('template_version'),
+                        self.param('cluster')
                     )
                 )
             template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
@@ -1066,6 +1076,10 @@ class VmsModule(BaseModule):
                     self.param('instance_type'),
                 ),
             ) if self.param('instance_type') else None,
+            custom_compatibility_version=otypes.Version(
+                major=self._get_major(self.param('custom_compatibility_version')),
+                minor=self._get_minor(self.param('custom_compatibility_version')),
+            ) if self.param('custom_compatibility_version') else None,
             description=self.param('description'),
             comment=self.param('comment'),
             time_zone=otypes.TimeZone(
@@ -1153,6 +1167,8 @@ class VmsModule(BaseModule):
             equal(self.param('io_threads'), entity.io.threads) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), entity.console.enabled) and
+            equal(self._get_minor(self.param('custom_compatibility_version')), self._get_minor(entity.custom_compatibility_version)) and
+            equal(self._get_major(self.param('custom_compatibility_version')), self._get_major(entity.custom_compatibility_version)) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
@@ -1589,7 +1605,6 @@ class VmsModule(BaseModule):
 
 def _get_role_mappings(module):
     roleMappings = list()
-
     for roleMapping in module.params['role_mappings']:
         roleMappings.append(
             otypes.RegistrationRoleMapping(
@@ -1892,6 +1907,7 @@ def main():
         kvm=dict(type='dict'),
         cpu_mode=dict(type='str'),
         placement_policy=dict(type='str'),
+        custom_compatibility_version=dict(type='str'),
         cpu_pinning=dict(type='list'),
         soundcard_enabled=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),

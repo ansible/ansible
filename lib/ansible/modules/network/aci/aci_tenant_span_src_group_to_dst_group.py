@@ -57,6 +57,7 @@ EXAMPLES = r'''
     src_group: "{{ src_group }}"
     dst_group: "{{ dst_group }}"
     description: "{{ description }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -198,20 +199,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='spanSrcGrp',
             aci_rn='srcgrp-{0}'.format(src_group),
-            filter_target='eq(spanSrcGrp.name, "{0}")'.format(src_group),
             module_object=src_group,
+            target_filter={'name': src_group},
         ),
         subclass_2=dict(
             aci_class='spanSpanLbl',
             aci_rn='spanlbl-{0}'.format(dst_group),
-            filter_target='eq(spanSpanLbl.name, "{0}")'.format(dst_group),
             module_object=dst_group,
+            target_filter={'name': dst_group},
         ),
     )
 

@@ -1038,6 +1038,9 @@ def main():
         except AttributeError:
             module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
+    if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
+        module.fail_json(msg='csr_path is required when provider is not assertonly')
+
     base_dir = os.path.dirname(module.params['path'])
     if not os.path.isdir(base_dir):
         module.fail_json(

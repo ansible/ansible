@@ -1,7 +1,6 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -17,7 +16,7 @@ $exclude_hosts = Get-AnsibleParam -obj $params -name "exclude_hosts" -type "list
 $hostname = Get-AnsibleParam -obj $params -name "host" -type "str" -default "127.0.0.1"
 $path = Get-AnsibleParam -obj $params -name "path" -type "path"
 $port = Get-AnsibleParam -obj $params -name "port" -type "int"
-$search_regex = Get-AnsibleParam -obj $params -name "search_regex" -type "string"
+$search_regex = Get-AnsibleParam -obj $params -name "search_regex" -type "str"
 $sleep = Get-AnsibleParam -obj $params -name "sleep" -type "int" -default 1
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "started" -validateset "present","started","stopped","absent","drained"
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 300

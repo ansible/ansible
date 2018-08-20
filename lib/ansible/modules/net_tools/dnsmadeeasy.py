@@ -562,9 +562,9 @@ def main():
             ip5=dict(required=False),
             validate_certs=dict(default='yes', type='bool'),
         ),
-        required_together=(
+        required_together=[
             ['record_value', 'record_ttl', 'record_type']
-        ),
+        ],
         required_if=[
             ['failover', True, ['autoFailover', 'port', 'protocol', 'ip1', 'ip2']],
             ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']]

@@ -94,12 +94,13 @@ EXAMPLES = '''
       resource_group: TestGroup
       name: testserver
       sku:
-        name: MYSQLB50
-        tier: Basic
-        capacity: 100
+        name: GP_Gen4_2
+        tier: GeneralPurpose
+        capacity: 2
       location: eastus
       storage_mb: 1024
       enforce_ssl: True
+      version: 5.6
       admin_username: cloudsa
       admin_password: password
 '''
@@ -371,6 +372,7 @@ class AzureRMServers(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMServers()
+
 
 if __name__ == '__main__':
     main()

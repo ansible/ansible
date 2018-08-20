@@ -40,6 +40,7 @@ options:
     - This is required when I(state) is C(present) or C(exported).
     - When I(state) is C(absent) and I(thumbprint) is not specified, the
       thumbprint is derived from the certificate at this path.
+    type: path
   thumbprint:
     description:
     - The thumbprint as a hex string to either export or remove.
