@@ -350,10 +350,11 @@ def _is_present(module, req, installed_pkgs, pkg_command):
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
+            pkg_name = Package.canonicalize_name(pkg_name)
         else:
             continue
 
-        if pkg_name.lower() == req.package_name and req.is_satisfied_by(pkg_version):
+        if pkg_name == req.package_name and req.is_satisfied_by(pkg_version):
             return True
 
     return False
@@ -499,6 +500,8 @@ class Package:
     test whether a package is already satisfied.
     """
 
+    _CANONICALIZE_RE = re.compile(r'[-_.]+')
+
     def __init__(self, name_string, version_string=None):
         self._plain_package = False
         self.package_name = name_string
@@ -515,7 +518,7 @@ class Package:
                 self.package_name = "setuptools"
                 self._requirement.project_name = "setuptools"
             else:
-                self.package_name = self._requirement.project_name
+                self.package_name = Package.canonicalize_name(self._requirement.project_name)
             self._plain_package = True
         except ValueError as e:
             pass
@@ -538,6 +541,11 @@ class Package:
                 op_dict[op](version_to_test, LooseVersion(ver))
                 for op, ver in self._requirement.specs
             )
+
+    @staticmethod
+    def canonicalize_name(name):
+        # This is taken from PEP 503.
+        return Package._CANONICALIZE_RE.sub("-", name).lower()
 
     def __str__(self):
         if self._plain_package:
