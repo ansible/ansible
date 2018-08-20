@@ -122,6 +122,10 @@ class PkgMgrFactCollector(BaseFactCollector):
         if collected_facts['ansible_os_family'] == "RedHat":
             if pkg_mgr_name not in ('yum', 'dnf'):
                 pkg_mgr_name = self._check_rh_versions(pkg_mgr_name, collected_facts)
+        elif collected_facts['ansible_os_family'] == 'Debian' and pkg_mgr_name != 'apt':
+            # It's possible to install yum, dnf, zypper, rpm, etc inside of
+            # Debian. Doing so does not mean the system wants to use them.
+            pkg_mgr_name = 'apt'
         elif collected_facts['ansible_os_family'] == 'Altlinux':
             if pkg_mgr_name == 'apt':
                 pkg_mgr_name = 'apt_rpm'
