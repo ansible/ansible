@@ -38,10 +38,10 @@
     when:
       - ansible_distribution in ['RedHat'] and ansible_distribution_version != '8.0'
 
-    - name: install rpmfluff for voldemort
-      pip: name=rpmfluff state=present executable=/usr/local/bin/pip3
-      when:
-        - ansible_distribution in ['RedHat'] and ansible_distribution_version == '8.0'
+  - name: install rpmfluff for voldemort
+    pip: name=rpmfluff state=present executable=/usr/local/bin/pip3
+    when:
+      - ansible_distribution in ['RedHat'] and ansible_distribution_version == '8.0'
 
   - name: Copy script for creating a repo
     copy:
