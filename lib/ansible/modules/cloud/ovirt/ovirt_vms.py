@@ -496,7 +496,7 @@ options:
         version_added: "2.5"
     ticket:
         description:
-            - "If I(true), returns to vms remote_vv_file ticket to remote-viewer."
+            - "If I(true), in addition return I(remote_vv_file) inside I(vm) dictionary, which contains compatible content for remote-viewer application. Works only C(state) is I(running)."
         version_added: "2.7"
     cpu_pinning:
         description:
@@ -873,7 +873,7 @@ EXAMPLES = '''
         - vnc
 # Execute remote viever to VM
 - block:
-  - name: Create a VM that has the console configured for both Spice and VNC
+  - name: Create a ticket for console for a running VM
     ovirt_vms:
       name: myvm
       ticket: true
