@@ -1,0 +1,5 @@
+- hosts: localhost
+  connection: local
+
+  roles:
+    - ../../cloudformation_stack_set
