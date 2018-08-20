@@ -3,7 +3,7 @@
     package:
       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     when:
-      - ansible_distribution in ['RedHat']
+      - ansible_distribution in ['RedHat'] and ansible_distribution_version != '8.0'
 
   - name: Install rpmfluff and deps
     package:
@@ -13,27 +13,35 @@
     when:
       - ansible_distribution in ['Fedora']
 
-  - name: Install rpmfluff and deps
-    package:
-      name: "{{ item }}"
-    with_items:
-      - python-rpmfluff
-      - createrepo_c
-      - createrepo  # used by el6 version of rpmfluff
-    when:
-      - ansible_distribution not in ['Fedora']
-      - ansible_python["version"]["major"] == 2
+  - block:
+    - name: Install rpmfluff and deps
+      package:
+        name: "{{ item }}"
+      with_items:
+        - python-rpmfluff
+        - createrepo_c
+        - createrepo  # used by el6 version of rpmfluff
+      when:
+        - ansible_distribution not in ['Fedora']
+        - ansible_python["version"]["major"] == 2
 
-  - name: Install rpmfluff and deps
-    package:
-      name: "{{ item }}"
-    with_items:
-      - python3-rpmfluff
-      - createrepo_c
-      - createrepo  # used by el6 version of rpmfluff
+    - name: Install rpmfluff and deps
+      package:
+        name: "{{ item }}"
+      with_items:
+        - python3-rpmfluff
+        - createrepo_c
+        - createrepo  # used by el6 version of rpmfluff
+      when:
+        - ansible_distribution not in ['Fedora']
+        - ansible_python["version"]["major"] == 3
     when:
-      - ansible_distribution not in ['Fedora']
-      - ansible_python["version"]["major"] == 3
+      - ansible_distribution in ['RedHat'] and ansible_distribution_version != '8.0'
+
+    - name: install rpmfluff for voldemort
+      pip: name=rpmfluff state=present executable=/usr/local/bin/pip3
+      when:
+        - ansible_distribution in ['RedHat'] and ansible_distribution_version == '8.0'
 
   - name: Copy script for creating a repo
     copy:
@@ -79,7 +87,7 @@
   - name: Install the repo (ppc64)
     yum_repository:
       name: "fake-ppc64"
-      description: "fake-ppc64"
+    description: "fake-ppc64"
       baseurl: "file://{{ repodir_ppc64 }}"
       gpgcheck: no
 
