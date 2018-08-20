@@ -37,6 +37,7 @@ DOCUMENTATION = """
         ini:
           - section: lookup_consul
             key: host
+        version_added: '2.7'
       port:
         description: The port of the target host to connect to.
         default: 8500
