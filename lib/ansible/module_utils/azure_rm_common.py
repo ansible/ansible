@@ -67,7 +67,8 @@ AZURE_API_PROFILES = {
         'NetworkManagementClient': '2017-11-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
-        'WebsiteManagementClient': '2016-08-01'
+        'WebsiteManagementClient': '2016-08-01',
+        'CdnManagementClient': '2017-04-02'
     },
 
     '2017-03-09-profile': {
@@ -1093,5 +1094,6 @@ class AzureRMModuleBase(object):
         self.log('Getting cdn management client')
         if not self._cdn_management_client:
             self._cdn_management_client = self.get_mgmt_svc_client(CdnManagementClient,
-                                                                   base_url=self._cloud_environment.endpoints.resource_manager)
+                                                                   base_url=self._cloud_environment.endpoints.resource_manager,
+                                                                   api_version='2017-04-02')
         return self._cdn_management_client
