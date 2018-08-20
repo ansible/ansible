@@ -100,7 +100,7 @@ EXAMPLES = '''
 
 - name: Assign QuotaConsumer role to user
   ovirt_permissions:
-    state: absent
+    state: present
     user_name: user1
     authz_name: example.com-authz
     object_type: data_center
