@@ -5,56 +5,56 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.utils.deepishcopy import deepishcopy
+from ansible.utils.naive_deepcopy import naive_deepcopy
 
 import pytest
 
 
-def test_deepishcopy_basic():
+def test_naive_deepcopy_basic():
     x = 42
-    y = deepishcopy(x)
+    y = naive_deepcopy(x)
     assert y == x
 
 
-def test_deepishcopy_atomic():
+def test_naive_deepcopy_atomic():
     tests = [None, 42, 2**100, 3.14, True, False, 1j,
              "hello", "hello\u1234"]
     for x in tests:
-        assert deepishcopy(x) is x
+        assert naive_deepcopy(x) is x
 
 
-def test_deepishcopy_list():
+def test_naive_deepcopy_list():
     x = [[1, 2], 3]
-    y = deepishcopy(x)
+    y = naive_deepcopy(x)
     assert y == x
     assert x is not y
     assert x[0] is not y[0]
 
 
-def test_deepishcopy_empty_tuple():
+def test_naive_deepcopy_empty_tuple():
     x = ()
-    y = deepishcopy(x)
+    y = naive_deepcopy(x)
     assert x is y
 
 
 @pytest.mark.skip(reason='No current support for this situation')
-def test_deepishcopy_tuple():
+def test_naive_deepcopy_tuple():
     x = ([1, 2], 3)
-    y = deepishcopy(x)
+    y = naive_deepcopy(x)
     assert y == x
     assert x is not y
     assert x[0] is not y[0]
 
 
-def test_deepishcopy_tuple_of_immutables():
+def test_naive_deepcopy_tuple_of_immutables():
     x = ((1, 2), 3)
-    y = deepishcopy(x)
+    y = naive_deepcopy(x)
     assert x is y
 
 
-def test_deepishcopy_dict():
+def test_naive_deepcopy_dict():
     x = {"foo": [1, 2], "bar": 3}
-    y = deepishcopy(x)
+    y = naive_deepcopy(x)
     assert y == x
     assert x is not y
     assert x["foo"] is not y["foo"]

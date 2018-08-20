@@ -12,7 +12,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 from ansible.plugins.loader import connection_loader
-from ansible.utils.deepishcopy import deepishcopy
+from ansible.utils.naive_deepcopy import naive_deepcopy
 
 try:
     from __main__ import display
@@ -56,7 +56,7 @@ def remove_internal_keys(data):
 
 def clean_facts(facts):
     ''' remove facts that can override internal keys or otherwise deemed unsafe '''
-    data = deepishcopy(facts)
+    data = naive_deepcopy(facts)
 
     remove_keys = set()
     fact_keys = set(data.keys())
@@ -112,8 +112,8 @@ def namespace_facts(facts):
     for k in facts:
         if k in ('ansible_local',):
             # exceptions to 'deprefixing'
-            deprefixed[k] = deepishcopy(facts[k])
+            deprefixed[k] = naive_deepcopy(facts[k])
         else:
-            deprefixed[k.replace('ansible_', '', 1)] = deepishcopy(facts[k])
+            deprefixed[k.replace('ansible_', '', 1)] = naive_deepcopy(facts[k])
 
     return {'ansible_facts': deprefixed}
