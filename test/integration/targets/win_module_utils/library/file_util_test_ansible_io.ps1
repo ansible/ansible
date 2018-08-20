@@ -437,6 +437,13 @@ Function Test-FileClass($root_path) {
     [Ansible.IO.File]::Delete($file_path)
     Assert-Equals -actual ([Ansible.IO.File]::Exists($file_path)) -expected $false
 
+    # make sure we can delete a file with the ReadOnly attribute set
+    $fs = [Ansible.IO.File]::Create($file_path)
+    $fs.Close()
+    [Ansible.IO.File]::SetAttributes($file_path, [System.IO.FileAttributes]::ReadOnly)
+    [Ansible.IO.File]::Delete($file_path)
+    Assert-Equals -actual ([Ansible.IO.File]::Exists($file_path)) -expected $false
+
     $fs = [Ansible.IO.File]::Create($file_path, 4096, [System.IO.FileOptions]::None, $acl)
     $fs.Close()
     $acl = [Ansible.IO.File]::GetAccessControl($file_path)
@@ -1069,6 +1076,13 @@ Function Test-DirectoryClass($root_path) {
     $dir = [Ansible.IO.Directory]::CreateDirectory($directory_path)
     Assert-Equals -actual ($dir -is [Ansible.IO.DirectoryInfo]) -expected $true
     Assert-Equals -actual ([Ansible.IO.Directory]::Exists($directory_path)) -expected $true
+
+    # delete directory with the ReadOnly attribute set
+    $dir.Attributes = [System.IO.FileAttributes]"Directory, ReadOnly"
+    [Ansible.IO.Directory]::Delete($directory_path)
+    Assert-Equals -actual ([Ansible.IO.Directory]::Exists($directory_path)) -expected $false
+
+    $dir = [Ansible.IO.Directory]::CreateDirectory($directory_path)
 
     # ACL Tests
     $acl = New-Object -TypeName System.Security.AccessControl.DirectorySecurity

@@ -609,12 +609,35 @@ namespace Ansible.IO
                 throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("DecryptFileW({0}) failed", fullPath));
         }
 
-        public static void DeleteFile(string fullPath)
+        public static void DeleteFile(string fullPath, bool retry = false)
         {
             if (!NativeMethods.DeleteFileW(fullPath))
             {
                 int errorCode = Marshal.GetLastWin32Error();
-                if (errorCode != Win32Errors.ERROR_FILE_NOT_FOUND)
+                if (errorCode == Win32Errors.ERROR_ACCESS_DENIED)
+                {
+                        // DeleteFileW can fail if ReadOnly is set as a file attribute, try to remove and try delete again
+
+                        // we've already removed ReadOnly and this is the 2nd attempt so just throw the error
+                        if (retry)
+                            throw Win32Marshal.GetExceptionForWin32Error(errorCode, fullPath);
+
+                        try
+                        {
+                            FileAttributes existingAttributes = GetAttributes(fullPath);
+                            if ((existingAttributes & FileAttributes.ReadOnly) == 0)
+                                throw new Exception("");  // ReadOnly wasn't set, no use trying again
+                            SetAttributes(fullPath, existingAttributes & ~FileAttributes.ReadOnly, existingAttributes);
+                        }
+                        catch (Exception)
+                        {
+                            // Failed to get/set the existing attributes for whatever reason, just raise the Exception
+                            throw Win32Marshal.GetExceptionForWin32Error(errorCode, fullPath);
+                        }
+
+                        DeleteFile(fullPath, retry: true);
+                }
+                else if (errorCode != Win32Errors.ERROR_FILE_NOT_FOUND)
                     throw Win32Marshal.GetExceptionForWin32Error(errorCode, fullPath);
             }
         }
@@ -1041,7 +1064,7 @@ namespace Ansible.IO
             RemoveDirectoryInternal(fullPath, topLevel: topLevel, allowDirectoryNotEmpty: true);
         }
 
-        private static void RemoveDirectoryInternal(string fullPath, bool topLevel, bool allowDirectoryNotEmpty = false)
+        private static void RemoveDirectoryInternal(string fullPath, bool topLevel, bool allowDirectoryNotEmpty = false, bool retry = false)
         {
             if (!NativeMethods.RemoveDirectoryW(fullPath))
             {
@@ -1061,8 +1084,29 @@ namespace Ansible.IO
                             return;
                         break;
                     case Win32Errors.ERROR_ACCESS_DENIED:
-                        // This conversion was originally put in for Win9x. Keeping for compatibility.
-                        throw new IOException(String.Format("Access to the path '{0}' is denied.", fullPath));
+                        // RemoveDirectoryW can fail if ReadOnly is set as a file attribute, try to remove and try delete again
+                        // If not throw IOException like System.IO.Directory would do in this case. Due to backwards compat with
+                        // Win9x, it throws IOException and not UnauthorizedAccessException
+
+                        // we've already removed ReadOnly and this is the 2nd attempt so just throw the error
+                        if (retry)
+                            throw new IOException(String.Format("Access to the path '{0}' is denied.", fullPath));
+
+                        try
+                        {
+                            FileAttributes existingAttributes = GetAttributes(fullPath);
+                            if ((existingAttributes & FileAttributes.ReadOnly) == 0)
+                                throw new Exception("");  // ReadOnly wasn't set, no use trying again
+                            SetAttributes(fullPath, existingAttributes & ~FileAttributes.ReadOnly, existingAttributes);
+                        }
+                        catch (Exception)
+                        {
+                            // Failed to get/set the existing attributes for whatever reason, just raise the IOException
+                            throw new IOException(String.Format("Access to the path '{0}' is denied.", fullPath));
+                        }
+
+                        RemoveDirectoryInternal(fullPath, topLevel, allowDirectoryNotEmpty, retry: true);
+                        return;
                 }
                 throw Win32Marshal.GetExceptionForWin32Error(errorCode, fullPath);
             }
