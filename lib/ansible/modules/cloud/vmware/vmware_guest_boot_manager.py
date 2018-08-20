@@ -38,6 +38,11 @@ options:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID.
      - This is required if C(name) parameter is not supplied.
+   uuid_type:
+     description:
+     - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
+     default: 'bios_uuid'
+     choices: ['bios_uuid', 'instance_uuid']
    boot_order:
      description:
      - List of the boot devices.
@@ -158,7 +163,8 @@ class VmBootManager(PyVmomi):
         vms = []
 
         if self.uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
+            vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid",
+                                   vm_uuid_type="uuid")
             if vm_obj is None:
                 self.module.fail_json(msg="Failed to find the virtual machine with UUID : %s" % self.uuid)
             vms = [vm_obj]
@@ -314,6 +320,10 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        uuid_type=dict(
+            choices=['bios_uuid', 'instance_uuid'],
+            default='uuid'
+        ),
         boot_order=dict(
             type='list',
             default=[],

@@ -56,6 +56,11 @@ options:
      description:
      - UUID of the VM  for which to wait until the tools become available, if known. This is VMware's unique identifier.
      - This is required, if C(name) is not supplied.
+   uuid_type:
+     description:
+     - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
+     default: 'bios_uuid'
+     choices: ['bios_uuid', 'instance_uuid']
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -146,6 +151,10 @@ def main():
         name_match=dict(type='str', default='first', choices=['first', 'last']),
         folder=dict(type='str'),
         uuid=dict(type='str'),
+        uuid_type=dict(
+            choices=['bios_uuid', 'instance_uuid'],
+            default='bios_uuid'
+        ),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

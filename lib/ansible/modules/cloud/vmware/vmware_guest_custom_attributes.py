@@ -48,6 +48,11 @@ options:
      description:
      - UUID of the virtual machine to manage if known. This is VMware's unique identifier.
      - This is required parameter, if C(name) is not supplied.
+   uuid_type:
+     description:
+     - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
+     default: 'bios_uuid'
+     choices: ['bios_uuid', 'instance_uuid']
    folder:
      description:
      - Absolute path to find an existing guest.

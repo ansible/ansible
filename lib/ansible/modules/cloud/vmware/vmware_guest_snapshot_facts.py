@@ -38,6 +38,11 @@ options:
      - UUID of the instance to manage if known, this value is VMware's unique identifier.
      - This is required if C(name) is not supplied.
      - The C(folder) is ignored, if C(uuid) is provided.
+   uuid_type:
+     description:
+     - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
+     default: 'bios_uuid'
+     choices: ['bios_uuid', 'instance_uuid']
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -125,6 +130,10 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        uuid_type=dict(
+            choices=['bios_uuid', 'instance_uuid'],
+            default='bios_uuid'
+        ),
         folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
     )

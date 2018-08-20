@@ -37,6 +37,11 @@ options:
         description:
             - UUID of the virtual machine to manage if known, this is VMware's unique identifier.
             - This is required if C(name) is not supplied.
+   uuid_type:
+        description:
+            - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
+        default: 'bios_uuid'
+        choices: ['bios_uuid', 'instance_uuid']
    name_match:
         description:
             - If multiple virtual machines matching the name, use the first or last found.
@@ -169,6 +174,10 @@ def main():
         name_match=dict(
             type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        uuid_type=dict(
+            choices=['bios_uuid', 'instance_uuid'],
+            default='bios_uuid'
+        ),
         dest_folder=dict(type='str', required=True),
         datacenter=dict(type='str', required=True),
     )

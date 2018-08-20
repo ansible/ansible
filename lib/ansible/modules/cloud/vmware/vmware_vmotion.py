@@ -47,6 +47,11 @@ options:
       - This is a required parameter, if C(vm_name) is not set.
       aliases: ['uuid']
       version_added: 2.7
+    vm_uuid_type:
+     description:
+        - The type of UUID provided to search against, to use the BIOS UUID or the Instance UUID
+     default: 'bios_uuid'
+     choices: ['bios_uuid', 'instance_uuid']
     destination_host:
       description:
       - Name of the destination host the virtual machine should be running on.
@@ -118,6 +123,7 @@ class VmotionManager(PyVmomi):
         super(VmotionManager, self).__init__(module)
         self.vm = None
         self.vm_uuid = self.params.get('vm_uuid', None)
+        self.vm_uuid_type = self.params.get('vm_uuid_type', None)
         self.vm_name = self.params.get('vm_name', None)
         result = dict()
 
@@ -255,7 +261,7 @@ class VmotionManager(PyVmomi):
         """
         vms = []
         if self.vm_uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.params['vm_uuid'], vm_id_type="uuid")
+            vm_obj = find_vm_by_id(self.content, vm_id=self.params['vm_uuid'], vm_id_type="uuid",  vm_uuid_type=self.uuid_type)
             vms = [vm_obj]
 
         elif self.vm_name:
@@ -280,6 +286,10 @@ def main():
         dict(
             vm_name=dict(aliases=['vm']),
             vm_uuid=dict(aliases=['uuid']),
+            vm_uuid_type=dict(
+                choices=['bios_uuid', 'instance_uuid'],
+                default='bios_uuid'
+            ),
             destination_host=dict(aliases=['destination']),
             destination_datastore=dict(aliases=['datastore'])
         )
