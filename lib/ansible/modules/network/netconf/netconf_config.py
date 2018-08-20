@@ -144,7 +144,6 @@ options:
 requirements:
   - "python >= 2.6"
   - "ncclient"
-  - "jxmlease (required if content is json/yaml)"
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
