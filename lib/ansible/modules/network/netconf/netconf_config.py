@@ -21,7 +21,6 @@ short_description: netconf device configuration
 description:
     - Netconf is a network management protocol developed and standardized by
       the IETF. It is documented in RFC 6241.
-
     - This module allows the user to send a configuration XML file to a netconf
       device, and detects if there was a configuration change.
 extends_documentation_fragment: netconf
@@ -31,22 +30,22 @@ options:
      - The configuration data as defined by the device's data models, the value can be either in
        xml string format or text format. The format of the configuration should be supported by remote
        Netconf server
-  aliases: ['xml']
+    aliases: ['xml']
   target:
     description:
       Name of the configuration datastore to be edited.
       - auto, uses candidate and fallback to running
       - candidate, edit <candidate/> datastore and then commit
       - running, edit <running/> datastore directly
-  default: auto
-  version_added: "2.4"
-  aliases: ['datastore']
+    default: auto
+    version_added: "2.4"
+    aliases: ['datastore']
   source:
     description:
     - It is the name of the configuration datastore to use as the source to copy the configuration
       to the datastore mentioned byC(target) option. The values can be either I(running), I(candidate),
       I(startup) or a remote URL
-  version_added: "2.7"
+    version_added: "2.7"
   src:
     description:
     - Specifies the source path to the xml file that contains the configuration or configuration template
