@@ -49,7 +49,7 @@ I want to :ref:`document my module <developing_modules_documenting>`.
 I want to :ref:`contribute my module back to Ansible Core <developing_modules_checklist>`.
 I want to :ref:`add unit and integration tests to my module <developing_testing>`.
 I want to :ref:`add Python 3 support to my module <developing_python_3>`.
-I want to :ref:` write multiple modules <developing_modules_in_groups>`.
+I want to :ref:`write multiple modules <developing_modules_in_groups>`.
 
 
 .. seealso::
