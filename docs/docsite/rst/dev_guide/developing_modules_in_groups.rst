@@ -16,6 +16,7 @@ This document is intended for both companies wishing to add modules for their ow
 
 It's based on module development best practices that the Ansible core team and community have accumulated.
 
+.. include:: shared_snippets/Licensing.txt
 
 Before you start coding
 ```````````````````````
@@ -25,7 +26,6 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Read though all the pages linked off :doc:`developing_modules`; paying particular focus to the :doc:`developing_modules_checklist`.
 * New modules must be PEP 8 compliant. See :doc:`testing_pep8` for more information.
 * Starting with Ansible version 2.7, all new modules must support Python 2.7+ and Python 3.5+. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
-* All modules shipped with Ansible must be done so under the GPLv3 license. Files under the ``lib/ansible/module_utils/`` directory should be done so under the BSD license.
 * Have a look at the existing modules and how they've been named in the :ref:`all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
