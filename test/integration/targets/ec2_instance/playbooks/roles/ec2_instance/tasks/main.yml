@@ -6,7 +6,7 @@
 #  - EC2_REGION -> AWS_REGION
 #
 
-# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_instance
+# - include: ../../../../../setup_ec2/tasks/common.yml module_name: ec2_instance
 
 - block:
 
@@ -89,12 +89,13 @@
         <<: *aws_connection_info
       register: sg
 
-    - include_tasks: tasks/termination_protection.yml
-    - include_tasks: tasks/tags_and_vpc_settings.yml
-    - include_tasks: tasks/external_resource_attach.yml
-    - include_tasks: tasks/block_devices.yml
-    - include_tasks: tasks/default_vpc_tests.yml
-    - include_tasks: tasks/iam_instance_role.yml
+    - include_tasks: cpu_options.yml
+    - include_tasks: termination_protection.yml
+    - include_tasks: tags_and_vpc_settings.yml
+    - include_tasks: external_resource_attach.yml
+    - include_tasks: block_devices.yml
+    - include_tasks: default_vpc_tests.yml
+    - include_tasks: iam_instance_role.yml
 
 
     # ============================================================
