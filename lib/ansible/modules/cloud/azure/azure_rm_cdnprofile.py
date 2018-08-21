@@ -226,14 +226,11 @@ class AzureRMCdnprofile(AzureRMModuleBase):
         )
 
         try:
-            import uuid
-            xid = str(uuid.uuid1())
-            print(xid)
-            poller = self.cdn_management_client.profiles.create(self.resource_group, 
-                                                                self.name, 
-                                                                parameters, 
+            poller = self.cdn_management_client.profiles.create(self.resource_group,
+                                                                self.name,
+                                                                parameters,
                                                                 raw=True,
-                                                                custom_headers={'x-ms-client-request-id':xid}
+                                                                custom_headers={'x-ms-client-request-id': 'ac5feae4-a4f9-11e8-853b-000d3afd55c9'}
                                                                 )
             # response = self.get_poller_result(poller)
             print(poller)
