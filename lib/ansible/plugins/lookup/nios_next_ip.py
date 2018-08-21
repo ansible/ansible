@@ -52,7 +52,7 @@ EXAMPLES = """
 
 - name: return the next 3 available IP addresses for network 192.168.10.0/24 excluding ip addresses: '192.168.10.1', '192.168.10.2'
   set_fact:
-    ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', num=3, exclude=['192.168.10.1', '192.168.10.2'], provider=nios_provider) }}"
+    ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', num=3, exclude=['192.168.10.1', '192.168.10.2'], provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 """
 
 RETURN = """
