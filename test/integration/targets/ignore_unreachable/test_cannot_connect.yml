@@ -25,6 +25,6 @@
       register: should_fail
     - assert:
         that:
-          - 'should_fail | unreachable'
-          - 'not (should_fail | skipped)'
-          - 'not (should_fail | failed)'
+          - 'should_fail is unreachable'
+          - 'not (should_fail is skipped)'
+          - 'not (should_fail is failed)'
