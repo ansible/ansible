@@ -74,8 +74,8 @@ class ActionModule(ActionBase):
         # override connection timeout from defaults to custom value
         if connect_timeout:
             try:
-                self._connection.set_options(direct={"connection_timeout": connect_timeout})
-                self._connection._reset()
+                self._connection.set_option("connection_timeout", connect_timeout)
+                self._connection.reset()
             except AttributeError:
                 display.warning("Connection plugin does not allow the connection timeout to be overridden")
 
