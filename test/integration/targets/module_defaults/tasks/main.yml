@@ -98,7 +98,7 @@
       register: s3
     - assert:
         that:
-          - "'Partial credentials' in s3.msg"
+          - "'Partial credentials' in s3.msg or 'boto3 required' in s3.msg"
 - name: Module group defaults block
   module_defaults:
     group/aws:
@@ -111,4 +111,4 @@
       register: s3
     - assert:
         that:
-          - "'InvalidAccessKeyId' in s3.msg"
+          - "'InvalidAccessKeyId' in s3.msg or 'boto3 required' in s3.msg"
