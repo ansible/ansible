@@ -36,7 +36,7 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.api import basic_auth_argument_spec
 try:
-    from ansible.release import __version__ as ansible_version
+    from ansible.module_utils.ansible_release import __version__ as ansible_version
 except ImportError:
     ansible_version = 'unknown'
 
