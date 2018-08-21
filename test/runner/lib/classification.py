@@ -395,7 +395,7 @@ class PathMapper(object):
 
             # entire integration test commands depend on these connection plugins
 
-            if name == 'winrm':
+            if name in ['winrm', 'psrp']:
                 return {
                     'windows-integration': self.integration_all_target,
                     'units': units_path,
