@@ -40,7 +40,8 @@ options:
    use_instance_uuid:
         description:
             - Use the VMWare instance UUID rather than the BIOS UUID.
-         default: False
+        default: 'no'
+        type: bool
         version_added: 2.7
    name_match:
         description:
