@@ -117,7 +117,7 @@ class LdapPasswd(LdapGeneric):
 
         # Change the password (or throw an exception)
         try:
-            self.connection.passwd_set(self.dn, None, self.passwd)
+            self.connection.passwd_s(self.dn, None, self.passwd)
         except ldap.LDAPError as e:
             self.fail("Unable to set password", e)
 
