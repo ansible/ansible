@@ -297,8 +297,16 @@ def main():
                     module.fail_json(msg="Could not remove unmatched label pair '%s':'%s'" % (k, v))
     else:
         for k, v in module.params['labels'].items():
+            # If the label is missing entirely mark for update
             if k not in new_labels:
                 update_needed = True
+
+            # Also if the label is present, but not set to the correct value, mark it for update
+            if k in new_labels:
+                if new_labels[k] != v:
+                    update_needed = True
+
+            if update_needed:
                 new_labels[k] = v
 
     changed = False
