@@ -98,6 +98,10 @@ def get_volume_info(volume, region):
     return volume_info
 
 
+def describe_volumes_with_backoff(connection, filters):
+    paginator = connection.get_paginator('describe_volumes')
+    return paginator.paginate(Filters=filters).build_full_result()
+
 def list_ec2_volumes(connection, module, region):
 
     # Replace filter key underscores with dashes, for compatibility, except if we're dealing with tags
@@ -108,7 +112,8 @@ def list_ec2_volumes(connection, module, region):
     volume_dict_array = []
 
     try:
-        all_volumes = connection.describe_volumes(Filters=ansible_dict_to_boto3_filter_list(sanitized_filters))
+        all_volumes = describe_volumes_with_backoff(connection, ansible_dict_to_boto3_filter_list(sanitized_filters))
+
     except ClientError as e:
         module.fail_json(msg=e.response, exception=traceback.format_exc())
 
