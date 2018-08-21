@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: junos_command
-version_added: "2.7"
+version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Run arbitrary commands on an Juniper JUNOS device
 description:
