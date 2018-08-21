@@ -149,5 +149,5 @@ class ZabbixInventory(object):
             print("Error: Configuration of server and credentials are required. See zabbix.ini.", file=sys.stderr)
             sys.exit(1)
 
-
-ZabbixInventory()
+if __name__ == '__main__':
+    ZabbixInventory()

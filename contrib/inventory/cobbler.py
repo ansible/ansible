@@ -309,5 +309,5 @@ class CobblerInventory(object):
         else:
             return json.dumps(data)
 
-
-CobblerInventory()
+if __name__ == '__main__':
+    CobblerInventory()

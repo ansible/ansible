@@ -195,5 +195,5 @@ class SoftLayerInventory(object):
         self.get_virtual_servers()
         self.get_physical_servers()
 
-
-SoftLayerInventory()
+if __name__ == '__main__':
+    SoftLayerInventory()

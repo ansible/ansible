@@ -525,5 +525,5 @@ class ConsulConfig(dict):
                 token = 'anonymous'
         return consul.Consul(host=host, port=port, token=token, scheme=scheme)
 
-
-ConsulInventory()
+if __name__ == '__main__':
+    ConsulInventory()

@@ -173,5 +173,5 @@ class NagiosLivestatusInventory(object):
         else:
             sys.exit("usage: --list or --host HOSTNAME [--pretty]")
 
-
-NagiosLivestatusInventory()
+if __name__ == '__main__':
+    NagiosLivestatusInventory()

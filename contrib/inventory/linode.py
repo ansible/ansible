@@ -344,5 +344,5 @@ class LinodeInventory(object):
         else:
             return json.dumps(data)
 
-
-LinodeInventory()
+if __name__ == '__main__':
+    LinodeInventory()

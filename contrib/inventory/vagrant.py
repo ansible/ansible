@@ -52,25 +52,14 @@ _ssh_to_ansible = [('user', 'ansible_ssh_user'),
                    ('identityfile', 'ansible_ssh_private_key_file'),
                    ('port', 'ansible_ssh_port')]
 
-# Options
-# ------------------------------
-
-parser = OptionParser(usage="%prog [options] --list | --host <machine>")
-parser.add_option('--list', default=False, dest="list", action="store_true",
-                  help="Produce a JSON consumable grouping of Vagrant servers for Ansible")
-parser.add_option('--host', default=None, dest="host",
-                  help="Generate additional host specific details for given host for Ansible")
-(options, args) = parser.parse_args()
 
 #
 # helper functions
 #
 
-
 # get all the ssh configs for all boxes in an array of dictionaries.
 def get_ssh_config():
     return dict((k, get_a_ssh_config(k)) for k in list_running_boxes())
-
 
 # list all the running boxes
 def list_running_boxes():
@@ -105,27 +94,41 @@ def get_a_ssh_config(box_name):
 
     return dict((v, host_config[k]) for k, v in _ssh_to_ansible)
 
+if __name__ == '__main__':
+    # Options
+    # ------------------------------
 
-# List out servers that vagrant has running
-# ------------------------------
-if options.list:
-    ssh_config = get_ssh_config()
-    meta = defaultdict(dict)
+    parser = OptionParser(usage="%prog [options] --list | --host <machine>")
+    parser.add_option('--list', default=False, dest="list", action="store_true",
+                      help="Produce a JSON consumable grouping of Vagrant servers for Ansible")
+    parser.add_option('--host', default=None, dest="host",
+                      help="Generate additional host specific details for given host for Ansible")
+    (options, args) = parser.parse_args()
 
-    for host in ssh_config:
-        meta['hostvars'][host] = ssh_config[host]
 
-    print(json.dumps({_group: list(ssh_config.keys()), '_meta': meta}))
-    sys.exit(0)
 
-# Get out the host details
-# ------------------------------
-elif options.host:
-    print(json.dumps(get_a_ssh_config(options.host)))
-    sys.exit(0)
 
-# Print out help
-# ------------------------------
-else:
-    parser.print_help()
-    sys.exit(0)
+
+    # List out servers that vagrant has running
+    # ------------------------------
+    if options.list:
+        ssh_config = get_ssh_config()
+        meta = defaultdict(dict)
+
+        for host in ssh_config:
+            meta['hostvars'][host] = ssh_config[host]
+
+        print(json.dumps({_group: list(ssh_config.keys()), '_meta': meta}))
+        sys.exit(0)
+
+    # Get out the host details
+    # ------------------------------
+    elif options.host:
+        print(json.dumps(get_a_ssh_config(options.host)))
+        sys.exit(0)
+
+    # Print out help
+    # ------------------------------
+    else:
+        parser.print_help()
+        sys.exit(0)

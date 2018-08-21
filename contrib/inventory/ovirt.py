@@ -284,6 +284,5 @@ class OVirtInventory(object):
         else:
             return json.dumps(data)
 
-
-# Run the script
-OVirtInventory()
+if __name__ == '__main__':
+    OVirtInventory()

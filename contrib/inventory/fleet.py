@@ -73,35 +73,40 @@ def get_a_ssh_config(box_name):
     return config
 
 
-# List out servers that vagrant has running
-# ------------------------------
-if options.list:
-    ssh_config = get_ssh_config()
-    hosts = {'coreos': []}
+def main():
+    # List out servers that vagrant has running
+    # ------------------------------
+    if options.list:
+        ssh_config = get_ssh_config()
+        hosts = {'coreos': []}
 
-    for data in ssh_config:
-        hosts['coreos'].append(data['Host'])
+        for data in ssh_config:
+            hosts['coreos'].append(data['Host'])
 
-    print(json.dumps(hosts))
-    sys.exit(1)
+        print(json.dumps(hosts))
+        sys.exit(1)
 
-# Get out the host details
-# ------------------------------
-elif options.host:
-    result = {}
-    ssh_config = get_ssh_config()
+    # Get out the host details
+    # ------------------------------
+    elif options.host:
+        result = {}
+        ssh_config = get_ssh_config()
 
-    details = filter(lambda x: (x['Host'] == options.host), ssh_config)
-    if len(details) > 0:
-        # pass through the port, in case it's non standard.
-        result = details[0]
+        details = filter(lambda x: (x['Host'] == options.host), ssh_config)
+        if len(details) > 0:
+            # pass through the port, in case it's non standard.
+            result = details[0]
 
-    print(json.dumps(result))
-    sys.exit(1)
+        print(json.dumps(result))
+        sys.exit(1)
 
 
-# Print out help
-# ------------------------------
-else:
-    parser.print_help()
-    sys.exit(1)
+    # Print out help
+    # ------------------------------
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

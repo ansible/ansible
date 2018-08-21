@@ -69,32 +69,36 @@ def get_json_from_api(url, username, password):
     return json.loads(response.read())['data']
 
 
-username = get_config('ANSIBLE_OPENSHIFT_USERNAME', 'default_rhlogin')
-password = get_config('ANSIBLE_OPENSHIFT_PASSWORD', 'password')
-broker_url = 'https://%s/broker/rest/' % get_config('ANSIBLE_OPENSHIFT_BROKER', 'libra_server')
+def main():
+    username = get_config('ANSIBLE_OPENSHIFT_USERNAME', 'default_rhlogin')
+    password = get_config('ANSIBLE_OPENSHIFT_PASSWORD', 'password')
+    broker_url = 'https://%s/broker/rest/' % get_config('ANSIBLE_OPENSHIFT_BROKER', 'libra_server')
 
 
-response = get_json_from_api(broker_url + '/domains', username, password)
+    response = get_json_from_api(broker_url + '/domains', username, password)
 
-response = get_json_from_api("%s/domains/%s/applications" %
-                             (broker_url, response[0]['id']), username, password)
+    response = get_json_from_api("%s/domains/%s/applications" %
+                                 (broker_url, response[0]['id']), username, password)
 
-result = {}
-for app in response:
+    result = {}
+    for app in response:
 
-    # ssh://520311404832ce3e570000ff@blog-johndoe.example.org
-    (user, host) = app['ssh_url'][6:].split('@')
-    app_name = host.split('-')[0]
+        # ssh://520311404832ce3e570000ff@blog-johndoe.example.org
+        (user, host) = app['ssh_url'][6:].split('@')
+        app_name = host.split('-')[0]
 
-    result[app_name] = {}
-    result[app_name]['hosts'] = []
-    result[app_name]['hosts'].append(host)
-    result[app_name]['vars'] = {}
-    result[app_name]['vars']['ansible_ssh_user'] = user
+        result[app_name] = {}
+        result[app_name]['hosts'] = []
+        result[app_name]['hosts'].append(host)
+        result[app_name]['vars'] = {}
+        result[app_name]['vars']['ansible_ssh_user'] = user
 
-if len(sys.argv) == 2 and sys.argv[1] == '--list':
-    print(json.dumps(result))
-elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-    print(json.dumps({}))
-else:
-    print("Need an argument, either --list or --host <host>")
+    if len(sys.argv) == 2 and sys.argv[1] == '--list':
+        print(json.dumps(result))
+    elif len(sys.argv) == 3 and sys.argv[1] == '--host':
+        print(json.dumps({}))
+    else:
+        print("Need an argument, either --list or --host <host>")
+
+if __name__ == '__main__':
+    main()

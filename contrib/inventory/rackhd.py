@@ -73,24 +73,25 @@ except:
     # use default values
     pass
 
-# Use the nodeid specified in the environment to limit the data returned
-# or return data for all available nodes
-nodeids = []
+if __name__ == '__main__':
+    # Use the nodeid specified in the environment to limit the data returned
+    # or return data for all available nodes
+    nodeids = []
 
-if (parse_args().host):
-    try:
-        nodeids += parse_args().host.split(',')
-        RackhdInventory(nodeids)
-    except:
-        pass
-if (parse_args().list):
-    try:
-        url = RACKHD_URL + '/api/common/nodes'
-        r = requests.get(url, verify=False)
-        data = json.loads(r.text)
-        for entry in data:
-            if entry['type'] == 'compute':
-                nodeids.append(entry['id'])
-        RackhdInventory(nodeids)
-    except:
-        pass
+    if (parse_args().host):
+        try:
+            nodeids += parse_args().host.split(',')
+            RackhdInventory(nodeids)
+        except:
+            pass
+    if (parse_args().list):
+        try:
+            url = RACKHD_URL + '/api/common/nodes'
+            r = requests.get(url, verify=False)
+            data = json.loads(r.text)
+            for entry in data:
+                if entry['type'] == 'compute':
+                    nodeids.append(entry['id'])
+            RackhdInventory(nodeids)
+        except:
+            pass
