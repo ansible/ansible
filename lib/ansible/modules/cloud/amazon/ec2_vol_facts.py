@@ -61,7 +61,6 @@ import traceback
 
 try:
     from botocore.exceptions import ClientError
-    from botocore.exceptions import ProfileNotFound
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -74,9 +73,6 @@ from ansible.module_utils._text import to_native
 def get_volume_info(volume, region):
 
     attachment = volume["attachments"]
-    tags = {}
-    for tag in volume["tags"]:
-        tags[tag["key"]] = tag["value"]
 
     volume_info = {
         'create_time': volume["create_time"],
@@ -96,7 +92,7 @@ def get_volume_info(volume, region):
             'status': attachment[0]["state"] if len(attachment) > 0 else None,
             'delete_on_termination': attachment[0]["delete_on_termination"] if len(attachment) > 0 else None
         },
-        'tags': tags
+        'tags': boto3_tag_list_to_ansible_dict(volume['tags'])
     }
 
     return volume_info
@@ -114,10 +110,10 @@ def list_ec2_volumes(connection, module, region):
     try:
         all_volumes = connection.describe_volumes(Filters=ansible_dict_to_boto3_filter_list(sanitized_filters))
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc())
+        module.fail_json(msg=e.response, exception=traceback.format_exc())
 
     for volume in all_volumes["Volumes"]:
-        volume = camel_dict_to_snake_dict(volume)
+        volume = camel_dict_to_snake_dict(volume, ignore_list=['Tags'])
         volume_dict_array.append(get_volume_info(volume, region))
     module.exit_json(volumes=volume_dict_array)
 
@@ -137,20 +133,14 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
-    if region:
-        try:
-            connection = boto3_conn(
-                module,
-                conn_type='client',
-                resource='ec2',
-                region=region,
-                endpoint=ec2_url,
-                **aws_connect_params
-            )
-        except (ProfileNotFound, Exception) as e:
-            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(
+        module,
+        conn_type='client',
+        resource='ec2',
+        region=region,
+        endpoint=ec2_url,
+        **aws_connect_params
+    )
 
     list_ec2_volumes(connection, module, region)
 
