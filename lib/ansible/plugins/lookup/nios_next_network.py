@@ -101,11 +101,11 @@ class LookupModule(LookupBase):
         if network_obj is None:
             raise AnsibleError('unable to find network-container object %s' % network)
         num = kwargs.get('num', 1)
-        excludeIP = kwargs.get('exclude', [])
+        exclude_ip = kwargs.get('exclude', [])
 
         try:
             ref = network_obj[0]['_ref']
-            avail_nets = wapi.call_func('next_available_network', ref, {'cidr': cidr, 'num': num, 'exclude': excludeIP})
+            avail_nets = wapi.call_func('next_available_network', ref, {'cidr': cidr, 'num': num, 'exclude': exclude_ip})
             return [avail_nets['networks']]
         except Exception as exc:
             raise AnsibleError(to_text(exc))
