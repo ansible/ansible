@@ -14,6 +14,20 @@ This document is part of a collection on porting. The complete list of porting g
 
 .. contents:: Topics
 
+Command Line
+============
+
+Specifying ``--tags`` or ``--skip-tags`` multiple times on the commandline will merge the specified
+tags together.  In previous versions of Ansible, a config option, ``merge_multiple_cli_tags``,
+existed to change this behaviour to only keep the last specified ``--tags`` option.  This config
+option existed for backwards compatibility as the overwriting behaviour was deprecated in 2.3 and
+the default behaviour was changed in 2.4.  Ansible-2.7 removes the config option; multiple
+``--tags`` are now always merged.
+
+If you have a shell script that depends on the overwriting behaviour, please upgrade your script to
+only add the --tags which you actually want before upgrading to Ansible-2.7.
+
+
 Python Compatibility
 ====================
 
