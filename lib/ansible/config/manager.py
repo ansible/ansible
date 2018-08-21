@@ -455,21 +455,6 @@ class ConfigManager(object):
             raise AnsibleError('module_defaults.yml has an invalid version "%s" for configuration. Could be a bad install.' % defaults_config.get('version'))
         module_default_groups = defaults_config.get('groupings', {})
 
-        if self.get_config_value('MODULE_DEFAULTS_CFG') is not None:
-            try:
-                user_def_groups = self._read_config_yaml_file(
-                    self.get_config_value('MODULE_DEFAULTS_CFG')
-                ).get('groupings', {})
-                for k, v in user_def_groups.items():
-                    module_default_groups[k] = v + module_default_groups.get(k, [])
-                    for group in v:
-                        if group.startswith('-'):
-                            try:
-                                module_default_groups[k].remove(group[1:])
-                            except ValueError:
-                                pass
-            except AnsibleError:
-                raise AnsibleError("Missing user-specified MODULE_DEFAULTS_CFG file: %s" % self.get_config_value('MODULE_DEFAULTS_CFG'))
         self.module_defaults_groups = module_default_groups
 
     def update_config_data(self, defs=None, configfile=None):
