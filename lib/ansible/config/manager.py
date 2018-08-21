@@ -453,9 +453,7 @@ class ConfigManager(object):
         )
         if defaults_config.get('version') not in ('1', '1.0', 1, 1.0):
             raise AnsibleError('module_defaults.yml has an invalid version "%s" for configuration. Could be a bad install.' % defaults_config.get('version'))
-        module_default_groups = defaults_config.get('groupings', {})
-
-        self.module_defaults_groups = module_default_groups
+        self.module_defaults_groups = defaults_config.get('groupings', {})
 
     def update_config_data(self, defs=None, configfile=None):
         ''' really: update constants '''
