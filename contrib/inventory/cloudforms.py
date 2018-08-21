@@ -479,5 +479,5 @@ class CloudFormsInventory(object):
         else:
             return json.dumps(data)
 
-
-CloudFormsInventory()
+if __name__ == '__main__':
+    CloudFormsInventory()

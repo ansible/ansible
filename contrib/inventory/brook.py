@@ -254,8 +254,6 @@ class BrookInventory:
 
         return hostvars
 
-
-# Run the script
-#
-brook = BrookInventory()
-print(json.dumps(brook.inventory))
+if __name__ == '__main__':
+    brook = BrookInventory()
+    print(json.dumps(brook.inventory))

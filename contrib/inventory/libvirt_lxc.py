@@ -21,17 +21,18 @@ from subprocess import Popen, PIPE
 import sys
 import json
 
-result = {}
-result['all'] = {}
+if __name__ == '__main__':
+    result = {}
+    result['all'] = {}
 
-pipe = Popen(['virsh', '-q', '-c', 'lxc:///', 'list', '--name', '--all'], stdout=PIPE, universal_newlines=True)
-result['all']['hosts'] = [x[:-1] for x in pipe.stdout.readlines()]
-result['all']['vars'] = {}
-result['all']['vars']['ansible_connection'] = 'libvirt_lxc'
+    pipe = Popen(['virsh', '-q', '-c', 'lxc:///', 'list', '--name', '--all'], stdout=PIPE, universal_newlines=True)
+    result['all']['hosts'] = [x[:-1] for x in pipe.stdout.readlines()]
+    result['all']['vars'] = {}
+    result['all']['vars']['ansible_connection'] = 'libvirt_lxc'
 
-if len(sys.argv) == 2 and sys.argv[1] == '--list':
-    print(json.dumps(result))
-elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-    print(json.dumps({'ansible_connection': 'libvirt_lxc'}))
-else:
-    sys.stderr.write("Need an argument, either --list or --host <host>\n")
+    if len(sys.argv) == 2 and sys.argv[1] == '--list':
+        print(json.dumps(result))
+    elif len(sys.argv) == 3 and sys.argv[1] == '--host':
+        print(json.dumps({'ansible_connection': 'libvirt_lxc'}))
+    else:
+        sys.stderr.write("Need an argument, either --list or --host <host>\n")

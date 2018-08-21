@@ -548,4 +548,5 @@ class DigitalOceanInventory(object):
 
 ###########################################################################
 # Run the script
-DigitalOceanInventory()
+if __name__ == '__main__':
+    DigitalOceanInventory()

@@ -292,5 +292,6 @@ class RudderInventory(object):
         return re.sub(r'[^A-Za-z0-9\_]', '_', word)
 
 
-# Run the script
-RudderInventory()
+
+if __name__ == '__main__':
+    RudderInventory()

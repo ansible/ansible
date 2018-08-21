@@ -492,5 +492,6 @@ class PacketInventory(object):
             return json.dumps(data)
 
 
-# Run the script
-PacketInventory()
+
+if __name__ == '__main__':
+    PacketInventory()
