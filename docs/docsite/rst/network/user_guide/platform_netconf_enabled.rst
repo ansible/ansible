@@ -25,7 +25,7 @@ Connections Available
 | **Connection Settings**    |   ``ansible_connection: netconf``                                                                  |
 +----------------------------+----------------------------------------------------------------------------------------------------+
 
-For legacy playbooks, Ansible still supports ``ansible_connection=local`` for netconf_config module only. We recommend modernizing to use ``ansible_connection=netconf`` as soon as possible.
+For legacy playbooks, Ansible still supports ``ansible_connection=local`` for the netconf_config module only. We recommend modernizing to use ``ansible_connection=netconf`` as soon as possible.
 
 Using NETCONF in Ansible 2.6 onwards
 ================================================================================
@@ -35,7 +35,7 @@ Enabling NETCONF
 
 Before you can use NETCONF to connect to a switch, you must:
 
-- install the ``ncclient`` python package on your control node(s) with ``pip install ncclient``
+- install the ``ncclient`` Python package on your control node(s) with ``pip install ncclient``
 - enable NETCONF on the Junos OS device(s)
 
 To enable NETCONF on a new switch via Ansible, use the platform specific module via the CLI connection or set it manually.

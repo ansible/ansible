@@ -146,7 +146,7 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - This module supports devices with and without the candidate and
-    confirmed-commit capabilities. It always use the safer feature.
+    confirmed-commit capabilities. It will always use the safer feature.
   - This module supports the use of connection=netconf
 '''
 
