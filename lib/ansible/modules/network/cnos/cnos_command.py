@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: cnos_command
-version_added: "2.7"
+version_added: "2.6"
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Run arbitrary commands on Lenovo CNOS devices
 description:
