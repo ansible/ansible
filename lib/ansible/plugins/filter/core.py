@@ -34,7 +34,7 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping, MutableSequence
+from collections import MutableMapping
 import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
@@ -462,7 +462,7 @@ def flatten(mylist, levels=None):
         if element in (None, 'None', 'null'):
             # ignore undefined items
             break
-        elif isinstance(element, MutableSequence):
+        elif is_sequence(element):
             if levels is None:
                 ret.extend(flatten(element))
             elif levels >= 1:
