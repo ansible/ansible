@@ -176,6 +176,7 @@
         flat_full: '{{orig_list|flatten}}'
         flat_one: '{{orig_list|flatten(levels=1)}}'
         flat_two: '{{orig_list|flatten(levels=2)}}'
+        flat_tuples: '{{ [1,3] | zip([2,4]) | list | flatten }}'
 
     - name: Verify flatten filter works as expected
       assert:
@@ -183,6 +184,7 @@
           - flat_full == [1, 2, 3, 4, 5, 6, 7]
           - flat_one == [1, 2, 3, [4, [5]], 6, 7]
           - flat_two == [1, 2, 3, 4, [5], 6, 7]
+          - flat_tuples == [1, 2, 3, 4]
   vars:
     orig_list: [1, 2, [3, [4, [5]], 6], 7]
 
