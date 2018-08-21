@@ -63,6 +63,7 @@
             - "v.snapshot_id                is defined and v.snapshot_id                == ''"
             - "v.status                     is defined and v.status                     == 'in-use'"
             - "v.tags.Name                  is defined and v.tags.Name                  == 'ansible_ec2_vol_facts_test.db'"
+            - "v.tags['Tag Name with Space-and-dash']                                   == 'Tag Value with Space-and-dash'"
             - "v.type                       is defined and v.type                       == 'io1'"
             - "v.zone                       is defined and v.zone                       == instance.instances[0].placement.availability_zone"
       vars:
