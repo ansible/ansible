@@ -1,0 +1,8 @@
+---
+removed_features:
+- The configuration toggle, ``merge_multiple_cli_tags``, has been removed.
+  This setting controlled whether specifying ``--tags`` or ``--skip-tags``
+  multiple times on the commandline would merge the specified tags or use the
+  old behaviour of overwriting the previous entry.  The overwriting behaviour
+  was deprecated in 2.3 and the default value of the config option became merge
+  in 2.4.
