@@ -5,7 +5,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -13,49 +13,40 @@ module: reboot
 short_description: Reboot a *nix machine
 description:
      - Reboot a *nix machine, wait for it to go down, come back up, and respond to commands.
-version_added: "2.5"
+version_added: "2.7"
 options:
   pre_reboot_delay:
     description:
     - Minutes for shutdown to wait before requesting reboot
     default: 0
-    aliases: [ pre_reboot_delay_min ]
   post_reboot_delay:
     description:
-    - Seconds to wait after the reboot was successful and the connection was re-established
-    - This is useful if you want wait for something to settle despite your connection already working
+      - Seconds to wait after the reboot was successful and the connection was re-established
+      - This is useful if you want wait for something to settle despite your connection already working
     default: 0
-    aliases: [ post_reboot_delay_sec ]
-  shutdown_timeout:
-    description:
-    - Maximum seconds to wait for shutdown to occur
-    - Increase this timeout for very slow hardware, large update applications, etc
-    - This option has been removed since Ansible 2.5 as the reboot behavior has changed
-    default: 600
-    aliases: [ shutdown_timeout_sec ]
   reboot_timeout:
     description:
-    - Maximum seconds to wait for machine to re-appear on the network and respond to a test command
-    - This timeout is evaluated separately for both network appearance and test command success (so maximum clock time is actually twice this value)
+      - Maximum seconds to wait for machine to reboot and respond to a test command
+      - This timeout is evaluated separately for both network connection and test command success so the
+        maximum execution time for the module is twice this amount.
     default: 600
-    aliases: [ reboot_timeout_sec ]
   connect_timeout:
     description:
-    - Maximum seconds to wait for a single successful TCP connection to the WinRM endpoint before trying again
-    default: 5
-    aliases: [ connect_timeout_sec ]
+      - Maximum seconds to wait for a single successful TCP connection to the managed hosts before trying again
+      - This defaults to None which means the default setting for the underlying connection plugin is used.
+    default: None
   test_command:
     description:
-    - Command to expect success for to determine the machine is ready for management
+      - Command to run on the rebooted host and expect success from to determine the machine is ready for
+        further tasks.
     default: whoami
   msg:
     description:
-    - Message to display to users
+      - Message to display to users
     default: Reboot initiated by Ansible
-notes:
-- If a shutdown was already scheduled on the system, C(reboot) will abort the scheduled shutdown and enforce its own shutdown.
 author:
     - Matt Davis (@nitzmahone)
+    - Sam Doran (@samdoran)
 '''
 
 EXAMPLES = r'''
