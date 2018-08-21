@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ios_l2_interface - fix issue with certain interface types (https://github.com/ansible/ansible/pull/43819)
