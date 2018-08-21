@@ -485,6 +485,7 @@ files:
   $modules/network/netconf/netconf_config.py: lpenz userlerueda $team_networking
   $modules/network/netconf/netconf_get.py: wisotzky $team_networking
   $modules/network/netconf/netconf_rpc.py: wisotzky $team_networking
+  $modules/network/netconf/netconf_set.py: wisotzky $team_networking
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nos/: $team_extreme

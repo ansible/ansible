@@ -1,0 +1,215 @@
+---
+- debug: msg="START netconf_set sros/basic.yaml on connection={{ ansible_connection }}"
+
+- name: initial clean-up
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="remove">
+                <customer-name>acme-user</customer-name>
+              </customer>
+              <customer operation="remove">
+                <customer-name>alpha</customer-name>
+              </customer>
+              <customer operation="remove">
+                <customer-name>bravo</customer-name>
+              </customer>
+              <customer operation="remove">
+                <customer-name>charlie</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    lock: if-supported
+    operation: none
+  register: result
+
+- name: creating a new customer
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="create">
+                <customer-id>100</customer-id>
+                <customer-name>alpha</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    backup: true
+    lock: always
+    display: json
+  register: result
+
+- name: Display return values
+  debug:
+    var: result
+
+- name: merge one existing plus two new customers
+  netconf_set:
+    content:
+      configure:
+        service:
+          customer:
+            - customer-name: "alpha"
+              customer-id: 100
+              description: "1st customer"
+            - customer-name: "bravo"
+              customer-id: 200
+              description: "2nd customer"
+            - customer-name: "charlie"
+              customer-id: 300
+              description: "3rd customer"
+    xmlns: "urn:nokia.com:sros:ns:yang:sr:conf"
+    lock: always
+    display: json
+  register: result
+
+- name: merge an existing user (no changes)
+  netconf_set:
+    content:
+      configure:
+        service:
+          customer:
+            - customer-name: "charlie"
+              customer-id: 300
+              description: "3rd customer"
+    xmlns: "urn:nokia.com:sros:ns:yang:sr:conf"
+    lock: always
+    display: json
+  register: result
+
+- name: delete one customer
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="delete">
+                <customer-name>alpha</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    lock: never
+    display: json
+  register: result
+
+- name: remove one customer
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="remove">
+                <customer-name>bravo</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    lock: never
+    display: json
+  register: result
+
+- name: remove the customer again (no changes)
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="remove">
+                <customer-name>bravo</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    lock: never
+    display: json
+  register: result
+
+- name: delete non-existing customer (error)
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="delete">
+                <customer-name>bravo</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    lock: never
+    display: json
+  ignore_errors: True
+  register: result
+
+- name: creating an existing customer (error)
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="create">
+                <customer-id>300</customer-id>
+                <customer-name>charlie</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    lock: if-supported
+  ignore_errors: True
+  register: result
+
+- name: dry-run deleting the last customer
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="remove">
+                <customer-name>charlie</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    operation: none
+    mode: dryrun
+    lock: always
+    display: json
+  register: result
+
+- assert:
+    that:
+      - "{{ result is defined }}"
+
+- name: Display differences
+  debug:
+    var: result
+
+- name: final clean-up
+  netconf_set:
+    content: |
+        <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+          <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf">
+            <service>
+              <customer operation="remove">
+                <customer-name>alpha</customer-name>
+              </customer>
+              <customer operation="remove">
+                <customer-name>bravo</customer-name>
+              </customer>
+              <customer operation="remove">
+                <customer-name>charlie</customer-name>
+              </customer>
+            </service>
+          </configure>
+        </config>
+    lock: if-supported
+    operation: none
+  register: result
+
+- debug: msg="END netconf_set sros/basic.yaml on connection={{ ansible_connection }}"
