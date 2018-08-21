@@ -245,6 +245,8 @@ class ConfigManager(object):
             self.module_defaults_groups = {}
 
     def _read_config_yaml_file(self, yml_file):
+        # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
+        # Currently this is only used with absolute paths to the `ansible/config` directory
         yml_file = to_bytes(yml_file)
         if os.path.exists(yml_file):
             with open(yml_file, 'rb') as config_def:
