@@ -1078,6 +1078,7 @@ class AzureRMModuleBase(object):
                                                           base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mysql_client
 
+    @property
     def sql_client(self):
         self.log('Getting SQL client')
         if not self._sql_client:
