@@ -11,6 +11,7 @@ custom groups or remove modules from the builtin groups.
 In a playbook, you can set module defaults for whole groups of modules, such as setting a common AWS region.
 
 .. code-block:: YAML
+
     # example_play.yml
     - hosts: localhost
       module_defaults:
@@ -21,7 +22,7 @@ In a playbook, you can set module defaults for whole groups of modules, such as 
       # now the region is shared between both facts modules
       - ec2_ami_facts:
           filters:
-            name: RHEL*7.5*
+            name: 'RHEL*7.5*'
 
 Users can also add their own custom groups. The version 1.0 file format has two keys: version, and groupings.
 Modules can be in multiple groups, and can be removed from groups by prefixing the name with '-', such as '-aws'.
@@ -45,5 +46,6 @@ Modules can be in multiple groups, and can be removed from groups by prefixing t
 To add these custom groupings to the module defaults, in ansible.cfg the user would need to add the file path:
 
 .. code-block:: INI
+
     [defaults]
     module_defaults_cfg = my_custom_defaults.yml
