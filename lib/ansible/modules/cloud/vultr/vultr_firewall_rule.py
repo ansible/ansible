@@ -17,7 +17,7 @@ module: vultr_firewall_rule
 short_description: Manages firewall rules on Vultr.
 description:
   - Create and remove firewall rules.
-version_added: "2.5"
+version_added: "2.7"
 author: "René Moser (@resmo)"
 options:
   group:

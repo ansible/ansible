@@ -17,7 +17,7 @@ module: vultr_account_facts
 short_description: Gather facts about the Vultr account.
 description:
   - Gather facts about account balance, charges and payments.
-version_added: "2.5"
+version_added: "2.7"
 author: "René Moser (@resmo)"
 extends_documentation_fragment: vultr
 '''
