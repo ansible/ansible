@@ -107,13 +107,9 @@ class VmBootFactsManager(PyVmomi):
 
         if self.uuid:
             if self.use_instance_uuid:
-               vm_obj = find_vm_by_id(self.content,
-                                      vm_id=self.uuid,
-                                      vm_id_type="use_instance_uuid")
+                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="use_instance_uuid")
             else:
-                vm_obj = find_vm_by_id(self.content,
-                                       vm_id=self.uuid,
-                                       vm_id_type="uuid")
+                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
             if vm_obj is None:
                 self.module.fail_json(msg="Failed to find the virtual machine with UUID : %s" % self.uuid)
             vms = [vm_obj]
