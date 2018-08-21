@@ -96,13 +96,10 @@ def to_nice_json(a, indent=4, *args, **kw):
 
 def to_bool(a):
     ''' return a bool for the arg '''
-    if a is None or isinstance(a, bool):
-        return a
-    if isinstance(a, string_types):
-        a = a.lower()
-    if a in ('yes', 'on', '1', 'true', 1):
-        return True
-    return False
+    if a and isinstance(a, string_types):
+        if a.lower() in ('no', 'off', '0', 'false', 'n', 'f'):
+            return False
+    return bool(a)
 
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
