@@ -322,6 +322,12 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 
 
+def lowercase_string(param):
+    if not isinstance(param, str):
+        return param
+    return param.lower()
+
+
 class CloudflareAPI(object):
 
     cf_api_endpoint = 'https://api.cloudflare.com/client/v4'
@@ -337,11 +343,11 @@ class CloudflareAPI(object):
         self.key_tag = module.params['key_tag']
         self.port = module.params['port']
         self.priority = module.params['priority']
-        self.proto = module.params['proto']
+        self.proto = lowercase_string(module.params['proto'])
         self.proxied = module.params['proxied']
         self.selector = module.params['selector']
-        self.record = module.params['record']
-        self.service = module.params['service']
+        self.record = lowercase_string(module.params['record'])
+        self.service = lowercase_string(module.params['service'])
         self.is_solo = module.params['solo']
         self.state = module.params['state']
         self.timeout = module.params['timeout']
@@ -349,13 +355,16 @@ class CloudflareAPI(object):
         self.type = module.params['type']
         self.value = module.params['value']
         self.weight = module.params['weight']
-        self.zone = module.params['zone']
+        self.zone = lowercase_string(module.params['zone'])
 
         if self.record == '@':
             self.record = self.zone
 
         if (self.type in ['CNAME', 'NS', 'MX', 'SRV']) and (self.value is not None):
-            self.value = self.value.rstrip('.')
+            self.value = self.value.rstrip('.').lower()
+
+        if (self.type == 'AAAA') and (self.value is not None):
+            self.value = self.value.lower()
 
         if (self.type == 'SRV'):
             if (self.proto is not None) and (not self.proto.startswith('_')):
