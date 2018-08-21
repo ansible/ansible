@@ -17,7 +17,7 @@ module: vultr_dns_record
 short_description: Manages DNS records on Vultr.
 description:
   - Create, update and remove DNS records.
-version_added: "2.5"
+version_added: "2.7"
 author: "René Moser (@resmo)"
 options:
   name:

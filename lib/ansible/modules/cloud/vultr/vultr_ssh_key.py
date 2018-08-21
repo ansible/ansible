@@ -17,7 +17,7 @@ module: vultr_ssh_key
 short_description: Manages ssh keys on Vultr.
 description:
   - Create, update and remove ssh keys.
-version_added: "2.5"
+version_added: "2.7"
 author: "René Moser (@resmo)"
 options:
   name:

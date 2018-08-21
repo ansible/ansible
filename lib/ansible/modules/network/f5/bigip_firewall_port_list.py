@@ -19,7 +19,7 @@ short_description: Manage port lists on BIG-IP AFM
 description:
   - Manages the AFM port lists on a BIG-IP. This module can be used to add
     and remove port list entries.
-version_added: 2.5
+version_added: 2.7
 options:
   name:
     description:

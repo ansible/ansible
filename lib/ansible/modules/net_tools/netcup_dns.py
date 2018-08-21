@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: netcup_dns
 notes: []
-version_added: 2.7.0
+version_added: 2.7
 short_description: manage Netcup DNS records
 description:
   - "Manages DNS records via the Netcup API, see the docs U(https://ccp.netcup.net/run/webservice/servers/endpoint.php)"

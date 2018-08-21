@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: enos_command
-version_added: "2.5"
+version_added: "2.7"
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Run arbitrary commands on Lenovo ENOS devices
 description:
