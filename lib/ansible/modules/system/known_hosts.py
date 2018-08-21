@@ -98,16 +98,19 @@ def enforce_state(module, params):
     # Find the ssh-keygen binary
     sshkeygen = module.get_bin_path("ssh-keygen", True)
 
+    if key is None and state != "absent":
+        module.fail_json(msg="No key specified when adding a host")
+
+    if key is not None and hash_host is True:
+        key = hash_host_key(module, sshkeygen, host, key)
+
     # Trailing newline in files gets lost, so re-add if necessary
     if key and key[-1] != '\n':
         key += '\n'
 
-    if key is None and state != "absent":
-        module.fail_json(msg="No key specified when adding a host")
-
     sanity_check(module, host, key, sshkeygen)
 
-    found, replace_or_add, found_line, key = search_for_host_key(module, host, key, hash_host, path, sshkeygen)
+    found, replace_or_add, found_line = search_for_host_key(module, host, key, path, sshkeygen)
 
     params['diff'] = compute_diff(path, found_line, replace_or_add, state, key)
 
@@ -202,7 +205,7 @@ def sanity_check(module, host, key, sshkeygen):
         module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
 
 
-def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
+def search_for_host_key(module, host, key, path, sshkeygen):
     '''search_for_host_key(module,host,key,path,sshkeygen) -> (found,replace_or_add,found_line)
 
     Looks up host and keytype in the known_hosts file path; if it's there, looks to see
@@ -214,7 +217,7 @@ def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
     '''
     if os.path.exists(path) is False:
-        return False, False, None, key
+        return False, False, None
 
     sshkeygen_command = [sshkeygen, '-F', host, '-f', path]
 
@@ -222,22 +225,16 @@ def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
     # 1 if no host is found, whereas previously it returned 0
     rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=False)
     if stdout == '' and stderr == '' and (rc == 0 or rc == 1):
-        return False, False, None, key  # host not found, no other errors
+        return False, False, None  # host not found, no other errors
     if rc != 0:  # something went wrong
         module.fail_json(msg="ssh-keygen failed (rc=%d, stdout='%s',stderr='%s')" % (rc, stdout, stderr))
 
     # If user supplied no key, we don't want to try and replace anything with it
     if key is None:
-        return True, False, None, key
+        return True, False, None
 
     lines = stdout.split('\n')
     new_key = normalize_known_hosts_key(key)
-
-    sshkeygen_command.insert(1, '-H')
-    rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=False)
-    if rc not in (0, 1) or stderr != '':  # something went wrong
-        module.fail_json(msg="ssh-keygen failed to hash host (rc=%d, stdout='%s',stderr='%s')" % (rc, stdout, stderr))
-    hashed_lines = stdout.split('\n')
 
     for lnum, l in enumerate(lines):
         if l == '':
@@ -251,19 +248,30 @@ def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
             found_key = normalize_known_hosts_key(l)
-            if hash_host is True:
-                if found_key['host'][:3] == '|1|':
-                    new_key['host'] = found_key['host']
-                else:
-                    hashed_host = normalize_known_hosts_key(hashed_lines[lnum])
-                    found_key['host'] = hashed_host['host']
-                key = key.replace(host, found_key['host'])
+            if new_key['host'][:3] == '|1|' and found_key['host'][:3] == '|1|':  # do not change host hash if already hashed
+                new_key['host'] = found_key['host']
             if new_key == found_key:  # found a match
-                return True, False, found_line, key  # found exactly the same key, don't replace
-            elif new_key['type'] == found_key['type']:  # found a different key for the same key type
-                return True, True, found_line, key
+                return True, False, found_line  # found exactly the same key, don't replace
+            elif new_key['type'] == found_key['type']:
+                return True, True, found_line
     # No match found, return found and replace, but no line
-    return True, True, None, key
+    return True, True, None
+
+
+def hash_host_key(module, sshkeygen, host, key):
+    outf = tempfile.NamedTemporaryFile(mode='w+')
+    outf.write(key + '\n')
+    outf.flush()
+
+    sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name, '-H']
+    rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=False)
+    if rc not in (0, 1) or stderr != '':  # something went wrong
+        module.fail_json(msg="ssh-keygen failed to hash host (rc=%d, stdout='%s',stderr='%s')" % (rc, stdout, stderr))
+    hashed_line = stdout.split('\n')[1]
+
+    outf.close()
+
+    return hashed_line
 
 
 def normalize_known_hosts_key(key):
