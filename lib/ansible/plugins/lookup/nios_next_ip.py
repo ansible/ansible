@@ -39,6 +39,10 @@ options:
       description: The number of IP addresses to return
       required: false
       default: 1
+    exclude:
+      version_added: "2.7"
+      description: List of IP's that need to be excluded from returned IP addresses
+      required: false
 """
 
 EXAMPLES = """
