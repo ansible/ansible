@@ -241,7 +241,7 @@ def main():
 
     argument_spec.update(netconf_argument_spec)
 
-    mutually_exclusive=[('content', 'src', 'source', 'delete', 'confirm_commit')]
+    mutually_exclusive = [('content', 'src', 'source', 'delete', 'confirm_commit')]
     required_one_of = [('content', 'src', 'source', 'delete', 'confirm_commit')]
 
     module = AnsibleModule(argument_spec=argument_spec,
