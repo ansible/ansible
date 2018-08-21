@@ -8,11 +8,15 @@ class ModuleDocFragment(object):
     # Standard documentation fragment
     DOCUMENTATION = '''
 options:
-  oauth_token:
+  api_token:
     description:
       - Scaleway OAuth token.
-    aliases: ['api_token']
-  timeout:
+    aliases: ['oauth_token']
+  api_url:
+    description:
+      - Scaleway API URL
+    default: 'https://api.scaleway.com'
+  api_timeout:
     description:
       - HTTP timeout to Scaleway API in seconds.
     default: 30
@@ -23,7 +27,9 @@ options:
     type: bool
 notes:
   - Also see the API documentation on U(https://developer.scaleway.com/)
-  - If parameters are not set within the module, the following
+  - If C(api_token) is not set within the module, the following
     environment variables can be used in decreasing order of precedence
-    C(SCW_TOKEN), C(SCW_API_KEY) or C(SCW_OAUTH_TOKEN).
+    C(SCW_TOKEN), C(SCW_API_KEY), C(SCW_OAUTH_TOKEN) or C(SCW_API_TOKEN).
+  - If one wants to use a different C(api_url) one can also set the C(SCW_API_URL)
+    environment variable.
 '''
