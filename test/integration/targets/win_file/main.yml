@@ -1,0 +1,47 @@
+---
+- hosts: test
+  gather_facts: no
+  strategy: free
+  tasks:
+  - name: get current working dir
+    win_shell: $pwd.Path
+    register: raw_working_dir
+
+  - name: set facts for test
+    set_fact:
+      win_file_dir: C:\ansible_testing\win file {{ win_file_test_name }}
+      win_file_long_dir: \\?\C:\ansible_testing\win file {{ win_file_test_name }}\long\{{ "a" * 250 }}\{{ "b" * 250 }}\test
+      win_file_working_dir_name: win file {{ win_file_test_name }}
+      win_file_working_dir: '{{ raw_working_dir.stdout_lines[0] }}\win file {{ win_file_test_name }}'
+
+  - name: clean out test dirs
+    win_file:
+      path: '{{ item.path }}'
+      state: '{{ item.state }}'
+    with_items:
+    # use long path as it could contain long paths on deletion
+    - path: \\?\{{ win_file_dir }}
+      state: absent
+    - path: '{{ win_file_dir }}'
+      state: directory
+    - path: '{{ win_file_working_dir }}'
+      state: absent
+    - path: '{{ win_file_working_dir }}'
+      state: directory
+    - path: '{{ win_file_long_dir }}'
+      state: directory
+
+  - name: run tests
+    block:
+    - name: run {{ item }} tests
+      include_tasks: '{{ item }}'
+      with_items: '{{ win_file_tests }}'
+
+    always:
+    - name: clean out test dirs
+      win_file:
+        path: '{{ item }}'
+        state: absent
+      with_items:
+      - \\?\{{ win_file_dir }}
+      - '{{ win_file_working_dir }}'

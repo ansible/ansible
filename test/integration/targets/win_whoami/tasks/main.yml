@@ -213,13 +213,13 @@
     - '{{become_username_limited}}'
 
   - name: ensure test user profile is deleted
-    win_shell: rmdir /S /Q {{profile_dir_out.stdout_lines[0]}}
-    args:
-      executable: cmd.exe
+    win_file:
+      path: \\?\{{profile_dir_out.stdout_lines[0]}}
+      state: absent
     when: become_username in profile_dir_out.stdout_lines[0]
 
   - name: ensure limited test user profile is deleted
-    win_shell: rmdir /S /Q {{profile_dir_out_limited.stdout_lines[0]}}
-    args:
-      executable: cmd.exe
+    win_file:
+      path: \\?\{{profile_dir_out_limited.stdout_lines[0]}}
+      state: absent
     when: become_username_limited in profile_dir_out_limited.stdout_lines[0]

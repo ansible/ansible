@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    win_file_tests:
+      test1:
+      - tests/test_file.yml
+      - tests/test_directory.yml
+      test2:
+      - tests/test_symbolic_link.yml
+      - tests/test_junction_point.yml
+      - tests/test_hard_link.yml
+  tasks:
+  - name: create test inventory file
+    template:
+      src: inventory.j2
+      dest: inventory.ini

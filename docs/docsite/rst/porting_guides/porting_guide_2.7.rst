@@ -162,6 +162,10 @@ Noteworthy module changes
   * ``frequency``, use ``type``, in a triggers entry instead
   * ``time``, use ``start_boundary`` in a triggers entry instead
 
+* In Ansible 2.11, the ``win_file`` module will create a file when ``state=file`` and the file does not already exist.
+  The current behaviour is to fail but in 2.7 a deprecation warning will display when this condition is met to let
+  users know of this changing behaviour.
+
 
 Plugins
 =======

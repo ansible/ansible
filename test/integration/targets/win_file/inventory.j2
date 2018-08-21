@@ -1,0 +1,22 @@
+[test:children]
+{% for host in vars.groups.windows %}
+{{ host }}
+{% endfor %}
+
+{% for host in vars.groups.windows %}
+# the names of the tests to run in parallel for each host
+[{{ host }}]
+{% for test_name, tests in win_file_tests.items() %}
+{{ host }}-{{ test_name }}  win_file_test_name={{ test_name }} win_file_tests="{{ tests }}"
+{% endfor %}
+
+# the connection variables for the host so each parallel test can run
+[{{ host }}:vars]
+ansible_host={{ host }}
+{% for key, value in hostvars[host].items() %}
+{% if key.startswith("ansible_") %}
+{{ key }}={{ value }}
+{% endif %}
+{% endfor %}
+
+{% endfor %}

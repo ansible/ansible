@@ -1,0 +1,260 @@
+---
+# use win_shell to save on time
+- name: create test directories and files for hard link tests
+  win_shell: |
+    $directories = @(
+        "{{ win_file_dir }}\hard\directory",
+        "{{ win_file_dir }}\hard\nested\directory",
+        "{{ win_file_dir }}\hard\nested\empty"
+    )
+    $files = @(
+        "{{ win_file_dir }}\hard\file.txt",
+        "{{ win_file_dir }}\hard\another-file.txt",
+        "{{ win_file_dir }}\hard\another-file2.txt",
+        "{{ win_file_dir }}\hard\directory\directory-file.txt",
+        "{{ win_file_dir }}\hard\nested\directory\nested-file.txt"
+    )
+    foreach ($dir in $directories) {
+        New-Item -Path $dir -ItemType Directory -Force > $null
+    }
+    foreach ($file in $files) {
+        $new_file = New-Item -Path $file -ItemType File -Force
+        $sw = $new_file.AppendText()
+        $sw.WriteLine($new_file.Name)
+        $sw.Close()
+    }
+
+- name: create hard link (check)
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+    src: '{{ win_file_dir }}\hard\file.txt'
+    state: hard
+    owner: Everyone
+    attributes:
+    - hidden
+  register: create_hard_check
+  check_mode: yes
+
+- name: get result of create hard link (check)
+  win_stat:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+  register: create_hard_actual_check
+
+- name: assert create hard link (check)
+  assert:
+    that:
+    - create_hard_check is changed
+    - not create_hard_actual_check.stat.exists
+
+- name: create hard link
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+    src: '{{ win_file_dir }}\hard\file.txt'
+    state: hard
+    owner: Everyone
+    attributes:
+    - hidden
+  register: create_hard
+
+- name: get result of create hard link
+  win_stat:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+  register: create_hard_actual
+
+- name: assert create hard link
+  assert:
+    that:
+    - create_hard is changed
+    - create_hard_actual.stat.exists
+    - create_hard_actual.stat.attributes == "Hidden, Archive"
+    - create_hard_actual.stat.isreg
+    - create_hard_actual.stat.hlnk_targets == [win_file_dir + "\\hard\\file.txt"]
+    - create_hard_actual.stat.lnk_type == "hard"
+    - create_hard_actual.stat.owner == "Everyone"
+
+- name: create hard link (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+    src: '{{ win_file_dir }}\hard\file.txt'
+    state: hard
+    owner: Everyone
+    attributes:
+    - hidden
+  register: create_hard_again
+
+- name: assert create hard link (idempotent)
+  assert:
+    that:
+    - not create_hard_again is changed
+
+- name: fail to create hard link to directory
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link'
+    src: '{{ win_file_dir }}\hard'
+    state: hard
+  register: fail_is_dir
+  failed_when: fail_is_dir.msg != "The src file at '" + win_file_dir + "\\hard' is a directory, cannot create a hard link to a directory"
+
+- name: change the source of a hard link (check)
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+    src: '{{ win_file_dir }}\hard\directory\directory-file.txt'
+    state: hard
+  register: change_src_check
+  check_mode: yes
+
+- name: get result of change the source of a hard link (check)
+  win_stat:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+  register: change_src_actual_check
+
+- name: assert change the source of a hard link (check)
+  assert:
+    that:
+    - change_src_check is changed
+    - change_src_actual_check.stat == create_hard_actual.stat
+
+- name: change the source of a hard link
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+    src: '{{ win_file_dir }}\hard\directory\directory-file.txt'
+    state: hard
+  register: change_src
+
+- name: get result of change the source of a hard link
+  win_stat:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+  register: change_src_actual
+
+- name: assert change the source of a hard link
+  assert:
+    that:
+    - change_src is changed
+    - change_src_actual.stat.hlnk_targets == [win_file_dir + "\\hard\\directory\\directory-file.txt"]
+
+- name: create a second hard link to same source
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link2.txt'
+    src: '{{ win_file_dir }}\hard\directory\directory-file.txt'
+    state: hard
+
+- name: set source to a different hard link target
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+    src: '{{ win_file_dir }}\hard\hard-link2.txt'
+    state: hard
+  register: change_src_no_change
+
+- name: get result of set source to a different hard link target
+  win_stat:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+  register: change_src_no_change_actual
+
+- name: assert set source to a different hard link target
+  assert:
+    that:
+    - not change_src_no_change is changed  # while we created with a different src, it's the same file so no change
+    - change_src_no_change_actual.stat.hlnk_targets|count == 2
+    - win_file_dir + "\\hard\\hard-link2.txt" in change_src_no_change_actual.stat.hlnk_targets
+    - win_file_dir + "\\hard\\directory\\directory-file.txt" in change_src_no_change_actual.stat.hlnk_targets
+
+- name: change hard link to a relative src
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+    src: nested\directory\nested-file.txt
+    state: hard
+  register: change_src_relative
+
+- name: get result of change hard link to a relative src
+  win_stat:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+  register: change_src_relative_actual
+
+- name: assert change hard link to a relative src
+  assert:
+    that:
+    - change_src_relative is changed
+    - change_src_relative_actual.stat.hlnk_targets == [win_file_dir + "\\hard\\nested\\directory\\nested-file.txt"]
+
+- name: fail to create hard link with non-existant source
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-missing.txt'
+    src: missing
+    state: hard
+    force: yes
+  register: fail_missing_src
+  failed_when: fail_missing_src.msg != "The src file at '" + win_file_dir + "\\hard\\missing' does not exist, cannot create a hard link to a non-existent source"
+
+- name: set attributes when src not defined
+  win_file:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+    owner: Guests
+    state: hard
+    attributes:
+    - hidden
+    - -system
+  register: set_attr_no_src
+
+- name: get result of set attributes when src not defined
+  win_stat:
+    path: '{{ win_file_dir }}\hard\hard-link.txt'
+  register: set_attr_no_src_actual
+
+- name: assert set attributes when src not defined
+  assert:
+    that:
+    - set_attr_no_src is changed
+    - set_attr_no_src_actual.stat.attributes == "Hidden, Archive"
+    - set_attr_no_src_actual.stat.owner == "BUILTIN\\Guests"
+
+- name: fail to convert existing file to hard link without force
+  win_file:
+    path: '{{ win_file_dir }}\hard\another-file.txt'
+    src: '{{ win_file_dir }}\hard\another-file2.txt'
+    state: hard
+  register: fail_no_force
+  failed_when: fail_no_force.msg != "Cannot convert file at '" + win_file_dir + "\\hard\\another-file.txt' to a hard link, use force=yes to override"
+
+- name: convert existing file to hard link
+  win_file:
+    path: '{{ win_file_dir }}\hard\another-file.txt'
+    src: '{{ win_file_dir }}\hard\another-file2.txt'
+    state: hard
+    force: yes
+  register: file_to_hard
+
+- name: get result fo convert existing file to hard link
+  win_stat:
+    path: '{{ win_file_dir }}\hard\another-file.txt'
+  register: file_to_hard_actual
+
+- name: assert convert existing file to hard link
+  assert:
+    that:
+    - file_to_hard is changed
+    - file_to_hard_actual.stat.lnk_type == "hard"
+    - file_to_hard_actual.stat.hlnk_targets == [win_file_dir + "\\hard\\another-file2.txt"]
+
+- name: remove a hard link
+  win_file:
+    path: '{{ win_file_dir }}\hard\another-file.txt'
+    state: absent
+  register: remove_hard
+
+- name: get result of remove a hard link - link
+  win_stat:
+    path: '{{ win_file_dir }}\hard\another-file.txt'
+  register: remove_hard_link_actual
+
+- name: get result of remove a hard link - target
+  win_stat:
+    path: '{{ win_file_dir }}\hard\another-file2.txt'
+  register: remove_hard_target_actual
+
+- name: assert remove a hard link
+  assert:
+    that:
+    - remove_hard is changed
+    - not remove_hard_link_actual.stat.exists
+    - remove_hard_target_actual.stat.exists
+    - remove_hard_target_actual.stat.hlnk_targets|default([]) == []

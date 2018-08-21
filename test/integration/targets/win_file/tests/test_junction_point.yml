@@ -1,0 +1,406 @@
+---
+# use win_shell to save on time
+- name: create test directories and files for junction tests
+  win_shell: |
+    $directories = @(
+        "{{ win_file_dir }}\junction\directory",
+        "{{ win_file_dir }}\junction\nested\directory",
+        "{{ win_file_dir }}\junction\nested\empty"
+    )
+    $files = @(
+        "{{ win_file_dir }}\junction\file.txt",
+        "{{ win_file_dir }}\junction\directory\directory-file.txt",
+        "{{ win_file_dir }}\junction\nested\directory\nested-file.txt"
+    )
+    foreach ($dir in $directories) {
+        New-Item -Path $dir -ItemType Directory -Force > $null
+    }
+    foreach ($file in $files) {
+        $new_file = New-Item -Path $file -ItemType File -Force
+        $sw = $new_file.AppendText()
+        $sw.WriteLine($new_file.Name)
+        $sw.Close()
+    }
+
+- name: create junction point (check)
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+    src: '{{ win_file_dir }}\junction\nested\directory'
+    state: junction
+    owner: Everyone
+    attributes:
+    - hidden
+  register: create_junc_check
+  check_mode: yes
+
+- name: get result of create junction point to directory (check)
+  win_stat:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+  register: create_junc_actual_check
+
+- name: get result to create junction point to directory src (check)
+  win_stat:
+    path: '{{ win_file_dir }}\junction\nested\directory'
+  register: create_junc_src_actual_check
+
+- name: assert create junction point to directory (check)
+  assert:
+    that:
+    - create_junc_check is changed
+    - not create_junc_actual_check.stat.exists
+    - create_junc_src_actual_check.stat.attributes == "Directory"
+    - create_junc_src_actual_check.stat.owner != "Everyone"
+
+- name: create junction point to directory
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+    src: '{{ win_file_dir }}\junction\nested\directory'
+    state: junction
+    owner: Everyone
+    attributes:
+    - hidden
+  register: create_junc
+
+- name: get result of create junction point to directory
+  win_stat:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+  register: create_junc_actual
+
+- name: get result of create junction point to directory src
+  win_stat:
+    path: '{{ win_file_dir }}\junction\nested\directory'
+  register: create_junc_src_actual
+
+- name: assert create junction point to directory
+  assert:
+    that:
+    - create_junc is changed
+    - create_junc_actual.stat.exists
+    - create_junc_actual.stat.attributes == "Directory, ReparsePoint"
+    - create_junc_actual.stat.isjunction
+    - create_junc_actual.stat.lnk_target == win_file_dir + '\\junction\\nested\\directory'
+    - create_junc_actual.stat.lnk_source == win_file_dir + '\\junction\\nested\\directory'
+    - create_junc_src_actual.stat.attributes == "Hidden, Directory"
+    - create_junc_src_actual.stat.owner == "Everyone"
+
+- name: create junction point to directory (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+    src: '{{ win_file_dir }}\junction\nested\directory'
+    state: junction
+  register: create_junc_again
+
+- name: assert create junction point to directory (idempotent)
+  assert:
+    that:
+    - not create_junc_again is changed
+
+- name: fail to create junction point to file
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory\junction-link.txt'
+    src: '{{ win_file_dir }}\junction\file.txt'
+    state: junction
+  register: fail_junc_file
+  failed_when: fail_junc_file.msg != "The src file at '" + win_file_dir + "\\junction\\file.txt' is a file, cannot create a junction point to a file"
+
+- name: change the source of a junction (check)
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+    src: '{{ win_file_dir }}\junction\nested'
+    state: junction
+  register: change_src_check
+  check_mode: yes
+
+- name: get result of change the source of a junction (check)
+  win_stat:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+  register: change_src_actual_check
+
+- name: assert change the source of a junction (check)
+  assert:
+    that:
+    - change_src_check is changed
+    - change_src_actual_check.stat.lnk_target == win_file_dir + '\\junction\\nested\\directory'
+    - change_src_actual_check.stat.lnk_source == win_file_dir + '\\junction\\nested\\directory'
+
+- name: change the source of a junction
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+    src: '{{ win_file_dir }}\junction\nested'
+    state: junction
+  register: change_src
+
+- name: get result of change the source of a junction
+  win_stat:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+  register: change_src_actual
+
+- name: assert change the source of a junction
+  assert:
+    that:
+    - change_src is changed
+    - change_src_actual.stat.lnk_target == win_file_dir + '\\junction\\nested'
+    - change_src_actual.stat.lnk_source == win_file_dir + '\\junction\\nested'
+
+# allows relative input paths but is converted to the abs path internally
+- name: change junction to a relative src
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+    src: '..\nested\directory'
+    state: junction
+  register: change_src_relative
+
+- name: get result of change junction to a relative src
+  win_stat:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+  register: change_src_relative_actual
+
+- name: assert change junction to a relative src
+  assert:
+    that:
+    - change_src_relative is changed
+    - change_src_relative_actual.stat.lnk_target == win_file_dir + '\\junction\\nested\\directory'
+    - change_src_relative_actual.stat.lnk_source == win_file_dir + '\\junction\\nested\\directory'
+
+- name: change junction to a relative src (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+    src: '..\nested\directory'
+    state: junction
+  register: change_src_relative_again
+
+- name: assert change junction to a relative src (idempotent)
+  assert:
+    that:
+    - not change_src_relative_again is changed
+
+- name: create a junction to another junction and follow yes (default)
+  win_file:
+    path: '{{ win_file_dir }}\junction\link-follow-yes'
+    src: directory\folder-link
+    state: junction
+    owner: Users
+    attributes: -hidden, system
+  register: link_to_link_follow
+
+- name: get result of create a junction to another junction and follow yes - link
+  win_stat:
+    path: '{{ win_file_dir }}\junction\link-follow-yes'
+  register: link_to_link_follow_link_actual
+
+- name: get result of create a junction to another junction and follow yes - middle link
+  win_stat:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+  register: link_to_link_follow_middle_actual
+
+- name: get result of create a junction to another junction and follow yes - target dir
+  win_stat:
+    path: '{{ win_file_dir }}\junction\nested\directory'
+  register: link_to_link_follow_target_actual
+
+- name: assert create a junction to aonther junction and follow yes
+  assert:
+    that:
+    - link_to_link_follow is changed
+    - link_to_link_follow_link_actual.stat.exists
+    - link_to_link_follow_link_actual.stat.isjunction
+    - link_to_link_follow_link_actual.stat.attributes == "Directory, ReparsePoint"
+    - link_to_link_follow_link_actual.stat.lnk_target == win_file_dir + "\\junction\\nested\\directory"
+    - link_to_link_follow_link_actual.stat.lnk_source == win_file_dir + "\\junction\\nested\\directory"
+    - link_to_link_follow_link_actual.stat.owner != "BUILTIN\\Users"
+    - link_to_link_follow_middle_actual.stat.attributes == "Directory, ReparsePoint"
+    - link_to_link_follow_middle_actual.stat.owner != "BUILTIN\\Users"
+    - link_to_link_follow_target_actual.stat.attributes == "System, Directory"
+    - link_to_link_follow_target_actual.stat.owner == "BUILTIN\\Users"
+
+- name: set attribute of junction without specifying source and follow yes
+  win_file:
+    path: '{{ win_file_dir }}\junction\link-follow-yes'
+    state: junction
+    owner: Everyone
+    attributes: hidden, -system
+  register: link_without_source_follow
+
+- name: get result of set attribute of junction without specifying source and follow yes - link
+  win_stat:
+    path: '{{ win_file_dir }}\junction\link-follow-yes'
+  register: link_without_source_follow_link_actual
+
+- name: get result of set attribute of junction without specifying source and follow yes - target
+  win_stat:
+    path: '{{ win_file_dir }}\junction\nested\directory'
+  register: link_without_source_follow_target_actual
+
+- name: assert set attribute of junction without specifying source and follow yes
+  assert:
+    that:
+    - link_without_source_follow is changed
+    - link_without_source_follow_link_actual.stat == link_to_link_follow_link_actual.stat
+    - link_without_source_follow_target_actual.stat.attributes == "Hidden, Directory"
+    - link_without_source_follow_target_actual.stat.owner == "Everyone"
+
+- name: create a junction which points to another junction and follow no
+  win_file:
+    path: '{{ win_file_dir }}\junction\link-follow-no'
+    src: directory\folder-link
+    state: junction
+    owner: Guests
+    attributes: hidden, -system
+    follow: no
+  register: link_to_link_no_follow
+
+- name: get result of create a junction to another junction and follow no - link
+  win_stat:
+    path: '{{ win_file_dir }}\junction\link-follow-no'
+  register: link_to_link_no_follow_link_actual
+
+- name: get result of create a junction to another junction and follow no - middle link
+  win_stat:
+    path: '{{ win_file_dir }}\junction\directory\folder-link'
+  register: link_to_link_no_follow_middle_actual
+
+- name: get result of create a junction to another junction and follow no - target dir
+  win_stat:
+    path: '{{ win_file_dir }}\junction\nested\directory'
+  register: link_to_link_no_follow_target_actual
+
+- name: assert create a link to another link and follow no
+  assert:
+    that:
+    - link_to_link_no_follow is changed
+    - link_to_link_no_follow_link_actual.stat.exists
+    - link_to_link_no_follow_link_actual.stat.isjunction
+    - link_to_link_no_follow_link_actual.stat.attributes == "Hidden, Directory, ReparsePoint"
+    - link_to_link_no_follow_link_actual.stat.lnk_target == win_file_dir + "\\junction\\directory\\folder-link"
+    - link_to_link_no_follow_link_actual.stat.lnk_source == win_file_dir + "\\junction\\directory\\folder-link"
+    - link_to_link_no_follow_link_actual.stat.owner == "BUILTIN\\Guests"
+    - link_to_link_no_follow_middle_actual.stat.attributes == "Directory, ReparsePoint"
+    - link_to_link_no_follow_middle_actual.stat.owner != "BUILTIN\\Guests"
+    - link_to_link_no_follow_target_actual.stat.attributes == "Hidden, Directory"
+    - link_to_link_no_follow_target_actual.stat.owner == "Everyone"
+
+- name: set attribute of junction without specifying source and follow no
+  win_file:
+    path: '{{ win_file_dir }}\junction\\link-follow-no'
+    state: junction
+    owner: Users
+    attributes: -hidden, system
+    follow: no
+  register: link_without_source_follow_no
+
+- name: get result of set attribute of junction without specifying source and follow no - link
+  win_stat:
+    path: '{{ win_file_dir }}\junction\link-follow-no'
+  register: link_without_source_follow_no_link_actual
+
+- name: get result of set attribute of junction without specifying source and follow no - target
+  win_stat:
+    path: '{{ win_file_dir }}\junction\nested\directory'
+  register: link_without_source_follow_no_target_actual
+
+- name: assert set attribute of junction without specifying source and follow no
+  assert:
+    that:
+    - link_without_source_follow_no is changed
+    - link_without_source_follow_no_link_actual.stat.attributes == "System, Directory, ReparsePoint"
+    - link_without_source_follow_no_link_actual.stat.owner == "BUILTIN\\Users"
+    - link_without_source_follow_no_target_actual.stat == link_to_link_no_follow_target_actual.stat
+
+- name: fail to create a junction to a missing src
+  win_file:
+    path: '{{ win_file_dir }}\junction\directory-link'
+    state: junction
+    src: missing
+  register: fail_missing_source
+  failed_when: fail_missing_source.msg != "The src file at '" + win_file_dir + "\\junction\\missing' does not exist, use force=yes to override and create the junction point"
+
+- name: fail to create a junction at an existing directory
+  win_file:
+    path: '{{ win_file_dir }}\junction\nested\empty'
+    state: junction
+    src: '{{ win_file_dir }}\junction\nested'
+  register: fail_is_dir
+  failed_when: fail_is_dir.msg != "Cannot convert directory at '" + win_file_dir + "\\junction\\nested\empty' to a junction point, use force=yes to override"
+
+- name: fail to create a junction at a populated directory with force=yes
+  win_file:
+    path: '{{ win_file_dir }}\junction\nested'
+    state: junction
+    src: '{{ win_file_dir }}\junction\directory'
+    force: yes
+  register: fail_nonempty_dir
+  failed_when: fail_nonempty_dir.msg != "The directory '" + win_file_dir + "\\junction\\nested' is not empty, cannot convert to a junction point"
+
+- name: create a junction point to a missing target
+  win_file:
+    path: '{{ win_file_dir }}\junction\missing-dir-link'
+    state: junction
+    src: missing
+    force: yes
+    owner: Users
+    attributes:
+    - hidden
+  register: missing_dir_link
+
+- name: get result of create a junction point to a missing target
+  win_stat:
+    path: '{{ win_file_dir }}\junction\missing-dir-link'
+    get_checksum: no
+  register: missing_dir_link_actual
+
+- name: assert create a junction point to a missing target
+  assert:
+    that:
+    - missing_dir_link is changed
+    - missing_dir_link.warnings == ["Cannot set attributes on non-existent symlink or junction point target, follow should be set to False to avoid this"]
+    - missing_dir_link_actual.stat.exists
+    - missing_dir_link_actual.stat.isjunction
+    - missing_dir_link_actual.stat.attributes == "Directory, ReparsePoint"
+    - missing_dir_link_actual.stat.lnk_target == win_file_dir + "\\junction\\missing"
+    - missing_dir_link_actual.stat.lnk_source == win_file_dir + "\\junction\\missing"
+    - missing_dir_link_actual.stat.owner != "BUILTIN\\Users"
+
+- name: create a junction point at a directory
+  win_file:
+    path: '{{ win_file_dir }}\junction\nested\empty'
+    src: '{{ win_file_dir }}\junction\directory'
+    state: junction
+    force: yes
+  register: dir_to_link
+
+- name: get result of create a junction point at a directory
+  win_stat:
+    path: '{{ win_file_dir }}\junction\nested\empty'
+  register: dir_to_link_actual
+
+- name: assert create a junction point at a directory
+  assert:
+    that:
+    - dir_to_link is changed
+    - dir_to_link_actual.stat.isjunction
+    - dir_to_link_actual.stat.attributes == "Directory, ReparsePoint"
+    - dir_to_link_actual.stat.lnk_target == win_file_dir + "\\junction\\directory"
+    - dir_to_link_actual.stat.lnk_source == win_file_dir + "\\junction\\directory"
+
+- name: remove a junction point
+  win_file:
+    path: '{{ win_file_dir }}\junction\nested\empty'
+    state: absent
+  register: remove_junction
+
+- name: get result of remove a junction - link
+  win_stat:
+    path: '{{ win_file_dir }}\junction\nested\empty'
+  register: remove_junction_link_actual
+
+- name: get result of remove a junction - target
+  win_stat:
+    path: '{{ win_file_dir }}\junction\directory'
+  register: remove_junction_target_actual
+
+- name: assert remove a junction point
+  assert:
+    that:
+    - remove_junction is changed
+    - not remove_junction_link_actual.stat.exists
+    - remove_junction_target_actual.stat.exists

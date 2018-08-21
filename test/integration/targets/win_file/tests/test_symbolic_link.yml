@@ -1,0 +1,526 @@
+---
+# use win_shell to save on time
+- name: create test directories and files for symlink tests
+  win_shell: |
+    $directories = @(
+        "{{ win_file_dir }}\symlink\directory",
+        "{{ win_file_dir }}\symlink\nested\directory",
+        "{{ win_file_dir }}\symlink\nested\empty"
+    )
+    $files = @(
+        "{{ win_file_dir }}\symlink\file.txt",
+        "{{ win_file_dir }}\symlink\directory\directory-file.txt",
+        "{{ win_file_dir }}\symlink\nested\directory\nested-file.txt"
+    )
+    foreach ($dir in $directories) {
+        New-Item -Path $dir -ItemType Directory -Force > $null
+    }
+    foreach ($file in $files) {
+        $new_file = New-Item -Path $file -ItemType File -Force
+        $sw = $new_file.AppendText()
+        $sw.WriteLine($new_file.Name)
+        $sw.Close()
+    }
+
+- name: create symbolic link to directory (check)
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+    src: '{{ win_file_dir }}\symlink\nested\directory'
+    state: link
+    owner: Everyone
+    attributes:
+    - hidden
+  register: create_link_check
+  check_mode: yes
+
+- name: get result of create symbolic link to directory (check)
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+  register: create_link_actual_check
+
+- name: get result to create symbolic link to directory src (check)
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\directory'
+  register: create_link_src_actual_check
+
+- name: assert create symbolic link to directory (check)
+  assert:
+    that:
+    - create_link_check is changed
+    - not create_link_actual_check.stat.exists
+    - create_link_src_actual_check.stat.attributes == "Directory"
+    - create_link_src_actual_check.stat.owner != "Everyone"
+
+- name: create symbolic link to directory
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+    src: '{{ win_file_dir }}\symlink\nested\directory'
+    state: link
+    owner: Everyone
+    attributes:
+    - hidden
+  register: create_link
+
+- name: get result of create symbolic link to directory
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+  register: create_link_actual
+
+- name: get result of create symbolic link to directory src
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\directory'
+  register: create_link_src_actual
+
+- name: assert create symbolic link to directory
+  assert:
+    that:
+    - create_link is changed
+    - create_link_actual.stat.exists
+    - create_link_actual.stat.attributes == "Directory, ReparsePoint"
+    - create_link_actual.stat.islnk
+    - create_link_actual.stat.lnk_target == win_file_dir + '\\symlink\\nested\\directory'
+    - create_link_actual.stat.lnk_source == win_file_dir + '\\symlink\\nested\\directory'
+    - create_link_src_actual.stat.attributes == "Hidden, Directory"
+    - create_link_src_actual.stat.owner == "Everyone"
+
+- name: create symbolic link to directory (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+    src: '{{ win_file_dir }}\symlink\nested\directory'
+    state: link
+  register: create_link_again
+
+- name: assert create symbolic link to directory (idempotent)
+  assert:
+    that:
+    - not create_link_again is changed
+
+- name: create symbolic link to file (check)
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\file-link.txt'
+    src: '{{ win_file_dir }}\symlink\file.txt'
+    state: link
+    follow: no
+    attibutes: hidden
+    owner: Everyone
+  register: create_link_file_check
+  check_mode: yes
+
+- name: get result of create symbolic link to file (check)
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\file-link.txt'
+  register: create_link_file_actual_check
+
+- name: get result of create symbolic link to file src (check)
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\file.txt'
+  register: create_link_file_src_actual_check
+
+- name: assert create symbolic link to file (check)
+  assert:
+    that:
+    - create_link_file_check is changed
+    - not create_link_file_actual_check.stat.exists
+    - create_link_file_src_actual_check.stat.attributes == "Archive"
+    - create_link_file_src_actual_check.stat.owner != "Everyone"
+
+- name: create symbolic link to file
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\file-link.txt'
+    src: '{{ win_file_dir }}\symlink\file.txt'
+    state: link
+    follow: no
+    attributes: hidden
+    owner: Everyone
+  register: create_link_file
+
+- name: get result of create symbolic link to file
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\file-link.txt'
+  register: create_link_file_actual
+
+- name: get result of create symbolic link to file src
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\file.txt'
+  register: create_link_file_src_actual
+
+- name: assert create symbolic link to file
+  assert:
+    that:
+    - create_link_file is changed
+    - create_link_file_actual.stat.exists
+    - not create_link_file_actual.stat.isreg
+    - not create_link_file_actual.stat.isdir
+    - create_link_file_actual.stat.islnk
+    - create_link_file_actual.stat.attributes == "Hidden, Archive, ReparsePoint"
+    - create_link_file_actual.stat.lnk_target == win_file_dir + '\\symlink\\file.txt'
+    - create_link_file_actual.stat.lnk_source == win_file_dir + '\\symlink\\file.txt'
+    - create_link_file_actual.stat.owner == "Everyone"
+    - create_link_file_src_actual.stat.attributes == "Archive"
+    - create_link_file_src_actual.stat.owner != "Everyone"
+
+- name: create symbolic link to file (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\file-link.txt'
+    src: '{{ win_file_dir }}\symlink\file.txt'
+    state: link
+  register: create_link_file_again
+
+- name: assert create symbolic link to file (idempotent)
+  assert:
+    that:
+    - not create_link_file_again is changed
+
+- name: change the source of a link (check)
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+    src: '{{ win_file_dir }}\symlink\nested'
+    state: link
+  register: change_src_check
+  check_mode: yes
+
+- name: get result of change the source of a link (check)
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+  register: change_src_actual_check
+
+- name: assert change the source of a link (check)
+  assert:
+    that:
+    - change_src_check is changed
+    - change_src_actual_check.stat.lnk_target == win_file_dir + '\\symlink\\nested\\directory'
+    - change_src_actual_check.stat.lnk_source == win_file_dir + '\\symlink\\nested\\directory'
+
+- name: change the source of a link
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+    src: '{{ win_file_dir }}\symlink\nested'
+    state: link
+  register: change_src
+
+- name: get result of change the source of a link
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+  register: change_src_actual
+
+- name: assert change the source of a link
+  assert:
+    that:
+    - change_src is changed
+    - change_src_actual.stat.lnk_target == win_file_dir + '\\symlink\\nested'
+    - change_src_actual.stat.lnk_source == win_file_dir + '\\symlink\\nested'
+
+- name: change link to a relative src
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+    src: '..\nested\directory'
+    state: link
+  register: change_src_relative
+
+- name: get result of change link to a relative src
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+  register: change_src_relative_actual
+
+- name: assert change link to a relative src
+  assert:
+    that:
+    - change_src_relative is changed
+    - change_src_relative_actual.stat.lnk_target == '..\\nested\\directory'
+    - change_src_relative_actual.stat.lnk_source == win_file_dir + '\\symlink\\nested\\directory'
+
+- name: change link to a relative src (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+    src: '..\nested\directory'
+    state: link
+  register: change_src_relative_again
+
+- name: assert change link to a relative src (idempotent)
+  assert:
+    that:
+    - not change_src_relative_again is changed
+
+- name: create a link to another link and follow yes (default)
+  win_file:
+    path: '{{ win_file_dir }}\symlink\link-follow-yes'
+    src: directory\folder-link
+    state: link
+    owner: Users
+    attributes: -hidden, system
+  register: link_to_link_follow
+
+- name: get result of create a link to another link and follow yes - link
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\link-follow-yes'
+  register: link_to_link_follow_link_actual
+
+- name: get result of create a link to another link and follow yes - middle link
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+  register: link_to_link_follow_middle_actual
+
+- name: get result of create a link to another link and follow yes - target dir
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\directory'
+  register: link_to_link_follow_target_actual
+
+- name: assert create a link to aonther link and follow yes
+  assert:
+    that:
+    - link_to_link_follow is changed
+    - link_to_link_follow_link_actual.stat.exists
+    - link_to_link_follow_link_actual.stat.islnk
+    - link_to_link_follow_link_actual.stat.attributes == "Directory, ReparsePoint"
+    - link_to_link_follow_link_actual.stat.lnk_target == win_file_dir + "\\symlink\\nested\\directory"
+    - link_to_link_follow_link_actual.stat.lnk_source == win_file_dir + "\\symlink\\nested\\directory"
+    - link_to_link_follow_link_actual.stat.owner != "BUILTIN\\Users"
+    - link_to_link_follow_middle_actual.stat.attributes == "Directory, ReparsePoint"
+    - link_to_link_follow_middle_actual.stat.owner != "BUILTIN\\Users"
+    - link_to_link_follow_target_actual.stat.attributes == "System, Directory"
+    - link_to_link_follow_target_actual.stat.owner == "BUILTIN\\Users"
+
+- name: set attribute of link without specifying source and follow yes
+  win_file:
+    path: '{{ win_file_dir }}\symlink\link-follow-yes'
+    state: link
+    owner: Everyone
+    attributes: hidden, -system
+  register: link_without_source_follow
+
+- name: get result of set attribute of link without specifying source and follow yes - link
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\link-follow-yes'
+  register: link_without_source_follow_link_actual
+
+- name: get result of set attribute of link without specifying source and follow yes - target
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\directory'
+  register: link_without_source_follow_target_actual
+
+- name: assert set attribute of link without specifying source and follow yes
+  assert:
+    that:
+    - link_without_source_follow is changed
+    - link_without_source_follow_link_actual.stat == link_to_link_follow_link_actual.stat
+    - link_without_source_follow_target_actual.stat.attributes == "Hidden, Directory"
+    - link_without_source_follow_target_actual.stat.owner == "Everyone"
+
+- name: create a link which points to another link and follow no
+  win_file:
+    path: '{{ win_file_dir }}\symlink\link-follow-no'
+    src: directory\folder-link
+    state: link
+    owner: Guests
+    attributes: hidden, -system
+    follow: no
+  register: link_to_link_no_follow
+
+- name: get result of create a link to another link and follow no - link
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\link-follow-no'
+  register: link_to_link_no_follow_link_actual
+
+- name: get result of create a link to another link and follow no - middle link
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\directory\folder-link'
+  register: link_to_link_no_follow_middle_actual
+
+- name: get result of create a link to another link and follow no - target dir
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\directory'
+  register: link_to_link_no_follow_target_actual
+
+- name: assert create a link to another link and follow no
+  assert:
+    that:
+    - link_to_link_no_follow is changed
+    - link_to_link_no_follow_link_actual.stat.exists
+    - link_to_link_no_follow_link_actual.stat.islnk
+    - link_to_link_no_follow_link_actual.stat.attributes == "Hidden, Directory, ReparsePoint"
+    - link_to_link_no_follow_link_actual.stat.lnk_target == "directory\\folder-link"
+    - link_to_link_no_follow_link_actual.stat.lnk_source == win_file_dir + "\\symlink\\directory\\folder-link"
+    - link_to_link_no_follow_link_actual.stat.owner == "BUILTIN\\Guests"
+    - link_to_link_no_follow_middle_actual.stat.attributes == "Directory, ReparsePoint"
+    - link_to_link_no_follow_middle_actual.stat.owner != "BUILTIN\\Guests"
+    - link_to_link_no_follow_target_actual.stat.attributes == "Hidden, Directory"
+    - link_to_link_no_follow_target_actual.stat.owner == "Everyone"
+
+- name: set attribute of link without specifying source and follow no
+  win_file:
+    path: '{{ win_file_dir }}\symlink\link-follow-no'
+    state: link
+    owner: Users
+    attributes: -hidden, system
+    follow: no
+  register: link_without_source_follow_no
+
+- name: get result of set attribute of link without specifying source and follow no - link
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\link-follow-no'
+  register: link_without_source_follow_no_link_actual
+
+- name: get result of set attribute of link without specifying source and follow no - target
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\directory'
+  register: link_without_source_follow_no_target_actual
+
+- name: assert set attribute of link without specifying source and follow no
+  assert:
+    that:
+    - link_without_source_follow_no is changed
+    - link_without_source_follow_no_link_actual.stat.attributes == "System, Directory, ReparsePoint"
+    - link_without_source_follow_no_link_actual.stat.owner == "BUILTIN\\Users"
+    - link_without_source_follow_no_target_actual.stat == link_to_link_no_follow_target_actual.stat
+
+- name: fail to create a link to a missing src
+  win_file:
+    path: '{{ win_file_dir }}\symlink\directory-link'
+    state: link
+    src: missing
+  register: fail_missing_source
+  failed_when: fail_missing_source.msg != "The src file at '" + win_file_dir + "\\symlink\\missing' does not exist, use force=yes to override and create the link"
+
+- name: fail to create a link at an existing directory
+  win_file:
+    path: '{{ win_file_dir }}\symlink\nested\empty'
+    state: link
+    src: '{{ win_file_dir }}\symlink\nested'
+  register: fail_is_dir
+  failed_when: fail_is_dir.msg != "Cannot convert directory at '" + win_file_dir + "\\symlink\\nested\empty' to a symbolic link, use force=yes to override"
+
+- name: fail to create a link at a populated directory with force=yes
+  win_file:
+    path: '{{ win_file_dir }}\symlink\nested'
+    state: link
+    src: '{{ win_file_dir }}\symlink\directory'
+    force: yes
+  register: fail_nonempty_dir
+  failed_when: fail_nonempty_dir.msg != "The directory '" + win_file_dir + "\\symlink\\nested' is not empty, cannot convert to a symbolic link"
+
+- name: create a dir link to a missing target
+  win_file:
+    path: '{{ win_file_dir }}\symlink\missing-dir-link'
+    state: link
+    src: missing
+    force: yes
+    owner: Users
+    attributes:
+    - hidden
+  register: missing_dir_link
+
+- name: get result of create a dir link to a missing target
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\missing-dir-link'
+    get_checksum: no
+  register: missing_dir_link_actual
+
+- name: assert create a dir link to a missing target
+  assert:
+    that:
+    - missing_dir_link is changed
+    - missing_dir_link.warnings == ["Cannot set attributes on non-existent symlink or junction point target, follow should be set to False to avoid this"]
+    - missing_dir_link_actual.stat.exists
+    - missing_dir_link_actual.stat.islnk
+    - missing_dir_link_actual.stat.attributes == "Directory, ReparsePoint"
+    - missing_dir_link_actual.stat.lnk_target == "missing"
+    - missing_dir_link_actual.stat.lnk_source == win_file_dir + "\\symlink\\missing"
+    - missing_dir_link_actual.stat.owner != "BUILTIN\\Users"
+
+- name: create a file link to a missing target
+  win_file:
+    path: '{{ win_file_dir }}\symlink\missing-file-link'
+    state: link
+    src: missing.txt
+    force: yes
+    owner: Users
+    attributes:
+    - hidden
+    follow: no  # Set-StateAttribute will run on the link not the link target which would raise a warning
+  register: missing_file_link
+
+- name: get result of create a file link to a missing target
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\missing-file-link'
+    get_checksum: no
+  register: missing_file_link_actual
+
+- name: assert create a file link to a missing target
+  assert:
+    that:
+    - missing_file_link is changed
+    - missing_file_link.warnings|default([]) == []
+    - missing_file_link_actual.stat.exists
+    - missing_file_link_actual.stat.islnk
+    - not missing_file_link_actual.stat.isdir
+    - missing_file_link_actual.stat.attributes == "Hidden, Archive, ReparsePoint"
+    - missing_file_link_actual.stat.lnk_target == "missing.txt"
+    - missing_file_link_actual.stat.lnk_source == win_file_dir + "\\symlink\\missing.txt"
+    - missing_file_link_actual.stat.owner == 'BUILTIN\\Users'
+
+- name: create a link at a directory
+  win_file:
+    path: '{{ win_file_dir }}\symlink\nested\empty'
+    src: '{{ win_file_dir }}\symlink\directory'
+    state: link
+    force: yes
+  register: dir_to_link
+
+- name: get result of create a link at a directory
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\empty'
+  register: dir_to_link_actual
+
+- name: assert create a link at a directory
+  assert:
+    that:
+    - dir_to_link is changed
+    - dir_to_link_actual.stat.islnk
+    - dir_to_link_actual.stat.attributes == "Directory, ReparsePoint"
+    - dir_to_link_actual.stat.lnk_target == win_file_dir + "\\symlink\\directory"
+    - dir_to_link_actual.stat.lnk_source == win_file_dir + "\\symlink\\directory"
+
+- name: create a link at a file
+  win_file:
+    path: '{{ win_file_dir }}\symlink\nested\directory\nested-file.txt'
+    src: '{{ win_file_dir }}\symlink\file.txt'
+    state: link
+    force: yes
+  register: file_to_link
+
+- name: get result of create a link at a file
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\directory\nested-file.txt'
+  register: file_to_link_actual
+
+- name: assert create a link at a file
+  assert:
+    that:
+    - file_to_link is changed
+    - file_to_link_actual.stat.islnk
+    - file_to_link_actual.stat.attributes == "Archive, ReparsePoint"
+    - file_to_link_actual.stat.lnk_target == win_file_dir + "\\symlink\\file.txt"
+    - file_to_link_actual.stat.lnk_source == win_file_dir + "\\symlink\\file.txt"
+
+- name: remove a link
+  win_file:
+    path: '{{ win_file_dir }}\symlink\nested\directory\nested-file.txt'
+    state: absent
+  register: remove_link
+
+- name: get result of remove a link - link
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\nested\directory\nested-file.txt'
+  register: remove_link_link_actual
+
+- name: get result of remove a link - target
+  win_stat:
+    path: '{{ win_file_dir }}\symlink\file.txt'
+  register: remove_link_target_actual
+
+- name: assert remove a link
+  assert:
+    that:
+    - remove_link is changed
+    - not remove_link_link_actual.stat.exists
+    - remove_link_target_actual.stat.exists

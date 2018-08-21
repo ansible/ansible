@@ -1,0 +1,469 @@
+---
+- name: fail when file does not exist
+  win_file:
+    path: '{{ win_file_dir }}\foo.txt'
+    state: file
+  register: fail_no_file
+  failed_when: fail_no_file.msg != "file '" + win_file_dir + "\\foo.txt' is absent, cannot continue"
+
+- name: fail when file is a directory
+  win_file:
+    path: '{{ win_file_dir }}'
+    state: file
+  register: fail_file_is_dir
+  failed_when: fail_file_is_dir.msg != "file '" + win_file_dir + "' is directory, cannot continue"
+
+- name: create basic file
+  win_copy:
+    content: foo.txt
+    dest: '{{ win_file_dir }}\foo.txt'
+
+- name: verify that we are checking a file and it is present
+  win_file:
+    path: '{{ win_file_dir }}\foo.txt'
+    state: file
+  register: file_result
+
+- name: assert verify that we are checking a file and it is present
+  assert:
+    that:
+    - not file_result is changed
+
+- name: remove a file (check mode)
+  win_file:
+    path: '{{ win_file_dir }}\foo.txt'
+    state: absent
+  register: file_absent_check
+  check_mode: yes
+
+- name: get result of remove a file (check mode)
+  win_stat:
+    path: '{{ win_file_dir }}\foo.txt'
+  register: file_absent_actual_check
+
+- name: assert remove a file (check mode)
+  assert:
+    that:
+    - file_absent_check is changed
+    - file_absent_actual_check.stat.exists
+
+- name: create link to file
+  win_file:
+    path: '{{ win_file_dir }}\link.txt'
+    src: '{{ win_file_dir }}\foo.txt'
+    state: link
+
+- name: follow link when state=file
+  win_file:
+    path: '{{ win_file_dir }}\link.txt'
+    state: file
+  register: file_is_link_with_follow
+
+- name: assert follow link when state=file
+  assert:
+    that:
+    - not file_is_link_with_follow is changed
+
+- name: fail when state=file and path is not a file
+  win_file:
+    path: '{{ win_file_dir }}\link.txt'
+    state: file
+    follow: no
+  register: fail_file_not_file
+  failed_when: fail_file_not_file.msg != "file '" + win_file_dir + "\\link.txt' is link, cannot continue"
+
+- name: remove a file
+  win_file:
+    path: '{{ win_file_dir }}\foo.txt'
+    state: absent
+  register: file_absent
+
+- name: get result of remove a file
+  win_stat:
+    path: '{{ win_file_dir }}\foo.txt'
+  register: file_absent_actual
+
+- name: assert remove a file
+  assert:
+    that:
+    - file_absent is changed
+    - not file_absent_actual.stat.exists
+
+- name: remove a file (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\foo.txt'
+    state: absent
+  register: file_absent_again
+
+- name: assert remove a file (idempotent)
+  assert:
+    that:
+    - not file_absent_again is changed
+
+- name: touch a file (check)
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: touch
+  register: touch_file_check
+  check_mode: yes
+
+- name: get result of touch a file (check)
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: touch_file_actual_check
+
+- name: assert touch a file (check)
+  assert:
+    that:
+    - touch_file_check is changed
+    - not touch_file_actual_check.stat.exists
+
+- name: touch a file
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: touch
+  register: touch_file
+
+- name: get result of touch a file
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: touch_file_actual
+
+- name: assert touch a file
+  assert:
+    that:
+    - touch_file is changed
+    - touch_file_actual.stat.exists
+    - touch_file_actual.stat.size == 0
+
+- name: touch a file again (check)
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: touch
+  register: touch_file_again_check
+  check_mode: yes
+
+- name: get result of touch a file again (check)
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: touch_file_again_actual_check
+
+- name: assert touch a file again (check)
+  assert:
+    that:
+    - touch_file_again_check is changed
+    - touch_file_again_actual_check.stat.exists
+    - touch_file_again_actual_check.stat.checksum == touch_file_actual.stat.checksum
+    - touch_file_again_actual_check.stat.creationtime == touch_file_actual.stat.creationtime
+    - touch_file_again_actual_check.stat.lastaccesstime == touch_file_actual.stat.lastaccesstime
+    - touch_file_again_actual_check.stat.lastwritetime == touch_file_actual.stat.lastwritetime
+
+- name: touch a file again
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: touch
+  register: touch_file_again
+
+- name: get result of touch a file again
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: touch_file_again_actual
+
+- name: assert touch a file again
+  assert:
+    that:
+    - touch_file_again is changed
+    - touch_file_again_actual.stat.exists
+    - touch_file_again_actual.stat.checksum == touch_file_actual.stat.checksum
+    - touch_file_again_actual.stat.creationtime == touch_file_actual.stat.creationtime
+    - touch_file_again_actual.stat.lastaccesstime > touch_file_actual.stat.lastaccesstime
+    - touch_file_again_actual.stat.lastwritetime > touch_file_actual.stat.lastwritetime
+
+- name: touch a file preserving timestamp
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: touch
+    access_time: preserve
+    write_time: preserve
+  register: touch_preserve_time
+
+- name: get result of touch a file preserving timestamp
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: touch_preserve_time_actual
+
+- name: assert actual touch a file preserving timestamp
+  assert:
+    that:
+    - not touch_preserve_time is changed
+    - touch_preserve_time_actual.stat.creationtime == touch_file_again_actual.stat.creationtime
+    - touch_preserve_time_actual.stat.lastaccesstime == touch_file_again_actual.stat.lastaccesstime
+    - touch_preserve_time_actual.stat.lastwritetime == touch_file_again_actual.stat.lastwritetime
+
+- name: fail when trying to set the normal with other attributes
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: file
+    attributes: normal, read_only
+  register: fail_normal_add
+  failed_when: fail_normal_add.msg != "The normal attribute is mutually exclusive from other attributes"
+
+- name: set random file attributes (check)
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: file
+    access_time: 201801010534.05
+    attributes:
+    - archive
+    - read_only
+    - sparse_file
+    - -normal  # prefix with '-' means to ensure attribute isn't set
+    creation_time: '2018-01-01T23:45:41.0000000+00:00'
+    creation_time_format: O  # .net ISO 8601 format string
+    group: Guests
+    owner: Users
+    write_time: now
+  register: file_attr_check
+  check_mode: yes
+
+# FUTURE: Add group to win_stat output and assert that here
+- name: get actual set random file attributes (check)
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: file_attr_actual_check
+
+- name: assert set random file attributes (check)
+  assert:
+    that:
+    - file_attr_check is changed
+    - file_attr_actual_check.stat == touch_preserve_time_actual.stat
+
+- name: set random file attributes
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: file
+    access_time: 201801010534.05
+    attributes:
+    - archive
+    - read_only
+    - sparse_file
+    - -normal
+    creation_time: '2018-01-01T23:45:41.0000000+00:00'
+    creation_time_format: O
+    group: Guests
+    owner: Users
+    write_time: now
+  register: file_attr
+
+# FUTURE: Add group to win_stat output and assert that here
+- name: get actual set random file attributes
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: file_attr_actual
+
+- name: assert set random file attributes
+  assert:
+    that:
+    - file_attr is changed
+    - file_attr_actual.stat.attributes == "ReadOnly, Archive, SparseFile"
+    - file_attr_actual.stat.creationtime == 1514850341
+    - file_attr_actual.stat.lastaccesstime == 1514784845
+    - file_attr_actual.stat.lastwritetime > touch_preserve_time_actual.stat.lastwritetime
+    - file_attr_actual.stat.owner == 'BUILTIN\\Users'
+
+- name: set random file attributes (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: file
+    access_time: 201801010534.05
+    attributes:
+    - archive
+    - read_only
+    - sparse_file
+    - -normal
+    creation_time: '2018-01-01T23:45:41.0000000+00:00'
+    creation_time_format: O
+    group: Guests
+    owner: Users
+  register: file_attr_again
+
+- name: assert set random file attributes (idempotent)
+  assert:
+    that:
+    - not file_attr_again is changed
+
+- name: modify file attributes
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    attributes:
+    - -archive
+    - hidden
+    - system
+    state: file
+  register: file_attr_change
+
+- name: get result of modify file attributes
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: file_attr_change_actual
+
+- name: assert modify file attributes
+  assert:
+    that:
+    - file_attr_change is changed
+    - file_attr_change_actual.stat.attributes == "ReadOnly, Hidden, System, SparseFile"
+
+- name: modify file attributes (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    attributes:
+    - -archive
+    - hidden
+    - system
+    state: file
+  register: file_attr_change_again
+
+- name: assert modify file attributes (idempotent)
+  assert:
+    that:
+    - not file_attr_change_again is changed
+
+- name: remove hidden/system file
+  win_file:
+    path: '{{ win_file_dir }}\touch.txt'
+    state: absent
+  register: file_remove_hidden
+
+- name: get result of remove hidden/system file
+  win_stat:
+    path: '{{ win_file_dir }}\touch.txt'
+  register: file_remove_hidden_actual
+
+- name: assert remove hidden/system file
+  assert:
+    that:
+    - file_remove_hidden is changed
+    - not file_remove_hidden_actual.stat.exists
+
+- name: create file with relative path
+  win_file:
+    path: '{{ win_file_working_dir_name }}\file.txt'
+    state: touch
+    attributes:
+    - hidden
+    - system
+    owner: Everyone
+  register: relative_file
+
+- name: get result of create file with relative path
+  win_stat:
+    path: '{{ win_file_working_dir }}\file.txt'
+  register: relative_file_actual
+
+- name: assert result of create file with relative path
+  assert:
+    that:
+    - relative_file is changed
+    - relative_file.path == win_file_working_dir + "\\file.txt"
+    - relative_file_actual.stat.exists
+    - relative_file_actual.stat.attributes == "Hidden, System, Archive"
+    - relative_file_actual.stat.isreg
+    - relative_file_actual.stat.owner == "Everyone"
+
+- name: reset attributes to normal on relative path
+  win_file:
+    path: '{{ win_file_working_dir_name }}\file.txt'
+    attributes: normal
+  register: relative_reset_attr
+
+- name: get result of reset attributes to normal on relative path
+  win_stat:
+    path: '{{ win_file_working_dir }}\file.txt'
+  register: relative_reset_attr_actual
+
+- name: assert reset attributes to normal on relative path
+  assert:
+    that:
+    - relative_reset_attr is changed
+    - relative_reset_attr.path == win_file_working_dir + "\\file.txt"
+    - relative_reset_attr_actual.stat.attributes == "Normal"
+
+- name: remove file with relative path
+  win_file:
+    path: '{{ win_file_working_dir_name }}\file.txt'
+    state: absent
+  register: remove_relative_dir
+
+- name: get result of remove file with relative path
+  win_stat:
+    path: '{{ win_file_working_dir }}\file.txt'
+  register: remove_relative_dir_actual
+
+- name: assert remove file with relative path
+  assert:
+    that:
+    - remove_relative_dir is changed
+    - remove_relative_dir.path == win_file_working_dir + "\\file.txt"
+    - not remove_relative_dir_actual.stat.exists
+
+- name: touch file with long path
+  win_file:
+    path: '{{ win_file_long_dir }}\file.txt'
+    state: touch
+  register: long_file
+
+- name: get result of touch file with long path
+  win_stat:
+    path: '{{ win_file_long_dir }}\file.txt'
+  register: long_file_actual
+
+- name: assert touch file with long path
+  assert:
+    that:
+    - long_file is changed
+    - long_file_actual.stat.exists
+    - long_file_actual.stat.isreg
+
+- name: set attributes on file with long path
+  win_file:
+    path: '{{ win_file_long_dir }}\file.txt'
+    attributes:
+    - hidden
+    - system
+    - read_only
+    creation_time: 201804230356.12
+    owner: Everyone
+  register: long_file_set_attr
+
+- name: get result of set attributes on file with long path
+  win_stat:
+    path: '{{ win_file_long_dir }}\file.txt'
+  register: long_file_set_attr_actual
+
+- name: assert set attributes on file with long path
+  assert:
+    that:
+    - long_file_set_attr is changed
+    - long_file_set_attr_actual.stat.exists
+    - long_file_set_attr_actual.stat.attributes == "ReadOnly, Hidden, System, Archive"
+    - long_file_set_attr_actual.stat.owner == "Everyone"
+    - long_file_set_attr_actual.stat.creationtime == 1524455772
+    - long_file_set_attr_actual.stat.lastaccesstime == long_file_actual.stat.lastaccesstime
+    - long_file_set_attr_actual.stat.lastwritetime == long_file_actual.stat.lastwritetime
+
+- name: remove file with long path
+  win_file:
+    path: '{{ win_file_long_dir }}\file.txt'
+    state: absent
+  register: long_file_remove
+
+- name: get result of remove file with long path
+  win_stat:
+    path: '{{ win_file_long_dir }}\file.txt'
+  register: long_file_remove_actual
+
+- name: assert remove file with long path
+  assert:
+    that:
+    - long_file_remove is changed
+    - not long_file_remove_actual.stat.exists

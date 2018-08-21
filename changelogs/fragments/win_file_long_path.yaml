@@ -1,0 +1,8 @@
+minor_changes:
+- win_file - Add support for managing paths that exceed MAX_PATH when using the \\?\ prefix
+- win_file - Add support for managing symbolic links, junction points, and hard links - https://github.com/ansible/ansible/issues/43060
+- win_file - Add support for setting file attributes, owner, and timestamps
+- win_file - Added --diff support
+- win_file - Add warning when state=file and file does not exist, win_file will create the file instead of erroring in a future release
+bugfixes:
+- win_file - fix issue when managing hidden and system files - https://github.com/ansible/ansible/issues/42466

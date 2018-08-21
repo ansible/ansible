@@ -1,0 +1,405 @@
+---
+- name: create directory (check mode)
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: directory
+  register: directory_result_check
+  check_mode: yes
+
+- name: get result of create directory (check mode)
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: directory_result_actual_check
+
+- name: assert create directory (check mode)
+  assert:
+    that:
+    - directory_result_check is changed
+    - not directory_result_actual_check.stat.exists
+
+- name: create directory
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: directory
+  register: directory_result
+
+- name: get result of create directory
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: directory_result_actual
+
+- name: assert create directory
+  assert:
+    that:
+    - directory_result is changed
+    - directory_result_actual.stat.exists
+    - directory_result_actual.stat.attributes == "Directory"
+
+- name: create directory (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: directory
+  register: directory_result_again
+
+- name: assert create directory (idempotent)
+  assert:
+    that:
+    - not directory_result_again is changed
+
+- name: create link that points to a directory
+  win_file:
+    path: '{{ win_file_dir }}\directory-link'
+    src: '{{ win_file_dir }}\directory'
+    state: link
+
+- name: touch a directory following a link
+  win_file:
+    path: '{{ win_file_dir }}\directory-link'
+    state: touch
+  register: touch_dir_follow
+
+- name: get result of touch a directory following a link
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: touch_dir_follow_actual
+
+- name: assert touch a directory following a link
+  assert:
+    that:
+    - touch_dir_follow is changed
+    - touch_dir_follow_actual.stat.lastaccesstime > directory_result_actual.stat.lastaccesstime
+    - touch_dir_follow_actual.stat.lastwritetime > directory_result_actual.stat.lastwritetime
+
+- name: remove a directory (check)
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: absent
+  register: directory_remove_check
+  check_mode: yes
+
+- name: get result of remove a directory (check)
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: directory_remove_actual_check
+
+- name: assert remove a directory (check)
+  assert:
+    that:
+    - directory_remove_check is changed
+    - directory_remove_actual_check.stat.exists
+
+- name: remove a directory
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: absent
+  register: directory_remove
+
+- name: get result of remove a directory
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: directory_remove_actual
+
+- name: assert remove a directory
+  assert:
+    that:
+    - directory_remove is changed
+    - not directory_remove_actual.stat.exists
+
+- name: remove a directory (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: absent
+  register: directory_remove_again
+
+- name: assert remove a directory (idempotent)
+  assert:
+    that:
+    - not directory_remove_again is changed
+
+- name: create directory by following a link
+  win_file:
+    path: '{{ win_file_dir }}\directory-link'
+    state: directory
+    follow: yes
+  register: directory_create_follow
+
+- name: get result of create directory by following a link
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: directory_create_follow_actual
+
+- name: assert create directory by following a link
+  assert:
+    that:
+    - directory_create_follow is changed
+    - directory_create_follow_actual.stat.exists
+    - directory_create_follow_actual.stat.isdir
+
+- name: remove dir for nested test
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: absent
+
+- name: create nested directory with attributes (check)
+  win_file:
+    path: '{{ win_file_dir }}\directory\nested'
+    state: directory
+    attributes:
+    - read_only
+    - hidden
+    owner: Users
+  register: nested_directory_check
+  check_mode: yes
+
+- name: get result of create nested directory parent dir (check)
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: nested_directory_parent_actual_check
+
+- name: get result of create nested directory leaf dir (check)
+  win_stat:
+    path: '{{ win_file_dir }}\directory\nested'
+  register: nested_directory_leaf_actual_check
+
+- name: assert create nested directory with attributes (check)
+  assert:
+    that:
+    - nested_directory_check is changed
+    - not nested_directory_parent_actual_check.stat.exists
+    - not nested_directory_leaf_actual_check.stat.exists
+
+- name: create nested directory with attributes
+  win_file:
+    path: '{{ win_file_dir }}\directory\nested'
+    state: directory
+    attributes:
+    - read_only
+    - hidden
+    owner: Users
+  register: nested_directory
+
+- name: get result of create nested directory parent dir
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: nested_directory_parent_actual
+
+- name: get result of create nested directory leaf dir
+  win_stat:
+    path: '{{ win_file_dir }}\directory\nested'
+  register: nested_directory_leaf_actual
+
+- name: assert create nested directory with attributes
+  assert:
+    that:
+    - nested_directory is changed
+    - nested_directory_parent_actual.stat.exists
+    - nested_directory_parent_actual.stat.attributes == "ReadOnly, Hidden, Directory"
+    - nested_directory_parent_actual.stat.owner == "BUILTIN\\Users"
+    - nested_directory_leaf_actual.stat.exists
+    - nested_directory_leaf_actual.stat.attributes == "ReadOnly, Hidden, Directory"
+    - nested_directory_leaf_actual.stat.owner == "BUILTIN\\Users"
+
+- name: create nested directory with attributes (idempotent)
+  win_file:
+    path: '{{ win_file_dir }}\directory\nested'
+    state: directory
+    attributes:
+    - read_only
+    - hidden
+    owner: Users
+  register: nested_directory_again
+
+- name: assert create nested directory with attributes (idempotent)
+  assert:
+    that:
+    - not nested_directory_again is changed
+
+- name: create file with parens and block
+  win_file:
+    path: '{{ win_file_dir }}\directory\nested\file with spaces (and parens) [block]-1.txt'
+    state: touch
+
+- name: fail to change a directory to a file
+  win_file:
+    path: '{{ win_file_dir }}\directory\nested\file with spaces (and parens) [block]-1.txt'
+    state: directory
+  register: fail_dir_is_file
+  failed_when: fail_dir_is_file.msg != "'" + win_file_dir + "\\directory\\nested\\file with spaces (and parens) [block]-1.txt' already exists as a file"
+
+- name: touch a directory
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: touch
+  register: directory_touch
+
+- name: get result of touch a directory
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: directory_touch_actual
+
+- name: assert touch a directory
+  assert:
+    that:
+    - directory_touch is changed
+    - directory_touch_actual.stat.creationtime == nested_directory_parent_actual.stat.creationtime
+    - directory_touch_actual.stat.lastaccesstime > nested_directory_parent_actual.stat.lastaccesstime
+    - directory_touch_actual.stat.lastwritetime > nested_directory_parent_actual.stat.lastwritetime
+
+- name: remove directory with child items (check)
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: absent
+  register: remove_nested_check
+  check_mode: yes
+
+- name: get result of remove directory with child items parent (check)
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: remove_nested_parent_actual_check
+
+- name: get result of remove directory with child items leaf (check)
+  win_stat:
+    path: '{{ win_file_dir }}\directory\nested\file with spaces (and parens) [block]-1.txt'
+  register: remove_nested_leaf_actual_check
+
+- name: assert remove directory with child items (check)
+  assert:
+    that:
+    - remove_nested_check is changed
+    - remove_nested_parent_actual_check.stat.exists
+    - remove_nested_leaf_actual_check.stat.exists
+
+- name: remove directory with child items
+  win_file:
+    path: '{{ win_file_dir }}\directory'
+    state: absent
+  register: remove_nested
+
+- name: get result of remove directory with child items parent
+  win_stat:
+    path: '{{ win_file_dir }}\directory'
+  register: remove_nested_parent_actual
+
+- name: get result of remove directory with child items leaf
+  win_stat:
+    path: '{{ win_file_dir }}\directory\nested\file with spaces (and parens) [block]-1.txt'
+  register: remove_nested_leaf_actual
+
+- name: assert remove directory with child items
+  assert:
+    that:
+    - remove_nested is changed
+    - not remove_nested_parent_actual.stat.exists
+    - not remove_nested_leaf_actual.stat.exists
+
+- name: remove directory with missing parent
+  win_file:
+    path: '{{ win_file_dir }}\directory missing\directory'
+    state: absent
+  register: remove_missing_parent_directory
+
+- name: assert remove directory with missing parent
+  assert:
+    that:
+    - not remove_missing_parent_directory is changed
+
+- name: create dir with relative path
+  win_file:
+    path: '{{ win_file_working_dir_name }}\directory'
+    state: directory
+    attributes: hidden, system
+    owner: Everyone
+  register: relative_dir
+
+- name: get result of create dir with relative path
+  win_stat:
+    path: '{{ win_file_working_dir }}\directory'
+  register: relative_dir_actual
+
+- name: assert result of create dir with relative path
+  assert:
+    that:
+    - relative_dir is changed
+    - relative_dir.path == win_file_working_dir + "\\directory"
+    - relative_dir_actual.stat.exists
+    - relative_dir_actual.stat.attributes == "Hidden, System, Directory"
+    - relative_dir_actual.stat.isdir
+    - relative_dir_actual.stat.owner == "Everyone"
+
+- name: remove directory with relative path
+  win_file:
+    path: '{{ win_file_working_dir_name }}\directory'
+    state: absent
+  register: remove_relative_dir
+
+- name: get result of remove relative dir
+  win_stat:
+    path: '{{ win_file_working_dir }}\directory'
+  register: remove_relative_dir_actual
+
+- name: assert remove directory with relative path
+  assert:
+    that:
+    - remove_relative_dir is changed
+    - remove_relative_dir.path == win_file_working_dir + "\\directory"
+    - not remove_relative_dir_actual.stat.exists
+
+- name: create dir with long path
+  win_file:
+    path: '{{ win_file_long_dir }}\directory'
+    state: directory
+  register: long_dir
+
+- name: get result of create dir with long path
+  win_stat:
+    path: '{{ win_file_long_dir }}\directory'
+  register: long_dir_actual
+
+- name: assert create ir with long path
+  assert:
+    that:
+    - long_dir is changed
+    - long_dir_actual.stat.exists
+    - long_dir_actual.stat.attributes == "Directory"
+    - long_dir_actual.stat.isdir
+
+- name: set attributes on dir with long path
+  win_file:
+    path: '{{ win_file_long_dir }}\directory'
+    attributes: hidden, system, -offline
+    creation_time: 201804230356.12
+    owner: Everyone
+  register: long_dir_set_attr
+
+- name: get result of set attributes on dir with long path
+  win_stat:
+    path: '{{ win_file_long_dir }}\directory'
+  register: long_dir_set_attr_actual
+
+- name: assert set attributes on dir with long path
+  assert:
+    that:
+    - long_dir_set_attr is changed
+    - long_dir_set_attr_actual.stat.exists
+    - long_dir_set_attr_actual.stat.attributes == "Hidden, System, Directory"
+    - long_dir_set_attr_actual.stat.owner == "Everyone"
+    - long_dir_set_attr_actual.stat.creationtime == 1524455772
+    - long_dir_set_attr_actual.stat.lastaccesstime == long_dir_actual.stat.lastaccesstime
+    - long_dir_set_attr_actual.stat.lastwritetime == long_dir_actual.stat.lastwritetime
+
+- name: remove directory with long path
+  win_file:
+    path: '{{ win_file_long_dir }}\directory'
+    state: absent
+  register: long_dir_remove
+
+- name: get result of remove directory with long path
+  win_stat:
+    path: '{{ win_file_long_dir }}\directory'
+  register: long_dir_remove_actual
+
+- name: assert remove directory with long path
+  assert:
+    that:
+    - long_dir_remove is changed
+    - not long_dir_remove_actual.stat.exists
