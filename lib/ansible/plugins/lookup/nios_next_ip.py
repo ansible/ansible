@@ -49,6 +49,10 @@ EXAMPLES = """
 - name: return the next 3 available IP addresses for network 192.168.10.0/24
   set_fact:
     ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', num=3, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+
+- name: return the next 3 available IP addresses for network 192.168.10.0/24 excluding ip addresses: '192.168.10.1', '192.168.10.2'
+  set_fact:
+    ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', num=3, exclude=['192.168.10.1', '192.168.10.2'], provider=nios_provider) }}"
 """
 
 RETURN = """
@@ -81,10 +85,11 @@ class LookupModule(LookupBase):
             raise AnsibleError('unable to find network object %s' % network)
 
         num = kwargs.get('num', 1)
+        excludeIP = kwargs.get('exclude', [])
 
         try:
             ref = network_obj[0]['_ref']
-            avail_ips = wapi.call_func('next_available_ip', ref, {'num': num})
+            avail_ips = wapi.call_func('next_available_ip', ref, {'num': num, 'exclude': excludeIP})
             return [avail_ips['ips']]
         except Exception as exc:
             raise AnsibleError(to_text(exc))
