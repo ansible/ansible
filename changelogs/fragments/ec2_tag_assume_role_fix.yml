@@ -1,0 +1,5 @@
+bugfixes:
+  - fixes authentication failures when using temporary credentials from an assumed role
+minor_changes:
+  - adds purge_tags, in line with other AWS modules that manipulate tags
+  - ports ec2_tag to boto3 and AnsibleAWSModule
