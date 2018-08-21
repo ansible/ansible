@@ -9,7 +9,7 @@ set -eux
 
 # deal with corner cases with no log and loops
 # no log enabled, should produce 6 censored messages
-[ "$(ansible-playbook dynamic.yml -i ../../inventory -vvvvv "$@" -e unsafe_show_logs=no|grep 'output has been hidden'|wc -l)" = "6" ]
+[ "$(ansible-playbook dynamic.yml -i ../../inventory -vvvvv "$@" -e unsafe_show_logs=no|grep -c 'output has been hidden')" = "6" ]
 
 # no log disabled, should produce 0 censored
-[ "$(ansible-playbook dynamic.yml -i ../../inventory -vvvvv "$@" -e unsafe_show_logs=yes|grep 'output has been hidden'|wc -l)" = "0" ]
+[ "$(ansible-playbook dynamic.yml -i ../../inventory -vvvvv "$@" -e unsafe_show_logs=yes|grep -c 'output has been hidden')" = "0" ]
