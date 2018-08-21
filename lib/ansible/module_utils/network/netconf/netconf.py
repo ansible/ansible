@@ -27,24 +27,9 @@ except ImportError:
     from xml.etree.ElementTree import fromstring, tostring
 
 from ansible.module_utils._text import to_text, to_bytes
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
 
-
-netconf_argument_spec = {}
-
-netconf_top_spec = {
-    'host': dict(removed_in_version=2.11),
-    'port': dict(removed_in_version=2.11, type='int', default=830),
-    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), removed_in_version=2.11, no_log=True),
-    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), removed_in_version=2.11, no_log=True),
-    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), removed_in_version=2.11, type='path'),
-    'hostkey_verify': dict(removed_in_version=2.11, type='bool', default=True),
-    'look_for_keys': dict(removed_in_version=2.11, type='bool', default=True),
-    'timeout': dict(removed_in_version=2.11, type='int', default=10),
-}
-netconf_argument_spec.update(netconf_top_spec)
 
 IGNORE_XML_ATTRIBUTE = ()
 
