@@ -4,9 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import time
-
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
@@ -33,9 +31,9 @@ class ActionModule(RebootActionModule, ActionBase):
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '/r /t %d /c "%s"'
     DEFAULT_SUDOABLE = False
     DEFAULT_DEPRECATED_ARGS = {
-            'shutdown_timeout': '2.5',
-            'shutdown_timeout_sec': '2.5',
-        }
+        'shutdown_timeout': '2.5',
+        'shutdown_timeout_sec': '2.5',
+    }
 
     def construct_command(self):
         self.deprecated_args()
@@ -57,7 +55,7 @@ class ActionModule(RebootActionModule, ActionBase):
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self.DEFAULT_PRE_REBOOT_DELAY))
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
-        if reboot_result['rc'] == 1190 or (reboot_result['rc'] != 0 and b"(1190)" in stderr):
+        if reboot_result['rc'] == 1190 or (reboot_result['rc'] != 0 and b"(1190)" in reboot_result['stderr']):
             display.warning('A scheduled reboot was pre-empted by Ansible.')
 
             # Try to abort (this may fail if it was already aborted)

@@ -3,21 +3,23 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
 DOCUMENTATION = r'''
----
 module: reboot
-short_description: Reboot a *nix machine
+short_description: Reboot a \*nix machine
 description:
-     - Reboot a *nix machine, wait for it to go down, come back up, and respond to commands.
+     - Reboot a \*nix machine, wait for it to go down, come back up, and respond to commands.
 version_added: "2.7"
 options:
   pre_reboot_delay:
     description:
-    - Minutes for shutdown to wait before requesting reboot
+      - Minutes for shutdown to wait before requesting reboot
     default: 0
   post_reboot_delay:
     description:
