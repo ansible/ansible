@@ -233,33 +233,21 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    from requests.exceptions import ConnectionError
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -561,10 +549,7 @@ class ModuleManager(object):
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.present()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.present()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -595,22 +580,54 @@ class ModuleManager(object):
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.sys.httpd.load()
+        uri = "https://{0}:{1}/mgmt/tm/sys/httpd".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+
         try:
-            resource.modify(**params)
-            return True
-        except ConnectionError as ex:
+            resp = self.client.api.patch(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+        except Exception as ex:
+            valid = [
+                'Remote end closed connection',
+                'Connection aborted',
+            ]
             # BIG-IP will kill your management connection when you change the HTTP
             # redirect setting. So this catches that and handles it gracefully.
-            if 'Connection aborted' in str(ex) and 'redirectHttpToHttps' in params:
-                # Wait for BIG-IP web server to settle after changing this
-                time.sleep(2)
-                return True
+            if 'redirectHttpToHttps' in params:
+                if any(i for i in valid if i in str(ex)):
+                    # Wait for BIG-IP web server to settle after changing this
+                    time.sleep(2)
+                    return True
             raise F5ModuleError(str(ex))
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.httpd.load()
-        return ApiParameters(params=resource.attrs)
+        uri = "https://{0}:{1}/mgmt/tm/sys/httpd".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -664,22 +681,16 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_REQUESTS:
-        module.fail_json(msg="The python requests module is required")
 
     try:
-        client = F5Client(**module.params)
+        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':
