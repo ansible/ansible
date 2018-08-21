@@ -4,7 +4,7 @@
 Netconf enabled Platform Options
 ***************************************
 
-This page offers details on how netconf connection works in Ansible 2.7 and how to use it.
+This page offers details on how the netconf connection works in Ansible 2.7 and how to use it.
 
 .. contents:: Topics
 
@@ -38,7 +38,7 @@ Before you can use NETCONF to connect to a switch, you must:
 - install the ``ncclient`` python package on your control node(s) with ``pip install ncclient``
 - enable NETCONF on the Junos OS device(s)
 
-To enable NETCONF on a new switch via Ansible, use platform specific module via the CLI connection or set it manually.
+To enable NETCONF on a new switch via Ansible, use the platform specific module via the CLI connection or set it manually.
 For example set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
@@ -78,7 +78,7 @@ Example NETCONF Task with configurable variables
 
 .. code-block:: yaml
 
-   - name: configure interface while providing different private key file pat
+   - name: configure interface while providing different private key file path
      netconf_config:
        backup: yes
      register: backup_junos_location

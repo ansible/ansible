@@ -103,7 +103,7 @@ options:
   look_for_keys:
     default: True
     description:
-      -  enables looking ssh keys in the usual locations for ssh keys (e.g. :file:`~/.ssh/id_*`)
+      -  enables looking for ssh keys in the usual locations for ssh keys (e.g. :file:`~/.ssh/id_*`)
     env:
       - name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS
     ini:

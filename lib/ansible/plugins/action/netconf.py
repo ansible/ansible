@@ -22,8 +22,6 @@ __metaclass__ = type
 import copy
 import sys
 
-from ansible.module_utils.network.common.utils import load_provider
-from ansible.module_utils.network.netconf.netconf import netconf_provider_spec
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 
 try:
@@ -41,27 +39,28 @@ class ActionModule(_ActionModule):
         if self._play_context.connection not in ['netconf', 'local'] and self._task.action == 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for netconf_config module. '
                                            'Valid connection type is netconf or local (deprecated)' % self._play_context.connection}
-        elif self._play_context.connection not in ['netconf']:
+        elif self._play_context.connection not in ['netconf'] and self._task.action != 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for %s module. '
                                            'Valid connection type is netconf.' % (self._play_context.connection, self._task.action)}
 
         if self._play_context.connection == 'local' and self._task.action == 'netconf_config':
-            provider = load_provider(netconf_provider_spec, self._task.args)
+            args = self._task.args
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'netconf'
-            pc.port = int(provider['port'] or self._play_context.port or 830)
+            pc.port = int(args.get('port') or self._play_context.port or 830)
 
-            pc.remote_user = provider['username'] or self._play_context.connection_user
-            pc.password = provider['password'] or self._play_context.password
-            pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+            pc.remote_user = args.get('username') or self._play_context.connection_user
+            pc.password = args.get('password') or self._play_context.password
+            pc.private_key_file = args.get('ssh_keyfile') or self._play_context.private_key_file
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
-            command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
-            connection.set_options(direct={'persistent_command_timeout': command_timeout, 'look_for_keys': provider.get('look_for_keys'),
-                                           'hostkey_verify': provider.get('hostkey_verify'),
-                                           'allow_agent': provider.get('allow_agent')})
+            timeout = args.get('timeout')
+            command_timeout = int(timeout) if timeout else connection.get_option('persistent_command_timeout')
+            connection.set_options(direct={'persistent_command_timeout': command_timeout, 'look_for_keys': args.get('look_for_keys'),
+                                           'hostkey_verify': args.get('hostkey_verify'),
+                                           'allow_agent': args.get('allow_agent')})
 
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)

@@ -32,30 +32,18 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
 
 
-netconf_provider_spec = {
-    'host': dict(),
-    'port': dict(type='int', default=830),
-    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), no_log=True),
-    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
-    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'hostkey_verify': dict(type='bool', default=True),
-    'look_for_keys': dict(type='bool', default=True),
-    'allow_agent': dict(type='bool', default=True),
-    'timeout': dict(type='int'),
-}
-netconf_argument_spec = {
-    'provider': dict(type='dict', options=netconf_provider_spec),
-}
+netconf_argument_spec = {}
+
 netconf_top_spec = {
-    'host': dict(removed_in_version=2.9, default=830),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9, no_log=True),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'hostkey_verify': dict(removed_in_version=2.9, type='bool', default=True),
-    'look_for_keys': dict(removed_in_version=2.9, type='bool', default=True),
-    'allow_agent': dict(removed_in_version=2.9, type='bool', default=True),
-    'timeout': dict(removed_in_version=2.9, type='int'),
+    'host': dict(removed_in_version=2.11),
+    'port': dict(removed_in_version=2.11, type='int', default=830),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), removed_in_version=2.11, no_log=True),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), removed_in_version=2.11, no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), removed_in_version=2.11, type='path'),
+    'hostkey_verify': dict(removed_in_version=2.11, type='bool', default=True),
+    'look_for_keys': dict(removed_in_version=2.11, type='bool', default=True),
+    'allow_agent': dict(removed_in_version=2.11, type='bool', default=True),
+    'timeout': dict(removed_in_version=2.11, type='int'),
 }
 netconf_argument_spec.update(netconf_top_spec)
 

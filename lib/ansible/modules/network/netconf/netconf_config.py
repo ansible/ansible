@@ -42,8 +42,8 @@ options:
     aliases: ['datastore']
   source:
     description:
-    - It is the name of the configuration datastore to use as the source to copy the configuration
-      to the datastore mentioned byC(target) option. The values can be either I(running), I(candidate),
+    - Name of the configuration datastore to use as the source to copy the configuration
+      to the datastore mentioned by C(target) option. The values can be either I(running), I(candidate),
       I(startup) or a remote URL
     version_added: "2.7"
   src:
@@ -141,7 +141,6 @@ options:
     default: False
     version_added: "2.7"
 requirements:
-  - "python >= 2.6"
   - "ncclient"
 notes:
   - This module requires the netconf system service be enabled on
@@ -185,6 +184,12 @@ EXAMPLES = '''
             </system>
         </config>
 
+- name: configure interface while providing different private key file path (for connection=netconf)
+  netconf_config:
+    backup: yes
+  register: backup_junos_location
+  vars:
+    ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile
 '''
 
 RETURN = '''
@@ -206,7 +211,7 @@ diff:
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 '''
 
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.netconf.netconf import get_capabilities, netconf_argument_spec, get_config, sanitize_xml
