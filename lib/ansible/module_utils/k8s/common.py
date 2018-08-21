@@ -210,9 +210,9 @@ class K8sAnsibleMixin(object):
                               label_selector=','.join(label_selectors),
                               field_selector=','.join(field_selectors)).to_dict()
         if 'items' in result:
-            return result
+            return dict(resources=result['items'])
         else:
-            return dict(items=[result])
+            return dict(resources=[result])
 
     def remove_aliases(self):
         """
