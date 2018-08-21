@@ -275,7 +275,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         curated_output['tags'] = webapp.get('tags', None)
 
         # important properties from output. not match input arguments.
-        curated_output['properties'] = []
+        curated_output['properties'] = dict()
         curated_output['properties']['state'] = webapp['properties']['state']
         curated_output['properties']['availability_state'] = webapp['properties']['availabilityState']
         curated_output['properties']['default_host_name'] = webapp['properties']['defaultHostName']
