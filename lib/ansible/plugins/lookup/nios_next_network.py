@@ -37,8 +37,9 @@ options:
                    container.
       required: True
     cidr:
-      description: The CIDR of the network to retrieve the next network from next available network within the 
-                   specified container. Also, Requested CIDR must be specified and greater than the parent CIDR.
+      description:
+        - The CIDR of the network to retrieve the next network from next available network within the
+          specified container. Also, Requested CIDR must be specified and greater than the parent CIDR.
       required: True
       default: 24
     num:
@@ -58,11 +59,13 @@ EXAMPLES = """
 
 - name: return the next 2 available network addresses for network-container 192.168.10.0/24
   set_fact:
-    networkaddr: "{{ lookup('nios_next_network', '192.168.10.0/24', cidr=25, num=2, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+    networkaddr: "{{ lookup('nios_next_network', '192.168.10.0/24', cidr=25, num=2,
+                        provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 
 - name: return the available network addresses for network-container 192.168.10.0/24 excluding network range '192.168.10.0/25'
   set_fact:
-    networkaddr: "{{ lookup('nios_next_network', '192.168.10.0/24', cidr=25, exclude=['192.168.10.0/25'], provider=nios_provider) }}"
+    networkaddr: "{{ lookup('nios_next_network', '192.168.10.0/24', cidr=25, exclude=['192.168.10.0/25'],
+                        provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 """
 
 RETURN = """
