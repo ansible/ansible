@@ -39,7 +39,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
     def argspec(self):
         argument_spec = copy.deepcopy(COMMON_ARG_SPEC)
         argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
-        argument_spec['merge_type'] = dict(choices=['json', 'merge', 'strategic-merge'])
+        argument_spec['merge_type'] = dict(type='list', choices=['json', 'merge', 'strategic-merge'])
         return argument_spec
 
     def __init__(self, *args, **kwargs):
@@ -210,25 +210,41 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if self.check_mode:
                 k8s_obj = dict_merge(existing.to_dict(), definition)
             else:
-                try:
-                    params = dict(name=name, namespace=namespace)
-                    if self.params['merge_type']:
-                        from distutils.version import LooseVersion
-                        if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
-                            self.fail_json(msg="openshift >= 0.6.2 is required for merge_type")
-                        params['content_type'] = 'application/{0}-patch+json'.format(self.params['merge_type'])
-                    k8s_obj = resource.patch(definition, **params).to_dict()
-                    match, diffs = self.diff_objects(existing.to_dict(), k8s_obj)
-                    result['result'] = k8s_obj
-                except DynamicApiError as exc:
-                    self.fail_json(msg="Failed to patch object: {0}".format(exc.body),
-                                   error=exc.status, status=exc.status, reason=exc.reason)
+                if self.params['merge_type']:
+                    from distutils.version import LooseVersion
+                    if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
+                        self.fail_json(msg="openshift >= 0.6.2 is required for merge_type")
+                    for merge_type in self.params['merge_type']:
+                        k8s_obj, error = self.patch_resource(resource, definition, existing, name,
+                                                             namespace, merge_type=merge_type)
+                        if not error:
+                            break
+                else:
+                    k8s_obj, error = self.patch_resource(resource, definition, existing, name,
+                                                         namespace)
+                if error:
+                    self.fail_json(**error)
+
             match, diffs = self.diff_objects(existing.to_dict(), k8s_obj)
             result['result'] = k8s_obj
             result['changed'] = not match
             result['method'] = 'patch'
             result['diff'] = diffs
             return result
+
+    def patch_resource(self, resource, definition, existing, name, namespace, merge_type=None):
+        try:
+            params = dict(name=name, namespace=namespace)
+            if merge_type:
+                params['content_type'] = 'application/{0}-patch+json'.format(merge_type)
+            k8s_obj = resource.patch(definition, **params).to_dict()
+            match, diffs = self.diff_objects(existing.to_dict(), k8s_obj)
+            error = {}
+            return k8s_obj, {}
+        except DynamicApiError as exc:
+            error = dict(msg="Failed to patch object: {0}".format(exc.body),
+                         error=exc.status, status=exc.status, reason=exc.reason)
+            return None, error
 
     def create_project_request(self, definition):
         definition['kind'] = 'ProjectRequest'
