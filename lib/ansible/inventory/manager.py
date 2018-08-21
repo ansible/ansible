@@ -263,7 +263,7 @@ class InventoryManager(object):
 
                 if plugin_wants:
                     try:
-                        # in case plugin fails 1/2 way we dont want partial inventory
+                        # FIXME in case plugin fails 1/2 way we have partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
                         parsed = True
                         display.vvv('Parsed %s inventory source with %s plugin' % (source, plugin_name))
