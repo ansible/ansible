@@ -314,6 +314,12 @@ def main():
     if update_needed:
         changed, err = _set_labels(client, new_labels, module, resource_info,
                                    fingerprint)
+        if module._diff:
+            json_output['diff'] = {
+                'before': resource_info['labels'],
+                'after': new_labels
+            }
+
     json_output['changed'] = changed
 
     # TODO(erjohnso): probably want to re-fetch the resource to return the
