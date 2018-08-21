@@ -287,7 +287,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.locked(*args, **kwargs)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-
     @abstractmethod
     def get_capabilities(self):
         """

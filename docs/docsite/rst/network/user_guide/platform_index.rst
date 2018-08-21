@@ -67,4 +67,5 @@ Settings by Platform
 | OS that supports  | ``<network-os>``        | N/A                  | in v. >=2.6          | N/A              | in v. >=2.2      |
 | Netconf*          |                         |                      |                      |                  |                  |
 +-------------------+-------------------------+----------------------+----------------------+------------------+------------------+
+
 `*` Maintained by Ansible Network Team

@@ -56,7 +56,7 @@ options:
     description:
     - The format of the configuration provided as value of C(content). Accepted values are I(xml) and I(test) and
       the given configuration format should be supported by remote Netconf server.
-    default: xml   
+    default: xml
     choices: ['xml', 'text']
     version_added: "2.7"
   lock:
@@ -67,6 +67,7 @@ options:
         datastore only if it is supported by the remote Netconf server.
     default: always
     choices: ['never', 'always', 'if-supported']
+    version_added: "2.7"
   default_operation:
     description:
     - The default operation for <edit-config> rpc, valid values are I(merge), I(replace) and I(none).
@@ -241,7 +242,7 @@ def main():
     argument_spec.update(netconf_argument_spec)
 
     mutually_exclusive=[('content', 'src', 'source', 'delete', 'confirm_commit')]
-    required_one_of = [('content', 'src','source', 'delete', 'confirm_commit')]
+    required_one_of = [('content', 'src', 'source', 'delete', 'confirm_commit')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,

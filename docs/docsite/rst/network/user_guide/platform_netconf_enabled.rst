@@ -73,8 +73,7 @@ Example NETCONF Task
      register: backup_junos_location
 
 Example NETCONF Task with configurable variables
------------------------------------------------
-
+------------------------------------------------
 
 .. code-block:: yaml
 
