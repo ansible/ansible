@@ -40,18 +40,13 @@ options:
     default: auto
     version_added: "2.4"
     aliases: ['datastore']
-  source:
+  source_datastore:
     description:
     - Name of the configuration datastore to use as the source to copy the configuration
       to the datastore mentioned by C(target) option. The values can be either I(running), I(candidate),
       I(startup) or a remote URL
     version_added: "2.7"
-  src:
-    description:
-    - Specifies the source path to the xml file that contains the configuration or configuration template
-      to load. The path to the source file can either be the full path on the Ansible control host or
-      a relative path from the playbook or role root directory. This argument is mutually exclusive with I(xml).
-    version_added: "2.4"
+    aliases: ['source']
   format:
     description:
     - The format of the configuration provided as value of C(content). Accepted values are I(xml) and I(test) and
@@ -141,6 +136,12 @@ options:
     type: bool
     default: False
     version_added: "2.7"
+  src:
+    description:
+    - Specifies the source path to the xml file that contains the configuration or configuration template
+      to load. The path to the source file can either be the full path on the Ansible control host or
+      a relative path from the playbook or role root directory. This argument is mutually exclusive with I(xml).
+    version_added: "2.4"
 requirements:
   - "ncclient"
 notes:
@@ -224,8 +225,7 @@ def main():
     argument_spec = dict(
         content=dict(aliases=['xml']),
         target=dict(choices=['auto', 'candidate', 'running'], default='auto', aliases=['datastore']),
-        source=dict(),
-        src=dict(type='path'),
+        source_datastore=dict(aliases=['source']),
         format=dict(choices=['xml', 'text'], default='xml'),
         lock=dict(choices=['never', 'always', 'if-supported'], default='always'),
         default_operation=dict(choices=['merge', 'replace', 'none'], default='merge'),
@@ -241,6 +241,7 @@ def main():
 
     # deprecated options
     netconf_top_spec = {
+        'src': dict(type='path', removed_in_version=2.11),
         'host': dict(removed_in_version=2.11),
         'port': dict(removed_in_version=2.11, type='int', default=830),
         'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), removed_in_version=2.11, no_log=True),
