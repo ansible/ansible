@@ -367,12 +367,6 @@ When using :ref:`ansible-vault` commands that encrypt content (:ref:`ansible-vau
 only one vault-id can be used.
 
 
-
-.. note::
-    Prior to Ansible 2.4, only one vault password could be used in each Ansible run. The
-    :option:`--vault-id <ansible-playbook --vault-id>` option is not support prior to Ansible 2.4.
-
-
 .. _speeding_up_vault:
 
 Speeding Up Vault Operations

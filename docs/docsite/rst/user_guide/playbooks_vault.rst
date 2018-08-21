@@ -11,9 +11,6 @@ To enable this feature, a command line tool, :ref:`ansible-vault` is used to edi
 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
 
-.. note::
-    The :option:`--vault-id <ansible-playbook --vault-id>` flag is only avalibe in Ansible 2.4 or later.
-.. _running_a_playbook_with_vault:
 
 Running a Playbook With Vault
 `````````````````````````````
@@ -89,7 +86,7 @@ the passwords, but it's generally cleaner to avoid mixing these with :option:`--
     By defaut the vault label (dev, prod etc.) is just a hint. Ansible will try to decrypt each
     vault with every provided password.
 
-    Setting the config option :ref:`DEFAULT_VAULT_ID_MATCH` will change this behaiour so that each password
+    Setting the config option :ref:`DEFAULT_VAULT_ID_MATCH` will change this behavior so that each password
     is only used to decrypt data that was encrypted with the same label. See :ref:`specifying_vault_ids`
     for more details.
 
