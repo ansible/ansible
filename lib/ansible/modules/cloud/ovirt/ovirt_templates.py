@@ -97,6 +97,10 @@ options:
             - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the name of disk
                to be imported as template."
         aliases: ['glance_image_disk_name']
+    io_threads:
+        description:
+            - "Number of IO threads used by virtual machine. I(0) means IO threading disabled."
+        version_added: "2.7"
     template_image_disk_name:
         description:
             - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the new name for imported disk,
@@ -308,6 +312,9 @@ class TemplatesModule(BaseModule):
                 self.param('memory_guaranteed'),
                 self.param('memory_max')
             )) else None,
+            io=otypes.Io(
+                threads=self.param('io_threads'),
+            ) if self.param('io_threads') is not None else None,
         )
 
     def update_check(self, entity):
@@ -318,7 +325,8 @@ class TemplatesModule(BaseModule):
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
             equal(convert_to_bytes(self.param('memory')), entity.memory) and
-            equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile))
+            equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile)) and
+            equal(self.param('io_threads'), entity.io.threads)
         )
 
     def _get_export_domain_service(self):
@@ -438,6 +446,7 @@ def main():
         exclusive=dict(type='bool'),
         image_provider=dict(default=None),
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
+        io_threads=dict(type='int', default=None),
         template_image_disk_name=dict(default=None),
         seal=dict(type='bool'),
         vnic_profile_mappings=dict(default=[], type='list'),
