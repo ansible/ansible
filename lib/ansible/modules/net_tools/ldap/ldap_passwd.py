@@ -33,7 +33,7 @@ notes:
     and I(bind_pw).
 version_added: '2.6'
 author:
-  - Keller Fuchs (@kellerfuchs)
+  - Keller Fuchs (@KellerFuchs)
 requirements:
   - python-ldap
 options:
