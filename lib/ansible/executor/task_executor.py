@@ -565,7 +565,6 @@ class TaskExecutor:
                 tmp_args.update(self._task.args)
                 self._task.args = tmp_args
 
-
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:

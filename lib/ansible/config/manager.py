@@ -252,7 +252,6 @@ class ConfigManager(object):
         raise AnsibleError(
             "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
 
-
     def _parse_config_file(self, cfile=None):
         ''' return flat configuration settings from file(s) '''
         # TODO: take list of files with merge/nomerge
