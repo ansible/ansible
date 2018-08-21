@@ -10,11 +10,20 @@
   no_log: true
 
 - block:
+    - ec2_ami_facts:
+        <<: *aws_connection_info
+        filters:
+          architecture: x86_64
+          virtualization-type: hvm
+          root-device-type: ebs
+          name: "amzn-ami-hvm*"
+      register: amis
+
     - name: Create test instance
       ec2_instance:
           name: "ansible_ec2_vol_facts_test"
           instance_type: t2.nano
-          image_id: ami-6cd6f714
+          image_id: "{{ amis.images | sort(attribute='creation_date') | last }}"
           wait: yes
           tags:
             Environment: test
