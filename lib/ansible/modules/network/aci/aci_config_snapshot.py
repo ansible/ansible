@@ -74,6 +74,7 @@ EXAMPLES = r'''
     export_policy: config_backup
     max_count: 10
     description: Backups taken before new configs are applied.
+  delegate_to: localhost
 
 - name: Query all Snapshots
   aci_config_snapshot:
@@ -81,23 +82,28 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query Snapshots associated with a particular Export Policy
   aci_config_snapshot:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     export_policy: config_backup
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Delete a Snapshot
   aci_config_snapshot:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: absent
     export_policy: config_backup
     snapshot: run-2017-08-24T17-20-05
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -252,8 +258,8 @@ def main():
             root_class=dict(
                 aci_class='configExportP',
                 aci_rn='fabric/configexp-{0}'.format(export_policy),
-                filter_target='eq(configExportP.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
+                target_filter={'name': export_policy},
             ),
         )
 
@@ -286,14 +292,14 @@ def main():
             root_class=dict(
                 aci_class='configSnapshotCont',
                 aci_rn='backupst/snapshots-[{0}]'.format(export_policy),
-                filter_target='(configSnapshotCont.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
+                target_filter={'name': export_policy},
             ),
             subclass_1=dict(
                 aci_class='configSnapshot',
                 aci_rn='snapshot-{0}'.format(snapshot),
-                filter_target='eq(configSnapshot.name, "{0}")'.format(snapshot),
                 module_object=snapshot,
+                target_filter={'name': snapshot},
             ),
         )
 

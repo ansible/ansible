@@ -33,22 +33,25 @@ DOCUMENTATION = '''
 ---
 module: cnos_showrun
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
-short_description: Collect the current running configuration on devices running Lenovo CNOS
+short_description: Collect the current running configuration on devices running on CNOS
 description:
-    - This module allows you to view the switch running configuration. It executes the display running-config CLI
-     command on a switch and returns a file containing the current running configuration of the target network
+    - This module allows you to view the switch running configuration. It
+     executes the display running-config CLI command on a switch and returns a
+     file containing the current running configuration of the target network
      device. This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_showrun.html)
+     that must be created by the user in their local directory to where the
+     playbook is run. For more information about this module from Lenovo and
+     customizing it usage for your use cases, please visit
+     U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_showrun.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options: {}
 
 '''
 EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_showrun. These are written in the main.yml file of the tasks directory.
+Tasks : The following are examples of using the module cnos_showrun. These are
+ written in the main.yml file of the tasks directory.
 ---
 - name: Run show running-config
   cnos_showrun:
@@ -69,11 +72,6 @@ msg:
 '''
 
 import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 import time
 import socket
 import array
@@ -99,41 +97,11 @@ def main():
             enablePassword=dict(required=False, no_log=True),),
         supports_check_mode=False)
 
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
-    cliCommand = "display running-config"
+    command = 'show running-config'
     outputfile = module.params['outputfile']
-    hostIP = module.params['host']
-    output = ""
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
-
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
-
-    # Automatically add untrusted hosts (make sure okay for security policy in your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(hostIP, username=username, password=password)
-    time.sleep(2)
-
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
-
-    # Enable and then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
-
-    output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
-
-    # Make terminal length = 0
-    output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
-
-    # Send the CLi command
-    output = output + cnos.waitForDeviceResponse(cliCommand + "\n", "#", 2, remote_conn)
-
+    output = ''
+    cmd = [{'command': command, 'prompt': None, 'answer': None}]
+    output = output + str(cnos.run_cnos_commands(module, cmd))
     # Save it into the file
     file = open(outputfile, "a")
     file.write(output)
@@ -141,9 +109,11 @@ def main():
 
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="Running Configuration saved in file ")
+        module.exit_json(changed=True,
+                         msg="Running Configuration saved in file ")
     else:
         module.fail_json(msg=errorMsg)
+
 
 if __name__ == '__main__':
     main()

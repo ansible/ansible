@@ -5,11 +5,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from copy import deepcopy
-
 from ansible import constants as C
 from ansible.parsing.dataloader import DataLoader
-from ansible.vars.clean import strip_internal_keys
+from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
 _PRESERVE = ('attempts', 'changed', 'retries')
@@ -126,11 +124,12 @@ class TaskResult:
                 if sub in self._result:
                     x[sub] = {}
                     for key in _SUB_PRESERVE[sub]:
-                        x[sub][key] = self._result[sub][key]
+                        if key in self._result[sub]:
+                            x[sub][key] = self._result[sub][key]
 
             result._result = x
         elif self._result:
-            result._result = deepcopy(self._result)
+            result._result = module_response_deepcopy(self._result)
 
             # actualy remove
             for remove_key in ignore:

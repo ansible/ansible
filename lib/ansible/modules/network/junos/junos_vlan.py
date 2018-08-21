@@ -28,7 +28,7 @@ options:
     required: true
   vlan_id:
     description:
-      - ID of the VLAN.
+      - ID of the VLAN. Range 1-4094.
     required: true
   description:
     description:
@@ -218,6 +218,7 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

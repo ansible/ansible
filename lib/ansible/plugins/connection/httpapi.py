@@ -142,9 +142,9 @@ options:
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six import PY3
+from ansible.module_utils.six import PY3, BytesIO
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.six.moves.urllib.error import URLError
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import cliconf_loader, httpapi_loader
@@ -206,12 +206,12 @@ class Connection(NetworkConnectionBase):
 
             httpapi = httpapi_loader.get(self._network_os, self)
             if httpapi:
+                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
+                self._implementation_plugins.append(httpapi)
                 httpapi.set_become(self._play_context)
                 httpapi.login(self.get_option('remote_user'), self.get_option('password'))
-                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
-            self._implementation_plugins.append(httpapi)
 
             cliconf = cliconf_loader.get(self._network_os, self)
             if cliconf:
@@ -222,30 +222,52 @@ class Connection(NetworkConnectionBase):
 
             self._connected = True
 
+    def close(self):
+        '''
+        Close the active session to the device
+        '''
+        # only close the connection if its connected.
+        if self._connected:
+            display.vvvv("closing http(s) connection to device", host=self._play_context.remote_addr)
+            self.logout()
+
+        super(Connection, self).close()
+
     def send(self, path, data, **kwargs):
         '''
         Sends the command to the device over api
         '''
         url_kwargs = dict(
             timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
+            headers={},
         )
         url_kwargs.update(kwargs)
         if self._auth:
-            url_kwargs['headers']['Cookie'] = self._auth
+            # Avoid modifying passed-in headers
+            headers = dict(kwargs.get('headers', {}))
+            headers.update(self._auth)
+            url_kwargs['headers'] = headers
         else:
             url_kwargs['url_username'] = self.get_option('remote_user')
             url_kwargs['url_password'] = self.get_option('password')
 
         try:
             response = open_url(self._url + path, data=data, **url_kwargs)
-        except URLError as exc:
-            if exc.reason == 'Unauthorized' and self._auth:
-                # Stored auth appears to be invalid, clear and retry
-                self._auth = None
-                self.login(self.get_option('remote_user'), self.get_option('password'))
+        except HTTPError as exc:
+            is_handled = self.handle_httperror(exc)
+            if is_handled is True:
                 return self.send(path, data, **kwargs)
-            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
+            elif is_handled is False:
+                raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
+            else:
+                raise
+        except URLError as exc:
+            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
 
-        self._auth = response.info().get('Set-Cookie')
+        response_buffer = BytesIO()
+        response_buffer.write(response.read())
 
-        return response
+        # Try to assign a new auth token if one is given
+        self._auth = self.update_auth(response, response_buffer) or self._auth
+
+        return response, response_buffer

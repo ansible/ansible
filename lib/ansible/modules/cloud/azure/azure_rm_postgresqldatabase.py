@@ -299,5 +299,6 @@ def main():
     """Main execution"""
     AzureRMDatabases()
 
+
 if __name__ == '__main__':
     main()

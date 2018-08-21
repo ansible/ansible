@@ -191,10 +191,7 @@ if os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_ENABLED'):
     setup_logging()
 
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import consul
@@ -527,5 +524,6 @@ class ConsulConfig(dict):
             if not token:
                 token = 'anonymous'
         return consul.Consul(host=host, port=port, token=token, scheme=scheme)
+
 
 ConsulInventory()

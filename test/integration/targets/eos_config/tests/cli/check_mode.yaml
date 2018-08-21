@@ -69,5 +69,6 @@
 - assert:
    that:
    - "result.changed == true"
+   - "'session' not in result"
 
 - debug: msg="END cli/check_mode.yaml on connection={{ ansible_connection }}"

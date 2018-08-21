@@ -113,6 +113,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     tenant: production
+    state: present
+  delegate_to: localhost
 
 - name: Create a bridge domain
   aci_bd:
@@ -121,6 +123,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     tenant: production
     bd: database
+    state: present
+  delegate_to: localhost
 
 - name: Create a subnet
   aci_bd_subnet:
@@ -131,6 +135,8 @@ EXAMPLES = r'''
     bd: database
     gateway: 10.1.1.1
     mask: 24
+    state: present
+  delegate_to: localhost
 
 - name: Create a subnet with options
   aci_bd_subnet:
@@ -146,6 +152,8 @@ EXAMPLES = r'''
     scope: public
     route_profile_l3_out: corp
     route_profile: corp_route_profile
+    state: present
+  delegate_to: localhost
 
 - name: Update a subnets scope to private and shared
   aci_bd_subnet:
@@ -157,6 +165,8 @@ EXAMPLES = r'''
     gateway: 10.1.1.1
     mask: 24
     scope: [private, shared]
+    state: present
+  delegate_to: localhost
 
 - name: Get all subnets
   aci_bd_subnet:
@@ -164,38 +174,44 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
 
 - name: Get all subnets of specific gateway in specified tenant
   aci_bd_subnet:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     tenant: production
     gateway: 10.1.1.1
     mask: 24
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Get specific subnet
   aci_bd_subnet:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     tenant: production
     bd: database
     gateway: 10.1.1.1
     mask: 24
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Delete a subnet
   aci_bd_subnet:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: absent
     tenant: production
     bd: database
     gateway: 10.1.1.1
     mask: 24
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -372,20 +388,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvBD',
             aci_rn='BD-{0}'.format(bd),
-            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
+            target_filter={'name': bd},
         ),
         subclass_2=dict(
             aci_class='fvSubnet',
             aci_rn='subnet-[{0}]'.format(gateway),
-            filter_target='eq(fvSubnet.ip, "{0}")'.format(gateway),
             module_object=gateway,
+            target_filter={'ip': gateway},
         ),
         child_classes=['fvRsBDSubnetToProfile', 'fvRsNdPfxPol'],
     )

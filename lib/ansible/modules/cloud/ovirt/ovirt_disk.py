@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -195,6 +180,13 @@ EXAMPLES = '''
     size: 10GiB
     format: cow
     interface: virtio
+
+# Change Disk Name
+- ovirt_disk:
+    id: 00000000-0000-0000-0000-000000000000
+    storage_domain: data
+    name: "new disk name"
+    vm_name: rhel7
 
 # Upload local image to disk and attach it to vm:
 # Since Ansible 2.3
@@ -528,6 +520,7 @@ class DisksModule(BaseModule):
 
     def _update_check(self, entity):
         return (
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and

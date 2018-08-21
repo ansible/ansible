@@ -68,7 +68,7 @@ class IncludeRole(TaskInclude):
 
     def get_name(self):
         ''' return the name of the task '''
-        return "%s : %s" % (self.action, self._role_name)
+        return self.name or "%s : %s" % (self.action, self._role_name)
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 

@@ -229,7 +229,9 @@ files:
   $modules/cloud/docker/docker_network.py: keitwb olsaki
   $modules/cloud/docker/docker_secret.py:
   $modules/cloud/docker/docker_service.py: $team_ansible
-  $modules/cloud/google/: rambleraptor erjohnso
+  $modules/cloud/google/:
+    maintainers: rambleraptor erjohnso
+    ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
   $modules/cloud/google/gcdns_record.py: walbert947
   $modules/cloud/google/gcdns_zone.py: walbert947
@@ -310,7 +312,7 @@ files:
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/vsphere_guest.py: dagwieers
-  $modules/cloud/vultr/: resmo
+  $modules/cloud/vultr/: $team_vultr
   $modules/cloud/webfaction/: quentinsf
   $modules/clustering/consul.py: sgargan
   $modules/clustering/consul_acl.py: sgargan
@@ -328,6 +330,7 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: Spredzy
+  $modules/crypto/acme/: resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/misc/elasticsearch_plugin.py: ThePixelDeveloper
   $modules/database/misc/kibana_plugin.py: barryib
@@ -424,10 +427,10 @@ files:
   $modules/monitoring/zabbix/zabbix_maintenance.py: abulimov
   $modules/monitoring/zabbix/zabbix_screen.py: cove harrisongu
   $modules/monitoring/zabbix/zabbix_template.py: eikef Logan2211 sookido
-  $modules/net_tools/basics/get_url.py: jpmens
+  $modules/net_tools/basics/get_url.py: jpmens ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py: $team_ansible
-  $modules/net_tools/cloudflare_dns.py: mgruener andreaso
+  $modules/net_tools/cloudflare_dns.py: andreaso
   $modules/net_tools/dnsimple.py: drcapulet
   $modules/net_tools/dnsmadeeasy.py: briceburg
   $modules/net_tools/exoscale/: resmo
@@ -463,7 +466,7 @@ files:
   $modules/network/dellos9/: dhivyap skg-net
   $modules/network/edgeos/: samdoran
   $modules/network/enos/: amuraleedhar
-  $modules/network/eos/: privateip trishnaguha
+  $modules/network/eos/: trishnaguha
   $modules/network/exos/: rdvencioneck
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806 JoeReifel $team_networking
@@ -472,8 +475,8 @@ files:
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
-  $modules/network/ios/: privateip rcarrillocruz
-  $modules/network/iosxr/: privateip rcarrillocruz gdpak
+  $modules/network/ios/: rcarrillocruz
+  $modules/network/iosxr/: rcarrillocruz gdpak
   $modules/network/ironware/: paulquack
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
@@ -484,6 +487,7 @@ files:
   $modules/network/netconf/netconf_rpc.py: wisotzky $team_networking
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
+  $modules/network/nos/: $team_extreme
   $modules/network/nuage/: pdellaert
   $modules/network/nxos/: $team_nxos
   $modules/network/nso/: $team_nso
@@ -494,14 +498,16 @@ files:
   $modules/network/ordnance/: alexanderturner djh00t
   $modules/network/ovs/:
     ignored: stygstra
-    maintainers: privateip rcarrillocruz
+    maintainers: rcarrillocruz
   $modules/network/panos/: ivanbojer jtschichold
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
+  $modules/network/routeros/: heuels
   $modules/network/routing/: $team_networking
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
+  $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos samdoran
   $modules/notification/bearychat.py: tonyseek
   $modules/notification/campfire.py: fabulops
@@ -546,7 +552,7 @@ files:
   $modules/packaging/os/apt_key.py: jvantuyl
   $modules/packaging/os/apt_repository.py: $team_ansible sashka
   $modules/packaging/os/apt_rpm.py: evgkrsk
-  $modules/packaging/os/dnf.py: DJMuggs berenddeschouwer ignatenkobrain
+  $modules/packaging/os/dnf.py: DJMuggs berenddeschouwer ignatenkobrain maxamillion
   $modules/packaging/os/dpkg_selections.py: brian-brazil
   $modules/packaging/os/homebrew.py: andrew-d danieljaouen indrajitr
   $modules/packaging/os/homebrew_cask.py: danieljaouen enriclluelles indrajitr
@@ -581,7 +587,7 @@ files:
   $modules/packaging/os/swdepot.py: melodous
   $modules/packaging/os/swupd.py: albertomurillo
   $modules/packaging/os/urpmi.py: pmakowski
-  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 kustodian
+  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 kustodian maxamillion
   $modules/packaging/os/yum_repository.py: jtyr
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
@@ -686,9 +692,6 @@ files:
   $modules/utilities/logic/pause.py: tbielawa samdoran
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
-  $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_account.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
@@ -699,6 +702,7 @@ files:
   $modules/web_infrastructure/jboss.py:
     labels: jboss
     maintainers: jhoekx
+  $modules/web_infrastructure/jboss/: $team_jboss
   $modules/web_infrastructure/jenkins_job.py: sermilrod
   $modules/web_infrastructure/jenkins_plugin.py: jtyr
   $modules/web_infrastructure/jenkins_script.py: hogarthj
@@ -712,6 +716,12 @@ files:
     maintainers: $team_windows
     ignored: angstwad georgefrank h0nIg
   $modules/windows/win_security_policy.py: rndmh3ro defionscode
+  bin/ansible-connection:
+    keywords:
+    - persistent connection
+    labels:
+    - networking
+    maintainers: $team_networking
   contrib/inventory:
     keywords:
     - dynamic inventory script
@@ -803,7 +813,7 @@ files:
     labels: networking
     support: community
   $module_utils/acme.py:
-    maintainers: mgruener resmo felixfontein
+    maintainers: resmo felixfontein
   $module_utils/network/aireos:
     maintainers: jmighion
     labels: networking
@@ -881,11 +891,17 @@ files:
   $module_utils/network/netscaler:
     maintainers: $team_netscaler
     labels: networking
+  $module_utils/network/nos:
+    maintainers: $team_extreme
+    labels: networking
   $module_utils/network/nso:
     maintainers: $team_nso
     labels: networking
   $module_utils/network/onyx:
     maintainers: $team_onyx
+    labels: networking
+  $module_utils/network/routeros:
+    maintainers: heuels
     labels: networking
   $module_utils/network/slxos:
     maintainers: $team_extreme
@@ -910,10 +926,19 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
+  $module_utils/netapp: $team_netapp
+  $module_utils/vultr.py:
+    maintainers: $team_vultr
+    labels:
+    - vultr
+    - cloud
   $module_utils/vmware:
     maintainers: $team_vmware
     labels: vmware
     support: community
+  $module_utils/network/voss:
+    maintainers: $team_extreme
+    labels: networking
   $module_utils/network:
     maintainers: $team_networking
     labels: networking
@@ -922,6 +947,8 @@ files:
   $module_utils/memset.py:
     maintainers: analbeard
     labels: cloud
+  $module_utils/jboss/:
+    maintainers: $team_jboss
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
@@ -1000,6 +1027,9 @@ files:
   lib/ansible/plugins/cliconf/ironware.py:
     maintainers: paulquack
     labels: networking
+  lib/ansible/plugins/cliconf/nos.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/cliconf/nxos.py:
     maintainers: $team_nxos
     labels:
@@ -1007,6 +1037,9 @@ files:
     - nxos
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
+    labels: networking
+  lib/ansible/plugins/cliconf/routeros.py:
+    maintainers: heuels
     labels: networking
   lib/ansible/plugins/cliconf/slxos.py:
     maintainers: $team_extreme
@@ -1022,6 +1055,9 @@ files:
   lib/ansible/plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/httpapi/ftd.py:
+    maintainers: annikulin $team_networking
+    labels: networking
   lib/ansible/plugins/inventory/openstack.py:
     maintainers: $team_openstack
     keywords:
@@ -1030,6 +1066,9 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/cliconf/voss.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/connection/winrm.py:
     maintainers: $team_windows_core
     labels:
@@ -1038,6 +1077,10 @@ files:
     maintainers: machacekondra
     labels:
       - ovirt
+      - cloud
+  lib/ansible/plugins/inventory/scaleway.py:
+    maintainers: sieben hekonsek
+    labels:
       - cloud
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking
@@ -1107,6 +1150,9 @@ files:
   lib/ansible/plugins/terminal/junos.py:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/terminal/nos.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/terminal/nxos.py:
     maintainers: $team_networking
     labels:
@@ -1115,11 +1161,17 @@ files:
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/terminal/routeros.py:
+    maintainers: heuels
+    labels: networking
   lib/ansible/plugins/terminal/slxos.py:
     maintainers: $team_extreme
     labels: networking
   lib/ansible/plugins/terminal/sros.py:
     maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/terminal/voss.py:
+    maintainers: $team_extreme
     labels: networking
   lib/ansible/plugins/terminal/vyos.py:
     maintainers: $team_networking samdoran
@@ -1130,15 +1182,19 @@ files:
     keywords:
     - jinja
     - jinja2
+  lib/ansible/utils/module_docs_fragments/acme.py:
+    maintainers: resmo felixfontein
   test/sanity/validate-modules:
     keywords:
     - validate-modules
   docs/:
     labels: docs
+    maintainers:
+      - acozine
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
-      - acozine
+      - samccann
       - gundalow
   docs/docsite/rst/scenario_guides/guide_aci.rst:
     maintainers: $team_aci
@@ -1177,6 +1233,8 @@ files:
     labels:
     - networking
     - nxos
+  test/integration/targets/setup_acme:
+    maintainers: resmo felixfontein
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
   test/integration/targets/ucs:
@@ -1210,25 +1268,27 @@ macros:
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
   team_cloudstack: resmo dpassante
-  team_cumulus: isharacomix jrrivers privateip
+  team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
+  team_jboss: jairojunior wbrefvem Wolfant
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
   team_netscaler: chiradeep giorgos-nikolopoulos
-  team_netvisor: Qalthos amitsi gundalow privateip
-  team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha gdpak
+  team_netvisor: Qalthos amitsi
+  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais
   team_nso: cmoberg cnasten tbjurman
-  team_nxos: mikewiebe privateip rahushen rcarrillocruz trishnaguha tstoner
+  team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha tstoner
   team_onyx: samerd
   team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello
-  team_openswitch: Qalthos gundalow privateip gdpak
+  team_openswitch: Qalthos gdpak
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough vallard vvb dagwieers
   team_vmware: Akasurde dav1x warthog9
+  team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93

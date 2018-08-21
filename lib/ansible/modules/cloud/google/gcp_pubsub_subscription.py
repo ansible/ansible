@@ -53,7 +53,7 @@ options:
         required: false
     topic:
         description:
-            - A reference to Topic resource.
+            - A reference to a Topic resource.
         required: false
     push_config:
         description:
@@ -90,26 +90,23 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a topic
   gcp_pubsub_topic:
-      name: 'topic-subscription'
+      name: "topic-subscription"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: present
   register: topic
+
 - name: create a subscription
   gcp_pubsub_subscription:
-      name: testObject
+      name: "test_object"
       topic: "{{ topic }}"
       push_config:
-        push_endpoint: 'https://myapp.graphite.cloudnativeapp.com/webhook/sub1'
+        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -121,7 +118,7 @@ RETURN = '''
         type: str
     topic:
         description:
-            - A reference to Topic resource.
+            - A reference to a Topic resource.
         returned: success
         type: dict
     push_config:
@@ -185,6 +182,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
+
     state = module.params['state']
 
     fetch = fetch_resource(module, self_link(module))
@@ -229,7 +229,7 @@ def resource_to_request(module):
     request = {
         u'name': module.params.get('name'),
         u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
-        u'pushConfig': SubscriPushConfig(module.params.get('push_config', {}), module).to_request(),
+        u'pushConfig': SubscriptionPushConfig(module.params.get('push_config', {}), module).to_request(),
         u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds')
     }
     request = encode_request(request, module)
@@ -302,7 +302,7 @@ def response_to_hash(module, response):
     return {
         u'name': response.get(u'name'),
         u'topic': response.get(u'topic'),
-        u'pushConfig': SubscriPushConfig(response.get(u'pushConfig', {}), module).from_response(),
+        u'pushConfig': SubscriptionPushConfig(response.get(u'pushConfig', {}), module).from_response(),
         u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds')
     }
 
@@ -326,7 +326,7 @@ def encode_request(request, module):
     return request
 
 
-class SubscriPushConfig(object):
+class SubscriptionPushConfig(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -343,6 +343,7 @@ class SubscriPushConfig(object):
         return remove_nones_from_dict({
             u'pushEndpoint': self.request.get(u'pushEndpoint')
         })
+
 
 if __name__ == '__main__':
     main()

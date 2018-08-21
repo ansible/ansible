@@ -30,6 +30,7 @@ options:
     description:
       - Share directory.
     required: yes
+    type: path
   state:
     description:
       - Specify whether to add C(present) or remove C(absent) the specified share.
@@ -40,7 +41,7 @@ options:
       - Share description.
   list:
     description:
-      - Specify whether to allow or deny file listing, in case user got no permission on share.
+      - Specify whether to allow or deny file listing, in case user has no permission on share. Also known as Access-Based Enumeration.
     type: bool
     default: 'no'
   read:

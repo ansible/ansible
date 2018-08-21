@@ -1,0 +1,20 @@
+---
+- name: ensure Chocolatey is installed
+  win_chocolatey:
+    name: chocolatey
+    state: present
+
+- name: ensure we start from a baseline for test feature
+  win_chocolatey_feature:
+    name: checksumFiles
+    state: disabled
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: set feature back to enabled
+    win_chocolatey_feature:
+      name: checksumFiles
+      state: enabled

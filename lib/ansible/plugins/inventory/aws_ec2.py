@@ -8,6 +8,9 @@ DOCUMENTATION = '''
     name: aws_ec2
     plugin_type: inventory
     short_description: ec2 inventory source
+    requirements:
+        - boto3
+        - botocore
     extends_documentation_fragment:
         - inventory_cache
         - constructed
@@ -130,6 +133,12 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 try:
     import boto3
@@ -466,7 +475,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             # Composed variables
             self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
 
-            # Complex groups based on jinaj2 conditionals, hosts that meet the conditional are added to group
+            # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
             self._add_host_to_composed_groups(self.get_option('groups'), host, hostname, strict=strict)
 
             # Create groups based on variable values and add the corresponding hosts to it
@@ -502,6 +511,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if super(InventoryModule, self).verify_file(path):
             if path.endswith('.aws_ec2.yml') or path.endswith('.aws_ec2.yaml'):
                 return True
+        display.debug("aws_ec2 inventory filename must end with '*.aws_ec2.yml' or '*.aws_ec2.yaml'")
         return False
 
     def _get_query_options(self, config_data):

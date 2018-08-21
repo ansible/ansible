@@ -270,7 +270,7 @@ def main():
             commands = dumps(configobjs, 'commands')
             if ((isinstance(module.params['lines'], list)) and
                     (isinstance(module.params['lines'][0], dict)) and
-                    ['prompt', 'answer'].issubset(module.params['lines'][0])):
+                    set(['prompt', 'answer']).issubset(module.params['lines'][0])):
 
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],
@@ -305,6 +305,7 @@ def main():
                         'non-volatile storage')
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

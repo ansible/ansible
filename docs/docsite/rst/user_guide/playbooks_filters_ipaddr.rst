@@ -545,7 +545,7 @@ convert it between various formats. Examples::
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

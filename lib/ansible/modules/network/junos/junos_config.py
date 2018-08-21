@@ -131,6 +131,7 @@ notes:
     L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Loading JSON-formatted configuration I(json) is supported
     starting in Junos OS Release 16.1 onwards.
+  - Update C(override) not currently compatible with C(set) notation.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
   - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
   - This module also works with C(local) connections for legacy playbooks.

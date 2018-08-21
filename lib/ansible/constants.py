@@ -123,9 +123,9 @@ VAULT_VERSION_MAX = 1.0
 # object. The dictionary values are tuples, to account for aliases
 # in variable names.
 
-COMMON_CONNECTION_VARS = frozenset(set(('ansible_connection', 'ansbile_host', 'ansible_user', 'ansible_shell_executable',
-                                        'ansible_port', 'ansible_pipelining', 'ansible_password', 'ansible_timeout',
-                                        'ansible_shell_type', 'ansible_module_compression', 'ansible_private_key_file')))
+COMMON_CONNECTION_VARS = frozenset(('ansible_connection', 'ansible_host', 'ansible_user', 'ansible_shell_executable',
+                                    'ansible_port', 'ansible_pipelining', 'ansible_password', 'ansible_timeout',
+                                    'ansible_shell_type', 'ansible_module_compression', 'ansible_private_key_file'))
 
 MAGIC_VARIABLE_MAPPING = dict(
 

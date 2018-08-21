@@ -226,10 +226,10 @@ class Task(Base, Conditional, Taggable, Become):
                 # pre-2.0 syntax allowed variables for include statements at the top level of the task,
                 # so we move those into the 'vars' dictionary here, and show a deprecation message
                 # as we will remove this at some point in the future.
-                if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
+                if action in ('include',) and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
                                        " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                                       " for currently supported syntax regarding included files and variables", version="2.7")
+                                       " for currently supported syntax regarding included files and variables", version="2.12")
                     new_ds['vars'][k] = v
                 elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
@@ -247,6 +247,13 @@ class Task(Base, Conditional, Taggable, Become):
             )
 
         return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
+
+    def _validate_attributes(self, ds):
+        try:
+            super(Task, self)._validate_attributes(ds)
+        except AnsibleParserError as e:
+            e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
+            raise e
 
     def post_validate(self, templar):
         '''
@@ -278,8 +285,9 @@ class Task(Base, Conditional, Taggable, Become):
                 try:
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
-                    if self.action in ('setup', 'gather_facts') and 'ansible_env' in to_native(e):
-                        # ignore as fact gathering sets ansible_env
+                    error = to_native(e)
+                    if self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+                        # ignore as fact gathering is required for 'env' facts
                         return
                     raise
 

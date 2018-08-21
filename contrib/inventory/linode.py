@@ -81,10 +81,7 @@ import sys
 import argparse
 from time import time
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     from chube import load_chube_config

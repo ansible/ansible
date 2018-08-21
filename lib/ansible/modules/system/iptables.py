@@ -178,11 +178,13 @@ options:
         greater than the second one they will be swapped.
   destination_port:
     description:
-      - Destination port or port range specification. This can either be
+      - "Destination port or port range specification. This can either be
         a service name or a port number. An inclusive range can also be
         specified, using the format first:last. If the first port is omitted,
         '0' is assumed; if the last is omitted, '65535' is assumed. If the
         first port is greater than the second one they will be swapped.
+        This is only valid if the rule also specifies one of the following
+        protocols: tcp, udp, dccp or sctp."
   to_ports:
     description:
       - "This specifies a destination port or range of ports to use: without

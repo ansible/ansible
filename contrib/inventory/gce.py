@@ -101,10 +101,7 @@ else:
 import logging
 logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     from libcloud.compute.types import Provider
@@ -533,6 +530,7 @@ class GceInventory(object):
             return json.dumps(data, sort_keys=True, indent=2)
         else:
             return json.dumps(data)
+
 
 # Run the script
 if __name__ == '__main__':

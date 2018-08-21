@@ -77,6 +77,7 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing contract to EPG binding
   aci_epg_to_contract:
@@ -89,6 +90,7 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific contract to EPG binding
   aci_epg_to_contract:
@@ -101,6 +103,8 @@ EXAMPLES = r'''
     contract: anstest_http
     contract_type: provider
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all provider contract to EPG bindings
   aci_epg_to_contract:
@@ -109,6 +113,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     contract_type: provider
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -267,26 +273,26 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class=aci_class,
             aci_rn='{0}{1}'.format(aci_rn, contract),
-            filter_target='eq({0}.tnVzBrCPName, "{1}'.format(aci_class, contract),
             module_object=contract,
+            target_filter={'tnVzBrCPName': contract},
         ),
     )
 

@@ -36,10 +36,7 @@ import SoftLayer
 import re
 import argparse
 import itertools
-try:
-    import json
-except:
-    import simplejson as json
+import json
 
 
 class SoftLayerInventory(object):
@@ -197,5 +194,6 @@ class SoftLayerInventory(object):
         self.client = SoftLayer.Client()
         self.get_virtual_servers()
         self.get_physical_servers()
+
 
 SoftLayerInventory()

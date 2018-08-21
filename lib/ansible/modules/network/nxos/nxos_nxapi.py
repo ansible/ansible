@@ -94,6 +94,43 @@ options:
     choices: ['present', 'absent']
     required: false
     default: present
+  ssl_strong_ciphers:
+    description:
+      - Controls the use of whether strong or weak ciphers are configured.
+        By default, this feature is disabled and weak ciphers are
+        configured.  To enable the use of strong ciphers, set the value of
+        this argument to True.
+    required: false
+    default: no
+    type: bool
+    version_added: "2.7"
+  tlsv1_0:
+    description:
+      - Controls the use of the Transport Layer Security version 1.0 is
+        configured.  By default, this feature is enabled.  To disable the
+        use of TLSV1.0, set the value of this argument to True.
+    required: false
+    default: yes
+    type: bool
+    version_added: "2.7"
+  tlsv1_1:
+    description:
+      - Controls the use of the Transport Layer Security version 1.1 is
+        configured.  By default, this feature is disabled.  To enable the
+        use of TLSV1.1, set the value of this argument to True.
+    required: false
+    default: no
+    type: bool
+    version_added: "2.7"
+  tlsv1_2:
+    description:
+      - Controls the use of the Transport Layer Security version 1.2 is
+        configured.  By default, this feature is disabled.  To enable the
+        use of TLSV1.2, set the value of this argument to True.
+    required: false
+    default: no
+    type: bool
+    version_added: "2.7"
 """
 
 EXAMPLES = """
@@ -124,6 +161,7 @@ updates:
 """
 import re
 
+from distutils.version import LooseVersion
 from ansible.module_utils.network.nxos.nxos import run_commands, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import get_capabilities
@@ -131,14 +169,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 
-def check_args(module, warnings):
-    device_info = get_capabilities(module)
-
-    network_api = device_info.get('network_api', 'nxapi')
+def check_args(module, warnings, capabilities):
+    network_api = capabilities.get('network_api', 'nxapi')
     if network_api == 'nxapi':
         module.fail_json(msg='module not supported over nxapi transport')
 
-    os_platform = device_info['device_info']['network_os_platform']
+    os_platform = capabilities['device_info']['network_os_platform']
     if '7K' not in os_platform and module.params['sandbox']:
         module.fail_json(msg='sandbox or enable_sandbox is supported on NX-OS 7K series of switches')
 
@@ -161,9 +197,20 @@ def check_args(module, warnings):
     return warnings
 
 
-def map_obj_to_commands(want, have, module):
+def map_obj_to_commands(want, have, module, warnings, capabilities):
     send_commands = list()
     commands = dict()
+    os_platform = None
+    os_version = None
+
+    device_info = capabilities.get('device_info')
+    if device_info:
+        os_version = device_info.get('network_os_version')
+        if os_version:
+            os_version = os_version[:3]
+        os_platform = device_info.get('network_os_platform')
+        if os_platform:
+            os_platform = os_platform[:3]
 
     def needs_update(x):
         return want.get(x) is not None and (want.get(x) != have.get(x))
@@ -191,8 +238,30 @@ def map_obj_to_commands(want, have, module):
         if not want['sandbox']:
             commands['sandbox'] = 'no %s' % commands['sandbox']
 
-    for parameter in commands.keys():
-        send_commands.append(commands[parameter])
+    if os_platform and os_version:
+        if (os_platform == 'N9K' or os_platform == 'N3K') and LooseVersion(os_version) >= "9.2":
+            if needs_update('ssl_strong_ciphers'):
+                commands['ssl_strong_ciphers'] = 'nxapi ssl ciphers weak'
+                if want['ssl_strong_ciphers'] is True:
+                    commands['ssl_strong_ciphers'] = 'no nxapi ssl ciphers weak'
+
+            have_ssl_protocols = ''
+            want_ssl_protocols = ''
+            for key, value in {'tlsv1_2': 'TLSv1.2', 'tlsv1_1': 'TLSv1.1', 'tlsv1_0': 'TLSv1'}.items():
+                if needs_update(key):
+                    if want.get(key) is True:
+                        want_ssl_protocols = " ".join([want_ssl_protocols, value])
+                elif have.get(key) is True:
+                    have_ssl_protocols = " ".join([have_ssl_protocols, value])
+
+            if len(want_ssl_protocols) > 0:
+                commands['ssl_protocols'] = 'nxapi ssl protocols%s' % (" ".join([want_ssl_protocols, have_ssl_protocols]))
+    else:
+        warnings.append('os_version and/or os_platform keys from '
+                        'platform capabilities are not available.  '
+                        'Any NXAPI SSL optional arguments will be ignored')
+
+    send_commands.extend(commands.values())
 
     return send_commands
 
@@ -231,6 +300,27 @@ def parse_sandbox(data):
     return {'sandbox': value}
 
 
+def parse_ssl_strong_ciphers(data):
+    ciphers_res = [r'(\w+) nxapi ssl ciphers weak']
+    value = None
+
+    for regex in ciphers_res:
+        match = re.search(regex, data, re.M)
+        if match:
+            value = match.group(1)
+            break
+
+    return {'ssl_strong_ciphers': value == 'no'}
+
+
+def parse_ssl_protocols(data):
+    tlsv1_0 = re.search(r'(?<!\S)TLSv1(?!\S)', data, re.M) is not None
+    tlsv1_1 = re.search(r'(?<!\S)TLSv1.1(?!\S)', data, re.M) is not None
+    tlsv1_2 = re.search(r'(?<!\S)TLSv1.2(?!\S)', data, re.M) is not None
+
+    return {'tlsv1_0': tlsv1_0, 'tlsv1_1': tlsv1_1, 'tlsv1_2': tlsv1_2}
+
+
 def map_config_to_obj(module):
     out = run_commands(module, ['show run all | inc nxapi'], check_rc=False)[0]
     match = re.search(r'no feature nxapi', out, re.M)
@@ -246,6 +336,8 @@ def map_config_to_obj(module):
     obj.update(parse_http(out))
     obj.update(parse_https(out))
     obj.update(parse_sandbox(out))
+    obj.update(parse_ssl_strong_ciphers(out))
+    obj.update(parse_ssl_protocols(out))
 
     return obj
 
@@ -257,7 +349,11 @@ def map_params_to_obj(module):
         'https': module.params['https'],
         'https_port': module.params['https_port'],
         'sandbox': module.params['sandbox'],
-        'state': module.params['state']
+        'state': module.params['state'],
+        'ssl_strong_ciphers': module.params['ssl_strong_ciphers'],
+        'tlsv1_0': module.params['tlsv1_0'],
+        'tlsv1_1': module.params['tlsv1_1'],
+        'tlsv1_2': module.params['tlsv1_2']
     }
 
     return obj
@@ -272,7 +368,11 @@ def main():
         https=dict(aliases=['enable_https'], type='bool', default=False),
         https_port=dict(type='int', default=443),
         sandbox=dict(aliases=['enable_sandbox'], type='bool'),
-        state=dict(default='present', choices=['started', 'stopped', 'present', 'absent'])
+        state=dict(default='present', choices=['started', 'stopped', 'present', 'absent']),
+        ssl_strong_ciphers=dict(type='bool', default=False),
+        tlsv1_0=dict(type='bool', default=True),
+        tlsv1_1=dict(type='bool', default=False),
+        tlsv1_2=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -286,15 +386,16 @@ def main():
     warning_msg += " when params 'http, http_port, https, https_port' are not set in the playbook"
     module.deprecate(msg=warning_msg, version="2.11")
 
-    check_args(module, warnings)
+    capabilities = get_capabilities(module)
 
-    result = {'changed': False, 'warnings': warnings}
+    check_args(module, warnings, capabilities)
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands(want, have, module)
-    result['commands'] = commands
+    commands = map_obj_to_commands(want, have, module, warnings, capabilities)
+
+    result = {'changed': False, 'warnings': warnings, 'commands': commands}
 
     if commands:
         if not module.check_mode:
@@ -302,6 +403,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

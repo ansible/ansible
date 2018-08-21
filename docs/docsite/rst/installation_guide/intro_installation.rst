@@ -41,7 +41,7 @@ information about running from source.  It's not necessary to install the progra
 Control Machine Requirements
 ````````````````````````````
 
-Currently Ansible can be run from any machine with Python 2 (versions 2.6 or 2.7) or Python 3 (versions 3.5 and higher) installed (Windows isn't supported for the control machine).
+Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Windows isn't supported for the control machine.
 
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
@@ -121,7 +121,7 @@ To enable the Ansible Engine repository, run the following command:
 
     $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.6-rpms
 
-RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <http://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
+RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
 Ansible version 2.4 and later can manage earlier operating systems that contain Python 2.6 or higher.
 
@@ -139,7 +139,7 @@ You can also build an RPM yourself. From the root of a checkout or tarball, use 
 Latest Releases Via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
-Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ansible>`_.
+Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_.
 
 To configure the PPA on your machine and install ansible run these commands:
 
@@ -397,7 +397,7 @@ bugs and feature ideas.
        Learning ansible's configuration management language
    :ref:`installation_faqs`
        Ansible Installation related to FAQs
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

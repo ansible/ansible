@@ -264,7 +264,9 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
 """
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.eos.eos import get_config, load_config, get_connection
 from ansible.module_utils.network.eos.eos import run_commands
@@ -382,7 +384,12 @@ def main():
         candidate = get_candidate(module)
         running = get_running_config(module, contents, flags=flags)
 
-        response = connection.get_diff(candidate=candidate, running=running, match=match, diff_ignore_lines=diff_ignore_lines, path=path, replace=replace)
+        try:
+            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                           diff_replace=replace)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
         config_diff = response['config_diff']
 
         if config_diff:

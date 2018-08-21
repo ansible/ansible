@@ -62,6 +62,7 @@ PASS_BOOLS = ('no_log', 'debug', 'diff')
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
+import __main__
 import atexit
 import locale
 import os
@@ -108,26 +109,14 @@ NoneType = type(None)
 try:
     import json
     # Detect the python-json library which is incompatible
-    # Look for simplejson if that's the case
     try:
         if not isinstance(json.loads, types.FunctionType) or not isinstance(json.dumps, types.FunctionType):
             raise ImportError
     except AttributeError:
         raise ImportError
 except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        print('\n{"msg": "Error: ansible requires the stdlib json or simplejson module, neither was found!", "failed": true}')
-        sys.exit(1)
-    except SyntaxError:
-        print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
-        sys.exit(1)
-    else:
-        sj_version = json.__version__.split('.')
-        if sj_version < ['1', '6']:
-            # Version 1.5 released 2007-01-18 does not have the encoding parameter which we need
-            print('\n{"msg": "Error: Ansible requires the stdlib json or simplejson >= 1.6.  Neither was found!", "failed": true}')
+    print('\n{"msg": "Error: ansible requires the stdlib json and was not found!", "failed": true}')
+    sys.exit(1)
 
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:
@@ -159,6 +148,8 @@ from ansible.module_utils.common._collections_compat import (
     Sequence, MutableSequence,
     Set, MutableSet,
 )
+from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.common.file import is_executable
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
@@ -667,20 +658,6 @@ def human_to_bytes(number, default_unit=None, isbits=False):
             raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (number, expect_message))
 
     return int(round(num * limit))
-
-
-def is_executable(path):
-    '''is the given path executable?
-
-    Limitations:
-    * Does not account for FSACLs.
-    * Most times we really want to know "Can the current user execute this
-      file"  This function does not tell us that, only if an execute bit is set.
-    '''
-    # These are all bitfields so first bitwise-or all the permissions we're
-    # looking for, then bitwise-and with the file's mode to determine if any
-    # execute bits are set.
-    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
 
 
 def _load_params():
@@ -2286,28 +2263,13 @@ class AnsibleModule(object):
            - opt_dirs:  optional list of directories to search in addition to PATH
         if found return full path; otherwise return None
         '''
-        opt_dirs = [] if opt_dirs is None else opt_dirs
 
-        sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-        paths = []
-        for d in opt_dirs:
-            if d is not None and os.path.exists(d):
-                paths.append(d)
-        paths += os.environ.get('PATH', '').split(os.pathsep)
         bin_path = None
-        # mangle PATH to include /sbin dirs
-        for p in sbin_paths:
-            if p not in paths and os.path.exists(p):
-                paths.append(p)
-        for d in paths:
-            if not d:
-                continue
-            path = os.path.join(d, arg)
-            if os.path.exists(path) and not os.path.isdir(path) and is_executable(path):
-                bin_path = path
-                break
-        if required and bin_path is None:
-            self.fail_json(msg='Failed to find required executable %s in paths: %s' % (arg, os.pathsep.join(paths)))
+        try:
+            bin_path = get_bin_path(arg, required, opt_dirs)
+        except ValueError as e:
+            self.fail_json(msg=to_text(e))
+
         return bin_path
 
     def boolean(self, arg):
@@ -2384,10 +2346,15 @@ class AnsibleModule(object):
             raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
 
-        # add traceback if debug or high verbosity and it is missing
-        # Note: badly named as exception, it is really always been 'traceback'
+        # Add traceback if debug or high verbosity and it is missing
+        # NOTE: Badly named as exception, it really always has been a traceback
         if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+            if PY2:
+                # On Python 2 this is the last (stack frame) exception and as such may be unrelated to the failure
+                kwargs['exception'] = 'WARNING: The below traceback may *not* be related to the actual failure.\n' +\
+                                      ''.join(traceback.format_tb(sys.exc_info()[2]))
+            else:
+                kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -2618,7 +2585,8 @@ class AnsibleModule(object):
                                 if unsafe_writes and e.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
-                                    self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, to_native(e)),
+                                    self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
+                                                       (src, dest, b_tmp_dest_name, to_native(e)),
                                                    exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError) as e:
                             self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)),

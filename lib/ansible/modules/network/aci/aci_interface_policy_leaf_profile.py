@@ -51,6 +51,7 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     description:  leafintprfname description
     state: present
+  delegate_to: localhost
 
 - name: Remove a leaf_interface_profile
   aci_interface_policy_leaf_profile:
@@ -59,6 +60,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
     state: absent
+  delegate_to: localhost
 
 - name: Remove all leaf_interface_profiles
   aci_interface_policy_leaf_profile:
@@ -66,6 +68,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: absent
+  delegate_to: localhost
 
 - name: Query a leaf_interface_profile
   aci_interface_policy_leaf_profile:
@@ -74,6 +77,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -211,8 +216,8 @@ def main():
         root_class=dict(
             aci_class='infraAccPortP',
             aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
-            module_object=leaf_interface_profile
+            module_object=leaf_interface_profile,
+            target_filter={'name': leaf_interface_profile},
         ),
     )
     aci.get_existing()

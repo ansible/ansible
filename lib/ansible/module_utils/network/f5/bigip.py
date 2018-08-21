@@ -87,7 +87,7 @@ class F5RestClient(F5BaseClient):
 
                 if response.status not in [200]:
                     raise F5ModuleError('Status code: {0}. Unexpected Error: {1} for uri: {2}\nText: {3}'.format(
-                        response.status, response.reason, response.url, response._content
+                        response.status, response.reason, response.url, response.content
                     ))
 
                 session.headers['X-F5-Auth-Token'] = response.json()['token']['token']

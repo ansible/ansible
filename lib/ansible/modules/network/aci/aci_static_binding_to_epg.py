@@ -125,6 +125,7 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: present
+  delegate_to: localhost
 
 - name: Remove Static Path binding for given EPG
   aci_static_binding_to_epg:
@@ -139,6 +140,7 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: absent
+  delegate_to: localhost
 
 - name: Get specific Static Path binding for given EPG
   aci_static_binding_to_epg:
@@ -153,6 +155,8 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -308,8 +312,11 @@ def main():
     pod_id = module.params['pod_id']
     leafs = module.params['leafs']
     if leafs is not None:
-        # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
-        leafs = [str(leaf) for leaf in module.params['leafs']]
+        # Process leafs, and support dash-delimited leafs
+        leafs = []
+        for leaf in module.params['leafs']:
+            # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
+            leafs.extend(str(leaf).split('-'))
         if len(leafs) == 1:
             if interface_type != 'vpc':
                 leafs = leafs[0]
@@ -358,6 +365,11 @@ def main():
     )
 
     static_path = INTERFACE_TYPE_MAPPING[interface_type]
+
+    path_target_filter = {}
+    if pod_id is not None and leafs is not None and interface is not None and (interface_type != 'fex' or extpaths is not None):
+        path_target_filter = {'tDn': static_path}
+
     if interface_mode is not None:
         interface_mode = INTERFACE_MODE_MAPPING[interface_mode]
 
@@ -366,26 +378,26 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class='fvRsPathAtt',
             aci_rn='rspathAtt-[{0}]'.format(static_path),
-            filter_target='eq(fvRsPathAtt.tDn, "{0}"'.format(static_path),
             module_object=static_path,
+            target_filter=path_target_filter,
         ),
     )
 

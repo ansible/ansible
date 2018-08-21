@@ -57,11 +57,9 @@ import os
 import sys
 import time
 from distutils.version import StrictVersion
+from io import StringIO
 
-try:
-    import json
-except:
-    import simplejson as json
+import json
 
 import openstack as sdk
 from openstack.cloud import inventory as sdk_inventory
@@ -81,7 +79,8 @@ def get_groups_from_server(server_vars, namegroup=True):
     groups.append(cloud)
 
     # Create a group on region
-    groups.append(region)
+    if region:
+        groups.append(region)
 
     # And one by cloud_region
     groups.append("%s_%s" % (cloud, region))
@@ -235,6 +234,8 @@ def parse_args():
 def main():
     args = parse_args()
     try:
+        # openstacksdk library may write to stdout, so redirect this
+        sys.stdout = StringIO()
         config_files = cloud_config.CONFIG_FILES + CONFIG_FILES
         sdk.enable_logging(debug=args.debug)
         inventory_args = dict(
@@ -255,6 +256,7 @@ def main():
 
         inventory = sdk_inventory.OpenStackInventory(**inventory_args)
 
+        sys.stdout = sys.__stdout__
         if args.list:
             output = get_host_groups(inventory, refresh=args.refresh, cloud=args.cloud)
         elif args.host:

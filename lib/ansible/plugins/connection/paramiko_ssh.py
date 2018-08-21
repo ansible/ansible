@@ -386,7 +386,7 @@ class Connection(ConnectionBase):
             raise AnsibleConnectionFailure(msg)
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
-        # we give it one by default (pty=True in ansble.cfg), and we try
+        # we give it one by default (pty=True in ansible.cfg), and we try
         # to initialise from the calling environment when sudoable is enabled
         if self.get_option('pty') and sudoable:
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))

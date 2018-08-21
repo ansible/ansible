@@ -1,10 +1,3 @@
-- name: Install Python requirements
-  pip:
-    state: present 
-    name: "{{ item }}"
-  with_items:
-    - docker==2.7.0
-
 - name: Test parameters with state=present
   docker_swarm:
     state: present

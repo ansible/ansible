@@ -65,10 +65,7 @@ import re
 from time import time
 import xmlrpclib
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from six import iteritems
 
@@ -311,5 +308,6 @@ class CobblerInventory(object):
             return json.dumps(data, sort_keys=True, indent=2)
         else:
             return json.dumps(data)
+
 
 CobblerInventory()

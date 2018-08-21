@@ -59,23 +59,6 @@ class Cliconf(CliconfBase):
     def __init__(self, *args, **kwargs):
         super(Cliconf, self).__init__(*args, **kwargs)
         self._session_support = None
-        if isinstance(self._connection, NetworkCli):
-            self.network_api = 'network_cli'
-        elif isinstance(self._connection, HttpApi):
-            self.network_api = 'eapi'
-        else:
-            raise ValueError("Invalid connection type")
-
-    def _get_command_with_output(self, command, output):
-        options_values = self.get_option_values()
-        if output not in options_values['output']:
-            raise ValueError("'output' value %s is invalid. Valid values are %s" % (output, ','.join(options_values['output'])))
-
-        if output == 'json' and not command.endswith('| json'):
-            cmd = '%s | json' % command
-        else:
-            cmd = command
-        return cmd
 
     def send_command(self, command, **kwargs):
         """Executes a cli command and returns the results
@@ -83,57 +66,46 @@ class Cliconf(CliconfBase):
         the results to the caller.  The command output will be returned as a
         string
         """
-        if self.network_api == 'network_cli':
+        if isinstance(self._connection, NetworkCli):
             resp = super(Cliconf, self).send_command(command, **kwargs)
-        else:
+        elif isinstance(self._connection, HttpApi):
             resp = self._connection.send_request(command, **kwargs)
+        else:
+            raise ValueError("Invalid connection type")
         return resp
 
     @enable_mode
-    def get_config(self, source='running', format='text', filter=None):
+    def get_config(self, source='running', format='text', flags=None):
         options_values = self.get_option_values()
         if format not in options_values['format']:
             raise ValueError("'format' value %s is invalid. Valid values are %s" % (format, ','.join(options_values['format'])))
 
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         if source not in lookup:
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show %s ' % lookup[source]
         if format and format is not 'text':
             cmd += '| %s ' % format
 
-        cmd += ' '.join(to_list(filter))
+        cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
         return self.send_command(cmd)
 
     @enable_mode
-    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
-
-        if not candidate:
-            raise ValueError("must provide a candidate config to load")
-
-        if commit not in (True, False):
-            raise ValueError("'commit' must be a bool, got %s" % commit)
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
 
         operations = self.get_device_operations()
-        if replace not in (True, False):
-            raise ValueError("'replace' must be a bool, got %s" % replace)
-
-        if replace and not operations['supports_replace']:
-            raise ValueError("configuration replace is supported only with configuration session")
-
-        if comment and not operations['supports_commit_comment']:
-            raise ValueError("commit comment is not supported")
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         if (commit is False) and (not self.supports_sessions):
             raise ValueError('check mode is not supported without configuration session')
 
-        response = {}
+        resp = {}
         session = None
         if self.supports_sessions:
             session = 'ansible_%s' % int(time.time())
-            response.update({'session': session})
+            resp.update({'session': session})
             self.send_command('configure session %s' % session)
             if replace:
                 self.send_command('rollback clean-config')
@@ -141,6 +113,7 @@ class Cliconf(CliconfBase):
             self.send_command('configure')
 
         results = []
+        requests = []
         multiline = False
         for line in to_list(candidate):
             if not isinstance(line, collections.Mapping):
@@ -160,15 +133,17 @@ class Cliconf(CliconfBase):
             if cmd != 'end' and cmd[0] != '!':
                 try:
                     results.append(self.send_command(**line))
+                    requests.append(cmd)
                 except AnsibleConnectionFailure as e:
                     self.discard_changes(session)
                     raise AnsibleConnectionFailure(e.message)
 
-        response['response'] = results
+        resp['request'] = requests
+        resp['response'] = results
         if self.supports_sessions:
             out = self.send_command('show session-config diffs')
             if out:
-                response['diff'] = out.strip()
+                resp['diff'] = out.strip()
 
             if commit:
                 self.commit()
@@ -176,7 +151,7 @@ class Cliconf(CliconfBase):
                 self.discard_changes(session)
         else:
             self.send_command('end')
-        return response
+        return resp
 
     def get(self, command, prompt=None, answer=None, sendonly=False, output=None):
         if output:
@@ -213,17 +188,18 @@ class Cliconf(CliconfBase):
                 if check_rc:
                     raise
                 out = getattr(e, 'err', e)
+            out = to_text(out, errors='surrogate_or_strict')
 
             if out is not None:
                 try:
                     out = json.loads(out)
                 except ValueError:
-                    out = to_text(out, errors='surrogate_or_strict').strip()
+                    out = out.strip()
 
                 responses.append(out)
         return responses
 
-    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         diff = {}
         device_operations = self.get_device_operations()
         option_values = self.get_option_values()
@@ -231,26 +207,25 @@ class Cliconf(CliconfBase):
         if candidate is None and device_operations['supports_generate_diff']:
             raise ValueError("candidate configuration is required to generate diff")
 
-        if match not in option_values['diff_match']:
-            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, ', '.join(option_values['diff_match'])))
+        if diff_match not in option_values['diff_match']:
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (diff_match, ', '.join(option_values['diff_match'])))
 
-        if replace not in option_values['diff_replace']:
-            raise ValueError("'replace' value %s in invalid, valid values are %s" % (replace, ', '.join(option_values['diff_replace'])))
+        if diff_replace not in option_values['diff_replace']:
+            raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
-        candidate_obj = NetworkConfig(indent=3)
+        candidate_obj = NetworkConfig(indent=3, ignore_lines=diff_ignore_lines)
         candidate_obj.load(candidate)
 
-        if running and match != 'none' and replace != 'config':
+        if running and diff_match != 'none' and diff_replace != 'config':
             # running configuration
             running_obj = NetworkConfig(indent=3, contents=running, ignore_lines=diff_ignore_lines)
-            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=match, replace=replace)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
 
         else:
             configdiffobjs = candidate_obj.items
 
-        configdiff = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
-        diff['config_diff'] = configdiff if configdiffobjs else {}
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         return diff
 
     @property
@@ -300,7 +275,7 @@ class Cliconf(CliconfBase):
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
-            'supports_generate_diff': True,
+            'supports_generate_diff': False if self.supports_sessions else True,
             'supports_replace': True if self.supports_sessions else False
         }
 
@@ -314,10 +289,27 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['device_info'] = self.get_device_info()
-        result['network_api'] = self.network_api
+        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
+        result['rpc'] = self.get_base_rpc() + rpc_list
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
+
+        if isinstance(self._connection, NetworkCli):
+            result['network_api'] = 'cliconf'
+        elif isinstance(self._connection, HttpApi):
+            result['network_api'] = 'eapi'
+        else:
+            raise ValueError("Invalid connection type")
         return json.dumps(result)
+
+    def _get_command_with_output(self, command, output):
+        options_values = self.get_option_values()
+        if output not in options_values['output']:
+            raise ValueError("'output' value %s is invalid. Valid values are %s" % (output, ','.join(options_values['output'])))
+
+        if output == 'json' and not command.endswith('| json'):
+            cmd = '%s | json' % command
+        else:
+            cmd = command
+        return cmd

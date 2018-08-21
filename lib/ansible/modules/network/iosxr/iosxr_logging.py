@@ -721,5 +721,6 @@ def main():
         result = config_object.run()
     module.exit_json(**result)
 
+
 if __name__ == '__main__':
     main()

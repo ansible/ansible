@@ -17,6 +17,7 @@ To get started, please select one of the following topics.
    scenario_clone_template
    scenario_rename_vm
    scenario_remove_vm
+   scenario_find_vm_folder
    vmware_scenario_1
 
 

@@ -78,6 +78,7 @@ options:
         A special value is available; C(EOF) for inserting the line at the
         end of the file.
         If specified regular expression has no matches, EOF will be used instead.
+        If regular expressions are passed to both C(regexp) and C(insertafter), C(insertafter) is only honored if no match for C(regexp) is found.
         May not be used with C(backrefs).
     choices: [ EOF, '*regex*' ]
     default: EOF
@@ -89,7 +90,9 @@ options:
         A value is available; C(BOF) for inserting the line at
         the beginning of the file.
         If specified regular expression has no matches, the line will be
-        inserted at the end of the file.  May not be used with C(backrefs).
+        inserted at the end of the file.
+        If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
+        May not be used with C(backrefs).
     choices: [ BOF, '*regex*' ]
     version_added: "1.1"
   create:

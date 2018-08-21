@@ -37,6 +37,10 @@ options:
   capabilities:
     description:
       - List of capabilities to add to the container.
+  cap_drop:
+    description:
+      - List of capabilities to drop from the container.
+    version_added: "2.7"
   cleanup:
     description:
       - Use with I(detach=false) to remove the container after successful execution.
@@ -561,6 +565,15 @@ EXAMPLES = '''
     name: sleepy
     purge_networks: yes
 
+- name: Create a container with limited capabilities
+  docker_container:
+    name: sleepy
+    image: ubuntu:16.04
+    command: sleep infinity
+    capabilities:
+      - sys_time
+    cap_drop:
+      - all
 '''
 
 RETURN = '''
@@ -650,6 +663,7 @@ class TaskParameters(DockerBaseClass):
         self.auto_remove = None
         self.blkio_weight = None
         self.capabilities = None
+        self.cap_drop = None
         self.cleanup = None
         self.command = None
         self.cpu_period = None
@@ -905,6 +919,7 @@ class TaskParameters(DockerBaseClass):
             network_mode='network_mode',
             userns_mode='userns_mode',
             cap_add='capabilities',
+            cap_drop='cap_drop',
             extra_hosts='etc_hosts',
             read_only='read_only',
             ipc_mode='ipc_mode',
@@ -1739,32 +1754,36 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
-        image = self._get_image()
-        self.log(image, pretty_print=True)
-        if not container.exists:
-            # New container
-            self.log('No container found')
-            new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
-            if new_container:
-                container = new_container
-        else:
-            # Existing container
-            different, differences = container.has_different_configuration(image)
-            image_different = False
-            if not self.parameters.ignore_image:
-                image_different = self._image_is_different(image, container)
-            if image_different or different or self.parameters.recreate:
-                self.diff['differences'] = differences
-                if image_different:
-                    self.diff['image_different'] = True
-                self.log("differences")
-                self.log(differences, pretty_print=True)
-                if container.running:
-                    self.container_stop(container.Id)
-                self.container_remove(container.Id)
+
+        # If the image parameter was passed then we need to deal with the image
+        # version comparison, otherwise we should not care
+        if self.parameters.image:
+            image = self._get_image()
+            self.log(image, pretty_print=True)
+            if not container.exists:
+                # New container
+                self.log('No container found')
                 new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
+            else:
+                # Existing container
+                different, differences = container.has_different_configuration(image)
+                image_different = False
+                if not self.parameters.ignore_image:
+                    image_different = self._image_is_different(image, container)
+                if image_different or different or self.parameters.recreate:
+                    self.diff['differences'] = differences
+                    if image_different:
+                        self.diff['image_different'] = True
+                    self.log("differences")
+                    self.log(differences, pretty_print=True)
+                    if container.running:
+                        self.container_stop(container.Id)
+                    self.container_remove(container.Id)
+                    new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+                    if new_container:
+                        container = new_container
 
         if container and container.exists:
             container = self.update_limits(container)
@@ -2035,6 +2054,7 @@ def main():
         auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
+        cap_drop=dict(type='list'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         cpu_period=dict(type='int'),

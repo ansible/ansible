@@ -34,7 +34,7 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping, MutableSequence
+from collections import MutableMapping
 import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
@@ -58,6 +58,12 @@ from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
@@ -80,25 +86,11 @@ def to_json(a, *args, **kw):
 
 def to_nice_json(a, indent=4, *args, **kw):
     '''Make verbose, human readable JSON'''
-    # python-2.6's json encoder is buggy (can't encode hostvars)
-    if sys.version_info < (2, 7):
-        try:
-            import simplejson
-        except ImportError:
-            pass
-        else:
-            try:
-                major = int(simplejson.__version__.split('.')[0])
-            except Exception:
-                pass
-            else:
-                if major >= 2:
-                    return simplejson.dumps(a, default=AnsibleJSONEncoder.default, indent=indent, sort_keys=True, *args, **kw)
-
     try:
         return json.dumps(a, indent=indent, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
-    except Exception:
+    except Exception as e:
         # Fallback to the to_json filter
+        display.warning(u'Unable to convert data using to_nice_json, falling back to to_json: %s' % to_text(e))
         return to_json(a, *args, **kw)
 
 
@@ -210,6 +202,12 @@ def from_yaml(data):
     return data
 
 
+def from_yaml_all(data):
+    if isinstance(data, string_types):
+        return yaml.safe_load_all(data)
+    return data
+
+
 @environmentfilter
 def rand(environment, end, start=None, step=None, seed=None):
     if seed is None:
@@ -301,7 +299,11 @@ def mandatory(a):
 
     ''' Make a variable mandatory '''
     if isinstance(a, Undefined):
-        raise AnsibleFilterError('Mandatory variable not defined.')
+        if a._undefined_name is not None:
+            name = "'%s' " % to_text(a._undefined_name)
+        else:
+            name = ''
+        raise AnsibleFilterError("Mandatory variable %snot defined." % name)
     return a
 
 
@@ -460,7 +462,7 @@ def flatten(mylist, levels=None):
         if element in (None, 'None', 'null'):
             # ignore undefined items
             break
-        elif isinstance(element, MutableSequence):
+        elif is_sequence(element):
             if levels is None:
                 ret.extend(flatten(element))
             elif levels >= 1:
@@ -600,6 +602,7 @@ class FilterModule(object):
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': from_yaml,
+            'from_yaml_all': from_yaml_all,
 
             # path
             'basename': partial(unicode_wrap, os.path.basename),

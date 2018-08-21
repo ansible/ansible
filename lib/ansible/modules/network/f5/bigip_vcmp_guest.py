@@ -287,7 +287,7 @@ class Parameters(AnsibleF5Parameters):
             elif len(parts) < 2:
                 result = Destination(ip=parts[0], subnet=None)
             else:
-                F5ModuleError(
+                raise F5ModuleError(
                     "The provided mgmt_address is malformed."
                 )
         except ValueError:

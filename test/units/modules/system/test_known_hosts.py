@@ -1,10 +1,12 @@
 import os
 import tempfile
+import ansible.module_utils.basic as basic
 
 from ansible.compat.tests import unittest
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.basic import AnsibleModule
 
-from ansible.modules.system.known_hosts import compute_diff
+from ansible.modules.system.known_hosts import compute_diff, sanity_check
 
 
 class KnownHostsDiffTestCase(unittest.TestCase):
@@ -94,3 +96,12 @@ class KnownHostsDiffTestCase(unittest.TestCase):
             'before': 'two.example.com ssh-rsa BBBBetc\n',
             'after': 'two.example.com ssh-rsa BBBBetc\n',
         })
+
+    def test_sanity_check(self):
+        basic._load_params = lambda: {}
+        # Module used internally to execute ssh-keygen system executable
+        module = AnsibleModule(argument_spec={})
+        host = '10.0.0.1'
+        key = '%s ssh-rsa ASDF foo@bar' % (host,)
+        keygen = module.get_bin_path('ssh-keygen')
+        sanity_check(module, host, key, keygen)

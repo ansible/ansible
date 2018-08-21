@@ -36,6 +36,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
 
@@ -138,7 +139,11 @@ class Cli:
             return self._device_configs[cmd]
         except KeyError:
             connection = self._get_connection()
-            out = connection.get_config(flags=flags)
+            try:
+                out = connection.get_config(flags=flags)
+            except ConnectionError as exc:
+                self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
             cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs[cmd] = cfg
             return cfg
@@ -149,41 +154,61 @@ class Cli:
         connection = self._get_connection()
 
         try:
-            return connection.run_commands(commands, check_rc)
+            out = connection.run_commands(commands, check_rc)
+            if check_rc == 'retry_json':
+                capabilities = self.get_capabilities()
+                network_api = capabilities.get('network_api')
+
+                if network_api == 'cliconf' and out:
+                    for index, resp in enumerate(out):
+                        if 'Invalid command at' in resp and 'json' in resp:
+                            if commands[index]['output'] == 'json':
+                                commands[index]['output'] = 'text'
+                                out = connection.run_commands(commands, check_rc)
+            return out
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc))
 
-    def load_config(self, config, return_error=False, opts=None):
+    def load_config(self, config, return_error=False, opts=None, replace=None):
         """Sends configuration commands to the remote device
         """
         if opts is None:
             opts = {}
 
         connection = self._get_connection()
-
-        msgs = []
+        responses = []
         try:
-            responses = connection.edit_config(config)
-            msg = json.loads(responses)
+            resp = connection.edit_config(config, replace=replace)
+            if isinstance(resp, collections.Mapping):
+                resp = resp['response']
         except ConnectionError as e:
             code = getattr(e, 'code', 1)
             message = getattr(e, 'err', e)
             err = to_text(message, errors='surrogate_then_replace')
             if opts.get('ignore_timeout') and code:
-                msgs.append(code)
-                return msgs
+                responses.append(code)
+                return responses
             elif code and 'no graceful-restart' in err:
                 if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
                     msg = ['']
-                    msgs.extend(msg)
-                    return msgs
+                    responses.extend(msg)
+                    return responses
                 else:
                     self._module.fail_json(msg=err)
             elif code:
                 self._module.fail_json(msg=err)
 
-        msgs.extend(msg)
-        return msgs
+        responses.extend(resp)
+        return responses
+
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+        conn = self._get_connection()
+        try:
+            response = conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                     diff_replace=diff_replace)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return response
 
     def get_capabilities(self):
         """Returns platform info of the remove device
@@ -192,7 +217,10 @@ class Cli:
             return self._module._capabilities
 
         connection = self._get_connection()
-        capabilities = connection.get_capabilities()
+        try:
+            capabilities = connection.get_capabilities()
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         self._module._capabilities = json.loads(capabilities)
         return self._module._capabilities
 
@@ -313,7 +341,7 @@ class Nxapi:
             if response['ins_api'].get('outputs'):
                 output = response['ins_api']['outputs']['output']
                 for item in to_list(output):
-                    if check_status and item['code'] != '200':
+                    if check_status is True and item['code'] != '200':
                         if return_error:
                             result.append(item)
                         else:
@@ -371,16 +399,41 @@ class Nxapi:
 
         return responses
 
-    def load_config(self, commands, return_error=False, opts=None):
+    def load_config(self, commands, return_error=False, opts=None, replace=None):
         """Sends the ordered set of commands to the device
         """
+        if replace:
+            device_info = self.get_device_info()
+            if '9K' not in device_info.get('network_os_platform', ''):
+                self._module.fail_json(msg='replace is supported only on Nexus 9K devices')
+            commands = 'config replace {0}'.format(replace)
+
         commands = to_list(commands)
+
         msg = self.send_request(commands, output='config', check_status=True,
                                 return_error=return_error, opts=opts)
         if return_error:
             return msg
         else:
             return []
+
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+        diff = {}
+
+        # prepare candidate configuration
+        candidate_obj = NetworkConfig(indent=2)
+        candidate_obj.load(candidate)
+
+        if running and diff_match != 'none' and diff_replace != 'config':
+            # running configuration
+            running_obj = NetworkConfig(indent=2, contents=running, ignore_lines=diff_ignore_lines)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
+
+        else:
+            configdiffobjs = candidate_obj.items
+
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
+        return diff
 
     def get_device_info(self):
         device_info = {}
@@ -460,14 +513,19 @@ def run_commands(module, commands, check_rc=True):
     return conn.run_commands(to_command(module, commands), check_rc)
 
 
-def load_config(module, config, return_error=False, opts=None):
+def load_config(module, config, return_error=False, opts=None, replace=None):
     conn = get_connection(module)
-    return conn.load_config(config, return_error, opts)
+    return conn.load_config(config, return_error, opts, replace=replace)
 
 
 def get_capabilities(module):
     conn = get_connection(module)
     return conn.get_capabilities()
+
+
+def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+    conn = self.get_connection()
+    return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
 
 
 def normalize_interface(name):

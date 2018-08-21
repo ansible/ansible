@@ -80,7 +80,6 @@ DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
 DEFAULT_TLS_HOSTNAME = 'localhost'
 MIN_DOCKER_VERSION = "1.7.0"
-DEFAULT_SSL_VERSION = "1.0"
 DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
@@ -91,7 +90,7 @@ DOCKER_COMMON_ARGS = dict(
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
-    ssl_version=dict(type='str', default=DEFAULT_SSL_VERSION),
+    ssl_version=dict(type='str'),
     tls=dict(type='bool', default=DEFAULT_TLS),
     tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY),
     debug=dict(type='bool', default=False)

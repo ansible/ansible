@@ -8,7 +8,7 @@ __metaclass__ = type
 import telnetlib
 from time import sleep
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.six import text_type
 from ansible.plugins.action import ActionBase
 
@@ -64,26 +64,26 @@ class ActionModule(ActionBase):
                 output = []
                 try:
                     if send_newline:
-                        tn.write('\n')
+                        tn.write(b'\n')
 
-                    tn.read_until(login_prompt)
-                    tn.write('%s\n' % to_native(user))
+                    tn.read_until(to_bytes(login_prompt))
+                    tn.write(to_bytes(user + "\n"))
 
                     if password:
-                        tn.read_until(password_prompt)
-                        tn.write('%s\n' % to_native(password))
+                        tn.read_until(to_bytes(password_prompt))
+                        tn.write(to_bytes(password + "\n"))
 
-                    tn.expect(prompts)
+                    tn.expect(list(map(to_bytes, prompts)))
 
                     for cmd in commands:
                         display.vvvvv('>>> %s' % cmd)
-                        tn.write('%s\n' % to_native(cmd))
-                        index, match, out = tn.expect(prompts)
+                        tn.write(to_bytes(cmd + "\n"))
+                        index, match, out = tn.expect(list(map(to_bytes, prompts)))
                         display.vvvvv('<<< %s' % cmd)
                         output.append(out)
                         sleep(pause)
 
-                    tn.write("exit\n")
+                    tn.write(b"exit\n")
 
                 except EOFError as e:
                     result['failed'] = True

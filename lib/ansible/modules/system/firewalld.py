@@ -498,7 +498,9 @@ class ZoneTransaction(FirewallTransaction):
         self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def get_enabled_permanent(self):
-        if self.zone in self.fw.config().getZoneNames():
+        zones = self.fw.config().listZones()
+        zone_names = [self.fw.config().getZone(z).get_property("name") for z in zones]
+        if self.zone in zone_names:
             return True
         else:
             return False

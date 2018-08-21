@@ -64,6 +64,7 @@ EXAMPLES = r'''
     ntp_servers:
         - 0.pool.ntp.org
         - 1.pool.ntp.org
+  delegate_to: localhost
 
 - name: Set NTP setting for an ESXi Host
   vmware_host_ntp:
@@ -75,6 +76,7 @@ EXAMPLES = r'''
     ntp_servers:
         - 0.pool.ntp.org
         - 1.pool.ntp.org
+  delegate_to: localhost
 
 - name: Remove NTP setting for an ESXi Host
   vmware_host_ntp:
@@ -85,13 +87,14 @@ EXAMPLES = r'''
     state: absent
     ntp_servers:
         - bad.server.ntp.org
+  delegate_to: localhost
 '''
 
 RETURN = r'''#
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
@@ -115,6 +118,7 @@ class VmwareNtpConfigManager(PyVmomi):
         host_date_time_manager = host.configManager.dateTimeSystem
         if host_date_time_manager:
             available_ntp_servers = host_date_time_manager.dateTimeInfo.ntpConfig.server
+            available_ntp_servers = list(filter(None, available_ntp_servers))
             if operation == 'add':
                 available_ntp_servers = available_ntp_servers + ntp_servers
             elif operation == 'delete':

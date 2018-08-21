@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016-2017, Cumulus Networks <ce-ceng@cumulusnetworks.com>
+# (c) 2016-2018, Cumulus Networks <ce-ceng@cumulusnetworks.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -64,6 +64,12 @@ EXAMPLES = '''
         - add int swp1
         - add int swp2
 
+- name: Modify hostname to Cumulus-1 and commit the change
+  nclu:
+    commands:
+        - add hostname Cumulus-1
+    commit: true
+
 - name: Add 48 interfaces and commit the change.
   nclu:
     template: |
@@ -78,6 +84,7 @@ EXAMPLES = '''
     commands:
         - show interface swp1
   register: output
+
 - name: Print Status Of Interface
   debug:
     var: output
@@ -87,6 +94,7 @@ EXAMPLES = '''
     commands:
         - show interface json
   register: output
+
 - name: Print Interface Details
   debug:
     var: output["msg"]
@@ -120,6 +128,7 @@ EXAMPLES = '''
     commands:
         - show bgp summary json
   register: output
+
 - name: Print BGP Status In JSON
   debug:
     var: output["msg"]
@@ -185,7 +194,8 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
     # Run all of the net commands
     output_lines = []
     for line in commands:
-        output_lines += [command_helper(module, line.strip(), "Failed on line %s" % line)]
+        if line.strip():
+            output_lines += [command_helper(module, line.strip(), "Failed on line %s" % line)]
     output = "\n".join(output_lines)
 
     # If pending changes changed, report a change.

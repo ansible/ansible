@@ -30,10 +30,9 @@ options:
     version_added: "1.0"
 description:
      - Executes a low-down and dirty SSH command, not going through the module
-       subsystem. This is useful and should only be done in two cases. The
-       first case is installing C(python-simplejson) on older (Python 2.4 and
-       before) hosts that need it as a dependency to run modules, since nearly
-       all core modules require it. Another is speaking to any devices such as
+       subsystem. This is useful and should only be done in a few cases. A common
+       case is installing C(python) on a system without python installed by default.
+       Another is speaking to any devices such as
        routers that do not have any Python installed. In any other case, using
        the M(shell) or M(command) module is much more appropriate. Arguments
        given to C(raw) are run directly through the configured remote shell.
@@ -58,9 +57,6 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Bootstrap a legacy python 2.4 host
-  raw: yum -y install python-simplejson
-
 - name: Bootstrap a host without python2 installed
   raw: dnf install -y python2 python2-dnf libselinux-python
 
@@ -70,5 +66,5 @@ EXAMPLES = '''
     executable: /bin/bash
 
 - name: safely use templated variables. Always use quote filter to avoid injection issues.
-  raw: "{{package_mgr|quote}} {{pkg_flags|quote}} install {{python_simplejson|quote}}"
+  raw: "{{package_mgr|quote}} {{pkg_flags|quote}} install {{python|quote}}"
 '''

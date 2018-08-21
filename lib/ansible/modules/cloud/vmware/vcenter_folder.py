@@ -79,6 +79,7 @@ EXAMPLES = r'''
     folder_type: vm
     state: present
   register: vm_folder_creation_result
+  delegate_to: localhost
 
 - name: Create a datastore folder on given datacenter
   vcenter_folder:
@@ -90,6 +91,7 @@ EXAMPLES = r'''
     folder_type: datastore
     state: present
   register: datastore_folder_creation_result
+  delegate_to: localhost
 
 - name: Create a sub folder under VM folder on given datacenter
   vcenter_folder:
@@ -101,6 +103,7 @@ EXAMPLES = r'''
     parent_folder: vm_folder
     state: present
   register: sub_folder_creation_result
+  delegate_to: localhost
 
 - name: Delete a VM folder on given datacenter
   vcenter_folder:
@@ -112,7 +115,7 @@ EXAMPLES = r'''
     folder_type: vm
     state: absent
   register: vm_folder_deletion_result
-
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -125,7 +128,7 @@ result:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError as e:
     pass
 
@@ -158,12 +161,12 @@ class VmwareFolderManager(PyVmomi):
             try:
                 if parent_folder:
                     folder = self.get_folder_by_name(folder_name=parent_folder)
-                    if folder:
+                    if folder and not self.get_folder_by_name(folder_name=folder_name, parent_folder=folder):
                         folder.CreateFolder(folder_name)
                         results['changed'] = True
                         results['result'] = "Folder '%s' of type '%s' created under %s" \
                                             " successfully." % (folder_name, folder_type, parent_folder)
-                    else:
+                    elif folder is None:
                         self.module.fail_json(msg="Failed to find the parent folder %s"
                                                   " for folder %s" % (parent_folder, folder_name))
                 else:
@@ -208,13 +211,13 @@ class VmwareFolderManager(PyVmomi):
                                               " exception %s " % to_native(e))
             self.module.exit_json(**results)
 
-    def get_folder_by_name(self, folder_name):
+    def get_folder_by_name(self, folder_name, parent_folder=None):
         """
         Function to get managed object of folder by name
         Returns: Managed object of folder by name
 
         """
-        folder_objs = get_all_objs(self.content, [vim.Folder])
+        folder_objs = get_all_objs(self.content, [vim.Folder], parent_folder)
         for folder in folder_objs:
             if folder.name == folder_name:
                 return folder

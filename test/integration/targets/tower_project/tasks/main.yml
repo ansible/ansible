@@ -40,3 +40,10 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Create a git project without credentials
+  tower_project:
+    name: git project
+    organization: Default
+    scm_type: git
+    scm_url: https://github.com/ansible/ansible

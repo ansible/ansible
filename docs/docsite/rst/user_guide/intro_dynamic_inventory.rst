@@ -31,7 +31,7 @@ While primarily used to kickoff OS installations and manage DHCP and DNS, Cobble
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
 been referred to as a 'lightweight CMDB' by some admins.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file.  cobblerd will now need
+To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file.  cobblerd will now need
 to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
 This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
 
@@ -103,7 +103,7 @@ So in other words, you can use those variables in arguments/actions as well.
 Example: AWS EC2 External Inventory Script
 ``````````````````````````````````````````
 
-If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
+If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
 
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script after
 marking it executable::
@@ -246,19 +246,22 @@ explicitly clear the cache, you can run the ec2.py script with the ``--refresh-c
 Example: OpenStack External Inventory Script
 ````````````````````````````````````````````
 
-If you use an OpenStack based cloud, instead of manually maintaining your own inventory file, you can use the openstack.py dynamic inventory to pull information about your compute instances directly from OpenStack.
+If you use an OpenStack based cloud, instead of manually maintaining your own inventory file, you can use the openstack_inventory.py dynamic inventory to pull information about your compute instances directly from OpenStack.
 
 You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py>`_.
 
-You can use the inventory script explicitly (by passing the `-i openstack.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
+You can use the inventory script explicitly (by passing the `-i openstack_inventory.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
 
 Explicit use of inventory script
 ++++++++++++++++++++++++++++++++
 
 Download the latest version of the OpenStack dynamic inventory script and make it executable::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
-    chmod +x openstack.py
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
+    chmod +x openstack_inventory.py
+
+.. note::
+    Do not name it `openstack.py`. This name will conflict with imports from openstacksdk.
 
 Source an OpenStack RC file::
 
@@ -266,23 +269,23 @@ Source an OpenStack RC file::
 
 .. note::
 
-    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <http://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
+    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <https://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
 
 You can confirm the file has been successfully sourced by running a simple command, such as `nova list` and ensuring it return no errors.
 
 .. note::
 
-    The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to `Install the OpenStack command-line clients <http://docs.openstack.org/user-guide/common/cli_install_openstack_command_line_clients.html>`_.
+    The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to `Install the OpenStack command-line clients <https://docs.openstack.org/user-guide/common/cli_install_openstack_command_line_clients.html>`_.
 
 You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
 
-    ./openstack.py --list
+    ./openstack_inventory.py --list
 
-After a few moments you should see some JSON output with information about your compute instances. 
+After a few moments you should see some JSON output with information about your compute instances.
 
-Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack.py` script as an inventory file, as illustrated below::
+Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack_inventory.py` script as an inventory file, as illustrated below::
 
-    ansible -i openstack.py all -m ping
+    ansible -i openstack_inventory.py all -m ping
 
 Implicit use of inventory script
 ++++++++++++++++++++++++++++++++
@@ -290,8 +293,8 @@ Implicit use of inventory script
 Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
 
     wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
-    chmod +x openstack.py
-    sudo cp openstack.py /etc/ansible/hosts
+    chmod +x openstack_inventory.py
+    sudo cp openstack_inventory.py /etc/ansible/hosts
 
 Download the sample configuration file, modify it to suit your needs and copy it to `/etc/ansible/openstack.yml`::
 
@@ -308,9 +311,9 @@ After a few moments you should see some JSON output with information about your 
 Refresh the cache
 +++++++++++++++++
 
-Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the ``--refresh`` parameter::
+Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack_inventory.py (or hosts) script with the ``--refresh`` parameter::
 
-    ./openstack.py --refresh --list
+    ./openstack_inventory.py --refresh --list
 
 .. _other_inventory_scripts:
 
@@ -377,8 +380,7 @@ the dynamic groups as empty in the static inventory file. For example::
 
    :doc:`intro_inventory`
        All about static inventory files
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

@@ -1065,7 +1065,6 @@ Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
 
     $original_tmp = $env:TMP
-    $original_temp = $env:TEMP
     $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
     $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
     if ($null -eq $remote_tmp) {
@@ -1075,10 +1074,8 @@ Function Run($payload) {
     # become process is run under a different console to the WinRM one so we
     # need to set the UTF-8 codepage again
     $env:TMP = $remote_tmp
-    $env:TEMP = $remote_tmp
     Add-Type -TypeDefinition $helper_def -Debug:$false
     $env:TMP = $original_tmp
-    $env:TEMP = $original_tmp
 
     $username = $payload.become_user
     $password = $payload.become_password
@@ -1127,6 +1124,15 @@ $ErrorActionPreference = "Stop"
 # return asyncresult to controller
 
 $exec_wrapper = {
+    # help to debug any errors in the exec_wrapper or async_watchdog by generating
+    # an error log in case of a terminating error
+    trap {
+        $log_path = "$($env:TEMP)\async-exec-wrapper-$(Get-Date -Format "yyyy-MM-ddTHH-mm-ss.ffffZ")-error.txt"
+        $error_msg = "Error while running the async exec wrapper`r`n$_`r`n$($_.ScriptStackTrace)"
+        Set-Content -Path $log_path -Value $error_msg
+        throw $_
+    }
+
     &chcp.com 65001 > $null
     $DebugPreference = "Continue"
     $ErrorActionPreference = "Stop"
@@ -1204,9 +1210,6 @@ $exec_wrapper = {
 Function Run($payload) {
     $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
     $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
-    if ($null -eq $remote_tmp) {
-        $remote_tmp = $original_tmp
-    }
 
     # calculate the result path so we can include it in the worker payload
     $jid = $payload.async_jid
@@ -1270,6 +1273,19 @@ Function Run($payload) {
         }
         $watchdog_pid = $process.ProcessId
 
+        # populate initial results before we send the async data to avoid result race
+        $result = @{
+            started = 1;
+            finished = 0;
+            results_file = $results_path;
+            ansible_job_id = $local_jid;
+            _ansible_suppress_tmpdir_delete = $true;
+            ansible_async_watchdog_pid = $watchdog_pid
+        }
+
+        $result_json = ConvertTo-Json $result
+        Set-Content $results_path -Value $result_json
+
         # wait until the client connects, throw an error if the timeout is reached
         $wait_async = $pipe.BeginWaitForConnection($null, $null)
         $wait_async.AsyncWaitHandle.WaitOne(5000) > $null
@@ -1285,19 +1301,6 @@ Function Run($payload) {
     } finally {
         $pipe.Close()
     }
-
-    # populate initial results before we resume the process to avoid result race
-    $result = @{
-        started=1;
-        finished=0;
-        results_file=$results_path;
-        ansible_job_id=$local_jid;
-        _ansible_suppress_tmpdir_delete=$true;
-        ansible_async_watchdog_pid=$watchdog_pid
-    }
-
-    $result_json = ConvertTo-Json $result
-    Set-Content $results_path -Value $result_json
 
     return $result_json
 }

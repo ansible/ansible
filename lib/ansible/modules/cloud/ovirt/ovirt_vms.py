@@ -52,7 +52,7 @@ options:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
                vnic_profile is described by the following dictionary:"
             - "C(source_network_name): The network name of the source network."
-            - "C(source_profile_name): The prfile name related to the source network."
+            - "C(source_profile_name): The profile name related to the source network."
             - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
         version_added: "2.5"
     cluster_mappings:
@@ -270,6 +270,13 @@ options:
             - Name of the storage domain this virtual machine lease reside on.
             - NOTE - Supported since oVirt 4.1.
         version_added: "2.4"
+    custom_compatibility_version:
+        description:
+            - "Enables a virtual machine to be customized to its own compatibility version. If
+            `C(custom_compatibility_version)` is set, it overrides the cluster's compatibility version
+            for this particular virtual machine."
+        version_added: "2.7"
+
     delete_protected:
         description:
             - If I(yes) Virtual Machine will be set as delete protected.
@@ -317,8 +324,8 @@ options:
     disks:
         description:
             - List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary.
-            - C(name) - Name of the disk. Either C(name) or C(id) is reuqired.
-            - C(id) - ID of the disk. Either C(name) or C(id) is reuqired.
+            - C(name) - Name of the disk. Either C(name) or C(id) is required.
+            - C(id) - ID of the disk. Either C(name) or C(id) is required.
             - C(interface) - Interface of the disk, either I(virtio) or I(IDE), default is I(virtio).
             - C(bootable) - I(True) if the disk should be bootable, default is non bootable.
             - C(activate) - I(True) if the disk should be activated, default is activated.
@@ -359,7 +366,7 @@ options:
             - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
     cloud_init_nics:
         description:
-            - List of dictionaries representing network interafaces to be setup by cloud init.
+            - List of dictionaries representing network interfaces to be setup by cloud init.
             - This option is used, when user needs to setup more network interfaces via cloud init.
             - If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
               are merged with C(cloud_init_nics) parameters.
@@ -487,6 +494,11 @@ options:
             - "C(user_migratable) - Allow manual migration only."
             - "If no value is passed, default value is set by oVirt/RHV engine."
         version_added: "2.5"
+    ticket:
+        description:
+            - "If I(true), in addition return I(remote_vv_file) inside I(vm) dictionary, which contains compatible
+                content for remote-viewer application. Works only C(state) is I(running)."
+        version_added: "2.7"
     cpu_pinning:
         description:
             - "CPU Pinning topology to map virtual machine CPU to host CPU."
@@ -860,6 +872,23 @@ EXAMPLES = '''
       protocol:
         - spice
         - vnc
+# Execute remote viever to VM
+- block:
+  - name: Create a ticket for console for a running VM
+    ovirt_vms:
+      name: myvm
+      ticket: true
+      state: running
+    register: myvm
+
+  - name: Save ticket to file
+    copy:
+      content: "{{ myvm.vm.remote_vv_file }}"
+      dest: ~/vvfile.vv
+
+  - name: Run remote viewer with file
+    command: remote-viewer ~/vvfile.vv
+
 '''
 
 
@@ -871,7 +900,10 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vm:
     description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
-                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm.
+                  Additionally when user sent ticket=true, this module will return also remote_vv_file
+                  parameter in vm dictionary, which contains remote-viewer compatible file to open virtual
+                  machine console. Please note that this file contains sensible information."
     returned: On success if VM is found.
     type: dict
 '''
@@ -916,7 +948,9 @@ class VmsModule(BaseModule):
         template = None
         templates_service = self._connection.system_service().templates_service()
         if self.param('template'):
-            templates = templates_service.list(search='name=%s' % self.param('template'))
+            templates = templates_service.list(
+                search='name=%s and cluster=%s' % (self.param('template'), self.param('cluster'))
+            )
             if self.param('template_version'):
                 templates = [
                     t for t in templates
@@ -924,9 +958,10 @@ class VmsModule(BaseModule):
                 ]
             if not templates:
                 raise ValueError(
-                    "Template with name '%s' and version '%s' was not found'" % (
+                    "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
                         self.param('template'),
-                        self.param('template_version')
+                        self.param('template_version'),
+                        self.param('cluster')
                     )
                 )
             template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
@@ -1066,6 +1101,10 @@ class VmsModule(BaseModule):
                     self.param('instance_type'),
                 ),
             ) if self.param('instance_type') else None,
+            custom_compatibility_version=otypes.Version(
+                major=self._get_major(self.param('custom_compatibility_version')),
+                minor=self._get_minor(self.param('custom_compatibility_version')),
+            ) if self.param('custom_compatibility_version') else None,
             description=self.param('description'),
             comment=self.param('comment'),
             time_zone=otypes.TimeZone(
@@ -1153,6 +1192,8 @@ class VmsModule(BaseModule):
             equal(self.param('io_threads'), entity.io.threads) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), entity.console.enabled) and
+            equal(self._get_minor(self.param('custom_compatibility_version')), self._get_minor(entity.custom_compatibility_version)) and
+            equal(self._get_major(self.param('custom_compatibility_version')), self._get_major(entity.custom_compatibility_version)) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
@@ -1589,7 +1630,6 @@ class VmsModule(BaseModule):
 
 def _get_role_mappings(module):
     roleMappings = list()
-
     for roleMapping in module.params['role_mappings']:
         roleMappings.append(
             otypes.RegistrationRoleMapping(
@@ -1892,6 +1932,8 @@ def main():
         kvm=dict(type='dict'),
         cpu_mode=dict(type='str'),
         placement_policy=dict(type='str'),
+        custom_compatibility_version=dict(type='str'),
+        ticket=dict(type='bool', default=None),
         cpu_pinning=dict(type='list'),
         soundcard_enabled=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
@@ -1984,6 +2026,15 @@ def main():
                         initialization is not None and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
+
+                if module.params['ticket']:
+                    vm_service = vms_service.vm_service(ret['id'])
+                    graphics_consoles_service = vm_service.graphics_consoles_service()
+                    graphics_console = graphics_consoles_service.list()[0]
+                    console_service = graphics_consoles_service.console_service(graphics_console.id)
+                    ticket = console_service.remote_viewer_connection_file()
+                    if ticket:
+                        ret['vm']['remote_vv_file'] = ticket
 
             if state == 'next_run':
                 # Apply next run configuration, if needed:
