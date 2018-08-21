@@ -27,7 +27,7 @@ class TestConnectionWinRM(object):
                 '_psrp_cert_validation': True,
                 '_psrp_configuration_name': 'Microsoft.PowerShell',
                 '_psrp_connection_timeout': 30,
-                '_psrp_encryption': 'auto',
+                '_psrp_message_encryption': 'auto',
                 '_psrp_host': 'inventory_hostname',
                 '_psrp_conn_kwargs': {
                     'server': 'inventory_hostname',
@@ -46,13 +46,13 @@ class TestConnectionWinRM(object):
                     'operation_timeout': 20,
                 },
                 '_psrp_max_envelope_size': 153600,
-                '_psrp_no_proxy': False,
+                '_psrp_ignore_proxy': False,
                 '_psrp_operation_timeout': 20,
                 '_psrp_pass': '',
                 '_psrp_path': 'wsman',
                 '_psrp_port': 5986,
                 '_psrp_proxy': None,
-                '_psrp_ssl': True,
+                '_psrp_protocol': 'https',
                 '_psrp_user': None
             },
         ),
@@ -61,7 +61,7 @@ class TestConnectionWinRM(object):
             {'_extras': {}, 'ansible_port': '5985'},
             {
                 '_psrp_port': 5985,
-                '_psrp_ssl': False
+                '_psrp_protocol': 'http'
             },
         ),
         # ssl=True when port defined to not 5985
@@ -69,23 +69,23 @@ class TestConnectionWinRM(object):
             {'_extras': {}, 'ansible_port': 1234},
             {
                 '_psrp_port': 1234,
-                '_psrp_ssl': True
+                '_psrp_protocol': 'https'
             },
         ),
         # port 5986 when ssl=True
         (
-            {'_extras': {}, 'ansible_psrp_ssl': 'yes'},
+            {'_extras': {}, 'ansible_psrp_protocol': 'https'},
             {
                 '_psrp_port': 5986,
-                '_psrp_ssl': True
+                '_psrp_protocol': 'https'
             },
         ),
         # port 5985 when ssl=False
         (
-            {'_extras': {}, 'ansible_psrp_ssl': 'False'},
+            {'_extras': {}, 'ansible_psrp_protocol': 'http'},
             {
                 '_psrp_port': 5985,
-                '_psrp_ssl': False
+                '_psrp_protocol': 'http'
             },
         ),
         # psrp extras
@@ -107,20 +107,21 @@ class TestConnectionWinRM(object):
                     'no_proxy': False,
                     'max_envelope_size': 153600,
                     'operation_timeout': 20,
-                    'negotiate_delegate': True
+                    'negotiate_delegate': True,
+
                 },
             },
         ),
         # cert validation through string repr of bool
         (
-            {'_extras': {}, 'ansible_psrp_cert_validation': 'no'},
+            {'_extras': {}, 'ansible_psrp_cert_validation': 'ignore'},
             {
                 '_psrp_cert_validation': False
             },
         ),
         # cert validation path
         (
-            {'_extras': {}, 'ansible_psrp_cert_validation': '/path/cert.pem'},
+            {'_extras': {}, 'ansible_psrp_cert_trust_path': '/path/cert.pem'},
             {
                 '_psrp_cert_validation': '/path/cert.pem'
             },

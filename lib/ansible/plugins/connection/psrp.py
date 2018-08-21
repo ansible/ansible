@@ -11,7 +11,7 @@ short_description: Run tasks over Microsoft PowerShell Remoting Protocol
 description:
 - Run commands or put/fetch on a target via PSRP (WinRM plugin)
 - This is similar to the I(winrm) connection plugin which uses the same
-  underlying transport but insteads runs in a PowerShell interpreter.
+  underlying transport but instead runs in a PowerShell interpreter.
 version_added: "2.7"
 requirements:
 - pypsrp (Python library)
@@ -33,17 +33,20 @@ options:
   port:
     description:
     - The port for PSRP to connect on the remote target.
-    - Default is C(5986) if I(ssl) is not defined or is C(yes), otherwise the
-      port is C(5985).
+    - Default is C(5986) if I(protocol) is not defined or is C(https),
+      otherwise the port is C(5985).
     vars:
     - name: ansible_port
     - name: ansible_psrp_port
-  ssl:
+  protocol:
     description:
-    - Whether to use SSL (HTTPS) or without (HTTP).
-    - Default is C(True) if I(port) is not defined or I(port) is not C(5985).
+    - Set the protocol to use for the connection.
+    - Default is C(https) if I(port) is not defined or I(port) is not C(5985).
+    choices:
+    - http
+    - https
     vars:
-    - name: ansible_psrp_ssl
+    - name: ansible_psrp_protocol
   path:
     description:
     - The URI path to connect to.
@@ -68,11 +71,22 @@ options:
   cert_validation:
     description:
     - Whether to validate the remote server's certificate or not.
-    - Can also be set to the path of a PEM certificate chain to use in the
-      validation process.
+    - Set to C(ignore) to not validate any certificates.
+    - I(cert_trust_path) can be set to the path of a PEM certificate chain to
+      use in the validation.
+    choices:
+    - validate
+    - ignore
+    default: validate
     vars:
     - name: ansible_psrp_cert_validation
-    default: yes
+  cert_trust_path:
+    description:
+    - The path to a PEM certificate chain to use when validating the server's
+      certificate.
+    - This value is ignored if I(cert_validation) is set to C(ignore).
+    vars:
+    - name: ansible_psrp_cert_trust_path
   connection_timeout:
     description:
     - The connection timeout for making the request to the remote host.
@@ -80,20 +94,21 @@ options:
     vars:
     - name: ansible_psrp_connection_timeout
     default: 30
-  encryption:
+  message_encryption:
     description:
-    - Controls the encryption settings.
+    - Controls the message encryption settings, this is different from TLS
+      encryption when I(ansible_psrp_protocol) is C(https).
     - Only the auth protocols C(negotiate), C(kerberos), C(ntlm), and
       C(credssp) can do message encryption. The other authentication protocols
-      only support encryption when C(ssl) is set to C(True).
-    - C(auto) means means message encryption is required through either through
-      the authentication process or with TLS/HTTPS.
+      only support encryption when C(protocol) is set to C(https).
+    - C(auto) means means message encryption is only used when not using
+      TLS/HTTPS.
     - C(always) is the same as C(auto) but message encryption is always used
       even when running over TLS/HTTPS.
     - C(never) disables any encryption checks that are in place when running
-      over HTTP and disables any authentication encryptions processes.
+      over HTTP and disables any authentication encryption processes.
     vars:
-    - name: ansible_psrp_encryption
+    - name: ansible_psrp_message_encryption
     choices:
     - auto
     - always
@@ -104,13 +119,13 @@ options:
     - Set the proxy URL to use when connecting to the remote host.
     vars:
     - name: ansible_psrp_proxy
-  no_proxy:
+  ignore_proxy:
     description:
     - Will disable any environment proxy settings and connect directly to the
       remote host.
     - This option is ignored if C(proxy) is set.
     vars:
-    - name: ansible_psrp_no_proxy
+    - name: ansible_psrp_ignore_proxy
     type: bool
     default: 'no'
 
@@ -445,32 +460,35 @@ if ($bytes_read -gt 0) {
         self._psrp_user = self.get_option('remote_user')
         self._psrp_pass = self._play_context.password
 
-        ssl = self.get_option('ssl')
+        protocol = self.get_option('protocol')
         port = self.get_option('port')
-        if ssl is None and port is None:
-            ssl = True
+        if protocol is None and port is None:
+            protocol = 'https'
             port = 5986
-        elif ssl is None:
-            ssl = int(port) != 5985
+        elif protocol is None:
+            protocol = 'https' if int(port) != 5985 else 'http'
         elif port is None:
-            port = 5986 if boolean(ssl) else 5985
+            port = 5986 if protocol == 'https' else 5985
 
-        self._psrp_ssl = boolean(ssl)
+        self._psrp_protocol = protocol
         self._psrp_port = int(port)
 
         self._psrp_path = self.get_option('path')
         self._psrp_auth = self.get_option('auth')
         # cert validation can either be a bool or a path to the cert
         cert_validation = self.get_option('cert_validation')
-        try:
-            self._psrp_cert_validation = boolean(cert_validation, strict=True)
-        except TypeError:
-            self._psrp_cert_validation = cert_validation
+        cert_trust_path = self.get_option('cert_trust_path')
+        if cert_validation == 'ignore':
+            self._psrp_cert_validation = False
+        elif cert_trust_path is not None:
+            self._psrp_cert_validation = cert_trust_path
+        else:
+            self._psrp_cert_validation = True
 
         self._psrp_connection_timeout = int(self.get_option('connection_timeout'))
-        self._psrp_encryption = self.get_option('encryption')
+        self._psrp_message_encryption = self.get_option('message_encryption')
         self._psrp_proxy = self.get_option('proxy')
-        self._psrp_no_proxy = boolean(self.get_option('no_proxy'))
+        self._psrp_ignore_proxy = boolean(self.get_option('ignore_proxy'))
         self._psrp_operation_timeout = int(self.get_option('operation_timeout'))
         self._psrp_max_envelope_size = int(self.get_option('max_envelope_size'))
         self._psrp_configuration_name = self.get_option('configuration_name')
@@ -489,11 +507,11 @@ if ($bytes_read -gt 0) {
         self._psrp_conn_kwargs = dict(
             server=self._psrp_host, port=self._psrp_port,
             username=self._psrp_user, password=self._psrp_pass,
-            ssl=self._psrp_ssl, path=self._psrp_path, auth=self._psrp_auth,
-            cert_validation=self._psrp_cert_validation,
+            ssl=self._psrp_protocol == 'https', path=self._psrp_path,
+            auth=self._psrp_auth, cert_validation=self._psrp_cert_validation,
             connection_timeout=self._psrp_connection_timeout,
-            encryption=self._psrp_encryption, proxy=self._psrp_proxy,
-            no_proxy=self._psrp_no_proxy,
+            encryption=self._psrp_message_encryption, proxy=self._psrp_proxy,
+            no_proxy=self._psrp_ignore_proxy,
             max_envelope_size=self._psrp_max_envelope_size,
             operation_timeout=self._psrp_operation_timeout,
         )
