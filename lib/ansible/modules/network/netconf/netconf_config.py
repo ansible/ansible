@@ -58,6 +58,11 @@ options:
     default: true
     required: false
     version_added: "2.4"
+  key_filename:
+    description:
+     - Specifies the path to ssh key to be used to connect to host
+    required: false
+    version_added: "2.7"
   datastore:
     description:
      - auto, uses candidate and fallback to running
@@ -80,7 +85,7 @@ options:
   password:
     description:
      - password of the user to authenticate with
-    required: true
+    required: false
   xml:
     description:
      - the XML content to send to the device
@@ -143,6 +148,13 @@ EXAMPLES = '''
                 </ntp>
             </system>
         </config>
+
+- name: Send XML Template Payload
+  netconf_config:
+    host: 10.0.0.1
+    username: admin
+    key_filename: /home/admin/.ssh/privatekeyfile
+    src: my_xml_template.j2
 
 '''
 
@@ -223,8 +235,9 @@ def main():
             look_for_keys=dict(type='bool', default=True),
 
             allow_agent=dict(type='bool', default=True),
+            key_filename=dict(type='path', required=False),
         ),
-        mutually_exclusive=[('xml', 'src')]
+        mutually_exclusive=[('xml', 'src'), ('password', 'key_filename')]
     )
 
     if not module._socket_path and not HAS_NCCLIENT:
@@ -254,6 +267,7 @@ def main():
             look_for_keys=module.params['look_for_keys'],
             username=module.params['username'],
             password=module.params['password'],
+            key_filename=module.params['key_filename'],
         )
 
         try:
