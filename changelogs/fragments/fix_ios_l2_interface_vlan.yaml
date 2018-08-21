@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ios_l2_interface - fix bug when list of vlans ends with comma (https://github.com/ansible/ansible/pull/43879)
