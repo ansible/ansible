@@ -23,7 +23,7 @@
       ec2_instance:
           name: "ansible_ec2_vol_facts_test"
           instance_type: t2.nano
-          image_id: "{{ amis.images | sort(attribute='creation_date') | last }}"
+          image_id: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
           wait: yes
           tags:
             Environment: test
