@@ -37,6 +37,8 @@ options:
     description:
     - Node name of vlan interface.
     required: true
+notes:
+  - The C(interface_name) option has been removed and should be deleted from playbooks
 '''
 
 EXAMPLES = """

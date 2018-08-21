@@ -170,6 +170,8 @@ Noteworthy module changes
   * ``frequency``, use ``type``, in a triggers entry instead
   * ``time``, use ``start_boundary`` in a triggers entry instead
 
+* The ``interface_name`` module option for ``na_ontap_net_vlan`` has been removed and should be removed from your playbooks
+
 
 Plugins
 =======
