@@ -36,7 +36,7 @@ options:
      - This is required if C(uuid) parameter is not supplied.
    uuid:
      description:
-     - UUID of the instance to manage if known, this is VMware's BIOS UUID.
+     - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
      - This is required if C(name) parameter is not supplied.
    use_instance_uuid:
      description:
