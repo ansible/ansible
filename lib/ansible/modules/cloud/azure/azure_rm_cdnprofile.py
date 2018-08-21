@@ -226,7 +226,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
         )
 
         try:
-            poller = self.cdn_management_client.profiles.create(self.resource_group, self.name, parameters)
+            poller = self.cdn_management_client.profiles.create(self.resource_group, self.name, parameters, raw=True)
             response = self.get_poller_result(poller)
             return cdnprofile_to_dict(response)
         except ErrorResponseException as exc:
