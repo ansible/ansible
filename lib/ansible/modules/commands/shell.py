@@ -119,10 +119,10 @@ EXAMPLES = '''
   args:
     executable: /usr/bin/expect
   delegate_to: localhost
-  
+
 # Disabling warnings
 - name: Using curl to connect to a host via SOCKS proxy (unsupported in uri). Ordinarily this would throw a warning.
-  shell: curl --socks5: localhost:9000 http://www.ansible.com
+  shell: curl --socks5 localhost:9000 http://www.ansible.com
   args:
     warn: False
 '''
