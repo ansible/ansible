@@ -124,9 +124,6 @@ webapps:
                 hostNames:
                     description: host names of the web app.
                     type: list
-                lastModifiedTimeUtc:
-                    description: Last modified date  of the web app.
-                    type: str
                 outboundIpAddresses:
                     description: outbound ip address of the web app.
                     type: str
@@ -207,7 +204,8 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         try:
             response = list(self.web_client.web_apps.list_by_resource_group(self.resource_group))
         except CloudError as exc:
-            self.fail("Error listing web apps in resource groups {0} - {1}".format(self.resource_group, str(exc)))
+            request_id = exc.request_id if exc.request_id else ''
+            self.fail("Error listing web apps in resource groups {0}, request id: {1} - {2}".format(self.resource_group, request_id, str(exc)))
 
         results = []
         for item in response:
@@ -221,7 +219,8 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         try:
             response = list(self.web_client.web_apps.list())
         except CloudError as exc:
-            self.fail("Error listing web apps: {1}".format(str(exc)))
+            request_id = exc.request_id if exc.request_id else ''
+            self.fail("Error listing web apps, request id {0} - {1}".format(request_id, str(exc)))
 
         results = []
         for item in response:
@@ -238,7 +237,8 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         try:
             response = self.web_client.web_apps.get_configuration(resource_group_name=resource_group, name=name)
         except CloudError as ex:
-            self.fail('Error getting web app {0} configuration'.format(name))
+            request_id = ex.request_id if ex.request_id else ''
+            self.fail('Error getting web app {0} configuration, request id {1} - {2}'.format(name, request_id, str(ex)))
 
         return response.as_dict()
 
@@ -250,7 +250,8 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         try:
             response = self.web_client.web_apps.list_application_settings(resource_group_name=resource_group, name=name)
         except CloudError as ex:
-            self.fail('Error getting web app {0} app settings'.format(name))
+            request_id = ex.request_id if ex.request_id else ''
+            self.fail('Error getting web app {0} app settings, request id {1} - {2}'.format(name, request_id, str(ex)))
 
         return response.as_dict()
 
@@ -273,8 +274,16 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         curated_output['plan'] = webapp['properties']['serverFarmId']
         curated_output['tags'] = webapp.get('tags', None)
 
-        # add properties
-        curated_output['properties'] = webapp['properties']
+        # important properties from output. not match input arguments.
+        curated_output['properties'] = []
+        curated_output['properties']['state'] = webapp['properties']['state']
+        curated_output['properties']['availability_state'] = webapp['properties']['availabilityState']
+        curated_output['properties']['default_host_name'] = webapp['properties']['defaultHostName']
+        curated_output['properties']['host_names'] = webapp['properties']['hostNames']
+        curated_output['properties']['enabled'] = webapp['properties']['enabled']
+        curated_output['properties']['enabled_host_names'] = webapp['properties']['enabledHostNames']
+        curated_output['properties']['host_name_ssl_states'] = webapp['properties']['hostNameSslStates']
+        curated_output['properties']['outbound_ip_addresses'] = webapp['properties']['outboundIpAddresses']
 
         # curated site_config
         if configuration:
