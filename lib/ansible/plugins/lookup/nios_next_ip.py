@@ -90,11 +90,11 @@ class LookupModule(LookupBase):
             raise AnsibleError('unable to find network object %s' % network)
 
         num = kwargs.get('num', 1)
-        excludeIP = kwargs.get('exclude', [])
+        exclude_ip = kwargs.get('exclude', [])
 
         try:
             ref = network_obj[0]['_ref']
-            avail_ips = wapi.call_func('next_available_ip', ref, {'num': num, 'exclude': excludeIP})
+            avail_ips = wapi.call_func('next_available_ip', ref, {'num': num, 'exclude': exclude_ip})
             return [avail_ips['ips']]
         except Exception as exc:
             raise AnsibleError(to_text(exc))
