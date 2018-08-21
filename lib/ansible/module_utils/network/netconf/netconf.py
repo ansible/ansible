@@ -42,8 +42,7 @@ netconf_top_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), removed_in_version=2.11, type='path'),
     'hostkey_verify': dict(removed_in_version=2.11, type='bool', default=True),
     'look_for_keys': dict(removed_in_version=2.11, type='bool', default=True),
-    'allow_agent': dict(removed_in_version=2.11, type='bool', default=True),
-    'timeout': dict(removed_in_version=2.11, type='int'),
+    'timeout': dict(removed_in_version=2.11, type='int', default=10),
 }
 netconf_argument_spec.update(netconf_top_spec)
 
