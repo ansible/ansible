@@ -1473,7 +1473,7 @@ MERGE_MULTIPLE_CLI_TAGS:
   version_added: "2.3"
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
   description: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
