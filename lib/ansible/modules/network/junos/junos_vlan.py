@@ -32,7 +32,8 @@ options:
     required: true
   l3_interface:
     description:
-      -  Name of logical layer 3 interface
+      -  Name of logical layer 3 interface.
+    version_added: "2.7"
   description:
     description:
       - Text description of VLANs.
