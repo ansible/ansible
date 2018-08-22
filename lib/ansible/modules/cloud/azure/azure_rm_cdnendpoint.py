@@ -62,21 +62,17 @@ options:
             name:
                 description:
                     - Origin name
-                type: str
                 required: true
             host_name:
                 description:
                     - The address of the origin. It can be a domain name, IPv4 address, or IPv6 address.
-                type: str
                 required: true
             http_port:
                 description:
                     - The value of the HTTP port. Must be between 1 and 65535
-                type: int
             https_port:
                 description:
                     - The value of the HTTPS port. Must be between 1 and 65535
-                type: int
     origin_host_header:
         description:
             - The host header value sent to the origin with each request.
