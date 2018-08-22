@@ -181,6 +181,13 @@ EXAMPLES = '''
     format: cow
     interface: virtio
 
+# Change Disk Name
+- ovirt_disk:
+    id: 00000000-0000-0000-0000-000000000000
+    storage_domain: data
+    name: "new disk name"
+    vm_name: rhel7
+
 # Upload local image to disk and attach it to vm:
 # Since Ansible 2.3
 - ovirt_disk:
@@ -513,6 +520,7 @@ class DisksModule(BaseModule):
 
     def _update_check(self, entity):
         return (
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and

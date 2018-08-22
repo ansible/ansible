@@ -494,6 +494,11 @@ options:
             - "C(user_migratable) - Allow manual migration only."
             - "If no value is passed, default value is set by oVirt/RHV engine."
         version_added: "2.5"
+    ticket:
+        description:
+            - "If I(true), in addition return I(remote_vv_file) inside I(vm) dictionary, which contains compatible
+                content for remote-viewer application. Works only C(state) is I(running)."
+        version_added: "2.7"
     cpu_pinning:
         description:
             - "CPU Pinning topology to map virtual machine CPU to host CPU."
@@ -867,6 +872,23 @@ EXAMPLES = '''
       protocol:
         - spice
         - vnc
+# Execute remote viever to VM
+- block:
+  - name: Create a ticket for console for a running VM
+    ovirt_vms:
+      name: myvm
+      ticket: true
+      state: running
+    register: myvm
+
+  - name: Save ticket to file
+    copy:
+      content: "{{ myvm.vm.remote_vv_file }}"
+      dest: ~/vvfile.vv
+
+  - name: Run remote viewer with file
+    command: remote-viewer ~/vvfile.vv
+
 '''
 
 
@@ -878,7 +900,10 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vm:
     description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
-                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm.
+                  Additionally when user sent ticket=true, this module will return also remote_vv_file
+                  parameter in vm dictionary, which contains remote-viewer compatible file to open virtual
+                  machine console. Please note that this file contains sensible information."
     returned: On success if VM is found.
     type: dict
 '''
@@ -1908,6 +1933,7 @@ def main():
         cpu_mode=dict(type='str'),
         placement_policy=dict(type='str'),
         custom_compatibility_version=dict(type='str'),
+        ticket=dict(type='bool', default=None),
         cpu_pinning=dict(type='list'),
         soundcard_enabled=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
@@ -2000,6 +2026,15 @@ def main():
                         initialization is not None and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
+
+                if module.params['ticket']:
+                    vm_service = vms_service.vm_service(ret['id'])
+                    graphics_consoles_service = vm_service.graphics_consoles_service()
+                    graphics_console = graphics_consoles_service.list()[0]
+                    console_service = graphics_consoles_service.console_service(graphics_console.id)
+                    ticket = console_service.remote_viewer_connection_file()
+                    if ticket:
+                        ret['vm']['remote_vv_file'] = ticket
 
             if state == 'next_run':
                 # Apply next run configuration, if needed:

@@ -1,0 +1,2 @@
+bugfixes:
+- flatten filter - use better method of type checking allowing flattening of mutable and non-mutable sequences (https://github.com/ansible/ansible/pull/44331)
