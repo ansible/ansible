@@ -115,6 +115,7 @@ try:
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import fq_name
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.utils.iapp_parser import NonextantTemplateNameException
@@ -127,6 +128,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import fq_name
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.utils.iapp_parser import NonextantTemplateNameException
@@ -163,8 +165,7 @@ class Parameters(AnsibleF5Parameters):
         if self._values['content'] is None:
             return None
         result = self._squash_template_name_prefix()
-        if self._values['name']:
-            result = self._replace_template_name(result)
+        result = self._replace_template_name(result)
         return result
 
     @property
@@ -206,7 +207,13 @@ class Parameters(AnsibleF5Parameters):
         :return string
         """
         pattern = r'sys\s+application\s+template\s+[^ ]+'
-        replace = 'sys application template {0}'.format(self._values['name'])
+
+        if self._values['name']:
+            name = self._values['name']
+        else:
+            name = self._get_template_name()
+
+        replace = 'sys application template {0}'.format(fq_name(self.partition, name))
         return re.sub(pattern, replace, template)
 
     def _get_template_name(self):
@@ -214,7 +221,7 @@ class Parameters(AnsibleF5Parameters):
         # using it in all cases to get the name of an iApp. So we'll use this
         # pattern for now and file a bug with the F5 SDK
         pattern = r'sys\s+application\s+template\s+(?P<path>\/[^\{}"\'*?|#]+\/)?(?P<name>[^\{}"\'*?|#]+)'
-        matches = re.search(pattern, self.content)
+        matches = re.search(pattern, self._values['content'])
         try:
             result = matches.group('name').strip()
         except IndexError:
@@ -391,6 +398,8 @@ class ModuleManager(object):
         if hasattr(output, 'commandResult'):
             result = output.commandResult
             if 'Syntax Error' in result:
+                raise F5ModuleError(output.commandResult)
+            if 'ERROR' in result:
                 raise F5ModuleError(output.commandResult)
 
     def remove(self):

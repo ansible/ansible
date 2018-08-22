@@ -21,6 +21,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.modules.bigip_iapp_service import Parameters
+    from library.modules.bigip_iapp_service import ApiParameters
+    from library.modules.bigip_iapp_service import ModuleParameters
     from library.modules.bigip_iapp_service import ModuleManager
     from library.modules.bigip_iapp_service import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
@@ -29,6 +31,8 @@ try:
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_iapp_service import Parameters
+        from ansible.modules.network.f5.bigip_iapp_service import ApiParameters
+        from ansible.modules.network.f5.bigip_iapp_service import ModuleParameters
         from ansible.modules.network.f5.bigip_iapp_service import ModuleManager
         from ansible.modules.network.f5.bigip_iapp_service import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
@@ -63,13 +67,13 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_keys(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
 
         # Assert the top-level keys
         assert p.name == 'http_example'
         assert p.partition == 'Common'
         assert p.template == '/Common/f5.http'
-        assert p.deviceGroup == 'none'
+        assert p.device_group is None
         assert p.inheritedTrafficGroup == 'true'
         assert p.inheritedDevicegroup == 'true'
         assert p.traffic_group == '/Common/traffic-group-local-only'
@@ -119,7 +123,7 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_variables(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
 
         assert 'variables' in p._values
         assert len(p.variables) == 34
@@ -142,13 +146,13 @@ class TestParameters(unittest.TestCase):
         args = dict(
             strict_updates=True
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.strict_updates == 'enabled'
 
         args = dict(
             strict_updates=False
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.strict_updates == 'disabled'
 
     def test_module_strict_updates_override_from_top_level(self):
@@ -158,7 +162,7 @@ class TestParameters(unittest.TestCase):
                 strictUpdates='disabled'
             )
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.strict_updates == 'enabled'
 
         args = dict(
@@ -167,7 +171,7 @@ class TestParameters(unittest.TestCase):
                 strictUpdates='enabled'
             )
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.strict_updates == 'disabled'
 
     def test_module_strict_updates_only_parameters(self):
@@ -176,7 +180,7 @@ class TestParameters(unittest.TestCase):
                 strictUpdates='disabled'
             )
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.strict_updates == 'disabled'
 
         args = dict(
@@ -184,7 +188,7 @@ class TestParameters(unittest.TestCase):
                 strictUpdates='enabled'
             )
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.strict_updates == 'enabled'
 
     def test_api_strict_updates_from_top_level(self):
@@ -242,7 +246,7 @@ class TestParameters(unittest.TestCase):
                 }
             ]
         )
-        p = Parameters(params=args)
+        p = ApiParameters(params=args)
         assert p.tables[0]['name'] == 'pool__members'
         assert p.tables[0]['columnNames'] == ['addr', 'port', 'connection_limit']
         assert len(p.tables[0]['rows']) == 2
@@ -255,8 +259,8 @@ class TestParameters(unittest.TestCase):
         args = dict(
             deviceGroup='none'
         )
-        p = Parameters(params=args)
-        assert p.deviceGroup == 'none'
+        p = ApiParameters(params=args)
+        assert p.device_group is None
 
     def test_api_parameters_inherited_traffic_group(self):
         args = dict(
@@ -284,7 +288,7 @@ class TestParameters(unittest.TestCase):
             template='foo',
             partition='bar'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.template == '/bar/foo'
 
     def test_module_template_same_partition_full_path(self):
@@ -292,7 +296,7 @@ class TestParameters(unittest.TestCase):
             template='/bar/foo',
             partition='bar'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.template == '/bar/foo'
 
     def test_module_template_different_partition_full_path(self):
@@ -300,7 +304,7 @@ class TestParameters(unittest.TestCase):
             template='/Common/foo',
             partition='bar'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.template == '/Common/foo'
 
 
@@ -316,7 +320,7 @@ class TestManager(unittest.TestCase):
             template='f5.http',
             parameters=parameters,
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -330,6 +334,7 @@ class TestManager(unittest.TestCase):
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(return_value=False)
         mm.create_on_device = Mock(return_value=True)
+        mm.template_exists = Mock(return_value=True)
 
         results = mm.exec_module()
         assert results['changed'] is True
@@ -341,7 +346,7 @@ class TestManager(unittest.TestCase):
             template='f5.http',
             parameters=parameters,
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

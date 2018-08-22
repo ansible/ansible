@@ -136,10 +136,10 @@ class TestManager(unittest.TestCase):
         results = mm.exec_module()
 
         assert results['changed'] is True
-        assert results['enable_dns_express'] is True
-        assert results['enable_zone_transfer'] is True
-        assert results['enable_dnssec'] is True
-        assert results['enable_gtm'] is True
-        assert results['process_recursion_desired'] is True
-        assert results['use_local_bind'] is True
-        assert results['enable_dns_firewall'] is True
+        assert results['enable_dns_express'] == 'yes'
+        assert results['enable_zone_transfer'] == 'yes'
+        assert results['enable_dnssec'] == 'yes'
+        assert results['enable_gtm'] == 'yes'
+        assert results['process_recursion_desired'] == 'yes'
+        assert results['use_local_bind'] == 'yes'
+        assert results['enable_dns_firewall'] == 'yes'

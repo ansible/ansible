@@ -171,6 +171,7 @@ class TestModuleManager(unittest.TestCase):
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[True, False])
         mm.remove_from_device = Mock(return_value=True)
+        mm.remove_members_in_group_from_device = Mock(return_value=True)
 
         results = mm.exec_module()
         assert results['changed'] is True
