@@ -107,7 +107,7 @@ class NetAppONTAPClusterPeer(object):
             passphrase=dict(required=False, type='str'),
             dest_hostname=dict(required=True, type='str'),
             dest_username=dict(required=False, type='str'),
-            dest_password=dict(required=False, type='str'),
+            dest_password=dict(required=False, type='str', no_log=True),
             source_cluster_name=dict(required=False, type='str'),
             dest_cluster_name=dict(required=False, type='str')
         ))
