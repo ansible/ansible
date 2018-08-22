@@ -90,7 +90,7 @@ DOCKER_COMMON_ARGS = dict(
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
-    ssl_version=dict(type='str', default=DEFAULT_SSL_VERSION, fallback=(env_fallback, 'DOCKER_SSL_VERSION')),
+    ssl_version=dict(type='str'),
     tls=dict(type='bool', default=DEFAULT_TLS, fallback=(env_fallback, 'DOCKER_TLS')),
     tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY, fallback=(env_fallback, 'DOCKER_TLS_VERIFY')),
     debug=dict(type='bool', default=False)
@@ -258,7 +258,7 @@ class AnsibleDockerClient(Client):
             cacert_path=self._get_value('cacert_path', params['cacert_path'], 'DOCKER_CERT_PATH', None),
             cert_path=self._get_value('cert_path', params['cert_path'], 'DOCKER_CERT_PATH', None),
             key_path=self._get_value('key_path', params['key_path'], 'DOCKER_CERT_PATH', None),
-            ssl_version=self._get_value('ssl_version', params['ssl_version'], 'DOCKER_SSL_VERSION', DEFAULT_SSL_VERSION),
+            ssl_version=self._get_value('ssl_version', params['ssl_version'], 'DOCKER_SSL_VERSION', None),
             tls=self._get_value('tls', params['tls'], 'DOCKER_TLS', DEFAULT_TLS),
             tls_verify=self._get_value('tls_verfy', params['tls_verify'], 'DOCKER_TLS_VERIFY',
                                        DEFAULT_TLS_VERIFY),
