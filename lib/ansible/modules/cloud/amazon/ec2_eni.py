@@ -69,16 +69,19 @@ options:
       - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id
         to None or when deleting an interface with state=absent.
     default: 'no'
+    type: bool
   delete_on_termination:
     description:
       - Delete the interface when the instance it is attached to is terminated. You can only specify this flag when the
         interface is being modified, not on creation.
     required: false
+    type: bool
   source_dest_check:
     description:
       - By default, interfaces perform source/destination checks. NAT instances however need this check to be disabled.
         You can only specify this flag when the interface is being modified, not on creation.
     required: false
+    type: bool
   secondary_private_ip_addresses:
     description:
       - A list of IP addresses to assign as secondary IP addresses to the network interface.
@@ -90,6 +93,7 @@ options:
       - To be used with I(secondary_private_ip_addresses) to determine whether or not to remove any secondary IP addresses other than those specified.
         Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
     default: no
+    type: bool
     version_added: 2.5
   secondary_private_ip_address_count:
     description:
@@ -102,6 +106,7 @@ options:
         to be reassigned to the specified network interface.
     required: false
     default: 'no'
+    type: bool
     version_added: 2.7
 extends_documentation_fragment:
     - aws
