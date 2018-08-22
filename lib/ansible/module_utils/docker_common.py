@@ -90,7 +90,7 @@ DOCKER_COMMON_ARGS = dict(
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
-    ssl_version=dict(type='str'),
+    ssl_version=dict(type='str', fallback=(env_fallback, ['DOCKER_SSL_VERSION'])),
     tls=dict(type='bool', default=DEFAULT_TLS, fallback=(env_fallback, ['DOCKER_TLS'])),
     tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY, fallback=(env_fallback, ['DOCKER_TLS_VERIFY'])),
     debug=dict(type='bool', default=False)
