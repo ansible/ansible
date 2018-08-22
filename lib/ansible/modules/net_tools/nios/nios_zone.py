@@ -124,7 +124,7 @@ EXAMPLES = '''
   connection: local
 - name: configure a reverse mapping zone on the system using IPV4 zone format
   nios_zone:
-    name: 10.10.10.in-addr.arpa
+    name: 10.10.10.0/24
     format: IPV4
     state: present
     provider:
@@ -134,7 +134,7 @@ EXAMPLES = '''
   connection: local
 - name: configure a reverse mapping zone on the system using IPV6 zone format
   nios_zone:
-    name: 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1.0.ip6.arpa
+    name: 100::1/128
     format: IPV6
     state: present
     provider:
@@ -165,7 +165,7 @@ EXAMPLES = '''
   connection: local
 - name: remove the reverse mapping dns zone from the system with IPV4 zone format
   nios_zone:
-    name: 10.10.10.in-addr.arpa
+    name: 10.10.10.0/24
     format: IPV4
     state: absent
     provider:
