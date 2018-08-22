@@ -1,0 +1,5 @@
+bugfixes:
+- "docker_container: makes unit parsing for memory sizes more consistent, and
+   fixes idempotency problem when ``kernel_memory`` is set (see
+   https://github.com/ansible/ansible/pull/16748 and
+   https://github.com/ansible/ansible/issues/42692)"
