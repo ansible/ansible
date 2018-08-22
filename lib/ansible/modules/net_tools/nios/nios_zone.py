@@ -65,7 +65,7 @@ options:
       - If set to true, causes the NIOS DNS service to restart and load the
         new zone configuration
     type: bool
-  format:
+  zone_format:
     version_added: "2.7"
     description:
       - Create an authorative Reverse-Mapping Zone which is an area of network
@@ -125,7 +125,7 @@ EXAMPLES = '''
 - name: configure a reverse mapping zone on the system using IPV4 zone format
   nios_zone:
     name: 10.10.10.0/24
-    format: IPV4
+    zone_format: IPV4
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -135,7 +135,7 @@ EXAMPLES = '''
 - name: configure a reverse mapping zone on the system using IPV6 zone format
   nios_zone:
     name: 100::1/128
-    format: IPV6
+    zone_format: IPV6
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -166,7 +166,7 @@ EXAMPLES = '''
 - name: remove the reverse mapping dns zone from the system with IPV4 zone format
   nios_zone:
     name: 10.10.10.0/24
-    format: IPV4
+    zone_format: IPV4
     state: absent
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -191,7 +191,7 @@ def main():
 
     ib_spec = dict(
         fqdn=dict(required=True, aliases=['name'], ib_req=True, update=False),
-        zone_format=dict(default='FORWARD', aliases=['format'], ib_req=False),
+        zone_format=dict(default='FORWARD', aliases=['zone_format'], ib_req=False),
         view=dict(default='default', aliases=['dns_view'], ib_req=True),
 
         grid_primary=dict(type='list', elements='dict', options=grid_spec),
