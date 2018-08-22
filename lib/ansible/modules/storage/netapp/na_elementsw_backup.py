@@ -141,11 +141,11 @@ class ElementSWBackup(object):
 
             src_hostname=dict(aliases=['hostname'], required=True, type='str'),
             src_username=dict(aliases=['username', 'user'], required=True, type='str'),
-            src_password=dict(aliases=['password', 'pass'], required=True, type='str'),
+            src_password=dict(aliases=['password', 'pass'], required=True, type='str', no_log=True),
             src_volume_id=dict(aliases=['volume_id'], required=True, type='str'),
             dest_hostname=dict(required=False, type='str'),
             dest_username=dict(required=False, type='str'),
-            dest_password=dict(required=False, type='str'),
+            dest_password=dict(required=False, type='str', no_log=True),
             dest_volume_id=dict(required=True, type='str'),
             format=dict(required=False, choices=['native', 'uncompressed'], default='native'),
             script=dict(required=False, type='str'),
