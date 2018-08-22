@@ -60,7 +60,7 @@ The ``win_dsc`` module takes in a free-form of options so that it changes
 according to the resource it is managing. A list of built in resources can be
 found at `resources <https://docs.microsoft.com/en-us/powershell/dsc/resources>`_.
 
-Using the the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
+Using the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
 resource as an example, this is the DSC definition as documented by Microsoft::
 
     Registry [string] #ResourceName

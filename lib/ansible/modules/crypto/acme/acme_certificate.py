@@ -96,7 +96,7 @@ options:
       - "The CSR may contain multiple Subject Alternate Names, but each one
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
-      - "I(Note): the private key used to create the CSR I(must not) be the the
+      - "I(Note): the private key used to create the CSR I(must not) be the
          account key. This is a bad idea from a security point of view, and
          the CA should not accept the CSR. Let's Encrypt will return an error
          in this case."

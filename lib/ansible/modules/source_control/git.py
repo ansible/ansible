@@ -36,7 +36,7 @@ options:
         required: true
     version:
         description:
-            - What version of the repository to check out.  This can be the
+            - What version of the repository to check out.  This can be
               the literal string C(HEAD), a branch name, a tag name.
               It can also be a I(SHA-1) hash, in which case C(refspec) needs
               to be specified if the given revision is not already available.
