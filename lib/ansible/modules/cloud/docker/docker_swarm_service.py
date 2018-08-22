@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: docker_swarm_service
-author: "Dario Zanzico (@dariko)"
+author: "Dario Zanzico (@dariko), Jason Witkowski (@jwitko)"
 short_description: docker swarm service
 description: |
   Manage docker services. Allows live altering of already defined services
@@ -811,7 +811,7 @@ class DockerService(DockerBaseClass):
 
         if self.mode == 'global':
             self.replicas = None
-        
+
         mode = types.ServiceMode(self.mode, replicas=self.replicas)
 
         networks = []
@@ -855,7 +855,7 @@ class DockerServiceManager():
 
         task_template_data = raw_data['Spec']['TaskTemplate']
         update_config_data = raw_data['Spec']['UpdateConfig']
-        
+
         ds.image = task_template_data['ContainerSpec']['Image']
         ds.user = task_template_data['ContainerSpec'].get('User', 'root')
         ds.env = task_template_data['ContainerSpec'].get('Env', [])
