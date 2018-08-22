@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
     @enable_mode
     def get_config(self, source='running', flags=None, format=None):
         if source not in ('running', 'startup'):
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         if format:
             raise ValueError("'format' value %s is not supported for get_config" % format)
