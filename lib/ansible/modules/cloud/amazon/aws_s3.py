@@ -702,9 +702,6 @@ def main():
                      ['mode', 'geturl', ['object']]],
     )
 
-    if module._name == 's3':
-        module.deprecate("The 's3' module is being renamed 'aws_s3'", version=2.7)
-
     bucket = module.params.get('bucket')
     encrypt = module.params.get('encrypt')
     expiry = module.params.get('expiry')
