@@ -1,51 +1,18 @@
 #!powershell
-# -*- coding: utf-8 -*-
 
-# (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
-$params = Parse-Args $args;
+$ErrorActionPreference = "Stop"
 
-# Name parameter
-$name = Get-Attr $params "name" $FALSE;
-If ($name -eq $FALSE) {
-    Fail-Json @{} "missing required argument: name";
-}
-
-# Site
-$site = Get-Attr $params "site" $FALSE;
-If ($site -eq $FALSE) {
-    Fail-Json @{} "missing required argument: site";
-}
-
-# Application
-$application = Get-Attr $params "application" $FALSE;
-
-# State parameter
-$state = Get-Attr $params "state" "present";
-If (($state -ne 'present') -and ($state -ne 'absent')) {
-  Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
-}
-
-# Path parameter
-$physical_path = Get-Attr $params "physical_path" $FALSE;
+$params = Parse-Args $args
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$site = Get-AnsibleParam -obj $params -name "site" -type "str" -failifempty $true
+$application = Get-AnsibleParam -obj $params -name "application" -type "str"
+$physical_path = Get-AnsibleParam -obj $params -name "physical_path" -type "str"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 
 # Ensure WebAdministration module is loaded
 if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
@@ -75,18 +42,18 @@ $directory = if($application) {
 try {
   # Add directory
   If(($state -eq 'present') -and (-not $directory)) {
-    If ($physical_path -eq $FALSE) {
-      Fail-Json @{} "missing required arguments: physical_path"
+    If (-not $physical_path) {
+      Fail-Json -obj $result -message "missing required arguments: physical_path"
     }
     If (-not (Test-Path $physical_path)) {
-      Fail-Json @{} "specified folder must already exist: physical_path"
+      Fail-Json -obj $result -message "specified folder must already exist: physical_path"
     }
 
     $directory_parameters = @{
       Site = $site
       Name = $name
       PhysicalPath = $physical_path
-    };
+    }
 
     If ($application) {
       $directory_parameters.Application = $application
@@ -108,7 +75,7 @@ try {
     # Change Physical Path if needed
     if($physical_path) {
       If (-not (Test-Path $physical_path)) {
-        Fail-Json @{} "specified folder must already exist: physical_path"
+        Fail-Json -obj $result -message "specified folder must already exist: physical_path"
       }
 
       $vdir_folder = Get-Item $directory.PhysicalPath
@@ -129,4 +96,4 @@ $result.directory = @{
   PhysicalPath = $directory.PhysicalPath
 }
 
-Exit-Json $result
+Exit-Json -obj $result

@@ -61,6 +61,10 @@ notes:
      playbooks will follow the trend of using M(command) unless the C(shell)
      module is explicitly required. When running ad-hoc commands, use your best
      judgement.
+  -  Check mode is supported when passing C(creates) or C(removes). If running
+     in check mode and either of these are specified, the module will check for
+     the existence of the file and report the correct changed status. If these
+     are not supplied, the task will be skipped.
   -  To sanitize any variables passed to the shell module, you should use
      "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
   - For Windows targets, use the M(win_shell) module instead.

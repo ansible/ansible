@@ -1,0 +1,163 @@
+# these are very basic tests, they should be expanded greatly as this is a core module
+---
+- name: get register cmd that will get ace info
+  set_fact:
+    test_ace_cmd: |
+      $ace_list = (Get-Acl -Path $path).Access | Where-Object { $_.IsInherited -eq $false } | ForEach-Object {
+          @{
+              rights = $_.FileSystemRights.ToString()
+              type = $_.AccessControlType.ToString()
+              identity = $_.IdentityReference.Value.ToString()
+              inheritance_flags = $_.InheritanceFlags.ToString()
+              propagation_flags = $_.PropagationFlags.ToString()
+          }
+      }
+      ConvertTo-Json -InputObject @($ace_list)
+
+- name: add write rights to Guest
+  win_acl:
+    path: '{{ test_acl_path }}'
+    type: allow
+    user: Guests
+    rights: Write
+  register: allow_right
+
+- name: get result of add write rights to Guest
+  win_shell: '$path = ''{{ test_acl_path }}''; {{ test_ace_cmd }}'
+  register: allow_right_actual
+
+- name: assert add write rights to Guest
+  assert:
+    that:
+    - allow_right is changed
+    - (allow_right_actual.stdout|from_json)|count == 1
+    - (allow_right_actual.stdout|from_json)[0].identity == 'BUILTIN\Guests'
+    - (allow_right_actual.stdout|from_json)[0].inheritance_flags == 'ContainerInherit, ObjectInherit'
+    - (allow_right_actual.stdout|from_json)[0].propagation_flags == 'None'
+    - (allow_right_actual.stdout|from_json)[0].rights == 'Write, Synchronize'
+    - (allow_right_actual.stdout|from_json)[0].type == 'Allow'
+
+- name: add write rights to Guest (idempotent)
+  win_acl:
+    path: '{{ test_acl_path }}'
+    type: allow
+    user: Guests
+    rights: Write
+  register: allow_right_again
+
+- name: assert add write rights to Guest (idempotent)
+  assert:
+    that:
+    - not allow_right_again is changed
+
+- name: remove write rights from Guest
+  win_acl:
+    path: '{{ test_acl_path }}'
+    type: allow
+    user: Guests
+    rights: Write
+    state: absent
+  register: remove_right
+
+- name: get result of remove write rights from Guest
+  win_shell: '$path = ''{{ test_acl_path }}''; {{ test_ace_cmd }}'
+  register: remove_right_actual
+
+- name: assert remove write rights from Guest
+  assert:
+    that:
+    - remove_right is changed
+    - remove_right_actual.stdout_lines == ["[", "", "]"]
+
+- name: remove write rights from Guest (idempotent)
+  win_acl:
+    path: '{{ test_acl_path }}'
+    type: allow
+    user: Guests
+    rights: Write
+    state: absent
+  register: remove_right_again
+
+- name: assert remote write rights from Guest (idempotent)
+  assert:
+    that:
+    - not remove_right_again is changed
+
+- name: add deny write rights to Guest
+  win_acl:
+    path: '{{ test_acl_path }}'
+    type: deny
+    user: Guests
+    rights: Write
+    inherit: ContainerInherit
+    propagation: NoPropagateInherit
+    state: present
+  register: add_deny_right
+
+- name: get result of add deny write rights to Guest
+  win_shell: '$path = ''{{ test_acl_path }}''; {{ test_ace_cmd }}'
+  register: add_deny_right_actual
+
+- name: assert add deny write rights to Guest
+  assert:
+    that:
+    - add_deny_right is changed
+    - (add_deny_right_actual.stdout|from_json)|count == 1
+    - (add_deny_right_actual.stdout|from_json)[0].identity == 'BUILTIN\Guests'
+    - (add_deny_right_actual.stdout|from_json)[0].inheritance_flags == 'ContainerInherit'
+    - (add_deny_right_actual.stdout|from_json)[0].propagation_flags == 'NoPropagateInherit'
+    - (add_deny_right_actual.stdout|from_json)[0].rights == 'Write'
+    - (add_deny_right_actual.stdout|from_json)[0].type == 'Deny'
+
+- name: add deny write rights to Guest (idempotent)
+  win_acl:
+    path: '{{ test_acl_path }}'
+    type: deny
+    user: Guests
+    rights: Write
+    inherit: ContainerInherit
+    propagation: NoPropagateInherit
+    state: present
+  register: add_deny_right_again
+
+- name: assert add deny write rights to Guest (idempotent)
+  assert:
+    that:
+    - not add_deny_right_again is changed
+
+- name: remove deny write rights from Guest
+  win_acl:
+    path: '{{ test_acl_path }}'
+    type: deny
+    user: Guests
+    rights: Write
+    inherit: ContainerInherit
+    propagation: NoPropagateInherit
+    state: absent
+  register: remove_deny_right
+
+- name: get result of remove deny write rights from Guest
+  win_shell: '$path = ''{{ test_acl_path }}''; {{ test_ace_cmd }}'
+  register: remove_deny_right_actual
+
+- name: assert remove deny write rights from Guest
+  assert:
+    that:
+    - remove_deny_right is changed
+    - remove_deny_right_actual.stdout_lines == ["[", "", "]"]
+
+- name: remove deny write rights from Guest (idempotent)
+  win_acl:
+    path: '{{ test_acl_path }}'
+    type: deny
+    user: Guests
+    rights: Write
+    inherit: ContainerInherit
+    propagation: NoPropagateInherit
+    state: absent
+  register: remove_deny_right_again
+
+- name: assert remove deny write rights from Guest (idempotent)
+  assert:
+    that:
+    - not remove_deny_right_again is changed

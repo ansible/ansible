@@ -10,14 +10,15 @@ import time
 import json
 import subprocess
 import sys
+import termios
 import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
-from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -67,7 +68,7 @@ class TaskExecutor:
     # the module
     SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -76,7 +77,7 @@ class TaskExecutor:
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
-        self._rslt_q = rslt_q
+        self._final_q = final_q
         self._loop_eval_error = None
 
         self._task.squash()
@@ -170,9 +171,10 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')))
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._task.no_log)
         except Exception as e:
-            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()), stdout='')
+            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
+                        stdout='', _ansible_no_log=self._task.no_log)
         finally:
             try:
                 self._connection.close()
@@ -201,6 +203,10 @@ class TaskExecutor:
 
         # get search path for this task to pass to lookup plugins
         self._job_vars['ansible_search_path'] = self._task.get_search_path()
+
+        # ensure basedir is always in (dwim already searches here but we need to display it)
+        if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
+            self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
@@ -253,10 +259,6 @@ class TaskExecutor:
                 if item is not None and not isinstance(item, UnsafeProxy):
                     items[idx] = UnsafeProxy(item)
 
-        # ensure basedir is always in (dwim already searches here but we need to display it)
-        if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
-            self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
-
         return items
 
     def _run_loop(self, items):
@@ -302,6 +304,7 @@ class TaskExecutor:
             # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
             items = self._squash_items(items, loop_var, task_vars)
 
+        no_log = False
         for item_index, item in enumerate(items):
             task_vars[loop_var] = item
             if index_var:
@@ -336,6 +339,9 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
+            # update 'general no_log' based on specific no_log
+            no_log = no_log or tmp_task.no_log
+
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
@@ -347,7 +353,7 @@ class TaskExecutor:
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             res['_ansible_item_label'] = templar.template(label, cache=False)
 
-            self._rslt_q.put(
+            self._final_q.put(
                 TaskResult(
                     self._host.name,
                     self._task._uuid,
@@ -358,6 +364,8 @@ class TaskExecutor:
             )
             results.append(res)
             del task_vars[loop_var]
+
+        self._task.no_log = no_log
 
         return results
 
@@ -518,8 +526,9 @@ class TaskExecutor:
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
-                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts",
-                                   version="2.6")
+                if C.INJECT_FACTS_AS_VARS:
+                    display.warning("Using a variable for a task's 'args' is unsafe in some situations "
+                                    "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe)")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
 
@@ -627,6 +636,7 @@ class TaskExecutor:
                 if self._task.action in ('set_fact', 'include_vars'):
                     vars_copy.update(result['ansible_facts'])
                 else:
+                    # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     vars_copy.update(namespace_facts(result['ansible_facts']))
                     if C.INJECT_FACTS_AS_VARS:
                         vars_copy.update(clean_facts(result['ansible_facts']))
@@ -671,7 +681,7 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
+                        self._final_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
                         time.sleep(delay)
         else:
             if retries > 1:
@@ -688,6 +698,7 @@ class TaskExecutor:
             if self._task.action in ('set_fact', 'include_vars'):
                 variables.update(result['ansible_facts'])
             else:
+                # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                 variables.update(namespace_facts(result['ansible_facts']))
                 if C.INJECT_FACTS_AS_VARS:
                     variables.update(clean_facts(result['ansible_facts']))
@@ -767,7 +778,7 @@ class TaskExecutor:
                 display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:
-                    normal_handler._connection._reset()
+                    normal_handler._connection.reset()
                 except AttributeError:
                     pass
 
@@ -923,26 +934,24 @@ class TaskExecutor:
             [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
             stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
-        # Need to force a protocol that is compatible with both py2 and py3.
-        # That would be protocol=2 or less.
-        # Also need to force a protocol that excludes certain control chars as
-        # stdin in this case is a pty and control chars will cause problems.
-        # that means only protocol=0 will work.
-        src = cPickle.dumps(self._play_context.serialize(), protocol=0)
-        stdin.write(src)
-        stdin.write(b'\n#END_INIT#\n')
+        # We need to set the pty into noncanonical mode. This ensures that we
+        # can receive lines longer than 4095 characters (plus newline) without
+        # truncating.
+        old = termios.tcgetattr(master)
+        new = termios.tcgetattr(master)
+        new[3] = new[3] & ~termios.ICANON
 
-        src = cPickle.dumps(variables, protocol=0)
-        stdin.write(src)
-        stdin.write(b'\n#END_VARS#\n')
+        try:
+            termios.tcsetattr(master, termios.TCSANOW, new)
+            write_to_file_descriptor(master, variables)
+            write_to_file_descriptor(master, self._play_context.serialize())
 
-        stdin.flush()
-
-        (stdout, stderr) = p.communicate()
-        stdin.close()
+            (stdout, stderr) = p.communicate()
+        finally:
+            termios.tcsetattr(master, termios.TCSANOW, old)
+        os.close(master)
 
         if p.returncode == 0:
             result = json.loads(to_text(stdout, errors='surrogate_then_replace'))

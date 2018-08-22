@@ -68,8 +68,8 @@ options:
       - The private SSH key or certificate file used to to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
-     section: defaults
-     key: private_key_file
+      - section: defaults
+        key: private_key_file
     env:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
@@ -94,8 +94,8 @@ options:
       - Can be configured form the CLI via the C(--become) or C(-b) options
     default: False
     ini:
-      section: privilege_escalation
-      key: become
+      - section: privilege_escalation
+        key: become
     env:
       - name: ANSIBLE_BECOME
     vars:
@@ -107,8 +107,8 @@ options:
         C(enable) but could be defined as other values.
     default: sudo
     ini:
-      section: privilege_escalation
-      key: become_method
+      - section: privilege_escalation
+        key: become_method
     env:
       - name: ANSIBLE_BECOME_METHOD
     vars:
@@ -125,8 +125,8 @@ options:
         option on production systems as it could create a security vulnerability.
     default: False
     ini:
-      section: paramiko_connection
-      key: host_key_auto_add
+      - section: paramiko_connection
+        key: host_key_auto_add
     env:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
   persistent_connect_timeout:
@@ -155,6 +155,8 @@ options:
         key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 
 import getpass
@@ -198,6 +200,7 @@ class Connection(NetworkConnectionBase):
         self._history = list()
 
         self._terminal = None
+        self.cliconf = None
         self.paramiko_conn = None
 
         if self._play_context.verbosity > 3:
@@ -258,7 +261,6 @@ class Connection(NetworkConnectionBase):
 
         self.reset_history()
         self.disable_response_logging()
-
         return messages
 
     def _connect(self):
@@ -291,10 +293,10 @@ class Connection(NetworkConnectionBase):
 
             display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
 
-            cliconf = cliconf_loader.get(self._network_os, self)
-            if cliconf:
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
                 display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(cliconf)
+                self._implementation_plugins.append(self.cliconf)
             else:
                 display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 

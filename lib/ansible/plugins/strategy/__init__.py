@@ -197,6 +197,10 @@ class StrategyBase:
         # outstanding tasks still in queue
         self._blocked_hosts = dict()
 
+        # this dictionary is used to keep track of hosts that have
+        # flushed handlers
+        self._flushed_hosts = dict()
+
         self._results = deque()
         self._results_lock = threading.Condition(threading.Lock())
 
@@ -302,7 +306,7 @@ class StrategyBase:
             queued = False
             starting_worker = self._cur_worker
             while True:
-                (worker_prc, rslt_q) = self._workers[self._cur_worker]
+                worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     self._queued_task_cache[(host.name, task._uuid)] = {
                         'host': host,
@@ -312,7 +316,7 @@ class StrategyBase:
                     }
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
-                    self._workers[self._cur_worker][0] = worker_prc
+                    self._workers[self._cur_worker] = worker_prc
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
@@ -657,6 +661,35 @@ class StrategyBase:
 
         return ret_results
 
+    def _wait_on_handler_results(self, iterator, handler, notified_hosts):
+        '''
+        Wait for the handler tasks to complete, using a short sleep
+        between checks to ensure we don't spin lock
+        '''
+
+        ret_results = []
+        handler_results = 0
+
+        display.debug("waiting for handler results...")
+        while (self._pending_results > 0 and
+               handler_results < len(notified_hosts) and
+               not self._tqm._terminated):
+
+            if self._tqm.has_dead_workers():
+                raise AnsibleError("A worker was found in a dead state")
+
+            results = self._process_pending_results(iterator)
+            ret_results.extend(results)
+            handler_results += len([
+                r._host for r in results if r._host in notified_hosts and
+                r.task_name == handler.name])
+            if self._pending_results > 0:
+                time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
+
+        display.debug("no more pending handlers, returning what we have")
+
+        return ret_results
+
     def _wait_on_pending_results(self, iterator):
         '''
         Wait for the shared counter to drop to zero, using a short sleep
@@ -855,13 +888,16 @@ class StrategyBase:
         #     self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
         #     result = False
         #     break
-        saved_name = handler.name
-        handler.name = handler_name
-        self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
-        handler.name = saved_name
-
         if notified_hosts is None:
             notified_hosts = self._notified_handlers[handler._uuid]
+
+        notified_hosts = self._filter_notified_hosts(notified_hosts)
+
+        if len(notified_hosts) > 0:
+            saved_name = handler.name
+            handler.name = handler_name
+            self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
+            handler.name = saved_name
 
         run_once = False
         try:
@@ -883,7 +919,7 @@ class StrategyBase:
                     break
 
         # collect the results from the handler run
-        host_results = self._wait_on_pending_results(iterator)
+        host_results = self._wait_on_handler_results(iterator, handler, notified_hosts)
 
         try:
             included_files = IncludedFile.process_include_results(
@@ -922,10 +958,21 @@ class StrategyBase:
                     display.warning(str(e))
                     continue
 
-        # wipe the notification list
-        self._notified_handlers[handler._uuid] = []
+        # remove hosts from notification list
+        self._notified_handlers[handler._uuid] = [
+            h for h in self._notified_handlers[handler._uuid]
+            if h not in notified_hosts]
         display.debug("done running handlers, result is: %s" % result)
         return result
+
+    def _filter_notified_hosts(self, notified_hosts):
+        '''
+        Filter notified hosts accordingly to strategy
+        '''
+
+        # As main strategy is linear, we do not filter hosts
+        # We return a copy to avoid race conditions
+        return notified_hosts[:]
 
     def _take_step(self, task, host=None):
 
@@ -974,7 +1021,9 @@ class StrategyBase:
         elif meta_action == 'flush_handlers':
             if task.when:
                 self._cond_not_supported_warn(meta_action)
+            self._flushed_hosts[target_host] = True
             self.run_handlers(iterator, play_context)
+            self._flushed_hosts[target_host] = False
             msg = "ran handlers"
         elif meta_action == 'refresh_inventory' or self.flush_cache:
             if task.when:

@@ -26,6 +26,7 @@ options:
       - Name of the node to create, or re-use, when creating a new pool member.
       - This parameter is optional and, if not specified, a node name will be
         created automatically from either the specified C(address) or C(fqdn).
+      - The C(enabled) state is an alias of C(present).
     version_added: 2.6
   state:
     description:
@@ -113,11 +114,11 @@ options:
       - Specifies whether the system automatically creates ephemeral nodes using
         the IP addresses returned by the resolution of a DNS query for a node
         defined by an FQDN.
-      - When C(enabled), the system generates an ephemeral node for each IP address
+      - When C(yes), the system generates an ephemeral node for each IP address
         returned in response to a DNS query for the FQDN of the node. Additionally,
         when a DNS response indicates the IP address of an ephemeral node no longer
         exists, the system deletes the ephemeral node.
-      - When C(disabled), the system resolves a DNS query for the FQDN of the node
+      - When C(no), the system resolves a DNS query for the FQDN of the node
         with the single IP address associated with the FQDN.
       - When creating a new pool member, the default for this parameter is C(yes).
       - This parameter is ignored when C(reuse_nodes) is C(yes).
@@ -129,24 +130,6 @@ options:
     default: yes
     type: bool
     version_added: 2.6
-  session_state:
-    description:
-      - Set new session availability status for pool member.
-      - This parameter is deprecated and will be removed in Ansible 2.7. Use C(state)
-        C(enabled) or C(disabled).
-    version_added: 2.0
-    choices:
-      - enabled
-      - disabled
-  monitor_state:
-    description:
-      - Set monitor availability status for pool member.
-      - This parameter is deprecated and will be removed in Ansible 2.7. Use C(state)
-        C(enabled) or C(disabled).
-    version_added: 2.0
-    choices:
-      - enabled
-      - disabled
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -289,6 +272,9 @@ try:
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import is_valid_hostname
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import validate_ip_address
+    from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -302,16 +288,13 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import is_valid_hostname
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import validate_ip_address
+    from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -342,10 +325,9 @@ class ModuleParameters(Parameters):
     def full_name(self):
         delimiter = ':'
         try:
-            addr = netaddr.IPAddress(self.full_name_dict['name'])
-            if addr.version == 6:
+            if validate_ip_v6_address(self.full_name_dict['name']):
                 delimiter = '.'
-        except netaddr.AddrFormatError:
+        except TypeError:
             pass
         return '{0}{1}{2}'.format(self.full_name_dict['name'], delimiter, self.port)
 
@@ -397,48 +379,22 @@ class ModuleParameters(Parameters):
         return int(self._values['port'])
 
     @property
-    def state(self):
-        # TODO(Remove all of this state craziness in 2.7)
-        if self.session_state is not None or self.monitor_state is not None:
-            if self._values['state'] in ['enabled', 'disabled', 'forced_offline']:
-                self._values['__warnings'].append([{
-                    'msg': "'session_state' is deprecated and will be ignored in favor of 'state'.",
-                    'version': '2.7'
-                }])
-                return self._values['state']
-            else:
-                if self.session_state is not None:
-                    self._values['__warnings'].append([{
-                        'msg': "'session_state' is deprecated and will be removed in the future. Use 'state'.",
-                        'version': '2.7'
-                    }])
-                elif self.monitor_state is not None:
-                    self._values['__warnings'].append([{
-                        'msg': "'monitor_state' is deprecated and will be removed in the future. Use 'state'.",
-                        'version': '2.7'
-                    }])
-
-                if self.session_state == 'enabled' and self.monitor_state == 'enabled':
-                    return 'enabled'
-                elif self.session_state == 'disabled' and self.monitor_state == 'enabled':
-                    return 'disabled'
-                else:
-                    return 'forced_offline'
-        return self._values['state']
-
-    @property
     def address(self):
         if self._values['address'] is None:
             return None
         elif self._values['address'] == 'any6':
             return 'any6'
-        try:
-            addr = netaddr.IPAddress(self._values['address'])
-            return str(addr)
-        except netaddr.AddrFormatError:
-            raise F5ModuleError(
-                "The specified 'address' value is not a valid IP address."
-            )
+        if is_valid_ip(self._values['address']):
+            return self._values['address']
+        raise F5ModuleError(
+            "The specified 'address' value is not a valid IP address."
+        )
+
+    @property
+    def state(self):
+        if self._values['state'] == 'enabled':
+            return 'present'
+        return self._values['state']
 
 
 class ApiParameters(Parameters):
@@ -652,7 +608,7 @@ class ModuleManager(object):
                 name=self.want.pool,
                 partition=self.want.partition
             )
-        except Exception:
+        except Exception as ex:
             raise F5ModuleError('The specified pool does not exist')
         result = pool.members_s.members.exists(
             name=self.want.full_name,
@@ -687,13 +643,12 @@ class ModuleManager(object):
         return True
 
     def _set_host_by_name(self):
-        try:
-            netaddr.IPAddress(self.want.name)
+        if is_valid_ip(self.want.name):
             self.want.update({
                 'fqdn': None,
                 'address': self.want.name
             })
-        except netaddr.AddrFormatError:
+        else:
             if not is_valid_hostname(self.want.name):
                 raise F5ModuleError(
                     "'name' is neither a valid IP address or FQDN name."
@@ -708,28 +663,16 @@ class ModuleManager(object):
             self.want.update({
                 'state': 'user-down',
                 'session': 'user-disabled',
-
-                # TODO(Remove in 2.7)
-                'session_state': None,
-                'monitor_state': None
             })
         elif self.want.state == 'disabled':
             self.want.update({
                 'state': 'user-up',
                 'session': 'user-disabled',
-
-                # TODO(Remove in 2.7)
-                'session_state': None,
-                'monitor_state': None
             })
         elif self.want.state in ['present', 'enabled']:
             self.want.update({
                 'state': 'user-up',
                 'session': 'user-enabled',
-
-                # TODO(Remove in 2.7)
-                'session_state': None,
-                'monitor_state': None
             })
 
     def _update_address_with_existing_nodes(self):
@@ -863,17 +806,6 @@ class ArgumentSpec(object):
             ),
             fqdn_auto_populate=dict(type='bool'),
             reuse_nodes=dict(type='bool', default=True),
-
-            # Deprecated params
-            # TODO(Remove in 2.7)
-            session_state=dict(
-                choices=['enabled', 'disabled'],
-                removed_in_version=2.7,
-            ),
-            monitor_state=dict(
-                choices=['enabled', 'disabled'],
-                removed_in_version=2.7,
-            ),
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -895,8 +827,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

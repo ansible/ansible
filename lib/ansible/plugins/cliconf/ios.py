@@ -26,6 +26,7 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
@@ -36,26 +37,26 @@ from ansible.plugins.cliconf import CliconfBase, enable_mode
 class Cliconf(CliconfBase):
 
     @enable_mode
-    def get_config(self, source='running', filter=None, format=None):
+    def get_config(self, source='running', flags=None, format=None):
         if source not in ('running', 'startup'):
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         if format:
-            raise ValueError("'format' value %s is not supported on ios" % format)
+            raise ValueError("'format' value %s is not supported for get_config" % format)
 
-        if not filter:
-            filter = []
+        if not flags:
+            flags = []
         if source == 'running':
             cmd = 'show running-config '
         else:
             cmd = 'show startup-config '
 
-        cmd += ' '.join(to_list(filter))
+        cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
 
         return self.send_command(cmd)
 
-    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace='line'):
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         """
         Generate diff between candidate and running configuration. If the
         remote host supports onbox diff capabilities ie. supports_onbox_diff in that case
@@ -64,7 +65,7 @@ class Cliconf(CliconfBase):
         and running argument is optional.
         :param candidate: The configuration which is expected to be present on remote host.
         :param running: The base configuration which is used to generate diff.
-        :param match: Instructs how to match the candidate configuration with current device configuration
+        :param diff_match: Instructs how to match the candidate configuration with current device configuration
                       Valid values are 'line', 'strict', 'exact', 'none'.
                       'line' - commands are matched line by line
                       'strict' - command lines are matched with respect to position
@@ -78,7 +79,7 @@ class Cliconf(CliconfBase):
                      the commands should be checked against.  If the parents argument
                      is omitted, the commands are checked against the set of top
                     level or global commands.
-        :param replace: Instructs on the way to perform the configuration on the device.
+        :param diff_replace: Instructs on the way to perform the configuration on the device.
                         If the replace argument is set to I(line) then the modified lines are
                         pushed to the device in configuration mode.  If the replace argument is
                         set to I(block) then the entire command block is pushed to the device in
@@ -86,7 +87,7 @@ class Cliconf(CliconfBase):
         :return: Configuration diff in  json format.
                {
                    'config_diff': '',
-                   'banner_diff': ''
+                   'banner_diff': {}
                }
 
         """
@@ -94,74 +95,67 @@ class Cliconf(CliconfBase):
         device_operations = self.get_device_operations()
         option_values = self.get_option_values()
 
-        if candidate is None and not device_operations['supports_onbox_diff']:
+        if candidate is None and device_operations['supports_generate_diff']:
             raise ValueError("candidate configuration is required to generate diff")
 
-        if match not in option_values['diff_match']:
-            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, option_values['diff_match']))
+        if diff_match not in option_values['diff_match']:
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (diff_match, ', '.join(option_values['diff_match'])))
 
-        if replace not in option_values['diff_replace']:
-            raise ValueError("'replace' value %s in invalid, valid values are %s" % (replace, option_values['diff_replace']))
+        if diff_replace not in option_values['diff_replace']:
+            raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
-        candidate_obj = NetworkConfig(indent=1)
+        candidate_obj = NetworkConfig(indent=1, ignore_lines=diff_ignore_lines)
         want_src, want_banners = self._extract_banners(candidate)
         candidate_obj.load(want_src)
 
-        if running and match != 'none':
+        if running and diff_match != 'none':
             # running configuration
             have_src, have_banners = self._extract_banners(running)
             running_obj = NetworkConfig(indent=1, contents=have_src, ignore_lines=diff_ignore_lines)
-            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=match, replace=replace)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
 
         else:
             configdiffobjs = candidate_obj.items
             have_banners = {}
 
-        configdiff = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
-        diff['config_diff'] = configdiff if configdiffobjs else {}
-
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         banners = self._diff_banners(want_banners, have_banners)
-
         diff['banner_diff'] = banners if banners else {}
-        return json.dumps(diff)
+        return diff
 
     @enable_mode
-    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
-        if not candidate:
-            raise ValueError("must provide a candidate config to load")
-
-        if commit not in (True, False):
-            raise ValueError("'commit' must be a bool, got %s" % commit)
-
-        if replace not in (True, False):
-            raise ValueError("'replace' must be a bool, got %s" % replace)
-
         operations = self.get_device_operations()
-        if replace and not operations['supports_replace']:
-            raise ValueError("configuration replace is not supported on ios")
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
+        requests = []
         if commit:
-            for line in chain(['configure terminal'], to_list(candidate)):
+            self.send_command('configure terminal')
+            for line in to_list(candidate):
                 if not isinstance(line, collections.Mapping):
                     line = {'command': line}
 
                 cmd = line['command']
                 if cmd != 'end' and cmd[0] != '!':
                     results.append(self.send_command(**line))
+                    requests.append(cmd)
 
-            results.append(self.send_command('end'))
+            self.send_command('end')
+        else:
+            raise ValueError('check mode is not supported')
 
-        resp['response'] = results[1:-1]
+        resp['request'] = requests
+        resp['response'] = results
         return resp
 
     def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
         if not command:
             raise ValueError('must provide value of command to execute')
         if output:
-            raise ValueError("'output' value %s is not supported on ios" % output)
+            raise ValueError("'output' value %s is not supported for get" % output)
 
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly)
 
@@ -194,9 +188,9 @@ class Cliconf(CliconfBase):
             'supports_defaults': True,
             'supports_onbox_diff': False,
             'supports_commit_comment': False,
-            'supports_multiline_delimiter': False,
-            'support_diff_match': True,
-            'support_diff_ignore_lines': True,
+            'supports_multiline_delimiter': True,
+            'supports_diff_match': True,
+            'supports_diff_ignore_lines': True,
             'supports_generate_diff': True,
             'supports_replace': False
         }
@@ -211,7 +205,7 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff', 'run_commands']
+        result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff', 'run_commands', 'get_defaults_flag']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
@@ -233,21 +227,30 @@ class Cliconf(CliconfBase):
         resp = {}
         banners_obj = json.loads(candidate)
         results = []
+        requests = []
         if commit:
             for key, value in iteritems(banners_obj):
                 key += ' %s' % multiline_delimiter
-                for cmd in ['config terminal', key, value, multiline_delimiter, 'end']:
+                self.send_command('config terminal', sendonly=True)
+                for cmd in [key, value, multiline_delimiter]:
                     obj = {'command': cmd, 'sendonly': True}
                     results.append(self.send_command(**obj))
+                    requests.append(cmd)
 
+                self.send_command('end', sendonly=True)
                 time.sleep(0.1)
                 results.append(self.send_command('\n'))
+                requests.append('\n')
 
-        resp['response'] = results[1:-1]
+        resp['request'] = requests
+        resp['response'] = results
 
         return resp
 
-    def run_commands(self, commands):
+    def run_commands(self, commands=None, check_rc=True):
+        if commands is None:
+            raise ValueError("'commands' value is required")
+
         responses = list()
         for cmd in to_list(commands):
             if not isinstance(cmd, collections.Mapping):
@@ -255,10 +258,37 @@ class Cliconf(CliconfBase):
 
             output = cmd.pop('output', None)
             if output:
-                raise ValueError("'output' value %s is not supported on ios" % output)
+                raise ValueError("'output' value %s is not supported for run_commands" % output)
 
-            responses.append(self.send_command(**cmd))
+            try:
+                out = self.send_command(**cmd)
+            except AnsibleConnectionFailure as e:
+                if check_rc:
+                    raise
+                out = getattr(e, 'err', e)
+
+            responses.append(out)
+
         return responses
+
+    def get_defaults_flag(self):
+        """
+        The method identifies the filter that should be used to fetch running-configuration
+        with defaults.
+        :return: valid default filter
+        """
+        out = self.get('show running-config ?')
+        out = to_text(out, errors='surrogate_then_replace')
+
+        commands = set()
+        for line in out.splitlines():
+            if line.strip():
+                commands.add(line.strip().split()[0])
+
+        if 'all' in commands:
+            return 'all'
+        else:
+            return 'full'
 
     def _extract_banners(self, config):
         banners = {}

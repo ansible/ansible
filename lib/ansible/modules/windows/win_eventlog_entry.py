@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
+# Copyright: (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -29,6 +29,7 @@ options:
       - The numeric event identifier for the entry.
       - Value must be between 0 and 65535.
     required: yes
+    type: int
   message:
     description:
       - The message for the given log entry.
@@ -45,6 +46,7 @@ options:
   category:
     description:
       - A numeric task category associated with the category message file for the log source.
+    type: int
   raw_data:
     description:
       - Binary data associated with the log entry.

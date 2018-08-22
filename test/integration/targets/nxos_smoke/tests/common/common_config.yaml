@@ -30,7 +30,6 @@
 - name: delete backup files
   file:
     path: "{{ item.path }}"
-    provider: "{{ connection }}"
     state: absent
   with_items: "{{backup_files.files|default([])}}"
 

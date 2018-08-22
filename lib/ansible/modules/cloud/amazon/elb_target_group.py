@@ -130,6 +130,17 @@ options:
     description:
       - The identifier of the virtual private cloud (VPC). Required when I(state) is C(present).
     required: false
+  wait:
+    description:
+      - Whether or not to wait for the target group.
+    type: bool
+    default: false
+    version_added: "2.4"
+  wait_timeout:
+    description:
+      - The time to wait for the target group.
+    default: 200
+    version_added: "2.4"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -418,6 +429,10 @@ def create_or_update_target_group(connection, module):
         if params['TargetType'] == 'ip':
             fail_if_ip_target_type_not_supported(module)
 
+    # Correct type of target ports
+    for target in params['Targets']:
+        target['Port'] = int(target.get('Port', module.params.get('port')))
+
     # Get target group
     tg = get_target_group(connection, module)
 
@@ -504,7 +519,7 @@ def create_or_update_target_group(connection, module):
                     instances_to_add = []
                     for target in params['Targets']:
                         if target['Id'] in add_instances:
-                            instances_to_add.append({'Id': target['Id'], 'Port': int(target.get('Port', module.params.get('port')))})
+                            instances_to_add.append({'Id': target['Id'], 'Port': target['Port']})
 
                     changed = True
                     try:
@@ -515,7 +530,7 @@ def create_or_update_target_group(connection, module):
                     if module.params.get("wait"):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_add, 'healthy')
                         if not status_achieved:
-                            module.fail_json(msg='Error waiting for target registration - please check the AWS console')
+                            module.fail_json(msg='Error waiting for target registration to be healthy - please check the AWS console')
 
                 remove_instances = set(current_instance_ids) - set(new_instance_ids)
 
@@ -578,7 +593,7 @@ def create_or_update_target_group(connection, module):
             if module.params.get("wait"):
                 status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], params['Targets'], 'healthy')
                 if not status_achieved:
-                    module.fail_json(msg='Error waiting for target registration - please check the AWS console')
+                    module.fail_json(msg='Error waiting for target registration to be healthy - please check the AWS console')
 
     # Now set target group attributes
     update_attributes = []
@@ -685,8 +700,8 @@ def main():
             targets=dict(type='list'),
             unhealthy_threshold_count=dict(type='int'),
             vpc_id=dict(),
-            wait_timeout=dict(type='int'),
-            wait=dict(type='bool')
+            wait_timeout=dict(type='int', default=200),
+            wait=dict(type='bool', default=False)
         )
     )
 

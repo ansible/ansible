@@ -1,7 +1,7 @@
 #!powershell
-# This file is part of Ansible.
-#
-# Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>, Tal Auslander <tal@cloudshare.com>
+
+# Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>
+# Copyright: (c) 2015, Tal Auslander <tal@cloudshare.com>
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -30,12 +30,9 @@ $webclient_util = @"
     }
 "@
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $webclient_util
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 
 Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {

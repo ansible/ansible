@@ -1,0 +1,38 @@
+- block:
+
+  - debug: msg="START nxapi/setup_test.yaml"
+
+  - name: "Configure NXAPI tlsv1_2={{ tlsv1_2 }}, tlsv1_1={{ tlsv1_1 }}, tlsv1_0={{ tlsv1_0 }}, ssl_strong_ciphers={{ ssl_strong_ciphers }}"
+    nxos_nxapi:
+      enable_http: no
+      enable_https: yes
+      https_port: 443
+      tlsv1_2: "{{ tlsv1_2 }}"
+      tlsv1_1: "{{ tlsv1_1 }}"
+      tlsv1_0: "{{ tlsv1_0 }}"
+      ssl_strong_ciphers: "{{ ssl_strong_ciphers }}"
+    connection: network_cli
+    register: result
+
+  - name: Assert NXAPI setup test  was successful
+    assert: &assert_false
+       that:
+          - "result.failed == false"
+
+  - name: Assert transports
+    include: targets/nxos_nxapi_transports/tests/nxapi/assert_transports.yaml
+
+  - debug: msg="END nxapi/setup_test.yaml"
+
+  always:
+  - name: Cleanup - Disable NXAPI
+    nxos_nxapi:
+      state: absent
+    connection: network_cli
+    register: result
+
+  - name: Cleanup - Re-enable NXAPI
+    nxos_nxapi:
+      state: present
+    connection: network_cli
+    register: result

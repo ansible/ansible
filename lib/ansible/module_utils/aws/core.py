@@ -69,7 +69,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
 
 # We will also export HAS_BOTO3 so end user modules can use it.
-__all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
+__all__ = ('AnsibleAWSModule', 'HAS_BOTO3', 'is_boto3_error_code')
 
 
 class AnsibleAWSModule(object):
@@ -134,6 +134,12 @@ class AnsibleAWSModule(object):
 
     def warn(self, *args, **kwargs):
         return self._module.warn(*args, **kwargs)
+
+    def deprecate(self, *args, **kwargs):
+        return self._module.deprecate(*args, **kwargs)
+
+    def boolean(self, *args, **kwargs):
+        return self._module.boolean(*args, **kwargs)
 
     def md5(self, *args, **kwargs):
         return self._module.md5(*args, **kwargs)

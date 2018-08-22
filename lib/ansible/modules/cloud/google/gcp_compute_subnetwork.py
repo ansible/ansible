@@ -67,18 +67,13 @@ options:
             - An optional description of this resource. Provide this property when you create
               the resource. This field can be set only at resource creation time.
         required: false
-    gateway_address:
-        description:
-            - The gateway address for default routes to reach destination addresses outside this
-              subnetwork. This field can be set only at resource creation time.
-        required: false
     ip_cidr_range:
         description:
             - The range of internal addresses that are owned by this subnetwork.
             - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
               192.168.0.0/16. Ranges must be unique and non-overlapping within a network. Only
               IPv4 is supported.
-        required: false
+        required: true
     name:
         description:
             - The name of the resource, provided by the client when initially creating the resource.
@@ -87,11 +82,12 @@ options:
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
-        required: false
+        required: true
     network:
         description:
-            - A reference to Network resource.
-        required: false
+            - The network this subnet belongs to.
+            - Only networks that are in the distributed mode can have subnetworks.
+        required: true
     private_ip_google_access:
         description:
             - Whether the VMs in this subnet can access Google services without assigned external
@@ -100,34 +96,35 @@ options:
         type: bool
     region:
         description:
-            - A reference to Region resource.
+            - URL of the GCP region for this subnetwork.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks)"
+    - "Private Google Access: U(https://cloud.google.com/vpc/docs/configure-private-google-access)"
+    - "Cloud Networking: U(https://cloud.google.com/vpc/docs/using-vpc)"
 '''
 
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: 'network-subnetwork'
+      name: "network-subnetwork"
       auto_create_subnetworks: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: network
+
 - name: create a subnetwork
   gcp_compute_subnetwork:
-      name: 'ansiblenet'
-      region: 'us-west1'
+      name: ansiblenet
+      region: us-west1
       network: "{{ network }}"
-      ip_cidr_range: '172.16.0.0/16'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      ip_cidr_range: 172.16.0.0/16
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -146,7 +143,7 @@ RETURN = '''
     gateway_address:
         description:
             - The gateway address for default routes to reach destination addresses outside this
-              subnetwork. This field can be set only at resource creation time.
+              subnetwork.
         returned: success
         type: str
     id:
@@ -174,7 +171,8 @@ RETURN = '''
         type: str
     network:
         description:
-            - A reference to Network resource.
+            - The network this subnet belongs to.
+            - Only networks that are in the distributed mode can have subnetworks.
         returned: success
         type: dict
     private_ip_google_access:
@@ -185,7 +183,7 @@ RETURN = '''
         type: bool
     region:
         description:
-            - A reference to Region resource.
+            - URL of the GCP region for this subnetwork.
         returned: success
         type: str
 '''
@@ -210,14 +208,16 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
-            gateway_address=dict(type='str'),
-            ip_cidr_range=dict(type='str'),
-            name=dict(type='str'),
-            network=dict(type='dict'),
+            ip_cidr_range=dict(required=True, type='str'),
+            name=dict(required=True, type='str'),
+            network=dict(required=True, type='dict'),
             private_ip_google_access=dict(type='bool'),
             region=dict(required=True, type='str')
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#subnetwork'
@@ -228,10 +228,10 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                fetch = update(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -251,12 +251,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -265,7 +265,6 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#subnetwork',
         u'description': module.params.get('description'),
-        u'gatewayAddress': module.params.get('gateway_address'),
         u'ipCidrRange': module.params.get('ip_cidr_range'),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
@@ -340,9 +339,9 @@ def response_to_hash(module, response):
     return {
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
-        u'gatewayAddress': module.params.get('gateway_address'),
+        u'gatewayAddress': response.get(u'gatewayAddress'),
         u'id': response.get(u'id'),
-        u'ipCidrRange': module.params.get('ip_cidr_range'),
+        u'ipCidrRange': response.get(u'ipCidrRange'),
         u'name': response.get(u'name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'privateIpGoogleAccess': response.get(u'privateIpGoogleAccess'),
@@ -362,7 +361,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#subnetwork')
@@ -385,6 +384,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

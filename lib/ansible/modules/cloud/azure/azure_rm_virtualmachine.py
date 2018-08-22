@@ -226,9 +226,11 @@ options:
               providing a list of ports.
     network_interface_names:
         description:
-            - List of existing network interface names to add to the VM. If a network interface name is not provided
-              when the VM is created, a default network interface will be created. In order for the module to create
-              a network interface, at least one Virtual Network with one Subnet must exist.
+            - List of existing network interface names to add to the VM.
+            - Item can be a str of name or resource id of the network interface.
+            - Item can also be a dict contains C(resource_group) and C(name) of the network interface.
+            - If a network interface name is not provided when the VM is created, a default network interface will be created.
+            - In order for the module to create a new network interface, at least one Virtual Network with one Subnet must exist.
         aliases:
             - network_interfaces
     virtual_network_resource_group:
@@ -239,15 +241,17 @@ options:
     virtual_network_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
-              The new network interface will be assigned to the first virtual network found in the resource group.
-              Use this parameter to provide a specific virtual network instead.
+            - The network interface will be assigned to the first virtual network found in the resource group.
+            - Use this parameter to provide a specific virtual network instead.
+            - If the virtual network in in another resource group, specific resource group by C(virtual_network_resource_group).
         aliases:
             - virtual_network
     subnet_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
-              The new network interface will be assigned to the first subnet found in the virtual network.
-              Use this parameter to provide a specific subnet instead.
+            - The new network interface will be assigned to the first subnet found in the virtual network.
+            - Use this parameter to provide a specific subnet instead.
+            - If the subnet is in another resource group, specific resource group by C(virtual_network_resource_group).
         aliases:
             - subnet
     remove_on_absent:
@@ -614,7 +618,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import to_native, to_bytes
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name, format_resource_id
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
@@ -660,7 +664,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
-            network_interface_names=dict(type='list', aliases=['network_interfaces']),
+            network_interface_names=dict(type='list', aliases=['network_interfaces'], elements='raw'),
             remove_on_absent=dict(type='list', default=['all']),
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
@@ -753,9 +757,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 ))
 
             if self.network_interface_names:
-                for name in self.network_interface_names:
-                    nic = self.get_network_interface(name)
-                    network_interfaces.append(nic.id)
+                for nic_name in self.network_interface_names:
+                    nic = self.parse_network_interface(nic_name)
+                    network_interfaces.append(nic)
 
             if self.ssh_public_keys:
                 msg = "Parameter error: expecting ssh_public_keys to be a list of type dict where " \
@@ -1241,7 +1245,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         # Expand network interfaces to include config properties
         for interface in vm.network_profile.network_interfaces:
             int_dict = azure_id_to_dict(interface.id)
-            nic = self.get_network_interface(int_dict['networkInterfaces'])
+            nic = self.get_network_interface(int_dict['resourceGroups'], int_dict['networkInterfaces'])
             for interface_dict in result['properties']['networkProfile']['networkInterfaces']:
                 if interface_dict['id'] == interface.id:
                     nic_dict = self.serialize_obj(nic, 'NetworkInterface')
@@ -1254,7 +1258,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 if config['properties'].get('publicIPAddress'):
                     pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])
                     try:
-                        pip = self.network_client.public_ip_addresses.get(self.resource_group,
+                        pip = self.network_client.public_ip_addresses.get(pipid_dict['resourceGroups'],
                                                                           pipid_dict['publicIPAddresses'])
                     except Exception as exc:
                         self.fail("Error fetching public ip {0} - {1}".format(pipid_dict['publicIPAddresses'],
@@ -1341,18 +1345,18 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Storing NIC names for deletion.')
             for interface in vm.network_profile.network_interfaces:
                 id_dict = azure_id_to_dict(interface.id)
-                nic_names.append(id_dict['networkInterfaces'])
-            self.log('NIC names to delete {0}'.format(', '.join(nic_names)))
+                nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
+            self.log('NIC names to delete {0}'.format(str(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
             if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
-                for name in nic_names:
-                    nic = self.get_network_interface(name)
+                for nic_dict in nic_names:
+                    nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
                     for ipc in nic.ip_configurations:
                         if ipc.public_ip_address:
                             pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
-                            pip_names.append(pip_dict['publicIPAddresses'])
-                self.log('Public IPs to  delete are {0}'.format(', '.join(pip_names)))
+                            pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
+                self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
 
         self.log("Deleting virtual machine {0}".format(self.name))
@@ -1374,37 +1378,37 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
             self.log('Deleting network interfaces')
-            for name in nic_names:
-                self.delete_nic(name)
+            for nic_dict in nic_names:
+                self.delete_nic(nic_dict['resource_group'], nic_dict['name'])
 
         if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
             self.log('Deleting public IPs')
-            for name in pip_names:
-                self.delete_pip(name)
+            for pip_dict in pip_names:
+                self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
         return True
 
-    def get_network_interface(self, name):
+    def get_network_interface(self, resource_group, name):
         try:
-            nic = self.network_client.network_interfaces.get(self.resource_group, name)
+            nic = self.network_client.network_interfaces.get(resource_group, name)
             return nic
         except Exception as exc:
             self.fail("Error fetching network interface {0} - {1}".format(name, str(exc)))
 
-    def delete_nic(self, name):
+    def delete_nic(self, resource_group, name):
         self.log("Deleting network interface {0}".format(name))
         self.results['actions'].append("Deleted network interface {0}".format(name))
         try:
-            poller = self.network_client.network_interfaces.delete(self.resource_group, name)
+            poller = self.network_client.network_interfaces.delete(resource_group, name)
         except Exception as exc:
             self.fail("Error deleting network interface {0} - {1}".format(name, str(exc)))
         self.get_poller_result(poller)
         # Delete doesn't return anything. If we get this far, assume success
         return True
 
-    def delete_pip(self, name):
+    def delete_pip(self, resource_group, name):
         self.results['actions'].append("Deleted public IP {0}".format(name))
         try:
-            poller = self.network_client.public_ip_addresses.delete(self.resource_group, name)
+            poller = self.network_client.public_ip_addresses.delete(resource_group, name)
             self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deleting {0} - {1}".format(name, str(exc)))
@@ -1691,6 +1695,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error creating network interface {0} - {1}".format(network_interface_name, str(exc)))
         return new_nic
+
+    def parse_network_interface(self, nic):
+        nic = self.parse_resource_to_dict(nic)
+        if 'name' not in nic:
+            self.fail("Invalid network interface {0}".format(str(nic)))
+        return format_resource_id(val=nic['name'],
+                                  subscription_id=nic['subscription_id'],
+                                  resource_group=nic['resource_group'],
+                                  namespace='Microsoft.Network',
+                                  types='networkInterfaces')
 
 
 def main():

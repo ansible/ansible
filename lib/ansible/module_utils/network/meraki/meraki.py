@@ -56,6 +56,10 @@ class MerakiModule(object):
         self.result = dict(changed=False)
         self.headers = dict()
         self.function = function
+        self.orgs = None
+        self.nets = None
+        self.org_id = None
+        self.net_id = None
 
         # normal output
         self.existing = None
@@ -130,14 +134,14 @@ class MerakiModule(object):
         if not optional_ignore:
             optional_ignore = ('')
 
-        for k, v in original.items():
-            try:
-                if k not in ignored_keys and k not in optional_ignore:
-                    if v != proposed[k]:
-                        is_changed = True
-            except KeyError:
-                if v != '':
-                    is_changed = True
+        # for k, v in original.items():
+        #     try:
+        #         if k not in ignored_keys and k not in optional_ignore:
+        #             if v != proposed[k]:
+        #                 is_changed = True
+        #     except KeyError:
+        #         if v != '':
+        #             is_changed = True
         for k, v in proposed.items():
             try:
                 if k not in ignored_keys and k not in optional_ignore:
@@ -150,7 +154,11 @@ class MerakiModule(object):
 
     def get_orgs(self):
         """Downloads all organizations for a user."""
-        return self.request('/organizations', method='GET')
+        response = self.request('/organizations', method='GET')
+        if self.status != 200:
+            self.fail_json(msg='Organization lookup failed')
+        self.orgs = self.request('/organizations', method='GET')
+        return self.orgs
 
     def is_org_valid(self, data, org_name=None, org_id=None):
         """Checks whether a specific org exists and is duplicated.
@@ -195,22 +203,25 @@ class MerakiModule(object):
             org_id = self.get_org_id(org_name)
         path = self.construct_path('get_all', org_id=org_id, function='network')
         r = self.request(path, method='GET')
-        return r
+        if self.status != 200:
+            self.fail_json(msg='Network lookup failed')
+        self.nets = self.request(path, method='GET')
+        templates = self.get_config_templates(org_id)
+        for t in templates:
+            self.nets.append(t)
+        return self.nets
 
-    def get_net(self, org_name, net_name, data=None):
-        """Return network information about a particular network."""
-        # TODO: Allow method to download data on its own
-        # if not data:
-        #     org_id = self.get_org_id(org_name)
-        #     path = '/organizations/{org_id}/networks/{net_id}'.format(
-        #         org_id=org_id,
-        #         net_id=self.get_net_id(
-        #             org_name=org_name,
-        #             net_name=net_name,
-        #             data=data)
-        #     )
-        #     return json.loads(self.request('GET', path))
-        # else:
+    # def get_net(self, org_name, net_name, data=None):
+    #     path = self.construct_path('get_all', function='network', org_id=org_id)
+    #     r = self.request(path, method='GET')
+    #     return r
+
+    def get_net(self, org_name, net_name, org_id=None, data=None):
+        ''' Return network information '''
+        if not data:
+            if not org_id:
+                org_id = self.get_org_id(org_name)
+            data = self.get_nets(org_id=org_id)
         for n in data:
             if n['name'] == net_name:
                 return n
@@ -225,7 +236,20 @@ class MerakiModule(object):
                 return n['id']
         self.fail_json(msg='No network found with the name {0}'.format(net_name))
 
-    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None):
+    def get_config_templates(self, org_id):
+        path = self.construct_path('get_all', function='configTemplates', org_id=org_id)
+        response = self.request(path, 'GET')
+        if self.status != 200:
+            self.fail_json(msg='Unable to get configuration templates')
+        return response
+
+    def get_template_id(self, name, data):
+        for template in data:
+            if name == template['name']:
+                return template['id']
+        self.fail_json(msg='No configuration template named {0} found'.format(name))
+
+    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None, custom=None):
         """Build a path from the URL catalog.
 
         Uses function property from class for catalog lookup.
@@ -237,8 +261,10 @@ class MerakiModule(object):
             built_path = self.url_catalog[action][function]
         if org_name:
             org_id = self.get_org_id(org_name)
-
-        built_path = built_path.format(org_id=org_id, net_id=net_id)
+        if custom:
+            built_path = built_path.format(org_id=org_id, net_id=net_id, **custom)
+        else:
+            built_path = built_path.format(org_id=org_id, net_id=net_id)
         return built_path
 
     def request(self, path, method=None, payload=None):

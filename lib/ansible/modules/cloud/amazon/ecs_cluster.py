@@ -162,7 +162,7 @@ def main():
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10)
     ))
-    required_together = (['state', 'name'])
+    required_together = [['state', 'name']]
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
 

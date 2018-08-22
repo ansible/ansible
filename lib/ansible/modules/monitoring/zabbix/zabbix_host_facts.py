@@ -207,5 +207,6 @@ def main():
     else:
         module.exit_json(ok=False, hosts=[], result="No Host present")
 
+
 if __name__ == '__main__':
     main()

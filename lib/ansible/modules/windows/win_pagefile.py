@@ -27,9 +27,11 @@ options:
   initial_size:
     description:
       - The initial size of the pagefile in megabytes.
+    type: int
   maximum_size:
     description:
       - The maximum size of the pagefile in megabytes.
+    type: int
   override:
     description:
       - Override the current pagefile on the drive.

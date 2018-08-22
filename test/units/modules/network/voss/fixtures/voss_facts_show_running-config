@@ -1,0 +1,903 @@
+Preparing to Display Configuration...
+#
+# Wed Aug 15 05:20:06 2018 UTC
+# box type             : VSP-8284XSQ
+# software version     : 7.0.0.0_B015
+# cli mode             : ECLI
+#
+
+#Card Info : 
+
+#  Slot 1 : 
+#	CardType          : 8242XSQ
+#	CardDescription   : 8242XSQ
+#	CardSerial#       : 
+#	CardPart#         : 
+#	CardAssemblyDate  : 
+#	CardHWRevision    : 
+#	CardHWConfig      : 
+#	AdminStatus       : up
+#	OperStatus        : up
+
+#  Slot 2 : 
+#	CardType          : 8242XSQ
+#	CardDescription   : 8242XSQ
+#	CardSerial#       : 
+#	CardPart#         : 
+#	CardAssemblyDate  : 
+#	CardHWRevision    : 
+#	CardHWConfig      : 
+#	AdminStatus       : up
+#	OperStatus        : up
+
+#
+#!end
+#
+config terminal
+
+#
+# BOOT CONFIGURATION
+#
+
+boot config flags block-snmp
+boot config flags sshd
+# end boot flags
+
+#
+# CLI CONFIGURATION
+#
+
+cli timeout 3600
+password password-history 3
+
+#
+# SYSTEM CONFIGURATION
+#
+
+
+#
+# LOG CONFIGURATION
+#
+
+
+#
+# LINK-FLAP-DETECT CONFIGURATION
+#
+
+
+#
+# IEEE VLAN AGING CONFIGURATION
+#
+
+
+#
+# ACCESS-POLICY CONFIGURATION
+#
+
+#
+# SSH CONFIGURATION
+#
+
+ssh keyboard-interactive-auth
+ 
+
+ 
+ssh secure
+
+#
+# ASG CONFIGURATION 
+#
+
+
+#
+# MCAST SOFTWARE FORWARDING CONFIGURATION
+#
+
+
+#
+# MCAST SMLT CONFIGURATION
+#
+
+
+#
+# SNMP V3 GLOBAL CONFIGURATION
+#
+
+
+#
+# SNMP V3 GROUP MEMBERSHIP CONFIGURATION
+#
+
+
+#
+# SNMP V3 NOTIFY FILTER CONFIGURATION
+#
+
+
+#
+# SNMP V3 MIB VIEW CONFIGURATION
+#
+
+
+#
+# SNMP V3 GROUP CONFIGURATION
+#
+
+
+#
+# SNMP V3 TARGET ADDRESS CONFIGURATION
+#
+
+
+#
+# DDI CONFIGURATION
+#
+
+
+#
+# SLOT CONFIGURATION
+#
+
+
+#
+# MAC AGING CONFIGURATION
+#
+
+
+#
+# SMTP CONFIGURATION
+#
+
+
+#
+# WEB CONFIGURATION
+#
+
+web-server enable
+
+
+#
+# GLOBAL FDB FILTER CONFIGURATION
+#
+
+
+
+
+#
+# QOS CONFIGURATION - PHASE I 
+#
+
+
+#
+# LACP CONFIGURATION
+#
+
+
+#
+# VRF CONFIGURATION
+#
+
+ip vrf dmz vrfid 1
+
+#
+# MAINTENANCE-DOMAIN CONFIGURATION
+#
+
+
+#
+# MAINTENANCE-ASSOCIATION CONFIGURATION
+#
+
+
+#
+# MAINTENANCE-ENDPOINT CONFIGURATION
+#
+
+
+#
+# PORT CHANNELIZE CONFIGURATION
+#
+
+
+#
+# PORT CONFIGURATION - PHASE I
+#
+
+
+#
+# ISIS SPBM CONFIGURATION
+#
+
+
+#
+# SPB-PIM-GW CONFIGURATION
+#
+
+
+#
+# MLT CONFIGURATION
+#
+
+
+#
+# IP PREFIX LIST CONFIGURATION - GlobalRouter
+#
+
+
+#
+# IP PREFIX LIST CONFIGURATION - VRF
+#
+
+
+#
+# IPv6 PREFIX LIST CONFIGURATION - GlobalRouter
+#
+
+
+#
+# RMON CONFIGURATION
+#
+
+
+#
+# DVR CONFIGURATION
+#
+
+
+#
+# VLAN CONFIGURATION
+#
+
+interface Vlan 1
+ip address 10.10.10.10 255.255.255.0 0 
+ipv6 interface mac-offset 0
+ipv6 interface address 2001:0:0:0:0:0:0:1/64
+ipv6 interface address 2002:0:0:0:0:0:0:1/64
+
+exit
+vlan create 3 type port-mstprstp 0
+
+#
+# MSTP CONFIGURATION
+#
+
+
+#
+# NLS CONFIGURATION
+#
+
+
+#
+# FHS CONFIGURATION
+#
+
+
+#
+# MAC ACL CONFIGURATION
+#
+
+
+#
+# IPv6 FHS ACL CONFIGURATION
+#
+
+
+#
+# RA-GUARD CONFIGURATION
+#
+
+
+#
+# DHCP-GUARD CONFIGURATION
+#
+
+
+#
+# FHS SNOOPING CONFIGURATION
+#
+
+
+#
+# SFLOW CONFIGURATION
+#
+
+
+#
+# DHCP SNOOPING CONFIGURATION
+#
+
+
+#
+# DHCP SNOOPING BINDING CONFIGURATION
+#
+
+
+#
+# LINK-STATE TRACKING 
+#
+
+
+#
+# VIRTUAL IST CONFIGURATION
+#
+
+
+#
+# MLT INTERFACE CONFIGURATION
+#
+
+
+#
+# PORT CONFIGURATION - PHASE II
+#
+
+interface mgmtEthernet mgmt
+auto-negotiate
+ip address 192.168.8.10 255.255.255.0
+
+exit
+interface GigabitEthernet 1/1
+name "serverA"
+exit
+
+#
+# IP CONFIGURATION
+#
+
+
+#
+# IP AS LIST CONFIGURATION - GlobalRouter
+#
+
+
+#
+# IP AS LIST CONFIGURATION - VRF
+#
+
+
+#
+# IP COMMUNITY LIST CONFIGURATION - GlobalRouter
+#
+
+
+#
+# IP COMMUNITY LIST CONFIGURATION - VRF
+#
+
+
+#
+# IP EXTENDED COMMUNITY LIST CONFIGURATION - GlobalRouter
+#
+
+
+#
+# IP EXTENDED COMMUNITY LIST CONFIGURATION - VRF
+#
+
+
+#
+# IP ROUTE MAP CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# IP ROUTE MAP CONFIGURATION - VRF 
+#
+
+
+#
+# IP CONFIGURATION -  GlobalRouter 
+#
+
+
+#
+# IP CONFIGURATION -  VRF 
+#
+
+
+#
+# CIRCUITLESS IP INTERFACE CONFIGURATION - GlobalRouter
+#
+
+interface loopback 1
+ip address 1 1.1.1.1/255.255.255.255
+exit
+
+#
+# CIRCUITLESS IP INTERFACE CONFIGURATION - VRF
+#
+
+interface loopback 2
+ip address 2 4.4.4.4/255.255.255.255 vrf dmz
+exit
+
+#
+# TOPOLOGY-CLIP-IP
+#
+
+
+#
+# MSDP CONFIGURATION - GlobalRouter 
+#
+
+
+
+
+#
+# CIRCUITLESS IPV6 INTERFACE CONFIGURATION - GlobalRouter 
+#
+
+interface loopback 1
+ipv6 interface address 2011:0:0:0:0:0:0:1/128
+exit
+
+#
+# CIRCUITLESS IPV6 INTERFACE CONFIGURATION - VRF 
+#
+
+
+#
+# VRRP CONFIGURATION - GlobalRouter
+#
+
+
+#
+# VRRP CONFIGURATION - VRF
+#
+
+
+#
+# UDP FORWARDING CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# UDP FORWARDING CONFIGURATION - VRF 
+#
+
+
+#
+# UDP FORWARDING VLAN CONFIGURATION 
+#
+
+
+#
+# DHCP CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# DHCP CONFIGURATION - VRF 
+#
+
+
+#
+# RIP CONFIGURATION - GlobalRouter
+#
+
+
+#
+# RIP CONFIGURATION - VRF
+#
+
+
+#
+# RIP VLAN CONFIGURATION
+#
+
+
+#
+# IGMP CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# IGMP CONFIGURATION - VRF 
+#
+
+
+#
+# MROUTE CONFIGURATION
+#
+
+
+#
+# MCAST RESOURCE USAGE CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# MCAST RESOURCE USAGE CONFIGURATION - VRF 
+#
+
+
+#
+# TIMED PRUNE CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# TIMED PRUNE CONFIGURATION - VRF 
+#
+
+
+#
+# RSMLT CONFIGURATION
+#
+
+
+#
+# IPV6 CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# IPV6 CONFIGURATION - VRF 
+#
+
+
+#
+# MLD CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# MROUTE6 CONFIGURATION
+#
+
+
+#
+# ISIS CONFIGURATION
+#
+
+
+#
+# VTEP CONFIGURATION
+#
+
+
+#
+# REMOTE VTEP CONFIGURATIONS
+#
+
+
+#
+# VLAN NODAL MEP/MIP CONFIGURATION
+#
+
+
+#
+# QOS CONFIGURATION - PHASE II 
+#
+
+qos queue-profile 1 member add 1/1-1/42,2/1-2/42
+
+#
+# CFM CONFIGURATION - PHASE II
+#
+
+
+#
+# DIAG CONFIGURATION
+#
+
+
+#
+# NTP CONFIGURATION
+#
+
+no ntp
+
+#
+#  OSPF CONFIGURATION - GlobalRouter 
+#
+
+router ospf
+exit
+
+#
+#  OSPF CONFIGURATION - VRF 
+#
+
+
+#
+# OSPF ACCEPT CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# OSPF ACCEPT CONFIGURATION - VRF 
+#
+
+
+#
+# BGP CONFIGURATION - GlobalRouter
+#
+
+
+#
+# BGP CONFIGURATION - VRF
+#
+
+
+#
+# ISIS SPBM IPVPN CONFIGURATION
+#
+
+#
+# IP ISID LIST CONFIGURATION - GlobalRouter
+#
+
+
+#
+# IP ISID LIST CONFIGURATION - VRF
+#
+
+
+#
+# ISIS ACCEPT CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# ISIS ACCEPT CONFIGURATION - VRF 
+#
+
+
+#
+# IP REDISTRIBUTION CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# IP REDISTRIBUTION CONFIGURATION - VRF 
+#
+
+
+#
+# OSPF VLAN CONFIGURATION
+#
+
+
+#
+# OSPF PORT CONFIGURATION
+#
+
+
+#
+# OSPF LOOPBACK CONFIGURATION
+#
+
+
+#
+# RIP PORT CONFIGURATION
+#
+
+
+#
+# IPVPN CONFIGURATION
+#
+
+#
+# SLPP CONFIGURATION
+#
+
+
+#
+# FILTER CONFIGURATION
+#
+
+
+#
+# IPV6 TUNNEL CONFIGURATION
+#
+
+
+#
+# IPV6 OSPFV3 CONFIGURATION
+#
+
+router ospf
+
+exit
+
+#
+# IPV6 RIPng CONFIGURATION
+#
+
+router rip
+exit
+
+#
+# IPV6 STATIC ROUTE CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# IPV6 STATIC ROUTE CONFIGURATION - VRF 
+#
+
+#
+# IPV6 MGMT INTERFACE CONFIGURATION
+#
+
+
+#
+# IPV6 OSPF VLAN CONFIGURATION
+#
+
+
+#
+# IPV6 OSPF PORT CONFIGURATION
+#
+
+
+#
+# IPV6 RIP VLAN CONFIGURATION
+#
+
+
+#
+# IPV6 RIP PORT CONFIGURATION
+#
+
+
+#
+# IPV6 VRRP VLAN CONFIGURATION
+#
+
+
+#
+# IPV6 VRRP PORT CONFIGURATION
+#
+
+
+#
+# IPV6 NEIGHBOR CONFIGURATION - GlobalRouter 
+#
+
+
+#
+# IPV6 NEIGHBOR CONFIGURATION - VRF 
+#
+
+
+#
+# IPV6 DHCP CONFIGURATION - GlobalRouter
+#
+
+
+
+#
+# IPV6 DHCP CONFIGURATION - VRF
+#
+
+
+#
+# I-SID CONFIGURATION
+#
+
+
+#
+# VNID CONFIGURATION
+#
+
+
+
+
+#
+# RADIUS CONFIGURATION
+#
+
+
+#
+# TACACS CONFIGURATION
+#
+
+
+#
+# LLDP  CONFIGURATION
+#
+
+
+#
+# EAP  CONFIGURATION
+#
+
+
+#
+# MACSEC CONFIGURATION
+#
+
+
+#
+# FABRIC ATTACH CONFIGURATION
+#
+
+
+#
+# SPB-PIM-GW CONFIGURATION
+#
+
+
+#
+# SOFTWARE CONFIGURATION
+#
+
+
+#
+#  APPLICATION CONFIGURATION  
+#
+
+
+#
+#  OVSDB CONFIGURATION  
+#
+
+
+
+
+
+
+#
+# IPSEC CONFIGURATION
+#
+
+
+#
+# IPSEC POLICY TABLE CONFIGURATION
+#
+
+
+#
+# IPSEC SA TABLE CONFIGURATION
+#
+
+
+#
+# IPSEC SA POLICY LINK TABLE CONFIGURATION
+#
+
+
+#
+# IPV6 OSPFV3 IPSEC CONFIGURATION
+#
+
+
+#
+# IPV6 IPSEC INTERFACE CONFIGURATION
+#
+
+
+#
+# IP IPSEC INTERFACE CONFIGURATION
+#
+
+
+
+
+
+
+#
+# IKE CONFIGURATION
+#
+
+
+
+
+#
+# IP REDISTRIBUTE APPLY CONFIGURATIONS
+
+#
+#
+
+
+#
+# IP ECMP APPLY CONFIGURATIONS
+
+
+
+
+end
+
+

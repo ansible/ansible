@@ -295,6 +295,7 @@ class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
     pass
 
+
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
 # against openssl and thus do not have any HTTPS support.
 CustomHTTPSConnection = CustomHTTPSHandler = None
@@ -734,7 +735,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             if https_proxy:
                 proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
-                s = socket.create_connection((proxy_parts.get('hostname'), port))
+                proxy_hostname = proxy_parts.get('hostname', None)
+                if proxy_hostname is None or proxy_parts.get('scheme') == '':
+                    raise ProxyError("Failed to parse https_proxy environment variable."
+                                     " Please make sure you export https proxy as 'https_proxy=<SCHEME>://<IP_ADDRESS>:<PORT>'")
+
+                s = socket.create_connection((proxy_hostname, port))
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port), errors='surrogate_or_strict'))
                     if proxy_parts.get('username'):
@@ -1131,7 +1137,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     Does not require the module environment
     '''
-    method = method or 'GET'
+    method = method or ('POST' if data else 'GET')
     return Request().open(method, url, data=data, headers=headers, use_proxy=use_proxy,
                           force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,

@@ -49,5 +49,6 @@ options:
     - If set to C(no), the SSL certificates will not be validated.
     - This should only set to C(no) used on personally controlled sites using self-signed certificates.
     default: true
+    type: bool
 
 '''

@@ -815,7 +815,7 @@ def create_disk_str(module, client, template_id, disk_size_str):
         disk[child.tag] = child.text
 
     result = 'DISK = [' + ','.join('{key}="{val}"'.format(key=key, val=val) for key, val in disk.items() if key != 'SIZE')
-    result += ', SIZE=' + str(get_size_in_MB(module, disk_size_str)) + ']\n'
+    result += ', SIZE=' + str(int(get_size_in_MB(module, disk_size_str))) + ']\n'
 
     return result
 
@@ -1026,6 +1026,7 @@ def create_exact_count_of_vms(module, client, template_id, exact_count, attribut
 
     return changed, instances_list, tagged_instances_list
 
+
 VM_STATES = ['INIT', 'PENDING', 'HOLD', 'ACTIVE', 'STOPPED', 'SUSPENDED', 'DONE', '', 'POWEROFF', 'UNDEPLOYED', 'CLONING', 'CLONING_FAILURE']
 LCM_STATES = ['LCM_INIT', 'PROLOG', 'BOOT', 'RUNNING', 'MIGRATE', 'SAVE_STOP',
               'SAVE_SUSPEND', 'SAVE_MIGRATE', 'PROLOG_MIGRATE', 'PROLOG_RESUME',
@@ -1174,6 +1175,7 @@ def check_name_attribute(module, attributes):
         if re.match(r'^[^#]+#*$', attributes.get("NAME")) is None:
             module.fail_json(msg="Ilegal 'NAME' attribute: '" + attributes.get("NAME") +
                              "' .Signs '#' are allowed only at the end of the name and the name cannot contain only '#'.")
+
 
 TEMPLATE_RESTRICTED_ATTRIBUTES = ["CPU", "VCPU", "OS", "FEATURES", "MEMORY", "DISK", "NIC", "INPUT", "GRAPHICS",
                                   "CONTEXT", "CREATED_BY", "CPU_COST", "DISK_COST", "MEMORY_COST",

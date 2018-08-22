@@ -106,6 +106,13 @@ options:
         may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).  As of
         version 2.6, the mode may also be the special string C(preserve).  C(preserve) means that
         the file will be given the same permissions as the source file."
+  output_encoding:
+    description:
+      - Overrides the encoding used to write the template file defined by C(dest).
+      - It defaults to C('utf-8'), but any encoding supported by python can be used.
+      - The source template file must always be encoded using C('utf-8'), for homogeneity.
+    default: 'utf-8'
+    version_added: "2.7"
 notes:
   - For Windows you can use M(win_template) which uses '\\r\\n' as C(newline_sequence).
   - Including a string that uses a date in the template will result in the template being marked 'changed' each time

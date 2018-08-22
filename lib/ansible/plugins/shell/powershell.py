@@ -171,8 +171,12 @@ Function Run($payload) {
         $ps.AddCommand("Out-Null") | Out-Null
     }
 
-    # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
-    $ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false") | Out-Null
+    # force input encoding to preamble-free UTF8 so PS sub-processes (eg,
+    # Start-Job) don't blow up. This is only required for WinRM, a PSRP
+    # runspace doesn't have a host console and this will bomb out
+    if ($host.Name -eq "ConsoleHost") {
+        $ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false") | Out-Null
+    }
 
     $ps.AddStatement().AddScript($entrypoint) | Out-Null
 
@@ -182,7 +186,7 @@ Function Run($payload) {
 
     # PS3 doesn't properly set HadErrors in many cases, inspect the error stream as a fallback
     If ($ps.HadErrors -or ($PSVersionTable.PSVersion.Major -lt 4 -and $ps.Streams.Error.Count -gt 0)) {
-        [System.Console]::Error.WriteLine($($ps.Streams.Error | Out-String))
+        $host.UI.WriteErrorLine($($ps.Streams.Error | Out-String))
         $exit_code = $ps.Runspace.SessionStateProxy.GetVariable("LASTEXITCODE")
         If(-not $exit_code) {
             $exit_code = 1
@@ -210,7 +214,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 
-namespace Ansible
+namespace AnsibleBecome
 {
     [StructLayout(LayoutKind.Sequential)]
     public class SECURITY_ATTRIBUTES
@@ -931,6 +935,7 @@ $become_exec_wrapper = {
 }
 
 $exec_wrapper = {
+    &chcp.com 65001 > $null
     Set-StrictMode -Version 2
     $DebugPreference = "Continue"
     $ErrorActionPreference = "Stop"
@@ -1011,8 +1016,8 @@ Function Parse-EnumValue($enum, $flag_type, $value, $prefix) {
 }
 
 Function Parse-BecomeFlags($flags) {
-    $logon_type = [Ansible.LogonType]::LOGON32_LOGON_INTERACTIVE
-    $logon_flags = [Ansible.LogonFlags]::LOGON_WITH_PROFILE
+    $logon_type = [AnsibleBecome.LogonType]::LOGON32_LOGON_INTERACTIVE
+    $logon_flags = [AnsibleBecome.LogonFlags]::LOGON_WITH_PROFILE
 
     if ($flags -eq $null -or $flags -eq "") {
         $flag_split = @()
@@ -1031,7 +1036,7 @@ Function Parse-BecomeFlags($flags) {
         $flag_value = $split[1]
         if ($flag_key -eq "logon_type") {
             $enum_details = @{
-                enum = [Ansible.LogonType]
+                enum = [AnsibleBecome.LogonType]
                 flag_type = $flag_key
                 value = $flag_value
                 prefix = "LOGON32_LOGON_"
@@ -1039,13 +1044,13 @@ Function Parse-BecomeFlags($flags) {
             $logon_type = Parse-EnumValue @enum_details
         } elseif ($flag_key -eq "logon_flags") {
             $logon_flag_values = $flag_value.Split(",")
-            $logon_flags = 0 -as [Ansible.LogonFlags]
+            $logon_flags = 0 -as [AnsibleBecome.LogonFlags]
             foreach ($logon_flag_value in $logon_flag_values) {
                 if ($logon_flag_value -eq "") {
                     continue
                 }
                 $enum_details = @{
-                    enum = [Ansible.LogonFlags]
+                    enum = [AnsibleBecome.LogonFlags]
                     flag_type = $flag_key
                     value = $logon_flag_value
                     prefix = "LOGON_"
@@ -1058,14 +1063,13 @@ Function Parse-BecomeFlags($flags) {
         }
     }
 
-    return $logon_type, [Ansible.LogonFlags]$logon_flags
+    return $logon_type, [AnsibleBecome.LogonFlags]$logon_flags
 }
 
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
 
     $original_tmp = $env:TMP
-    $original_temp = $env:TEMP
     $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
     $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
     if ($null -eq $remote_tmp) {
@@ -1075,10 +1079,8 @@ Function Run($payload) {
     # become process is run under a different console to the WinRM one so we
     # need to set the UTF-8 codepage again
     $env:TMP = $remote_tmp
-    $env:TEMP = $remote_tmp
     Add-Type -TypeDefinition $helper_def -Debug:$false
     $env:TMP = $original_tmp
-    $env:TEMP = $original_tmp
 
     $username = $payload.become_user
     $password = $payload.become_password
@@ -1101,14 +1103,14 @@ Function Run($payload) {
     $lp_current_directory = "$env:SystemRoot"
 
     Try {
-        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $exec_wrapper, $logon_flags, $logon_type)
+        $result = [AnsibleBecome.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $exec_wrapper, $logon_flags, $logon_type)
         $stdout = $result.StandardOut
         $stdout = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($stdout.Trim()))
         $stderr = $result.StandardError
         $rc = $result.ExitCode
 
-        [Console]::Out.WriteLine($stdout)
-        [Console]::Error.WriteLine($stderr.Trim())
+        $host.UI.WriteLine($stdout)
+        $host.UI.WriteErrorLine($stderr.Trim())
     } Catch {
         $excep = $_
         Dump-Error -excep $excep -msg "Failed to become user $username"
@@ -1127,6 +1129,15 @@ $ErrorActionPreference = "Stop"
 # return asyncresult to controller
 
 $exec_wrapper = {
+    # help to debug any errors in the exec_wrapper or async_watchdog by generating
+    # an error log in case of a terminating error
+    trap {
+        $log_path = "$($env:TEMP)\async-exec-wrapper-$(Get-Date -Format "yyyy-MM-ddTHH-mm-ss.ffffZ")-error.txt"
+        $error_msg = "Error while running the async exec wrapper`r`n$_`r`n$($_.ScriptStackTrace)"
+        Set-Content -Path $log_path -Value $error_msg
+        throw $_
+    }
+
     &chcp.com 65001 > $null
     $DebugPreference = "Continue"
     $ErrorActionPreference = "Stop"
@@ -1204,9 +1215,6 @@ $exec_wrapper = {
 Function Run($payload) {
     $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
     $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
-    if ($null -eq $remote_tmp) {
-        $remote_tmp = $original_tmp
-    }
 
     # calculate the result path so we can include it in the worker payload
     $jid = $payload.async_jid
@@ -1270,6 +1278,19 @@ Function Run($payload) {
         }
         $watchdog_pid = $process.ProcessId
 
+        # populate initial results before we send the async data to avoid result race
+        $result = @{
+            started = 1;
+            finished = 0;
+            results_file = $results_path;
+            ansible_job_id = $local_jid;
+            _ansible_suppress_tmpdir_delete = $true;
+            ansible_async_watchdog_pid = $watchdog_pid
+        }
+
+        $result_json = ConvertTo-Json $result
+        Set-Content $results_path -Value $result_json
+
         # wait until the client connects, throw an error if the timeout is reached
         $wait_async = $pipe.BeginWaitForConnection($null, $null)
         $wait_async.AsyncWaitHandle.WaitOne(5000) > $null
@@ -1285,19 +1306,6 @@ Function Run($payload) {
     } finally {
         $pipe.Close()
     }
-
-    # populate initial results before we resume the process to avoid result race
-    $result = @{
-        started=1;
-        finished=0;
-        results_file=$results_path;
-        ansible_job_id=$local_jid;
-        _ansible_suppress_tmpdir_delete=$true;
-        ansible_async_watchdog_pid=$watchdog_pid
-    }
-
-    $result_json = ConvertTo-Json $result
-    Set-Content $results_path -Value $result_json
 
     return $result_json
 }
@@ -1518,7 +1526,7 @@ class ShellModule(ShellBase):
         script = '''
         $tmp_path = [System.Environment]::ExpandEnvironmentVariables('%s')
         $tmp = New-Item -Type Directory -Path $tmp_path -Name '%s'
-        $tmp.FullName | Write-Host -Separator ''
+        Write-Output -InputObject $tmp.FullName
         ''' % (basetmpdir, basefile)
         return self._encode_script(script.strip())
 
@@ -1528,11 +1536,11 @@ class ShellModule(ShellBase):
         # in the user's home directory.
         user_home_path = self._unquote(user_home_path)
         if user_home_path == '~':
-            script = 'Write-Host (Get-Location).Path'
+            script = 'Write-Output (Get-Location).Path'
         elif user_home_path.startswith('~\\'):
-            script = 'Write-Host ((Get-Location).Path + "%s")' % self._escape(user_home_path[1:])
+            script = 'Write-Output ((Get-Location).Path + "%s")' % self._escape(user_home_path[1:])
         else:
-            script = 'Write-Host "%s"' % self._escape(user_home_path)
+            script = 'Write-Output "%s"' % self._escape(user_home_path)
         return self._encode_script(script)
 
     def exists(self, path):
@@ -1546,7 +1554,7 @@ class ShellModule(ShellBase):
             {
                 $res = 1;
             }
-            Write-Host "$res";
+            Write-Output "$res";
             Exit $res;
          ''' % path
         return self._encode_script(script)
@@ -1563,11 +1571,11 @@ class ShellModule(ShellBase):
             }
             ElseIf (Test-Path -PathType Container "%(path)s")
             {
-                Write-Host "3";
+                Write-Output "3";
             }
             Else
             {
-                Write-Host "1";
+                Write-Output "1";
             }
         ''' % dict(path=path)
         return self._encode_script(script)
@@ -1630,7 +1638,7 @@ class ShellModule(ShellBase):
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):
-        return '& %s' % cmd
+        return '& %s; exit $LASTEXITCODE' % cmd
 
     def _unquote(self, value):
         '''Remove any matching quotes that wrap the given value.'''

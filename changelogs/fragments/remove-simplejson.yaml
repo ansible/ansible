@@ -1,0 +1,2 @@
+major_changes:
+- Remove support for simplejson (https://github.com/ansible/ansible/issues/42761)

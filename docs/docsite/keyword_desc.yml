@@ -71,5 +71,4 @@ until: "This keyword implies a ':term:`retries` loop' that will go on until the 
 vars: Dictionary/map of variables
 vars_files: List of files that contain vars to include in the play.
 vars_prompt: list of variables to prompt for.
-vault_password: Secret used to decrypt vaulted files or variables.
 when: Conditional expression, determines if an iteration of a task is run or not.

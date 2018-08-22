@@ -37,6 +37,10 @@ options:
   capabilities:
     description:
       - List of capabilities to add to the container.
+  cap_drop:
+    description:
+      - List of capabilities to drop from the container.
+    version_added: "2.7"
   cleanup:
     description:
       - Use with I(detach=false) to remove the container after successful execution.
@@ -96,7 +100,6 @@ options:
     description:
       - Path to a file, present on the target, containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
-      - Requires docker-py >= 1.4.0.
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -165,8 +168,10 @@ options:
       - Override default signal used to kill a running container.
   kernel_memory:
     description:
-      - "Kernel memory limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g. Minimum is 4M."
+      - "Kernel memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte). Minimum is C(4M)."
+      - Omitting the unit defaults to bytes.
     default: 0
   labels:
      description:
@@ -198,18 +203,24 @@ options:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
   memory:
     description:
-      - "Memory limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g"
+      - "Memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: '0'
   memory_reservation:
     description:
-      - "Memory soft limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g"
+      - "Memory soft limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: 0
   memory_swap:
     description:
-      - Total memory limit (memory + swap, format:<number>[<unit>]).
-        Number is a positive integer. Unit can be one of b, k, m, or g.
+      - "Total memory limit (memory + swap, format: C(<number>[<unit>])).
+        Number is a positive integer. Unit can be C(B) (byte), C(K) (kibibyte, 1024B),
+        C(M) (mebibyte), C(G) (gibibyte), C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: 0
   memory_swappiness:
     description:
@@ -322,9 +333,10 @@ options:
     default: 0
   shm_size:
     description:
-      - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
-        Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes).
-      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
+      - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses C(64M).
   security_opts:
     description:
       - List of security options in the form of C("label:user:User")
@@ -422,6 +434,12 @@ author:
 requirements:
     - "python >= 2.6"
     - "docker-py >= 1.7.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "Docker API >= 1.20"
 '''
 
@@ -556,12 +574,21 @@ EXAMPLES = '''
     name: sleepy
     purge_networks: yes
 
-- name: Star a container and use an env file
+- name: Start a container and use an env file
   docker_container:
     name: agent
     image: jenkinsci/ssh-slave
     env_file: '/var/tmp/jenkins/agent.env'
 
+- name: Create a container with limited capabilities
+  docker_container:
+    name: sleepy
+    image: ubuntu:16.04
+    command: sleep infinity
+    capabilities:
+      - sys_time
+    cap_drop:
+      - all
 '''
 
 RETURN = '''
@@ -611,6 +638,7 @@ docker_container:
 import os
 import re
 import shlex
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
@@ -622,12 +650,14 @@ try:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
+    from ansible.module_utils.docker_common import docker_version
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
 
 REQUIRES_CONVERSION_TO_BYTES = [
+    'kernel_memory',
     'memory',
     'memory_reservation',
     'memory_swap',
@@ -649,6 +679,7 @@ class TaskParameters(DockerBaseClass):
         self.auto_remove = None
         self.blkio_weight = None
         self.capabilities = None
+        self.cap_drop = None
         self.cleanup = None
         self.command = None
         self.cpu_period = None
@@ -904,6 +935,7 @@ class TaskParameters(DockerBaseClass):
             network_mode='network_mode',
             userns_mode='userns_mode',
             cap_add='capabilities',
+            cap_drop='cap_drop',
             extra_hosts='etc_hosts',
             read_only='read_only',
             ipc_mode='ipc_mode',
@@ -921,10 +953,9 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode',
             tmpfs='tmpfs',
-            init='init'
         )
 
-        if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+        if self.client.HAS_AUTO_REMOVE_OPT:
             # auto_remove is only supported in docker>=2
             host_config_params['auto_remove'] = 'auto_remove'
 
@@ -932,6 +963,9 @@ class TaskParameters(DockerBaseClass):
             # cpu_shares and volume_driver moved to create_host_config in > 3
             host_config_params['cpu_shares'] = 'cpu_shares'
             host_config_params['volume_driver'] = 'volume_driver'
+
+        if self.client.HAS_INIT_OPT:
+            host_config_params['init'] = 'init'
 
         params = dict()
         for key, value in host_config_params.items():
@@ -1291,7 +1325,7 @@ class Container(DockerBaseClass):
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
             volume_driver=host_config.get('VolumeDriver'),
-            working_dir=host_config.get('WorkingDir')
+            working_dir=config.get('WorkingDir')
         )
 
         differences = []
@@ -1736,32 +1770,36 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
-        image = self._get_image()
-        self.log(image, pretty_print=True)
-        if not container.exists:
-            # New container
-            self.log('No container found')
-            new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
-            if new_container:
-                container = new_container
-        else:
-            # Existing container
-            different, differences = container.has_different_configuration(image)
-            image_different = False
-            if not self.parameters.ignore_image:
-                image_different = self._image_is_different(image, container)
-            if image_different or different or self.parameters.recreate:
-                self.diff['differences'] = differences
-                if image_different:
-                    self.diff['image_different'] = True
-                self.log("differences")
-                self.log(differences, pretty_print=True)
-                if container.running:
-                    self.container_stop(container.Id)
-                self.container_remove(container.Id)
+
+        # If the image parameter was passed then we need to deal with the image
+        # version comparison, otherwise we should not care
+        if self.parameters.image:
+            image = self._get_image()
+            self.log(image, pretty_print=True)
+            if not container.exists:
+                # New container
+                self.log('No container found')
                 new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
+            else:
+                # Existing container
+                different, differences = container.has_different_configuration(image)
+                image_different = False
+                if not self.parameters.ignore_image:
+                    image_different = self._image_is_different(image, container)
+                if image_different or different or self.parameters.recreate:
+                    self.diff['differences'] = differences
+                    if image_different:
+                        self.diff['image_different'] = True
+                    self.log("differences")
+                    self.log(differences, pretty_print=True)
+                    if container.running:
+                        self.container_stop(container.Id)
+                    self.container_remove(container.Id)
+                    new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+                    if new_container:
+                        container = new_container
 
         if container and container.exists:
             container = self.update_limits(container)
@@ -2006,11 +2044,33 @@ class ContainerManager(DockerBaseClass):
         return response
 
 
+class AnsibleDockerClientContainer(AnsibleDockerClient):
+
+    def __init__(self, **kwargs):
+        super(AnsibleDockerClientContainer, self).__init__(**kwargs)
+
+        docker_api_version = self.version()['ApiVersion']
+        init_supported = LooseVersion(docker_api_version) >= LooseVersion('1.25')
+        if self.module.params.get("init") and not init_supported:
+            self.fail('docker API version is %s. Minimum version required is 1.25 to set init option.' % (docker_api_version,))
+
+        init_supported = init_supported and LooseVersion(docker_version) >= LooseVersion('2.2')
+        if self.module.params.get("init") and not init_supported:
+            self.fail("docker or docker-py version is %s. Minimum version required is 2.2 to set init option. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+
+        self.HAS_INIT_OPT = init_supported
+        self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
+        if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
+            self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
+
+
 def main():
     argument_spec = dict(
         auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
+        cap_drop=dict(type='list'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         cpu_period=dict(type='int'),
@@ -2091,14 +2151,11 @@ def main():
         ('state', 'present', ['image'])
     ]
 
-    client = AnsibleDockerClient(
+    client = AnsibleDockerClientContainer(
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True
     )
-
-    if (not (HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3)) and client.module.params.get('auto_remove'):
-        client.module.fail_json(msg="'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)

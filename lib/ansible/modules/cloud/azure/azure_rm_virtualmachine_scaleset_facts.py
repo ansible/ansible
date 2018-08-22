@@ -38,6 +38,7 @@ options:
             - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
             - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
             - In Ansible 2.5 and lower facts are always returned in raw format.
+            - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
         default: 'raw'
         choices:
             - 'curated'
@@ -70,42 +71,153 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-azure_vmss:
+vmss:
     description: List of virtual machine scale sets
     returned: always
-    type: list
-    example: [{
-        "admin_username": "testuser",
-        "capacity": 2,
-        "data_disks": [
-            {
-                "caching": "ReadWrite",
-                "disk_size_gb": 64,
-                "lun": 0,
-                "managed_disk_type": "Standard_LRS"
-            }
-        ],
-        "image": {
-            "offer": "CoreOS",
-            "publisher": "CoreOS",
-            "sku": "Stable",
-            "version": "899.17.0"
-        },
-        "load_balancer": null,
-        "location": "eastus",
-        "managed_disk_type": "Standard_LRS",
-        "name": "testVMSSeb4fd3c704",
-        "os_disk_caching": "ReadWrite",
-        "os_type": "Linux",
-        "resource_group": "myresourcegroup",
-        "ssh_password_enabled": false,
-        "state": "present",
-        "subnet_name": null,
-        "tier": "Standard",
-        "upgrade_policy": "Manual",
-        "virtual_network_name": null,
-        "vm_size": "Standard_DS1_v2"
-    }]
+    type: complex
+    contains:
+        admin_username:
+            description:
+                - Admin username used to access the host after it is created.
+            returned: always
+            type: str
+            sample: adminuser
+        capacity:
+            description:
+                - Capacity of VMSS.
+            returned: always
+            type: int
+            sample: 2
+        data_disks:
+            description:
+                - List of attached data disks.
+            returned: always
+            type: complex
+            contains:
+                caching:
+                    description:
+                        - Type of data disk caching.
+                    type: str
+                    sample: ReadOnly
+                disk_size_gb:
+                    description:
+                        - The initial disk size in GB for blank data disks
+                    type: int
+                    sample: 64
+                lun:
+                    description:
+                        - The logical unit number for data disk
+                    type: int
+                    sample: 0
+                managed_disk_type:
+                    description:
+                        - Managed data disk type
+                    type: str
+                    sample: Standard_LRS
+        image:
+            description:
+                - Image specification
+            returned: always
+            type: complex
+            contains:
+                offer:
+                    description:
+                        - Offer.
+                    type: str
+                    sample: RHEL
+                publisher:
+                    description:
+                        - Publisher name.
+                    type: str
+                    sample: RedHat
+                sku:
+                    description:
+                        - SKU name.
+                    type: str
+                    sample: 7-RAW
+                version:
+                    description:
+                        - Image version.
+                    type: str
+                    sample: 7.5.2018050901
+        load_balancer:
+            description:
+                - Load balancer name.
+            returned: always
+            type: str
+            sample: testlb
+        location:
+            description:
+                - Resource location.
+            type: str
+            returned: always
+            sample: japaneast
+        managed_disk_type:
+            description:
+                - Managed data disk type
+            type: str
+            returned: always
+            sample: Standard_LRS
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: myvmss
+        os_disk_caching:
+            description:
+                - Type of OS disk caching.
+            type: str
+            returned: always
+            sample: ReadOnly
+        os_type:
+            description:
+                - Base type of operating system.
+            type: str
+            returned: always
+            sample: Linux
+        resource_group:
+            description:
+                - Resource group.
+            type: str
+            returned: always
+            sample: testrg
+        ssh_password_enabled:
+            description:
+                - Is SSH password authentication enabled. Valid only for Linux.
+            type: bool
+            returned: always
+            sample: true
+        subnet_name:
+            description:
+                - Subnet name.
+            type: str
+            returned: always
+            sample: testsubnet
+        tier:
+            description:
+                - SKU Tier.
+            type: str
+            returned: always
+            sample: Basic
+        upgrade_policy:
+            description:
+                - Upgrade policy.
+            type: str
+            returned: always
+            sample: Manual
+        virtual_network_name:
+            description:
+                - Associated virtual network name.
+            type: str
+            returned: always
+            sample: testvn
+        vm_size:
+            description:
+                - Virtual machine size.
+            type: str
+            returned: always
+            sample: Standard_D4
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -234,6 +346,10 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
 
                 self.results['ansible_facts']['azure_vmss'][index] = updated
 
+            # proper result format we want to support in the future
+            # dropping 'ansible_facts' and shorter name 'vmss'
+            self.results['vmss'] = self.results['ansible_facts']['azure_vmss']
+
         return self.results
 
     def get_item(self):
@@ -276,6 +392,7 @@ def main():
     """Main module execution code path"""
 
     AzureRMVirtualMachineScaleSetFacts()
+
 
 if __name__ == '__main__':
     main()

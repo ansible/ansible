@@ -6,7 +6,6 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 PSUseApp
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSProvideCommentHelp
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSUseOutputTypeCorrectly
-lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSAvoidUsingCmdletAliases
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSAvoidUsingWMICmdlet
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 PSUseApprovedVerbs
@@ -14,12 +13,6 @@ lib/ansible/modules/windows/setup.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/setup.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/setup.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_certificate_store.ps1 PSAvoidUsingPlainTextForPassword
-lib/ansible/modules/windows/win_chocolatey.ps1 PSAvoidUsingConvertToSecureStringWithPlainText
-lib/ansible/modules/windows/win_chocolatey.ps1 PSAvoidUsingPlainTextForPassword
-lib/ansible/modules/windows/win_chocolatey.ps1 PSAvoidUsingUserNameAndPassWordParams
-lib/ansible/modules/windows/win_chocolatey.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_chocolatey.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_chocolatey.ps1 PSUseOutputTypeCorrectly
 lib/ansible/modules/windows/win_copy.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_copy.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_dns_client.ps1 PSAvoidGlobalVars
@@ -52,7 +45,6 @@ lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingConvertToSecureStringWithPla
 lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_dsc.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_eventlog.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_file_version.ps1 PSUseBOMForUnicodeEncodedFile
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSAvoidUsingCmdletAliases

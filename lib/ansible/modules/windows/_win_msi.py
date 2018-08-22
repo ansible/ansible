@@ -28,6 +28,7 @@ options:
         description:
             - File system path to the MSI file to install.
         required: yes
+        type: path
     extra_args:
         description:
             - Additional arguments to pass to the msiexec.exe command.
@@ -40,10 +41,12 @@ options:
         description:
             - Path to a file created by installing the MSI to prevent from
               attempting to reinstall the package on every run.
+        type: path
     removes:
         description:
             - Path to a file removed by uninstalling the MSI to prevent from
               attempting to re-uninstall the package on every run.
+        type: path
         version_added: '2.4'
     wait:
         description:

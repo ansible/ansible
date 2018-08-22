@@ -63,6 +63,7 @@ options:
       of the HTTP request being sent to the ACI fabric.
     - If you require a templated payload, use the C(content) parameter
       together with the C(template) lookup plugin, or use M(template).
+    type: path
     aliases: [ config_file ]
 extends_documentation_fragment: aci
 '''
@@ -141,6 +142,7 @@ EXAMPLES = r'''
     method: get
     path: /api/node/class/fvTenant.json
   delegate_to: localhost
+  register: query_result
 
 - name: Configure contracts
   aci_rest:

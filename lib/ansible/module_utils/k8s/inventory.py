@@ -70,7 +70,7 @@ class K8sInventoryHelper(K8sAnsibleMixin):
                 client = self.get_api_client(**connection)
                 name = connection.get('name', self.get_default_host_name(client.configuration.host))
                 if connection.get('namespaces'):
-                    namespaces = connections['namespaces']
+                    namespaces = connection['namespaces']
                 else:
                     namespaces = self.get_available_namespaces(client)
                 for namespace in namespaces:
@@ -157,11 +157,14 @@ class K8sInventoryHelper(K8sAnsibleMixin):
                 if container.state.waiting:
                     self.inventory.set_variable(container_name, 'container_state', 'Waiting')
                 self.inventory.set_variable(container_name, 'container_ready', container.ready)
+                self.inventory.set_variable(container_name, 'ansible_remote_tmp', '/tmp/')
                 self.inventory.set_variable(container_name, 'ansible_connection', self.transport)
                 self.inventory.set_variable(container_name, 'ansible_{0}_pod'.format(self.transport),
                                             pod_name)
                 self.inventory.set_variable(container_name, 'ansible_{0}_container'.format(self.transport),
                                             container.name)
+                self.inventory.set_variable(container_name, 'ansible_{0}_namespace'.format(self.transport),
+                                            namespace)
 
     def get_services_for_namespace(self, client, name, namespace):
         v1_service = client.resources.get(api_version='v1', kind='Service')

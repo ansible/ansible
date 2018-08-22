@@ -95,7 +95,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -123,7 +123,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -153,7 +153,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -182,7 +182,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -214,7 +214,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

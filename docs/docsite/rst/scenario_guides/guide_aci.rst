@@ -41,7 +41,7 @@ More information
 Various resources exist to start learning ACI, here is a list of interesting articles from the community.
 
 - `Adam Raffe: Learning ACI <https://adamraffe.com/learning-aci/>`_
-- `Luca Relandini: ACI for dummies <http://lucarelandini.blogspot.be/2015/03/aci-for-dummies.html>`_
+- `Luca Relandini: ACI for dummies <https://lucarelandini.blogspot.be/2015/03/aci-for-dummies.html>`_
 - `Cisco DevNet Learning Labs about ACI <https://learninglabs.cisco.com/labs/tags/ACI>`_
 
 
@@ -51,7 +51,7 @@ Using the ACI modules
 ---------------------
 The Ansible ACI modules provide a user-friendly interface to managing your ACI environment using Ansible playbooks.
 
-For instance ensuring that a specific tenant exists, is done using the following Ansible task using module `aci_tenant <aci_tenant_module>`:
+For instance ensuring that a specific tenant exists, is done using the following Ansible task using module :ref:`aci_tenant <aci_tenant_module>`:
 
 .. code-block:: yaml
 
@@ -96,7 +96,7 @@ Or query all objects.
         state: query
       register: all_tenants
 
-After registering the return values of the `aci_tenant <aci_tenant_module>` task as shown above, you can access all tenant information from variable ``all_tenants``.
+After registering the return values of the :ref:`aci_tenant <aci_tenant_module>` task as shown above, you can access all tenant information from variable ``all_tenants``.
 
 
 Common parameters
@@ -503,5 +503,5 @@ You will find our roadmap, an overview of open ACI issues and pull-requests and 
        The Ansible Network community page, includes contact information and meeting information.
    `#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_
        The #ansible-network IRC chat channel on Freenode.net.
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

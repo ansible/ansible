@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -69,7 +54,7 @@ options:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
                vnic_profile is described by the following dictionary:"
             - "C(source_network_name): The network name of the source network."
-            - "C(source_profile_name): The prfile name related to the source network."
+            - "C(source_profile_name): The profile name related to the source network."
             - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
         version_added: "2.5"
     cluster_mappings:
@@ -112,6 +97,10 @@ options:
             - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the name of disk
                to be imported as template."
         aliases: ['glance_image_disk_name']
+    io_threads:
+        description:
+            - "Number of IO threads used by virtual machine. I(0) means IO threading disabled."
+        version_added: "2.7"
     template_image_disk_name:
         description:
             - "When C(state) is I(imported) and C(image_provider) is used this parameter specifies the new name for imported disk,
@@ -323,6 +312,9 @@ class TemplatesModule(BaseModule):
                 self.param('memory_guaranteed'),
                 self.param('memory_max')
             )) else None,
+            io=otypes.Io(
+                threads=self.param('io_threads'),
+            ) if self.param('io_threads') is not None else None,
         )
 
     def update_check(self, entity):
@@ -333,7 +325,8 @@ class TemplatesModule(BaseModule):
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
             equal(convert_to_bytes(self.param('memory')), entity.memory) and
-            equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile))
+            equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile)) and
+            equal(self.param('io_threads'), entity.io.threads)
         )
 
     def _get_export_domain_service(self):
@@ -453,6 +446,7 @@ def main():
         exclusive=dict(type='bool'),
         image_provider=dict(default=None),
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
+        io_threads=dict(type='int', default=None),
         template_image_disk_name=dict(default=None),
         seal=dict(type='bool'),
         vnic_profile_mappings=dict(default=[], type='list'),

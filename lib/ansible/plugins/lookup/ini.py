@@ -15,7 +15,7 @@ DOCUMENTATION = """
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:
-        description: they key(s) too look up
+        description: The key(s) to look up
         required: True
       type:
         description: ini Type of the file. 'properties' refers to the Java properties files.

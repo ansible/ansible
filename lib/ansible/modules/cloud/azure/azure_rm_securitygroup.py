@@ -141,13 +141,13 @@ EXAMPLES = '''
       purge_rules: yes
       rules:
           - name: DenySSH
-            protocol: TCP
+            protocol: Tcp
             destination_port_range: 22
             access: Deny
             priority: 100
             direction: Inbound
           - name: 'AllowSSH'
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix:
               - '174.109.158.0/24'
               - '174.109.159.0/24'
@@ -155,6 +155,16 @@ EXAMPLES = '''
             access: Allow
             priority: 101
             direction: Inbound
+          - name: 'AllowMultiplePorts'
+            protocol: Tcp
+            source_address_prefix:
+              - '174.109.158.0/24'
+              - '174.109.159.0/24'
+            destination_port_range:
+              - 80
+              - 443
+            access: Allow
+            priority: 102
 
 # Update rules on existing security group
 - azure_rm_securitygroup:
@@ -162,13 +172,13 @@ EXAMPLES = '''
       name: mysecgroup
       rules:
           - name: DenySSH
-            protocol: TCP
+            protocol: Tcp
             destination_port_range: 22-23
             access: Deny
             priority: 100
             direction: Inbound
           - name: AllowSSHFromHome
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix: '174.109.158.0/24'
             destination_port_range: 22-23
             access: Allow
@@ -338,6 +348,7 @@ except ImportError:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six import integer_types
+from ansible.module_utils._text import to_native
 
 
 def validate_rule(self, rule, rule_type=None):
@@ -376,6 +387,11 @@ def compare_rules_change(old_list, new_list, purge_list):
             new_list.append(old_rule)
         else:  # one rule is removed
             changed = True
+    # Compare new list and old list is the same? here only compare names
+    if not changed:
+        new_names = [to_native(x['name']) for x in new_list]
+        old_names = [to_native(x['name']) for x in old_list]
+        changed = (set(new_names) != set(old_names))
     return changed, new_list
 
 

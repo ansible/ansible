@@ -152,6 +152,7 @@ options:
               I(lambda_function_associations[])
                 I(lambda_function_arn)
                 I(event_type)
+              I(field_level_encryption_id)
 
     cache_behaviors:
       description:
@@ -180,6 +181,7 @@ options:
             I(max_ttl)
             I(compress)
             I(lambda_function_associations[])
+            I(field_level_encryption_id)
 
     purge_cache_behaviors:
       description: Whether to remove any cache behaviors that aren't listed in I(cache_behaviors). This switch
@@ -1505,6 +1507,7 @@ class CloudFrontValidationManager(object):
         cache_behavior = self.validate_allowed_methods(config, cache_behavior.get('allowed_methods'), cache_behavior)
         cache_behavior = self.validate_lambda_function_associations(config, cache_behavior.get('lambda_function_associations'), cache_behavior)
         cache_behavior = self.validate_trusted_signers(config, cache_behavior.get('trusted_signers'), cache_behavior)
+        cache_behavior = self.validate_field_level_encryption_id(config, cache_behavior.get('field_level_encryption_id'), cache_behavior)
         return cache_behavior
 
     def validate_cache_behavior_first_level_keys(self, config, cache_behavior, valid_origins, is_default_cache):
@@ -1586,6 +1589,14 @@ class CloudFrontValidationManager(object):
             return cache_behavior
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating lambda function associations")
+
+    def validate_field_level_encryption_id(self, config, field_level_encryption_id, cache_behavior):
+        # only set field_level_encryption_id if it's already set or if it was passed
+        if field_level_encryption_id is not None:
+            cache_behavior['field_level_encryption_id'] = field_level_encryption_id
+        elif 'field_level_encryption_id' in config:
+            cache_behavior['field_level_encryption_id'] = config.get('field_level_encryption_id')
+        return cache_behavior
 
     def validate_allowed_methods(self, config, allowed_methods, cache_behavior):
         try:

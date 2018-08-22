@@ -211,6 +211,14 @@ COLOR_CHANGED:
   ini:
   - {key: changed, section: colors}
   yaml: {key: display.colors.changed}
+COLOR_CONSOLE_PROMPT:
+  name: "Color for ansible-console's prompt task status"
+  default: white
+  description: Defines the default color to use for ansible-console
+  env: [{name: ANSIBLE_COLOR_CONSOLE_PROMPT}]
+  ini:
+  - {key: console_prompt, section: colors}
+  version_added: "2.7"
 COLOR_DEBUG:
   name: Color for debug statements
   default: dark gray
@@ -1375,6 +1383,17 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+INVALID_TASK_ATTRIBUTE_FAILED:
+  name: Controls whether invalid attributes for a task result in errors instead of warnings
+  default: True
+  description: If 'false', invalid attributes for a task will result in warnings instead of errors
+  type: boolean
+  env:
+    - name: ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED
+  ini:
+    - key: invalid_task_attribute_failed
+      section: defaults
+  version_added: "2.7"
 INVENTORY_ANY_UNPARSED_IS_FAILED:
   name: Controls whether any unparseable inventory source is a fatal error
   default: False
@@ -1440,21 +1459,9 @@ MAX_FILE_SIZE_FOR_DIFF:
   ini:
   - {key: max_diff_size, section: defaults}
   type: int
-MERGE_MULTIPLE_CLI_TAGS:
-  name: Merge 'tags' options
-  default: True
-  description:
-    - "This allows changing how multiple --tags and --skip-tags arguments are handled on the command line.
-      In Ansible up to and including 2.3, specifying --tags more than once will only take the last value of --tags."
-    - "Setting this config value to True will mean that all of the --tags options will be merged together. The same holds true for --skip-tags."
-  env: [{name: ANSIBLE_MERGE_MULTIPLE_CLI_TAGS}]
-  ini:
-    - {key: merge_multiple_cli_tags, section: defaults}
-  type: bool
-  version_added: "2.3"
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
   description: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
@@ -1632,4 +1639,13 @@ YAML_FILENAME_EXTENSIONS:
     - section: defaults
       key: yaml_valid_extensions
   type: list
+NETCONF_SSH_CONFIG:
+  description: This variable is used to enable bastion/jump host with netconf connection. If set to True the bastion/jump
+               host ssh settings should be present in ~/.ssh/config file, alternatively it can be set
+               to custom ssh configuration file path to read the bastion/jump host settings.
+  env: [{name: ANSIBLE_NETCONF_SSH_CONFIG}]
+  ini:
+  - {key: ssh_config, section: netconf_connection}
+  yaml: {key: netconf_connection.ssh_config}
+  default: null
 ...

@@ -22,9 +22,8 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import integer_types, iteritems, string_types
+from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils import six
 
 
 class TaskError(Exception):
@@ -57,7 +56,7 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             except AttributeError:
                 pass
             finally:
-                six.raise_from(TaskError(error_msg), task.info.error)
+                raise_from(TaskError(error_msg), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
             sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
             time.sleep(sleep_time)
@@ -91,7 +90,7 @@ def find_obj(content, vimtype, name, first=True):
     # Select the first match
     if first is True:
         for obj in obj_list:
-            if obj.name == name:
+            if to_text(obj.name) == to_text(name):
                 return obj
 
         # If no object found, return None
@@ -438,8 +437,10 @@ def list_snapshots(vm):
     result['snapshots'] = list_snapshots_recursively(vm.snapshot.rootSnapshotList)
     current_snapref = vm.snapshot.currentSnapshot
     current_snap_obj = get_current_snap_obj(vm.snapshot.rootSnapshotList, current_snapref)
-    result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
-
+    if current_snap_obj:
+        result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
+    else:
+        result['current_snapshot'] = dict()
     return result
 
 
@@ -501,7 +502,15 @@ def connect_to_api(module, disconnect_atexit=True):
 
     service_instance = None
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context, port=port)
+        connect_args = dict(
+            host=hostname,
+            user=username,
+            pwd=password,
+            port=port,
+        )
+        if ssl_context:
+            connect_args.update(sslContext=ssl_context)
+        service_instance = connect.SmartConnect(**connect_args)
     except vim.fault.InvalidLogin as invalid_login:
         module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
     except vim.fault.NoPermission as no_permission:

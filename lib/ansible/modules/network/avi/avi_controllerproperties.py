@@ -383,5 +383,6 @@ def main():
     return avi_ansible_api(module, 'controllerproperties',
                            set(['portal_token']))
 
+
 if __name__ == '__main__':
     main()

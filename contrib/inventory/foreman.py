@@ -436,5 +436,6 @@ class ForemanInventory(object):
         self._print_data()
         return True
 
+
 if __name__ == '__main__':
     sys.exit(not ForemanInventory().run())

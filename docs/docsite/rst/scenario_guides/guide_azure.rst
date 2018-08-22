@@ -38,7 +38,7 @@ instructions on how to actually use the modules and authenticate with the Azure 
 Using Service Principal
 .......................
 
-There is now a detailed official tutorial describing `how to create a service principal <https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/>`_.
+There is now a detailed official tutorial describing `how to create a service principal <https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal>`_.
 
 After stepping through the tutorial you will have:
 
@@ -328,6 +328,7 @@ By default hosts are grouped by:
 * security group name
 * tag key
 * tag key_value
+* os_disk operating_system_type (Windows/Linux)
 
 You can control host groupings and host selection by either defining environment variables or creating an
 azure_rm.ini file in your current working directory.
@@ -344,6 +345,7 @@ Control grouping using the following variables defined in the environment:
 * AZURE_GROUP_BY_LOCATION=yes
 * AZURE_GROUP_BY_SECURITY_GROUP=yes
 * AZURE_GROUP_BY_TAG=yes
+* AZURE_GROUP_BY_OS_FAMILY=yes
 
 Select hosts within specific resource groups by assigning a comma separated list to:
 
@@ -390,7 +392,7 @@ file will contain the following:
     group_by_location=yes
     group_by_security_group=yes
     group_by_tag=yes
-
+    group_by_os_family=yes
 
 Examples
 ........
@@ -401,6 +403,12 @@ Here are some examples using the inventory script:
 
     # Execute /bin/uname on all instances in the Testing resource group
     $ ansible -i azure_rm.py Testing -m shell -a "/bin/uname -a"
+
+    # Execute win_ping on all Windows instances
+    $ ansible -i azure_rm.py windows -m win_ping
+
+    # Execute win_ping on all Windows instances
+    $ ansible -i azure_rm.py winux -m ping
 
     # Use the inventory script to print instance specific information
     $ ./ansible/contrib/inventory/azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty

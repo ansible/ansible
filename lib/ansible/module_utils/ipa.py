@@ -27,10 +27,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 import re
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -97,10 +94,14 @@ class IPAClient(object):
             item = {}
         url = '%s/session/json' % self.get_base_url()
         data = dict(method=method)
-        if method != 'ping':
-            data['params'] = [[name], item]
-        else:
+
+        # TODO: We should probably handle this a little better.
+        if method in ('ping', 'config_show'):
             data['params'] = [[], {}]
+        elif method == 'config_mod':
+            data['params'] = [[], item]
+        else:
+            data['params'] = [[name], item]
 
         try:
             resp, info = fetch_url(module=self.module, url=url, data=to_bytes(json.dumps(data)), headers=self.headers)

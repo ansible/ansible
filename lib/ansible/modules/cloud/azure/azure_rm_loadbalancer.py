@@ -306,26 +306,32 @@ author:
 '''
 
 EXAMPLES = '''
-    # TODO: this example needs update for 2.5+ module args
-    - name: Create a load balancer
-      azure_rm_loadbalancer:
-        name: myloadbalancer
-        location: eastus
-        resource_group: my-rg
-        public_ip: mypublicip
-        probe_protocol: Tcp
-        probe_port: 80
-        probe_interval: 10
-        probe_fail_count: 3
+- name: create load balancer
+  azure_rm_loadbalancer:
+    resource_group: testrg
+    name: testloadbalancer1
+    frontend_ip_configurations:
+      - name: frontendipconf0
+        public_ip_address: testpip
+    backend_address_pools:
+      - name: backendaddrpool0
+    probes:
+      - name: prob0
+        port: 80
+    inbound_nat_pools:
+      - name: inboundnatpool0
+        frontend_ip_configuration_name: frontendipconf0
         protocol: Tcp
-        load_distribution: Default
-        frontend_port: 80
+        frontend_port_range_start: 80
+        frontend_port_range_end: 81
         backend_port: 8080
-        idle_timeout: 4
-        natpool_frontend_port_start: 1030
-        natpool_frontend_port_end: 1040
-        natpool_backend_port: 80
-        natpool_protocol: Tcp
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
 '''
 
 RETURN = '''
@@ -969,6 +975,7 @@ def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
 def main():
     """Main execution"""
     AzureRMLoadBalancer()
+
 
 if __name__ == '__main__':
     main()

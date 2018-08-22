@@ -72,8 +72,8 @@ options:
       - The private SSH key or certificate file used to to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
-     section: defaults
-     key: private_key_file
+      - section: defaults
+        key: private_key_file
     env:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
@@ -96,13 +96,14 @@ options:
         option on production systems as it could create a security vulnerability.
     default: 'no'
     ini:
-      section: paramiko_connection
-      key: host_key_auto_add
+      - section: paramiko_connection
+        key: host_key_auto_add
     env:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
   look_for_keys:
     default: True
-    description: 'TODO: write it'
+    description:
+      -  enables looking for ssh keys in the usual locations for ssh keys (e.g. :file:`~/.ssh/id_*`)
     env:
       - name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS
     ini:
@@ -152,6 +153,23 @@ options:
         key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
+  netconf_ssh_config:
+    description:
+      - This variable is used to enable bastion/jump host with netconf connection. If set to
+        True the bastion/jump host ssh settings should be present in ~/.ssh/config file,
+        alternatively it can be set to custom ssh configuration file path to read the
+        bastion/jump host settings.
+    ini:
+      - section: netconf_connection
+        key: ssh_config
+        version_added: '2.7'
+    env:
+      - name: ANSIBLE_NETCONF_SSH_CONFIG
+    vars:
+      - name: ansible_netconf_ssh_config
+        version_added: '2.7'
 """
 
 import os
@@ -160,7 +178,7 @@ import json
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import NetworkConnectionBase
 
@@ -201,6 +219,7 @@ class Connection(NetworkConnectionBase):
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None
+        self.key_filename = None
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         """Sends the request to the node and returns the reply
@@ -235,9 +254,9 @@ class Connection(NetworkConnectionBase):
             allow_agent = False
         setattr(self._play_context, 'allow_agent', allow_agent)
 
-        key_filename = None
-        if self._play_context.private_key_file:
-            key_filename = os.path.expanduser(self._play_context.private_key_file)
+        self.key_filename = self._play_context.private_key_file or self.get_option('private_key_file')
+        if self.key_filename:
+            self.key_filename = os.path.expanduser(self.key_filename)
 
         if self._network_os == 'default':
             for cls in netconf_loader.all(class_only=True):
@@ -248,10 +267,10 @@ class Connection(NetworkConnectionBase):
 
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
 
-        ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
+        ssh_config = self.get_option('netconf_ssh_config')
         if ssh_config in BOOLEANS_TRUE:
             ssh_config = True
-        else:
+        elif ssh_config in BOOLEANS_FALSE:
             ssh_config = None
 
         try:
@@ -260,7 +279,7 @@ class Connection(NetworkConnectionBase):
                 port=self._play_context.port or 830,
                 username=self._play_context.remote_user,
                 password=self._play_context.password,
-                key_filename=str(key_filename),
+                key_filename=str(self.key_filename),
                 hostkey_verify=self.get_option('host_key_checking'),
                 look_for_keys=self.get_option('look_for_keys'),
                 device_params=device_params,
