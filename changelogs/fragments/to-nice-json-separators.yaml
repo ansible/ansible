@@ -1,0 +1,2 @@
+minor_changes:
+- to_nice_json - specify separators to json.dumps to normalize the output between python2 and python3 (https://github.com/ansible/ansible/pull/42633)
