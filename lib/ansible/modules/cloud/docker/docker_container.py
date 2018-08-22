@@ -168,8 +168,10 @@ options:
       - Override default signal used to kill a running container.
   kernel_memory:
     description:
-      - "Kernel memory limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g. Minimum is 4M."
+      - "Kernel memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte). Minimum is C(4M)."
+      - Omitting the unit defaults to bytes.
     default: 0
   labels:
      description:
@@ -201,18 +203,24 @@ options:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
   memory:
     description:
-      - "Memory limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g"
+      - "Memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: '0'
   memory_reservation:
     description:
-      - "Memory soft limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g"
+      - "Memory soft limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: 0
   memory_swap:
     description:
-      - Total memory limit (memory + swap, format:<number>[<unit>]).
-        Number is a positive integer. Unit can be one of b, k, m, or g.
+      - "Total memory limit (memory + swap, format: C(<number>[<unit>])).
+        Number is a positive integer. Unit can be C(B) (byte), C(K) (kibibyte, 1024B),
+        C(M) (mebibyte), C(G) (gibibyte), C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: 0
   memory_swappiness:
     description:
@@ -325,9 +333,10 @@ options:
     default: 0
   shm_size:
     description:
-      - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
-        Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes).
-      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
+      - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses C(64M).
   security_opts:
     description:
       - List of security options in the form of C("label:user:User")
@@ -642,6 +651,7 @@ except:
 
 
 REQUIRES_CONVERSION_TO_BYTES = [
+    'kernel_memory',
     'memory',
     'memory_reservation',
     'memory_swap',
