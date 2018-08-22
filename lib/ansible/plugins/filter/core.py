@@ -87,7 +87,7 @@ def to_json(a, *args, **kw):
 def to_nice_json(a, indent=4, *args, **kw):
     '''Make verbose, human readable JSON'''
     try:
-        return json.dumps(a, indent=indent, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
+        return json.dumps(a, indent=indent, sort_keys=True, separators=(',', ': '), cls=AnsibleJSONEncoder, *args, **kw)
     except Exception as e:
         # Fallback to the to_json filter
         display.warning(u'Unable to convert data using to_nice_json, falling back to to_json: %s' % to_text(e))
