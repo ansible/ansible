@@ -105,7 +105,7 @@ class NetAppONTAPVserverPeer(object):
             applications=dict(required=False, type='list', choices=['snapmirror', 'file_copy', 'lun_copy']),
             dest_hostname=dict(required=False, type='str'),
             dest_username=dict(required=False, type='str'),
-            dest_password=dict(required=False, type='str')
+            dest_password=dict(required=False, type='str', no_log=True)
         ))
 
         self.module = AnsibleModule(
