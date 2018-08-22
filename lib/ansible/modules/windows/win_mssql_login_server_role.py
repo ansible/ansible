@@ -49,7 +49,7 @@ options:
 author:
   - Daniele Lazzari
 notes:
-  - If the user that runs ansible has the appropriated permission on the db,
+  - If the user that runs ansible has the appropriate permission on the database server,
   - you don't need to set C(server_instance_user) and C(server_instance_password)
 '''
 
