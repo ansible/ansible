@@ -64,6 +64,10 @@ options:
     required: false
     type: bool
     default: true
+  use_proxy:
+    description: Flag to control if the lookup will observe HTTP proxy environment variables when present.
+    type: boolean
+    default: True
   user_name:
     description:
       - This is the User Name that needs to be create/modified/deleted
@@ -210,40 +214,34 @@ def assemble_json(cpmmodule):
     json_load = ""
 
     json_load = '{"users":'
-    json_load = json_load + '{"username": "'+cpmmodule.params["user_name"]+'"'
+    json_load = json_load + '{"username": "' + cpmmodule.params["user_name"] + '"'
 
     # for Adding there must be a password present
     if cpmmodule.params["user_pass"] is not None and (len(cpmmodule.params["user_pass"]) > 0):
-        json_load = json_load + ',"newpasswd": "'+cpmmodule.params["user_pass"]+'"'
+        json_load = json_load + ',"newpasswd": "' + cpmmodule.params["user_pass"] + '"'
     if cpmmodule.params["user_accesslevel"] is not None:
         if 0 <= cpmmodule.params["user_accesslevel"] <= 3:
-            json_load = json_load + ',"accesslevel": '+str(cpmmodule.params["user_accesslevel"])+''
+            json_load = json_load + ',"accesslevel": ' + str(cpmmodule.params["user_accesslevel"]) + ''
     if cpmmodule.params["user_portaccess"] is not None:
-        json_load = json_load + ',"portaccess": '+cpmmodule.params["user_portaccess"]+''
+        json_load = json_load + ',"portaccess": ' + cpmmodule.params["user_portaccess"] + ''
     if cpmmodule.params["user_plugaccess"] is not None:
-        json_load = json_load + ',"plugaccess": '+cpmmodule.params["user_plugaccess"]+''
+        json_load = json_load + ',"plugaccess": ' + cpmmodule.params["user_plugaccess"] + ''
     if cpmmodule.params["user_groupaccess"] is not None:
-        json_load = json_load + ',"groupaccess": '+cpmmodule.params["user_groupaccess"]+''
+        json_load = json_load + ',"groupaccess": ' + cpmmodule.params["user_groupaccess"] + ''
     if cpmmodule.params["user_accessserial"] is not None:
-        if 0 <= cpmmodule.params["user_accessserial"] <= 1:
-            json_load = json_load + ',"accessserial": '+str(cpmmodule.params["user_accessserial"])+''
+        json_load = json_load + ',"accessserial": ' + str(cpmmodule.params["user_accessserial"]) + ''
     if cpmmodule.params["user_accessssh"] is not None:
-        if 0 <= cpmmodule.params["user_accessserial"] <= 1:
-            json_load = json_load + ',"accessssh": '+str(cpmmodule.params["user_accessssh"])+''
+        json_load = json_load + ',"accessssh": ' + str(cpmmodule.params["user_accessssh"]) + ''
     if cpmmodule.params["user_accessweb"] is not None:
-        if 0 <= cpmmodule.params["user_accessweb"] <= 1:
-            json_load = json_load + ',"accessweb": '+str(cpmmodule.params["user_accessweb"])+''
+        json_load = json_load + ',"accessweb": ' + str(cpmmodule.params["user_accessweb"]) + ''
     if cpmmodule.params["user_accessoutbound"] is not None:
-        if 0 <= cpmmodule.params["user_accessoutbound"] <= 1:
-            json_load = json_load + ',"accessoutbound": '+str(cpmmodule.params["user_accessoutbound"])+''
+        json_load = json_load + ',"accessoutbound": ' + str(cpmmodule.params["user_accessoutbound"]) + ''
     if cpmmodule.params["user_accessapi"] is not None:
-        if 0 <= cpmmodule.params["user_accessapi"] <= 1:
-            json_load = json_load + ',"accessapi": '+str(cpmmodule.params["user_accessapi"])+''
+        json_load = json_load + ',"accessapi": ' + str(cpmmodule.params["user_accessapi"]) + ''
     if cpmmodule.params["user_accessmonitor"] is not None:
-        if 0 <= cpmmodule.params["user_accessmonitor"] <= 1:
-            json_load = json_load + ',"accessmonitor": '+str(cpmmodule.params["user_accessmonitor"])+''
+        json_load = json_load + ',"accessmonitor": ' + str(cpmmodule.params["user_accessmonitor"]) + ''
     if cpmmodule.params["user_callbackphone"] is not None:
-        json_load = json_load + ',"callbackphone": "'+cpmmodule.params["user_callbackphone"]+'"'
+        json_load = json_load + ',"callbackphone": "' + cpmmodule.params["user_callbackphone"] + '"'
 
     json_load = json_load + '}'
     json_load = json_load + '}'
@@ -260,13 +258,13 @@ def run_module():
         cpm_password=dict(type='str', required=True, no_log=True),
         user_name=dict(type='str', required=True),
         user_pass=dict(type='str', required=False, default=None, no_log=True),
-        user_accesslevel=dict(type='int', required=False, default=None),
-        user_accessssh=dict(type='int', required=False, default=None),
-        user_accessserial=dict(type='int', required=False, default=None),
-        user_accessweb=dict(type='int', required=False, default=None),
-        user_accessapi=dict(type='int', required=False, default=None),
-        user_accessmonitor=dict(type='int', required=False, default=None),
-        user_accessoutbound=dict(type='int', required=False, default=None),
+        user_accesslevel=dict(type='int', required=False, default=None, choices = [0, 1, 2, 3]),
+        user_accessssh=dict(type='int', required=False, default=None, choices = [0, 1]),
+        user_accessserial=dict(type='int', required=False, default=None, choices = [0, 1]),
+        user_accessweb=dict(type='int', required=False, default=None, choices = [0, 1]),
+        user_accessapi=dict(type='int', required=False, default=None, choices = [0, 1]),
+        user_accessmonitor=dict(type='int', required=False, default=None, choices = [0, 1]),
+        user_accessoutbound=dict(type='int', required=False, default=None, choices = [0, 1]),
         user_portaccess=dict(type='str', required=False, default=None),
         user_plugaccess=dict(type='str', required=False, default=None),
         user_groupaccess=dict(type='str', required=False, default=None),
