@@ -288,12 +288,15 @@
               cidr_ipv6: "64:ff9b::/96"
             <<: *aws_connection_info
           check_mode: true
+          diff: true
           register: result
 
         - name: assert state=present (expected changed=true)
           assert:
             that:
                - 'result.changed'
+               - 'result.diff.0.before.ip_permissions == result.diff.0.after.ip_permissions'
+               - 'result.diff.0.before.ip_permissions_egress != result.diff.0.after.ip_permissions_egress'
 
         # ============================================================
         - name: test rules_egress state=present for ipv6 (expected changed=true)
