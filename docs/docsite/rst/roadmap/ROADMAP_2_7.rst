@@ -94,11 +94,14 @@ Windows
 General
 =======
 
-* Investigate the cause of WinRM HTTPS read timeouts `issue #41145 <https://github.com/ansible/ansible/issues/41145>`__
+* Added new connection plugin that uses PSRP as the connection protocol `pr #41729 <https://github.com/ansible/ansible/pull/41729>`__
 
 Modules
 =======
 
-* `win_domain` and `win_domain_controller` action wrappers `issue #42764 <https://github.com/ansible/ansible/issues/42764>`__
-* Add link to `win_file` `issue #43060 <https://github.com/ansible/ansible/issues/43060>`__
-* Hostname change support for `win_domain` and `win_domain_controller` `issue #42768 <https://github.com/ansible/ansible/issues/42768>`__
+* Revamp Chocolatey to fix bugs and support offline installation `pr #43013 <https://github.com/ansible/ansible/pull/43013>`_.
+* Add Chocolatey modules that can manage the following Chocolatey features
+
+    * `Sources <https://chocolatey.org/docs/commands-sources>`_ `pr #42790 <https://github.com/ansible/ansible/pull/42790>`_
+    * `Features <https://chocolatey.org/docs/chocolatey-configuration#features>`_ `pr #42848 <https://github.com/ansible/ansible/pull/42848>`_
+    * `Config <https://chocolatey.org/docs/chocolatey-configuration#config-settings>`_ `pr #42915 <h*ttps://github.com/ansible/ansible/pull/42915>`_
