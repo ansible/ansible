@@ -35,16 +35,17 @@
     that:
       output.changed
 
-- name: get the web app
-  azure_rm_webapp_facts:
-    resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}2"
-  register: stopped
+# enable after webapp_facts merged
+# - name: get the web app
+#   azure_rm_webapp_facts:
+#     resource_group: "{{ resource_group }}"
+#     name: "{{ win_app_name }}2"
+#   register: stopped
 
-- name: assert web app is stopped
-  assert:
-    that:
-      - stopped.properties.state == "Stopped"
+# - name: assert web app is stopped
+#   assert:
+#     that:
+#       - stopped.properties.state == "Stopped"
 
 - name: Create a windows web app with existing app service plan, try to update some root level params
   azure_rm_webapp:
