@@ -232,7 +232,6 @@ class AzureRMCdnprofile(AzureRMModuleBase):
             poller = self.cdn_management_client.profiles.create(self.resource_group,
                                                                 self.name,
                                                                 parameters,
-                                                                raw=True,
                                                                 custom_headers={'x-ms-client-request-id': xid}
                                                                 )
             response = self.get_poller_result(poller)
