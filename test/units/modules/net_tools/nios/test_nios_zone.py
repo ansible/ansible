@@ -139,8 +139,8 @@ class TestNiosZoneModule(TestNiosModule):
         )
         test_spec = {
             "fqdn": {"ib_req": True},
-            "grid_primary": {},#{"options":grid_spec},
-            "grid_secondaries": {},#{"options":grid_spec},
+            "grid_primary": {},
+            "grid_secondaries": {},
             "restart_if_needed": {},
             "comment": {},
             "extattrs": {}
