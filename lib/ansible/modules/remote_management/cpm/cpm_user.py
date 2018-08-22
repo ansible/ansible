@@ -67,11 +67,12 @@ options:
   user_name:
     description:
       - This is the User Name that needs to be create/modified/deleted
-    required: false
+    required: true
   user_pass:
     description:
       - This is the User Password that needs to be create/modified/deleted
       - If the user is being Created this parameter is required
+    required: false
   user_accesslevel:
     description:
       - This is the access level that needs to be create/modified/deleted
