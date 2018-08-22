@@ -65,10 +65,10 @@ options:
       - If set to true, causes the NIOS DNS service to restart and load the
         new zone configuration
     type: bool
-  zone_format:
+  format:
     version_added: "2.7"
     description:
-      - Create an authorative Reverse-Mapping Zone which is an area of network 
+      - Create an authorative Reverse-Mapping Zone which is an area of network
         space for which one or more name servers-primary and secondary-have the
         responsibility to respond to address-to-name queries. It supports
         reverse-mapping zones for both IPv4 and IPv6 addresses.
