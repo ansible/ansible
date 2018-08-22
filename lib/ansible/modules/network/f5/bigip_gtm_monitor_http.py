@@ -237,6 +237,7 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -249,16 +250,11 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -377,12 +373,11 @@ class ModuleParameters(Parameters):
     def ip(self):
         if self._values['ip'] is None:
             return None
-        try:
-            if self._values['ip'] in ['*', '0.0.0.0']:
-                return '*'
-            result = str(netaddr.IPAddress(self._values['ip']))
-            return result
-        except netaddr.core.AddrFormatError:
+        if self._values['ip'] in ['*', '0.0.0.0']:
+            return '*'
+        elif is_valid_ip(self._values['ip']):
+            return self._values['ip']
+        else:
             raise F5ModuleError(
                 "The provided 'ip' parameter is not an IP address."
             )
@@ -774,8 +769,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)
