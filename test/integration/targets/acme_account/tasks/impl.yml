@@ -100,72 +100,23 @@
 - name: Parse account key (to ease debugging some test failures)
   command: openssl ec -in {{ output_dir }}/accountkey2.pem -noout -text
 
-# Note that pebble has no change key endpoint implemented yet!
-# When it has (and the container was updated), uncomment the
-# uncomment the following tests, and delete the ones below the
-# out-commented ones.
-
-# - name: Change account key
-#   acme_account:
-#     select_crypto_backend: "{{ select_crypto_backend }}"
-#     account_key_src: "{{ output_dir }}/accountkey.pem"
-#     acme_version: 2
-#     acme_directory: https://{{ acme_host }}:14000/dir
-#     validate_certs: no
-#     new_account_key_src: "{{ output_dir }}/accountkey2.pem"
-#     state: changed_key
-#     contact:
-#     - mailto:example@example.com
-#   register: account_change_key
-
-# - name: Deactivate account
-#   acme_account:
-#     select_crypto_backend: "{{ select_crypto_backend }}"
-#     account_key_src: "{{ output_dir }}/accountkey2.pem"
-#     acme_version: 2
-#     acme_directory: https://{{ acme_host }}:14000/dir
-#     validate_certs: no
-#     state: absent
-#   register: account_deactivate
-
-# - name: Deactivate account (idempotent)
-#   acme_account:
-#     select_crypto_backend: "{{ select_crypto_backend }}"
-#     account_key_src: "{{ output_dir }}/accountkey2.pem"
-#     acme_version: 2
-#     acme_directory: https://{{ acme_host }}:14000/dir
-#     validate_certs: no
-#     state: absent
-#   register: account_deactivate_idempotent
-
-# - name: Do not try to create account II
-#   acme_account:
-#     select_crypto_backend: "{{ select_crypto_backend }}"
-#     account_key_src: "{{ output_dir }}/accountkey2.pem"
-#     acme_version: 2
-#     acme_directory: https://{{ acme_host }}:14000/dir
-#     validate_certs: no
-#     state: present
-#     allow_creation: no
-#   ignore_errors: yes
-#   register: account_not_created_2
-
-# - name: Do not try to create account III
-#   acme_account:
-#     select_crypto_backend: "{{ select_crypto_backend }}"
-#     account_key_src: "{{ output_dir }}/accountkey.pem"
-#     acme_version: 2
-#     acme_directory: https://{{ acme_host }}:14000/dir
-#     validate_certs: no
-#     state: present
-#     allow_creation: no
-#   ignore_errors: yes
-#   register: account_not_created_3
+- name: Change account key
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    new_account_key_src: "{{ output_dir }}/accountkey2.pem"
+    state: changed_key
+    contact:
+    - mailto:example@example.com
+  register: account_change_key
 
 - name: Deactivate account
   acme_account:
     select_crypto_backend: "{{ select_crypto_backend }}"
-    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_key_src: "{{ output_dir }}/accountkey2.pem"
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
@@ -175,7 +126,7 @@
 - name: Deactivate account (idempotent)
   acme_account:
     select_crypto_backend: "{{ select_crypto_backend }}"
-    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_key_src: "{{ output_dir }}/accountkey2.pem"
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
@@ -185,7 +136,7 @@
 - name: Do not try to create account II
   acme_account:
     select_crypto_backend: "{{ select_crypto_backend }}"
-    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_key_src: "{{ output_dir }}/accountkey2.pem"
     acme_version: 2
     acme_directory: https://{{ acme_host }}:14000/dir
     validate_certs: no
@@ -193,3 +144,15 @@
     allow_creation: no
   ignore_errors: yes
   register: account_not_created_2
+
+- name: Do not try to create account III
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    state: present
+    allow_creation: no
+  ignore_errors: yes
+  register: account_not_created_3
