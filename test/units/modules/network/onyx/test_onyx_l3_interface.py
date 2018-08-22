@@ -56,6 +56,7 @@ class TestOnyxL3InterfaceModule(TestOnyxModule):
     def load_fixture(self, config_file):
         self.get_config.return_value = load_fixture(config_file)
         self.load_config.return_value = None
+        self.get_version.return_value = "3.6.5000"
 
     def load_eth_ifc_fixture(self):
         config_file = 'onyx_l3_interface_show.cfg'
