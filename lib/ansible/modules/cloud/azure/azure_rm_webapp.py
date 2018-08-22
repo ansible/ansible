@@ -158,6 +158,15 @@ options:
             - Purge any existing application settings. Replace web app application settings with app_settings.
         type: bool
 
+    power_action:
+        description:
+            - Start/Stop/Restart the web app.
+        type: str
+        choices:
+            - start
+            - stop
+            - restart
+
     state:
       description:
         - Assert the state of the Web App.
@@ -410,6 +419,11 @@ class AzureRMWebApps(AzureRMModuleBase):
                 type='bool',
                 default=False
             ),
+            power_action=dict(
+                type='str',
+                choices=['start', 'stop', 'restart'],
+                default='start'
+            ),
             state=dict(
                 type='str',
                 default='present',
@@ -450,6 +464,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         self.container_settings = None
 
         self.purge_app_settings = False
+        self.power_action = 'start'
 
         self.results = dict(
             changed=False,
@@ -595,6 +610,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 to_be_updated = True
                 self.to_do = Actions.CreateOrUpdate
+                self.site.tags = self.tags
 
                 # service plan is required for creation
                 if not self.plan:
@@ -631,7 +647,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 self.log('Result: {0}'.format(old_response))
 
-                update_tags, old_response['tags'] = self.update_tags(old_response.get('tags', dict()))
+                update_tags, self.site.tags = self.update_tags(old_response.get('tags', None))
 
                 if update_tags:
                     to_be_updated = True
@@ -693,7 +709,23 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             if self.to_do == Actions.CreateOrUpdate:
                 response = self.create_update_webapp()
+
                 self.results['id'] = response['id']
+
+        webapp = None
+        if old_response:
+            webapp = old_response
+        if response:
+            webapp = response
+
+        if webapp:
+            if (webapp['state'] != 'Stopped' and self.power_action == 'stop') or \
+               (webapp['state'] != 'Running' and self.power_action == 'start') or \
+                self.power_action == 'restart':
+
+                if self.check_mode:
+                    self.results['changed'] = True
+                self.start_webapp(self.power_action)
 
         return self.results
 
@@ -942,6 +974,29 @@ class AzureRMWebApps(AzureRMModuleBase):
                 self.name, self.resource_group, str(ex)))
 
             return False
+
+    def start_webapp(self, action):
+        '''
+        Start/stop/restart web app
+        :return: deserialized updating response
+        '''
+        try:
+            if action == 'start':
+                response = self.web_client.web_apps.start(resource_group_name=self.resource_group, name=self.name)
+            elif action == 'stop':
+                response = self.web_client.web_apps.stop(resource_group_name=self.resource_group, name=self.name)
+            elif action == 'restart':
+                response = self.web_client.web_apps.restart(resource_group_name=self.resource_group, name=self.name)
+            else:
+                self.fail("Invalid web app power action {0}".format(action))
+
+            self.log("Response : {0}".format(response))
+
+            return response
+        except CloudError as ex:
+            request_id = ex.request_id if ex_request_id else ''
+            self.log("Failed to {0} web app {1} in resource group {2}, request_id {3} - {4}".format(
+                action, self.name, self.resource_group, request_id, str(ex)))
 
 
 def main():
