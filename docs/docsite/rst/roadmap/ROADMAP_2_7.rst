@@ -71,7 +71,6 @@ Azure
 =====
 
 * Azure inventory plugin `issue #42769 <https://github.com/ansible/ansible/issues/42769>`__
-* Azure stack support for modules `project tracker <https://github.com/nitzmahone/ansible/projects/2>`__
 
 
 Network
@@ -96,8 +95,6 @@ General
 =======
 
 * Investigate the cause of WinRM HTTPS read timeouts `issue #41145 <https://github.com/ansible/ansible/issues/41145>`__
-* WinRM connection persistence (improves performance) `pr #41729 <https://github.com/ansible/ansible/pull/41729>`__
-* Experiment with OpenSSH + powershell `pr #33074 <https://github.com/ansible/ansible/pull/33074>`_
 
 Modules
 =======
