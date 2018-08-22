@@ -98,7 +98,7 @@ class ActionModule(ActionBase):
         return command_result['stdout'].strip()
 
     def check_uptime(self, before_uptime):
-        display.vvv("Attempting to get system uptime")
+        display.vvv("%s: attempting to get system uptime" % self._task.action)
         connect_timeout = self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT)
 
         # override connection timeout from defaults to custom value
@@ -121,8 +121,8 @@ class ActionModule(ActionBase):
             raise Exception("uptime has not changed")
 
     def run_test_command(self, **kwargs):
-        test_command = str(self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND))
-        display.vvv("Attempting post-reboot test command '%s'" % test_command)
+        test_command = self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND)
+        display.vvv("%s: attempting post-reboot test command '%s'" % (self._task.action, test_command))
         command_result = self._low_level_execute_command(test_command, sudoable=self.DEFAULT_SUDOABLE)
 
         result = {}
@@ -151,21 +151,22 @@ class ActionModule(ActionBase):
         raise TimedOutException('Timed out waiting for %s' % (action_desc))
 
     def perform_reboot(self):
-        display.debug("Rebooting server")
+        display.debug("%s: rebooting server" % self._task.action)
 
         remote_command = self.construct_command()
         reboot_result = self._low_level_execute_command(remote_command, sudoable=self.DEFAULT_SUDOABLE)
 
         result = {}
+        result['start'] = datetime.utcnow()
+
         if reboot_result['rc'] != 0:
             result['failed'] = True
             result['rebooted'] = False
-            result['msg'] = "Shutdown command failed, error was: %s %s" % (
+            result['msg'] = "Shutdown command failed. Error was %s, %s" % (
                 to_native(reboot_result['stdout'].strip()), to_native(reboot_result['stderr'].strip()))
             return result
 
         result['failed'] = False
-        result['start'] = datetime.utcnow()
 
         # Get the original connection_timeout option var so it can be reset after
         result['connection_timeout_orig'] = None
@@ -177,11 +178,11 @@ class ActionModule(ActionBase):
         return result
 
     def validate_reboot(self, before_uptime, connection_timeout_orig):
-        display.debug('Validating reboot')
+        display.debug('%s: Validating reboot' % self._task.action)
         result = {}
 
         try:
-            # keep on checking system uptime with short connection
+            # keep on checking system uptime with short connection responses
             reboot_timeout = int(self._task.args.get('reboot_timeout', self.DEFAULT_REBOOT_TIMEOUT))
             connect_timeout = self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT)
             self.do_until_success_or_timeout(self.check_uptime, reboot_timeout, before_uptime, action_desc="uptime check")
