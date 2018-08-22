@@ -48,7 +48,7 @@ options:
     description:
       - Native VLAN to be configured in trunk port. The value of C(native_vlan)
         should be vlan id.
-  enhenced_layer:
+  enhanced_layer:
     description:
       - True if your device has Enhanced Layer 2 Software (ELS).
     default: True
@@ -178,7 +178,7 @@ def main():
         trunk_vlans=dict(type='list'),
         unit=dict(default=0, type='int'),
         description=dict(),
-        enhenced_layer=dict(default=True, type='bool'),
+        enhanced_layer=dict(default=True, type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
@@ -243,7 +243,7 @@ def main():
         validate_param_values(module, param_to_xpath_map, param=item)
 
         param_to_xpath_map['mode']['xpath'] = \
-            'interface-mode' if param['enhenced_layer'] else 'port-mode'
+            'interface-mode' if param['enhanced_layer'] else 'port-mode'
 
         want = map_params_to_obj(module, param_to_xpath_map, param=item)
         requests.append(map_obj_to_ele(module, want, top, param=item))
