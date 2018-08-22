@@ -330,7 +330,6 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: Spredzy
-  $modules/crypto/acme/: resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/misc/elasticsearch_plugin.py: ThePixelDeveloper
   $modules/database/misc/kibana_plugin.py: barryib
@@ -430,7 +429,7 @@ files:
   $modules/net_tools/basics/get_url.py: jpmens ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py: $team_ansible
-  $modules/net_tools/cloudflare_dns.py: andreaso
+  $modules/net_tools/cloudflare_dns.py: mgruener andreaso
   $modules/net_tools/dnsimple.py: drcapulet
   $modules/net_tools/dnsmadeeasy.py: briceburg
   $modules/net_tools/exoscale/: resmo
@@ -692,6 +691,10 @@ files:
   $modules/utilities/logic/pause.py: tbielawa samdoran
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
+  $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
+  $modules/web_infrastructure/acme_account.py: mgruener resmo felixfontein
+  $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
+  $modules/web_infrastructure/acme_certificate_revoke.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
@@ -813,7 +816,7 @@ files:
     labels: networking
     support: community
   $module_utils/acme.py:
-    maintainers: resmo felixfontein
+    maintainers: mgruener resmo felixfontein
   $module_utils/network/aireos:
     maintainers: jmighion
     labels: networking
@@ -926,7 +929,7 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
-  $module_utils/netapp: $team_netapp
+  $module_utils/storage/netapp: $team_netapp
   $module_utils/vultr.py:
     maintainers: $team_vultr
     labels:
@@ -1182,8 +1185,6 @@ files:
     keywords:
     - jinja
     - jinja2
-  lib/ansible/utils/module_docs_fragments/acme.py:
-    maintainers: resmo felixfontein
   test/sanity/validate-modules:
     keywords:
     - validate-modules
@@ -1234,7 +1235,7 @@ files:
     - networking
     - nxos
   test/integration/targets/setup_acme:
-    maintainers: resmo felixfontein
+    maintainers: mgruener resmo felixfontein
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
   test/integration/targets/ucs:
