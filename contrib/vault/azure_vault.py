@@ -562,7 +562,6 @@ class AzureKeyVaultSecret:
             env_settings[attribute] = os.environ.get(env_variable, None)
         return env_settings
 
-
     def _load_vault_settings(self):
         basename = os.path.splitext(os.path.basename(__file__))[0]
         default_path = os.path.join(os.path.dirname(__file__), (basename + '.ini'))
@@ -584,6 +583,7 @@ class AzureKeyVaultSecret:
                     pass
 
         return settings
+
 
 def main():
     if not HAS_AZURE:
