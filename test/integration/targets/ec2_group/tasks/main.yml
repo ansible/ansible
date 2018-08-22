@@ -333,12 +333,14 @@
             vpc_id: '{{ vpc_result.vpc.id }}'
             <<: *aws_connection_info
           check_mode: true
+          diff: true
           register: result
 
         - name: assert group was removed
           assert:
             that:
               - 'result.changed'
+              - 'not result.diff.0.after'
 
         # ============================================================
         - name: test state=absent (expected changed=true)
@@ -408,8 +410,13 @@
           to_port: 8182
           cidr_ip: "1.1.1.1/32"
       check_mode: true
+      diff: true
       register: check_result
 
+    - assert:
+        that:
+          - not check_result.changed
+          - check_result.diff.0.before.ip_permissions.0 == check_result.diff.0.after.ip_permissions.0
 
     # ============================================================
     - name: add same rule to the existing group  (expected changed=false)
@@ -880,12 +887,16 @@
           tag1: test1
           tag2: test2
       check_mode: true
+      diff: true
       register: result
 
     - name: assert that tags were added (expected changed=true)
       assert:
         that:
           - 'result.changed'
+          - 'not result.diff.0.before.tags'
+          - 'result.diff.0.after.tags.tag1 == "test1"'
+          - 'result.diff.0.after.tags.tag2 == "test2"'
 
     # ============================================================
     - name: test adding tags (expected changed=true)
