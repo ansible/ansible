@@ -24,6 +24,8 @@ description:
    - "The raw data is provided by the M(acme_certificate) module, and needs to be
       converted to a certificate to be used for challenge validation. This module
       provides a simple way to generate the required certificates."
+   - "The C(tls-alpn-01) implementation is based on
+      L(the draft-05 version of the specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05)."
 requirements:
    - "cryptography >= 1.3"
 options:
@@ -247,7 +249,7 @@ def main():
                 critical=False,
             ).add_extension(
                 cryptography.x509.UnrecognizedExtension(
-                    cryptography.x509.ObjectIdentifier("1.3.6.1.5.5.7.1.30.1"),
+                    cryptography.x509.ObjectIdentifier("1.3.6.1.5.5.7.1.31"),
                     encode_octet_string(value),
                 ),
                 critical=True,
