@@ -33,7 +33,7 @@ class ActionModule(ActionBase):
     DEFAULT_PRE_REBOOT_DELAY = 0
     DEFAULT_POST_REBOOT_DELAY = 0
     DEFAULT_TEST_COMMAND = 'whoami'
-    DEFAULT_UPTIME_COMMAND = 'uptime'
+    DEFAULT_UPTIME_COMMAND = 'who -b'
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible'
     DEFAULT_SHUTDOWN_COMMAND = 'shutdown'
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '-r %d "%s"'
