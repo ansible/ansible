@@ -222,7 +222,7 @@ files:
   $modules/cloud/dimensiondata/dimensiondata_network.py: aimonb tintoy
   $modules/cloud/docker/docker_container.py:
     ignored: ThomasSteinbach
-    maintainers: $team_ansible cove dusdanig kassiansun softzilla zfil
+    maintainers: $team_ansible cove dusdanig felixfontein kassiansun softzilla zfil
   $modules/cloud/docker/docker_image.py: $team_ansible softzilla
   $modules/cloud/docker/docker_image_facts.py: $team_ansible
   $modules/cloud/docker/docker_login.py: olsaki
