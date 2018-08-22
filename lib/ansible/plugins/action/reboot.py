@@ -36,8 +36,21 @@ class ActionModule(ActionBase):
     DEFAULT_UPTIME_COMMAND = 'who -b'
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible'
     DEFAULT_SHUTDOWN_COMMAND = 'shutdown'
-    DEFAULT_SHUTDOWN_COMMAND_ARGS = '-r %d "%s"'
     DEFAULT_SUDOABLE = True
+
+    SHUTDOWN_COMMANDS = {
+        'linux': DEFAULT_SHUTDOWN_COMMAND,
+        'freebsd': DEFAULT_SHUTDOWN_COMMAND,
+        'sunos': '/usr/sbin/shutdown',
+        'darwin': '/sbin/shutdown',
+    }
+
+    SHUTDOWN_COMMAND_ARGS = {
+        'linux': '-r {delay_min} "{message}"',
+        'freebsd': '-r +{delay_sec}s "{message}"',
+        'sunos': '-y -g {delay_sec} -r "{message}"',
+        'darwin': '-r +{delay_min_macos} "{message}"'
+    }
 
     def deprecated_args(self):
         deprecated_args = self._task.args.get('DEFAULT_DEPRECATED_ARGS')
@@ -50,10 +63,27 @@ class ActionModule(ActionBase):
     def construct_command(self):
         self.deprecated_args()
 
-        shutdown_command = str(self.DEFAULT_SHUTDOWN_COMMAND)
+        # Determine the system distribution in order to use the correct shutdown command arguments
+        uname_result = self._low_level_execute_command('uname')
+        distribution = uname_result['stdout'].strip().lower()
+
+        shutdown_command = self.SHUTDOWN_COMMANDS.get(distribution, self.SHUTDOWN_COMMAND_ARGS['linux'])
+        shutdown_command_args = self.SHUTDOWN_COMMAND_ARGS.get(distribution, self.SHUTDOWN_COMMAND_ARGS['linux'])
+
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self.DEFAULT_PRE_REBOOT_DELAY))
-        msg = str(self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE))
-        shutdown_command_args = str(self.DEFAULT_SHUTDOWN_COMMAND_ARGS % (pre_reboot_delay, msg))
+        if pre_reboot_delay < 0:
+            pre_reboot_delay = 0
+
+        # Convert seconds to minutes for Linux. If less that 60, set it to 0 except for macOS which will
+        # severe the connection too quickly if set to 0, so set that to 1.
+        # We could simplify this by setting them both to 1, but I think of all the time that
+        # people will lose waiting for that extra 1 minute delay and want to give them their
+        # lives back.
+        delay_min = pre_reboot_delay // 60
+        delay_min_macos = pre_reboot_delay // 60 | 1
+        msg = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
+
+        shutdown_command_args = shutdown_command_args.format(delay_sec=pre_reboot_delay, delay_min=delay_min, delay_min_macos=delay_min_macos, message=msg)
 
         reboot_command = '%s %s' % (shutdown_command, shutdown_command_args)
         return reboot_command
@@ -85,7 +115,9 @@ class ActionModule(ActionBase):
         except Exception as e:
             raise e
 
-        if current_uptime == before_uptime:
+        # FreeBSD returns an empty string immediately before reboot so adding a length
+        # check to prevent prematurely assuming system has rebooted
+        if len(current_uptime) == 0 or current_uptime == before_uptime:
             raise Exception("uptime has not changed")
 
     def run_test_command(self, **kwargs):
