@@ -115,7 +115,7 @@ regular_certificate:
 
 from ansible.module_utils.acme import (
     ModuleFailException,
-    # read_file,    -- TODO: WILL BE IN module_utils IN cryptography BRANCH!
+    read_file,
 )
 
 from ansible.module_utils.basic import AnsibleModule
@@ -141,15 +141,6 @@ try:
     _cryptography_backend = cryptography.hazmat.backends.default_backend()
 except ImportError as e:
     HAS_CRYPTOGRAPHY = False
-
-
-# TODO: WILL BE IN module_utils IN cryptography BRANCH!
-def read_file(fn, mode='b'):
-    try:
-        with open(fn, 'r' + mode) as f:
-            return f.read()
-    except Exception as e:
-        raise ModuleFailException('Error while reading file "{0}": {1}'.format(fn, e))
 
 
 # Convert byte string to ASN1 encoded octet string
