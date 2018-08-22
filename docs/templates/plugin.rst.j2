@@ -34,15 +34,19 @@
  #
  --------------------------------------------#}
 {% if deprecated is defined -%}
-
-
+{% if deprecated.get('removed') %}
+REMOVED
+-------
+.. danger::
+{% else %}
 DEPRECATED
 ----------
-{# use unknown here? skip the fields? #}
+.. attention::
+{% endif %}
+   {# use unknown here? skip the fields? #}
 :Removed in Ansible: version: @{ deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@
 :Why: @{ deprecated['why'] | default('') | convert_symbols_to_format }@
 :Alternative: @{ deprecated['alternative'] | default('')|  convert_symbols_to_format }@
-
 
 {% endif %}
 
