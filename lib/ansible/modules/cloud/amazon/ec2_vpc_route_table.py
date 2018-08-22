@@ -32,8 +32,8 @@ author:
 options:
   lookup:
     description: Look up route table by either tags or by route table ID. Non-unique tag lookup will fail.
-      If no tags are specified then no lookup for an existing route table is performed and a new
-      route table will be created. To change tags of a route table you must look up by id.
+      If tags or route_table_id are not specified, then a new route table will be created.
+      To change tags of a route you can set route_table_id, lookup on id is deprecated.
     default: tag
     choices: [ 'tag', 'id' ]
   propagating_vgw_ids:
@@ -53,7 +53,7 @@ options:
     type: bool
     default: 'no'
   route_table_id:
-    description: The ID of the route table to update or delete.
+    description: The ID of the route table to update or delete. On presence, lookup is set automatically to id.
   routes:
     description: List of routes in the route table.
         Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
@@ -119,7 +119,6 @@ EXAMPLES = '''
     vpc_id: vpc-1245678
     region: us-west-1
     route_table_id: "{{ route_table.id }}"
-    lookup: id
     state: absent
 '''
 
@@ -729,6 +728,10 @@ def main():
                                            ['lookup', 'tag', ['vpc_id']],
                                            ['state', 'present', ['vpc_id']]],
                               supports_check_mode=True)
+
+    # lookup is set on id when route_table_id is found
+    if module.params.get('route_table_id'):
+        module.params['lookup'] = 'id'
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 

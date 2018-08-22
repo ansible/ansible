@@ -568,6 +568,113 @@
       that:
         - not redestroy_table.changed
 
+  - name: CHECK MODE - create route table for tests with no lookup argument
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert the route table for the lookup tests would be created
+    assert:
+      that:
+        - check_mode_results.changed
+
+  - name: create route table for the lookup tests
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      <<: *aws_connection_info
+    register: create_lookup_table
+
+  - name: assert the route table for the lookup tests would be created
+    assert:
+      that:
+        - create_lookup_table.changed
+
+  - name: CHECK MODE - check route_table_id is the reference when lookup param is absent
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      route_table_id: "{{ create_lookup_table.route_table.route_table_id }}"
+      routes:
+      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert route_table_id is the reference when lookup param is asbent
+    assert:
+      that:
+        - not check_mode_results.changed
+
+  - name: ensure route_table_id is the reference when lookup is absent
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      route_table_id: "{{ create_lookup_table.route_table.route_table_id }}"
+      routes:
+      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      <<: *aws_connection_info
+    register: check_lookup_results
+
+  - name: assert route_table_id is the reference when lookup is absent
+    assert:
+      that:
+        - check_lookup_results.route_table.route_table_id == create_lookup_table.route_table.route_table_id
+        - not check_lookup_results.changed
+
+
+  - name: add a tag based on route_table_id and no lookup param
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      route_table_id: "{{ create_lookup_table.route_table.route_table_id }}"
+      tags:
+         Name: "Lookup test table"
+      routes:
+      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      <<: *aws_connection_info
+    register: add_tag_to_rtb_id
+
+  - name: assert adding tag based on route_table_id and no lookup param edit existing lookup table
+    assert:
+      that:
+        - add_tag_to_rtb_id.route_table.route_table_id == create_lookup_table.route_table.route_table_id
+        - add_tag_to_rtb_id.route_table.tags.Name == "Lookup test table"
+
+  - name: CHECK MODE - destroy lookup route table by route_table_id
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      route_table_id: "{{ create_lookup_table.route_table.route_table_id }}"
+      state: absent
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert lookup route table would be deleted
+    assert:
+      that:
+        check_mode_results.changed
+
+  - name: destroy lookup route table by route_table_id
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      route_table_id: "{{ create_lookup_table.route_table.route_table_id }}"
+      state: absent
+      <<: *aws_connection_info
+    register: destroy_lookup_table
+
+  - name: assert destroy lookup route table worked
+    assert:
+      that:
+        - destroy_lookup_table.changed
+
   - name: destroy NAT GW
     ec2_vpc_nat_gateway:
       state: absent
