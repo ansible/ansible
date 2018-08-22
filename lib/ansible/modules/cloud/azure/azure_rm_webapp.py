@@ -995,7 +995,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             return response
         except CloudError as ex:
-            request_id = ex.request_id if ex_request_id else ''
+            request_id = ex.request_id if ex.request_id else ''
             self.log("Failed to {0} web app {1} in resource group {2}, request_id {3} - {4}".format(
                 action, self.name, self.resource_group, request_id, str(ex)))
 
