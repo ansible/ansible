@@ -1,0 +1,2 @@
+removed_features:
+- s3 - deprecated module removed (https://github.com/ansible/ansible/pull/44537)
