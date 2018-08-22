@@ -99,7 +99,7 @@ class ElementSWClusterPair(object):
                        default='present'),
             dest_mvip=dict(required=True, type='str'),
             dest_username=dict(required=False, type='str'),
-            dest_password=dict(required=False, type='str')
+            dest_password=dict(required=False, type='str', no_log=True)
         ))
 
         self.module = AnsibleModule(
