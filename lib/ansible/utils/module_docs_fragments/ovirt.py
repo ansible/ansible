@@ -27,7 +27,7 @@ options:
     wait:
         description:
             - "I(True) if the module should wait for the entity to get into desired state."
-        default: true
+        default: True
         type: bool
     fetch_nested:
         description:
