@@ -95,7 +95,7 @@ def main():
         storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
         templates_service = storage_domain_service.templates_service()
 
-        # Find the the unregistered Template we want to register:
+        # Find the unregistered Template we want to register:
         if module.params.get('unregistered'):
             templates = templates_service.list(unregistered=True)
         else:

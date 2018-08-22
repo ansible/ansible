@@ -377,7 +377,7 @@ class WapiModule(WapiBase):
         and/or keys filtered before it is sent to the API endpoint to
         be processed.
         :args proposed_object: A dict item that will be encoded and sent
-            the the API endpoint with the updated data structure
+            the API endpoint with the updated data structure
         :returns: updated object to be sent to API endpoint
         '''
         keys = set()

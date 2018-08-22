@@ -94,7 +94,7 @@ def main():
         storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
         vms_service = storage_domain_service.vms_service()
 
-        # Find the the unregistered VM we want to register:
+        # Find the unregistered VM we want to register:
         if module.params.get('unregistered'):
             vms = vms_service.list(unregistered=True)
         else:

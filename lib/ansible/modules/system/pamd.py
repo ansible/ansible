@@ -262,7 +262,7 @@ dest:
     sample: "/etc/pam.d/system-auth"
 backupdest:
     description:
-    - "The file name of the the backup file, if created."
+    - "The file name of the backup file, if created."
     returned: success
     type: string
     version_added: 2.6

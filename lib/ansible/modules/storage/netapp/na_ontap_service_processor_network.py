@@ -39,7 +39,7 @@ options:
     type: bool
   node:
     description:
-    - The node where the the service processor network should be enabled
+    - The node where the service processor network should be enabled
     required: true
   dhcp:
     description:
