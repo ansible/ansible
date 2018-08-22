@@ -857,6 +857,22 @@ EXAMPLES = '''
       protocol:
         - spice
         - vnc
+<<<<<<< HEAD:lib/ansible/modules/cloud/ovirt/ovirt_vm.py
+=======
+
+# Default value of host_device state is present
+- name: Attach host devices to virtual machine
+  ovirt_vm:
+    name: myvm
+    host: myhost
+    placement_policy: pinned
+    host_devices:
+      - name: pci_0000_00_06_0
+      - name: pci_0000_00_07_0
+        state: absent
+      - name: pci_0000_00_08_0
+        state: present
+>>>>>>> pep8 syntax correct:lib/ansible/modules/cloud/ovirt/ovirt_vms.py
 
 <<<<<<< HEAD:lib/ansible/modules/cloud/ovirt/ovirt_vm.py
 # Execute remote viever to VM
