@@ -64,7 +64,7 @@ done
 | grep -E -o 'RUNNING HANDLER \[test_handlers_include_role : .*]')" = "RUNNING HANDLER [test_handlers_include_role : test handler]" ]
 
 # ensures handlers fire equally for both hosts on free strategy
-[ "$(ansible-playbook free_strategy.yml -i ../../inventory -v "$@" | grep testhost| grep -v testhost2 |wc -l)" = "9" ]
+[ "$(ansible-playbook free_strategy.yml -i ../../inventory -v "$@" | grep testhost| grep -c -v testhost2)" = "9" ]
 [ "$(ansible-playbook free_strategy.yml -i ../../inventory -v "$@" | grep -c testhost2)" = "9" ]
 
 # Notify handler listen
