@@ -1,0 +1,15 @@
+---
+- name: ensure chocolatey is installed
+  win_chocolatey:
+    name: chocolatey
+    state: present
+
+- name: ensure firefox is installed
+  win_chocolatey:
+    name: firefox
+    state: present
+    version: 61.0.2.0
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml

@@ -1,0 +1,69 @@
+---
+# tasks file for test.win_chocolatey_pin
+
+- name: pin firefox (check mode)
+  win_chocolatey_pin:
+    name: firefox
+  register: register_pin_firefox
+  check_mode: true
+
+- name: assert pin firefox (check mode)
+  assert:
+    that:
+    - register_pin_firefox is changed
+ 
+- name: pin firefox
+  win_chocolatey_pin:
+    name: firefox
+  register: register_pin_firefox
+
+- name: assert pin firefox 
+  assert:
+    that:
+    - register_pin_firefox is changed
+
+- name: failed invalid packges (check mode)
+  win_chocolatey_pin:
+    name: fake
+  register: register_failed_invalid_packges
+  check_mode: true
+
+- name: assert failed invalid Packges (check mode)
+  assert:
+    that:
+    - register_failed_invalid_packges is changed
+
+- name: failed invalid packges
+  win_chocolatey_pin:
+    name: fake
+  register: register_failed_invalid_packges
+  ignore_errors: true
+
+- name: assert failed invalid Packges
+  assert:
+    that:
+    - register_failed_invalid_packges is changed
+  ignore_errors: true
+
+- name: remove Pin firefox (check mode)
+  win_chocolatey_pin:
+    name: firefox
+    state: remove
+  register: register_remove_pin_firefox
+  check_mode: true
+
+- name: assert pin firefox (check mode)
+  assert:
+    that:
+    - register_remove_pin_firefox is changed
+
+- name: remove pin firefox
+  win_chocolatey_pin:
+    name: firefox
+    state: remove
+  register: register_remove_pin_firefox
+
+- name: assert pin firefox
+  assert:
+    that:
+    - register_remove_pin_firefox is changed
