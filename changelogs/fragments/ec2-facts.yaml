@@ -1,0 +1,2 @@
+removed_features:
+- ec2_facts - deprecated module removed (https://github.com/ansible/ansible/pull/44536)
