@@ -169,7 +169,7 @@ EXAMPLES = """
     user_accessoutbound: 0
     user_portaccess: "10011111"
     user_plugaccess: "00000111"
-    user_groupaccess:"00000000"
+    user_groupaccess: "00000000"
 
 # Edit User
 - name: Edit a User on a given WTI device
@@ -220,8 +220,7 @@ def assemble_json(cpmmodule):
     if cpmmodule.params["user_pass"] is not None and (len(cpmmodule.params["user_pass"]) > 0):
         json_load = json_load + ',"newpasswd": "' + cpmmodule.params["user_pass"] + '"'
     if cpmmodule.params["user_accesslevel"] is not None:
-        if 0 <= cpmmodule.params["user_accesslevel"] <= 3:
-            json_load = json_load + ',"accesslevel": ' + str(cpmmodule.params["user_accesslevel"]) + ''
+        json_load = json_load + ',"accesslevel": ' + str(cpmmodule.params["user_accesslevel"]) + ''
     if cpmmodule.params["user_portaccess"] is not None:
         json_load = json_load + ',"portaccess": ' + cpmmodule.params["user_portaccess"] + ''
     if cpmmodule.params["user_plugaccess"] is not None:
@@ -251,7 +250,6 @@ def assemble_json(cpmmodule):
 def run_module():
 
     module_args = dict(
-        name=dict(type='str', required=False),
         cpm_action=dict(choices=['getuser', 'adduser', 'edituser', 'deleteuser'], required=True),
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
