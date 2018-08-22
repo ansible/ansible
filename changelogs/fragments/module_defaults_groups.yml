@@ -1,0 +1,2 @@
+minor_changes:
+  - Extends `module_defaults` by adding a prefix to defaults `group/` which denotes a builtin or user-specified list of modules, such as `group/aws` or `group/gcp`
