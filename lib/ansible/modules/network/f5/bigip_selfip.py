@@ -74,11 +74,7 @@ options:
         other resources on a BIG-IP are.
     default: Common
     version_added: 2.5
-notes:
-  - Requires the netaddr Python package on the host.
 extends_documentation_fragment: f5
-requirements:
-  - netaddr
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -229,6 +225,11 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
+    from library.module_utils.compat.ipaddress import ip_address
+    from library.module_utils.compat.ipaddress import ip_network
+    from library.module_utils.compat.ipaddress import ip_interface
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -241,16 +242,15 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
+    from ansible.module_utils.compat.ipaddress import ip_address
+    from ansible.module_utils.compat.ipaddress import ip_network
+    from ansible.module_utils.compat.ipaddress import ip_interface
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -297,10 +297,9 @@ class ModuleParameters(Parameters):
     def ip(self):
         if self._values['address'] is None:
             return None
-        try:
-            ip = str(netaddr.IPAddress(self._values['address']))
-            return ip
-        except netaddr.AddrFormatError:
+        if is_valid_ip(self._values['address']):
+            return self._values['address']
+        else:
             raise F5ModuleError(
                 'The provided address is not a valid IP address'
             )
@@ -322,30 +321,23 @@ class ModuleParameters(Parameters):
     def netmask(self):
         if self._values['netmask'] is None:
             return None
-
-        # Check if numeric
-        if isinstance(self._values['netmask'], int):
+        result = -1
+        try:
             result = int(self._values['netmask'])
             if 0 < result < 256:
-                return result
+                pass
+        except ValueError:
+            if is_valid_ip(self._values['netmask']):
+                addr = ip_address(u'{0}'.format(str(self._values['netmask'])))
+                if addr.version == 4:
+                    ip = ip_network(u'0.0.0.0/%s' % str(self._values['netmask']))
+                    result = ip.prefixlen
+                else:
+                    result = ipv6_netmask_to_cidr(self._values['netmask'])
+        if result < 0:
             raise F5ModuleError(
                 'The provided netmask {0} is neither in IP or CIDR format'.format(result)
             )
-        else:
-            try:
-                # IPv4 netmask
-                address = '0.0.0.0/' + self._values['netmask']
-                ip = netaddr.IPNetwork(address)
-            except netaddr.AddrFormatError as ex:
-                try:
-                    # IPv6 netmask
-                    address = '::/' + self._values['netmask']
-                    ip = netaddr.IPNetwork(address)
-                except netaddr.AddrFormatError as ex:
-                    raise F5ModuleError(
-                        'The provided netmask {0} is neither in IP or CIDR format'.format(self._values['netmask'])
-                    )
-            result = int(ip.prefixlen)
         return result
 
     @property
@@ -424,26 +416,109 @@ class ApiParameters(Parameters):
         try:
             pattern = r'(?P<rd>%[0-9]+)'
             addr = re.sub(pattern, '', self._values['address'])
-            ip = netaddr.IPNetwork(addr)
-            return '{0}/{1}'.format(ip.ip, ip.prefixlen)
-        except netaddr.AddrFormatError:
+            ip = ip_interface(u'{0}'.format(addr))
+            return ip.with_prefixlen
+        except ValueError:
             raise F5ModuleError(
                 "The provided destination is not an IP address"
             )
 
     @property
     def netmask(self):
-        ip = netaddr.IPNetwork(self.destination_ip)
-        return int(ip.prefixlen)
+        ip = ip_interface(self.destination_ip)
+        return int(ip.network.prefixlen)
 
     @property
     def ip(self):
-        result = netaddr.IPNetwork(self.destination_ip)
+        result = ip_interface(self.destination_ip)
         return str(result.ip)
 
 
 class Changes(Parameters):
     pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def address(self):
+        return None
+
+    @property
+    def allow_service(self):
+        """Returns services formatted for consumption by f5-sdk update
+
+        The BIG-IP endpoint for services takes different values depending on
+        what you want the "allowed services" to be. It can be any of the
+        following
+
+            - a list containing "protocol:port" values
+            - the string "all"
+            - a null value, or None
+
+        This is a convenience function to massage the values the user has
+        supplied so that they are formatted in such a way that BIG-IP will
+        accept them and apply the specified policy.
+        """
+        if self.want.allow_service is None:
+            return None
+        result = self.want.allow_service
+        if result[0] == 'none' and self.have.allow_service is None:
+            return None
+        elif self.have.allow_service is None:
+            return result
+        elif result[0] == 'all' and self.have.allow_service[0] != 'all':
+            return ['all']
+        elif result[0] == 'none':
+            return []
+        elif set(self.want.allow_service) != set(self.have.allow_service):
+            return result
+
+    @property
+    def netmask(self):
+        if self.want.netmask is None:
+            return None
+        ip = self.have.ip
+        if is_valid_ip(ip):
+            if self.want.route_domain is not None:
+                want = "{0}%{1}/{2}".format(ip, self.want.route_domain, self.want.netmask)
+                have = "{0}%{1}/{2}".format(ip, self.want.route_domain, self.have.netmask)
+            elif self.have.route_domain is not None:
+                want = "{0}%{1}/{2}".format(ip, self.have.route_domain, self.want.netmask)
+                have = "{0}%{1}/{2}".format(ip, self.have.route_domain, self.have.netmask)
+            else:
+                want = "{0}/{1}".format(ip, self.want.netmask)
+                have = "{0}/{1}".format(ip, self.have.netmask)
+            if want != have:
+                return want
+        else:
+            raise F5ModuleError(
+                'The provided address/netmask value "{0}" was invalid'.format(self.have.ip)
+            )
+
+    @property
+    def traffic_group(self):
+        if self.want.traffic_group != self.have.traffic_group:
+            return self.want.traffic_group
 
 
 class UsableChanges(Changes):
@@ -557,6 +632,10 @@ class ModuleManager(object):
         )
         resource.modify(**params)
 
+    def read_partition_default_route_domain_from_device(self):
+        resource = self.client.api.tm.auth.partitions.partition.load(name=self.want.partition)
+        return int(resource.defaultRouteDomain)
+
     def create(self):
         if self.want.address is None or self.want.netmask is None:
             raise F5ModuleError(
@@ -566,6 +645,10 @@ class ModuleManager(object):
             raise F5ModuleError(
                 'A VLAN name must be specified'
             )
+        if self.want.route_domain is None:
+            rd = self.read_partition_default_route_domain_from_device()
+            self.want.update({'route_domain': rd})
+
         if self.want.traffic_group is None:
             self.want.update({'traffic_group': '/Common/traffic-group-local-only'})
         if self.want.route_domain is None:
@@ -617,89 +700,6 @@ class ModuleManager(object):
         return result
 
 
-class Difference(object):
-    def __init__(self, want, have=None):
-        self.want = want
-        self.have = have
-
-    def compare(self, param):
-        try:
-            result = getattr(self, param)
-            return result
-        except AttributeError:
-            return self.__default(param)
-
-    def __default(self, param):
-        attr1 = getattr(self.want, param)
-        try:
-            attr2 = getattr(self.have, param)
-            if attr1 != attr2:
-                return attr1
-        except AttributeError:
-            return attr1
-
-    @property
-    def address(self):
-        pass
-
-    @property
-    def allow_service(self):
-        """Returns services formatted for consumption by f5-sdk update
-
-        The BIG-IP endpoint for services takes different values depending on
-        what you want the "allowed services" to be. It can be any of the
-        following
-
-            - a list containing "protocol:port" values
-            - the string "all"
-            - a null value, or None
-
-        This is a convenience function to massage the values the user has
-        supplied so that they are formatted in such a way that BIG-IP will
-        accept them and apply the specified policy.
-        """
-        if self.want.allow_service is None:
-            return None
-        result = self.want.allow_service
-        if result[0] == 'none' and self.have.allow_service is None:
-            return None
-        elif result[0] == 'all' and self.have.allow_service[0] != 'all':
-            return ['all']
-        elif result[0] == 'none':
-            return []
-        elif self.have.allow_service is None:
-            return result
-        elif set(self.want.allow_service) != set(self.have.allow_service):
-            return result
-
-    @property
-    def netmask(self):
-        if self.want.netmask is None:
-            return None
-        try:
-            address = netaddr.IPNetwork(self.have.ip)
-            if self.want.route_domain is not None:
-                nipnet = "{0}%{1}/{2}".format(address.ip, self.want.route_domain, self.want.netmask)
-                cipnet = "{0}%{1}/{2}".format(address.ip, self.want.route_domain, self.have.netmask)
-            elif self.have.route_domain is not None:
-                nipnet = "{0}%{1}/{2}".format(address.ip, self.have.route_domain, self.want.netmask)
-                cipnet = "{0}%{1}/{2}".format(address.ip, self.have.route_domain, self.have.netmask)
-            else:
-                nipnet = "{0}/{1}".format(address.ip, self.want.netmask)
-                cipnet = "{0}/{1}".format(address.ip, self.have.netmask)
-            if nipnet != cipnet:
-                return nipnet
-        except netaddr.AddrFormatError:
-            raise F5ModuleError(
-                'The provided address/netmask value "{0}" was invalid'.format(self.have.ip)
-            )
-
-    @property
-    def traffic_group(self):
-        if self.want.traffic_group != self.have.traffic_group:
-            return self.want.traffic_group
-
-
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
@@ -734,8 +734,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)
