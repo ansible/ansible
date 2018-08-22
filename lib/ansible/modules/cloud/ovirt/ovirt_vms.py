@@ -876,7 +876,7 @@ EXAMPLES = '''
       protocol:
         - spice
         - vnc
-        
+
 # Default value of host_device state is present
 - name: Attach host devices to virtual machine
   ovirt_vm:
