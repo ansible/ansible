@@ -27,6 +27,10 @@ class TestOnyxL3InterfaceModule(TestOnyxModule):
             'ansible.module_utils.network.onyx.onyx.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_version = patch.object(
+            onyx_l3_interface.OnyxL3InterfaceModule, "_get_os_version")
+        self.get_version = self.mock_get_version.start()
+
     def tearDown(self):
         super(TestOnyxL3InterfaceModule, self).tearDown()
         self.mock_get_config.stop()
