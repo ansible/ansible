@@ -164,6 +164,11 @@ def run_module():
         required_together=[['client_cert', 'client_key'], ['user', 'password']],
     )
 
+    # It is possible to set `ca_cert` to verify the server identity without
+    # setting `client_cert` or `client_key` to authenticate the client
+    # so required_together is enough
+    # Due to `required_together=[['client_cert', 'client_key']]`, checking the presence
+    # of either `client_cert` or `client_key` is enough
     if module.params['ca_cert'] is None and module.params['client_cert'] is not None:
         module.fail_json(msg="The 'ca_cert' parameter must be defined when 'client_cert' and 'key_cert' are present.")
 
