@@ -51,6 +51,14 @@ DOCUMENTATION = """
         type: bool
         default: 'no'
         version_added: 2.7
+      chars:
+        description:
+           - Define comma separated list of names that compose a custom character set in the generated passwords.
+           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
+           - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
+           - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
+        type: string
+        version_added: 2.7
 """
 EXAMPLES = """
 # Debug is used for examples, BAD IDEA to show passwords on screen
@@ -79,6 +87,10 @@ EXAMPLES = """
 - name: Return the entire password file content
   set_fact:
     passfilecontent: "{{ lookup('passwordstore', 'example/test returnall=true')}}"
+
+- name: Create a password with only alphanumeric characters
+  debug:
+    msg: "{{ lookup('passwordstore', 'example/test chars=ascii_letters,digits') }}"
 """
 
 RETURN = """
@@ -90,6 +102,7 @@ _raw:
 import os
 import subprocess
 import time
+import string
 
 from distutils import util
 from ansible.errors import AnsibleError, AnsibleAssertionError
@@ -97,6 +110,37 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.encrypt import random_password
 from ansible.plugins.lookup import LookupBase
 
+def _gen_candidate_chars(characters):
+    '''Generate a string containing all valid chars as defined by ``characters``
+
+    :arg characters: A list of character specs. The character specs are
+        shorthand names for sets of characters like 'digits', 'ascii_letters',
+        or 'punctuation' or a string to be included verbatim.
+
+    The values of each char spec can be:
+
+    * a name of an attribute in the 'strings' module ('digits' for example).
+      The value of the attribute will be added to the candidate chars.
+    * a string of characters. If the string isn't an attribute in 'string'
+      module, the string will be directly added to the candidate chars.
+
+    For example::
+
+        characters=['digits', '?|']``
+
+    will match ``string.digits`` and add all ascii digits.  ``'?|'`` will add
+    the question mark and pipe characters directly. Return will be the string::
+
+        u'0123456789?|'
+    '''
+    chars = []
+    for chars_spec in characters:
+        # getattr from string expands things like "ascii_letters" and "digits"
+        # into a set of characters.
+        chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
+                     errors='strict'))
+    chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
+    return chars
 
 # backhacked check_output with input for python 2.7
 # http://stackoverflow.com/questions/10103551/passing-data-to-subprocess-check-output
@@ -165,6 +209,12 @@ class LookupModule(LookupBase):
                     self.paramvals['length'] = int(self.paramvals['length'])
                 else:
                     raise AnsibleError("{0} is not a correct value for length".format(self.paramvals['length']))
+            if self.paramvals['chars']:
+                tmp_chars = []
+                if u',,' in self.paramvals['chars']:
+                    tmp_chars.append(u',')
+                tmp_chars.extend(c for c in self.paramvals['chars'].replace(u',,', u',').split(u',') if c)
+                self.paramvals['chars'] = tmp_chars
 
             # Set PASSWORD_STORE_DIR if directory is set
             if self.paramvals['directory']:
@@ -201,7 +251,8 @@ class LookupModule(LookupBase):
         if self.paramvals['userpass']:
             newpass = self.paramvals['userpass']
         else:
-            newpass = random_password(length=self.paramvals['length'])
+            chars = _gen_candidate_chars(self.paramvals['chars'])
+            newpass = random_password(length=self.paramvals['length'], chars=chars)
         return newpass
 
     def update_password(self):
@@ -253,6 +304,7 @@ class LookupModule(LookupBase):
             'userpass': '',
             'length': 16,
             'backup': False,
+            'chars': 'ascii_letters,digits,.,:,-,_,,',
         }
 
         for term in terms:
