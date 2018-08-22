@@ -166,6 +166,7 @@ options:
             - start
             - stop
             - restart
+        default: start
 
     state:
       description:
@@ -721,7 +722,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         if webapp:
             if (webapp['state'] != 'Stopped' and self.power_action == 'stop') or \
                (webapp['state'] != 'Running' and self.power_action == 'start') or \
-                self.power_action == 'restart':
+               self.power_action == 'restart':
 
                 if self.check_mode:
                     self.results['changed'] = True
