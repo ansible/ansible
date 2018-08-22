@@ -1,0 +1,158 @@
+- name: Delete route table, if it exists
+  azure_rm_routetable:
+    name: my_test_route_table
+    resource_group: "{{ resource_group }}"
+    state: absent
+
+- name: Create route table with routes
+  azure_rm_routetable:
+    name: my_test_route_table
+    routes:
+      - 
+        name: my_test_route_entry
+        address_prefix: "10.0.0.0/16"
+        next_hop_type: "VirtualAppliance"
+        next_hop_ip_address: "1.2.3.4"
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - "output.state.routes | length == 1"
+      - "output.state.tags.delete == 'on-exit'"
+      - "output.state.tags | length == 2"
+
+- name: Should be idempotent
+  azure_rm_routetable:
+    name: my_test_route_table
+    routes:
+      - 
+        name: my_test_route_entry
+        address_prefix: "10.0.0.0/16"
+        next_hop_type: "VirtualAppliance"
+        next_hop_ip_address: "1.2.3.4"
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: output
+- assert:
+    that: not output.changed
+
+- name: Fail with existing name but new route entry
+  azure_rm_routetable:
+    name: my_test_route_table
+    routes:
+      - 
+        name: my_test_route_entry
+        address_prefix: "10.100.0.0/16"
+        next_hop_type: "VirtualAppliance"
+        next_hop_ip_address: "1.2.3.4"
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  ignore_errors: yes
+  register: output
+
+- assert:
+      that: output.failed
+
+- name: Update with new route but with no purge
+  azure_rm_routetable:
+    name: my_test_route_table
+    routes:
+      - 
+        name: my_test_route_entry_2
+        address_prefix: "10.100.0.0/16"
+        next_hop_type: "VirtualAppliance"
+        next_hop_ip_address: "1.2.3.4"
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - "output.state.routes | length == 2"
+      - "output.state.tags.delete == 'on-exit'"
+      - "output.state.tags | length == 2"
+
+
+
+- name: Update tags
+  azure_rm_routetable:
+    name: my_test_route_table
+    tags:
+      testing: 'no'
+      delete: never
+      foo: bar
+    routes:
+      - 
+        name: my_test_route_entry_2
+        address_prefix: "10.100.0.0/16"
+        next_hop_type: "VirtualAppliance"
+        next_hop_ip_address: "1.2.3.4"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+     that: output.state.tags | length == 3
+
+- name: Purge tags
+  azure_rm_routetable:
+    name: my_test_route_table
+    tags:
+      testing: 'always'
+    routes:
+      - 
+        name: my_test_route_entry_2
+        address_prefix: "10.100.0.0/16"
+        next_hop_type: "VirtualAppliance"
+        next_hop_ip_address: "1.2.3.4"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+     that:
+       - output.state.tags | length == 1
+       - output.state.tags.testing == 'always'
+
+- name: Should require routes when purge_routes is set
+  azure_rm_routetable:
+    name: my_test_route_table
+    purge_routes: true
+    resource_group: "{{ resource_group }}"
+  register: output
+  ignore_errors: yes
+
+- assert:
+      that: output.failed
+
+- name: Purge routes
+  azure_rm_routetable:
+    name: my_test_route_table
+    routes:
+      - 
+        name: my_test_route_entry
+        address_prefix: "10.2.0.0/16"
+        next_hop_type: "VirtualAppliance"
+        next_hop_ip_address: "1.2.3.4"
+    purge_routes: true
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+        - output.state.routes | length == 1
+        - output.state.routes[0].address_prefix == '10.2.0.0/16'
+
+- name: Delete route table
+  azure_rm_routetable:
+    name: my_test_route_table
+    resource_group: "{{ resource_group }}"
+    state: absent
