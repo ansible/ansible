@@ -270,7 +270,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
                 response = self.get_poller_result(poller)
         except CloudError as ex:
             request_id = ex.request_id if ex.request_id else ''
-            self.fail('Error getting web app {0} publishing credentials'.format(request_id, str(ex)))
+            self.fail('Error getting web app {0} publishing credentials - {1}'.format(request_id, str(ex)))
         return response
 
     def get_curated_webapp(self, resource_group, name, webapp):
