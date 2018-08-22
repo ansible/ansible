@@ -60,9 +60,8 @@ options:
     default: 0
   attached:
     description:
-      - Specifies if network interface should be attached or detached from instance. If ommited, attachment status
+      - Specifies if network interface should be attached or detached from instance. If omitted, attachment status
         won't change
-    default: 'yes'
     version_added: 2.2
     type: bool
   force_detach:
