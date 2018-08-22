@@ -62,7 +62,7 @@ options:
 
 EXAMPLES = """
 # Get Power data
-- name: Get Power data for a given WTI device
+  - name: Get Power data for a given WTI device
   - debug:
         var: lookup('cpm_metering',
                 'getpower',
@@ -73,7 +73,7 @@ EXAMPLES = """
                 cpm_password='restfulpowerpass12')
 
 # Get Current data
-- name: Get Current data for a given WTI device
+  - name: Get Current data for a given WTI device
   - debug:
         var: lookup('cpm_metering',
                 'getcurrent',
@@ -84,7 +84,7 @@ EXAMPLES = """
                 cpm_password='restfulpowerpass12')
 
 # Get Power data for a date range
-- name: Get Power data for a given WTI device given a certain date range
+  - name: Get Power data for a given WTI device given a certain date range
   - debug:
         var: lookup('cpm_metering',
                 'getpower',
