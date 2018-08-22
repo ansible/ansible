@@ -344,55 +344,121 @@ groupings:
   - aws
   gcp_compute_address:
   - gcp
+  gcp_compute_address_facts:
+  - gcp
   gcp_compute_backend_bucket:
+  - gcp
+  gcp_compute_backend_bucket_facts:
   - gcp
   gcp_compute_backend_service:
   - gcp
+  gcp_compute_backend_service_facts:
+  - gcp
   gcp_compute_disk:
+  - gcp
+  gcp_compute_disk_facts:
   - gcp
   gcp_compute_firewall:
   - gcp
+  gcp_compute_firewall_facts:
+  - gcp
   gcp_compute_forwarding_rule:
+  - gcp
+  gcp_compute_forwarding_rule_facts:
   - gcp
   gcp_compute_global_address:
   - gcp
+  gcp_compute_global_address_facts:
+  - gcp
   gcp_compute_global_forwarding_rule:
+  - gcp
+  gcp_compute_global_forwarding_rule_facts:
   - gcp
   gcp_compute_health_check:
   - gcp
+  gcp_compute_health_check_facts:
+  - gcp
   gcp_compute_http_health_check:
+  - gcp
+  gcp_compute_http_health_check_facts:
   - gcp
   gcp_compute_https_health_check:
   - gcp
+  gcp_compute_https_health_check_facts:
+  - gcp
   gcp_compute_image:
+  - gcp
+  gcp_compute_image_facts:
   - gcp
   gcp_compute_instance:
   - gcp
+  gcp_compute_instance_facts:
+  - gcp
   gcp_compute_instance_group:
+  - gcp
+  gcp_compute_instance_group_facts:
   - gcp
   gcp_compute_instance_group_manager:
   - gcp
+  gcp_compute_instance_group_manager_facts:
+  - gcp
   gcp_compute_instance_template:
+  - gcp
+  gcp_compute_instance_template_facts:
   - gcp
   gcp_compute_network:
   - gcp
+  gcp_compute_network_facts:
+  - gcp
   gcp_compute_route:
+  - gcp
+  gcp_compute_route_facts:
+  - gcp
+  gcp_compute_router_facts:
   - gcp
   gcp_compute_ssl_certificate:
   - gcp
+  gcp_compute_ssl_certificate_facts:
+  - gcp
+  gcp_compute_ssl_policy:
+  - gcp
+  gcp_compute_ssl_policy_facts:
+  - gcp
   gcp_compute_subnetwork:
+  - gcp
+  gcp_compute_subnetwork_facts:
   - gcp
   gcp_compute_target_http_proxy:
   - gcp
+  gcp_compute_target_http_proxy_facts:
+  - gcp
   gcp_compute_target_https_proxy:
+  - gcp
+  gcp_compute_target_https_proxy_facts:
   - gcp
   gcp_compute_target_pool:
   - gcp
+  gcp_compute_target_pool_facts:
+  - gcp
   gcp_compute_target_ssl_proxy:
+  - gcp
+  gcp_compute_target_ssl_proxy_facts:
   - gcp
   gcp_compute_target_tcp_proxy:
   - gcp
+  gcp_compute_target_tcp_proxy_facts:
+  - gcp
+  gcp_compute_target_vpn_gateway:
+  - gcp
+  gcp_compute_target_vpn_gateway_facts:
+  - gcp
   gcp_compute_url_map:
+  - gcp
+  gcp_compute_url_map_facts:
+  - gcp
+  gcp_compute_vpn_tunnel:
+  - gcp
+  gcp_compute_vpn_tunnel_facts:
   - gcp
   gcp_container_cluster:
   - gcp
@@ -410,3 +476,117 @@ groupings:
   - gcp
   gcp_storage_bucket_access_control:
   - gcp
+  azure_rm_acs:
+  - azure
+  azure_rm_aks:
+  - azure
+  azure_rm_aks_facts:
+  - azure
+  azure_rm_appserviceplan:
+  - azure
+  azure_rm_appserviceplan_facts:
+  - azure
+  azure_rm_availabilityset:
+  - azure
+  azure_rm_availabilityset_facts:
+  - azure
+  azure_rm_containerinstance:
+  - azure
+  azure_rm_containerregistry:
+  - azure
+  azure_rm_deployment:
+  - azure
+  azure_rm_dnsrecordset:
+  - azure
+  azure_rm_dnsrecordset_facts:
+  - azure
+  azure_rm_dnszone:
+  - azure
+  azure_rm_dnszone_facts:
+  - azure
+  azure_rm_functionapp:
+  - azure
+  azure_rm_functionapp_facts:
+  - azure
+  azure_rm_image:
+  - azure
+  azure_rm_keyvault:
+  - azure
+  azure_rm_keyvaultkey:
+  - azure
+  azure_rm_keyvaultsecret:
+  - azure
+  azure_rm_loadbalancer:
+  - azure
+  azure_rm_loadbalancer_facts:
+  - azure
+  azure_rm_managed_disk:
+  - azure
+  azure_rm_managed_disk_facts:
+  - azure
+  azure_rm_mysqldatabase:
+  - azure
+  azure_rm_mysqldatabase_facts:
+  - azure
+  azure_rm_mysqlserver:
+  - azure
+  azure_rm_mysqlserver_facts:
+  - azure
+  azure_rm_networkinterface:
+  - azure
+  azure_rm_networkinterface_facts:
+  - azure
+  azure_rm_postgresqldatabase:
+  - azure
+  azure_rm_postgresqldatabase_facts:
+  - azure
+  azure_rm_postgresqlserver:
+  - azure
+  azure_rm_publicipaddress:
+  - azure
+  azure_rm_publicipaddress_facts:
+  - azure
+  azure_rm_resource:
+  - azure
+  azure_rm_resource_facts:
+  - azure
+  azure_rm_resourcegroup:
+  - azure
+  azure_rm_resourcegroup_facts:
+  - azure
+  azure_rm_securitygroup:
+  - azure
+  azure_rm_securitygroup_facts:
+  - azure
+  azure_rm_sqldatabase:
+  - azure
+  azure_rm_sqlserver:
+  - azure
+  azure_rm_sqlserver_facts:
+  - azure
+  azure_rm_storageaccount:
+  - azure
+  azure_rm_storageaccount_facts:
+  - azure
+  azure_rm_storageblob:
+  - azure
+  azure_rm_subnet:
+  - azure
+  azure_rm_virtualmachine:
+  - azure
+  azure_rm_virtualmachine_extension:
+  - azure
+  azure_rm_virtualmachine_facts:
+  - azure
+  azure_rm_virtualmachineimage_facts:
+  - azure
+  azure_rm_virtualmachine_scaleset:
+  - azure
+  azure_rm_virtualmachine_scaleset_facts:
+  - azure
+  azure_rm_virtualnetwork:
+  - azure
+  azure_rm_virtualnetwork_facts:
+  - azure
+  azure_rm_webapp:
+  - azure
