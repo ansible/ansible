@@ -93,8 +93,8 @@ EXAMPLES = """
                 cpm_url='rest.wti.com',
                 cpm_username='restpower',
                 cpm_password='restfulpowerpass12',
-                startdate: '08-12-2018'
-                enddate: '08-14-2018' )
+                startdate='08-12-2018'
+                enddate='08-14-2018')
 """
 
 RETURN = """
