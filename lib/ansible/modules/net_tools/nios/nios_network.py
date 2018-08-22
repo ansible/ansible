@@ -178,6 +178,19 @@ def check_ip_addr_type(ip):
         return NIOS_IPV6_NETWORK
 
 
+def check_vendor_specific_dhcp_option(module, ib_spec):
+    '''This function will check if the argument dhcp option belongs to vendor-specific and if yes then will remove
+     use_options flag which is not supported with vendor-specific dhcp options.
+    '''
+    for key, value in iteritems(ib_spec):
+        if isinstance(module.params[key], list):
+            temp_dict = module.params[key][0]
+            if 'num' in temp_dict:
+                if temp_dict['num'] in (43, 124, 125):
+                    del module.params[key][0]['use_option']
+    return ib_spec
+
+
 def main():
     ''' Main entry point for module execution
     '''
@@ -218,6 +231,9 @@ def main():
     network_type = check_ip_addr_type(obj_filter['network'])
 
     wapi = WapiModule(module)
+    # to check for vendor specific dhcp option
+    ib_spec = check_vendor_specific_dhcp_option(module, ib_spec)
+
     result = wapi.run(network_type, ib_spec)
 
     module.exit_json(**result)

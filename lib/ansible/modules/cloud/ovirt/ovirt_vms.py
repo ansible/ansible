@@ -52,7 +52,7 @@ options:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
                vnic_profile is described by the following dictionary:"
             - "C(source_network_name): The network name of the source network."
-            - "C(source_profile_name): The prfile name related to the source network."
+            - "C(source_profile_name): The profile name related to the source network."
             - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
         version_added: "2.5"
     cluster_mappings:
@@ -328,8 +328,8 @@ options:
     disks:
         description:
             - List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary.
-            - C(name) - Name of the disk. Either C(name) or C(id) is reuqired.
-            - C(id) - ID of the disk. Either C(name) or C(id) is reuqired.
+            - C(name) - Name of the disk. Either C(name) or C(id) is required.
+            - C(id) - ID of the disk. Either C(name) or C(id) is required.
             - C(interface) - Interface of the disk, either I(virtio) or I(IDE), default is I(virtio).
             - C(bootable) - I(True) if the disk should be bootable, default is non bootable.
             - C(activate) - I(True) if the disk should be activated, default is activated.
@@ -370,7 +370,7 @@ options:
             - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
     cloud_init_nics:
         description:
-            - List of dictionaries representing network interafaces to be setup by cloud init.
+            - List of dictionaries representing network interfaces to be setup by cloud init.
             - This option is used, when user needs to setup more network interfaces via cloud init.
             - If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
               are merged with C(cloud_init_nics) parameters.
@@ -498,6 +498,11 @@ options:
             - "C(user_migratable) - Allow manual migration only."
             - "If no value is passed, default value is set by oVirt/RHV engine."
         version_added: "2.5"
+    ticket:
+        description:
+            - "If I(true), in addition return I(remote_vv_file) inside I(vm) dictionary, which contains compatible
+                content for remote-viewer application. Works only C(state) is I(running)."
+        version_added: "2.7"
     cpu_pinning:
         description:
             - "CPU Pinning topology to map virtual machine CPU to host CPU."
@@ -871,7 +876,7 @@ EXAMPLES = '''
       protocol:
         - spice
         - vnc
-
+        
 # Default value of host_device state is present
 - name: Attach host devices to virtual machine
   ovirt_vm:
@@ -885,6 +890,23 @@ EXAMPLES = '''
       - name: pci_0000_00_08_0
         state: present
 
+# Execute remote viever to VM
+- block:
+  - name: Create a ticket for console for a running VM
+    ovirt_vms:
+      name: myvm
+      ticket: true
+      state: running
+    register: myvm
+
+  - name: Save ticket to file
+    copy:
+      content: "{{ myvm.vm.remote_vv_file }}"
+      dest: ~/vvfile.vv
+
+  - name: Run remote viewer with file
+    command: remote-viewer ~/vvfile.vv
+
 '''
 
 
@@ -896,7 +918,10 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vm:
     description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
-                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm.
+                  Additionally when user sent ticket=true, this module will return also remote_vv_file
+                  parameter in vm dictionary, which contains remote-viewer compatible file to open virtual
+                  machine console. Please note that this file contains sensible information."
     returned: On success if VM is found.
     type: dict
 '''
@@ -1954,6 +1979,7 @@ def main():
         cpu_mode=dict(type='str'),
         placement_policy=dict(type='str'),
         custom_compatibility_version=dict(type='str'),
+        ticket=dict(type='bool', default=None),
         cpu_pinning=dict(type='list'),
         soundcard_enabled=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
@@ -2047,6 +2073,15 @@ def main():
                         initialization is not None and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
+
+                if module.params['ticket']:
+                    vm_service = vms_service.vm_service(ret['id'])
+                    graphics_consoles_service = vm_service.graphics_consoles_service()
+                    graphics_console = graphics_consoles_service.list()[0]
+                    console_service = graphics_consoles_service.console_service(graphics_console.id)
+                    ticket = console_service.remote_viewer_connection_file()
+                    if ticket:
+                        ret['vm']['remote_vv_file'] = ticket
 
             if state == 'next_run':
                 # Apply next run configuration, if needed:

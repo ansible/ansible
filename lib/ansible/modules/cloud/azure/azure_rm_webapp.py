@@ -45,7 +45,7 @@ options:
             - C(name). Name of app service plan.
             - C(resource_group). Resource group name of app service plan.
             - C(sku). SKU of app service plan. For allowed sku, please refer to U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/).
-            - C(is_linux). Indicate is linux app service plan. type bool. default False.
+            - C(is_linux). Indicates Linux app service plan. type bool. default False.
             - C(number_of_workers). Number of workers.
 
     frameworks:
@@ -70,7 +70,7 @@ options:
                     - node
             version:
                 description:
-                    - Version of the framework. For linux web app supported value, see U(https://aka.ms/linux-stacks) for more info.
+                    - Version of the framework. For Linux web app supported value, see U(https://aka.ms/linux-stacks) for more info.
                     - net_framework supported value sample, 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5.
                     - php supported value sample, 5.5, 5.6, 7.0.
                     - python supported value sample, e.g., 5.5, 5.6, 7.0.
@@ -82,11 +82,11 @@ options:
                     - List of settings of the framework.
                 suboptions:
                     java_container:
-                        description: Name of java contaner. This is supported by specific framework C(java) only. eg. Tomcat, Jetty.
+                        description: Name of Java container. This is supported by specific framework C(java) only. e.g. Tomcat, Jetty.
                     java_container_version:
                         description:
-                            - Versoin of java container. This is supported by specific framework C(java) only.
-                            - For Tomcat, eg. 8.0, 8.5, 9.0. For Jetty, eg. 9.1, 9.3.
+                            - Version of Java container. This is supported by specific framework C(java) only.
+                            - For Tomcat, e.g. 8.0, 8.5, 9.0. For Jetty, e.g. 9.1, 9.3.
 
     container_settings:
         description: Web app container settings.
@@ -160,7 +160,7 @@ options:
     state:
       description:
         - Assert the state of the Web App.
-        - Use 'present' to create or update an Web App and 'absent' to delete it.
+        - Use 'present' to create or update a Web App and 'absent' to delete it.
       default: present
       choices:
         - absent

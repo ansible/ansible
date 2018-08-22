@@ -1385,8 +1385,8 @@ HOST_KEY_CHECKING:
   type: boolean
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
-  default: false
-  description: If 'true', invalid attributes for a task will result in errors instead of warnings
+  default: True
+  description: If 'false', invalid attributes for a task will result in warnings instead of errors
   type: boolean
   env:
     - name: ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED
@@ -1459,21 +1459,9 @@ MAX_FILE_SIZE_FOR_DIFF:
   ini:
   - {key: max_diff_size, section: defaults}
   type: int
-MERGE_MULTIPLE_CLI_TAGS:
-  name: Merge 'tags' options
-  default: True
-  description:
-    - "This allows changing how multiple --tags and --skip-tags arguments are handled on the command line.
-      In Ansible up to and including 2.3, specifying --tags more than once will only take the last value of --tags."
-    - "Setting this config value to True will mean that all of the --tags options will be merged together. The same holds true for --skip-tags."
-  env: [{name: ANSIBLE_MERGE_MULTIPLE_CLI_TAGS}]
-  ini:
-    - {key: merge_multiple_cli_tags, section: defaults}
-  type: bool
-  version_added: "2.3"
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
   description: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:

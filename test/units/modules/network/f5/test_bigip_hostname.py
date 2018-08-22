@@ -78,7 +78,7 @@ class TestManager(unittest.TestCase):
     def test_update_hostname(self, *args):
         set_module_args(dict(
             hostname='foo2.internal.com',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

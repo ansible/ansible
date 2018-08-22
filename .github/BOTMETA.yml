@@ -330,6 +330,7 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: Spredzy
+  $modules/crypto/acme/: resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/misc/elasticsearch_plugin.py: ThePixelDeveloper
   $modules/database/misc/kibana_plugin.py: barryib
@@ -429,7 +430,7 @@ files:
   $modules/net_tools/basics/get_url.py: jpmens ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py: $team_ansible
-  $modules/net_tools/cloudflare_dns.py: mgruener andreaso
+  $modules/net_tools/cloudflare_dns.py: andreaso
   $modules/net_tools/dnsimple.py: drcapulet
   $modules/net_tools/dnsmadeeasy.py: briceburg
   $modules/net_tools/exoscale/: resmo
@@ -551,7 +552,7 @@ files:
   $modules/packaging/os/apt_key.py: jvantuyl
   $modules/packaging/os/apt_repository.py: $team_ansible sashka
   $modules/packaging/os/apt_rpm.py: evgkrsk
-  $modules/packaging/os/dnf.py: DJMuggs berenddeschouwer ignatenkobrain
+  $modules/packaging/os/dnf.py: DJMuggs berenddeschouwer ignatenkobrain maxamillion
   $modules/packaging/os/dpkg_selections.py: brian-brazil
   $modules/packaging/os/homebrew.py: andrew-d danieljaouen indrajitr
   $modules/packaging/os/homebrew_cask.py: danieljaouen enriclluelles indrajitr
@@ -586,7 +587,7 @@ files:
   $modules/packaging/os/swdepot.py: melodous
   $modules/packaging/os/swupd.py: albertomurillo
   $modules/packaging/os/urpmi.py: pmakowski
-  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 kustodian
+  $modules/packaging/os/yum.py: $team_ansible berenddeschouwer verm666 kustodian maxamillion
   $modules/packaging/os/yum_repository.py: jtyr
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
@@ -691,10 +692,6 @@ files:
   $modules/utilities/logic/pause.py: tbielawa samdoran
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
-  $modules/web_infrastructure/_letsencrypt.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_account.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_certificate.py: mgruener resmo felixfontein
-  $modules/web_infrastructure/acme_certificate_revoke.py: mgruener resmo felixfontein
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
@@ -816,7 +813,7 @@ files:
     labels: networking
     support: community
   $module_utils/acme.py:
-    maintainers: mgruener resmo felixfontein
+    maintainers: resmo felixfontein
   $module_utils/network/aireos:
     maintainers: jmighion
     labels: networking
@@ -929,7 +926,7 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
-  $module_utils/storage/netapp: $team_netapp
+  $module_utils/netapp: $team_netapp
   $module_utils/vultr.py:
     maintainers: $team_vultr
     labels:
@@ -1185,6 +1182,8 @@ files:
     keywords:
     - jinja
     - jinja2
+  lib/ansible/utils/module_docs_fragments/acme.py:
+    maintainers: resmo felixfontein
   test/sanity/validate-modules:
     keywords:
     - validate-modules
@@ -1235,7 +1234,7 @@ files:
     - networking
     - nxos
   test/integration/targets/setup_acme:
-    maintainers: mgruener resmo felixfontein
+    maintainers: resmo felixfontein
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
   test/integration/targets/ucs:
@@ -1279,7 +1278,7 @@ macros:
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi
-  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak
+  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha tstoner
   team_onyx: samerd
