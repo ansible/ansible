@@ -142,21 +142,21 @@ EXAMPLES = """
 # Get User Parameters
 - name: Get the User Parameters for the given user of a WTI device
   cpm_user:
-    cpm_action: "edituser"
-    cpm_url: "nonexist.wti.com"
-    cpm_username: "super"
-    cpm_password: "super"
+    cpm_action: "getuser"
+    cpm_url: "rest.wti.com"
+    cpm_username: "restuser"
+    cpm_password: "restfuluserpass12"
     use_https: true
     validate_certs: true
-    user_name: "userthatexists"
+    user_name: "usernumberone"
 
 # Create User
 - name: Create a User on a given WTI device
   cpm_user:
     cpm_action: "adduser"
-    cpm_url: "192.168.0.158"
-    cpm_username: "super"
-    cpm_password: "super"
+    cpm_url: "rest.wti.com"
+    cpm_username: "restuser"
+    cpm_password: "restfuluserpass12"
     use_https: true
     validate_certs: false
     user_name: "usernumberone"
@@ -176,22 +176,23 @@ EXAMPLES = """
 - name: Edit a User on a given WTI device
   cpm_user:
     cpm_action: "edituser"
-    cpm_url: "nonexist.wti.com"
-    cpm_username: "super"
-    cpm_password: "super"
+    cpm_url: "rest.wti.com"
+    cpm_username: "restuser"
+    cpm_password: "restfuluserpass12"
     use_https: true
     validate_certs: false
     user_name: "usernumberone"
-    user_pass: "newpassword"
+    user_pass: "newpasswordcomplicatedpassword"
 
 # Delete User
 - name: Delete a User from a given WTI device
   cpm_user:
-    cpm_action: "edituser"
-    cpm_url: "192.168.0.158"
-    cpm_username: "super"
-    cpm_password: "super"
-    use_https: false
+    cpm_action: "deleteuser"
+    cpm_url: "rest.wti.com"
+    cpm_username: "restuser"
+    cpm_password: "restfuluserpass12"
+    use_https: true
+    validate_certs: true
     user_name: "usernumberone"
 """
 
