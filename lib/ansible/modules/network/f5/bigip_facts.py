@@ -72,10 +72,13 @@ extends_documentation_fragment: f5
 EXAMPLES = r'''
 - name: Collect BIG-IP facts
   bigip_facts:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    include: interface,vlan
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+    include:
+      - interface
+      - vlan
   delegate_to: localhost
 '''
 
