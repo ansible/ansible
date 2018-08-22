@@ -19,7 +19,7 @@ Avoid spaces, hyphens, and preceding numbers (use ``floor_19``, not ``19th_floor
 
 This tiny example data center illustrates a basic group structure. You can group groups using the syntax ``[metagroupname:children]`` and listing groups as members of the metagroup. Here, the group ``network`` includes all leafs and all spines; the group ``datacenter`` includes all network devices plus all webservers.
 
-.. code-block:: yaml
+.. code-block:: ini
 
    [leafs]
    leaf01
@@ -47,7 +47,7 @@ Add Variables to Inventory
 
 Next, you can set values for many of the variables you needed in your first Ansible command in the inventory, so you can skip them in the ansible-playbook command. In this example, the inventory includes each network device's IP, OS, and SSH user. If your network devices are only accessible by IP, you must add the IP to the inventory file. If you access your network devices using hostnames, the IP is not necessary. 
 
-.. code-block:: yaml
+.. code-block:: ini
 
    [leafs]
    leaf01 ansible_host=10.16.10.11 ansible_network_os=vyos ansible_user=my_vyos_user
@@ -75,7 +75,7 @@ Group Variables within Inventory
 
 When devices in a group share the same variable values, such as OS or SSH user, you can reduce duplication and simplify maintenance by consolidating these into group variables:
 
-.. code-block:: yaml
+.. code-block:: ini
 
    [leafs]
    leaf01 ansible_host=10.16.10.11
@@ -123,7 +123,7 @@ Group Inventory by Platform
 
 As your inventory grows, you may want to group devices by platform. This allows you to specify platform-specific variables easily for all devices on that platform:
 
-.. code-block:: yaml
+.. code-block:: ini
 
    [vyos_leafs]
    leaf01 ansible_host=10.16.10.11
@@ -155,7 +155,7 @@ As your inventory grows, you may want to group devices by platform. This allows 
 
 With this setup, you can run first_playbook.yml with only two flags:
 
-.. code-block:: bash
+.. code-block:: console 
 
    ansible-playbook -i inventory -k first_playbook.yml
 
@@ -171,19 +171,19 @@ First you must create a password for ansible-vault itself. It is used as the enc
 
 Create a file and write your password for ansible-vault to it:
 
-.. code-block:: bash
+.. code-block:: console
 
    echo "my-ansible-vault-pw" > ~/my-ansible-vault-pw-file
 
 Create the encrypted ssh password for your VyOS network devices, pulling your ansible-vault password from the file you just created:
 
-.. code-block:: bash
+.. code-block:: console
 
    ansible-vault encrypt_string --vault-id my_user@~/my-ansible-vault-pw-file 'VyOS_SSH_password' --name 'ansible_ssh_pass'
 
 If you prefer to type your ansible-vault password rather than store it in a file, you can request a prompt:
 
-.. code-block:: bash
+.. code-block:: console
 
    ansible-vault encrypt_string --vault-id my_user@prompt 'VyOS_SSH_password' --name 'ansible_ssh_pass'
 
@@ -191,7 +191,7 @@ and type in the vault password for ``my_user``.
 
 The :option:`--vault-id <ansible-playbook --vault-id>` flag allows different vault passwords for different users or different levels of access. The output includes the user name ``my_user`` from your ``ansible-vault`` command and uses the YAML syntax ``key: value``:
 
-.. code-block:: bash
+.. code-block:: yaml
 
    ansible_ssh_pass: !vault |
           $ANSIBLE_VAULT;1.2;AES256;my_user
@@ -202,31 +202,39 @@ The :option:`--vault-id <ansible-playbook --vault-id>` flag allows different vau
           65656439626166666363323435613131643066353762333232326232323565376635
    Encryption successful
 
-Copy this output into your inventory file under ``[vyos:vars]``, which now looks like this:
+This is an example using an extract from a  YAML inventory, as the INI format does not support inline vaults:
 
 .. code-block:: yaml
 
-   [vyos:vars]
-   ansible_connection=network_cli
-   ansible_network_os=vyos
-   ansible_user=my_vyos_user
-   ansible_ssh_pass= !vault |
-          $ANSIBLE_VAULT;1.2;AES256;my_user
-          66386134653765386232383236303063623663343437643766386435663632343266393064373933
-          3661666132363339303639353538316662616638356631650a316338316663666439383138353032
-          63393934343937373637306162366265383461316334383132626462656463363630613832313562
-          3837646266663835640a313164343535316666653031353763613037656362613535633538386539
-          65656439626166666363323435613131643066353762333232326232323565376635
+  ...
+
+  vyos: # this is a group in yaml inventory, but you can also do under a host
+    vars:
+      ansible_connection: network_cli
+      ansible_network_os: vyos
+      ansible_user: my_vyos_user
+      ansible_ssh_pass:  !vault |
+           $ANSIBLE_VAULT;1.2;AES256;my_user
+           66386134653765386232383236303063623663343437643766386435663632343266393064373933
+           3661666132363339303639353538316662616638356631650a316338316663666439383138353032
+           63393934343937373637306162366265383461316334383132626462656463363630613832313562
+           3837646266663835640a313164343535316666653031353763613037656362613535633538386539
+           65656439626166666363323435613131643066353762333232326232323565376635
+
+   ...
+
+To use an inline vaulted variables with an INI inventory you need to store it in a 'vars' file in YAML format,
+it can reside in host_vars/ or group_vars/ to be automatically picked up or referenced from a play via ``vars_files`` or ``include_vars``.
 
 To run a playbook with this setup, drop the ``-k`` flag and add a flag for your ``vault-id``:
 
-.. code-block:: bash
+.. code-block:: console
 
    ansible-playbook -i inventory --vault-id my_user@~/my-ansible-vault-pw-file first_playbook.yml
 
 Or with a prompt instead of the vault password file:
 
-.. code-block:: bash
+.. code-block:: console
 
    ansible-playbook -i inventory --vault-id my_user@prompt first_playbook.yml
 
