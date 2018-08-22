@@ -12,7 +12,8 @@
                 "iam:ListPolicies",
                 "iam:ListRoles",
                 "iam:ListRolePolicies",
-                "iam:ListUsers"
+                "iam:ListUsers",
+                "iam:ListAccountAliases"
             ],
             "Resource": "*",
             "Effect": "Allow",
