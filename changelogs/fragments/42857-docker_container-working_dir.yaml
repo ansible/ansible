@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container: fixing ``working_dir`` idempotency problem (https://github.com/ansible/ansible/pull/42857)"
