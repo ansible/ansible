@@ -119,7 +119,7 @@ class ElementSWCluster(object):
             storage_virtual_ip=dict(required=True, type='str'),
             replica_count=dict(required=False, type='str', default='2'),
             cluster_admin_username=dict(required=False, type='str'),
-            cluster_admin_password=dict(required=False, type='str'),
+            cluster_admin_password=dict(required=False, type='str', no_log=True),
             accept_eula=dict(required=True, type='bool'),
             nodes=dict(required=False, type=list, default=None),
             attributes=dict(required=False, type=list, default=None)
