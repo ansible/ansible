@@ -815,7 +815,7 @@ def create_disk_str(module, client, template_id, disk_size_str):
         disk[child.tag] = child.text
 
     result = 'DISK = [' + ','.join('{key}="{val}"'.format(key=key, val=val) for key, val in disk.items() if key != 'SIZE')
-    result += ', SIZE=' + str(get_size_in_MB(module, disk_size_str)) + ']\n'
+    result += ', SIZE=' + str(int(get_size_in_MB(module, disk_size_str))) + ']\n'
 
     return result
 
