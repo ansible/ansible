@@ -8,12 +8,16 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: foreman
+deprecated:
+  removed_in: "2.9"
+  why: This has been replaced with a collection of other modules.
+  alternative: Use modules from https://github.com/theforeman/foreman-ansible-modules.
 short_description: Manage Foreman Resources
 description:
     - Allows the management of Foreman resources inside your Foreman server.
