@@ -1,0 +1,183 @@
+- name: Prepare random number
+  set_fact:
+    name: "table{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    route_name: "route{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create a route table (check mode)
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    tags:
+      purpose: testing
+  check_mode: yes
+  register: output
+
+- assert:
+    that:
+      - not output.id
+      - output.changed
+
+- name: Create a route table
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    tags:
+      purpose: testing    
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.id
+
+- name: Create a route table (idemponent)
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    tags:
+      purpose: testing
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Get facts of the table
+  azure_rm_routetable_facts:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - "output.route_tables | length == 1"
+      - "output.route_tables[0].routes | length == 0"
+
+- name: Create route (check mode)
+  azure_rm_route:
+    name: "{{ route_name }}"
+    resource_group: "{{ resource_group }}"
+    next_hop_type: virtual_network_gateway
+    address_prefix: "10.1.0.0/16"
+    route_table_name: "{{ name }}"
+  check_mode: yes
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - not output.id
+
+- name: Create route
+  azure_rm_route:
+    name: "{{ route_name }}"
+    resource_group: "{{ resource_group }}"
+    next_hop_type: virtual_network_gateway
+    address_prefix: "10.1.0.0/16"
+    route_table_name: "{{ name }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.id
+
+- name: Create route (idemponent)
+  azure_rm_route:
+    name: "{{ route_name }}"
+    resource_group: "{{ resource_group }}"
+    next_hop_type: virtual_network_gateway
+    address_prefix: "10.1.0.0/16"
+    route_table_name: "{{ name }}"
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: update route
+  azure_rm_route:
+    name: "{{ route_name }}"
+    resource_group: "{{ resource_group }}"
+    next_hop_type: virtual_network_gateway
+    address_prefix: "10.1.0.0/24"
+    route_table_name: "{{ name }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Get facts of the table
+  azure_rm_routetable_facts:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - "output.route_tables | length == 1"
+      - "output.route_tables[0].routes | length == 1"
+      - output.route_tables[0].routes[0].address_prefix == '10.1.0.0/24'
+
+- name: Delete route (check mode)
+  azure_rm_route:
+    name: "{{ route_name }}"
+    resource_group: "{{ resource_group }}"
+    route_table_name: "{{ name }}"
+    state: absent
+  check_mode: yes
+
+- name: Delete route
+  azure_rm_route:
+    name: "{{ route_name }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+    route_table_name: "{{ name }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete route (idemponent)
+  azure_rm_route:
+    name: "{{ route_name }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+    route_table_name: "{{ name }}"
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Delete route table (check mode)
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  check_mode: yes
+
+- name: Delete route table
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete route table (idemponent)
+  azure_rm_routetable:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - not output.changed
