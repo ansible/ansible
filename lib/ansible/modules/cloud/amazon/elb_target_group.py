@@ -429,6 +429,10 @@ def create_or_update_target_group(connection, module):
         if params['TargetType'] == 'ip':
             fail_if_ip_target_type_not_supported(module)
 
+    # Correct type of target ports
+    for target in params['Targets']:
+        target['Port'] = int(target.get('Port', module.params.get('port')))
+
     # Get target group
     tg = get_target_group(connection, module)
 
@@ -515,7 +519,7 @@ def create_or_update_target_group(connection, module):
                     instances_to_add = []
                     for target in params['Targets']:
                         if target['Id'] in add_instances:
-                            instances_to_add.append({'Id': target['Id'], 'Port': int(target.get('Port', module.params.get('port')))})
+                            instances_to_add.append({'Id': target['Id'], 'Port': target['Port']})
 
                     changed = True
                     try:
