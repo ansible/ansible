@@ -76,7 +76,7 @@ notes:
 
 EXAMPLES = r'''
 ---
-# install SqlServer module on the target server if needed 
+# install SqlServer module on the target server if needed
 - name: install SqlServer powershell module
   win_psmodule:
     name: SqlServer
