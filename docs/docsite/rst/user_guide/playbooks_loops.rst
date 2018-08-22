@@ -115,7 +115,7 @@ Using lookup vs query with loop
 
 In Ansible 2.5 a new jinja2 function was introduced named :ref:`query`, that offers several benefits over ``lookup`` when using the new ``loop`` keyword.
 
-This is described more in the lookup documentation, however, ``query`` provides a more simple interface and a more predictable output from lookup plugins, ensuring better compatibility with ``loop``.
+This is better described in the lookup documentation. However, ``query`` provides a simpler interface and a more predictable output from lookup plugins, ensuring better compatibility with ``loop``.
 
 In certain situations the ``lookup`` function may not return a list which ``loop`` requires.
 
