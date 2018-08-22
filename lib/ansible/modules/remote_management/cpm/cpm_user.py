@@ -66,8 +66,9 @@ options:
     default: true
   use_proxy:
     description: Flag to control if the lookup will observe HTTP proxy environment variables when present.
-    type: boolean
-    default: True
+    required: false
+    type: bool
+    default: false
   user_name:
     description:
       - This is the User Name that needs to be create/modified/deleted
@@ -316,13 +317,17 @@ def run_module():
             result['changed'] = True
 
     except HTTPError as e:
-        raise AnsibleError("Received HTTP error for %s : %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Received HTTP error for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except URLError as e:
-        raise AnsibleError("Failed lookup url for %s : %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Failed lookup url for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except SSLValidationError as e:
-        raise AnsibleError("Error validating the server's certificate for %s: %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Error validating the server''s certificate for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except ConnectionError as e:
-        raise AnsibleError("Error connecting to %s: %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Error connecting to  for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
 
     result['data'] = to_text(response.read())
 
