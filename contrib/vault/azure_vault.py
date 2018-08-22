@@ -21,7 +21,7 @@ the Azure Python SDK see http://azure-sdk-for-python.readthedocs.org/
 Authentication
 --------------
 The order of precedence is command line arguments, environment variables,
-and finally the [default] profile found in ~/.azure/credentials for all 
+and finally the [default] profile found in ~/.azure/credentials for all
 authentication parameters.
 
 If using a credentials file, it should be an ini formatted file with one or
@@ -66,7 +66,7 @@ Environment variables:
 Vault
 -----
 
-The order of precedence of Azure Key Vault Secret information is the same. 
+The order of precedence of Azure Key Vault Secret information is the same.
 Command line arguments, environment variables, and finally the azure_vault.ini
 file with the [azure_keyvault] section.
 
@@ -474,12 +474,12 @@ class AzureRM(object):
         self.log('Getting the Key Vault client')
         if not self._vault_client:
             self._vault_client = self.get_vault_client()
-        
+
         return self._vault_client
 
 
 class AzureKeyVaultSecret:
-    
+
     def __init__(self):
 
         self._args = self._parse_cli_args()
@@ -536,9 +536,9 @@ class AzureKeyVaultSecret:
                             help='Azure Cloud Environment name or metadata discovery URL')
 
         return parser.parse_args()
-        
+
     def get_password_from_vault(self):
-        vault_url = 'https://{}{}'.format(self.vault_name, self._vault_suffix)
+        vault_url = 'https://{0}{1}'.format(self.vault_name, self._vault_suffix)
         secret = self._vault_client.get_secret(vault_url, self.secret_name, self.secret_version)
         return secret.value
 
@@ -591,7 +591,7 @@ def main():
             AZURE_MIN_VERSION, HAS_AZURE_EXC))
 
     AzureKeyVaultSecret()
-    
+
 
 if __name__ == '__main__':
     main()
