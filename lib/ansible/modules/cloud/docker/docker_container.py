@@ -1292,7 +1292,7 @@ class Container(DockerBaseClass):
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
-            working_dir=host_config.get('WorkingDir')
+            working_dir=config.get('WorkingDir')
         )
         if self.parameters.restart_policy:
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
