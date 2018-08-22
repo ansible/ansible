@@ -70,12 +70,19 @@ options:
 author:
   - Daniele Lazzari
 notes:
-  - If the user that runs ansible has the appropriated permission on the db,
+  - If the user that runs ansible has the appropriate permission on the database server,
   - you don't need to set C(server_instance_user) and C(server_instance_password)
 '''
 
 EXAMPLES = r'''
 ---
+# install SqlServer module on the target server if needed 
+- name: install SqlServer powershell module
+  win_psmodule:
+    name: SqlServer
+    state: present
+    allow_clobber: yes
+
 - name: add a new login
   win_mssql_login:
     server_instance: 'MYSQLSERVER\MSSQLSERVER1'
