@@ -1447,7 +1447,7 @@ class ModuleParameters(Parameters):
                 self._values['__warnings'].append(
                     dict(
                         msg="Usage of the 'ALL' value for 'enabled_vlans' parameter is deprecated. Use '*' instead",
-                        version='2.5'
+                        version='2.9'
                     )
                 )
             return result
@@ -1957,19 +1957,19 @@ class VirtualServerValidator(object):
                 self.want.update({'type': 'performance-l4'})
                 self.module.deprecate(
                     msg="Specifying 'performance-l4' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.6'
+                    version='2.10'
                 )
             if self.want.has_fasthttp_profiles:
                 self.want.update({'type': 'performance-http'})
                 self.module.deprecate(
                     msg="Specifying 'performance-http' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.6'
+                    version='2.10'
                 )
             if self.want.has_message_routing_profiles:
                 self.want.update({'type': 'message-routing'})
                 self.module.deprecate(
                     msg="Specifying 'message-routing' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.6'
+                    version='2.10'
                 )
 
     def _check_source_and_destination_match(self):
