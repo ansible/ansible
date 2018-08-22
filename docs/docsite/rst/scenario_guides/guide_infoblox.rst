@@ -10,11 +10,13 @@ This guide describes how to use Ansible with the Infoblox Network Identity Opera
 
 Introduction
 =============
-With Ansible integration, you can automate Infoblox Core Network Services for IP address management (IPAM), DNS and DHCP configuration.
+With Ansible integration, you can use Ansible playbooks to automate Infoblox Core Network Services for IP address management (IPAM), DNS, and inventory tracking.
+
+See the `Infoblox <https://www.infoblox.com/>`_ website for mor information on the Infoblox product.
 
 Prerequisites
 -------------
-Before using Ansible nios modules with Infoblox, you must install the ``infoblox-client`` on your Ansible control node:
+Before using Ansible ``nios`` modules with Infoblox, you must install the ``infoblox-client`` on your Ansible control node:
 
 .. code-block:: bash
 
@@ -23,7 +25,7 @@ Before using Ansible nios modules with Infoblox, you must install the ``infoblox
 Credentials and authenticating
 ==============================
 
-To use Infoblox ``nios`` modules and sample roles, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/group_vars/all``.
+To use Infoblox ``nios`` modules in playbooks, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/group_vars/all``.
 
 This is an example of this ``group_vars/all`` file. Replace these values with your Infoblox credentials:
 
@@ -96,9 +98,6 @@ The following example playbook uses ``nios_zone`` module to configure an IPv4 ne
             comment: local DNS zone
             state: present
             provider: "{{ nios_provider }}"
-
-
-
 
 Creating a host record for the gateway address
 ----------------------------------------------
@@ -219,19 +218,6 @@ You can explicitely use the Infoblox dynamic inventory script as follows:
 You can also implicitly use the Infoblox dynamic inventory script by including it in your inventory directory (``etc/ansible/hosts`` by default).
 
 See `Working with Dynamic Inventory <https://docs.ansible.com/ansible/devel/user_guide/intro_dynamic_inventory.html>`_ for more details.
-
-Use cases with roles
-====================
-
-
-Example: Provisioning a grid master
------------------------------------
-
-Provisioning a grid member
---------------------------
-
-Limitations and known issues
-============================
 
 .. seealso::
 
