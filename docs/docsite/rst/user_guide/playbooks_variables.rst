@@ -864,7 +864,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
 .. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
-.. note:: Group loading follows parent/child relationships. Groups of the same 'patent/child' level are then merged following alphabetical order.
+.. note:: Group loading follows parent/child relationships. Groups of the same 'parent/child' level are then merged following alphabetical order.
           This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
 
 
