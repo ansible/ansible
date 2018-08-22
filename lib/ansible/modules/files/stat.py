@@ -121,10 +121,10 @@ EXAMPLES = '''
     msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
-# Don't do md5 checksum
+# Don't do checksum
 - stat:
     path: /path/to/myhugefile
-    get_md5: no
+    get_checksum: no
 
 # Use sha256 to calculate checksum
 - stat:
