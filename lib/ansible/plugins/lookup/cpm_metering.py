@@ -132,7 +132,7 @@ class LookupModule(LookupBase):
             additional = ""
             if self.get_option("startdate") is not None and (len(self.get_option("startdate")) > 0):
                 if self.get_option("enddate") is not None and (len(self.get_option("enddate")) > 0):
-                    additional = "?startdate="+self.get_option("startdate")+"&enddate="+self.get_option("enddate")
+                    additional = "?startdate=" + self.get_option("startdate") + "&enddate=" + self.get_option("enddate")
 
             if self.get_option('use_https') is True:
                 protocol = "https://"
