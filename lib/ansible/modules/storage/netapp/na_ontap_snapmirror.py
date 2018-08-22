@@ -142,7 +142,7 @@ class NetAppONTAPSnapmirror(object):
                                    ),
             source_hostname=dict(required=False, type='str'),
             source_username=dict(required=False, type='str'),
-            source_password=dict(required=False, type='str')
+            source_password=dict(required=False, type='str', no_log=True)
         ))
 
         self.module = AnsibleModule(
