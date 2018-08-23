@@ -175,6 +175,14 @@ class ActionModule(ActionBase):
         except AnsibleError:
             display.debug("%s: connect_timeout connection option has not been set" % self._task.action)
 
+        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self.DEFAULT_POST_REBOOT_DELAY))
+        if post_reboot_delay < 0:
+            post_reboot_delay = 0
+
+        if post_reboot_delay != 0:
+            display.vvv("%s: waiting an additional %d seconds" % (self._task.action, post_reboot_delay))
+            time.sleep(post_reboot_delay)
+
         return result
 
     def validate_reboot(self, before_uptime, connection_timeout_orig):
@@ -190,7 +198,7 @@ class ActionModule(ActionBase):
             if connect_timeout:
                 # reset the connection to clear the custom connection timeout
                 try:
-                    self._connection.set_options(direct={"connection_timeout": connection_timeout_orig})
+                    self._connection.set_option("connection_timeout", connect_timeout)
                     self._connection._reset()
                 except (AnsibleError, AttributeError) as e:
                     display.debug("Failed to reset connection_timeout back to default: %s" % to_native(e))
@@ -207,12 +215,6 @@ class ActionModule(ActionBase):
             result['rebooted'] = True
             result['msg'] = to_native(toex)
             return result
-
-        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self.DEFAULT_POST_REBOOT_DELAY))
-
-        if post_reboot_delay != 0:
-            display.vvv("%s: waiting an additional %d seconds" % (self._task.action, post_reboot_delay))
-            time.sleep(post_reboot_delay)
 
         return result
 
