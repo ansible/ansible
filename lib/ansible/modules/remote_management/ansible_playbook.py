@@ -270,7 +270,6 @@ def run_module():
             forks=dict(type='int', default=5)
         ),
         mutually_exclusive=[['inventory_hosts', 'inventory_path']],
-        required_if=dict(),
         supports_check_mode=True
     )
 
