@@ -58,7 +58,7 @@ class Cliconf(CliconfBase):
 
     def get_config(self, source='running', flags=None):
         if source not in 'running':
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
         if source == 'running':
             cmd = 'show running-config'
 
