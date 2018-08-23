@@ -110,6 +110,7 @@ notes:
   - If a rule declares a group_name and that group doesn't exist, it will be
     automatically created. In that case, group_desc should be provided as well.
     The module will refuse to create a depended-on group without a description.
+  - Preview diff mode support is added in version 2.7.
 '''
 
 EXAMPLES = '''
@@ -222,6 +223,7 @@ EXAMPLES = '''
           - 64:ff9b::/96
         group_id:
           - sg-edcd9784
+  diff: True
 
 - name: "Delete group by its id"
   ec2_group:
@@ -884,10 +886,10 @@ def get_diff_final_resource(client, module, security_group):
                 if rule.get('ports') and isinstance(rule.get('ports'), string_types):
                     rule['ports'] = [rule['ports']]
                 for port in rule.get('ports'):
-                    if '-' in port:
+                    if isinstance(port, string_types) and '-' in port:
                         format_rule['from_port'], format_rule['to_port'] = port.split('-')
                     else:
-                        format_rule['from_port'], format_rule['to_port'] = port
+                        format_rule['from_port'] = format_rule['to_port'] = port
             elif rule.get('from_port') or rule.get('to_port'):
                 format_rule['from_port'] = rule.get('from_port', rule.get('to_port'))
                 format_rule['to_port'] = rule.get('to_port', rule.get('from_port'))
@@ -987,7 +989,7 @@ def main():
         if group:
             # found a match, delete it
             before = camel_dict_to_snake_dict(group, ignore_list=['Tags'])
-            before['tags'] = boto3_tag_list_to_ansible_dict(before.get('tags', []), tag_name_key_name='Key', tag_value_key_name='Value')
+            before['tags'] = boto3_tag_list_to_ansible_dict(before.get('tags', []))
             try:
                 if not module.check_mode:
                     client.delete_security_group(GroupId=group['GroupId'])
@@ -1005,7 +1007,7 @@ def main():
         if group:
             # existing group
             before = camel_dict_to_snake_dict(group, ignore_list=['Tags'])
-            before['tags'] = boto3_tag_list_to_ansible_dict(before.get('tags', []), tag_name_key_name='Key', tag_value_key_name='Value')
+            before['tags'] = boto3_tag_list_to_ansible_dict(before.get('tags', []))
             if group['Description'] != description:
                 module.warn("Group description does not match existing group. Descriptions cannot be changed without deleting "
                             "and re-creating the security group. Try using state=absent to delete, then rerunning this task.")
