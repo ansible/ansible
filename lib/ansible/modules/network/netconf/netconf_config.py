@@ -263,7 +263,7 @@ def main():
 
     if module.params['src']:
         module.deprecate(msg="argument 'src' has been deprecated. Use file lookup plugin instead to read file contents.",
-                         version="4 releases from v2.7")
+                         version="2.11")
 
     config = module.params['content'] or module.params['src']
     target = module.params['target']

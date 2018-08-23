@@ -634,7 +634,7 @@ def main():
     config_object = None
     if is_cliconf(module):
         module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
-                         version='4 releases from v2.5')
+                         version='2.9')
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         if module.params['active'] == 'preconfigure':
