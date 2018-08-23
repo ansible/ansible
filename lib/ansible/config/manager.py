@@ -223,18 +223,7 @@ class ConfigManager(object):
         self._config_file = conf_file
         self.data = ConfigData()
 
-        if defs_file is None:
-            # Create configuration definitions from source
-            b_defs_file = to_bytes('%s/base.yml' % os.path.dirname(__file__))
-        else:
-            b_defs_file = to_bytes(defs_file)
-
-        # consume definitions
-        if os.path.exists(b_defs_file):
-            with open(b_defs_file, 'rb') as config_def:
-                self._base_defs = yaml_load(config_def, Loader=SafeLoader)
-        else:
-            raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(b_defs_file))
+        self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
 
         if self._config_file is None:
             # set config using ini
@@ -248,6 +237,22 @@ class ConfigManager(object):
 
         # update constants
         self.update_config_data()
+        try:
+            self.update_module_defaults_groups()
+        except Exception as e:
+            # Since this is a 2.7 preview feature, we want to have it fail as gracefully as possible when there are issues.
+            sys.stderr.write('Could not load module_defaults_groups: %s: %s\n\n' % (type(e).__name__, e))
+            self.module_defaults_groups = {}
+
+    def _read_config_yaml_file(self, yml_file):
+        # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
+        # Currently this is only used with absolute paths to the `ansible/config` directory
+        yml_file = to_bytes(yml_file)
+        if os.path.exists(yml_file):
+            with open(yml_file, 'rb') as config_def:
+                return yaml_load(config_def, Loader=SafeLoader) or {}
+        raise AnsibleError(
+            "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
 
     def _parse_config_file(self, cfile=None):
         ''' return flat configuration settings from file(s) '''
@@ -443,6 +448,14 @@ class ConfigManager(object):
             self._plugins[plugin_type] = {}
 
         self._plugins[plugin_type][name] = defs
+
+    def update_module_defaults_groups(self):
+        defaults_config = self._read_config_yaml_file(
+            '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
+        )
+        if defaults_config.get('version') not in ('1', '1.0', 1, 1.0):
+            raise AnsibleError('module_defaults.yml has an invalid version "%s" for configuration. Could be a bad install.' % defaults_config.get('version'))
+        self.module_defaults_groups = defaults_config.get('groupings', {})
 
     def update_config_data(self, defs=None, configfile=None):
         ''' really: update constants '''
