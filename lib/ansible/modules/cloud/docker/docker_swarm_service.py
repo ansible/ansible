@@ -83,6 +83,14 @@ options:
     - List of custom DNS options.
     - Maps docker service --dns-option option.
     - Requires api_version >= 1.25
+  force_update:
+    required: false
+    type: bool
+    default: False
+    description:
+    - Force update even if no changes require it.
+    - Maps to docker service update --force option.
+    - Requires api_version >= 1.25
   labels:
     required: false
     description:
@@ -290,6 +298,7 @@ ansible_swarm_service:
     "env": [
       "ENVVAR1=envvar1"
     ],
+    "force_update": False,
     "image": "alpine",
     "labels": {},
     "limit_cpu": 0.0,
@@ -442,6 +451,7 @@ EXAMPLES = '''
         state: absent
 '''
 
+import time
 from ansible.module_utils.docker_common import DockerBaseClass
 from ansible.module_utils.docker_common import AnsibleDockerClient
 from ansible.module_utils.basic import human_to_bytes
@@ -476,6 +486,7 @@ class DockerService(DockerBaseClass):
         self.dns_search = []
         self.dns_options = []
         self.env = []
+        self.force_update = None
         self.log_driver = "json-file"
         self.log_driver_options = {}
         self.labels = {}
@@ -519,6 +530,7 @@ class DockerService(DockerBaseClass):
             'dns_options': self.dns_options,
             'hostname': self.hostname,
             'env': self.env,
+            'force_update': self.force_update,
             'log_driver': self.log_driver,
             'log_driver_options ': self.log_driver_options,
             'publish': self.publish,
@@ -575,6 +587,9 @@ class DockerService(DockerBaseClass):
         s.update_max_failure_ratio = ap['update_max_failure_ratio']
         s.update_order = ap['update_order']
         s.user = ap['user']
+
+        if ap['force_update']:
+            s.force_update = int(str(time.time()).replace('.',''))
 
         if ap['replicas'] == -1:
             if old_service:
@@ -640,6 +655,7 @@ class DockerService(DockerBaseClass):
     def compare(self, os):
         differences = []
         needs_rebuild = False
+        force_update = False
         if self.endpoint_mode != os.endpoint_mode:
             differences.append('endpoint_mode')
         if self.env != os.env:
@@ -714,7 +730,10 @@ class DockerService(DockerBaseClass):
             differences.append('hostname')
         if self.tty != os.tty:
             differences.append('tty')
-        return len(differences) > 0, differences, needs_rebuild
+        if self.force_update:
+            differences.append('force_update')
+            force_update = True
+        return len(differences) > 0, differences, needs_rebuild, force_update
 
     def __str__(self):
         return str({
@@ -807,7 +826,8 @@ class DockerService(DockerBaseClass):
             log_driver=log_driver,
             restart_policy=restart_policy,
             placement=placement,
-            resources=resources)
+            resources=resources,
+            force_update=self.force_update)
 
         if self.mode == 'global':
             self.replicas = None
@@ -1047,7 +1067,7 @@ class DockerServiceManager():
                 msg = 'Service removed'
                 changed = True
             else:
-                changed, changes, need_rebuild = new_service.compare(current_service)
+                changed, changes, need_rebuild, force_update = new_service.compare(current_service)
                 if changed:
                     changed = True
                     if need_rebuild:
@@ -1067,7 +1087,16 @@ class DockerServiceManager():
                         rebuilt = False
                         changes = changes
                 else:
-                    msg = 'Service unchanged'
+                    if force_update and not module.check_mode:
+                        self.update_service(module.params['name'],
+                                            current_service,
+                                            new_service)
+                        msg = 'Service forcefully updated'
+                        rebuilt = False
+                        changed = True
+                        changes = changes
+                    else:
+                        msg = 'Service unchanged'
                 facts = new_service.get_facts()
         else:
             if module.params['state'] == 'absent':
@@ -1094,6 +1123,7 @@ def main():
         networks=dict(default=[], type='list'),
         args=dict(default=[], type='list'),
         env=dict(default=[], type='list'),
+        force_update=dict(default=False, type='bool'),
         log_driver=dict(default="json-file", type='str'),
         log_driver_options=dict(default={}, type='dict'),
         publish=dict(default=[], type='list'),
