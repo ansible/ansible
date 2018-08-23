@@ -93,7 +93,7 @@ General
 Modules
 =======
 
-* New ``cli_config`` module `issue #39228 <https://github.com/ansible/ansible/issues/39228>`_
+* New ``cli_config`` module `issue #39228 <https://github.com/ansible/ansible/issues/39228>`_ **done** `PR #42413 <https://github.com/ansible/ansible/pull/42413>`_.
 * New ``cli_command`` module `issue #39284 <https://github.com/ansible/ansible/issues/39284>`_
 * Refactor ``netconf_config`` module to add additional functionality. `proposal #104 <https://github.com/ansible/proposals/issues/104>`_
 
