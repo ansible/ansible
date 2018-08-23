@@ -88,14 +88,16 @@ Network
 General
 =======
 
-* Refactor the APIs in cliconf (`issue #39056 <https://github.com/ansible/ansible/issues/39056>`_) and netconf (`issue #39160 <https://github.com/ansible/ansible/issues/39160>`_) plugins so that they have a uniform signature across supported network platforms.
+* Refactor the APIs in cliconf (`issue #39056 <https://github.com/ansible/ansible/issues/39056>`_) and netconf (`issue #39160 <https://github.com/ansible/ansible/issues/39160>`_) plugins so that they have a uniform signature across supported network platforms. **done**
+  (`PR #41846 <https://github.com/ansible/ansible/pull/41846>`_) (`PR #43643 <https://github.com/ansible/ansible/pull/43643>`_) (`PR #43837 <https://github.com/ansible/ansible/pull/43837>`_)
+  (`PR #43203 <https://github.com/ansible/ansible/pull/43203>`_) (`PR #42300 <https://github.com/ansible/ansible/pull/42300>`_) (`PR #44157 <https://github.com/ansible/ansible/pull/44157>`_)
 
 Modules
 =======
 
 * New ``cli_config`` module `issue #39228 <https://github.com/ansible/ansible/issues/39228>`_ **done** `PR #42413 <https://github.com/ansible/ansible/pull/42413>`_.
 * New ``cli_command`` module `issue #39284 <https://github.com/ansible/ansible/issues/39284>`_
-* Refactor ``netconf_config`` module to add additional functionality. `proposal #104 <https://github.com/ansible/proposals/issues/104>`_
+* Refactor ``netconf_config`` module to add additional functionality. **done** `proposal #104 <https://github.com/ansible/proposals/issues/104>`_ (`PR #44379 <https://github.com/ansible/ansible/pull/44379>`_)
 
 Windows
 -------
