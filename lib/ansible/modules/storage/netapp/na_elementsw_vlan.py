@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_vlan
 
-short_description: Manage ElementSW VLAN
+short_description: NetApp Element Software Manage VLAN
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
