@@ -949,6 +949,11 @@ files:
     labels: cloud
   $module_utils/jboss/:
     maintainers: $team_jboss
+  $module_utils/scaleway.py: &scaleway
+    maintainers: sieben hekonsek
+    labels:
+      - cloud
+    support: community
   lib/ansible/playbook/handler.py:
     keywords:
     - handlers
@@ -1078,10 +1083,7 @@ files:
     labels:
       - ovirt
       - cloud
-  lib/ansible/plugins/inventory/scaleway.py:
-    maintainers: sieben hekonsek
-    labels:
-      - cloud
+  lib/ansible/plugins/inventory/scaleway.py: *scaleway
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking
     labels: networking
