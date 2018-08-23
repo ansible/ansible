@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_volume_clone
 
-short_description: Create Element OS Software volume clone
+short_description: NetApp Element Software Create Volume Clone
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
