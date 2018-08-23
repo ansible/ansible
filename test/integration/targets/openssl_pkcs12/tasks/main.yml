@@ -1,0 +1,65 @@
+- block:
+  - name: 'Generate privatekey'
+    openssl_privatekey:
+      path: "{{ output_dir }}/ansible_pkey.pem"
+
+  - name: 'Generate CSR'
+    openssl_csr:
+      path: "{{ output_dir }}/ansible.csr"
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      commonName: 'www.ansible.com'
+
+  - name: 'Generate certificate'
+    openssl_certificate:
+      path: "{{ output_dir }}/ansible.crt"
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      csr_path: "{{ output_dir }}/ansible.csr"
+      provider: selfsigned
+
+  - name: 'Generate PKCS#12 file'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    register: p12_standard
+
+  - name: 'Generate PKCS#12 file (force)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      force: True
+    register: p12_force
+
+  - name: 'Generate PKCS#12 file (force + change mode)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      force: True
+      mode: 0644
+    register: p12_force_and_mode
+
+  - name: 'Dump PKCS#12'
+    openssl_pkcs12:
+      src: "{{ output_dir }}/ansible.p12"
+      path: "{{ output_dir }}/ansible_parse.pem"
+      action: 'parse'
+      state: 'present'
+
+  - import_tasks: ../tests/validate.yml
+
+  always:
+  - name: 'Delete PKCS#12 file'
+    openssl_pkcs12:
+      state: absent
+      path: '{{ output_dir }}/ansible.p12'
+
+  # this is the pyopenssl version on my laptop.
+  when: pyopenssl_version.stdout is version_compare('17.1.0', '>=')
