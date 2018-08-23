@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, James Cammarata <jcammarata@ansible.com>
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['removed'],
@@ -17,4 +16,4 @@ from ansible.module_utils.common.removed import removed_module
 
 
 if __name__ == '__main__':
-    removed_module(removed_in="2.4")
+    removed_module(removed_in='2.7')
