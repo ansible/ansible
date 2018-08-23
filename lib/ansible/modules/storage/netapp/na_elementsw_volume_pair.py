@@ -14,7 +14,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_volume_pair
 
-short_description: Manage SolidFire Volume Pair
+short_description: NetApp Element Software Volume Pair
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
