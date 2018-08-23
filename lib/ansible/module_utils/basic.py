@@ -151,13 +151,19 @@ try:
         algorithms = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
     for algorithm in algorithms:
         AVAILABLE_HASH_ALGORITHMS[algorithm] = getattr(hashlib, algorithm)
-except ImportError:
+
+    # we may have been able to import md5 but it could still not be available
+    try:
+        hashlib.md5()
+    except ValueError:
+        algorithms.pop('md5', None)
+except Exception:
     import sha
     AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
     try:
         import md5
         AVAILABLE_HASH_ALGORITHMS['md5'] = md5.md5
-    except ImportError:
+    except Exception:
         pass
 
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
