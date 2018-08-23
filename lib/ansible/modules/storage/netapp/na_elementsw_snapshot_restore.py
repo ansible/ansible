@@ -21,7 +21,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_snapshot_restore
 
-short_description:  Element OS Software restore snapshot to active volume.
+short_description:  NetApp Element Software Restore Snapshot
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
