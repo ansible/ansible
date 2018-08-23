@@ -60,6 +60,7 @@ class TestFtdFileDownload(object):
                                 'The operation must make GET request and return a file.'
 
     def test_module_should_call_download_and_return(self, connection_mock):
+        connection_mock.validate_path_params.return_value = (True, None)
         connection_mock.get_operation_spec.return_value = {
             OperationField.METHOD: HTTPMethod.GET,
             OperationField.URL: '/file/{objId}',

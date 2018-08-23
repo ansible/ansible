@@ -70,22 +70,52 @@ from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.ftd.common import HTTPMethod, construct_ansible_facts, FtdConfigurationError, \
     FtdServerError
 from ansible.module_utils.network.ftd.configuration import BaseConfigurationResource
-from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField
+from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField, ValidationError
+
+
+def is_post_request(operation_spec):
+    return operation_spec[OperationField.METHOD] == HTTPMethod.POST
+
+
+def is_put_request(operation_spec):
+    return operation_spec[OperationField.METHOD] == HTTPMethod.PUT
 
 
 def is_add_operation(operation_name, operation_spec):
     # Some endpoints have non-CRUD operations, so checking operation name is required in addition to the HTTP method
-    return operation_name.startswith('add') and operation_spec[OperationField.METHOD] == HTTPMethod.POST
+    return operation_name.startswith('add') and is_post_request(operation_spec)
 
 
 def is_edit_operation(operation_name, operation_spec):
     # Some endpoints have non-CRUD operations, so checking operation name is required in addition to the HTTP method
-    return operation_name.startswith('edit') and operation_spec[OperationField.METHOD] == HTTPMethod.PUT
+    return operation_name.startswith('edit') and is_put_request(operation_spec)
 
 
 def is_delete_operation(operation_name, operation_spec):
     # Some endpoints have non-CRUD operations, so checking operation name is required in addition to the HTTP method
     return operation_name.startswith('delete') and operation_spec[OperationField.METHOD] == HTTPMethod.DELETE
+
+
+def validate_params(connection, op_name, query_params, path_params, data, op_spec):
+    report = {}
+
+    def validate(validation_method, field_name, params):
+        key = 'Invalid %s provided' % field_name
+        try:
+            is_valid, validation_report = validation_method(op_name, params)
+            if not is_valid:
+                report[key] = validation_report
+        except Exception as e:
+            report[key] = str(e)
+        return report
+
+    validate(connection.validate_query_params, 'query_params', query_params)
+    validate(connection.validate_path_params, 'path_params', path_params)
+    if is_post_request(op_spec) or is_post_request(op_spec):
+        validate(connection.validate_data, 'data', data)
+
+    if report:
+        raise ValidationError(report)
 
 
 def is_find_by_filter_operation(operation_name, operation_spec, params):
@@ -116,8 +146,10 @@ def main():
         register_as=dict(type='str'),
         filters=dict(type='dict')
     )
-    module = AnsibleModule(argument_spec=fields)
+    module = AnsibleModule(argument_spec=fields,
+                           supports_check_mode=True)
     params = module.params
+
     connection = Connection(module._socket_path)
 
     op_name = params['operation']
@@ -126,22 +158,31 @@ def main():
         module.fail_json(msg='Invalid operation name provided: %s' % op_name)
 
     data, query_params, path_params = params['data'], params['query_params'], params['path_params']
-    # TODO: implement validation for input parameters
-
-    resource = BaseConfigurationResource(connection)
 
     try:
+        validate_params(connection, op_name, query_params, path_params, data, op_spec)
+    except ValidationError as e:
+        module.fail_json(msg=e.args[0])
+
+    try:
+        if module.check_mode:
+            module.exit_json(changed=False)
+
+        resource = BaseConfigurationResource(connection)
+        url = op_spec[OperationField.URL]
+
         if is_add_operation(op_name, op_spec):
-            resp = resource.add_object(op_spec[OperationField.URL], data, path_params, query_params)
+            resp = resource.add_object(url, data, path_params, query_params)
         elif is_edit_operation(op_name, op_spec):
-            resp = resource.edit_object(op_spec[OperationField.URL], data, path_params, query_params)
+            resp = resource.edit_object(url, data, path_params, query_params)
         elif is_delete_operation(op_name, op_spec):
-            resp = resource.delete_object(op_spec[OperationField.URL], path_params)
+            resp = resource.delete_object(url, path_params)
         elif is_find_by_filter_operation(op_name, op_spec, params):
-            resp = resource.get_objects_by_filter(op_spec[OperationField.URL], params['filters'], path_params,
+            resp = resource.get_objects_by_filter(url, params['filters'], path_params,
                                                   query_params)
         else:
-            resp = resource.send_request(op_spec[OperationField.URL], op_spec[OperationField.METHOD], data, path_params,
+            resp = resource.send_request(url, op_spec[OperationField.METHOD], data,
+                                         path_params,
                                          query_params)
 
         module.exit_json(changed=resource.config_changed, response=resp,

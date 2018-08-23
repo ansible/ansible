@@ -60,7 +60,8 @@ def main():
         fileToUpload=dict(type='path', required=True),
         register_as=dict(type='str'),
     )
-    module = AnsibleModule(argument_spec=fields)
+    module = AnsibleModule(argument_spec=fields,
+                           supports_check_mode=True)
     params = module.params
     connection = Connection(module._socket_path)
 
@@ -73,6 +74,8 @@ def main():
                 params['operation'])
 
     try:
+        if module.check_mode:
+            module.exit_json()
         resp = connection.upload_file(params['fileToUpload'], op_spec[OperationField.URL])
         module.exit_json(changed=True, response=resp, ansible_facts=construct_ansible_facts(resp, module.params))
     except FtdServerError as e:

@@ -51,11 +51,25 @@ msg:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.ftd.common import FtdServerError, HTTPMethod
-from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField, FILE_MODEL_NAME
+from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField, ValidationError, FILE_MODEL_NAME
 
 
 def is_download_operation(op_spec):
     return op_spec[OperationField.METHOD] == HTTPMethod.GET and op_spec[OperationField.MODEL_NAME] == FILE_MODEL_NAME
+
+
+def validate_params(connection, op_name, path_params):
+    field_name = 'Invalid path_params provided'
+    try:
+        is_valid, validation_report = connection.validate_path_params(op_name, path_params)
+        if not is_valid:
+            raise ValidationError({
+                field_name: validation_report
+            })
+    except Exception as e:
+        raise ValidationError({
+            field_name: str(e)
+        })
 
 
 def main():
@@ -64,24 +78,32 @@ def main():
         path_params=dict(type='dict'),
         destination=dict(type='path', required=True)
     )
-    module = AnsibleModule(argument_spec=fields)
+    module = AnsibleModule(argument_spec=fields,
+                           supports_check_mode=True)
     params = module.params
     connection = Connection(module._socket_path)
 
-    op_spec = connection.get_operation_spec(params['operation'])
+    op_name = params['operation']
+    op_spec = connection.get_operation_spec(op_name)
     if op_spec is None:
-        module.fail_json(msg='Operation with specified name is not found: %s' % params['operation'])
+        module.fail_json(msg='Operation with specified name is not found: %s' % op_name)
     if not is_download_operation(op_spec):
         module.fail_json(
             msg='Invalid download operation: %s. The operation must make GET request and return a file.' %
-                params['operation'])
+                op_name)
 
     try:
-        connection.download_file(op_spec[OperationField.URL], params['destination'], params['path_params'])
+        path_params = params['path_params']
+        validate_params(connection, op_name, path_params)
+        if module.check_mode:
+            module.exit_json(changed=False)
+        connection.download_file(op_spec[OperationField.URL], params['destination'], path_params)
         module.exit_json(changed=False)
     except FtdServerError as e:
         module.fail_json(msg='Download request for %s operation failed. Status code: %s. '
-                             'Server response: %s' % (params['operation'], e.code, e.response))
+                             'Server response: %s' % (op_name, e.code, e.response))
+    except ValidationError as e:
+        module.fail_json(msg=e.args[0])
 
 
 if __name__ == '__main__':
