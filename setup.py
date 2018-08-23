@@ -254,6 +254,7 @@ static_setup_params = dict(
             'galaxy/data/*/*/*.*',
             'galaxy/data/*/tests/inventory',
             'config/base.yml',
+            'config/module_defaults.yml',
         ],
     },
     classifiers=[
