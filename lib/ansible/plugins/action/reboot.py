@@ -99,7 +99,7 @@ class ActionModule(ActionBase):
 
     def check_uptime(self, before_uptime):
         display.vvv("%s: attempting to get system uptime" % self._task.action)
-        connect_timeout = self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT)
+        connect_timeout = self._task.args.get('connect_timeout', self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
 
         # override connection timeout from defaults to custom value
         if connect_timeout:
@@ -175,7 +175,7 @@ class ActionModule(ActionBase):
         except AnsibleError:
             display.debug("%s: connect_timeout connection option has not been set" % self._task.action)
 
-        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self.DEFAULT_POST_REBOOT_DELAY))
+        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self._task.args.get('post_reboot_delay_sec', self.DEFAULT_POST_REBOOT_DELAY)))
         if post_reboot_delay < 0:
             post_reboot_delay = 0
 
@@ -191,8 +191,8 @@ class ActionModule(ActionBase):
 
         try:
             # keep on checking system uptime with short connection responses
-            reboot_timeout = int(self._task.args.get('reboot_timeout', self.DEFAULT_REBOOT_TIMEOUT))
-            connect_timeout = self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT)
+            reboot_timeout = int(self._task.args.get('reboot_timeout', self._task.args.get('reboot_timeout_sec', self.DEFAULT_REBOOT_TIMEOUT)))
+            connect_timeout = self._task.args.get('connect_timeout', self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
             self.do_until_success_or_timeout(self.check_uptime, reboot_timeout, before_uptime, action_desc="uptime check")
 
             if connect_timeout:
