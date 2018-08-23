@@ -153,6 +153,10 @@ options:
         default: ReadOnly
         aliases:
             - disk_caching
+    os_disk_size_gb:
+        description:
+            - Type of OS disk size in GB.
+        version_added: "2.7"
     os_type:
         description:
             - Base type of operating system.
@@ -659,6 +663,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
                                  default='ReadOnly'),
+            os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
@@ -694,6 +699,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.storage_blob_name = None
         self.os_type = None
         self.os_disk_caching = None
+        self.os_disk_size_gb = None
         self.managed_disk_type = None
         self.network_interface_names = None
         self.remove_on_absent = set()
@@ -845,6 +851,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['caching'] = self.os_disk_caching
 
+                if self.os_disk_size_gb and \
+                   self.os_disk_size_gb != vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']:
+                    self.log('CHANGED: virtual machine {0} - OS disk size '.format(self.name))
+                    differences.append('OS Disk size')
+                    changed = True
+                    vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB'] = self.os_disk_size_gb
+
                 update_tags, vm_dict['tags'] = self.update_tags(vm_dict.get('tags', dict()))
                 if update_tags:
                     differences.append('Tags')
@@ -980,6 +993,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
                                 caching=self.os_disk_caching,
+                                disk_size_gb=self.os_disk_size_gb
                             ),
                             image_reference=image_reference,
                         ),
@@ -1110,6 +1124,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 create_option=vm_dict['properties']['storageProfile']['osDisk']['createOption'],
                                 os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
+                                disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']
                             ),
                             image_reference=self.compute_models.ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
