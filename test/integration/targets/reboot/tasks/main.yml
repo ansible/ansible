@@ -1,0 +1,21 @@
+- block:
+    - name: Get current boot time
+      command: who -b
+      register: before_boot_time
+
+    - name: Reboot with default settings
+      reboot:
+      register: reboot_result
+
+    - name: Get current boot time
+      command: who -b
+      register: after_boot_time
+
+    - name: Enusure system was actually rebooted
+      assert:
+        that:
+          - reboot_result is changed
+          - reboot_result.elapsed > 10
+          - before_boot_time.stdout != after_boot_time.stdout
+
+  when: ansible_virtualization_type | default('') != 'docker'
