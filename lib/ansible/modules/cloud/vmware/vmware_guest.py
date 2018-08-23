@@ -1727,6 +1727,8 @@ class PyVmomiHelper(PyVmomi):
 
         datastore_freespace = 0
         for ds in datastores:
+            if ds.summary.maintenanceMode != 'normal':
+                continue
             if ds.summary.freeSpace > datastore_freespace:
                 datastore = ds
                 datastore_freespace = ds.summary.freeSpace
@@ -1786,6 +1788,8 @@ class PyVmomiHelper(PyVmomi):
 
                 datastore_freespace = 0
                 for ds in datastores:
+                    if ds.summary.maintenanceMode != 'normal':
+                        continue
                     if (ds.summary.freeSpace > datastore_freespace) or (ds.summary.freeSpace == datastore_freespace and not datastore):
                         # If datastore field is provided, filter destination datastores
                         if 'datastore' in self.params['disk'][0] and \
