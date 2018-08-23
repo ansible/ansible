@@ -82,41 +82,27 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
     return data
 
 
-def read_docstub(filename, verbose=True, ignore_errors=True):
+def read_docstub(filename):
     """
     Quickly find short_description using string methods instead of node parsing.
     This does not return a full set of documentation strings and is intended for
     operations like ansible-doc -l.
     """
 
-    data = {
-        'doc': None,
-        'plainexamples': None,
-        'returndocs': None,
-        'metadata': None
-    }
+    t_module_data = open(filename, 'r')
+    capturing = False
+    doc_stub = []
 
-    try:
-        t_module_data = open(filename, 'r')
-        capturing = False
-        doc_stub = []
+    for line in t_module_data:
+        # start capturing the stub until indentation returns
+        if capturing and line[0] == ' ':
+            doc_stub.append(line)
+        elif capturing and line[0] != ' ':
+            break
+        if 'short_description:' in line:
+            capturing = True
+            doc_stub.append(line)
 
-        for line in t_module_data:
-            # start capturing the stub until indentation returns
-            if capturing and line[0] == ' ':
-                doc_stub.append(line)
-            elif capturing and line[0] != ' ':
-                break
-            if 'short_description:' in line:
-                capturing = True
-                doc_stub.append(line)
-
-        data['doc'] = AnsibleLoader(r"".join(doc_stub), file_name=filename).get_single_data()
-
-    except:
-        if verbose:
-            display.error("unable to parse %s" % filename)
-        if not ignore_errors:
-            raise
+    data = AnsibleLoader(r"".join(doc_stub), file_name=filename).get_single_data()
 
     return data
