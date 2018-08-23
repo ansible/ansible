@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_ontap_disks
 
-short_description: Assign and unassign disks from nodes
+short_description: NetApp ONTAP Assign and unassign disks from nodes
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.7'
