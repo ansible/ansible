@@ -39,6 +39,7 @@ DOCUMENTATION = '''
       csv_output_dir:
         description: Output path for CSV file containing recorded memory readings. If the value contains a single %s,
                      the start time of the playbook run will be inserted in that space
+        type: path
         env:
           - name: CGROUP_CSV_OUTPUT_DIR
         ini:
