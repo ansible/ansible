@@ -637,6 +637,22 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                     normalized_modules.add(py_pkg_name)
                     py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
 
+    # FIXME: Currently the AnsiBallZ wrapper monkeypatches module args into a global
+    # variable in basic.py.  If a module doesn't import basic.py, then the AnsiBallZ wrapper will
+    # traceback when it tries to monkypatch.  So, for now, we have to unconditionally include
+    # basic.py.
+    #
+    # In the future we need to change the wrapper to monkeypatch the args into a global variable in
+    # their own, separate python module.  That way we won't require basic.py.  Modules which don't
+    # want basic.py can import that instead.  AnsibleModule will need to change to import the vars
+    # from the separate python module and mirror the args into its global variable for backwards
+    # compatibility.
+    if ('basic',) not in py_module_names:
+        pkg_dir_info = imp.find_module('basic', module_utils_paths)
+        normalized_modules.add(('basic',))
+        py_module_cache[('basic',)] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+    # End of AnsiballZ hack
+
     #
     # iterate through all of the ansible.module_utils* imports that we haven't
     # already checked for new imports
