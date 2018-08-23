@@ -110,6 +110,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.encrypt import random_password
 from ansible.plugins.lookup import LookupBase
 
+
 def _gen_candidate_chars(characters):
     '''Generate a string containing all valid chars as defined by ``characters``
 
@@ -141,6 +142,7 @@ def _gen_candidate_chars(characters):
                      errors='strict'))
     chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
+
 
 # backhacked check_output with input for python 2.7
 # http://stackoverflow.com/questions/10103551/passing-data-to-subprocess-check-output
