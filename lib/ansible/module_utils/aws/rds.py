@@ -26,7 +26,7 @@ instance_method_names = [
     'create_db_instance', 'restore_db_instance_to_point_in_time', 'restore_db_instance_from_s3',
     'restore_db_instance_from_db_snapshot', 'create_db_instance_read_replica', 'modify_db_instance',
     'delete_db_instance', 'add_tags_to_resource', 'remove_tags_from_resource', 'list_tags_for_resource',
-    'promote_read_replica'
+    'promote_read_replica', 'stop_db_instance', 'start_db_instance'
 ]
 
 
@@ -88,6 +88,17 @@ def handle_errors(module, exception, method_name, parameters):
             changed = False
         else:
             module.fail_json_aws(exception, msg='Unable to {0}'.format(get_rds_method_attribute(method_name, module).operation_description))
+    elif method_name == 'create_db_instance' and exception.response['Error']['Code'] == 'InvalidParameterValue':
+        accepted_engines = [
+            'aurora', 'aurora-mysql', 'aurora-postgresql', 'mariadb', 'mysql', 'oracle-ee', 'oracle-se',
+            'oracle-se1',  'oracle-se2', 'postgres', 'sqlserver-ee', 'sqlserver-ex', 'sqlserver-se', 'sqlserver-web'
+        ]
+        if parameters.get('Engine') not in accepted_engines:
+            module.fail_json_aws(exception, msg='DB engine {0} should be one of {1}'.format(parameters.get('Engine'), accepted_engines))
+        else:
+            module.fail_json_aws(exception, msg='Unable to {0}'.format(get_rds_method_attribute(method_name, module).operation_description))
+    else:
+        module.fail_json_aws(exception, msg='Unable to {0}'.format(get_rds_method_attribute(method_name, module).operation_description))
 
     return changed
 
@@ -118,8 +129,7 @@ def wait_for_instance_status(client, module, db_instance_id, waiter_name):
         except ValueError:
             # using a waiter in ansible.module_utils.aws.waiters
             waiter = get_waiter(client, waiter_name)
-        # Does a waiter ever raise a ClientError? I don't know if the retry is doing anything.
-        retry(waiter.wait)(WaiterConfig={'Delay': 40, 'MaxAttempts': 150}, DBInstanceIdentifier=db_instance_id)
+        waiter.wait(WaiterConfig={'Delay': 60, 'MaxAttempts': 30})
 
     waiter_expected_status = {
         'db_instance_deleted': 'deleted',
@@ -160,8 +170,6 @@ def wait_for_cluster_status(client, module, db_cluster_id, waiter_name):
 
 
 def wait_for_status(client, module, identifier, method_name):
-    is_cluster = get_rds_method_attribute(method_name, module).cluster
-    is_instance = get_rds_method_attribute(method_name, module).instance
     waiter_name = get_rds_method_attribute(method_name, module).waiter
     if get_rds_method_attribute(method_name, module).cluster:
         wait_for_cluster_status(client, module, identifier, waiter_name)
