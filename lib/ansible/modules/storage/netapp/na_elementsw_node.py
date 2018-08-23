@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_node
 
-short_description: Manage Element Software Node Operation
+short_description: NetApp Element Software Node Operation
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
