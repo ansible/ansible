@@ -1,14 +1,11 @@
 ---
 - debug: msg="START cli/all_facts.yaml"
 
-
 - name: test getting all facts
   cnos_facts:
     gather_subset:
       - all
   register: result
-
-
 
 - assert:
     that:
@@ -28,4 +25,3 @@
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"
 
 - debug: msg="END cli/all_facts.yaml"
-
