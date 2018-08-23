@@ -589,7 +589,7 @@ class DockerService(DockerBaseClass):
         s.user = ap['user']
 
         if ap['force_update']:
-            s.force_update = int(str(time.time()).replace('.',''))
+            s.force_update = int(str(time.time()).replace('.', ''))
 
         if ap['replicas'] == -1:
             if old_service:
