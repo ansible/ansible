@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_account
 
-short_description: Manage Element SW accounts
+short_description: NetApp Element Software Manage Accounts
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
