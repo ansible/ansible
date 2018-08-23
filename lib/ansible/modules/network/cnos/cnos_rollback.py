@@ -274,11 +274,10 @@ def main():
     outputfile = module.params['outputfile']
     protocol = module.params['protocol'].lower()
     output = ''
-    if(protocol == "tftp" or protocol == "ftp" or
-       protocol == "sftp" or protocol == "scp"):
+    if protocol in ('tftp', 'ftp', 'sftp', 'scp'):
         transfer_status = doConfigRollBack(module, None, None)
     else:
-        transfer_status = "Invalid Protocol option"
+        transfer_status = 'Invalid Protocol option'
     output = output + "\n Config Transfer status \n" + transfer_status
 
     # Save it into the file
