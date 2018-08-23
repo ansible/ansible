@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_ldap
 
-short_description: Manage elementsw ldap admin users
+short_description: NetApp Element Software Manage ldap admin users
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
