@@ -5,7 +5,7 @@
     - include: ./test_states.yml
     - include: ./test_tags.yml
     - include: ./test_modification.yml  # TODO: test availability_zone and multi_az
-    #- include: ./test_illegal_option_combinations.yml
+    - include: ./test_bad_options.yml
     - include: ./test_processor_features.yml
     - include: ./test_encryption.yml
     - include: ./test_final_snapshot.yml
