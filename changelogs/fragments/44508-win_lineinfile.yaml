@@ -1,0 +1,2 @@
+bugfixes:
+- win_lineinfile - changed `-Path` to `-LiteralPath` so that suqare brackes in the path don't cause a not-found exception
