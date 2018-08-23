@@ -28,7 +28,11 @@ options:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(tcp_half_open)
         parent on the C(Common) partition.
-    default: "/Common/tcp_half_open"
+    default: /Common/tcp_half_open
+  description:
+    description:
+      - The description of the monitor.
+    version_added: 2.7
   ip:
     description:
       - IP address part of the IP/port definition. If this parameter is not
@@ -84,6 +88,7 @@ notes:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -122,6 +127,11 @@ parent:
   returned: changed
   type: string
   sample: tcp
+description:
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important Monitor
 ip:
   description: The new IP of IP/port definition.
   returned: changed
@@ -156,6 +166,7 @@ try:
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -167,16 +178,11 @@ except ImportError:
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -187,15 +193,17 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination'
+        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination',
+        'description'
     ]
 
     returnables = [
-        'parent', 'ip', 'port', 'interval', 'timeout', 'time_until_up'
+        'parent', 'ip', 'port', 'interval', 'timeout', 'time_until_up',
+        'description'
     ]
 
     updatables = [
-        'destination', 'interval', 'timeout', 'time_until_up'
+        'destination', 'interval', 'timeout', 'time_until_up', 'description'
     ]
 
     def to_return(self):
@@ -244,15 +252,13 @@ class Parameters(AnsibleF5Parameters):
     def ip(self):
         if self._values['ip'] is None:
             return None
-        try:
-            if self._values['ip'] in ['*', '0.0.0.0']:
-                return '*'
-            result = str(netaddr.IPAddress(self._values['ip']))
-            return result
-        except netaddr.core.AddrFormatError:
-            raise F5ModuleError(
-                "The provided 'ip' parameter is not an IP address."
-            )
+        elif self._values['ip'] in ['*', '0.0.0.0']:
+            return '*'
+        elif is_valid_ip(self._values['ip']):
+            return self._values['ip']
+        raise F5ModuleError(
+            "The provided 'ip' parameter is not an IP address."
+        )
 
     @property
     def port(self):
@@ -514,6 +520,7 @@ class ArgumentSpec(object):
         argument_spec = dict(
             name=dict(required=True),
             parent=dict(default='/Common/tcp_half_open'),
+            description=dict(),
             ip=dict(),
             port=dict(type='int'),
             interval=dict(type='int'),
@@ -542,8 +549,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

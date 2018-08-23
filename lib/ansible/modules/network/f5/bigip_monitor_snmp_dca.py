@@ -129,6 +129,7 @@ notes:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -157,6 +158,11 @@ parent:
   returned: changed
   type: string
   sample: snmp_dca
+description:
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important Monitor
 interval:
   description: The new interval in which to run the monitor check.
   returned: changed
@@ -264,7 +270,7 @@ class Parameters(AnsibleF5Parameters):
     api_attributes = [
         'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination', 'community',
         'version', 'agentType', 'cpuCoefficient', 'cpuThreshold', 'memoryCoefficient',
-        'memoryThreshold', 'diskCoefficient', 'diskThreshold'
+        'memoryThreshold', 'diskCoefficient', 'diskThreshold', 'description'
     ]
 
     returnables = [
