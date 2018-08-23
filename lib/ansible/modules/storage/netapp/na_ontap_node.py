@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_node
-short_description: Rename an ONTAP node.
+short_description: NetApp ONTAP Rename a node.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.7'
