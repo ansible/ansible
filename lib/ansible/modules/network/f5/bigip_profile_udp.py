@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 module: bigip_profile_udp
 short_description: Manage UDP profiles on a BIG-IP
 description:
-  - Manage UDP profiles on a BIG-IP. There are a variety of UDP profiles, each with their
+  - Manage UDP profiles on a BIG-IP. Many of UDP profiles exist; each with their
     own adjustments to the standard C(udp) profile. Users of this module should be aware
     that many of the adjustable knobs have no module default. Instead, the default is
     assigned by the BIG-IP system itself which, in most cases, is acceptable.
