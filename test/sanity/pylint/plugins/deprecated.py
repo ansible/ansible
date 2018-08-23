@@ -21,7 +21,14 @@ MSGS = {
               {'minversion': (2, 6)}),
     'W9502': ("Display.deprecated call without a version",
               "ansible-deprecated-no-version",
-              "Used when a call to Display.deprecated does not specify a version",
+              "Used when a call to Display.deprecated does not specify a "
+              "version",
+              {'minversion': (2, 6)}),
+    'E9503': ("Invalid deprecated version (%r) found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "ansible-invalid-deprecated-version",
+              "Used when a call to Display.deprecated specifies an invalid "
+              "version number",
               {'minversion': (2, 6)}),
 }
 
@@ -74,9 +81,9 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     if ANSIBLE_VERSION >= StrictVersion(str(version)):
                         self.add_message('ansible-deprecated-version', node=node, args=(version,))
                 except ValueError:
-                    # TODO: Warn here?
-                    pass
+                    self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
         except AttributeError:
+            # Not the tyope of node we are interested in
             pass
 
 
