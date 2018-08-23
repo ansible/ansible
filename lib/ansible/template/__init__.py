@@ -429,7 +429,7 @@ class Templar:
         self._cached_result = {}
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
-                 convert_data=True, static_vars=None, cache=True, bare_deprecated=True, disable_lookups=False):
+                 convert_data=True, static_vars=None, cache=True, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -446,7 +446,7 @@ class Templar:
 
         try:
             if convert_bare:
-                variable = self._convert_bare_variable(variable, bare_deprecated=bare_deprecated)
+                variable = self._convert_bare_variable(variable)
 
             if isinstance(variable, string_types):
                 result = variable
@@ -587,7 +587,7 @@ class Templar:
                     return True
         return False
 
-    def _convert_bare_variable(self, variable, bare_deprecated):
+    def _convert_bare_variable(self, variable):
         '''
         Wraps a bare string, which may have an attribute portion (ie. foo.bar)
         in jinja2 variable braces so that it is evaluated properly.
@@ -597,10 +597,6 @@ class Templar:
             contains_filters = "|" in variable
             first_part = variable.split("|")[0].split(".")[0].split("[")[0]
             if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
-                if bare_deprecated:
-                    display.deprecated("Using bare variables is deprecated."
-                                       " Update your playbooks so that the environment value uses the full variable syntax ('%s%s%s')" %
-                                       (self.environment.variable_start_string, variable, self.environment.variable_end_string), version='2.7')
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
