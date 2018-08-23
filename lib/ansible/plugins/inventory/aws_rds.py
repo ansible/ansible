@@ -60,6 +60,7 @@ DOCUMENTATION = '''
           description: A list of desired states for instances/clusters to be added to inventory. Set to ['all'] as a shorthand to find everything.
           type: list
           default:
+              - creating
               - available
     extends_documentation_fragment:
         - inventory_cache
