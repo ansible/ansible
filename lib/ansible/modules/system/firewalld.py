@@ -50,6 +50,7 @@ options:
       - >
         Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can
         operate on firewalld configs when it's not running (requires firewalld >= 3.0.9). (NOTE: If this is false, immediate is assumed true.)
+    type: bool
   immediate:
     description:
       - "Should this configuration be applied immediately, if set as permanent"
