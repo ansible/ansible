@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_volume
 
-short_description: Manage ElementSW volumes
+short_description: NetApp Element Software Manage Volumes
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
