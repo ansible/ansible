@@ -1,7 +1,6 @@
 ---
 - debug: msg="START cli/not_hardware_facts.yaml"
 
-
 - name: test not hardware
   cnos_facts:
     gather_subset:
@@ -27,4 +26,3 @@
       - "result.ansible_facts.ansible_net_filesystems is not defined"
 
 - debug: msg="END cli/not_hardware_facts.yaml"
-
