@@ -1602,6 +1602,7 @@ TAGS_RUN:
   env: [{name: ANSIBLE_RUN_TAGS}]
   ini:
   - {key: run, section: tags}
+  version_added: "2.5"
 TAGS_SKIP:
   name: Skip Tags
   default: []
@@ -1610,6 +1611,7 @@ TAGS_SKIP:
   env: [{name: ANSIBLE_SKIP_TAGS}]
   ini:
   - {key: skip, section: tags}
+  version_added: "2.5"
 USE_PERSISTENT_CONNECTIONS:
   name: Persistence
   default: False
