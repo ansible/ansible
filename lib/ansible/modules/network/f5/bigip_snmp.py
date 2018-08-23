@@ -61,11 +61,6 @@ options:
     description:
       - Specifies the description of this system's physical location.
 extends_documentation_fragment: f5
-notes:
-  - Requires the netaddr Python package on the host. This is as easy as
-    C(pip install netaddr).
-requirements:
-  - netaddr
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -134,6 +129,7 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import is_valid_hostname
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.compat.ipaddress import ip_network
 
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -147,17 +143,12 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import is_valid_hostname
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.compat.ipaddress import ip_network
 
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -221,9 +212,9 @@ class ModuleParameters(Parameters):
         for address in addresses:
             try:
                 # Check for valid IPv4 or IPv6 entries
-                netaddr.IPNetwork(address)
+                ip_network(u'%s' % str(address))
                 result.append(address)
-            except netaddr.core.AddrFormatError:
+            except ValueError:
                 # else fallback to checking reasonably well formatted hostnames
                 if is_valid_hostname(address):
                     result.append(str(address))
@@ -392,8 +383,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

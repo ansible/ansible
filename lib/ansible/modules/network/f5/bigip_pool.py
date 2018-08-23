@@ -144,7 +144,6 @@ options:
       - minimum_active_members
     version_added: 2.6
 notes:
-  - Requires BIG-IP software version >= 12.
   - To add members do a pool, use the C(bigip_pool_member) module. Previously, the
     C(bigip_pool) module allowed the management of users, but this has been removed
     in version 2.5 of Ansible.
@@ -363,12 +362,6 @@ except ImportError:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    from netaddr import IPAddress, AddrFormatError
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -947,8 +940,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)
