@@ -61,7 +61,7 @@ options:
     description:
       - Connection type to use.
       - List of connection plugins is available using 'ansible-doc -t connection -l'.
-      - Ansible connection plugins documentation is also available at https://docs.ansible.com/ansible/2.5/plugins/connection.html
+      - Ansible connection plugins documentation is also available at https://docs.ansible.com/ansible/latest/plugins/connection.html
     required: false
     default: 'smart'
   connection_user:
@@ -93,6 +93,7 @@ options:
       - 'runas'
       - 'pmrun'
       - 'enable'
+      - 'machinectl'
     required: false
     default: 'sudo'
   become_user:
