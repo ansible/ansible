@@ -29,12 +29,13 @@ options:
     required: True
   type:
     description:
-      - Specifies that the type of group. A C(sync-failover) device group
-        contains devices that synchronize their configuration data and fail
-        over to one another when a device becomes unavailable. A C(sync-only)
-        device group has no such failover. When creating a new device group,
-        this option will default to C(sync-only). This setting cannot be
-        changed once it has been set.
+      - Specifies that the type of group.
+      - A C(sync-failover) device group contains devices that synchronize their
+        configuration data and fail over to one another when a device becomes
+        unavailable.
+      - A C(sync-only) device group has no such failover. When creating a new
+        device group, this option will default to C(sync-only).
+      - This setting cannot be changed once it has been set.
     choices:
       - sync-failover
       - sync-only
@@ -44,38 +45,39 @@ options:
   auto_sync:
     description:
       - Indicates whether configuration synchronization occurs manually or
-        automatically. When creating a new device group, this option will
-        default to C(false).
+        automatically.
+      - When creating a new device group, this option will default to C(no).
     type: bool
   save_on_auto_sync:
     description:
       - When performing an auto-sync, specifies whether the configuration
-        will be saved or not. If C(false), only the running configuration
-        will be changed on the device(s) being synced to. When creating a
-        new device group, this option will default to C(false).
+        will be saved or not.
+      - When C(no), only the running configuration will be changed on the
+        device(s) being synced to.
+      - When creating a new device group, this option will default to C(no).
     type: bool
   full_sync:
     description:
       - Specifies whether the system synchronizes the entire configuration
-        during synchronization operations. When C(false), the system performs
-        incremental synchronization operations, based on the cache size
-        specified in C(max_incremental_sync_size). Incremental configuration
-        synchronization is a mechanism for synchronizing a device-group's
-        configuration among its members, without requiring a full configuration
-        load for each configuration change. In order for this to work, all
-        devices in the device-group must initially agree on the configuration.
-        Typically this requires at least one full configuration load to each
-        device. When creating a new device group, this option will default
-        to C(false).
+        during synchronization operations.
+      - When C(no), the system performs incremental synchronization operations,
+        based on the cache size specified in C(max_incremental_sync_size).
+      - Incremental configuration synchronization is a mechanism for synchronizing
+        a device-group's configuration among its members, without requiring a
+        full configuration load for each configuration change.
+      - In order for this to work, all devices in the device-group must initially
+        agree on the configuration. Typically this requires at least one full
+        configuration load to each device.
+      - When creating a new device group, this option will default to C(no).
     type: bool
   max_incremental_sync_size:
     description:
-      - Specifies the size of the changes cache for incremental sync. For example,
-        using the default, if you make more than 1024 KB worth of incremental
-        changes, the system performs a full synchronization operation. Using
-        incremental synchronization operations can reduce the per-device sync/load
-        time for configuration changes. This setting is relevant only when
-        C(full_sync) is C(false).
+      - Specifies the size of the changes cache for incremental sync.
+      - For example, using the default, if you make more than 1024 KB worth of
+        incremental changes, the system performs a full synchronization operation.
+      - Using incremental synchronization operations can reduce the per-device sync/load
+        time for configuration changes.
+      - This setting is relevant only when C(full_sync) is C(no).
   state:
     description:
       - When C(state) is C(present), ensures the device group exists.
@@ -84,6 +86,12 @@ options:
       - present
       - absent
     default: present
+  network_failover:
+    description:
+      - Indicates whether failover occurs over the network or is hard-wired.
+      - This parameter is only valid for C(type)'s that are C(sync-failover).
+    type: bool
+    version_added: 2.7
 notes:
   - This module is primarily used as a component of configuring HA pairs of
     BIG-IP devices.
@@ -145,6 +153,11 @@ max_incremental_sync_size:
   returned: changed
   type: int
   sample: 1000
+network_failover:
+  description: Whether or not network failover is enabled.
+  returned: changed
+  type: bool
+  sample: yes
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -179,47 +192,35 @@ class Parameters(AnsibleF5Parameters):
         'saveOnAutoSync': 'save_on_auto_sync',
         'fullLoadOnSync': 'full_sync',
         'autoSync': 'auto_sync',
-        'incrementalConfigSyncSizeMax': 'max_incremental_sync_size'
+        'incrementalConfigSyncSizeMax': 'max_incremental_sync_size',
+        'networkFailover': 'network_failover',
     }
     api_attributes = [
-        'saveOnAutoSync', 'fullLoadOnSync', 'description', 'type', 'autoSync',
-        'incrementalConfigSyncSizeMax'
+        'saveOnAutoSync',
+        'fullLoadOnSync',
+        'description',
+        'type',
+        'autoSync',
+        'incrementalConfigSyncSizeMax',
+        'networkFailover'
     ]
     returnables = [
-        'save_on_auto_sync', 'full_sync', 'description', 'type', 'auto_sync',
-        'max_incremental_sync_size'
+        'save_on_auto_sync',
+        'full_sync',
+        'description',
+        'type',
+        'auto_sync',
+        'max_incremental_sync_size',
+        'network_failover',
     ]
     updatables = [
-        'save_on_auto_sync', 'full_sync', 'description', 'auto_sync',
-        'max_incremental_sync_size'
+        'save_on_auto_sync',
+        'full_sync',
+        'description',
+        'auto_sync',
+        'max_incremental_sync_size',
+        'network_failover',
     ]
-
-    @property
-    def save_on_auto_sync(self):
-        if self._values['save_on_auto_sync'] is None:
-            return None
-        elif self._values['save_on_auto_sync'] in BOOLEANS_TRUE:
-            return True
-        else:
-            return False
-
-    @property
-    def auto_sync(self):
-        if self._values['auto_sync'] is None:
-            return None
-        elif self._values['auto_sync'] in [True, 'enabled']:
-            return 'enabled'
-        else:
-            return 'disabled'
-
-    @property
-    def full_sync(self):
-        if self._values['full_sync'] is None:
-            return None
-        elif self._values['full_sync'] in BOOLEANS_TRUE:
-            return True
-        else:
-            return False
 
     @property
     def max_incremental_sync_size(self):
@@ -238,6 +239,48 @@ class Parameters(AnsibleF5Parameters):
             return None
         return int(self._values['max_incremental_sync_size'])
 
+
+class ApiParameters(Parameters):
+    @property
+    def network_failover(self):
+        if self._values['network_failover'] is None:
+            return None
+        elif self._values['network_failover'] == 'enabled':
+            return True
+        return False
+
+    @property
+    def auto_sync(self):
+        if self._values['auto_sync'] is None:
+            return None
+        elif self._values['auto_sync'] == 'enabled':
+            return True
+        return False
+
+    @property
+    def save_on_auto_sync(self):
+        if self._values['save_on_auto_sync'] is None:
+            return None
+        elif self._values['save_on_auto_sync'] in BOOLEANS_TRUE:
+            return True
+        else:
+            return False
+
+    @property
+    def full_sync(self):
+        if self._values['full_sync'] is None:
+            return None
+        elif self._values['full_sync'] in BOOLEANS_TRUE:
+            return True
+        else:
+            return False
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
     def to_return(self):
         result = {}
         try:
@@ -249,22 +292,83 @@ class Parameters(AnsibleF5Parameters):
         return result
 
 
-class Changes(Parameters):
+class UsableChanges(Changes):
+    @property
+    def network_failover(self):
+        if self._values['network_failover'] is None:
+            return None
+        elif self._values['network_failover']:
+            return 'enabled'
+        return 'disabled'
+
     @property
     def auto_sync(self):
-        if self._values['auto_sync'] in BOOLEANS_TRUE:
-            return True
+        if self._values['auto_sync'] is None:
+            return None
+        elif self._values['auto_sync']:
+            return 'enabled'
+        return 'disabled'
+
+    @property
+    def save_on_auto_sync(self):
+        if self._values['save_on_auto_sync'] is None:
+            return None
+        elif self._values['save_on_auto_sync'] in BOOLEANS_TRUE:
+            return "true"
         else:
-            return False
+            return "false"
+
+    @property
+    def full_sync(self):
+        if self._values['full_sync'] is None:
+            return None
+        elif self._values['full_sync'] in BOOLEANS_TRUE:
+            return "true"
+        else:
+            return "false"
+
+
+class ReportableChanges(Changes):
+    @property
+    def network_failover(self):
+        if self._values['network_failover'] is None:
+            return None
+        elif self._values['network_failover'] == 'enabled':
+            return 'yes'
+        return 'no'
+
+    @property
+    def auto_sync(self):
+        if self._values['auto_sync'] is None:
+            return None
+        elif self._values['auto_sync'] == 'enabled':
+            return 'yes'
+        return 'no'
+
+    @property
+    def save_on_auto_sync(self):
+        if self._values['save_on_auto_sync'] is None:
+            return None
+        elif self._values['save_on_auto_sync'] in BOOLEANS_TRUE:
+            return "yes"
+        return "no"
+
+    @property
+    def full_sync(self):
+        if self._values['full_sync'] is None:
+            return None
+        elif self._values['full_sync'] in BOOLEANS_TRUE:
+            return "yes"
+        return "no"
 
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.want = Parameters(params=self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
         self.have = None
-        self.changes = Parameters()
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -272,7 +376,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         changed = {}
@@ -283,7 +387,7 @@ class ModuleManager(object):
                 if attr1 != attr2:
                     changed[key] = attr1
         if changed:
-            self.changes = Changes(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -306,10 +410,10 @@ class ModuleManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
-        self._announce_deprecations(result)
         return result
 
     def _announce_deprecations(self, result):
@@ -344,27 +448,40 @@ class ModuleManager(object):
     def remove(self):
         if self.module.check_mode:
             return True
+        self.remove_members_in_group_from_device()
         self.remove_from_device()
         if self.exists():
             raise F5ModuleError("Failed to delete the device group")
         return True
 
+    def remove_members_in_group_from_device(self):
+        resource = self.client.api.tm.cm.device_groups.device_group.load(
+            name=self.want.name
+        )
+        collection = resource.devices_s.get_collection()
+        for item in collection:
+            item.delete()
+
     def create(self):
         self._set_changed_options()
+        if self.want.type == 'sync-only' and self.want.network_failover is not None:
+            raise F5ModuleError(
+                "'network_failover' may only be specified when 'type' is 'sync-failover'."
+            )
         if self.module.check_mode:
             return True
         self.create_on_device()
         return True
 
     def create_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         self.client.api.tm.cm.device_groups.device_group.create(
             name=self.want.name,
             **params
         )
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         resource = self.client.api.tm.cm.device_groups.device_group.load(
             name=self.want.name
         )
@@ -387,7 +504,7 @@ class ModuleManager(object):
             name=self.want.name
         )
         result = resource.attrs
-        return Parameters(params=result)
+        return ApiParameters(params=result)
 
 
 class ArgumentSpec(object):
@@ -415,7 +532,8 @@ class ArgumentSpec(object):
             state=dict(
                 default='present',
                 choices=['absent', 'present']
-            )
+            ),
+            network_failover=dict(type='bool')
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
