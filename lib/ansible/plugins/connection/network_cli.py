@@ -404,19 +404,22 @@ class Connection(NetworkConnectionBase):
 
         :arg resp: Byte string containing the raw response from the remote
         :arg prompts: Sequence of byte strings that we consider prompts for input
-        :arg answer: Byte string to send back to the remote if we find a prompt.
+        :arg answer: Sequence of Byte string to send back to the remote if we find a prompt.
                 A carriage return is automatically appended to this string.
         :returns: True if a prompt was found in ``resp``.  False otherwise
         '''
         if not isinstance(prompts, list):
             prompts = [prompts]
+        if not isinstance(answer, list):
+            answer = [answer]
         prompts = [re.compile(r, re.I) for r in prompts]
-        for regex in prompts:
+        for index, regex in enumerate(prompts):
             match = regex.search(resp)
             if match:
                 # if prompt_retry_check is enabled to check if same prompt is
                 # repeated don't send answer again.
                 if not prompt_retry_check:
+                    answer = answer[index] if len(answer) > index else answer[0]
                     self._ssh_shell.sendall(b'%s' % answer)
                     if newline:
                         self._ssh_shell.sendall(b'\r')

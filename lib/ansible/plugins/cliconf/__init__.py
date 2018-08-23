@@ -124,7 +124,10 @@ class CliconfBase(AnsiblePlugin):
             else:
                 kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
-            kwargs['answer'] = to_bytes(answer)
+            if isinstance(answer, list):
+                kwargs['answer'] = [to_bytes(p) for p in answer]
+            else:
+                kwargs['answer'] = to_bytes(answer)
 
         resp = self._connection.send(**kwargs)
 
