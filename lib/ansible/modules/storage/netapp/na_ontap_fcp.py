@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_fcp
-short_description: Start, Stop and Enable FCP services.
+short_description: NetApp ONTAP Start, Stop and Enable FCP services.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.7'
