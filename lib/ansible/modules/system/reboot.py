@@ -19,33 +19,41 @@ version_added: "2.7"
 options:
   pre_reboot_delay:
     description:
-      - Minutes for shutdown to wait before requesting reboot
+      - Seconds for shutdown to wait before requesting reboot.
+      - On Linux and macOS, this is converted to minutes and rounded down. If less than 60, it will be set to 0.
+      - On Solaris and FreeBSD, this will be seconds.
     default: 0
+    type: int
   post_reboot_delay:
     description:
-      - Seconds to wait after the reboot was successful and the connection was re-established
-      - This is useful if you want wait for something to settle despite your connection already working
+      - Seconds to wait after the reboot was successful and the connection was re-established.
+      - This is useful if you want wait for something to settle despite your connection already working.
     default: 0
+    type: int
   reboot_timeout:
     description:
-      - Maximum seconds to wait for machine to reboot and respond to a test command
+      - Maximum seconds to wait for machine to reboot and respond to a test command.
       - This timeout is evaluated separately for both network connection and test command success so the
         maximum execution time for the module is twice this amount.
     default: 600
+    type: int
   connect_timeout:
     description:
-      - Maximum seconds to wait for a single successful TCP connection to the managed hosts before trying again
+      - Maximum seconds to wait for a single successful TCP connection to the managed hosts before trying again.
       - This defaults to None which means the default setting for the underlying connection plugin is used.
     default: None
+    type: int
   test_command:
     description:
       - Command to run on the rebooted host and expect success from to determine the machine is ready for
         further tasks.
     default: whoami
+    type: str
   msg:
     description:
-      - Message to display to users
+      - Message to display to users before reboot.
     default: Reboot initiated by Ansible
+    type: str
 author:
     - Matt Davis (@nitzmahone)
     - Sam Doran (@samdoran)
