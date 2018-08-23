@@ -46,7 +46,7 @@ def _get_expr_name(node):
     try:
         return node.func.expr.attrname
     except AttributeError:
-        # If this fails too, we'll let it raise, pylint should catch, ignore and continue
+        # If this fails too, we'll let it raise, the caller should catch it
         return node.func.expr.name
 
 
@@ -88,7 +88,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
                 except ValueError:
                     self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
         except AttributeError:
-            # Not the tyope of node we are interested in
+            # Not the type of node we are interested in
             pass
 
 
