@@ -826,7 +826,8 @@ class StrategyBase:
                     raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). "
                                              "Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
                                              obj=included_file._task._ds)
-                display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option", version='2.12')
+                display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
+                                   version='2.12')
                 included_file._task.tags = tags
 
             block_list = load_list_of_blocks(
