@@ -518,7 +518,10 @@ class User(object):
 
         if self.expires is not None:
             cmd.append('-e')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            if self.expires < time.gmtime(0):
+                cmd.append('')
+            else:
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password is not None:
             cmd.append('-p')
@@ -966,7 +969,10 @@ class FreeBsdUser(User):
 
         if self.expires is not None:
             cmd.append('-e')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            if self.expires < time.gmtime(0):
+                cmd.append('0')
+            else:
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user

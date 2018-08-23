@@ -1,0 +1,2 @@
+bugfixes:
+  - user - when creating a new user without an expiration date, properly set no expiration rather that expirining the account (https://github.com/ansible/ansible/issues/44155)
