@@ -1,0 +1,18 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: assert cache was used to populate inventory
+      assert:
+        that:
+          - "'aws_rds' in groups"
+          - "groups.aws_rds | length == 1"
+
+    - meta: refresh_inventory
+
+    - name: assert refresh_inventory updated the cache
+      assert:
+        that:
+          - "'aws_rds' in groups"
+          - "not groups.aws_rds"
