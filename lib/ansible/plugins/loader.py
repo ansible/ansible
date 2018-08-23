@@ -315,7 +315,7 @@ class PluginLoader:
             if alias_name in pull_cache:
                 if not ignore_deprecated and not os.path.islink(pull_cache[alias_name]):
                     # FIXME: this is not always the case, some are just aliases
-                    display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '
+                    display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '  # pylint: disable=ansible-deprecated-no-version
                                        'The module documentation details page may explain more about this rationale.' % name.lstrip('_'))
                 return pull_cache[alias_name]
 
