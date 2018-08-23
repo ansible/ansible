@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_cluster
 
-short_description: Manage Element SW Create Cluster
+short_description: NetApp Element Software Create Cluster
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
