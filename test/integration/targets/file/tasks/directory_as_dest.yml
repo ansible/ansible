@@ -255,7 +255,7 @@
     follow: False
   register: file8_dir_stat
 
-- name: verify that the directory has Zbeen updated
+- name: verify that the directory has been updated
   assert:
     that:
       - 'file8_result is changed'

@@ -49,8 +49,8 @@ options:
         If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
         exist, while an existing file or directory will receive updated file access and
         modification times (similar to the way `touch` works from the command line).
-    choices: [ absent, directory, file, hard, link, touch ]
     default: file
+    choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
       - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept
@@ -78,7 +78,7 @@ options:
     version_added: "1.8"
   modification_time:
     description:
-      - This parameter indicates to which time should the file's modification time be set
+      - This parameter indicates the time the file's modification time should be set to
       - 'Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now)'
       - 'Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch)'
     version_added: "2.7"
@@ -90,13 +90,13 @@ options:
     version_added: "2.7"
   access_time:
     description:
-      - This parameter indicates to which time should the file's access time be set
+      - This parameter indicates the time the file's access time should be set to
       - 'Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now)'
       - 'Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch)'
     version_added: "2.7"
   access_time_format:
     description:
-      - 'When used with C(acces_time), indicates the time format that must be used.'
+      - 'When used with C(access_time), indicates the time format that must be used.'
       - 'Based on default Python format (see time.strftime doc)'
     default: "%Y%m%d%H%M.%S"
     version_added: "2.7"
@@ -147,7 +147,7 @@ EXAMPLES = '''
     state: touch
     mode: "u+rw,g-wx,o-rwx"
     modification_time: "preserve"
-    acces_time: "preserve"
+    access_time: "preserve"
 
 # create a directory if it doesn't exist
 - file:
