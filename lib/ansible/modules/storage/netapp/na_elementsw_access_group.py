@@ -21,7 +21,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_access_group
 
-short_description: Manage Element Software Access Groups
+short_description: NetApp Element Software Manage Access Groups
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
