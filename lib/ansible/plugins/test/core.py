@@ -84,16 +84,30 @@ def skipped(result):
     return result.get('skipped', False)
 
 
+def started(result):
+    ''' Test if async task has started '''
+    if not isinstance(result, MutableMapping):
+        raise errors.AnsibleFilterError("The 'started' test expects a dictionary")
+    if 'started' in result:
+        # For async tasks, return status
+        # NOTE: The value of started is 0 or 1, not False or True :-/
+        return result.get('started', 0) == 1
+    else:
+        # For non-async tasks, warn user, but return as if started
+        display.warning("The 'started' test expects an async task, but a non-async task was tested")
+        return True
+
+
 def finished(result):
     ''' Test if async task has finished '''
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'finished' test expects a dictionary")
     if 'finished' in result:
-        # For async tasks return status
-        # NOTE: The value of finished it 0 or 1, not False or True :-/
+        # For async tasks, return status
+        # NOTE: The value of finished is 0 or 1, not False or True :-/
         return result.get('finished', 0) == 1
     else:
-        # For non-async tasks warn user, but return as finished
+        # For non-async tasks, warn user, but return as if finished
         display.warning("The 'finished' test expects an async task, but a non-async task was tested")
         return True
 
@@ -175,6 +189,7 @@ class TestModule(object):
 
             # async testing
             'finished': finished,
+            'started': started,
 
             # regex
             'match': match,

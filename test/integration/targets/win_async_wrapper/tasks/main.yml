@@ -14,6 +14,7 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.started == 1
+    - asyncresult is started
     - asyncresult.finished == 0
     - asyncresult is not finished
     - asyncresult.results_file is search('\.ansible_async.+\d+\.\d+')

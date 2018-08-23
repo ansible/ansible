@@ -76,6 +76,7 @@
   assert:
     that:
     - fnf_task.started == 1
+    - fnf_task is started
     - "'ansible_job_id' in fnf_task"
 
 - name: 'check on task started as a "fire-and-forget"'
