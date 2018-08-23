@@ -490,7 +490,7 @@ class GalaxyCLI(CLI):
                 path_files = os.listdir(role_path)
                 path_found = True
                 for path_file in path_files:
-                    gr = GalaxyRole(self.galaxy, path_file)
+                    gr = GalaxyRole(self.galaxy, path_file, path=path)
                     if gr.metadata:
                         install_info = gr.install_info
                         version = None
