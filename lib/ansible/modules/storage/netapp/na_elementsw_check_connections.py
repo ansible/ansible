@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_check_connections
 
-short_description: Check connectivity to MVIP and SVIP.
+short_description: NetApp Element Software Check connectivity to MVIP and SVIP.
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
