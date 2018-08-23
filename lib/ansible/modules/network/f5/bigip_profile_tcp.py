@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 module: bigip_profile_tcp
 short_description: Manage TCP profiles on a BIG-IP
 description:
-  - Manage TCP profiles on a BIG-IP. There are a variety of TCP profiles, each with their
+  - Manage TCP profiles on a BIG-IP. Many TCP profiles; each with their
     own adjustments to the standard C(tcp) profile. Users of this module should be aware
     that many of the adjustable knobs have no module default. Instead, the default is
     assigned by the BIG-IP system itself which, in most cases, is acceptable.
@@ -43,6 +43,15 @@ options:
         connection can remain idle before the system deletes it.
       - When C(0), or C(indefinite), specifies that the system does not delete TCP connections
         regardless of how long they remain idle.
+  time_wait_recycle:
+    description:
+      - Specifies that connections in a TIME-WAIT state are reused, if a SYN packet,
+        indicating a request for a new connection, is received.
+      - When C(no), connections in a TIME-WAIT state remain unused for a specified length of time.
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
+    type: bool
+    version_added: 2.7
   partition:
     description:
       - Device partition to manage resources on.
@@ -58,6 +67,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -65,6 +75,7 @@ EXAMPLES = r'''
   bigip_profile_tcp:
     name: foo
     parent: f5-tcp-progressive
+    time_wait_recycle: no
     idle_timeout: 300
     password: secret
     server: lb.mydomain.com
@@ -84,6 +95,11 @@ idle_timeout:
   returned: changed
   type: int
   sample: 100
+time_wait_recycle:
+  description: Reuse connections in TIME-WAIT state
+  returned: changed
+  type: bool
+  sample: yes
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -97,6 +113,7 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import flatten_boolean
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -109,6 +126,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import flatten_boolean
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -118,22 +136,27 @@ except ImportError:
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'idleTimeout': 'idle_timeout',
-        'defaultsFrom': 'parent'
+        'defaultsFrom': 'parent',
+        'timeWaitRecycle': 'time_wait_recycle'
     }
 
     api_attributes = [
         'idleTimeout',
-        'defaultsFrom'
+        'defaultsFrom',
+        'timeWaitRecycle'
     ]
 
     returnables = [
         'idle_timeout',
-        'parent'
+        'parent',
+        'time_wait_recycle'
+
     ]
 
     updatables = [
         'idle_timeout',
-        'parent'
+        'parent',
+        'time_wait_recycle'
     ]
 
 
@@ -156,6 +179,15 @@ class ModuleParameters(Parameters):
         if self._values['idle_timeout'] == 'indefinite':
             return 4294967295
         return int(self._values['idle_timeout'])
+
+    @property
+    def time_wait_recycle(self):
+        result = flatten_boolean(self._values['time_wait_recycle'])
+        if result is None:
+            return None
+        if result == 'yes':
+            return 'enabled'
+        return 'disabled'
 
 
 class Changes(Parameters):
@@ -190,6 +222,14 @@ class ReportableChanges(Changes):
         if self._values['idle_timeout'] == 4294967295:
             return 'indefinite'
         return int(self._values['idle_timeout'])
+
+    @property
+    def time_wait_recycle(self):
+        if self._values['time_wait_recycle'] is None:
+            return None
+        elif self._values['time_wait_recycle'] == 'enabled':
+            return 'yes'
+        return 'no'
 
 
 class Difference(object):
@@ -370,6 +410,7 @@ class ArgumentSpec(object):
                 default='present',
                 choices=['present', 'absent']
             ),
+            time_wait_recycle=dict(type='bool'),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
