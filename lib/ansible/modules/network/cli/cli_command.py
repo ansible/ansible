@@ -71,7 +71,6 @@ EXAMPLES = """
   loop:
     - configure
     - set system syslog file test any any
-    - commit
     - exit
 
 - name: multiple prompt, multiple answer
