@@ -952,8 +952,9 @@ files:
   $module_utils/jboss/:
     maintainers: $team_jboss
   $module_utils/scaleway.py: &scaleway
-    maintainers: sieben hekonsek
+    maintainers: $team_scaleway
     labels:
+      - scaleway
       - cloud
     support: community
   lib/ansible/playbook/handler.py:
@@ -1290,6 +1291,7 @@ macros:
   team_openswitch: Qalthos gdpak
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
+  team_scaleway: sieben hekonsek Spredzy
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
   team_vmware: Akasurde dav1x warthog9
