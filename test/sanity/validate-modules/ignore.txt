@@ -54,8 +54,6 @@ lib/ansible/modules/cloud/amazon/ec2_elb.py E326
 lib/ansible/modules/cloud/amazon/ec2_elb_facts.py E323
 lib/ansible/modules/cloud/amazon/ec2_elb_lb.py E324
 lib/ansible/modules/cloud/amazon/ec2_elb_lb.py E325
-lib/ansible/modules/cloud/amazon/ec2_eni.py E324
-lib/ansible/modules/cloud/amazon/ec2_eni.py E325
 lib/ansible/modules/cloud/amazon/ec2_group.py E322
 lib/ansible/modules/cloud/amazon/ec2_group.py E325
 lib/ansible/modules/cloud/amazon/ec2_instance.py E324
