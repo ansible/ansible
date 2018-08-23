@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 module: bigip_device_dns
 short_description: Manage BIG-IP device DNS settings
 description:
-  - Manage BIG-IP device DNS settings
+  - Manage BIG-IP device DNS settings.
 version_added: 2.2
 options:
   cache:
