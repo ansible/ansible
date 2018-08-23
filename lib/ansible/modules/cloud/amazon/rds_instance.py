@@ -21,7 +21,7 @@ description:
 
 requirements:
     - botocore
-    - boto3
+    - boto3 >= 1.5.0
 extends_documentation_fragment:
     - aws
     - ec2
@@ -171,21 +171,8 @@ options:
     engine:
         description:
           - The name of the database engine to be used for this DB instance. This is required to create an instance.
-        choices:
-          - aurora
-          - aurora-mysql
-          - aurora-postgresql
-          - mariadb
-          - mysql
-          - oracle-ee
-          - oracle-se
-          - oracle-se1
-          - oracle-se2
-          - postgres
-          - sqlserver-ee
-          - sqlserver-ex
-          - sqlserver-se
-          - sqlserver-web
+            Valid choices are aurora | aurora-mysql | aurora-postgresql | mariadb | mysql | oracle-ee | oracle-se |
+            oracle-se1 | oracle-se2 | postgres | sqlserver-ee | sqlserver-ex | sqlserver-se | sqlserver-web
     engine_version:
         description:
           - The version number of the database engine to use. For Aurora MySQL that could be 5.6.10a , 5.7.12.
@@ -1022,22 +1009,7 @@ def main():
         enable_cloudwatch_logs_exports=dict(type='list', aliases=['cloudwatch_log_exports']),
         enable_iam_database_authentication=dict(type='bool'),
         enable_performance_insights=dict(type='bool'),
-        engine=dict(choices=[
-            'aurora',
-            'aurora-mysql',
-            'aurora-postgresql',
-            'mariadb',
-            'mysql',
-            'oracle-ee',
-            'oracle-se',
-            'oracle-se1',
-            'oracle-se2',
-            'postgres',
-            'sqlserver-ee',
-            'sqlserver-ex',
-            'sqlserver-se',
-            'sqlserver-web',
-        ]),
+        engine=dict(),
         engine_version=dict(),
         final_db_snapshot_identifier=dict(aliases=['final_snapshot_identifier']),
         force_failover=dict(type='bool'),
@@ -1101,6 +1073,9 @@ def main():
         mutually_exclusive=mutually_exclusive,
         supports_check_mode=True
     )
+
+    if not module.boto3_at_least('1.5.0'):
+        module.fail_json(msg="rds_intance requires boto3 > 1.5.0")
 
     # Sanitize instance identifiers
     module.params['db_instance_identifier'] = module.params['db_instance_identifier'].lower()
