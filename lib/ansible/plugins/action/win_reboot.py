@@ -38,10 +38,10 @@ class ActionModule(RebootActionModule, ActionBase):
     def construct_command(self):
         self.deprecated_args()
 
-        shutdown_command = str(self.DEFAULT_SHUTDOWN_COMMAND)
+        shutdown_command = self.DEFAULT_SHUTDOWN_COMMAND
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY)))
-        msg = str(self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE))
-        shutdown_command_args = str(self.DEFAULT_SHUTDOWN_COMMAND_ARGS % (pre_reboot_delay, msg))
+        msg = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
+        shutdown_command_args = self.DEFAULT_SHUTDOWN_COMMAND_ARGS % (pre_reboot_delay, msg)
 
         reboot_command = '%s %s' % (shutdown_command, shutdown_command_args)
         return reboot_command
@@ -52,7 +52,7 @@ class ActionModule(RebootActionModule, ActionBase):
         remote_command = self.construct_command()
         reboot_result = self._low_level_execute_command(remote_command, sudoable=self.DEFAULT_SUDOABLE)
 
-        pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self.DEFAULT_PRE_REBOOT_DELAY))
+        pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY)))
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
         if reboot_result['rc'] == 1190 or (reboot_result['rc'] != 0 and b"(1190)" in reboot_result['stderr']):
