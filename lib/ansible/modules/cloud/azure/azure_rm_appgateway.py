@@ -62,6 +62,10 @@ options:
             disabled_ssl_protocols:
                 description:
                     - List of SSL protocols to be disabled on application gateway.
+                choices:
+                    - 'tls_v1_0'
+                    - 'tls_v1_1'
+                    - 'tls_v1_2'
             policy_type:
                 description:
                     - Type of SSL Policy.
@@ -78,6 +82,35 @@ options:
             cipher_suites:
                 description:
                     - List of SSL cipher suites to be enabled in the specified order to application gateway.
+                choices:
+                    - tls_ecdhe_rsa_with_aes_256_gcm_sha384
+                    - tls_ecdhe_rsa_with_aes_128_gcm_sha256
+                    - tls_ecdhe_rsa_with_aes_256_cbc_sha384
+                    - tls_ecdhe_rsa_with_aes_128_cbc_sha256
+                    - tls_ecdhe_rsa_with_aes_256_cbc_sha
+                    - tls_ecdhe_rsa_with_aes_128_cbc_sha
+                    - tls_dhe_rsa_with_aes_256_gcm_sha384
+                    - tls_dhe_rsa_with_aes_128_gcm_sha256
+                    - tls_dhe_rsa_with_aes_256_cbc_sha
+                    - tls_dhe_rsa_with_aes_128_cbc_sha
+                    - tls_rsa_with_aes_256_gcm_sha384
+                    - tls_rsa_with_aes_128_gcm_sha256
+                    - tls_rsa_with_aes_256_cbc_sha256
+                    - tls_rsa_with_aes_128_cbc_sha256
+                    - tls_rsa_with_aes_256_cbc_sha
+                    - tls_rsa_with_aes_128_cbc_sha
+                    - tls_ecdhe_ecdsa_with_aes_256_gcm_sha384
+                    - tls_ecdhe_ecdsa_with_aes_128_gcm_sha256
+                    - tls_ecdhe_ecdsa_with_aes_256_cbc_sha384
+                    - tls_ecdhe_ecdsa_with_aes_128_cbc_sha256
+                    - tls_ecdhe_ecdsa_with_aes_256_cbc_sha
+                    - tls_ecdhe_ecdsa_with_aes_128_cbc_sha
+                    - tls_dhe_dss_with_aes_256_cbc_sha256
+                    - tls_dhe_dss_with_aes_128_cbc_sha256
+                    - tls_dhe_dss_with_aes_256_cbc_sha
+                    - tls_dhe_dss_with_aes_128_cbc_sha
+                    - tls_rsa_with_3des_ede_cbc_sha
+                    - tls_dhe_dss_with_3des_ede_cbc_sha
             min_protocol_version:
                 description:
                     - Minimum version of Ssl protocol to be supported on application gateway.
@@ -101,7 +134,7 @@ options:
         suboptions:
             data:
                 description:
-                    - Certificate public data.
+                    - Certificate public data - base64 encoded pfx
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
