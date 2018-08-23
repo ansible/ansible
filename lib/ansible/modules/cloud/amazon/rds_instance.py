@@ -62,7 +62,12 @@ options:
             be set to 'instance' or not provided. C(source_db_instance_identifier) must be provided with this option.
         type: bool
     wait:
-        description: Whether to wait for the cluster to be available or deleted.
+        description:
+          - Whether to wait for the cluster to be available, stopped, or deleted. At a later time a wait_timeout option may be added.
+            Following each API call to create/modify/delete the instance a waiter is used with a 60 second delay 30 times until the instance reaches
+            the expected state (available/stopped/deleted). The total task time may also be influenced by AWSRetry which helps stabilize if the
+            instance is in an invalid state to operate on to begin with (such as if you try to stop it when it is in the process of rebooting).
+            If setting this to False task retries and delays may make your playbook execution better handle timeouts for major modifications.
         type: bool
         default: True
 
