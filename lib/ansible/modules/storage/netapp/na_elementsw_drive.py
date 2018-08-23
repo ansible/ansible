@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_drive
 
-short_description: Manage Element SW Node Drives
+short_description: NetApp Element Software ManageNetApp Element Software Node Drives
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
