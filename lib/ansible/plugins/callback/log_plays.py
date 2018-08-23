@@ -63,7 +63,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_log_plays
             key: log_format
-        default: '%(timestamp)s - %(category)s - %(data)s\\n\\n'
+        default: '%(timestamp)s - %(task)s - %(module)s - %(category)s - %(data)s\\n\\n'
         name: Log format
         type: string
       timestamp_format:
@@ -144,6 +144,8 @@ class CallbackModule(CallbackBase):
                 # avoid logging extraneous data
                 data = 'omitted'
             else:
+                task = self.task
+                module = self.module
                 data = data.copy()
 
                 if self.data_format == 'json' or self.data_format == 'raw':
@@ -175,7 +177,7 @@ class CallbackModule(CallbackBase):
                 path += '-%s' % datetime.fromtimestamp(self.start_timestamp).strftime(self.log_filename_timestamp_format)
 
             timestamp = time.strftime(self.timestamp_format, time.localtime())
-            msg = to_bytes(self.log_format.decode('string_escape') % dict(timestamp=timestamp, category=category, data=data))
+            msg = to_bytes(self.log_format.decode('string_escape') % dict(timestamp=timestamp, task=task, module=module, category=category, data=data))
 
             with open(path, 'ab') as fd:
                 fd.write(msg)
@@ -204,3 +206,8 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_start(self, playbook):
         self.start_timestamp = time.time()
         self.playbook_on_start()
+
+    def v2_playbook_on_task_start(self, task, is_conditional):
+        self.task = task.name
+        self.module = task.action
+        self.playbook_on_task_start(task.name, is_conditional)
