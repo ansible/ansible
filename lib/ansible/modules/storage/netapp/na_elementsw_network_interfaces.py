@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_network_interfaces
 
-short_description: Configure Element SW Node Network Interfaces - Bond 1GbE and 10GbE Configuration
+short_description: NetApp Element Software Configure Node Network Interfaces
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
