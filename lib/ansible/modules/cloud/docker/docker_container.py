@@ -98,7 +98,7 @@ options:
   env_file:
     version_added: "2.2"
     description:
-      - Path to a file containing environment variables I(FOO=BAR).
+      - Path to a file, present on the target, containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
   entrypoint:
     description:
@@ -573,6 +573,12 @@ EXAMPLES = '''
   docker_container:
     name: sleepy
     purge_networks: yes
+
+- name: Start a container and use an env file
+  docker_container:
+    name: agent
+    image: jenkinsci/ssh-slave
+    env_file: /var/tmp/jenkins/agent.env
 
 - name: Create a container with limited capabilities
   docker_container:
