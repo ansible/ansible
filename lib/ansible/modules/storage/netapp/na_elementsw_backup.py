@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_backup
 
-short_description: Create SolidFire Backups
+short_description: NetApp Element Software Create Backups
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
