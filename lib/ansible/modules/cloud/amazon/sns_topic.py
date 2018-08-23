@@ -163,13 +163,13 @@ sns_topic:
     subscriptions_confirmed:
       description: Count of confirmed subscriptions
       returned: when topic is owned by this AWS account
-      type: string
-      sample: '0'
+      type: list
+      sample: []
     subscriptions_deleted:
       description: Count of deleted subscriptions
       returned: when topic is owned by this AWS account
-      type: string
-      sample: '0'
+      type: list
+      sample: []
     subscriptions_existing:
       description: List of existing subscriptions
       returned: always
@@ -354,7 +354,7 @@ class SnsTopicManager(object):
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                         self.module.fail_json_aws(e, msg="Couldn't unsubscribe from topic")
 
-        for (protocol, endpoint) in set(desired_subscriptions).difference(subscriptions_existing_list):
+        for protocol, endpoint in set(desired_subscriptions).difference(subscriptions_existing_list):
             changed = True
             self.subscriptions_added.append((protocol, endpoint))
             if not self.check_mode:
