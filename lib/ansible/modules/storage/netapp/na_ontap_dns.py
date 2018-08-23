@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_dns
-short_description: Create, delete, modify DNS servers.
+short_description: NetApp ONTAP Create, delete, modify DNS servers.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.7'
@@ -182,7 +182,7 @@ class NetAppOntapDns(object):
 
     def apply(self):
         # asup logging
-        netapp_utils.ems_log_event("na_ontap_dns", self.vserver)
+        netapp_utils.ems_log_event("na_ontap_dns", self.server)
 
         dns_attrs = self.get_dns()
         changed = False
