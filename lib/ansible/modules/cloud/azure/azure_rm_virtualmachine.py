@@ -156,7 +156,6 @@ options:
     os_disk_size_gb:
         description:
             - Type of OS disk size in GB.
-        default: 32
         version_added: "2.7"
     os_type:
         description:
@@ -660,7 +659,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
                                  default='ReadOnly'),
-            os_disk_size_gb=dict(type='int', default=32),
+            os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
