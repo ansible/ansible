@@ -223,14 +223,14 @@
 
 ## user expires
 # Date is March 3, 2050
-- name: Create user with expiration
+- name: Set user expiration
   user:
     name: ansibulluser
     state: present
     expires: 2529881062
   register: user_test_expires1
 
-- name: Create user with expiration again to ensure no change is made
+- name: Set user expiration again to ensure no change is made
   user:
     name: ansibulluser
     state: present
@@ -311,9 +311,9 @@
 
     - name: LINUX | Ensure proper expiration date was set
       assert:
-        msg: "expiry is supposed to be empty or -1, not {{getent_shadow['ansibulluser'][6]}}"
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
         that:
-          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] < 0
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
   when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
 
 - name: Verify un expiration date for linux/BSD
@@ -342,7 +342,91 @@
 
     - name: BSD | Ensure proper expiration date was set
       assert:
-        msg: "expiry is supposed to be '0', not {{bsd_account_expiration.stdout}}"
+        msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
+        that:
+          - bsd_account_expiration.stdout == '0'
+  when: ansible_os_family == 'FreeBSD'
+
+# Test setting no expiration when creating a new account
+# https://github.com/ansible/ansible/issues/44155
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: Create user account without expiration
+  user:
+    name: ansibulluser
+    state: present
+    expires: -1
+  register: user_test_create_no_expires_1
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Verify un expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
+        that:
+          - bsd_account_expiration.stdout == '0'
+  when: ansible_os_family == 'FreeBSD'
+
+# Test expiration with a very large negative number. This should have the same
+# result as setting -1.
+- name: Set expiration date using very long negative number
+  user:
+    name: ansibulluser
+    state: present
+    expires: -2529881062
+  register: user_test_expires5
+
+- name: Ensure no change was made
+  assert:
+    that:
+      - user_test_expires5 is not changed
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Verify un expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
         that:
           - bsd_account_expiration.stdout == '0'
   when: ansible_os_family == 'FreeBSD'
