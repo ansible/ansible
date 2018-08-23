@@ -52,7 +52,7 @@ options:
     description:
      - Destination password.
      - Optional if this is same as source password.
-short_description: "Manage NetApp Cluster peering"
+short_description: "NetApp ONTAP Manage Cluster peering"
 version_added: "2.7"
 '''
 
@@ -107,7 +107,7 @@ class NetAppONTAPClusterPeer(object):
             passphrase=dict(required=False, type='str'),
             dest_hostname=dict(required=True, type='str'),
             dest_username=dict(required=False, type='str'),
-            dest_password=dict(required=False, type='str', no_log=True),
+            dest_password=dict(required=False, type='str'),
             source_cluster_name=dict(required=False, type='str'),
             dest_cluster_name=dict(required=False, type='str')
         ))
