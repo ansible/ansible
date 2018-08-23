@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_cluster_pair
 
-short_description: Manage ElementSW Cluster Pair
+short_description: NetApp Element Software Manage Cluster Pair
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
