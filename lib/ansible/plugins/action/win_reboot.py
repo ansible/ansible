@@ -27,17 +27,16 @@ class ActionModule(RebootActionModule, ActionBase):
 
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_PRE_REBOOT_DELAY = 2
-    DEFAULT_UPTIME_COMMAND = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
+    DEFAULT_BOOT_TIME_COMMAND = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '/r /t %d /c "%s"'
     DEFAULT_SUDOABLE = False
-    DEFAULT_DEPRECATED_ARGS = {
+
+    DEPRECATED_ARGS = {
         'shutdown_timeout': '2.5',
         'shutdown_timeout_sec': '2.5',
     }
 
     def construct_command(self):
-        self.deprecated_args()
-
         shutdown_command = self.DEFAULT_SHUTDOWN_COMMAND
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY)))
         msg = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
@@ -80,9 +79,8 @@ class ActionModule(RebootActionModule, ActionBase):
         result['start'] = datetime.utcnow()
 
         # Get the original connection_timeout option var so it can be reset after
-        result['connection_timeout_orig'] = None
         try:
-            result['connection_timeout_orig'] = self._connection.get_option('connection_timeout')
+            self._original_connection_timeout = self._connection.get_option('connection_timeout')
         except AnsibleError:
             display.debug("%s: connect_timeout connection option has not been set" % self._task.action)
 

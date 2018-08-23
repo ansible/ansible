@@ -34,10 +34,12 @@ class ActionModule(ActionBase):
     DEFAULT_PRE_REBOOT_DELAY = 0
     DEFAULT_POST_REBOOT_DELAY = 0
     DEFAULT_TEST_COMMAND = 'whoami'
-    DEFAULT_UPTIME_COMMAND = 'who -b'
+    DEFAULT_BOOT_TIME_COMMAND = 'who -b'
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible'
     DEFAULT_SHUTDOWN_COMMAND = 'shutdown'
     DEFAULT_SUDOABLE = True
+
+    DEPRECATED_ARGS = {}
 
     SHUTDOWN_COMMANDS = {
         'linux': DEFAULT_SHUTDOWN_COMMAND,
@@ -53,17 +55,18 @@ class ActionModule(ActionBase):
         'darwin': '-r +{delay_min_macos} "{message}"'
     }
 
-    def deprecated_args(self):
-        deprecated_args = self._task.args.get('DEFAULT_DEPRECATED_ARGS')
+    def __init__(self, *args, **kwargs):
+        super(ActionModule, self).__init__(*args, **kwargs)
 
-        if deprecated_args:
-            for arg, version in deprecated_args.items():
-                if self._task.args.get(arg) is not None:
-                    display.warning("Since Ansible %s, %s is no longer a valid option for %s" % (version, arg, self._task.action))
+        self._original_connection_timeout = None
+        self._previous_boot_time = None
+
+    def deprecated_args(self):
+        for arg, version in self.DEPRECATED_ARGS.items():
+            if self._task.args.get(arg) is not None:
+                display.warning("Since Ansible %s, %s is no longer a valid option for %s" % (version, arg, self._task.action))
 
     def construct_command(self):
-        self.deprecated_args()
-
         # Determine the system distribution in order to use the correct shutdown command arguments
         uname_result = self._low_level_execute_command('uname')
         distribution = uname_result['stdout'].strip().lower()
@@ -89,8 +92,8 @@ class ActionModule(ActionBase):
         reboot_command = '%s %s' % (shutdown_command, shutdown_command_args)
         return reboot_command
 
-    def get_system_uptime(self):
-        command_result = self._low_level_execute_command(self.DEFAULT_UPTIME_COMMAND, sudoable=self.DEFAULT_SUDOABLE)
+    def get_system_boot_time(self):
+        command_result = self._low_level_execute_command(self.DEFAULT_BOOT_TIME_COMMAND, sudoable=self.DEFAULT_SUDOABLE)
 
         # For single board computers, e.g., Raspberry Pi, that lack a real time clock and are using fake-hwclock
         # launched by systemd, the update of utmp/wtmp is not done correctly.
@@ -100,13 +103,13 @@ class ActionModule(ActionBase):
             command_result = self._low_level_execute_command('uptime -s', sudoable=self.DEFAULT_SUDOABLE)
 
         if command_result['rc'] != 0:
-            raise AnsibleError("%s: failed to get host uptime info, rc: %d, stdout: %s, stderr: %s"
+            raise AnsibleError("%s: failed to get host boot time info, rc: %d, stdout: %s, stderr: %s"
                                % (self._task.action, command_result.rc, to_native(command_result['stdout']), to_native(command_result['stderr'])))
 
         return command_result['stdout'].strip()
 
-    def check_uptime(self, before_uptime):
-        display.vvv("%s: attempting to get system uptime" % self._task.action)
+    def check_boot_time(self):
+        display.vvv("%s: attempting to get system boot time" % self._task.action)
         connect_timeout = self._task.args.get('connect_timeout', self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
 
         # override connection timeout from defaults to custom value
@@ -117,16 +120,16 @@ class ActionModule(ActionBase):
             except AttributeError:
                 display.warning("Connection plugin does not allow the connection timeout to be overridden")
 
-        # try and get uptime
+        # try and get boot time
         try:
-            current_uptime = self.get_system_uptime()
+            current_boot_time = self.get_system_boot_time()
         except Exception as e:
             raise e
 
         # FreeBSD returns an empty string immediately before reboot so adding a length
         # check to prevent prematurely assuming system has rebooted
-        if len(current_uptime) == 0 or current_uptime == before_uptime:
-            raise Exception("uptime has not changed")
+        if len(current_boot_time) == 0 or current_boot_time == self._previous_boot_time:
+            raise Exception("boot time has not changed")
 
     def run_test_command(self, **kwargs):
         test_command = self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND)
@@ -142,7 +145,7 @@ class ActionModule(ActionBase):
 
         return result
 
-    def do_until_success_or_timeout(self, action, reboot_timeout, before_uptime, action_desc):
+    def do_until_success_or_timeout(self, action, reboot_timeout, action_desc):
         max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)
 
         fail_count = 0
@@ -150,7 +153,7 @@ class ActionModule(ActionBase):
 
         while datetime.utcnow() < max_end_time:
             try:
-                action(before_uptime=before_uptime)
+                action()
                 if action_desc:
                     display.debug('%s: %s success' % (self._task.action, action_desc))
                 return
@@ -185,10 +188,10 @@ class ActionModule(ActionBase):
 
         result['failed'] = False
 
-        # Get the original connection_timeout option var so it can be reset after
-        result['connection_timeout_orig'] = None
+        # attempt to store the original connection_timeout option var so it can be reset after
+        self._original_connection_timeout = None
         try:
-            result['connection_timeout_orig'] = self._connection.get_option('connection_timeout')
+            self._original_connection_timeout = self._connection.get_option('connection_timeout')
         except AnsibleError:
             display.debug("%s: connect_timeout connection option has not been set" % self._task.action)
 
@@ -202,27 +205,27 @@ class ActionModule(ActionBase):
 
         return result
 
-    def validate_reboot(self, before_uptime, connection_timeout_orig):
+    def validate_reboot(self):
         display.debug('%s: Validating reboot' % self._task.action)
         result = {}
 
         try:
-            # keep on checking system uptime with short connection responses
+            # keep on checking system boot_time with short connection responses
             reboot_timeout = int(self._task.args.get('reboot_timeout', self._task.args.get('reboot_timeout_sec', self.DEFAULT_REBOOT_TIMEOUT)))
             connect_timeout = self._task.args.get('connect_timeout', self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
-            self.do_until_success_or_timeout(self.check_uptime, reboot_timeout, before_uptime, action_desc="uptime check")
+            self.do_until_success_or_timeout(self.check_boot_time, reboot_timeout, action_desc="boot_time check")
 
             if connect_timeout:
                 # reset the connection to clear the custom connection timeout
                 try:
                     self._connection.set_option("connection_timeout", connect_timeout)
-                    self._connection._reset()
+                    self._connection.reset()
                 except (AnsibleError, AttributeError) as e:
                     display.debug("Failed to reset connection_timeout back to default: %s" % to_text(e))
 
             # finally run test command to ensure everything is working
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
-            self.do_until_success_or_timeout(self.run_test_command, reboot_timeout, before_uptime, action_desc="post-reboot test command")
+            self.do_until_success_or_timeout(self.run_test_command, reboot_timeout, action_desc="post-reboot test command")
 
             result['rebooted'] = True
             result['changed'] = True
@@ -250,14 +253,16 @@ class ActionModule(ActionBase):
         if task_vars is None:
             task_vars = dict()
 
+        self.deprecated_args()
+
         result = super(ActionModule, self).run(tmp, task_vars)
 
         if result.get('skipped', False) or result.get('failed', False):
             return result
 
-        # Get current uptime
+        # Get current boot time
         try:
-            before_uptime = self.get_system_uptime()
+            self._previous_boot_time = self.get_system_boot_time()
         except Exception as e:
             result['failed'] = True
             result['reboot'] = False
@@ -274,7 +279,7 @@ class ActionModule(ActionBase):
             return result
 
         # Make sure reboot was successful
-        result = self.validate_reboot(before_uptime, reboot_result['connection_timeout_orig'])
+        result = self.validate_reboot()
 
         elapsed = datetime.utcnow() - reboot_result['start']
         result['elapsed'] = elapsed.seconds
