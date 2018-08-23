@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 
 try:
@@ -152,7 +152,7 @@ class ActionModule(ActionBase):
                 return
             except Exception as e:
                 if action_desc:
-                    display.debug("%s: %s fail '%s', retrying in %d seconds..." % (self._task.action, action_desc, to_native(e), fail_sleep))
+                    display.debug("%s: %s fail '%s', retrying in %d seconds..." % (self._task.action, action_desc, to_text(e), fail_sleep))
                 time.sleep(fail_sleep)
 
         raise TimedOutException('Timed out waiting for %s' % (action_desc))
@@ -207,7 +207,7 @@ class ActionModule(ActionBase):
                     self._connection.set_option("connection_timeout", connect_timeout)
                     self._connection._reset()
                 except (AnsibleError, AttributeError) as e:
-                    display.debug("Failed to reset connection_timeout back to default: %s" % to_native(e))
+                    display.debug("Failed to reset connection_timeout back to default: %s" % to_text(e))
 
             # finally run test command to ensure everything is working
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
@@ -219,7 +219,7 @@ class ActionModule(ActionBase):
         except TimedOutException as toex:
             result['failed'] = True
             result['rebooted'] = True
-            result['msg'] = to_native(toex)
+            result['msg'] = to_text(toex)
             return result
 
         return result
@@ -245,7 +245,7 @@ class ActionModule(ActionBase):
         except Exception as e:
             result['failed'] = True
             result['reboot'] = False
-            result['msg'] = to_native(e)
+            result['msg'] = to_text(e)
             return result
 
         # Initiate reboot
