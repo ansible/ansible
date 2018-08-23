@@ -9,6 +9,7 @@ grep '^#!' -rIn . \
     -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!/usr/bin/python$' \
     -e '^\./test/integration/targets/module_precedence/.*lib.*:#!/usr/bin/python$' \
     -e '^\./hacking/cherrypick.py:#!/usr/bin/env python3$' \
+    -e '^\./test/utils/shippable/timing.py:#!/usr/bin/env python3$' \
     -e ':#!/bin/sh$' \
     -e ':#!/bin/bash( -[eux]|$)' \
     -e ':#!/usr/bin/make -f$' \
