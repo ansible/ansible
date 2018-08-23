@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_snapshot
 
-short_description: Manage Element OS Software Snapshots
+short_description: NetApp Element Software Manage Snapshots
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
