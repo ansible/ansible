@@ -574,6 +574,7 @@ class Base(FieldAttributeBase):
     _no_log = FieldAttribute(isa='bool')
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
+    _ignore_unreachable = FieldAttribute(isa='bool')
     _check_mode = FieldAttribute(isa='bool')
     _diff = FieldAttribute(isa='bool')
     _any_errors_fatal = FieldAttribute(isa='bool')

@@ -45,6 +45,18 @@ def success(result):
     return not failed(result)
 
 
+def unreachable(result):
+    ''' Test if task result yields unreachable '''
+    if not isinstance(result, MutableMapping):
+        raise errors.AnsibleFilterError("The 'unreachable' test expects a dictionary")
+    return result.get('unreachable', False)
+
+
+def reachable(result):
+    ''' Test if task result yields reachable '''
+    return not unreachable(result)
+
+
 def changed(result):
     ''' Test if task result yields changed '''
     if not isinstance(result, MutableMapping):
@@ -150,6 +162,8 @@ class TestModule(object):
             'succeeded': success,
             'success': success,
             'successful': success,
+            'reachable': reachable,
+            'unreachable': unreachable,
 
             # changed testing
             'changed': changed,
