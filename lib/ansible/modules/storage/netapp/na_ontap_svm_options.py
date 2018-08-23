@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-short_description: Modify ONTAP Options
+short_description: NetApp ONTAP Modify Options
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
   - Modify ONTAP Options
