@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_admin_users
 
-short_description: Manage SolidFire admin users
+short_description: NetApp Element Software Manage Admin Users
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
