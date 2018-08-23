@@ -814,6 +814,8 @@ files:
     support: community
   $module_utils/acme.py:
     maintainers: resmo felixfontein
+  $module_utils/ipa.py:
+    maintainers: $team_ipa
   $module_utils/network/aireos:
     maintainers: jmighion
     labels: networking
