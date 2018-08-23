@@ -89,11 +89,11 @@ tms:
                 - The status of the Traffic Manager profile.
             type: str
             sample: Enabled
-        traffic_routing_method:
+        routing_method:
             description:
                 - The traffic routing method of the Traffic Manager profile.
             type: str
-            sample: Performance
+            sample: performance
         dns_config:
             description:
                 - The DNS settings of the Traffic Manager profile.
@@ -122,17 +122,17 @@ tms:
                         - The path relative to the endpoint domain name used to probe for endpoint health.
                     type: str
                     sample: /
-                interval_in_seconds:
+                interval:
                     description:
-                        - The monitor interval for endpoints in this profile.
+                        - The monitor interval for endpoints in this profile in seconds.
                     type: int
                     sample: 10
-                timeout_in_seconds:
+                timeout:
                     description:
-                        - The monitor timeout for endpoints in this profile.
+                        - The monitor timeout for endpoints in this profile in seconds.
                     type: int
                     sample: 30
-                tolerated_number_of_failures:
+                tolerated_failures:
                     description:
                         - The number of consecutive failed health check before declaring an endpoint Degraded after the next failed health check.
                     type: int
@@ -342,7 +342,7 @@ class AzureRMTrafficManagerFacts(AzureRMModuleBase):
         new_result['state'] = 'present'
         new_result['location'] = tm.location
         new_result['profile_status'] = tm.profile_status
-        new_result['traffic_routing_method'] = tm.traffic_routing_method
+        new_result['routing_method'] = tm.traffic_routing_method
         new_result['dns_config'] = dict(
             relative_name=tm.dns_config.relative_name,
             fqdn=tm.dns_config.fqdn,
@@ -353,9 +353,9 @@ class AzureRMTrafficManagerFacts(AzureRMModuleBase):
             protocol=tm.monitor_config.protocol,
             port=tm.monitor_config.port,
             path=tm.monitor_config.path,
-            interval_in_seconds=tm.monitor_config.interval_in_seconds,
-            timeout_in_seconds=tm.monitor_config.timeout_in_seconds,
-            tolerated_number_of_failures=tm.monitor_config.tolerated_number_of_failures
+            interval=tm.monitor_config.interval_in_seconds,
+            timeout=tm.monitor_config.timeout_in_seconds,
+            tolerated_failures=tm.monitor_config.tolerated_number_of_failures
         )
         new_result['endpoints'] = [serialize_endpoint(endpoint) for endpoint in tm.endpoints]
         new_result['tags'] = tm.tags

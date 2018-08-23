@@ -13,8 +13,8 @@
           delete: on-exit
           foo: bar
       location: global
-      profile_status: Enabled
-      traffic_routing_method: Performance
+      profile_status: enabled
+      routing_method: performance
       dns_config: 
         relative_name: "{{ tmname }}"
         ttl: 60
@@ -57,8 +57,8 @@
           delete: on-exit
           foo: bar
       location: global
-      profile_status: Enabled
-      traffic_routing_method: Performance
+      profile_status: enabled
+      routing_method: performance
       dns_config: 
         relative_name: "{{ tmname }}"
         ttl: 60
@@ -87,7 +87,6 @@
   assert:
     that:
       - output.changed
-      - output.name == "{{ tmname }}"
 
 - name: Gather Traffic Manager profile facts
   azure_rm_trafficmanager_facts:
@@ -111,8 +110,8 @@
           delete: on-exit
           foo: bar
       location: global
-      profile_status: Enabled
-      traffic_routing_method: Performance
+      profile_status: enabled
+      routing_method: performance
       dns_config: 
         relative_name: "{{ tmname }}"
         ttl: 60
@@ -151,8 +150,8 @@
           delete: on-exit
           foo: bar
       location: global
-      profile_status: Disabled
-      traffic_routing_method: Priority
+      profile_status: disabled
+      routing_method: priority
       dns_config: 
         relative_name: "{{ tmname }}"
         ttl: 60
@@ -175,7 +174,6 @@
     that:
       - output.changed
       - output.endpoints | length == 1
-      - output.traffic_routing_method == 'Priority'
 
 - name: Delete the Traffic Manager profile(check mode)
   azure_rm_trafficmanager:
