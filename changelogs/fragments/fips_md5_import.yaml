@@ -1,0 +1,2 @@
+bugfixes:
+- basic.py - catch ValueError in case a FIPS enabled platform raises this exception - https://github.com/ansible/ansible/issues/44447
