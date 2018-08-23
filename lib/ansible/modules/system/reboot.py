@@ -12,9 +12,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 module: reboot
-short_description: Reboot a \*nix machine
+short_description: Reboot a machine
 description:
-     - Reboot a \*nix machine, wait for it to go down, come back up, and respond to commands.
+     - Reboot a machine, wait for it to go down, come back up, and respond to commands.
 version_added: "2.7"
 options:
   pre_reboot_delay:
@@ -39,9 +39,8 @@ options:
     type: int
   connect_timeout:
     description:
-      - Maximum seconds to wait for a single successful TCP connection to the managed hosts before trying again.
-      - This defaults to None which means the default setting for the underlying connection plugin is used.
-    default: None
+      - Maximum seconds to wait for a successful connection to the managed hosts before trying again.
+      - If unspecified, the default setting for the underlying connection plugin is used.
     type: int
   test_command:
     description:
