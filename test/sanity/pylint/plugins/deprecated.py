@@ -58,6 +58,9 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     node.func.attrname == 'deprecate' and 'module' in _get_expr_name(node)):
                 if node.keywords:
                     for keyword in node.keywords:
+                        if len(node.keywords) == 1 and keyword.arg == None:
+                            # This is likely a **kwargs splat
+                            return
                         if keyword.arg == 'version':
                             version = keyword.value.value
                 if not version:
