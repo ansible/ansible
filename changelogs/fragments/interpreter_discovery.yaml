@@ -1,0 +1,5 @@
+major_changes:
+- Python interpreter discovery - The first time a Python module runs on a target, Ansible will attempt to discover the
+  proper default Python interpreter to use for the target platform/version (instead of blindly defaulting to
+  ``/usr/bin/python``). This behavior is overridable by setting ``ansible_python_interpreter`` or via config. (see
+  https://github.com/ansible/ansible/pull/50163)

@@ -62,10 +62,39 @@ Beginning in version 2.8, Ansible will warn if a module expects a string, but a 
 
 This behavior can be changed to be an error or to be ignored by setting the ``ANSIBLE_STRING_CONVERSION_ACTION`` environment variable, or by setting the ``string_conversion_action`` configuration in the ``defaults`` section of ``ansible.cfg``.
 
+
 Command line facts
 ------------------
 
 ``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter contains multiple values with the same key.
+
+
+Python Interpreter Discovery
+============================
+
+Ansible 2.8 now discovers the default Python interpreter to use for many platforms the first time a Python module is
+run on a target.
+
+``ansible_python_interpreter`` now defaults to ``auto_legacy``, which consults a lookup table and selects the default
+Python if the target platform/version is listed in the table. It will also favor using ``/usr/bin/python`` if present,
+and show a deprecation warning that the default behavior will change in 4 releases to use the discovered interpreter
+instead. This interim behavior ensures that Ansible can continue to target platforms that added ``/usr/bin/python``
+instead of explicitly setting ``ansible_python_interpreter`` to the correct platform-included Python interpreter
+(eg, Ubuntu 16.04+, RHEL8, Fedora 23+).
+
+Setting ``ansible_python_interpreter`` to ``auto`` will behave the same way, except the discovered interpreter will
+always be used, regardless of the presence of ``/usr/bin/python``. This behavior will become the default after 4 releases.
+
+If the target platform is not listed with a known Python interpreter, a fallback list of Python interpreter names is
+used to discover an interpreter on the path that might work. If one is found, a warning is displayed that while a Python
+interpreter was found, future installation of a different Python on the target could lead to changed behavior. E.g., if
+an interpreter name from higher in the fallback list is installed later, any installed dependencies with the original
+interpreter will no longer be used. The best solution in this case is to explicitly set ``ansible_python_interpreter``
+to the path of the correct interpreter.
+
+To use ``auto`` or ``auto_legacy`` behavior while disabling all interpreter discovery warnings, add ``_silent`` to the
+end of the value when setting ``ansible_python_interpreter`` (e.g., ``auto_legacy_silent``).
+
 
 Command Line
 ============

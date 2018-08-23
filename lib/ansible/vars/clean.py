@@ -96,6 +96,11 @@ def remove_internal_keys(data):
         if key in data and not data[key]:
             del data[key]
 
+    # cleanse fact values that are allowed from actions but not modules
+    for key in list(data.get('ansible_facts', {}).keys()):
+        if key.startswith('discovered_interpreter_'):
+            del data['ansible_facts'][key]
+
 
 def clean_facts(facts):
     ''' remove facts that can override internal keys or otherwise deemed unsafe '''
