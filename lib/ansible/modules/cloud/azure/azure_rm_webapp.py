@@ -724,8 +724,10 @@ class AzureRMWebApps(AzureRMModuleBase):
                (webapp['state'] != 'Running' and self.power_action == 'start') or \
                self.power_action == 'restart':
 
+                self.results['changed'] = True
                 if self.check_mode:
-                    self.results['changed'] = True
+                    return self.results
+
                 self.start_webapp(self.power_action)
 
         return self.results
