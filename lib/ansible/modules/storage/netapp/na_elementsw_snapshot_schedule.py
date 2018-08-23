@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 
 module: na_elementsw_snapshot_schedule
 
-short_description: Manage ElementSW snapshot schedules
+short_description: NetApp Element Software Snapshot Schedules
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
