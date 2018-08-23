@@ -117,6 +117,7 @@ class AnsibleAWSModule(object):
                 msg='Python modules "botocore" or "boto3" are missing, please install both')
 
         self.check_mode = self._module.check_mode
+        self._diff = self._module._diff
         self._name = self._module._name
 
     @property
