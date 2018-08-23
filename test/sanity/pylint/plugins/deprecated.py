@@ -6,6 +6,8 @@ __metaclass__ = type
 
 from distutils.version import StrictVersion
 
+import astroid
+
 from pylint.interfaces import IAstroidChecker
 from pylint.checkers import BaseChecker
 from pylint.checkers.utils import check_messages
@@ -68,7 +70,10 @@ class AnsibleDeprecatedChecker(BaseChecker):
                         if len(node.keywords) == 1 and keyword.arg == None:
                             # This is likely a **kwargs splat
                             return
-                        if keyword.arg == 'version':
+                        elif keyword.arg == 'version':
+                            if isinstance(keyword.value.value, astroid.Name):
+                                # This is likely a variable
+                                return
                             version = keyword.value.value
                 if not version:
                     try:
