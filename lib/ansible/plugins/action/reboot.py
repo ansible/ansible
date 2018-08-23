@@ -75,7 +75,7 @@ class ActionModule(ActionBase):
             pre_reboot_delay = 0
 
         # Convert seconds to minutes for Linux. If less that 60, set it to 0 except for macOS which will
-        # severe the connection too quickly if set to 0, so set that to 1.
+        # sever the connection too quickly if set to 0, so set that to 1.
         # We could simplify this by setting them both to 1, but I think of all the time that
         # people will lose waiting for that extra 1 minute delay and want to give them their
         # lives back.
@@ -90,6 +90,13 @@ class ActionModule(ActionBase):
 
     def get_system_uptime(self):
         command_result = self._low_level_execute_command(self.DEFAULT_UPTIME_COMMAND, sudoable=self.DEFAULT_SUDOABLE)
+
+        # For single board computers, e.g., Raspberry Pi, that lack a real time clock and are using fake-hwclock
+        # launched by systemd, the update of utmp/wtmp is not done correctly.
+        # Fall back to using uptime -s for those systems.
+        # https://github.com/systemd/systemd/issues/6057
+        if '1970-01-01 00:00' in command_result['stdout']:
+            command_result = self._low_level_execute_command('uptime -s', sudoable=self.DEFAULT_SUDOABLE)
 
         if command_result['rc'] != 0:
             raise AnsibleError("%s: failed to get host uptime info, rc: %d, stdout: %s, stderr: %s"
@@ -155,7 +162,6 @@ class ActionModule(ActionBase):
 
         remote_command = self.construct_command()
         reboot_result = self._low_level_execute_command(remote_command, sudoable=self.DEFAULT_SUDOABLE)
-
         result = {}
         result['start'] = datetime.utcnow()
 
