@@ -239,6 +239,11 @@ class ActionModule(ActionBase):
         self._supports_check_mode = True
         self._supports_async = True
 
+        # If running with local connection, fail so we don't reboot ourself
+        if self._connection.transport == 'local':
+            msg = 'Running {0} with local connection would reboot the control node.'.format(self._task.action)
+            return dict(changed=False, elapsed=0, rebooted=False, failed=True, msg=msg)
+
         if self._play_context.check_mode:
             return dict(changed=True, elapsed=0, rebooted=True)
 
