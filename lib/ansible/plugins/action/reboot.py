@@ -1,4 +1,4 @@
-# (c) 2018, Matt Davis <mdavis@ansible.com>
+# (c) 2016-2018, Matt Davis <mdavis@ansible.com>
 # (c) 2018, Sam Doran <sdoran@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -80,7 +80,7 @@ class ActionModule(ActionBase):
         # people will lose waiting for that extra 1 minute delay and want to give them their
         # lives back.
         delay_min = pre_reboot_delay // 60
-        delay_min_macos = pre_reboot_delay // 60 | 1
+        delay_min_macos = delay_min | 1
         msg = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
 
         shutdown_command_args = shutdown_command_args.format(delay_sec=pre_reboot_delay, delay_min=delay_min, delay_min_macos=delay_min_macos, message=msg)
