@@ -11,6 +11,7 @@ Ansible Changes By Release
 * Fix setting of environment in a task that uses a loop:
   https://github.com/ansible/ansible/issues/32685
 * Fix https retrieval with TLSv1.2: https://github.com/ansible/ansible/pull/32053
+* Backported the AWS EC2 assign_public_ip fix for when a setting of "no" is ignored: https://github.com/ansible/ansible/pull/43954
 
 
 <a id="2.3.3"></a>
