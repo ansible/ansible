@@ -86,6 +86,7 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
+      os_disk_size_gb: 64
       network_interfaces: testvm001
       availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
       image:
@@ -190,6 +191,7 @@
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
+      os_disk_size_gb: 64
       network_interfaces: testvm001
       image:
         offer: UbuntuServer
