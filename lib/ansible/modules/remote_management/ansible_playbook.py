@@ -251,7 +251,8 @@ def run_module():
                     'ksu',
                     'runas',
                     'pmrun',
-                    'enable'
+                    'enable',
+                    'machinectl'
                 ],
                 default='sudo'),
             become_user=dict(type='str', default='root'),
