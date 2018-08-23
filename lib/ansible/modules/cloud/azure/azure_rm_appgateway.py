@@ -514,7 +514,19 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                             ev['min_protocol_version'] = 'TLSv1_1'
                         elif ev['min_protocol_version'] == 'tls_v1_2':
                             ev['min_protocol_version'] = 'TLSv1_2'
-                    self.parameters["ssl_policy"] = ev
+                    if 'disabled_ssl_protocols' in ev:
+                        protocols = ev['disabled_ssl_protocols']
+                        for i in range(len(protocols)):
+                            if protocols[i] == 'tls_v1_0':
+                                protocols[i] = 'TLSv1_0'
+                            elif protocols[i] == 'tls_v1_1':
+                                protocols[i] = 'TLSv1_1'
+                            elif protocols[i] == 'tls_v1_2':
+                                protocols[i] = 'TLSv1_2'
+                    if 'cipher_suites' in ev:
+                        suites = ev['cipher_suites']
+                        for i in range(len(suites)):
+                            suites[i] = suites[i].upper()
                 elif key == "gateway_ip_configurations":
                     self.parameters["gateway_ip_configurations"] = kwargs[key]
                 elif key == "authentication_certificates":
