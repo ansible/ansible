@@ -62,7 +62,7 @@ options:
     description:
      - Source password.
      - Optional if this is same as destination password.
-short_description: "Manage NetApp SnapMirror"
+short_description: "NetApp ONTAP Manage SnapMirror"
 version_added: "2.7"
 '''
 
