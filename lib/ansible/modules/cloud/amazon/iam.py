@@ -254,7 +254,7 @@ def delete_dependencies_first(module, iam, name):
         changed = True
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
-        if 'Cannot find Login Profile' not in error_msg:
+        if 'Login Profile for User ' + name + ' cannot be found.' not in error_msg:
             module.fail_json(changed=changed, msg="Failed to delete login profile: %s" % err, exception=traceback.format_exc())
 
     # try to detach policies
