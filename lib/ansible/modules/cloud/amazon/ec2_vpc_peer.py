@@ -50,7 +50,7 @@ options:
     required: false
     default: present
     choices: ['present', 'absent', 'accept', 'reject']
-author: Mike Mochan(@mmochan)
+author: Mike Mochan (@mmochan)
 extends_documentation_fragment:
     - aws
     - ec2

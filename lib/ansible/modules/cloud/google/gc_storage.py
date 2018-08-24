@@ -86,7 +86,9 @@ requirements:
     - "python >= 2.6"
     - "boto >= 2.9"
 
-author: "Benno Joy (@bennojoy), extended by Lukas Beumer (@nitaco)"
+author:
+- Benno Joy (@bennojoy)
+- Lukas Beumer (@nitaco)
 
 '''
 

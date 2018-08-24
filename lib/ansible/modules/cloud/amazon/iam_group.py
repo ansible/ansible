@@ -25,7 +25,9 @@ short_description: Manage AWS IAM groups
 description:
   - Manage AWS IAM groups
 version_added: "2.4"
-author: Nick Aslanidis, @naslanidis, Maksym Postument, @infectsoldier
+author:
+- Nick Aslanidis (@naslanidis)
+- Maksym Postument (@infectsoldier)
 options:
   name:
     description:

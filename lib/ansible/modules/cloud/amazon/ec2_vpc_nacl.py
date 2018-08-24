@@ -72,7 +72,7 @@ options:
     required: false
     choices: ['present', 'absent']
     default: present
-author: Mike Mochan(@mmochan)
+author: Mike Mochan (@mmochan)
 extends_documentation_fragment:
     - aws
     - ec2

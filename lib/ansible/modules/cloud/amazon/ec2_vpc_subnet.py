@@ -18,7 +18,9 @@ short_description: Manage subnets in AWS virtual private clouds
 description:
     - Manage subnets in AWS virtual private clouds
 version_added: "2.0"
-author: Robert Estelle (@erydo), Brad Davidson (@brandond)
+author:
+- Robert Estelle (@erydo)
+- Brad Davidson (@brandond)
 requirements: [ boto3 ]
 options:
   az:

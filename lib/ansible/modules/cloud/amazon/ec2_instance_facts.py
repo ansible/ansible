@@ -18,8 +18,8 @@ description:
     - Gather facts about ec2 instances in AWS
 version_added: "2.4"
 author:
-  - Michael Schuett, @michaeljs1990
-  - Rob White, @wimnat
+  - Michael Schuett (@michaeljs1990)
+  - Rob White (@wimnat)
 requirements: [ "boto3", "botocore" ]
 options:
   instance_ids:

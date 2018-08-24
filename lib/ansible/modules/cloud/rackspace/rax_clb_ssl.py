@@ -66,7 +66,7 @@ options:
     description:
     - How long before "wait" gives up, in seconds.
     default: 300
-author: Ash Wilson
+author: Ash Wilson (@smashwilson)
 extends_documentation_fragment:
   - rackspace
   - rackspace.openstack

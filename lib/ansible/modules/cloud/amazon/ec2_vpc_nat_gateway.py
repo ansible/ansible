@@ -67,9 +67,9 @@ options:
         When specifying this option, ensure you specify the eip_address parameter
         as well otherwise any subsequent runs will fail.
 author:
-  - "Allen Sanabria (@linuxdynasty)"
-  - "Jon Hadfield (@jonhadfield)"
-  - "Karen Cheng(@Etherdaemon)"
+  - Allen Sanabria (@linuxdynasty)
+  - Jon Hadfield (@jonhadfield)
+  - Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
   - ec2

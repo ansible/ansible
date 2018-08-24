@@ -84,7 +84,7 @@ options:
     description:
       - Optional client token to ensure idempotency
     required: false
-author: Karen Cheng(@Etherdaemon)
+author: Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
   - ec2

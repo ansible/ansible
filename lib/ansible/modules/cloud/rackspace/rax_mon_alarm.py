@@ -65,7 +65,7 @@ options:
     description:
     - Arbitrary key/value pairs to accompany the alarm. Must be a hash of String
       keys and values between 1 and 255 characters long.
-author: Ash Wilson
+author: Ash Wilson (@smashwilson)
 extends_documentation_fragment: rackspace.openstack
 '''
 

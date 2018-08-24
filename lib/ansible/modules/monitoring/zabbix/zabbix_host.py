@@ -22,10 +22,10 @@ description:
 version_added: "2.0"
 author:
     - "(@cove)"
-    - "Tony Minfei Ding"
-    - "Harrison Gu (@harrisongu)"
-    - "Werner Dijkerman"
-    - "Eike Frost (@eikef)"
+    - Tony Minfei Ding
+    - Harrison Gu (@harrisongu)
+    - Werner Dijkerman (@dj-wasabi)
+    - Eike Frost (@eikef)
 requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
