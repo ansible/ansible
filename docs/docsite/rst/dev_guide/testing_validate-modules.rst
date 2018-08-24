@@ -106,7 +106,9 @@ Errors
   316       Invalid ``ANSIBLE_METADATA`` schema
   317       option is marked as required but specifies a default.
             Arguments with a default should not be marked as required
-  318       Module deprecated, but DOCUMENTATION.deprecated is missing
+  318       Module marked as deprecated or removed in at least one of the filename, its metadata, or
+            in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all
+            documentation for removed) but not in all three places.
   319       ``RETURN`` fragments missing  or invalid
   320       ``DOCUMENTATION.options`` must be a dictionary/hash when used
   321       ``Exception`` attempting to import module for ``argument_spec`` introspection
@@ -121,6 +123,8 @@ Errors
   330       Choices value from the argument_spec is not compatible with type defined in the argument_spec
   331       argument in argument_spec must be a dictionary/hash when used
   332       ``AnsibleModule`` schema validation error
+  333       ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
+
   ..
 ---------   -------------------
   **4xx**   **Syntax**

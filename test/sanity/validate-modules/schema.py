@@ -179,10 +179,8 @@ def metadata_1_0_schema(deprecated):
     )
 
 
-def metadata_1_1_schema(deprecated):
+def metadata_1_1_schema():
     valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
-    if deprecated:
-        valid_status = Any('deprecated')
 
     return Schema(
         {
