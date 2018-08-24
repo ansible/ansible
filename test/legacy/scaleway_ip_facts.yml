@@ -1,0 +1,20 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_ip_facts.yml
+
+- name: Test IP information retrival from Scaleway
+  hosts: localhost
+  gather_facts: no
+  environment:
+    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
+
+  tasks:
+
+  - name: Get IP information and register it in a variable
+    scaleway_ip_facts:
+
+    register: ip_fetch_task
+
+  - debug: var=ip_fetch_task
+
+  - assert:
+      that:
+        - ip_fetch_task is success
