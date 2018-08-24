@@ -257,6 +257,88 @@
       - result is changed
       - "stat_result.stat.mode == '0775'"
 
+# https://github.com/ansible/ansible/issues/27617
+
+- name: set role facts
+  set_fact:
+    http_port: 27617
+    files_dir: '{{ output_dir }}/files'
+
+- name: create files_dir
+  file:
+    dest: "{{ files_dir }}"
+    state: directory
+
+- name: create src file
+  copy:
+    dest: '{{ files_dir }}/27617.txt'
+    content: "ptux"
+
+- name: create sha1 checksum file of src
+  copy:
+    dest: '{{ files_dir }}/sha1sum.txt'
+    content: "a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt"
+
+- name: add sha1 checksum not going to be downloaded
+  lineinfile:
+    dest: "{{ files_dir }}/sha1sum.txt"
+    line: "{{ item }}"
+  loop:
+    - '3911340502960ca33aece01129234460bfeb2791  not_target1.txt'
+    - '1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt'
+
+- name: create sha256 checksum file of src
+  copy:
+    dest: '{{ files_dir }}/sha256sum.txt'
+    content: "b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt"
+
+- name: add sha256 checksum not going to be downloaded
+  lineinfile:
+    dest: "{{ files_dir }}/sha256sum.txt"
+    line: "{{ item }}"
+  loop:
+    - '30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt'
+    - 'd0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt'
+
+- copy:
+    src: "testserver.py"
+    dest: "{{ output_dir }}/testserver.py"
+
+- name: start SimpleHTTPServer for issues 27617
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
+  async: 90
+  poll: 0
+
+- name: download src with sha1 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ output_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1
+
+- stat:
+    path: "{{ output_dir }}/27617.txt"
+  register: stat_result_sha1
+
+- name: download src with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ output_dir }}/27617sha256.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256
+
+- stat:
+    path: "{{ output_dir }}/27617.txt"
+  register: stat_result_sha256
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - result_sha1 is changed
+      - result_sha256 is changed
+      - "stat_result_sha1.stat.exists == true"
+      - "stat_result_sha256.stat.exists == true"
+
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
   get_url:
