@@ -64,23 +64,24 @@ class CryptHash(BaseHash):
             raise AnsibleError("crypt.crypt does not support '%s' algorithm" % self.algorithm)
         self.algo_data = self.algorithms[algorithm]
 
-    def hash(self, secret, **settings):
-        salt = self._salt(**settings)
-        rounds = self._rounds(**settings)
-        return self._encrypt(secret, salt, rounds)
+    def hash(self, secret, salt=None, salt_size=None, rounds=None):
+        salt = self._salt(salt, salt_size)
+        rounds = self._rounds(rounds)
+        return self._hash(secret, salt, rounds)
 
-    def _salt(self, **settings):
-        salt_size = settings.get('salt_size') or self.algo_data.salt_size
-        return settings.get('salt') or random_salt(salt_size)
+    def _salt(self, salt, salt_size):
+        salt_size = salt_size or self.algo_data.salt_size
+        return salt or random_salt(salt_size)
 
-    def _rounds(self, **settings):
-        if settings.get('rounds') == self.algo_data.implicit_rounds:
+    def _rounds(self, rounds):
+        if rounds == self.algo_data.implicit_rounds:
             # Passlib does not include the rounds if it is the same as implict_rounds.
             # Make crypt lib behave the same, by not explicitly specifying the rounds in that case.
             return None
-        return settings.get('rounds')
+        else:
+            return rounds
 
-    def _encrypt(self, secret, salt, rounds):
+    def _hash(self, secret, salt, rounds):
         if rounds is None:
             saltstring = "$%s$%s" % (self.algo_data.crypt_id, salt)
         else:
@@ -108,26 +109,42 @@ class PasslibHash(BaseHash):
         except:
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
 
-    def hash(self, secret, **settings):
-        self._clean_salt(settings)
-        self._clean_rounds(settings)
-        return self._encrypt(secret, settings)
+    def hash(self, secret, salt=None, salt_size=None, rounds=None):
+        salt = self._clean_salt(salt)
+        rounds = self._clean_rounds(rounds)
+        return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
 
-    def _clean_salt(self, settings):
-        if "salt" in settings:
-            if issubclass(self.crypt_algo, HasRawSalt):
-                settings["salt"] = to_bytes(settings["salt"], encoding='ascii', errors='strict')
-            else:
-                settings["salt"] = to_text(settings["salt"], encoding='ascii', errors='strict')
+    def _clean_salt(self, salt):
+        if not salt:
+            return None
+        elif issubclass(self.crypt_algo, HasRawSalt):
+            return to_bytes(salt, encoding='ascii', errors='strict')
+        else:
+            return to_text(salt, encoding='ascii', errors='strict')
 
-    def _clean_rounds(self, settings):
+    def _clean_rounds(self, rounds):
         algo_data = self.algorithms.get(self.algorithm)
-        if algo_data and algo_data.implicit_rounds and "rounds" not in settings:
-            # Ensure passlib behaves the same as crypt in case no rounds were specified.
-            # That means instead of using the passlib default for the rounds the crypt default is used.
-            settings["rounds"] = algo_data.implicit_rounds
+        if rounds:
+            return rounds
+        elif algo_data and algo_data.implicit_rounds:
+            # The default rounds used by passlib depend on the passlib version.
+            # For consistency ensure that passlib behaves the same as crypt in case no rounds were specified.
+            # Thus use the crypt defaults.
+            return algo_data.implicit_rounds
+        else:
+            return None
 
-    def _encrypt(self, secret, settings):
+    def _hash(self, secret, salt, salt_size, rounds):
+        # Not every hash algorithm supports every paramter.
+        # Thus create the settings dict only with set parameters.
+        settings = {}
+        if salt:
+            settings['salt'] = salt
+        if salt_size:
+            settings['salt_size'] = salt_size
+        if rounds:
+            settings['rounds'] = rounds
+
         # starting with passlib 1.7 'using' and 'hash' should be used instead of 'encrypt'
         if hasattr(self.crypt_algo, 'hash'):
             result = self.crypt_algo.using(**settings).hash(secret)
@@ -149,21 +166,15 @@ class PasslibHash(BaseHash):
         return to_text(result, errors='strict')
 
 
-def passlib_or_crypt(secret, algorithm, **settings):
+def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None):
     if PASSLIB_AVAILABLE:
-        return PasslibHash(algorithm).hash(secret, **settings)
+        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
     else:
-        return CryptHash(algorithm).hash(secret, **settings)
+        return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
 
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
-    settings = {}
-    if salt_size:
-        settings['salt_size'] = salt_size
-    elif salt:
-        settings['salt'] = salt
-
-    return passlib_or_crypt(result, encrypt, **settings)
+    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt)
 
 
 def random_salt(length=8):
