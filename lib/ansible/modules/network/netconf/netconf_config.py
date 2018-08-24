@@ -206,11 +206,13 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 diff:
-  description: If --diff option in enabled while running, the before and after configration change are
+  description: If --diff option in enabled while running, the before and after configuration change are
                returned as part of before and after key.
   returned: when diff is enabled
-  type: string
-  sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
+  type: dict
+  sample:
+    "after": "<rpc-reply>\n<data>\n<configuration>\n<version>17.3R1.10</version>...<--snip-->"
+    "before": "<rpc-reply>\n<data>\n<configuration>\n <version>17.3R1.10</version>...<--snip-->"
 '''
 
 from ansible.module_utils._text import to_text
@@ -369,12 +371,14 @@ def main():
 
             after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
 
-            if sanitize_xml(before) != sanitize_xml(after):
+            sanitized_before = sanitize_xml(before)
+            sanitized_after = sanitize_xml(after)
+            if sanitized_before != sanitized_after:
                 result['changed'] = True
 
             if module._diff:
                 if result['changed']:
-                    result['diff'] = {'before': before, 'after': after}
+                    result['diff'] = {'before': sanitized_before, 'after': sanitized_after}
 
     except ConnectionError as e:
         module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
