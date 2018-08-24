@@ -27,7 +27,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 import re
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -61,7 +64,7 @@ class IPAClient(object):
             resp, info = fetch_url(module=self.module, url=url, data=to_bytes(data), headers=headers)
             status_code = info['status']
             if status_code not in [200, 201, 204]:
-                self._fail('login', info['msg'])
+                self._fail('login', info)
 
             self.headers = {'referer': self.get_base_url(),
                             'Content-Type': 'application/json',
@@ -96,7 +99,7 @@ class IPAClient(object):
         data = dict(method=method)
 
         # TODO: We should probably handle this a little better.
-        if method in ('ping', 'config_show'):
+        if method in ('ping', 'config_show', 'vaultconfig_show'):
             data['params'] = [[], {}]
         elif method == 'config_mod':
             data['params'] = [[], item]
@@ -122,6 +125,10 @@ class IPAClient(object):
         resp = json.loads(to_text(resp.read(), encoding=charset), encoding=charset)
         err = resp.get('error')
         if err is not None:
+            # In case of vault_retrieve, empty vault would lead to an error in
+            # the response. Need to handle this seperately.
+            if method == 'vault_retrieve_internal' and err['code'] == 4001:
+                return None
             self._fail('response %s' % method, err)
 
         if 'result' in resp:
