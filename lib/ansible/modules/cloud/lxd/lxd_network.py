@@ -62,14 +62,16 @@ options:
         default: unix:/var/lib/lxd/unix.socket
     key_file:
         description:
-          - The client certificate key file path.
+          - The client certificate key file path. If unspecified, the
+          client.key file in the user's lxc config directory is used if present.
         required: false
-        default: '"{0}/.config/lxc/client.key".format(os.environ["HOME"])'
+        default: None
     cert_file:
         description:
-          - The client certificate file path.
+          - The client certificate file path.  If unspecified, the
+          client.crt file in the user's lxc config directory is used if present.
         required: false
-        default: '"{0}/.config/lxc/client.crt".format(os.environ["HOME"])'
+        default: None
     trust_password:
         description:
           - The client trusted password.
@@ -110,9 +112,6 @@ EXAMPLES = '''
   - name: create a bridged network
     lxd_network:
       url: https://127.0.0.1:8443
-      # These cert_file and key_file values are equal to the default values.
-      #cert_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
-      #key_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
       trust_password: mypassword
       name: mybr0
       state: present
@@ -194,8 +193,10 @@ class LXDNetworkManagement(object):
         self.new_name = self.module.params.get('new_name', None)
 
         self.url = self.module.params['url']
-        self.key_file = self.module.params.get('key_file', None)
-        self.cert_file = self.module.params.get('cert_file', None)
+        self.key_file = self.module.params.get('key_file',
+                                               '{0}/.config/lxc/client.key'.format(os.environ['HOME'])
+        self.cert_file = self.module.params.get('cert_file',
+                                                '{0}/.config/lxc/client.crt'.format(os.environ['HOME'])
         self.debug = self.module._verbosity >= 4
         try:
             self.client = LXDClient(
@@ -351,11 +352,11 @@ def main():
             ),
             key_file=dict(
                 type='str',
-                default='{0}/.config/lxc/client.key'.format(os.environ['HOME'])
+                default=None)
             ),
             cert_file=dict(
                 type='str',
-                default='{0}/.config/lxc/client.crt'.format(os.environ['HOME'])
+                default=None)
             ),
             trust_password=dict(type='str', no_log=True)
         ),
