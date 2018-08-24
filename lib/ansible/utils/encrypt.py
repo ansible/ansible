@@ -40,6 +40,29 @@ _LOCK = multiprocessing.Lock()
 DEFAULT_PASSWORD_LENGTH = 20
 
 
+def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
+    '''Return a random password string of length containing only chars
+
+    :kwarg length: The number of characters in the new password.  Defaults to 20.
+    :kwarg chars: The characters to choose from.  The default is all ascii
+        letters, ascii digits, and these symbols ``.,:-_``
+    '''
+    if not isinstance(chars, text_type):
+        raise AnsibleAssertionError('%s (%s) is not a text_type' % (chars, type(chars)))
+
+    random_generator = random.SystemRandom()
+    return u''.join(random_generator.choice(chars) for dummy in range(length))
+
+
+def random_salt(length=8):
+    """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
+    """
+    # Note passlib salt values must be pure ascii so we can't let the user
+    # configure this
+    salt_chars = string.ascii_letters + string.digits + u'./'
+    return random_password(length=length, chars=salt_chars)
+
+
 class BaseHash(object):
     algo = namedtuple('algo', ['crypt_id', 'salt_size', 'implicit_rounds'])
     algorithms = {
@@ -175,26 +198,3 @@ def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None):
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt)
-
-
-def random_salt(length=8):
-    """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
-    """
-    # Note passlib salt values must be pure ascii so we can't let the user
-    # configure this
-    salt_chars = string.ascii_letters + string.digits + u'./'
-    return random_password(length=length, chars=salt_chars)
-
-
-def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
-    '''Return a random password string of length containing only chars
-
-    :kwarg length: The number of characters in the new password.  Defaults to 20.
-    :kwarg chars: The characters to choose from.  The default is all ascii
-        letters, ascii digits, and these symbols ``.,:-_``
-    '''
-    if not isinstance(chars, text_type):
-        raise AnsibleAssertionError('%s (%s) is not a text_type' % (chars, type(chars)))
-
-    random_generator = random.SystemRandom()
-    return u''.join(random_generator.choice(chars) for dummy in range(length))
