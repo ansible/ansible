@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Hai Cao, <t-haicao@microsoft.com>
+# Copyright (c) 2018 Hai Cao, <t-haicao@microsoft.com> Yunge Zhu <yungez@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_trafficmanager
+module: azure_rm_trafficmanagerprofile
 version_added: "2.7"
 short_description: Manage a Traffic Manager profile.
 description:
@@ -246,7 +246,7 @@ monitor_config_spec = dict(
 
 
 
-class AzureRMTrafficManager(AzureRMModuleBase):
+class AzureRMTrafficManagerProfile(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -306,7 +306,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
             changed=False
         )
 
-        super(AzureRMTrafficManager, self).__init__(derived_arg_spec=self.module_arg_spec, supports_check_mode=True)
+        super(AzureRMTrafficManagerProfile, self).__init__(derived_arg_spec=self.module_arg_spec, supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
@@ -445,7 +445,7 @@ class AzureRMTrafficManager(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMTrafficManager()
+    AzureRMTrafficManagerProfile()
 
 
 if __name__ == '__main__':

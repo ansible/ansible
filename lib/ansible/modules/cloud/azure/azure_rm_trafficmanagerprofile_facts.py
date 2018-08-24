@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_trafficmanager_facts
+module: azure_rm_trafficmanagerprofile_facts
 
 version_added: "2.7"
 
@@ -233,8 +233,8 @@ def serialize_endpoint(endpoint):
     )
 
 
-class AzureRMTrafficManagerFacts(AzureRMModuleBase):
-    """Utility class to get Azure Traffic Manager facts"""
+class AzureRMTrafficManagerProfileFacts(AzureRMModuleBase):
+    """Utility class to get Azure Traffic Manager profile facts"""
 
     def __init__(self):
 
@@ -253,7 +253,7 @@ class AzureRMTrafficManagerFacts(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMTrafficManagerFacts, self).__init__(
+        super(AzureRMTrafficManagerProfileFacts, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
@@ -277,7 +277,7 @@ class AzureRMTrafficManagerFacts(AzureRMModuleBase):
         return self.results
 
     def get_item(self):
-        """Get a single Azure Traffic Manager"""
+        """Get a single Azure Traffic Manager profile"""
 
         self.log('Get properties for {0}'.format(self.name))
 
@@ -296,7 +296,7 @@ class AzureRMTrafficManagerFacts(AzureRMModuleBase):
         return result
 
     def list_resource_group(self):
-        """Get all Azure Traffic Managers within a resource group"""
+        """Get all Azure Traffic Manager profiles within a resource group"""
 
         self.log('List all Azure Traffic Managers within a resource group')
 
@@ -314,7 +314,7 @@ class AzureRMTrafficManagerFacts(AzureRMModuleBase):
         return results
 
     def list_all(self):
-        """Get all Azure Traffic Managers within a subscription"""
+        """Get all Azure Traffic Manager profiles within a subscription"""
         self.log('List all Traffic Manager profiles within a subscription')
         try:
             response = self.traffic_manager_management_client.profiles.list_by_subscription()
@@ -365,7 +365,7 @@ class AzureRMTrafficManagerFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMTrafficManagerFacts()
+    AzureRMTrafficManagerProfileFacts()
 
 
 if __name__ == '__main__':
