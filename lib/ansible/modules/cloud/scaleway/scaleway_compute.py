@@ -161,35 +161,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote
-from ansible.module_utils.scaleway import ScalewayAPI, SCALEWAY_LOCATION
-
-SCALEWAY_COMMERCIAL_TYPES = [
-
-    # Virtual ARM64 compute instance
-    'ARM64-2GB',
-    'ARM64-4GB',
-    'ARM64-8GB',
-    'ARM64-16GB',
-    'ARM64-32GB',
-    'ARM64-64GB',
-    'ARM64-128GB',
-
-    # Baremetal
-    'C1',  # ARM64 (4 cores) - 2GB
-    'C2S',  # X86-64 (4 cores) - 8GB
-    'C2M',  # X86-64 (8 cores) - 16GB
-    'C2L',  # x86-64 (8 cores) - 32 GB
-
-    # Virtual X86-64 compute instance
-    'START1-XS',  # Starter X86-64 (1 core) - 1GB - 25 GB NVMe
-    'START1-S',  # Starter X86-64 (2 cores) - 2GB - 50 GB NVMe
-    'START1-M',  # Starter X86-64 (4 cores) - 4GB - 100 GB NVMe
-    'START1-L',  # Starter X86-64 (8 cores) - 8GB - 200 GB NVMe
-    'X64-15GB',
-    'X64-30GB',
-    'X64-60GB',
-    'X64-120GB',
-]
+from ansible.module_utils.scaleway import ScalewayAPI, SCALEWAY_LOCATION, SCALEWAY_COMMERCIAL_TYPES_ARCH_MAPPING
 
 SCALEWAY_SERVER_STATES = (
     'stopped',
@@ -605,7 +577,7 @@ def main():
             image=dict(required=True),
             name=dict(),
             region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
-            commercial_type=dict(required=True, choices=SCALEWAY_COMMERCIAL_TYPES),
+            commercial_type=dict(required=True, choices=SCALEWAY_COMMERCIAL_TYPES_ARCH_MAPPING.keys()),
             enable_ipv6=dict(default=False, type="bool"),
             state=dict(choices=state_strategy.keys(), default='present'),
             tags=dict(type="list", default=[]),

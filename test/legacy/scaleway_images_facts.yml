@@ -1,0 +1,23 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_images_facts.yml
+
+- name: Test images information retrival from Scaleway
+  hosts: localhost
+  gather_facts: no
+  environment:
+    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
+
+  tasks:
+
+  - name: Get image information and register it in a variable
+    scaleway_images_facts:
+      name: Bionic
+      region: ams1
+      commercial_type: START1-S
+
+    register: image_fetch_task
+
+  - debug: var=image_fetch_task
+
+  - assert:
+      that:
+        - image_fetch_task is success
