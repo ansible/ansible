@@ -193,3 +193,13 @@
   register: new_rap_without_group
   check_mode: yes
   failed_when: "new_rap_without_group.msg != 'User groups must be defined to create a new RAP.'"
+
+- name: fail when create a new RAP with an invalid user group
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - fake_group@builtin
+    state: present
+  register: new_rap_invalid_group
+  check_mode: yes
+  failed_when: new_rap_invalid_group.changed != false or new_rap_invalid_group.msg is not search('is not a valid account')

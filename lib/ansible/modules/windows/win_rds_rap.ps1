@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.SID
 
 $ErrorActionPreference = "Stop"
 
@@ -83,6 +84,18 @@ if ($name -match "[*/\\;:?`"<>|\t]+") {
     Fail-Json -obj $result -message "Invalid character in RAP name."
 }
 
+# Validate user groups
+if ($null -ne $user_groups) {
+    $user_groups | foreach {
+        $group = $_
+        # Test that the group is resolvable on the local machine
+        $sid = Convert-ToSID -account_name $group
+        if (!$sid) {
+            Fail-Json -obj $result -message "$group is not a valid user group on the host machine or domain"
+        }
+    }
+}
+
 if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {
     Add-Warning -obj $result -message "Parameter computer_group ignored because the computer_group_type is set to allow_any."
 }
@@ -117,6 +130,8 @@ if ($state -eq 'absent') {
         $result.changed = $true
     }
 
+    # we cannot configure a RAP that was created above in check mode as it
+    # won't actually exist
     if($rap_exist) {
         $rap = Get-RAP -Name $name
         $result.rap = $rap
@@ -167,7 +182,6 @@ if ($state -eq 'absent') {
             $groups_to_remove = @($rap.UserGroups | where { $user_groups -notcontains $_ })
             $groups_to_add = @($user_groups | where { $rap.UserGroups -notcontains $_ })
 
-            # TODO Check that each element is a valid group name (required)
             foreach($group in $groups_to_add) {
                 New-Item -Path "RDS:\GatewayServer\RAP\$name\UserGroups" -Name $group -WhatIf:$check_mode
                 $result.changed = $true
