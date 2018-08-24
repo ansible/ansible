@@ -262,6 +262,35 @@
       - 'file8_dir_stat["stat"].isdir'
       - 'file8_dir_stat["stat"]["mtime"] != file8_initial_dir_stat["stat"]["mtime"]'
 
+- name: Get initial stat info to compare with later
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file11_initial_dir_stat
+
+- name: Use touch with directory as dest and keep mtime and atime
+  file:
+    dest: '{{output_dir}}/sub1'
+    state: touch
+    force: False
+    modification_time: preserve
+    access_time: preserve
+  register: file11_result
+
+- name: Get stat info to show the directory has not been changed
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file11_dir_stat
+
+- name: verify that the directory has not been updated
+  assert:
+    that:
+      - 'file11_result is not changed'
+      - 'file11_dir_stat["stat"].isdir'
+      - 'file11_dir_stat["stat"]["mtime"] == file11_initial_dir_stat["stat"]["mtime"]'
+      - 'file11_dir_stat["stat"]["atime"] == file11_initial_dir_stat["stat"]["atime"]'
+
 #
 # State=directory realizes that the directory already exists and does nothing
 #
