@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: ec2_instance
 short_description: Create & manage EC2 instances
 description:
-    - Gather facts about ec2 instances in AWS
+    - Create and manage AWS EC2 instance
 version_added: "2.5"
 author:
   - Ryan Scott Brown, @ryansb
