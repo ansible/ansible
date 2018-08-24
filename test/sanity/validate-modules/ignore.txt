@@ -1074,9 +1074,7 @@ lib/ansible/modules/storage/netapp/netapp_e_facts.py E325
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py E322
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py E325
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py E326
-lib/ansible/modules/storage/netapp/netapp_e_host.py E322
 lib/ansible/modules/storage/netapp/netapp_e_host.py E325
-lib/ansible/modules/storage/netapp/netapp_e_host.py E326
 lib/ansible/modules/storage/netapp/netapp_e_lun_mapping.py E325
 lib/ansible/modules/storage/netapp/netapp_e_snapshot_group.py E322
 lib/ansible/modules/storage/netapp/netapp_e_snapshot_group.py E325
