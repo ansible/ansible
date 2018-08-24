@@ -124,7 +124,7 @@ class NetappElementLdap(object):
             serverURIs=dict(required=False, type=str),
             userSearchBaseDN=dict(required=False, type=str),
             searchBindDN=dict(required=False, type=str),
-            searchBindPassword=dict(required=False, type=str),
+            searchBindPassword=dict(required=False, type=str, no_log=True),
             userSearchFilter=dict(required=False, type=str),
             userDNTemplate=dict(required=False, type=str),
             groupSearchCustomFilter=dict(required=False, type=str)
