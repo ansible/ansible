@@ -36,14 +36,14 @@ class passlib_off(object):
 
 
 def assert_hash(expected, secret, algorithm, **settings):
-    assert encrypt.CryptHash(algorithm, AnsibleFilterError).hash(secret, **settings) == expected
+    assert encrypt.CryptHash(algorithm).hash(secret, **settings) == expected
 
     if encrypt.PASSLIB_AVAILABLE:
-        assert encrypt.passlib_or_crypt(secret, algorithm, AnsibleFilterError, **settings) == expected
-        assert encrypt.PasslibHash(algorithm, AnsibleFilterError).hash(secret, **settings) == expected
+        assert encrypt.passlib_or_crypt(secret, algorithm, **settings) == expected
+        assert encrypt.PasslibHash(algorithm).hash(secret, **settings) == expected
     else:
         with pytest.raises(AnsibleFilterError):
-            encrypt.PasslibHash(algorithm, AnsibleFilterError).hash(secret, **settings)
+            encrypt.PasslibHash(algorithm).hash(secret, **settings)
 
 
 def test_encrypt_with_rounds():
@@ -63,7 +63,7 @@ def test_encrypt_default_rounds():
     assert_hash("$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.",
                 secret="123", algorithm="sha512_crypt", salt="12345678")
 
-    assert encrypt.CryptHash("md5_crypt", AnsibleFilterError).hash("123")
+    assert encrypt.CryptHash("md5_crypt").hash("123")
 
 
 def test_password_hash_filter_no_passlib():

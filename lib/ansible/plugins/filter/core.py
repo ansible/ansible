@@ -41,7 +41,7 @@ from random import Random, SystemRandom, shuffle, random
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
-from ansible.errors import AnsibleFilterError
+from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.module_utils.six import iteritems, string_types, integer_types
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
@@ -259,7 +259,20 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, **settings):
     }
 
     hashtype = passlib_mapping.get(hashtype, hashtype)
-    return passlib_or_crypt(password, hashtype, error_type=AnsibleFilterError, **settings)
+    try:
+        return passlib_or_crypt(password, hashtype, **settings)
+    except AnsibleError as e:
+        exc_info = sys.exc_info()
+        new_exc = AnsibleFilterError(str(e), orig_exc=e)
+        new_exc.tb = e.tb
+
+        # Ensure the old traceback is kept.
+        # This is handled differently in Python 2 and Python 3, see PEP 3109.
+        if (sys.version_info >= (3, 0)):
+            new_exc.__traceback__ = exc_info[2]
+            raise new_exc
+        else:
+            raise new_exc, None, exc_info[2]
 
 
 def to_uuid(string):

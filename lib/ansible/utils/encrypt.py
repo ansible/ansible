@@ -49,20 +49,19 @@ class BaseHash(object):
         'sha512_crypt': algo(crypt_id='6', salt_size=16, implicit_rounds=5000),
     }
 
-    def __init__(self, algorithm, error_type):
+    def __init__(self, algorithm):
         self.algorithm = algorithm
-        self.error_type = error_type
 
 
 class CryptHash(BaseHash):
-    def __init__(self, algorithm, error_type):
-        super(CryptHash, self).__init__(algorithm, error_type)
+    def __init__(self, algorithm):
+        super(CryptHash, self).__init__(algorithm)
 
         if sys.platform.startswith('darwin'):
-            raise self.error_type("crypt.crypt not supported on Mac OS X/Darwin, install passlib python module")
+            raise AnsibleError("crypt.crypt not supported on Mac OS X/Darwin, install passlib python module")
 
         if algorithm not in self.algorithms:
-            raise self.error_type("crypt.crypt does not support '%s' algorithm" % self.algorithm)
+            raise AnsibleError("crypt.crypt does not support '%s' algorithm" % self.algorithm)
         self.algo_data = self.algorithms[algorithm]
 
     def hash(self, secret, **settings):
@@ -92,22 +91,22 @@ class CryptHash(BaseHash):
         # None as result would be interpreted by the some modules (user module)
         # as no password at all.
         if not result:
-            raise self.error_type("crypt.crypt does not support '%s' algorithm" % self.algorithm)
+            raise AnsibleError("crypt.crypt does not support '%s' algorithm" % self.algorithm)
 
         return result
 
 
 class PasslibHash(BaseHash):
-    def __init__(self, algorithm, error_type):
-        super(PasslibHash, self).__init__(algorithm, error_type)
+    def __init__(self, algorithm):
+        super(PasslibHash, self).__init__(algorithm)
 
         if not PASSLIB_AVAILABLE:
-            raise error_type("passlib must be installed to hash with '%s'" % algorithm)
+            raise AnsibleError("passlib must be installed to hash with '%s'" % algorithm)
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
         except:
-            raise error_type("passlib does not support '%s' algorithm" % algorithm)
+            raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
 
     def hash(self, secret, **settings):
         self._clean_salt(settings)
@@ -135,13 +134,13 @@ class PasslibHash(BaseHash):
         elif hasattr(self.crypt_algo, 'encrypt'):
             result = self.crypt_algo.encrypt(secret, **settings)
         else:
-            raise self.error_type("installed passlib version %s not supported" % passlib.__version__)
+            raise AnsibleError("installed passlib version %s not supported" % passlib.__version__)
 
         # passlib.hash should always return something or raise an exception.
         # Still ensure that there is always a result.
         # Otherwise an empty password might be assumed by some modules, like the user module.
         if not result:
-            raise self.error_type("failed to hash with algorithm '%s'" % self.algorithm)
+            raise AnsibleError("failed to hash with algorithm '%s'" % self.algorithm)
 
         # Hashes from passlib.hash should be represented as ascii strings of hex
         # digits so this should not traceback.  If it's not representable as such
@@ -150,11 +149,11 @@ class PasslibHash(BaseHash):
         return to_text(result, errors='strict')
 
 
-def passlib_or_crypt(secret, algorithm, error_type, **settings):
+def passlib_or_crypt(secret, algorithm, **settings):
     if PASSLIB_AVAILABLE:
-        return PasslibHash(algorithm, error_type).hash(secret, **settings)
+        return PasslibHash(algorithm).hash(secret, **settings)
     else:
-        return CryptHash(algorithm, error_type).hash(secret, **settings)
+        return CryptHash(algorithm).hash(secret, **settings)
 
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
@@ -164,7 +163,7 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
     elif salt:
         settings['salt'] = salt
 
-    return passlib_or_crypt(result, encrypt, error_type=AnsibleError, **settings)
+    return passlib_or_crypt(result, encrypt, **settings)
 
 
 def random_salt(length=8):
