@@ -16,8 +16,9 @@ else
 fi
 
 case "${group}" in
-    1) options=(--skip-test pylint) ;;
+    1) options=(--skip-test pylint --skip-test ansible-doc --skip-test docs-build) ;;
     2) options=(--test pylint) ;;
+    3) options=(--test ansible-doc --test docs-build) ;;
 esac
 
 # shellcheck disable=SC2086
