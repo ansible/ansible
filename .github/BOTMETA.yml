@@ -929,7 +929,7 @@ files:
     maintainers: $team_ucs
     labels: ucs
   $module_utils/netapp: $team_netapp
-  $module_utils/vultr.py:
+  $module_utils/vultr.py: &vultr
     maintainers: $team_vultr
     labels:
     - vultr
@@ -1086,6 +1086,7 @@ files:
     labels:
       - ovirt
       - cloud
+  lib/ansible/plugins/inventory/vultr.py: *vultr
   lib/ansible/plugins/inventory/scaleway.py: *scaleway
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking
