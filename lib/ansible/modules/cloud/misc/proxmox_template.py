@@ -78,7 +78,7 @@ options:
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
 requirements: [ "proxmoxer", "requests" ]
-author: "Sergei Antipov @UnderGreen"
+author: Sergei Antipov (@UnderGreen)
 '''
 
 EXAMPLES = '''

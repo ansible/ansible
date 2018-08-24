@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: James Hogarth
+author: James Hogarth (@hogarthj)
 module: jenkins_script
 short_description: Executes a groovy script in the jenkins instance
 version_added: '2.3'

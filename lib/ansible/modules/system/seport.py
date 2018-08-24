@@ -49,7 +49,7 @@ requirements:
 - libselinux-python
 - policycoreutils-python
 author:
-- Dan Keder
+- Dan Keder (@dankeder)
 '''
 
 EXAMPLES = '''

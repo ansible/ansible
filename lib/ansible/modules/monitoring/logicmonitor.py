@@ -32,7 +32,9 @@ description:
   - LogicMonitor is a hosted, full-stack, infrastructure monitoring platform.
   - This module manages hosts, host groups, and collectors within your LogicMonitor account.
 version_added: "2.2"
-author: [Ethan Culler-Mayeno (@ethanculler), Jeff Wozniak (@woz5999)]
+author:
+- Ethan Culler-Mayeno (@ethanculler)
+- Jeff Wozniak (@woz5999)
 notes:
   - You must have an existing LogicMonitor account for this module to function.
 requirements: ["An existing LogicMonitor account", "Linux"]
