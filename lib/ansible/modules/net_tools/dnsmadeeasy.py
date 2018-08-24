@@ -460,6 +460,8 @@ class DME2(object):
                     value = record_value.split(" ")[1]
                 elif record_type == "SRV":
                     value = record_value.split(" ")[3]
+                elif record_type == "TXT":
+                    value = '\"{}\"'.format(record_value)
                 else:
                     value = record_value
                 if result['name'] == record_name and result['type'] == record_type and result['value'] == value:
@@ -606,6 +608,10 @@ def main():
         new_record["weight"] = new_record["value"].split(" ")[1]
         new_record["port"] = new_record["value"].split(" ")[2]
         new_record["value"] = new_record["value"].split(" ")[3]
+
+    # Special handling for TXT records (escape extra quotes)
+    if new_record["type"] == "TXT":
+        new_record["value"] = '\"{}\"'.format(new_record["value"])
 
     # Fetch existing monitor if the A record indicates it should exist and build the new monitor
     current_monitor = dict()
