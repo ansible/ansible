@@ -22,21 +22,6 @@
         protocol: HTTPS
         port: 80
         path: '/'
-      endpoints:
-        - name: e1
-          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
-          endpoint_location: West US 2
-          endpoint_status: Enabled
-          priority: 3
-          target: 1.2.3.4
-          weight: 1
-        - name: e2
-          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
-          endpoint_location: West US 2
-          endpoint_status: Enabled
-          priority: 1
-          target: azure.com
-          weight: 1
   check_mode: yes
 
 - name: Check there is no Traffic Manager profile created
@@ -66,21 +51,6 @@
         protocol: HTTPS
         port: 80
         path: '/'
-      endpoints:
-        - name: e1
-          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
-          endpoint_location: West US 2
-          endpoint_status: Enabled
-          priority: 3
-          target: 1.2.3.4
-          weight: 1
-        - name: e2
-          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
-          endpoint_location: West US 2
-          endpoint_status: Enabled
-          priority: 1
-          target: 8.8.8.8
-          weight: 1
   register: output
 
 - name: Assert the Traffic Manager profile is well created
@@ -99,7 +69,7 @@
       that:
         - "fact.tms | length == 1"
         - fact.tms[0].id == output.id
-        - fact.tms[0].endpoints | length == 2
+        - fact.tms[0].endpoints | length == 0
 
 - name: Create a Traffic Manager profile (idempotent)
   azure_rm_trafficmanager:
@@ -119,21 +89,6 @@
         protocol: HTTPS
         port: 80
         path: '/'
-      endpoints:
-        - name: e1
-          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
-          endpoint_location: West US 2
-          endpoint_status: Enabled
-          priority: 3
-          target: 1.2.3.4
-          weight: 1
-        - name: e2
-          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
-          endpoint_location: West US 2
-          endpoint_status: Enabled
-          priority: 1
-          target: 8.8.8.8
-          weight: 1
   register: output
 
 - name: Assert idempotent
@@ -154,26 +109,24 @@
       routing_method: priority
       dns_config: 
         relative_name: "{{ tmname }}"
-        ttl: 60
+        ttl: 30
       monitor_config:
         protocol: HTTPS
         port: 80
         path: '/'
-      endpoints:
-        - name: e1
-          type: Microsoft.network/TrafficManagerProfiles/ExternalEndpoints
-          endpoint_location: West US 2
-          endpoint_status: Enabled
-          priority: 3
-          target: 1.2.3.4
-          weight: 1
   register: output
+
+- name: Gather Traffic Manager profile facts
+  azure_rm_trafficmanager_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
 
 - name: Assert the Traffic Manager profile is upgraded
   assert:
     that:
       - output.changed
-      - output.endpoints | length == 1
+      - fact.tms[0].dns_config.ttl == 30
 
 - name: Delete the Traffic Manager profile(check mode)
   azure_rm_trafficmanager:
@@ -193,7 +146,7 @@
       that:
         - "fact.tms | length == 1"
         - fact.tms[0].id == output.id
-        - fact.tms[0].endpoints | length == 1
+        - fact.tms[0].endpoints | length == 0
 
 - name: Delete the Traffic Manager profile
   azure_rm_trafficmanager:
