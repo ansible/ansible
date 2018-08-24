@@ -40,6 +40,9 @@ options:
   sandbox:
     description:
       - Decides if the sandbox API should be used. Otherwise (default) the production API of DNS Made Easy is used.
+    type: bool
+    default: 'no'
+    version_added: 2.7
 
   record_name:
     description:
