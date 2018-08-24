@@ -6,16 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ipa import ipa_argument_spec
-from ansible.module_utils.ipa_vault import VaultIPAClient
-
-# only for method overwrite
-from ansible.module_utils._text import to_native
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -38,11 +28,14 @@ options:
             - Can not be changed as it is the unique identifier.
         required: true
         aliases: ["name"]
+    description:
+        description:
+            - Updated description.
     ipavaultnewtype:
         description:
             - New vault type.
         choices: ["standard", "symmetric", "asymmetric"]
-        aliases: ["vault_new_type", "new_type"]
+        aliases: ["newvaulttype", "newtype", "new_vault_type", "new_type"]
     ipavaultnewpublickey:
         description:
             - New public key.
@@ -92,7 +85,7 @@ options:
         description:
             - Any user can own one or more user vaults.
             - Mutually exclusive with service.
-        aliases: ["user", "vault_user", vaultuser"]
+        aliases: ["user", "vault_user", "vaultuser"]
     service:
         description:
             - Any service can own one or more service vaults.
@@ -111,6 +104,15 @@ vault:
   returned: always
   type: dict
 '''
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ipa import ipa_argument_spec
+from ansible.module_utils.ipa_vault import VaultIPAClient
+
+# only for method overwrite
+from ansible.module_utils._text import to_native
 
 
 def modify(module, client):

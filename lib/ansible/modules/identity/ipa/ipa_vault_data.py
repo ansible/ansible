@@ -6,15 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ipa import ipa_argument_spec
-from ansible.module_utils.ipa_vault import VaultIPAClient
-
-# only for method overwrite
-from ansible.module_utils._text import to_native
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -158,6 +149,14 @@ vault:
   type: dict
 '''
 
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ipa import ipa_argument_spec
+from ansible.module_utils.ipa_vault import VaultIPAClient
+
+# only for method overwrite
+from ansible.module_utils._text import to_native
 
 def mode(module, client):
     """Archive or retrieve"""

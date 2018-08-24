@@ -1,6 +1,5 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2018, Stefan Scheglmann <scheglmann@starto.de>
+# Copyright: (c) 2018, Stefan Scheglmann <scheglmann@strato.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) # noqa: E501
 
 from __future__ import absolute_import, division, print_function
@@ -511,7 +510,7 @@ class VaultIPAClient(IPAClient):
         return (boolean, data): if changed and archived data"""
         if not data:
             data = self.get_n_validate_data()
-        _, vault_data = self.retrieve_data(vault)
+        dummy, vault_data = self.retrieve_data(vault)
         changed = (data is not None and data != vault_data)
         if changed:
             vault_data = self.archive_data_internal(vault, data)
@@ -618,7 +617,7 @@ class VaultIPAClient(IPAClient):
 
     def _update_vault_password(self, vault):
         """Update vault password or keys"""
-        _, data = self.retrieve_data(vault)
+        dummy, data = self.retrieve_data(vault)
         if vault.get('ipavaulttype')[0] == 'symmetric':
             item = self._create_update_item(
                 password=self._get_password(
@@ -646,7 +645,7 @@ class VaultIPAClient(IPAClient):
 
     def _update_vault_type(self, vault, new_type):
         """Change vault type"""
-        _, data = self.retrieve_data(vault)
+        dummy, data = self.retrieve_data(vault)
         item = {'ipavaulttype': new_type}
         if new_type == 'symmetric':
             item = self._create_update_item(

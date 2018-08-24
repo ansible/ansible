@@ -6,18 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ipa import ipa_argument_spec
-from ansible.module_utils.ipa_vault import VaultIPAClient
-
-# only for method overwrite
-from ansible.module_utils._text import to_native
-
-# Set max vault data size to 1MB
-MAX_VAULT_DATA_SIZE = 2**20
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -61,6 +49,7 @@ options:
         description:
             - Any service who owns the service vault.
             - Mutually exclusive with user.
+        aliases: ["vault_service", "vaultservice"]
     state:
         description:
             - State to ensure.
@@ -114,6 +103,15 @@ vault:
   type: dict
 '''
 
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ipa import ipa_argument_spec
+from ansible.module_utils.ipa_vault import VaultIPAClient
+
+# only for method overwrite
+from ansible.module_utils._text import to_native
+
 
 def ensure(module, client):
     """Ensure membersuser, membergroup or memberservice state"""
@@ -140,7 +138,7 @@ def main():
         ),
         username=dict(
             type='str',
-            aliases=['vaultuser', 'vault_user']
+            aliases=['user', 'vaultuser', 'vault_user']
         ),
         service=dict(
             type='str',
