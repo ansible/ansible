@@ -37,6 +37,11 @@ options:
         resolution
     required: true
 
+  sandbox:
+    description:
+      - Decides if the sandbox API should be used. Otherwise (default) the production API of DNS Made Easy is used.
+    
+
   record_name:
     description:
       - Record name to get/create/delete/update. If record_name is not specified; all records for the domain will be returned in "result" regardless
@@ -368,12 +373,17 @@ from ansible.module_utils.six import string_types
 
 class DME2(object):
 
-    def __init__(self, apikey, secret, domain, module):
+    def __init__(self, apikey, secret, domain, sandbox, module):
         self.module = module
 
         self.api = apikey
         self.secret = secret
-        self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
+
+        if sandbox:
+            self.baseurl = 'https://api.sandbox.dnsmadeeasy.com/V2.0/'
+        else:
+            self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
+        
         self.domain = str(domain)
         self.domain_map = None      # ["domain_name"] => ID
         self.record_map = None      # ["record_name"] => ID
@@ -537,6 +547,7 @@ def main():
             account_key=dict(required=True),
             account_secret=dict(required=True, no_log=True),
             domain=dict(required=True),
+            sandbox=dict(default='no',type='bool'),
             state=dict(required=True, choices=['present', 'absent']),
             record_name=dict(required=False),
             record_type=dict(required=False, choices=[
@@ -575,7 +586,7 @@ def main():
     sensitivities = dict(Low=8, Medium=5, High=3)
 
     DME = DME2(module.params["account_key"], module.params[
-               "account_secret"], module.params["domain"], module)
+               "account_secret"], module.params["domain"], module.params["sandbox"], module)
     state = module.params["state"]
     record_name = module.params["record_name"]
     record_type = module.params["record_type"]
