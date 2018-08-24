@@ -57,6 +57,11 @@ options:
       - The C(sshkey) argument defines the public SSH key to be configured
         for the user account on the remote system.  This argument must
         be a valid SSH key
+  encrypted_password:
+    description:
+      - The C(encrypted_password) argument set already hashed password
+        for the user account on the remote system.
+    version_added: "2.7"
   purge:
     description:
       - The C(purge) argument instructs the module to consider the
@@ -108,6 +113,13 @@ EXAMPLES = """
     aggregate:
     - name: ansible
     purge: yes
+
+- name: set user password
+  junos_user:
+    name: ansible
+    role: super-user
+    encrypted_password: "{{ 'my-password' | password_hash('sha512') }}"
+    state: present
 
 - name: Create list of users
   junos_user:
