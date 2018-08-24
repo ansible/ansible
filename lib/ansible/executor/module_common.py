@@ -607,25 +607,27 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             py_module_name = py_module_name[:-1]
 
         # If not already processed then we've got work to do
-        if py_module_name not in py_module_names:
-            # If not in the cache, then read the file into the cache
-            # We already have a file handle for the module open so it makes
-            # sense to read it now
-            if py_module_name not in py_module_cache:
-                if module_info[2][2] == imp.PKG_DIRECTORY:
-                    # Read the __init__.py instead of the module file as this is
-                    # a python package
-                    normalized_name = py_module_name + ('__init__',)
+        # If not in the cache, then read the file into the cache
+        # We already have a file handle for the module open so it makes
+        # sense to read it now
+        if py_module_name not in py_module_cache:
+            if module_info[2][2] == imp.PKG_DIRECTORY:
+                # Read the __init__.py instead of the module file as this is
+                # a python package
+                normalized_name = py_module_name + ('__init__',)
+                if normalized_name not in py_module_names:
                     normalized_path = os.path.join(os.path.join(module_info[1], '__init__.py'))
                     normalized_data = _slurp(normalized_path)
-                else:
-                    normalized_name = py_module_name
+                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                    normalized_modules.add(normalized_name)
+            else:
+                normalized_name = py_module_name
+                if normalized_name not in py_module_names:
                     normalized_path = module_info[1]
                     normalized_data = module_info[0].read()
                     module_info[0].close()
-
-                py_module_cache[normalized_name] = (normalized_data, normalized_path)
-                normalized_modules.add(normalized_name)
+                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                    normalized_modules.add(normalized_name)
 
             # Make sure that all the packages that this module is a part of
             # are also added
