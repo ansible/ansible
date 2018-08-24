@@ -62,14 +62,14 @@ options:
         default: unix:/var/lib/lxd/unix.socket
     key_file:
         description:
-          - The client certificate key file path. If unspecified, the
-          client.key file in the user's lxc config directory is used if present.
+          - The client certificate key file path.
+          - If unspecified, the client.key file in the user's lxc config directory is used if present.
         required: false
         default: None
     cert_file:
         description:
-          - The client certificate file path.  If unspecified, the
-          client.crt file in the user's lxc config directory is used if present.
+          - The client certificate file path.
+          - If unspecified, the client.crt file in the user's lxc config directory is used if present.
         required: false
         default: None
     trust_password:
