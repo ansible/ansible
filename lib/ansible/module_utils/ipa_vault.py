@@ -10,16 +10,22 @@ import base64
 import os
 import io
 
-from cryptography.fernet import Fernet, InvalidToken
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives.padding import PKCS7
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives.serialization import (
-    load_pem_public_key, load_pem_private_key)
-from cryptography import x509
+try:
+    from cryptography.fernet import Fernet, InvalidToken
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import padding
+    from cryptography.hazmat.primitives.ciphers import (Cipher,
+                                                        algorithms, modes)
+    from cryptography.hazmat.primitives.padding import PKCS7
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives.serialization import (
+        load_pem_public_key, load_pem_private_key)
+    from cryptography import x509
+    HAS_CRYPTOGRAPHY = True
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
+
 from ansible.module_utils.ipa import IPAClient
 
 # Set max vault data size to 1MB
@@ -28,6 +34,15 @@ MAX_VAULT_DATA_SIZE = 2**20
 
 class VaultIPAClient(IPAClient):
     """IPA Client Class overrides"""
+    def __init__(self, module, host, port, protocol):
+        self._check_lib()
+        super(self.__class__, self).__init__(module, host, port, protocol)
+
+    def _check_lib(self):
+        if not HAS_CRYPTOGRAPHY:
+            self._fail("ImportError:", "This module requires the"
+                       " 'cryptography' python package")
+
     def vault_find(self):
         """Get vault information for given cn, equivalent to 'ipa vault_find'
         cli command with specified vault name."""
