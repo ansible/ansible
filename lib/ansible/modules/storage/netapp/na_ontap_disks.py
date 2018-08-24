@@ -27,25 +27,16 @@ description:
 
 options:
 
-  state:
-    description:
-    - Whether the specified aggregate should exist or not.
-    choices: ['present', 'absent']
-    default: 'present'
-
   node:
     required: true
     description:
-    - Used only with auto or all parameter. It specifies the node
-      to which autoassignment or assignment of all unowned disks
-      must be done.
+    - It specifies the node to assign all visible unowned disks.
 
 '''
 
 EXAMPLES = """
 - name: Assign unowned disks
   na_ontap_disks:
-    state: present
     node: cluster-01
     hostname: "{{ hostname }} "
     username: "{{ admin username }}"
@@ -71,7 +62,6 @@ class NetAppOntapDisks(object):
     def __init__(self):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            state=dict(required=False, choices=['present', 'absent'], default='present'),
             node=dict(required=True, type='str'),
         ))
 
@@ -83,7 +73,6 @@ class NetAppOntapDisks(object):
         parameters = self.module.params
 
         # set up state variables
-        self.state = parameters['state']
         self.node = parameters['node']
 
         if HAS_NETAPP_LIB is False:
