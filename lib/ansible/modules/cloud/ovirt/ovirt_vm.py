@@ -2057,7 +2057,7 @@ def main():
                 )
             vms_module.post_present(ret['id'])
         elif state == 'suspended':
-            vms_module.create(
+            ret = vms_module.create(
                 entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
