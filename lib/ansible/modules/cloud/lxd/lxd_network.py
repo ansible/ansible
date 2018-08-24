@@ -194,9 +194,9 @@ class LXDNetworkManagement(object):
 
         self.url = self.module.params['url']
         self.key_file = self.module.params.get('key_file',
-                                               '{0}/.config/lxc/client.key'.format(os.environ['HOME'])
+                                               '{0}/.config/lxc/client.key'.format(os.environ['HOME']))
         self.cert_file = self.module.params.get('cert_file',
-                                                '{0}/.config/lxc/client.crt'.format(os.environ['HOME'])
+                                                '{0}/.config/lxc/client.crt'.format(os.environ['HOME']))
         self.debug = self.module._verbosity >= 4
         try:
             self.client = LXDClient(
@@ -352,11 +352,11 @@ def main():
             ),
             key_file=dict(
                 type='str',
-                default=None)
+                default=None
             ),
             cert_file=dict(
                 type='str',
-                default=None)
+                default=None
             ),
             trust_password=dict(type='str', no_log=True)
         ),
