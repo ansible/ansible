@@ -1041,7 +1041,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`vars_list`
+   :ref:`special_variables`
        List of special variables
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

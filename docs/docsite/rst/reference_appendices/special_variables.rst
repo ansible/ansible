@@ -1,3 +1,5 @@
+.. _special_variables:
+
 Special Variables
 =================
 
