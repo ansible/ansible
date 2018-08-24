@@ -1,0 +1,2 @@
+bugfixes:
+- lib/ansible/modules/system/pamd.py - Allow for validation of definitive control in pamd module.
