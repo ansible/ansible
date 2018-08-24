@@ -71,7 +71,7 @@ class ActionModule(ActionBase):
         uname_result = self._low_level_execute_command('uname')
         distribution = uname_result['stdout'].strip().lower()
 
-        shutdown_command = self.SHUTDOWN_COMMANDS.get(distribution, self.SHUTDOWN_COMMAND_ARGS['linux'])
+        shutdown_command = self.SHUTDOWN_COMMANDS.get(distribution, self.SHUTDOWN_COMMANDS['linux'])
         shutdown_command_args = self.SHUTDOWN_COMMAND_ARGS.get(distribution, self.SHUTDOWN_COMMAND_ARGS['linux'])
 
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self.DEFAULT_PRE_REBOOT_DELAY))
