@@ -107,8 +107,8 @@ Example eAPI ``group_vars/eos.yml``
    ansible_network_os: eos
    ansible_user: myuser
    ansible_ssh_pass: !vault... 
-   become: yes
-   become_method: enable
+   ansible_become: yes
+   ansible_become_method: enable
    proxy_env:
      http_proxy: http://proxy.example.com:8080
 
