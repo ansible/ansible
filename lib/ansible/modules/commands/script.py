@@ -30,11 +30,11 @@ options:
     required: true
   creates:
     description:
-      - a filename, when it already exists, this step will B(not) be run.
+      - a filename on remote, when it already exists, this step will B(not) be run.
     version_added: "1.5"
   removes:
     description:
-      - a filename, when it does not exist, this step will B(not) be run.
+      - a filename on remote, when it does not exist, this step will B(not) be run.
     version_added: "1.5"
   chdir:
     description:
@@ -61,12 +61,12 @@ EXAMPLES = '''
 # Example from Ansible Playbooks
 - script: /some/local/script.sh --some-arguments 1234
 
-# Run a script that creates a file, but only if the file is not yet created
+# Run a script only if the file does not exists
 - script: /some/local/create_file.sh --some-arguments 1234
   args:
     creates: /the/created/file.txt
 
-# Run a script that removes a file, but only if the file is not yet removed
+# Run a script only if the file exists
 - script: /some/local/remove_file.sh --some-arguments 1234
   args:
     removes: /the/removed/file.txt
