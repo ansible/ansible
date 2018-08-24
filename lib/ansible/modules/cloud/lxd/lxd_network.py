@@ -326,7 +326,6 @@ class LXDNetworkManagement(object):
 def main():
     """Ansible Main module."""
 
-
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(
