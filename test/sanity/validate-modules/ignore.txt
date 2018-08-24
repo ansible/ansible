@@ -1065,7 +1065,6 @@ lib/ansible/modules/storage/netapp/_na_cdot_volume.py E322
 lib/ansible/modules/storage/netapp/_na_cdot_volume.py E324
 lib/ansible/modules/storage/netapp/_na_cdot_volume.py E325
 lib/ansible/modules/storage/netapp/netapp_e_amg.py E322
-lib/ansible/modules/storage/netapp/netapp_e_amg.py E325
 lib/ansible/modules/storage/netapp/netapp_e_amg_role.py E322
 lib/ansible/modules/storage/netapp/netapp_e_amg_role.py E325
 lib/ansible/modules/storage/netapp/netapp_e_amg_sync.py E325
@@ -1074,8 +1073,6 @@ lib/ansible/modules/storage/netapp/netapp_e_facts.py E325
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py E322
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py E325
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py E326
-lib/ansible/modules/storage/netapp/netapp_e_host.py E325
-lib/ansible/modules/storage/netapp/netapp_e_lun_mapping.py E325
 lib/ansible/modules/storage/netapp/netapp_e_snapshot_group.py E322
 lib/ansible/modules/storage/netapp/netapp_e_snapshot_group.py E325
 lib/ansible/modules/storage/netapp/netapp_e_snapshot_group.py E326
@@ -1090,7 +1087,6 @@ lib/ansible/modules/storage/netapp/netapp_e_storagepool.py E325
 lib/ansible/modules/storage/netapp/netapp_e_storagepool.py E326
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E322
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E324
-lib/ansible/modules/storage/netapp/netapp_e_volume.py E325
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E326
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E327
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E322
