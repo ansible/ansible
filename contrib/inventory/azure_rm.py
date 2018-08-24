@@ -586,7 +586,7 @@ class AzureInventory(object):
             azure=[]
         )
 
-        self._get_settings()
+        self._load_settings()
 
         if self._args.resource_groups:
             self.resource_groups = self._args.resource_groups.split(',')
@@ -859,29 +859,25 @@ class AzureInventory(object):
         else:
             return json.dumps(self._inventory)
 
-    def _get_settings(self):
-        # Load settings from the .ini, if it exists. Otherwise,
-        # look for environment values.
-        file_settings = self._load_settings()
-        if file_settings:
-            for key in AZURE_CONFIG_SETTINGS:
-                if key in ('resource_groups', 'tags', 'locations') and file_settings.get(key):
-                    values = file_settings.get(key).split(',')
-                    if len(values) > 0:
-                        setattr(self, key, values)
-                elif file_settings.get(key):
-                    val = self._to_boolean(file_settings[key])
-                    setattr(self, key, val)
-        else:
-            env_settings = self._get_env_settings()
-            for key in AZURE_CONFIG_SETTINGS:
-                if key in('resource_groups', 'tags', 'locations') and env_settings.get(key):
-                    values = env_settings.get(key).split(',')
-                    if len(values) > 0:
-                        setattr(self, key, values)
-                elif env_settings.get(key, None) is not None:
-                    val = self._to_boolean(env_settings[key])
-                    setattr(self, key, val)
+    def _load_settings(self):
+        # Load settings from the .ini, if it exists.
+        # Then load from env, if it exists, and override.
+
+        def _set_settings(self, settings, key):
+            if key in ('resource_groups', 'tags', 'locations') and settings.get(key):
+                values = settings.get(key).split(',')
+                if len(values) > 0:
+                    setattr(self, key, values)
+            elif settings.get(key):
+                val = self._to_boolean(settings[key])
+                setattr(self, key, val)
+
+        ini_settings = self._get_ini_settings()
+        env_settings = self._get_env_settings()
+
+        for key in AZURE_CONFIG_SETTINGS:
+            _set_settings(self, ini_settings, key)
+            _set_settings(self, env_settings, key)
 
     def _parse_ref_id(self, reference):
         response = {}
@@ -906,7 +902,7 @@ class AzureInventory(object):
             env_settings[attribute] = os.environ.get(env_variable, None)
         return env_settings
 
-    def _load_settings(self):
+    def _get_ini_settings(self):
         basename = os.path.splitext(os.path.basename(__file__))[0]
         default_path = os.path.join(os.path.dirname(__file__), (basename + '.ini'))
         path = os.path.expanduser(os.path.expandvars(os.environ.get('AZURE_INI_PATH', default_path)))
