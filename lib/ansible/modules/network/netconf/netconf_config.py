@@ -268,7 +268,7 @@ def main():
     config = module.params['content'] or module.params['src']
     target = module.params['target']
     lock = module.params['lock']
-    source = module.params['source']
+    source = module.params['source_datastore']
     delete = module.params['delete']
     confirm_commit = module.params['confirm_commit']
     confirm = module.params['confirm']
