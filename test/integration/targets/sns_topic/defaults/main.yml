@@ -1,0 +1,8 @@
+sns_topic_topic_name: "{{ resource_prefix }}-topic"
+sns_topic_subscriptions:
+  - endpoint: "{{ sns_topic_subscriber_arn }}"
+    protocol: "lambda"
+sns_topic_third_party_topic_arn: "arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged"
+sns_topic_third_party_region: "{{ sns_topic_third_party_topic_arn.split(':')[3] }}"
+sns_topic_lambda_function: "sns_topic_lambda"
+sns_topic_lambda_name: "{{ resource_prefix }}-{{ sns_topic_lambda_function }}"
