@@ -14,6 +14,20 @@ This document is part of a collection on porting. The complete list of porting g
 
 .. contents:: Topics
 
+Command Line
+============
+
+If you specify ``--tags`` or ``--skip-tags`` multiple times on the command line, Ansible will merge the specified
+tags together.  In previous versions of Ansible, you could set ``merge_multiple_cli_tags`` to ``False``
+if you wanted to keep only the last-specified ``--tags``.  This config
+option existed for backwards compatibility. The overwriting behavior was deprecated in 2.3 and
+the default behavior was changed in 2.4.  Ansible-2.7 removes the config option; multiple
+``--tags`` are now always merged.
+
+If you have a shell script that depends on setting ``merge_multiple_cli_tags`` to ``False``, please upgrade your script
+so it only adds the ``--tags`` you actually want before upgrading to Ansible-2.7.
+
+
 Python Compatibility
 ====================
 
@@ -169,6 +183,8 @@ Noteworthy module changes
   * ``days_of_week``, use ``monthlydow`` in a triggers entry instead
   * ``frequency``, use ``type``, in a triggers entry instead
   * ``time``, use ``start_boundary`` in a triggers entry instead
+
+* The ``interface_name`` module option for ``na_ontap_net_vlan`` has been removed and should be removed from your playbooks
 
 
 Plugins

@@ -65,6 +65,14 @@ options:
       - If set to true, causes the NIOS DNS service to restart and load the
         new zone configuration
     type: bool
+  zone_format:
+    version_added: "2.7"
+    description:
+      - Create an authorative Reverse-Mapping Zone which is an area of network
+        space for which one or more name servers-primary and secondary-have the
+        responsibility to respond to address-to-name queries. It supports
+        reverse-mapping zones for both IPv4 and IPv6 addresses.
+    default: FORWARD
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
@@ -103,12 +111,31 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: configure a zone on the system using a name server group
   nios_zone:
     name: ansible.com
     ns_group: examplensg
     restart_if_needed: true
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: configure a reverse mapping zone on the system using IPV4 zone format
+  nios_zone:
+    name: 10.10.10.0/24
+    zone_format: IPV4
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: configure a reverse mapping zone on the system using IPV6 zone format
+  nios_zone:
+    name: 100::1/128
+    zone_format: IPV6
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -136,6 +163,16 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
+- name: remove the reverse mapping dns zone from the system with IPV4 zone format
+  nios_zone:
+    name: 10.10.10.0/24
+    zone_format: IPV4
+    state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
@@ -154,6 +191,7 @@ def main():
 
     ib_spec = dict(
         fqdn=dict(required=True, aliases=['name'], ib_req=True, update=False),
+        zone_format=dict(default='FORWARD', aliases=['zone_format'], ib_req=False),
         view=dict(default='default', aliases=['dns_view'], ib_req=True),
 
         grid_primary=dict(type='list', elements='dict', options=grid_spec),

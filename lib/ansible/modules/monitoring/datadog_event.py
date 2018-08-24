@@ -20,9 +20,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: datadog_event
-short_description: Posts events to DataDog  service
+short_description: Posts events to Datadog  service
 description:
-- "Allows to post events to DataDog (www.datadoghq.com) service."
+- "Allows to post events to Datadog (www.datadoghq.com) service."
 - "Uses http://docs.datadoghq.com/api/#events API."
 version_added: "1.3"
 author:

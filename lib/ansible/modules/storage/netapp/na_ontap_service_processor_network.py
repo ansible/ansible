@@ -14,14 +14,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_service_processor_network
-short_description: Manage NetApp Ontap service processor network
+short_description: Manage NetApp ONTAP service processor network
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author:
-- Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
-- Modify a Ontap service processor network
+- Modify a ONTAP service processor network
 options:
   state:
     description:
@@ -37,10 +36,10 @@ options:
     description:
     - Specify whether to enable or disable the service processor network.
     required: true
-    choices: ['true', 'false']
+    type: bool
   node:
     description:
-    - The node where the the service processor network should be enabled
+    - The node where the service processor network should be enabled
     required: true
   dhcp:
     description:
@@ -98,7 +97,7 @@ class NetAppOntapServiceProcessorNetwork(object):
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present'], default='present'),
             address_type=dict(required=True, choices=['ipv4', 'ipv6']),
-            is_enabled=dict(required=True, choices=['true', 'false']),
+            is_enabled=dict(required=True, type='bool'),
             node=dict(required=True, type='str'),
             dhcp=dict(required=False, choices=['v4', 'none']),
             gateway_ip_address=dict(required=False, type='str'),
@@ -147,8 +146,6 @@ class NetAppOntapServiceProcessorNetwork(object):
         spn_info = netapp_utils.zapi.NaElement(
             'service-processor-network-info')
         spn_info.add_new_child('node', self.node)
-        spn_info.add_new_child('address-type', self.address_type)
-        spn_info.add_new_child('is-enabled', self.is_enabled)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(spn_info)
         spn_get_iter.add_child_elem(query)
@@ -190,7 +187,7 @@ class NetAppOntapServiceProcessorNetwork(object):
             'service-processor-network-modify')
         service_obj.add_new_child("node", self.node)
         service_obj.add_new_child("address-type", self.address_type)
-        service_obj.add_new_child("is-enabled", self.is_enabled)
+        service_obj.add_new_child("is-enabled", str(self.is_enabled).lower())
 
         if self.dhcp:
             service_obj.add_new_child("dhcp", self.dhcp)
@@ -228,19 +225,21 @@ class NetAppOntapServiceProcessorNetwork(object):
         if spn_details:
             spn_exists = True
             if self.state == 'present':  # modify
-                if (self.dhcp and
+                if (self.dhcp is not None and
                     self.dhcp != spn_details['dhcp_value']) or \
-                   (self.gateway_ip_address and
+                   (self.gateway_ip_address is not None and
                     self.gateway_ip_address != spn_details['gateway_ip_address_value']) or \
-                   (self.ip_address and
+                   (self.ip_address is not None and
                     self.ip_address != spn_details['ip_address_value']) or \
-                   (self.netmask and
+                   (self.netmask is not None and
                     self.netmask != spn_details['netmask_value']) or \
-                   (self.prefix_length and str(self.prefix_length)
-                        != spn_details['prefix_length_value']):
+                   (self.prefix_length is not None and str(self.prefix_length)
+                        != spn_details['prefix_length_value']) or \
+                   (self.is_enabled is not None and str(self.is_enabled).lower()
+                        != spn_details['is_enabled_value']):
                     changed = True
         else:
-            pass
+            self.module.fail_json(msg='Error No Service Processor for node: %s' % self.node)
         if changed:
             if self.module.check_mode:
                 pass

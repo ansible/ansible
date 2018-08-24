@@ -9,6 +9,7 @@ import types
 import copy
 import inspect
 import traceback
+import json
 
 from os.path import expanduser
 
@@ -36,7 +37,6 @@ AZURE_COMMON_ARGS = dict(
     cert_validation_mode=dict(type='str', choices=['validate', 'ignore']),
     api_profile=dict(type='str', default='latest'),
     adfs_authority_url=dict(type='str', default=None)
-    # debug=dict(type='bool', default=False),
 )
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
@@ -151,6 +151,8 @@ try:
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from adal.authentication_context import AuthenticationContext
+    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
+    from azure.mgmt.rdbms.mysql import MySQLManagementClient
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -272,13 +274,14 @@ class AzureRMModuleBase(object):
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
+        self._mysql_client = None
+        self._postgresql_client = None
         self._adfs_authority_url = None
         self._resource = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
         self.facts_module = facts_module
-        # self.debug = self.module.params.get('debug')
 
         # authenticate
         self.credentials = self._get_credentials(self.module.params)
@@ -431,14 +434,10 @@ class AzureRMModuleBase(object):
         self.module.deprecate(msg, version)
 
     def log(self, msg, pretty_print=False):
-        pass
-        # Use only during module development
-        # if self.debug:
-        #     log_file = open('azure_rm.log', 'a')
-        #     if pretty_print:
-        #         log_file.write(json.dumps(msg, indent=4, sort_keys=True))
-        #     else:
-        #         log_file.write(msg + u'\n')
+        if pretty_print:
+            self.module.debug(json.dumps(msg, indent=4, sort_keys=True))
+        else:
+            self.module.debug(msg)
 
     def validate_tags(self, tags):
         '''
@@ -992,7 +991,6 @@ class AzureRMModuleBase(object):
 
     @property
     def storage_models(self):
-        self.log('Getting storage models...')
         return StorageManagementClient.models("2017-10-01")
 
     @property
@@ -1061,3 +1059,19 @@ class AzureRMModuleBase(object):
             self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
                                                                      base_url=self._cloud_environment.endpoints.resource_manager)
         return self._containerservice_client
+
+    @property
+    def postgresql_client(self):
+        self.log('Getting PostgreSQL client')
+        if not self._postgresql_client:
+            self._postgresql_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._postgresql_client
+
+    @property
+    def mysql_client(self):
+        self.log('Getting MySQL client')
+        if not self._mysql_client:
+            self._mysql_client = self.get_mgmt_svc_client(MySQLManagementClient,
+                                                          base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._mysql_client

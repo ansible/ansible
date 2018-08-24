@@ -59,7 +59,7 @@ class Play(Base, Taggable, Become):
     # Facts
     _fact_path = FieldAttribute(isa='string', default=None)
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _gather_subset = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
+    _gather_subset = FieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
 
     # Variable Attributes
@@ -203,18 +203,7 @@ class Play(Base, Taggable, Become):
         if new_ds is not None:
             for prompt_data in new_ds:
                 if 'name' not in prompt_data:
-                    display.deprecated("Using the 'short form' for vars_prompt has been deprecated", version="2.7")
-                    for vname, prompt in prompt_data.items():
-                        vars_prompts.append(dict(
-                            name=vname,
-                            prompt=prompt,
-                            default=None,
-                            private=None,
-                            confirm=None,
-                            encrypt=None,
-                            salt_size=None,
-                            salt=None,
-                        ))
+                    raise AnsibleParserError("Invalid vars_prompt data structure", obj=ds)
                 else:
                     vars_prompts.append(prompt_data)
         return vars_prompts

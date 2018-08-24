@@ -39,7 +39,7 @@ options:
         - "C(clear_host_errors) (added in 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts."
         - "C(end_play) (added in 2.2) causes the play to end without failing the host(s). Note that this affects all hosts."
         - "C(reset_connection) (added in 2.3) interrupts a persistent connection (i.e. ssh + control persist)"
-    choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection']
+    choices: ['flush_handlers', 'refresh_inventory', 'noop', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection']
     required: true
 notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.

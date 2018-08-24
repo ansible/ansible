@@ -34,7 +34,7 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping, MutableSequence
+from collections import MutableMapping
 import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
@@ -87,7 +87,7 @@ def to_json(a, *args, **kw):
 def to_nice_json(a, indent=4, *args, **kw):
     '''Make verbose, human readable JSON'''
     try:
-        return json.dumps(a, indent=indent, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
+        return json.dumps(a, indent=indent, sort_keys=True, separators=(',', ': '), cls=AnsibleJSONEncoder, *args, **kw)
     except Exception as e:
         # Fallback to the to_json filter
         display.warning(u'Unable to convert data using to_nice_json, falling back to to_json: %s' % to_text(e))
@@ -299,7 +299,11 @@ def mandatory(a):
 
     ''' Make a variable mandatory '''
     if isinstance(a, Undefined):
-        raise AnsibleFilterError('Mandatory variable not defined.')
+        if a._undefined_name is not None:
+            name = "'%s' " % to_text(a._undefined_name)
+        else:
+            name = ''
+        raise AnsibleFilterError("Mandatory variable %snot defined." % name)
     return a
 
 
@@ -458,7 +462,7 @@ def flatten(mylist, levels=None):
         if element in (None, 'None', 'null'):
             # ignore undefined items
             break
-        elif isinstance(element, MutableSequence):
+        elif is_sequence(element):
             if levels is None:
                 ret.extend(flatten(element))
             elif levels >= 1:

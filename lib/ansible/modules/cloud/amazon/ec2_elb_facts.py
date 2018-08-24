@@ -128,6 +128,7 @@ class ElbInformation(object):
                 'load_balancer_port': listener[0],
                 'instance_port': listener[1],
                 'protocol': listener[2],
+                'instance_protocol': listener[3]
             }
 
             try:
