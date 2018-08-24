@@ -1,0 +1,3 @@
+bugfixes:
+- win_domain_computer - fixed error when description parameter is empty (https://github.com/ansible/ansible/pull/44054)
+- win_domain_computer - fixed error in diff_support
