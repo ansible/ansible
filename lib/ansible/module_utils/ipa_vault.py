@@ -36,7 +36,7 @@ class VaultIPAClient(IPAClient):
     """IPA Client Class overrides"""
     def __init__(self, module, host, port, protocol):
         self._check_lib()
-        super(self.__class__, self).__init__(module, host, port, protocol)
+        super(VaultIPAClient, self).__init__(module, host, port, protocol)
 
     def _check_lib(self):
         if not HAS_CRYPTOGRAPHY:

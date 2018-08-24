@@ -158,6 +158,7 @@ from ansible.module_utils.ipa_vault import VaultIPAClient
 # only for method overwrite
 from ansible.module_utils._text import to_native
 
+
 def mode(module, client):
     """Archive or retrieve"""
     operation = module.params['operation']
