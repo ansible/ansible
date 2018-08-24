@@ -254,6 +254,7 @@ status:
 '''  # NOQA
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
 from ansible.module_utils._text import to_native
 
@@ -465,7 +466,7 @@ def main():
                 result['enabled'] = not enabled
 
         # set service state if requested
-        if module.params['state'] is not None and result['status']:
+        if module.params['state'] is not None:
             fail_if_missing(module, found, unit, msg="host")
 
             # default to desired state
@@ -493,6 +494,9 @@ def main():
                         (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+            # check for chroot
+            elif is_chroot():
+                module.warn("The service (%s) can't be managed by Ansible as it's running in a chroot" % unit)
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])
