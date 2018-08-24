@@ -11127,7 +11127,7 @@ class VirtualServersParameters(BaseParameters):
     @property
     def enabled(self):
         if self._values['enabled'] is None:
-            return None
+            return 'no'
         elif self._values['enabled'] is True:
             return 'yes'
         return 'no'
