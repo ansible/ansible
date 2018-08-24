@@ -21,7 +21,7 @@ MSGS = {
               "Used when a call to Display.deprecated specifies a version "
               "less than or equal to the current version of Ansible",
               {'minversion': (2, 6)}),
-    'W9502': ("Display.deprecated call without a version",
+    'E9502': ("Display.deprecated call without a version",
               "ansible-deprecated-no-version",
               "Used when a call to Display.deprecated does not specify a "
               "version",
