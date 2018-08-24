@@ -33,7 +33,7 @@ options:
   state:
     description:
       - Whether to install (C(present), or remove (C(absent)) a package. Other states depend on the underlying package module, i.e C(latest).
-    required: true
+    required: false
   use:
     description:
       - The required package manager module to use (yum, apt, etc). The default 'auto' will use existing facts or try to autodetect it.
