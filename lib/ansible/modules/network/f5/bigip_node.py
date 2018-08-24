@@ -135,16 +135,33 @@ options:
   description:
     description:
       - Specifies descriptive text that identifies the node.
+      - You can remove a description by either specifying an empty string, or by
+        specifying the special value C(none).
+  connection_limit:
+    description:
+      - Node connection limit. Setting this to 0 disables the limit.
+    version_added: 2.7
+  rate_limit:
+    description:
+      - Node rate limit (connections-per-second). Setting this to 0 disables the limit.
+    version_added: 2.7
+  ratio:
+    description:
+      - Node ratio weight. Valid values range from 1 through 100.
+      - When creating a new node, if this parameter is not specified, the default of
+        C(1) will be used.
+    version_added: 2.7
+  dynamic_ratio:
+    description:
+      - The dynamic ratio number for the node. Used for dynamic ratio load balancing.
+      - When creating a new node, if this parameter is not specified, the default of
+        C(1) will be used.
+    version_added: 2.7
   partition:
     description:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
-notes:
-  - Requires the netaddr Python package on the host. This is as easy as
-    C(pip install netaddr).
-requirements:
-  - netaddr
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -266,44 +283,58 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'monitor': 'monitors'
+        'monitor': 'monitors',
+        'connectionLimit': 'connection_limit',
+        'rateLimit': 'rate_limit'
     }
 
     api_attributes = [
-        'monitor', 'description', 'address', 'fqdn',
+        # Leave the ``monitor`` attribute commented out
+        #
+        # This attribute is commented out to prevent it from trying to be
+        # sent to the API during a create or update request. This is because
+        # the field is **broken** and **will not work** if you send some
+        # formats of the monitor to the API.
+        #
+        # Specifically, the m_of_n types will not work because they include
+        # the brace ( ``{`` ) character and the API considers this character
+        # to be invalid.
+        #
+        # Monitors are handled in a special case within the ``update_one_device``
+        # and ``create_one_device`` methods. Refer to them if you need to know
+        # what that special case is.
+        #
+        # 'monitor',
+
+        'description',
+        'address',
+        'fqdn',
+        'ratio',
+        'connectionLimit',
+        'rateLimit',
 
         # Used for changing state
         #
@@ -318,15 +349,37 @@ class Parameters(AnsibleF5Parameters):
     ]
 
     returnables = [
-        'monitor_type', 'quorum', 'monitors', 'description', 'fqdn', 'session', 'state',
-        'fqdn_auto_populate', 'fqdn_address_type', 'fqdn_up_interval',
-        'fqdn_down_interval', 'fqdn_name'
+        'monitor_type',
+        'quorum',
+        'monitors',
+        'description',
+        'fqdn',
+        'session',
+        'state',
+        'fqdn_auto_populate',
+        'fqdn_address_type',
+        'fqdn_up_interval',
+        'fqdn_down_interval',
+        'fqdn_name',
+        'connection_limit',
+        'ratio',
+        'rate_limit'
     ]
 
     updatables = [
-        'monitor_type', 'quorum', 'monitors', 'description', 'state',
-        'fqdn_up_interval', 'fqdn_down_interval', 'tmName', 'fqdn_auto_populate',
-        'fqdn_address_type'
+        'monitor_type',
+        'quorum',
+        'monitors',
+        'description',
+        'state',
+        'fqdn_up_interval',
+        'fqdn_down_interval',
+        'tmName',
+        'fqdn_auto_populate',
+        'fqdn_address_type',
+        'connection_limit',
+        'ratio',
+        'rate_limit'
     ]
 
     def to_return(self):
@@ -362,42 +415,12 @@ class Parameters(AnsibleF5Parameters):
         return result
 
     @property
-    def quorum(self):
-        if self.kind == 'tm:ltm:pool:poolstate':
-            if self._values['monitors'] is None:
-                return None
-            pattern = r'min\s+(?P<quorum>\d+)\s+of'
-            matches = re.search(pattern, self._values['monitors'])
-            if matches:
-                quorum = matches.group('quorum')
-            else:
-                quorum = None
-        else:
-            quorum = self._values['quorum']
-        try:
-            if quorum is None:
-                return None
-            return int(quorum)
-        except ValueError:
-            raise F5ModuleError(
-                "The specified 'quorum' must be an integer."
-            )
-
-    @property
-    def monitor_type(self):
-        if self.kind == 'tm:ltm:node:nodestate':
-            if self._values['monitors'] is None:
-                return None
-            pattern = r'min\s+\d+\s+of'
-            matches = re.search(pattern, self._values['monitors'])
-            if matches:
-                return 'm_of_n'
-            else:
-                return 'and_list'
-        else:
-            if self._values['monitor_type'] is None:
-                return None
-            return self._values['monitor_type']
+    def rate_limit(self):
+        if self._values['rate_limit'] is None:
+            return None
+        if self._values['rate_limit'] == 'disabled':
+            return 0
+        return int(self._values['rate_limit'])
 
 
 class Changes(Parameters):
@@ -416,6 +439,8 @@ class UsableChanges(Changes):
             result['autopopulate'] = self._values['fqdn_auto_populate']
         if self._values['fqdn_name'] is not None:
             result['tmName'] = self._values['fqdn_name']
+        if not result:
+            return None
         return result
 
 
@@ -424,6 +449,26 @@ class ReportableChanges(Changes):
 
 
 class ModuleParameters(Parameters):
+    @property
+    def quorum(self):
+        if self._values['quorum'] is None:
+            return None
+        quorum = self._values['quorum']
+        try:
+            if quorum is None:
+                return None
+            return int(quorum)
+        except ValueError:
+            raise F5ModuleError(
+                "The specified 'quorum' must be an integer."
+            )
+
+    @property
+    def monitor_type(self):
+        if self._values['monitor_type'] is None:
+            return None
+        return self._values['monitor_type']
+
     @property
     def fqdn_up_interval(self):
         if self._values['fqdn_up_interval'] is None:
@@ -466,8 +511,46 @@ class ModuleParameters(Parameters):
             result['autopopulate'] = 'disabled'
         return result
 
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
 
 class ApiParameters(Parameters):
+    @property
+    def quorum(self):
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'min\s+(?P<quorum>\d+)\s+of'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches:
+            quorum = matches.group('quorum')
+        else:
+            quorum = None
+        try:
+            if quorum is None:
+                return None
+            return int(quorum)
+        except ValueError:
+            raise F5ModuleError(
+                "The specified 'quorum' must be an integer."
+            )
+
+    @property
+    def monitor_type(self):
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'min\s+\d+\s+of'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches:
+            return 'm_of_n'
+        else:
+            return 'and_list'
+
     @property
     def fqdn_up_interval(self):
         if self._values['fqdn'] is None:
@@ -496,6 +579,12 @@ class ApiParameters(Parameters):
         if 'autopopulate' in self._values['fqdn']:
             return str(self._values['fqdn']['autopopulate'])
 
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
 
 class Difference(object):
     def __init__(self, want, have=None):
@@ -522,9 +611,13 @@ class Difference(object):
     def monitor_type(self):
         if self.want.monitor_type is None:
             self.want.update(dict(monitor_type=self.have.monitor_type))
+
         if self.want.quorum is None:
             self.want.update(dict(quorum=self.have.quorum))
+
         if self.want.monitor_type == 'm_of_n' and self.want.quorum is None:
+            if self.want.quorum is None and self.have.quorum is None:
+                return None
             raise F5ModuleError(
                 "Quorum value must be specified with monitor_type 'm_of_n'."
             )
@@ -607,6 +700,15 @@ class Difference(object):
     @property
     def fqdn(self):
         return None
+
+    @property
+    def description(self):
+        if self.want.description is None:
+            return None
+        if self.have.description is None and self.want.description == '':
+            return None
+        if self.want.description != self.have.description:
+            return self.want.description
 
 
 class ModuleManager(object):
@@ -736,6 +838,10 @@ class ModuleManager(object):
             self.want.update({'fqdn_up_interval': 3600})
         if self.want.fqdn_down_interval is None:
             self.want.update({'fqdn_down_interval': 5})
+        if self.want.ratio is None:
+            self.want.update({'ratio': 1})
+        if self.want.dynamic_ratio is None:
+            self.want.update({'dynamic_ratio': 1})
 
         self._set_changed_options()
         if self.module.check_mode:
@@ -782,63 +888,164 @@ class ModuleManager(object):
         return True
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.nodes.node.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def exists(self):
-        result = self.client.api.tm.ltm.nodes.node.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update_node_offline_on_device(self):
         params = dict(
             session="user-disabled",
             state="user-down"
         )
-        result = self.client.api.tm.ltm.nodes.node.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def update_on_device(self):
         params = self.changes.api_params()
-        result = self.client.api.tm.ltm.nodes.node.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result.modify(**params)
+        if params:
+            resp = self.client.api.patch(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+        if self.want.monitors:
+            self.update_monitors_on_device()
 
     def create_on_device(self):
         params = self.want.api_params()
-        resource = self.client.api.tm.ltm.nodes.node.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
-        )
-        self._wait_for_fqdn_checks(resource)
 
-    def _wait_for_fqdn_checks(self, resource):
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if self.want.monitors:
+            self.update_monitors_on_device()
+        self._wait_for_fqdn_checks()
+
+    def _wait_for_fqdn_checks(self):
         while True:
-            if resource.state == 'fqdn-checking':
-                resource.refresh()
+            have = self.read_current_from_device()
+            if have.state == 'fqdn-checking':
                 time.sleep(1)
             else:
                 break
 
     def remove_from_device(self):
-        result = self.client.api.tm.ltm.nodes.node.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if result:
-            result.delete()
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
+
+    def update_monitors_on_device(self):
+        """Updates the monitors string
+
+        There is a long-standing bug in where the monitor value
+        is a string that includes braces. These braces cause the REST API to panic and
+        fail to update or create any resources that have an "at_least" or "require"
+        set of availability_requirements.
+
+        This method exists to do a tmsh command to cause the update to take place on
+        the device.
+
+        Preferably, this method can be removed and the bug be fixed. The API should
+        be working, obviously, but the more concerning issue is if tmsh commands change
+        over time, breaking this method.
+        """
+        command = 'tmsh modify ltm node /{0}/{1} monitor {2}'.format(
+            self.want.partition, self.want.name, self.want.monitors
+        )
+        params = {
+            "command": "run",
+            "utilCmdArgs": '-c "{0}"'.format(command)
+        }
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+            if 'commandResult' in response and len(response['commandResult'].strip()) > 0:
+                raise F5ModuleError(response['commandResult'])
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
 
 
 class ArgumentSpec(object):
@@ -873,7 +1080,11 @@ class ArgumentSpec(object):
             ),
             fqdn_auto_populate=dict(type='bool'),
             fqdn_up_interval=dict(),
-            fqdn_down_interval=dict(type='int')
+            fqdn_down_interval=dict(type='int'),
+            connection_limit=dict(type='int'),
+            rate_limit=dict(type='int'),
+            ratio=dict(type='int'),
+            dynamic_ratio=dict(type='int')
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -885,22 +1096,16 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        client = F5Client(**module.params)
+        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':
