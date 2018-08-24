@@ -40,7 +40,6 @@ options:
   sandbox:
     description:
       - Decides if the sandbox API should be used. Otherwise (default) the production API of DNS Made Easy is used.
-    
 
   record_name:
     description:
@@ -383,7 +382,7 @@ class DME2(object):
             self.baseurl = 'https://api.sandbox.dnsmadeeasy.com/V2.0/'
         else:
             self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
-        
+
         self.domain = str(domain)
         self.domain_map = None      # ["domain_name"] => ID
         self.record_map = None      # ["record_name"] => ID
@@ -547,7 +546,7 @@ def main():
             account_key=dict(required=True),
             account_secret=dict(required=True, no_log=True),
             domain=dict(required=True),
-            sandbox=dict(default='no',type='bool'),
+            sandbox=dict(default='no', type='bool'),
             state=dict(required=True, choices=['present', 'absent']),
             record_name=dict(required=False),
             record_type=dict(required=False, choices=[
