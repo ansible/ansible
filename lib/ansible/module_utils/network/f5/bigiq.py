@@ -63,9 +63,7 @@ class F5Client(F5BaseClient):
 
 class F5RestClient(F5BaseClient):
     def __init__(self, *args, **kwargs):
-        params = kwargs.get('module').params
-        module = kwargs.pop('module')
-        super(F5RestClient, self).__init__(module=module, **params)
+        super(F5RestClient, self).__init__(*args, **kwargs)
         self.provider = self.merge_provider_params()
 
     @property
@@ -89,7 +87,7 @@ class F5RestClient(F5BaseClient):
 
                 if response.status not in [200]:
                     raise F5ModuleError('Status code: {0}. Unexpected Error: {1} for uri: {2}\nText: {3}'.format(
-                        response.status, response.reason, response.url, response._content
+                        response.status, response.reason, response.url, response.content
                     ))
 
                 session.headers['X-F5-Auth-Token'] = response.json()['token']['token']

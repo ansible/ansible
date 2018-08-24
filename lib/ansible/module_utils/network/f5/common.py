@@ -54,6 +54,7 @@ f5_provider_spec = {
         default='rest'
     ),
     'timeout': dict(type='int'),
+    'auth_provider': dict()
 }
 
 f5_argument_spec = {
@@ -88,6 +89,9 @@ f5_top_spec = {
     'transport': dict(
         removed_in_version=2.9,
         choices=['cli', 'rest']
+    ),
+    'auth_provider': dict(
+        default=None
     )
 }
 f5_argument_spec.update(f5_top_spec)
@@ -103,6 +107,13 @@ def load_params(params):
         if key in f5_argument_spec:
             if params.get(key) is None and value is not None:
                 params[key] = value
+
+
+def is_empty_list(seq):
+    if len(seq) == 1:
+        if seq[0] == '' or seq[0] == 'none':
+            return True
+    return False
 
 
 # Fully Qualified name (with the partition)
@@ -204,7 +215,9 @@ def flatten_boolean(value):
         return 'no'
 
 
-def cleanup_tokens(client):
+def cleanup_tokens(client=None):
+    if client is None:
+        return
     try:
         # isinstance cannot be used here because to import it creates a
         # circular dependency with teh module_utils.network.f5.bigip file.
