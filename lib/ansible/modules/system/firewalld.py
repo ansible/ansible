@@ -91,28 +91,28 @@ author: "Adam Miller (@maxamillion)"
 EXAMPLES = '''
 - firewalld:
     service: https
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
     port: 8081/tcp
-    permanent: true
+    permanent: yes
     state: disabled
 
 - firewalld:
     port: 161-162/udp
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
     zone: dmz
     service: http
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
     rich_rule: 'rule service name="ftp" audit limit value="1/m" accept'
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
@@ -123,26 +123,26 @@ EXAMPLES = '''
 - firewalld:
     zone: trusted
     interface: eth2
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
     masquerade: yes
     state: enabled
-    permanent: true
+    permanent: yes
     zone: dmz
 
 - firewalld:
     zone: custom
     state: present
-    permanent: true
+    permanent: yes
 
 - name: Redirect port 443 to 8443 with Rich Rule
   firewalld:
     rich_rule: rule family={{ item }} forward-port port=443 protocol=tcp to-port=8443
     zone:      public
-    permanent: true
-    immediate: true
+    permanent: yes
+    immediate: yes
     state:     enabled
   with_items:
     - ipv4
