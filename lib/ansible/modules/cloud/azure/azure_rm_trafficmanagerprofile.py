@@ -245,7 +245,6 @@ monitor_config_spec = dict(
 )
 
 
-
 class AzureRMTrafficManagerProfile(AzureRMModuleBase):
 
     def __init__(self):
