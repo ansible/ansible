@@ -218,6 +218,11 @@ def map_obj_to_ele(module, want):
                     ssh_rsa = SubElement(auth, 'ssh-ed25519')
                 key = SubElement(ssh_rsa, 'name').text = item['sshkey']
 
+            if item.get('encrypted_password'):
+                if 'auth' not in locals():
+                    auth = SubElement(user, 'authentication')
+                SubElement(auth, 'encrypted-password').text = item['encrypted_password']
+
     return element
 
 
@@ -267,6 +272,7 @@ def map_params_to_obj(module):
         item.update({
             'full_name': get_value('full_name'),
             'role': get_value('role'),
+            'encrypted_password': get_value('encrypted_password'),
             'sshkey': get_value('sshkey'),
             'state': get_value('state'),
             'active': get_value('active')
@@ -290,6 +296,7 @@ def main():
         name=dict(),
         full_name=dict(),
         role=dict(choices=ROLES),
+        encrypted_password=dict(),
         sshkey=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         active=dict(type='bool', default=True)
