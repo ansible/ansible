@@ -20,7 +20,9 @@ short_description: Manage LXD network
 version_added: 2.7
 description:
   - Management of LXD networks
-author: "Sirtaj Singh Kang (@sirtaj) and Hiroaki Nakamura (@hnakamur)"
+author:
+  - Sirtaj Singh Kang (@sirtaj)
+  - Hiroaki Nakamura (@hnakamur)
 options:
     name:
         description:
@@ -40,36 +42,30 @@ options:
             are different, they this module tries to apply the configurations.
           - Not all config values are supported to apply the existing network.
             Maybe you need to delete and recreate a network.
-        required: false
     new_name:
         description:
           - A new name of a network.
           - If this parameter is specified a network will be renamed to this name.
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-11)
-        required: false
     state:
         choices:
           - present
           - absent
         description:
           - Define the state of a network.
-        required: false
         default: present
     url:
         description:
           - The unix domain socket path or the https URL for the LXD server.
-        required: false
         default: unix:/var/lib/lxd/unix.socket
     key_file:
         description:
           - The client certificate key file path.
           - If unspecified, the client.key file in the user's lxc config directory is used if present.
-        required: false
     cert_file:
         description:
           - The client certificate file path.
           - If unspecified, the client.crt file in the user's lxc config directory is used if present.
-        required: false
     trust_password:
         description:
           - The client trusted password.
@@ -79,9 +75,8 @@ options:
             See U(https://www.stgraber.org/2016/04/18/lxd-api-direct-interaction/)
           - If trust_password is set, this module send a request for
             authentication before sending any requests.
-        required: false
 notes:
-  - Profiles must have a unique name. If you attempt to create a network
+  - Networks must have a unique name. If you attempt to create a network
     with a name that already existed in the users namespace the module will
     simply return as "unchanged".
 '''
