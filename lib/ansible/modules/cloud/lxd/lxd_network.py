@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -17,6 +17,7 @@ DOCUMENTATION = '''
 ---
 module: lxd_network
 short_description: Manage LXD network
+version_added: 2.7
 description:
   - Management of LXD networks
 author: "Sirtaj Singh Kang (@sirtaj) and Hiroaki Nakamura (@hnakamur)"
@@ -63,12 +64,12 @@ options:
         description:
           - The client certificate key file path.
         required: false
-        default: '"{}/.config/lxc/client.key" .format(os.environ["HOME"])'
+        default: '"{0}/.config/lxc/client.key".format(os.environ["HOME"])'
     cert_file:
         description:
           - The client certificate file path.
         required: false
-        default: '"{}/.config/lxc/client.crt" .format(os.environ["HOME"])'
+        default: '"{0}/.config/lxc/client.crt".format(os.environ["HOME"])'
     trust_password:
         description:
           - The client trusted password.
@@ -256,7 +257,7 @@ class LXDNetworkManagement(object):
 
     def _rename_network(self):
         config = {'name': self.new_name}
-        self.client.do('POST', '/1.0/networks/{}'.format(self.name), config)
+        self.client.do('POST', '/1.0/networks/{0}'.format(self.name), config)
         self.actions.append('rename')
         self.name = self.new_name
 
@@ -283,11 +284,11 @@ class LXDNetworkManagement(object):
         config = self.old_network_json.copy()
         for k, v in self.config.items():
             config[k] = v
-        self.client.do('PUT', '/1.0/networks/{}'.format(self.name), config)
+        self.client.do('PUT', '/1.0/networks/{0}'.format(self.name), config)
         self.actions.append('apply_network_configs')
 
     def _delete_network(self):
-        self.client.do('DELETE', '/1.0/networks/{}'.format(self.name))
+        self.client.do('DELETE', '/1.0/networks/{0}'.format(self.name))
         self.actions.append('delete')
 
     def run(self):
@@ -351,11 +352,11 @@ def main():
             ),
             key_file=dict(
                 type='str',
-                default='{}/.config/lxc/client.key'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.key'.format(os.environ['HOME'])
             ),
             cert_file=dict(
                 type='str',
-                default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
             trust_password=dict(type='str', no_log=True)
         ),
