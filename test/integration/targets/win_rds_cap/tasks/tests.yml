@@ -3,8 +3,8 @@
   win_rds_cap:
     name: '{{ test_win_rds_cap_name }}'
     user_groups:
+      - administrators
       - users@builtin
-      - administrators@builtin
     state: present
   register: new_cap_check
   check_mode: yes
@@ -23,8 +23,8 @@
   win_rds_cap:
     name: '{{ test_win_rds_cap_name }}'
     user_groups:
+      - administrators
       - users@builtin
-      - administrators@builtin
     state: present
   register: new_cap
 
@@ -42,8 +42,8 @@
   win_rds_cap:
     name: '{{ test_win_rds_cap_name }}'
     user_groups:
+      - administrators
       - users@builtin
-      - administrators@builtin
     state: present
   register: new_cap_again
 
@@ -61,10 +61,11 @@
   win_rds_cap:
     name: '{{ test_win_rds_cap_name }}'
     user_groups:
+      # Test with different group name formats
       - users@builtin
-      - guests@builtin
+      - .\guests
     computer_groups:
-      - administrators@builtin
+      - administrators
     auth_method: both
     session_timeout: 20
     session_timeout_action: reauth
@@ -216,7 +217,7 @@
   win_rds_cap:
     name: '{{ test_win_rds_cap_name }}'
     user_groups:
-      - fake_group@builtin
+      - fake_group
     state: present
   register: new_cap_invalid_user_group
   check_mode: yes
@@ -226,7 +227,7 @@
   win_rds_cap:
     name: '{{ test_win_rds_cap_name }}'
     computer_groups:
-      - fake_group@builtin
+      - fake_group
     state: present
   register: new_cap_invalid_computer_group
   check_mode: yes
