@@ -29,7 +29,7 @@ options:
     value:
       description:
         - Value to be modified for given setting.
-    extends_documentation_fragment: tower
+extends_documentation_fragment: tower
 '''
 
 
