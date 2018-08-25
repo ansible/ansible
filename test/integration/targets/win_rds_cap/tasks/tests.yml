@@ -213,6 +213,15 @@
   check_mode: yes
   failed_when: "new_cap_without_group.msg != 'User groups must be defined to create a new CAP.'"
 
+- name: fail when create a new CAP with an empty user group list
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    user_groups: []
+    state: present
+  register: new_cap_empty_group_list
+  check_mode: yes
+  failed_when: "new_cap_empty_group_list.msg is not search('cannot be an empty list')"
+
 - name: fail when create a new CAP with an invalid user group
   win_rds_cap:
     name: '{{ test_win_rds_cap_name }}'

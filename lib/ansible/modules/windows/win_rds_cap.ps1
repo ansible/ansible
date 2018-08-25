@@ -98,6 +98,10 @@ if ($name -match "[*/\\;:?`"<>|\t]+") {
 
 # Validate user groups
 if ($null -ne $user_groups) {
+    if ($user_groups.Count -lt 1) {
+        Fail-Json -obj $result -message "Parameter 'user_groups' cannot be an empty list."
+    }
+
     $user_groups = $user_groups | foreach {
         $group = $_
         # Test that the group is resolvable on the local machine
@@ -242,7 +246,6 @@ if ($state -eq 'absent') {
                 $result.changed = $true
             }
 
-            # TODO Check that we keep at least one group (required)
             foreach($group in $groups_to_remove) {
                 Remove-Item -Path "RDS:\GatewayServer\CAP\$name\UserGroups\$group" -WhatIf:$check_mode
                 $result.changed = $true
