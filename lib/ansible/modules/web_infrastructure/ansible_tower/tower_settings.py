@@ -18,21 +18,20 @@ DOCUMENTATION = '''
 module: tower_settings
 author: "Nikhil Jain (@jainnikhil30)"
 version_added: "2.7"
-short_description: Get, Modify Ansible Tower settings.
+short_description: Modify Ansible Tower settings.
 description:
     - Get, Modify Ansible Tower settings. See
       U(https://www.ansible.com/tower) for an overview.
 options:
     name:
       description:
-        - Name of setting to get/modify.
+        - Name of setting to get/modify
     value:
       description:
-        - Value to be modified for given setting. If this parameter is not given, module will only get the value of setting.
-extends_documentation_fragment: tower
+        - Value to be modified for given setting.
+    extends_documentation_fragment: tower
 '''
 
-RETURN = ''' # '''
 
 EXAMPLES = '''
 - name: Set the value of AWX_PROOT_BASE_PATH
@@ -51,11 +50,7 @@ EXAMPLES = '''
   tower_settings:
     name: "AUTH_LDAP_BIND_PASSWORD"
     value: "Password"
-  no_log: true
-
-- name: Get the value of AWX_PROOT_BASE_PATH
-  tower_settings:
-    name: AWX_PROOT_BASE_PATH
+  no_log: true   
 '''
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
@@ -90,11 +85,7 @@ def main():
         tower_check_mode(module)
         try:
             setting = tower_cli.get_resource('setting')
-            if value:
-                result = setting.modify(setting=name, value=value)
-                json_output['changed'] = result['changed']
-            else:
-                result = setting.get(pk=name)
+            result = setting.modify(setting=name, value=value)
 
             json_output['id'] = result['id']
             json_output['value'] = result['value']
@@ -102,6 +93,7 @@ def main():
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to modify the setting: {0}'.format(excinfo), changed=False)
 
+    json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
