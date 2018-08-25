@@ -116,6 +116,15 @@ if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {
     $computer_group = ($computer_group -split "\\")[1..0] -join "@"
 }
 
+# Validate port numbers
+if ($null -ne $allowed_ports) {
+    foreach ($port in $allowed_ports) {
+        if ($port -notmatch "^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]|any)$") {
+            Fail-Json -obj $result -message "$port is not a valid port number."
+        }
+    }
+}
+
 # Ensure RemoteDesktopServices module is loaded
 if ((Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue) -eq $null) {
     Import-Module -Name RemoteDesktopServices
@@ -166,7 +175,6 @@ if ($state -eq 'absent') {
         }
 
         if ($null -ne $allowed_ports -and @(Compare-Object $rap.PortNumbers $allowed_ports -SyncWindow 0).Count -ne 0) {
-            # TODO Ensure array contains only valid port numbers
             if ($allowed_ports -contains 'any') { $allowed_ports = '*' }
             Set-RAPPropertyValue -Name $name -Property PortNumbers -Value $allowed_ports -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true

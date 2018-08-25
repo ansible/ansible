@@ -228,3 +228,18 @@
   register: new_rap_invalid_rdg_computer_group
   check_mode: yes
   failed_when: new_rap_invalid_rdg_computer_group.changed != false or new_rap_invalid_rdg_computer_group.msg is not search('is not a valid gateway managed computer group')
+
+- name: fail when create a new RAP with invalid port numbers
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+    allowed_ports:
+      - '{{ item }}'
+    state: present
+  loop:
+    - invalid_port_number
+    - 65536
+  register: new_rap_invalid_port
+  check_mode: yes
+  failed_when: new_rap_invalid_port.changed != false or new_rap_invalid_port.msg is not search('is not a valid port number')
