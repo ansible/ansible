@@ -86,6 +86,10 @@ if ($name -match "[*/\\;:?`"<>|\t]+") {
 
 # Validate user groups
 if ($null -ne $user_groups) {
+    if ($user_groups.Count -lt 1) {
+        Fail-Json -obj $result -message "Parameter 'user_groups' cannot be an empty list."
+    }
+
     $user_groups = $user_groups | foreach {
         $group = $_
         # Test that the group is resolvable on the local machine
@@ -103,7 +107,7 @@ if ($null -ne $user_groups) {
 
 # Validate computer group parameter
 if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {
-    Add-Warning -obj $result -message "Parameter computer_group ignored because the computer_group_type is set to allow_any."
+    Add-Warning -obj $result -message "Parameter 'computer_group' ignored because the computer_group_type is set to allow_any."
 } elseif ($computer_group_type -eq "rdg_group" -and -not (Test-Path -Path "RDS:\GatewayServer\GatewayManagedComputerGroups\$computer_group")) {
     Fail-Json -obj $result -message "$computer_group is not a valid gateway managed computer group"
 } elseif ($computer_group_type -eq "ad_network_resource_group") {
@@ -211,7 +215,6 @@ if ($state -eq 'absent') {
                 $result.changed = $true
             }
 
-            # TODO Check that we keep at least one group (required)
             foreach($group in $groups_to_remove) {
                 Remove-Item -Path "RDS:\GatewayServer\RAP\$name\UserGroups\$group" -WhatIf:$check_mode
                 $result.changed = $true
