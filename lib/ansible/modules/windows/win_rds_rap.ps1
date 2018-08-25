@@ -20,7 +20,7 @@ $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $tru
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present","enabled","disabled"
 $computer_group_type = Get-AnsibleParam -obj $params -name "computer_group_type" -type "str" -validateset $computer_group_types
-$computer_group = Get-AnsibleParam -obj $params -name "computer_group" -type "str"
+$computer_group = Get-AnsibleParam -obj $params -name "computer_group" -type "str" -failifempty ($computer_group_type -eq "ad_network_resource_group" -or $computer_group_type -eq "rdg_group")
 $user_groups = Get-AnsibleParam -obj $params -name "user_groups" -type "list"
 $allowed_ports = Get-AnsibleParam -obj $params -name "allowed_ports" -type "list"
 
@@ -101,8 +101,19 @@ if ($null -ne $user_groups) {
     $user_groups = @($user_groups)
 }
 
+# Validate computer group parameter
 if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {
     Add-Warning -obj $result -message "Parameter computer_group ignored because the computer_group_type is set to allow_any."
+} elseif ($computer_group_type -eq "rdg_group" -and -not (Test-Path -Path "RDS:\GatewayServer\GatewayManagedComputerGroups\$computer_group")) {
+    Fail-Json -obj $result -message "$computer_group is not a valid gateway managed computer group"
+} elseif ($computer_group_type -eq "ad_network_resource_group") {
+    $sid = Convert-ToSID -account_name $computer_group
+    if (!$sid) {
+        Fail-Json -obj $result -message "$computer_group is not a valid computer group on the host machine or domain"
+    }
+    # Ensure the group name is in UPN format
+    $computer_group = Convert-FromSID -sid $sid
+    $computer_group = ($computer_group -split "\\")[1..0] -join "@"
 }
 
 # Ensure RemoteDesktopServices module is loaded

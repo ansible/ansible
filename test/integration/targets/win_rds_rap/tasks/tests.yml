@@ -66,7 +66,7 @@
       - users@builtin
       - .\guests
     computer_group_type: ad_network_resource_group
-    computer_group: administrators@builtin
+    computer_group: administrators
     allowed_ports:
       - 3389
       - 3390
@@ -204,3 +204,27 @@
   register: new_rap_invalid_group
   check_mode: yes
   failed_when: new_rap_invalid_group.changed != false or new_rap_invalid_group.msg is not search('is not a valid account')
+
+- name: fail when create a new RAP with an invalid AD computer group
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+    computer_group_type: ad_network_resource_group
+    computer_group: fake_ad_group
+    state: present
+  register: new_rap_invalid_ad_computer_group
+  check_mode: yes
+  failed_when: new_rap_invalid_ad_computer_group.changed != false or new_rap_invalid_ad_computer_group.msg is not search('is not a valid account')
+
+- name: fail when create a new RAP with an invalid gateway managed computer group
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+    computer_group_type: rdg_group
+    computer_group: fake_rdg_group
+    state: present
+  register: new_rap_invalid_rdg_computer_group
+  check_mode: yes
+  failed_when: new_rap_invalid_rdg_computer_group.changed != false or new_rap_invalid_rdg_computer_group.msg is not search('is not a valid gateway managed computer group')
