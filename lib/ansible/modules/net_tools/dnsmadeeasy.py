@@ -383,6 +383,7 @@ class DME2(object):
 
         if sandbox:
             self.baseurl = 'https://api.sandbox.dnsmadeeasy.com/V2.0/'
+            self.module.warn(warning="Sandbox is enabled. All actions are made against the URL %s" % self.baseurl)
         else:
             self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
 
