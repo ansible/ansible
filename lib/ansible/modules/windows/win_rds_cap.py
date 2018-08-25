@@ -42,7 +42,9 @@ options:
       - Evaluation order of the policy.
       - The CAP in which I(order) is set to a value of '1' is evaluated first.
       - By default, a newly created CAP will take the first position.
-      - The given value should not exceed the total number of existing policies.
+      - If the given value exceed the total number of existing policies,
+        the policy will take the last position but the evaluation order
+        will be capped to this number.
     type: int
   session_timeout:
     description:

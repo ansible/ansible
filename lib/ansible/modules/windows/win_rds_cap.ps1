@@ -134,6 +134,11 @@ if ($null -ne $computer_groups) {
     $computer_groups = @($computer_groups)
 }
 
+# Validate order parameter
+if ($null -ne $order -and $order -lt 1) {
+    Fail-Json -obj $result -message "Parameter 'order' must be a strictly positive integer."
+}
+
 # Ensure RemoteDesktopServices module is loaded
 if ((Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue) -eq $null) {
     Import-Module -Name RemoteDesktopServices
@@ -183,7 +188,13 @@ if ($state -eq 'absent') {
         }
 
         if ($null -ne $order -and $order -ne $cap.EvaluationOrder) {
-            # TODO Handle InvalidArgument exception when the order value supplied is greater than the total number of CAPs
+            # Order cannot be greater than the total number of existing CAPs (InvalidArgument exception)
+            $cap_count =  (Get-ChildItem -Path "RDS:\GatewayServer\CAP").Count
+            if($order -gt $cap_count) {
+                Add-Warning -obj $result -message "Given value '$order' for parameter 'order' is greater than the number of existing CAPs. The actual order will be capped to '$cap_count'."
+                $order = $cap_count
+            }
+
             Set-CAPPropertyValue -Name $name -Property EvaluationOrder -Value $order -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }

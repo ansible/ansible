@@ -154,7 +154,28 @@
   assert:
     that:
     - second_cap.changed == true
+    - second_cap.warnings is not defined
     - second_cap_actual.stdout_lines[0] == "2"
+
+- name: test create a CAP with order greater than existing CAP count
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }} Last'
+    user_groups:
+      - users@builtin
+    order: 50
+    state: present
+  register: cap_big_order
+
+- name: get result of create a CAP with order greater than existing CAP count
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Get-Item "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }} Last\EvaluationOrder").CurrentValue
+  register: cap_big_order_actual
+
+- name: assert results of create a CAP with order greater than existing CAP count
+  assert:
+    that:
+    - cap_big_order.changed == true
+    - cap_big_order.warnings | length == 1
+    - cap_big_order_actual.stdout_lines[0] == "3"
 
 - name: test remove CAP (check mode)
   win_rds_cap:
