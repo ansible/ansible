@@ -163,7 +163,6 @@ if ($state -eq 'absent') {
     # won't actually exist
     if($rap_exist) {
         $rap = Get-RAP -Name $name
-        $result.rap = $rap
 
         if ($state -in @('enabled', 'disabled')) {
             $rap_enabled = $state -ne 'disabled'
