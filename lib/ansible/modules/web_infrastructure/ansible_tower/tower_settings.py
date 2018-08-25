@@ -50,7 +50,7 @@ EXAMPLES = '''
   tower_settings:
     name: "AUTH_LDAP_BIND_PASSWORD"
     value: "Password"
-  no_log: true   
+  no_log: true 
 '''
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
@@ -99,3 +99,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
