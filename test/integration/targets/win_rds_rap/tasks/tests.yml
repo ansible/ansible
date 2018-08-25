@@ -3,8 +3,8 @@
   win_rds_rap:
     name: '{{ test_win_rds_rap_name }}'
     user_groups:
+      - administrators
       - users@builtin
-      - administrators@builtin
     state: present
   register: new_rap_check
   check_mode: yes
@@ -23,8 +23,8 @@
   win_rds_rap:
     name: '{{ test_win_rds_rap_name }}'
     user_groups:
+      - administrators
       - users@builtin
-      - administrators@builtin
     state: present
   register: new_rap
 
@@ -42,8 +42,8 @@
   win_rds_rap:
     name: '{{ test_win_rds_rap_name }}'
     user_groups:
+      - administrators
       - users@builtin
-      - administrators@builtin
     state: present
   register: new_rap_again
 
@@ -62,8 +62,9 @@
     name: '{{ test_win_rds_rap_name }}'
     description: 'Description of {{ test_win_rds_rap_name }}'
     user_groups:
+      # Test with different group name formats
       - users@builtin
-      - guests@builtin
+      - .\guests
     computer_group_type: ad_network_resource_group
     computer_group: administrators@builtin
     allowed_ports:
@@ -198,7 +199,7 @@
   win_rds_rap:
     name: '{{ test_win_rds_rap_name }}'
     user_groups:
-      - fake_group@builtin
+      - fake_group
     state: present
   register: new_rap_invalid_group
   check_mode: yes

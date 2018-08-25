@@ -86,14 +86,19 @@ if ($name -match "[*/\\;:?`"<>|\t]+") {
 
 # Validate user groups
 if ($null -ne $user_groups) {
-    $user_groups | foreach {
+    $user_groups = $user_groups | foreach {
         $group = $_
         # Test that the group is resolvable on the local machine
         $sid = Convert-ToSID -account_name $group
         if (!$sid) {
             Fail-Json -obj $result -message "$group is not a valid user group on the host machine or domain"
         }
+
+        # Return the normalized group name in UPN format
+        $group_name = Convert-FromSID -sid $sid
+        ($group_name -split "\\")[1..0] -join "@"
     }
+    $user_groups = @($user_groups)
 }
 
 if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {

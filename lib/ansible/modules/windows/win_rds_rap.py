@@ -68,7 +68,7 @@ EXAMPLES = '''
     name: My RAP
     description: 'Allow all users to connect to any resource through ports 3389 and 3390'
     user_groups:
-      - users@builtin
+      - BUILTIN\\users
     computer_group_type: allow_any
     allowed_ports:
       - 3389
