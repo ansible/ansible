@@ -79,6 +79,13 @@ options:
         type: bool
         default: no
         version_added: "2.3"
+    root:
+      description:
+        - When using a unit, use the specified root path when locating it's files.
+          If this option is present, systemctl will operate on the file system directly,
+          instead of communicating with the systemd daemon to carry out changes.
+      version_added: "2.9"
+      type: path
 notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
       and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
@@ -329,6 +336,7 @@ def main():
             user=dict(type='bool'),
             scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
+            root=dict(type='path', default='')
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload', 'daemon_reexec']],
@@ -362,14 +370,14 @@ def main():
 
     # if scope is 'system' or None, we can ignore as there is no extra switch.
     # The other choices match the corresponding switch
-    if module.params['scope'] not in (None, 'system'):
-        systemctl += " --%s" % module.params['scope']
 
     if module.params['no_block']:
         systemctl += " --no-block"
 
     if module.params['force']:
         systemctl += " --force"
+
+    unit = module.params['name']
 
     rc = 0
     out = err = ''
@@ -392,17 +400,24 @@ def main():
             module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
     if unit:
+        systemctl_unit = systemctl
         found = False
         is_initd = sysv_exists(unit)
         is_systemd = False
 
+        if module.params['root']:
+            systemctl_unit += " --root=%s" % module.params['root']
+
+        if module.params['scope'] not in (None, 'system'):
+            systemctl_unit += " --%s" % module.params['scope']
+
         # check service data, cannot error out on rc as it changes across versions, assume not found
-        (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
+        (rc, out, err) = module.run_command("%s show '%s'" % (systemctl_unit, unit))
 
         if request_was_ignored(out) or request_was_ignored(err):
             # fallback list-unit-files as show does not work on some systems (chroot)
             # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
-            (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
+            (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl_unit, unit))
             if rc == 0:
                 is_systemd = True
 
@@ -440,7 +455,7 @@ def main():
                     action = 'unmask'
 
                 if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl_unit, action, unit))
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
@@ -457,7 +472,7 @@ def main():
 
             # do we need to enable the service?
             enabled = False
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl_unit, unit))
 
             # check systemctl result or if it is a init script
             if rc == 0:
@@ -478,7 +493,7 @@ def main():
             if enabled != module.params['enabled']:
                 result['changed'] = True
                 if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl_unit, action, unit))
                     if rc != 0:
                         module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
 
@@ -510,7 +525,7 @@ def main():
                 if action:
                     result['changed'] = True
                     if not module.check_mode:
-                        (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                        (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl_unit, action, unit))
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
             # check for chroot
