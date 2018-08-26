@@ -50,6 +50,10 @@ notes:
       option."
    - "This module was called C(letsencrypt) before Ansible 2.6. The usage
       did not change."
+   - "If you want to use the C(tls-alpn-01) challenge, you can use the
+      M(acme_challenge_cert_helper) module to prepare the challenge certificate."
+   - "You can use the M(certificate_complet_chain) module to find the root certificate
+      for the returned fullchain."
 extends_documentation_fragment:
   - acme
 options:
