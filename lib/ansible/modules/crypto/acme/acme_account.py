@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: acme_account
 author: "Felix Fontein (@felixfontein)"
 version_added: "2.6"
-short_description: Create, modify or delete accounts with Let's Encrypt
+short_description: Create, modify or delete ACME accounts
 description:
    - "Allows to create, modify or delete accounts with a CA supporting the
       L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),

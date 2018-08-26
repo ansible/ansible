@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: acme_certificate_revoke
 author: "Felix Fontein (@felixfontein)"
 version_added: "2.7"
-short_description: Revoke certificates with the ACME protocol.
+short_description: Revoke certificates with the ACME protocol
 description:
    - "Allows to revoke certificates issued by a CA supporting the
       L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),

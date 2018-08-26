@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: acme_account_facts
 author: "Felix Fontein (@felixfontein)"
 version_added: "2.7"
-short_description: Retrieves information on ACME accounts.
+short_description: Retrieves information on ACME accounts
 description:
    - "Allows to retrieve information on accounts a CA supporting the
       L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),

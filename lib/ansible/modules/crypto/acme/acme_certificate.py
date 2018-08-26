@@ -18,9 +18,9 @@ DOCUMENTATION = '''
 module: acme_certificate
 author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
-short_description: Create SSL certificates with an ACME protocol endpoint
+short_description: Create SSL/TLS certificates with the ACME protocol
 description:
-   - "Create and renew SSL certificates with a CA supporting the
+   - "Create and renew SSL/TLS certificates with a CA supporting the
       L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
       such as L(Let's Encrypt,https://letsencrypt.org/). The current
       implementation supports the C(http-01), C(dns-01) and C(tls-alpn-01)
