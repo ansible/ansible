@@ -67,13 +67,13 @@ except ImportError:
 
 def main():
     argument_spec = dict(
-        name=dict(),
-        value=dict(),
+        name=dict(Required=True),
+        value=dict(Required=True),
     )
 
     module = TowerModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
     json_output = {}
