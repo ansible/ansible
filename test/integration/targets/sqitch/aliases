@@ -3,3 +3,4 @@ skip/freebsd
 skip/osx
 skip/rhel
 destructive
+shippable/posix/group1

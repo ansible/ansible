@@ -30,7 +30,7 @@ module: sqitch
 short_description: Manage databases using sqitch
 description:
   - Manage PostgreSQL, SQLite, Oracle, MySQL, Firebird and Vertica database changes using sqitch
-version_added: "2.6"
+version_added: "2.7"
 author: "Dawid Wolski, @merito"
 requirements:
   - sqitch
@@ -72,6 +72,7 @@ options:
       - Run verify scripts after each change. Set to false to disable verification.
         There is no default, if not set it depends on the content od the conf file.
     required: no
+    type: bool
   mode:
     description:
       - Specify the reversion mode to use in case of deploy or verify failure. (deploy, rebase)
@@ -82,12 +83,17 @@ options:
         The format must be name=value, e.g., defuser='Homer Simpson'. Overrides any values loaded from the deploy.variables configuration.
     required: no
     default: []
+    choices:
+        - all
+        - tag
+        - change
   log_only:
     description:
       - Log the changes as if they were deployed, but without actually running the deploy scripts.
         Useful for an existing database that is being converted to Sqitch, and you need to log changes as deployed
         because they have been deployed by other means in the past.
     required: no
+    type: bool
   onto:
     description:
       - Specify the reversion change. Defaults to reverting all changes. (rebase)
