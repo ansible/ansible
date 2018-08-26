@@ -384,9 +384,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             'tempaltetype': 'template_type',
             'ostypename': 'os_type',
             'crossZones': 'cross_zones',
-            'isextractable': 'is_extractable',
-            'isfeatured': 'is_featured',
-            'ispublic': 'is_public',
             'format': 'format',
             'hypervisor': 'hypervisor',
             'url': 'url',
@@ -648,6 +645,14 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                 if poll_async:
                     res = self.poll_job(res, 'template')
         return template
+
+    def get_result(self, template):
+        super(AnsibleCloudStackTemplate, self).get_result(template)
+        if template:
+            self.result['is_extractable'] = True if template['isextractable'] else False
+            self.result['is_featured'] = True if template['isfeatured'] else False
+            self.result['is_public'] = True if template['ispublic'] else False
+        return self.result
 
 
 def main():
