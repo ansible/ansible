@@ -68,14 +68,13 @@ options:
     type: bool
   new_account_key_src:
     description:
-      - "Path to a file containing the Let's Encrypt account RSA or Elliptic Curve
-         key to change to."
+      - "Path to a file containing the ACME account RSA or Elliptic Curve key to change to."
       - "Same restrictions apply as to C(account_key_src)."
       - "Mutually exclusive with C(new_account_key_content)."
       - "Required if C(new_account_key_content) is not used and state is C(changed_key)."
   new_account_key_content:
     description:
-      - "Content of the Let's Encrypt account RSA or Elliptic Curve key to change to."
+      - "Content of the ACME account RSA or Elliptic Curve key to change to."
       - "Same restrictions apply as to C(account_key_content)."
       - "Mutually exclusive with C(new_account_key_src)."
       - "Required if C(new_account_key_src) is not used and state is C(changed_key)."

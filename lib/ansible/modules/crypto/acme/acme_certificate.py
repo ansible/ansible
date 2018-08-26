@@ -100,8 +100,8 @@ options:
          CSR to be signed."
       - "I(Note): the private key used to create the CSR I(must not) be the
          account key. This is a bad idea from a security point of view, and
-         the CA should not accept the CSR. Let's Encrypt will return an error
-         in this case."
+         the CA should not accept the CSR. The ACME server should return an
+         error in this case."
     required: true
     aliases: ['src']
   data:

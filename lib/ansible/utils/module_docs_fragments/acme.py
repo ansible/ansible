@@ -17,8 +17,8 @@ notes:
      contents always have to be stored on disk (see
      C(account_key_content))."
   - "Although the defaults are chosen so that the module can be used with
-     the Let's Encrypt CA, the module can in principle be used with any
-     CA providing an ACME endpoint."
+     the L(Let's Encrypt,https://letsencrypt.org/) CA, the module can in
+     principle be used with any CA providing an ACME endpoint."
 requirements:
   - "python >= 2.6"
   - "either openssl, ..."
@@ -76,8 +76,8 @@ options:
          U(https://acme-v01.api.letsencrypt.org/directory), and the production
          directory URL for ACME v2 is U(https://acme-v02.api.letsencrypt.org/directory)."
       - "I(Warning): So far, the module has only been tested against Let's Encrypt
-         (staging and production) and against the Pebble testing server
-         (U(https://github.com/letsencrypt/Pebble))."
+         (staging and production) and against the
+         L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
     default: https://acme-staging.api.letsencrypt.org/directory
   validate_certs:
     description:
