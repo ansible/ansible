@@ -39,9 +39,6 @@ description:
       L(the main ACME specification,https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-8)
       and the L(TLS-ALPN-01 specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3).
       Also, consider the examples provided for this module."
-   - "Although the defaults are chosen so that the module can be used with
-      the Let's Encrypt CA, the module can be used with any service using the ACME
-      v1 or v2 protocol."
 notes:
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
    - "This module includes basic account management functionality.

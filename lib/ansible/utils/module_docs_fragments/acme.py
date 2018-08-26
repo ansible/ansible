@@ -16,6 +16,9 @@ notes:
      the C(openssl) binary will be slower and less secure, as private key
      contents always have to be stored on disk (see
      C(account_key_content))."
+  - "Although the defaults are chosen so that the module can be used with
+     the Let's Encrypt CA, the module can in principle be used with any
+     CA providing an ACME endpoint."
 requirements:
   - "python >= 2.6"
   - "either openssl, ..."
