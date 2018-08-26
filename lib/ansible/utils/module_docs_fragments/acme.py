@@ -8,8 +8,8 @@ class ModuleDocFragment(object):
 
     # Standard files documentation fragment
     DOCUMENTATION = """
-description:
-  - "Note that if a new enough version of the C(cryptography) library
+notes:
+  - "If a new enough version of the C(cryptography) library
      is available (see Requirements for details), it will be used
      instead of the C(openssl) binary. This can be explicitly disabled
      or enabled with the C(select_crypto_backend) option. Note that using
