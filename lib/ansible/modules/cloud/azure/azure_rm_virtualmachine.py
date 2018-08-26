@@ -1044,7 +1044,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
-                                disk_size_gb=self.os_disk_size,
                                 caching=self.os_disk_caching,
                                 disk_size_gb=self.os_disk_size_gb
                             ),
@@ -1147,8 +1146,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name, parameters=term)
                         except Exception as exc:
                             self.fail(("Error accepting terms for virtual machine {0} with plan {1}. " +
-                                        "Only service admin/account admin users can purchase images " +
-                                        "from the marketplace. - {2}").format( self.name, self.plan, str(exc)))
+                                       "Only service admin/account admin users can purchase images " +
+                                       "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vm(vm_resource)
@@ -1193,7 +1192,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=vm_dict['properties']['storageProfile']['osDisk']['createOption'],
-                                disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB'],
                                 os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
                                 disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']
