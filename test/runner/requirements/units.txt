@@ -31,3 +31,6 @@ xmljson
 
 # requirement for winrm connection plugin tests
 pexpect
+
+# requirement for the linode module
+linode-python
