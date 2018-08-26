@@ -1,0 +1,21 @@
+---
+- name: install service
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: 'C:\Windows\System32\cmd.exe'
+    app_parameters_free_form: '-Dcom.test.string=value'
+    state: present
+  register: install_service
+
+- name: get result of install service
+  win_shell: |
+    Write-Host ([bool](Get-Service "{{ test_service_name }}" -ErrorAction SilentlyContinue))
+    nssm get "{{ test_service_name }}" AppParameters
+  register: install_service_actual
+
+- name: assert results of install service
+  assert:
+    that:
+    - install_service.changed == true
+    - install_service_actual.stdout_lines[0] == "True"
+    - install_service_actual.stdout_lines[1] == "-Dcom.test.string=value"
