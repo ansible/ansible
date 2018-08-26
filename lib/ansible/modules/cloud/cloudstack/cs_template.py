@@ -104,7 +104,7 @@ options:
       - Options to find a template uniquely.
       - More than one allowed.
     choices: [ display_text, checksum, cross_zones ]
-    version_added: 2.6
+    version_added: 2.7
     aliases: [ template_find_option ]
     default: []
   hypervisor:
@@ -114,17 +114,18 @@ options:
     choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
   requires_hvm:
     description:
-      - true if this template requires HVM.
+      - Whether the template requires HVM or not.
+      - Only considered while creating the template.
     default: no
     type: bool
   password_enabled:
     description:
-      - True if the template supports the password reset feature.
+      - Enable template password reset support.
     default: no
     type: bool
   template_tag:
     description:
-      - the tag for this template.
+      - The tag for this template.
   sshkey_enabled:
     description:
       - True if the template supports the sshkey upload feature.
