@@ -68,6 +68,11 @@ options:
         type: bool
         default: 'no'
         version_added: "2.3"
+    root:
+      description:
+        - When used with enable/disable/is-enabled (and related commands), use the specified root path when looking for unit files.
+          If this option is present, systemctl will operate on the file system directly, instead of communicating with the systemd daemon to carry out changes.
+      version_added: "2.7"
 notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', and all except 'daemon_reload' also require 'name'.
     - Before 2.4 you always required 'name'.
@@ -307,7 +312,8 @@ def main():
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
             user=dict(type='bool', default=False),
             scope=dict(type='str', default='system', choices=['system', 'user', 'global']),
-            no_block=dict(type='bool', default=False),
+            no_block=dict(type='bool', default=False),'
+            root=dict(type='str', default='')
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
@@ -325,6 +331,8 @@ def main():
         systemctl = systemctl + " --no-block"
     if module.params['force']:
         systemctl = systemctl + " --force"
+    if module.params['root']:
+      systemctl = systemctl + " --root=%s" % root
     unit = module.params['name']
     rc = 0
     out = err = ''
