@@ -16,7 +16,7 @@ short_description: Manages templates on Apache CloudStack based clouds.
 description:
   - Register templates from an URL.
   - Create templates from a ROOT volume of a stopped VM or its snapshot.
-  - Update (since version 2.6), extract and delete templates.
+  - Update (since version 2.7), extract and delete templates.
 version_added: '2.0'
 author: "René Moser (@resmo)"
 options:
@@ -48,7 +48,7 @@ options:
   is_ready:
     description:
       - "Note: this flag was not implemented and therefore marked as deprecated."
-      - Deprecated, will be removed in version 2.10.
+      - Deprecated, will be removed in version 2.11.
     type: bool
   is_public:
     description:
@@ -96,7 +96,7 @@ options:
   template_filter:
     description:
       - Name of the filter used to search for the template.
-      - The filter C(all) was added in 2.6.
+      - The filter C(all) was added in 2.7.
     default: self
     choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
   template_find_options:
@@ -666,7 +666,7 @@ def main():
         vm=dict(),
         snapshot=dict(),
         os_type=dict(),
-        is_ready=dict(type='bool', removed_in_version='2.10'),
+        is_ready=dict(type='bool', removed_in_version='2.11'),
         is_public=dict(type='bool', default=True),
         is_featured=dict(type='bool', default=False),
         is_dynamically_scalable=dict(type='bool', default=False),
