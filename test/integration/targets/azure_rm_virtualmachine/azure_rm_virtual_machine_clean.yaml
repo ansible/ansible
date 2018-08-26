@@ -1,0 +1,80 @@
+---
+
+# Remove ALL resources created by tests such that if the test fails the RG is cleaned up
+
+- name: Remove virtual machines
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+  loop:
+    - "{{ hostvars['localhost'].vm_names.basic }}"
+    - "{{ hostvars['localhost'].vm_names.managed_disk }}"
+    - "{{ hostvars['localhost'].vm_names.os_disk_size }}"
+    - "{{ hostvars['localhost'].vm_names.accept_terms }}"
+  loop_control:
+    loop_var: vm_name
+  
+- name: Remove NIC's
+  azure_rm_networkinterface:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ nic_name }}"
+    state: absent
+  loop:
+    - "{{ hostvars['localhost'].vm_nics[0] }}"
+    - "{{ hostvars['localhost'].vm_nics[1] }}"
+    - "{{ hostvars['localhost'].vm_names.basic }}"
+    - "{{ hostvars['localhost'].vm_names.managed_disk }}01"
+    - "{{ hostvars['localhost'].vm_names.os_disk_size }}01"
+    - "{{ hostvars['localhost'].vm_names.accept_terms }}01"
+  loop_control:
+    loop_var: nic_name
+
+- name: remove NSG's
+  azure_rm_securitygroup:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ nsg_name }}"
+    state: absent
+  loop:
+    - "{{ hostvars['localhost'].nsg }}"
+    - "{{ hostvars['localhost'].vm_names.managed_disk }}01"
+    - "{{ hostvars['localhost'].vm_names.os_disk_size }}01"
+    - "{{ hostvars['localhost'].vm_names.accept_terms }}01"
+  loop_control:
+    loop_var: nsg_name
+
+- name: Remove public IP
+  azure_rm_publicipaddress:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].pip }}"
+    state: absent
+
+- name: Remove availability sets
+  azure_rm_availabilityset:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ avs_name }}"
+    state: absent
+  loop:
+    - "{{ hostvars['localhost'].availability_set_blob }}"
+    - "{{ hostvars['localhost'].availability_set }}"
+  loop_control:
+    loop_var: avs_name
+  
+- name: Delete storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].storage_account }}"
+    state: absent
+
+- name: Remove subnet
+  azure_rm_subnet:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].subnet }}"
+    virtual_network: "{{ hostvars['localhost'].vnet }}"
+    state: absent
+
+- name: Remove virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vnet }}"
+    state: absent

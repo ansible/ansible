@@ -158,7 +158,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            account_type=dict(type='str', choices=[], aliases=['type']),
+            account_type=dict(type='str', choices=['Premium_LRS', 'Standard_GRS', 'Standard_LRS', 'Standard_RAGRS', 'Standard_ZRS'], aliases=['type']),
             custom_domain=dict(type='dict'),
             location=dict(type='str'),
             name=dict(type='str', required=True),

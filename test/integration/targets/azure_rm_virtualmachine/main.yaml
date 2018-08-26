@@ -1,0 +1,27 @@
+---
+
+- hosts: localhost
+  gather_facts: no
+  strategy: free
+  tasks:
+    - name: Create shared variables and resources
+      include_tasks: azure_rm_virtual_machine_common.yaml
+
+- hosts: all
+  gather_facts: no
+  strategy: free
+  tasks:
+    - name: Run tests and cleanup resources
+      block:
+        - name: Include host task for parallel execution
+          include_tasks: "{{ inventory_hostname }}.yaml"
+      rescue:
+        - name: Clean up host resources
+          include_tasks: azure_rm_virtual_machine_clean.yaml
+
+- hosts: localhost
+  gather_facts: no
+  strategy: free
+  tasks:
+    - name: Clean up host resources
+      include_tasks: azure_rm_virtual_machine_clean.yaml
