@@ -38,6 +38,29 @@ options:
     description:
       - "Path to the certificate to revoke."
     required: yes
+  account_key_src:
+    description:
+      - "Path to a file containing the ACME account RSA or Elliptic Curve
+         key."
+      - "RSA keys can be created with C(openssl rsa ...). Elliptic curve keys can
+         be created with C(openssl ecparam -genkey ...). Any other tool creating
+         private keys in PEM format can be used as well."
+      - "Mutually exclusive with C(account_key_content)."
+      - "Required if C(account_key_content) is not used."
+  account_key_content:
+    description:
+      - "Content of the ACME account RSA or Elliptic Curve key."
+      - "Note that exactly one of C(account_key_src), C(account_key_content),
+         C(private_key_src) or C(private_key_content) must be specified."
+      - "I(Warning): the content will be written into a temporary file, which will
+         be deleted by Ansible when the module completes. Since this is an
+         important private key — it can be used to change the account key,
+         or to revoke your certificates without knowing their private keys
+         —, this might not be acceptable."
+      - "In case C(cryptography) is used, the content is not written into a
+         temporary file. It can still happen that it is written to disk by
+         Ansible in the process of moving the module with its argument to
+         the node where it is executed."
   private_key_src:
     description:
       - "Path to the certificate's private key."
