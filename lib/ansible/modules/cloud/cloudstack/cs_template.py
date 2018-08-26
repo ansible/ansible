@@ -521,7 +521,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             'name': self.module.params.get('name'),
             'ostypeid': self.get_os_type(key='id'),
             'passwordenabled': self.module.params.get('password_enabled'),
-            'requireshvm': self.module.params.get('requires_hvm'),
         }
         if self.has_changed(args, template):
             self.result['changed'] = True
