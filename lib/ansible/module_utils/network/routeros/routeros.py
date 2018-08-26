@@ -76,15 +76,10 @@ def get_provider_argspec():
 
 
 def get_connection(module):
-    if hasattr(module, '_connection'):
-        return module._connection
-
     if is_api(module):
-        module._connection = Api(module)
+        return Api(module)
     else:
-        module._connection = Cli(module)
-
-    return module._connection
+        return Cli(module)
 
 
 def get_defaults_flag(module):
@@ -200,7 +195,7 @@ class Cli:
         self._capabilities = None
 
     def get_capabilities(self):
-        if hasattr(self, '_capabilities'):
+        if self._capabilities:
             return self._capabilities
 
         capabilities = Connection(self._module._socket_path).get_capabilities()
@@ -208,7 +203,7 @@ class Cli:
         return self._module._capabilities
 
     def _get_connection(self):
-        if hasattr(self, '_connection'):
+        if self._connection:
             return self._connection
 
         capabilities = self.get_capabilities()
