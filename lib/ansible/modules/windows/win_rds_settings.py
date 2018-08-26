@@ -26,6 +26,17 @@ options:
       - The maximum number of connections allowed.
       - If set to C(0), no new connections are allowed.
       - If set to C(-1), the number of connections is unlimited.
+  ssl_bridging:
+    description:
+      - Specifies whether to use SSL Bridging.
+      - 'C(none): no SSL bridging.'
+      - 'C(https_http): HTTPS-HTTP bridging.'
+      - 'C(https_https): HTTPS-HTTPS bridging.'
+    choices: [ none, https_http, https_https ]
+  enable_only_messaging_capable_clients:
+    description:
+      - If enabled, only clients that support logon messages and administrator messages can connect.
+    type: bool
 requirements:
   - Windows Server 2008R2 (6.1) or higher with RDS features
 '''

@@ -3,6 +3,8 @@
   win_rds_settings:
     max_connections: 50
     certificate_hash: '{{rds_cert_thumbprint.stdout_lines[0]}}'
+    ssl_bridging: https_https
+    enable_only_messaging_capable_clients: yes
   register: configure_rds_check
   check_mode: yes
 
@@ -11,6 +13,8 @@
     Import-Module RemoteDesktopServices
     (Get-Item RDS:\GatewayServer\MaxConnections).CurrentValue
     (Get-Item RDS:\GatewayServer\SSLCertificate\Thumbprint).CurrentValue
+    (Get-Item RDS:\GatewayServer\SSLBridging).CurrentValue
+    (Get-Item RDS:\GatewayServer\EnableOnlyMessagingCapableClients).CurrentValue
   register: configure_rds_actual_check
 
 - name: assert results of change RDS settings (check mode)
@@ -19,11 +23,15 @@
     - configure_rds_check.changed == true
     - configure_rds_actual_check.stdout_lines[0] != "50"
     - configure_rds_actual_check.stdout_lines[1] != rds_cert_thumbprint.stdout_lines[0]
+    - configure_rds_actual_check.stdout_lines[2] == "0"
+    - configure_rds_actual_check.stdout_lines[3] == "0"
 
 - name: test change RDS settings
   win_rds_settings:
     max_connections: 50
     certificate_hash: '{{rds_cert_thumbprint.stdout_lines[0]}}'
+    ssl_bridging: https_https
+    enable_only_messaging_capable_clients: yes
   register: configure_rds
 
 - name: get result of change RDS settings
@@ -31,6 +39,8 @@
     Import-Module RemoteDesktopServices
     (Get-Item RDS:\GatewayServer\MaxConnections).CurrentValue
     (Get-Item RDS:\GatewayServer\SSLCertificate\Thumbprint).CurrentValue
+    (Get-Item RDS:\GatewayServer\SSLBridging).CurrentValue
+    (Get-Item RDS:\GatewayServer\EnableOnlyMessagingCapableClients).CurrentValue
   register: configure_rds_actual
 
 - name: assert results of change RDS settings
@@ -39,11 +49,15 @@
     - configure_rds.changed == true
     - configure_rds_actual.stdout_lines[0] == "50"
     - configure_rds_actual.stdout_lines[1] == rds_cert_thumbprint.stdout_lines[0]
+    - configure_rds_actual.stdout_lines[2] == "2"
+    - configure_rds_actual.stdout_lines[3] == "1"
 
 - name: test change RDS settings (idempotent)
   win_rds_settings:
     max_connections: 50
     certificate_hash: '{{rds_cert_thumbprint.stdout_lines[0]}}'
+    ssl_bridging: https_https
+    enable_only_messaging_capable_clients: yes
   register: configure_rds_again
 
 - name: assert results of change RDS settings (idempotent)
