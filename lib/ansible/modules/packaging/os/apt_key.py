@@ -31,7 +31,8 @@ options:
     id:
         description:
             - The identifier of the key.
-            - Best practice is to use the full fingerprint (40 characters). This command shows it for an imported key: apt-key adv --list-public-keys --with-fingerprint --with-colons
+            - Best practice is to use the full fingerprint (40 characters). This command shows it for an imported key:
+              C(apt-key adv --list-public-keys --with-fingerprint --with-colons)
             - Including this allows check mode to correctly report the changed state.
             - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
             - This parameter is required when C(state) is set to C(absent).
