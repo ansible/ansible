@@ -31,6 +31,7 @@ options:
     id:
         description:
             - The identifier of the key.
+            - Best practice is to use the full fingerprint (40 characters). This command shows it for an imported key: apt-key adv --list-public-keys --with-fingerprint --with-colons
             - Including this allows check mode to correctly report the changed state.
             - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
             - This parameter is required when C(state) is set to C(absent).
@@ -77,13 +78,13 @@ EXAMPLES = '''
 
 - name: Add an Apt signing key, will not download if present
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
 - name: Remove a Apt specific signing key, leading 0x is valid
   apt_key:
-    id: 0x473041FA
+    id: 0x9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     state: absent
 
 # Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
@@ -94,13 +95,13 @@ EXAMPLES = '''
 
 - name: Add an Apt signing key to a specific keyring file
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     keyring: /etc/apt/trusted.gpg.d/debian.gpg
 
 - name: Add Apt signing key on remote server to keyring
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     file: /tmp/apt.gpg
     state: present
 '''
