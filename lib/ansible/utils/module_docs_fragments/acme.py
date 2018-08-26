@@ -8,14 +8,17 @@ class ModuleDocFragment(object):
 
     # Standard files documentation fragment
     DOCUMENTATION = """
-description:
-  - "Note that if a new enough version of the C(cryptography) library
+notes:
+  - "If a new enough version of the C(cryptography) library
      is available (see Requirements for details), it will be used
      instead of the C(openssl) binary. This can be explicitly disabled
      or enabled with the C(select_crypto_backend) option. Note that using
      the C(openssl) binary will be slower and less secure, as private key
      contents always have to be stored on disk (see
      C(account_key_content))."
+  - "Although the defaults are chosen so that the module can be used with
+     the L(Let's Encrypt,https://letsencrypt.org/) CA, the module can in
+     principle be used with any CA providing an ACME endpoint."
 requirements:
   - "python >= 2.6"
   - "either openssl, ..."
@@ -73,8 +76,8 @@ options:
          U(https://acme-v01.api.letsencrypt.org/directory), and the production
          directory URL for ACME v2 is U(https://acme-v02.api.letsencrypt.org/directory)."
       - "I(Warning): So far, the module has only been tested against Let's Encrypt
-         (staging and production) and against the Pebble testing server
-         (U(https://github.com/letsencrypt/Pebble))."
+         (staging and production) and against the
+         L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
     default: https://acme-staging.api.letsencrypt.org/directory
   validate_certs:
     description:
