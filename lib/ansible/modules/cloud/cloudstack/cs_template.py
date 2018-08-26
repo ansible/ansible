@@ -507,8 +507,8 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             args['zoneid'] = -1
 
         if not self.module.check_mode:
-            res = self.query_api('registerTemplate', **args)
-            template = res['template']
+            self.query_api('registerTemplate', **args)
+            template = self.get_template()
         return template
 
     def update_template(self, template):
@@ -518,14 +518,14 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             'format': self.module.params.get('format'),
             'isdynamicallyscalable': self.module.params.get('is_dynamically_scalable'),
             'isrouting': self.module.params.get('is_routing'),
-            'name': self.module.params.get('name'),
             'ostypeid': self.get_os_type(key='id'),
             'passwordenabled': self.module.params.get('password_enabled'),
         }
         if self.has_changed(args, template):
             self.result['changed'] = True
             if not self.module.check_mode:
-                template = self.query_api('updateTemplate', **args)
+                self.query_api('updateTemplate', **args)
+                template = self.get_template()
 
         args = {
             'id': template['id'],
@@ -545,7 +545,10 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
         return template
 
-    def _check_template_find_options(self, template, param_name, internal_name=None):
+    def _is_find_option(self, param_name):
+        return param_name in self.module.params.get('template_find_options')
+
+    def _find_option_match(self, template, param_name, internal_name=None):
         if not internal_name:
             internal_name = param_name
 
@@ -555,7 +558,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             if not param_value:
                 self.fail_json(msg="The param template_find_options has %s but param was not provided." % param_name)
 
-            if template[internal_name] != param_value:
+            if template[internal_name] == param_value:
                 return True
         return False
 
@@ -576,20 +579,20 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
         templates = self.query_api('listTemplates', **args)
         if templates:
-
             for tmpl in templates['template']:
-                if not self._check_template_find_options(
+
+                if self._is_find_option('cross_zones') and not self._find_option_match(
                         template=tmpl,
                         param_name='cross_zones',
                         internal_name='crossZones'):
                     continue
 
-                if not self._check_template_find_options(
+                if self._is_find_option('checksum') and not self._find_option_match(
                         template=tmpl,
                         param_name='checksum'):
                     continue
 
-                if not self._check_template_find_options(
+                if self._is_find_option('display_text') and not self._find_option_match(
                         template=tmpl,
                         param_name='display_text',
                         internal_name='displaytext'):
