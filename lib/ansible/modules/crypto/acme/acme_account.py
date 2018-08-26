@@ -233,9 +233,8 @@ def main():
                 }
                 payload = {
                     "account": account.uri,
-                    "newKey": new_key_data['jwk'],  # specified in draft 12
-                    "oldKey": account.jwk,  # discussed in https://github.com/ietf-wg-acme/acme/pull/425,
-                                            # might be required in draft 13
+                    "newKey": new_key_data['jwk'],  # specified in draft 12 and older
+                    "oldKey": account.jwk,  # specified in draft 13 and newer
                 }
                 data = account.sign_request(protected, payload, new_key_data)
                 # Send request and verify result
