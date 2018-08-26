@@ -15,8 +15,7 @@ $session_timeout_actions_set = @("disconnect", "reauth")
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-# TODO Support diff mode ?
-#$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present","enabled","disabled"
@@ -90,6 +89,7 @@ function Set-CAPPropertyValue {
 $result = @{
   changed = $false
 }
+$diff_text = $null
 
 # Validate CAP name
 if ($name -match "[*/\\;:?`"<>|\t]+") {
@@ -150,9 +150,11 @@ $cap_exist = Test-Path -Path "RDS:\GatewayServer\CAP\$name"
 if ($state -eq 'absent') {
     if ($cap_exist) {
         Remove-Item -Path "RDS:\GatewayServer\CAP\$name" -Recurse -WhatIf:$check_mode
+        $diff_text += "-[$name]"
         $result.changed = $true
     }
 } else {
+    $diff_text_added_prefix = ''
     if (-not $cap_exist) {
         if ($null -eq $user_groups) {
             Fail-Json -obj $result -message "User groups must be defined to create a new CAP."
@@ -166,23 +168,28 @@ if ($state -eq 'absent') {
         # Create a new CAP
         New-Item -Path "RDS:\GatewayServer\CAP" -Name $name -UserGroups $user_groups -AuthMethod ([array]::IndexOf($auth_methods_set, $auth_method)) -WhatIf:$check_mode
         $cap_exist = -not $check_mode
+
+        $diff_text_added_prefix = '+'
         $result.changed = $true
     }
 
-    # we cannot configure a CAP that was created above in check mode as it
-    # won't actually exist
+    $diff_text += "$diff_text_added_prefix[$name]`n"
+
+    # We cannot configure a CAP that was created above in check mode as it won't actually exist
     if($cap_exist) {
         $cap = Get-CAP -Name $name
 
-        if ($state -in @('enabled', 'disabled')) {
+        if ($state -in @('disabled', 'enabled')) {
             $cap_enabled = $state -ne 'disabled'
             if ($cap.Enabled -ne $cap_enabled) {
+                $diff_text += "-State = $(@('disabled', 'enabled')[[int]$cap.Enabled])`n+State = $state`n"
                 Set-CAPPropertyValue -Name $name -Property Status -Value ([int]$cap_enabled) -ResultObj $result -WhatIf:$check_mode
                 $result.changed = $true
             }
         }
 
         if ($null -ne $auth_method -and $auth_method -ne $cap.AuthMethod) {
+            $diff_text += "-AuthMethod = $($cap.AuthMethod)`n+AuthMethod = $auth_method`n"
             Set-CAPPropertyValue -Name $name -Property AuthMethod -Value ([array]::IndexOf($auth_methods_set, $auth_method)) -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
@@ -195,6 +202,7 @@ if ($state -eq 'absent') {
                 $order = $cap_count
             }
 
+            $diff_text += "-Order = $($cap.EvaluationOrder)`n+Order = $order`n"
             Set-CAPPropertyValue -Name $name -Property EvaluationOrder -Value $order -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
@@ -210,40 +218,49 @@ if ($state -eq 'absent') {
                 Fail-Json -obj $resultobj -message "Failed to set property ComputerGroupType of RAP ${name}: $($_.Exception.Message)"
             }
 
+            $diff_text += "-SessionTimeoutAction = $($cap.SessionTimeoutAction)`n+SessionTimeoutAction = $session_timeout_action`n"
+            $diff_text += "-SessionTimeout = $($cap.SessionTimeout)`n+SessionTimeout = $session_timeout`n"
             $result.changed = $true
         }
 
         if ($null -ne $idle_timeout -and $idle_timeout -ne $cap.IdleTimeout) {
+            $diff_text += "-IdleTimeout = $($cap.IdleTimeout)`n+IdleTimeout = $idle_timeout`n"
             Set-CAPPropertyValue -Name $name -Property IdleTimeout -Value $idle_timeout -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
 
         if ($null -ne $allow_only_sdrts_servers -and $allow_only_sdrts_servers -ne $cap.AllowOnlySDRTSServers) {
+            $diff_text += "-AllowOnlySDRTSServers = $($cap.AllowOnlySDRTSServers)`n+AllowOnlySDRTSServers = $allow_only_sdrts_servers`n"
             Set-CAPPropertyValue -Name $name -Property AllowOnlySDRTSServers -Value ([int]$allow_only_sdrts_servers) -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
 
         if ($null -ne $redirect_clipboard -and $redirect_clipboard -ne $cap.DeviceRedirection.Clipboard) {
+            $diff_text += "-RedirectClipboard = $($cap.DeviceRedirection.Clipboard)`n+RedirectClipboard = $redirect_clipboard`n"
             Set-CAPPropertyValue -Name $name -Property "DeviceRedirection\Clipboard" -Value ([int]$redirect_clipboard) -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
 
         if ($null -ne $redirect_drives -and $redirect_drives -ne $cap.DeviceRedirection.DiskDrives) {
+            $diff_text += "-RedirectDrives = $($cap.DeviceRedirection.DiskDrives)`n+RedirectDrives = $redirect_drives`n"
             Set-CAPPropertyValue -Name $name -Property "DeviceRedirection\DiskDrives" -Value ([int]$redirect_drives) -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
 
         if ($null -ne $redirect_printers -and $redirect_printers -ne $cap.DeviceRedirection.Printers) {
+            $diff_text += "-RedirectPrinters = $($cap.DeviceRedirection.Printers)`n+RedirectPrinters = $redirect_printers`n"
             Set-CAPPropertyValue -Name $name -Property "DeviceRedirection\Printers" -Value ([int]$redirect_printers) -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
 
         if ($null -ne $redirect_serial -and $redirect_serial -ne $cap.DeviceRedirection.SerialPorts) {
+            $diff_text += "-RedirectSerial = $($cap.DeviceRedirection.SerialPorts)`n+RedirectSerial = $redirect_serial`n"
             Set-CAPPropertyValue -Name $name -Property "DeviceRedirection\SerialPorts" -Value ([int]$redirect_serial) -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
 
         if ($null -ne $redirect_pnp -and $redirect_pnp -ne $cap.DeviceRedirection.PlugAndPlayDevices) {
+            $diff_text += "-RedirectPnP = $($cap.DeviceRedirection.PlugAndPlayDevices)`n+RedirectPnP = $redirect_pnp`n"
             Set-CAPPropertyValue -Name $name -Property "DeviceRedirection\PlugAndPlayDevices" -Value ([int]$redirect_pnp) -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
@@ -252,14 +269,21 @@ if ($state -eq 'absent') {
             $groups_to_remove = @($cap.UserGroups | where { $user_groups -notcontains $_ })
             $groups_to_add = @($user_groups | where { $cap.UserGroups -notcontains $_ })
 
+            $user_groups_diff = $null
             foreach($group in $groups_to_add) {
                 New-Item -Path "RDS:\GatewayServer\CAP\$name\UserGroups" -Name $group -WhatIf:$check_mode
+                $user_groups_diff += "  +$group`n"
                 $result.changed = $true
             }
 
             foreach($group in $groups_to_remove) {
                 Remove-Item -Path "RDS:\GatewayServer\CAP\$name\UserGroups\$group" -WhatIf:$check_mode
+                $user_groups_diff += "  -$group`n"
                 $result.changed = $true
+            }
+
+            if($user_groups_diff) {
+                $diff_text += "~UserGroups`n$user_groups_diff"
             }
         }
 
@@ -267,19 +291,32 @@ if ($state -eq 'absent') {
             $groups_to_remove = @($cap.ComputerGroups | where { $computer_groups -notcontains $_ })
             $groups_to_add = @($computer_groups | where { $cap.ComputerGroups -notcontains $_ })
 
+            $computer_groups_diff = $null
             foreach($group in $groups_to_add) {
                 New-Item -Path "RDS:\GatewayServer\CAP\$name\ComputerGroups" -Name $group -WhatIf:$check_mode
+                $computer_groups_diff += "  +$group`n"
                 $result.changed = $true
             }
 
             foreach($group in $groups_to_remove) {
                 Remove-Item -Path "RDS:\GatewayServer\CAP\$name\ComputerGroups\$group" -WhatIf:$check_mode
+                $computer_groups_diff += "  -$group`n"
                 $result.changed = $true
+            }
+
+            if($computer_groups_diff) {
+                $diff_text += "~ComputerGroups`n$computer_groups_diff"
             }
         }
 
         # ASK Should we return the full updated CAP object even if the Get-CAP function is a little bit slow ?
         # $result.cap = Get-CAP -Name $name
+    }
+}
+
+if ($diff_mode -and $result.changed -eq $true) {
+    $result.diff = @{
+        prepared = $diff_text
     }
 }
 
