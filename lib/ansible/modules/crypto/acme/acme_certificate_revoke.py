@@ -24,9 +24,10 @@ description:
       for certificates obtained by the M(acme_certificate) module. The
       ACME protocol is used by some Certificate Authorities such as
       L(Let's Encrypt,https://letsencrypt.org/)."
-   - "Note that exactly one of C(account_key_src), C(account_key_content),
+notes:
+   - "Exactly one of C(account_key_src), C(account_key_content),
       C(private_key_src) or C(private_key_content) must be specified."
-   - "Also note that trying to revoke an already revoked certificate
+   - "Trying to revoke an already revoked certificate
       should result in an unchanged status, even if the revocation reason
       was different than the one specified here. Also, depending on the
       server, it can happen that some other error is returned if the

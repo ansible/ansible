@@ -42,12 +42,13 @@ description:
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
       v1 or v2 protocol."
+notes:
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
-   - "Note that this module includes basic account management functionality.
+   - "This module includes basic account management functionality.
       If you want to have more control over your ACME account, use the M(acme_account)
       module and disable account management for this module using the C(modify_account)
       option."
-   - "Note: this module was called C(letsencrypt) before Ansible 2.6. The usage
+   - "This module was called C(letsencrypt) before Ansible 2.6. The usage
       did not change."
 extends_documentation_fragment:
   - acme

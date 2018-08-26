@@ -23,11 +23,14 @@ description:
    - "Allows to create, modify or delete accounts with Let's Encrypt.
       Let's Encrypt is a free, automated, and open certificate authority
       (CA), run for the public's benefit. For details see U(https://letsencrypt.org)."
+   - "This module only works with the ACME v2 protocol."
+notes:
+   - "Facts about an ACME account can be retrieved with the M(acme_account_facts)
+      module."
    - "The M(acme_certificate) module also allows to do basic account management.
       When using both modules, it is recommended to disable account management
       for M(acme_certificate). For that, use the C(modify_account) option of
       M(acme_certificate)."
-   - "This module only works with the ACME v2 protocol."
 extends_documentation_fragment:
   - acme
 options:
