@@ -249,6 +249,7 @@ files:
     ignored: stygstra
     maintainers: $team_networking
   $modules/network/ordnance/: alexanderturner djh00t
+  $modules/network/opx/: $team_dell
   $modules/network/ovs/:
     ignored: stygstra
     maintainers: rcarrillocruz
@@ -917,6 +918,7 @@ macros:
   team_cloudstack: resmo dpassante
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
+  team_dell: skg-net manjuv1 dhivyap abirami-n
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
