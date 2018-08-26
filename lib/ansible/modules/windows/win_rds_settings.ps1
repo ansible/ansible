@@ -9,8 +9,7 @@ $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-# TODO Support diff mode ?
-#$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $certificate = Get-AnsibleParam $params -name "certificate_hash" -type "str"
 $max_connections = Get-AnsibleParam $params -name "max_connections" -type "int"
@@ -19,6 +18,7 @@ $max_connections = Get-AnsibleParam $params -name "max_connections" -type "int"
 $result = @{
   changed = $false
 }
+$diff_text = $null
 
 # Ensure RemoteDesktopServices module is loaded
 if ((Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue) -eq $null) {
@@ -38,6 +38,7 @@ if ($null -ne $certificate)
     $current_cert = (Get-Item -Path "RDS:\GatewayServer\SSLCertificate\Thumbprint").CurrentValue
     if ($current_cert -ne $certificate) {
         Set-Item -Path "RDS:\GatewayServer\SSLCertificate\Thumbprint" -Value $certificate -WhatIf:$check_mode
+        $diff_text += "-Certificate = $current_cert`n+Certificate = $certificate`n"
         $result.changed = $true
     }
 }
@@ -55,7 +56,14 @@ if ($null -ne $max_connections)
     $current_max_connections = (Get-Item -Path "RDS:\GatewayServer\MaxConnections").CurrentValue
     if ($current_max_connections -ne $max_connections) {
         Set-Item -Path "RDS:\GatewayServer\MaxConnections" -Value $max_connections -WhatIf:$check_mode
+        $diff_text += "-MaxConnections = $current_max_connections`n+MaxConnections = $max_connections`n"
         $result.changed = $true
+    }
+}
+
+if ($diff_mode -and $result.changed -eq $true) {
+    $result.diff = @{
+        prepared = $diff_text
     }
 }
 
