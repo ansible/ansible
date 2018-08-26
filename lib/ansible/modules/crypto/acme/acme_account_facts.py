@@ -20,9 +20,9 @@ author: "Felix Fontein (@felixfontein)"
 version_added: "2.7"
 short_description: Retrieves information on ACME accounts.
 description:
-   - "Allows to retrieve information on accounts with Let's Encrypt.
-      Let's Encrypt is a free, automated, and open certificate authority
-      (CA), run for the public's benefit. For details see U(https://letsencrypt.org)."
+   - "Allows to retrieve information on accounts a CA supporting the
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-12),
+      such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module only works with the ACME v2 protocol."
 notes:
    - "The M(acme_account) module allows to modify, create and delete ACME accounts."
