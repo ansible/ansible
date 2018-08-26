@@ -77,16 +77,13 @@ options:
     description:
       - Specify the reversion mode to use in case of deploy or verify failure. (deploy, rebase)
     required: no
+    choices: ["all", "tag", "change"]
   set:
     description:
       - Attach a list of a variables name and value for use by the database engine client, if it supports variables.
         The format must be name=value, e.g., defuser='Homer Simpson'. Overrides any values loaded from the deploy.variables configuration.
     required: no
     default: []
-    choices:
-        - all
-        - tag
-        - change
   log_only:
     description:
       - Log the changes as if they were deployed, but without actually running the deploy scripts.
