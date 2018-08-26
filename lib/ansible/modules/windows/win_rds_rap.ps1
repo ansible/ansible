@@ -13,8 +13,7 @@ $computer_group_types = @("rdg_group", "ad_network_resource_group", "allow_any")
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-# TODO Support diff mode ?
-#$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
@@ -78,6 +77,7 @@ function Set-RAPPropertyValue {
 $result = @{
   changed = $false
 }
+$diff_text = $null
 
 # Validate RAP name
 if ($name -match "[*/\\;:?`"<>|\t]+") {
@@ -140,9 +140,11 @@ $rap_exist = Test-Path -Path "RDS:\GatewayServer\RAP\$name"
 if ($state -eq 'absent') {
     if ($rap_exist) {
         Remove-Item -Path "RDS:\GatewayServer\RAP\$name" -Recurse -WhatIf:$check_mode
+        $diff_text += "-[$name]"
         $result.changed = $true
     }
 } else {
+    $diff_text_added_prefix = ''
     if (-not $rap_exist) {
         if ($null -eq $user_groups) {
             Fail-Json -obj $result -message "User groups must be defined to create a new RAP."
@@ -156,17 +158,21 @@ if ($state -eq 'absent') {
         # Create a new RAP
         New-Item -Path "RDS:\GatewayServer\RAP" -Name $name -UserGroups $user_groups -ComputerGroupType ([array]::IndexOf($computer_group_types, $computer_group_type)) -WhatIf:$check_mode
         $rap_exist = -not $check_mode
+
+        $diff_text_added_prefix = '+'
         $result.changed = $true
     }
 
-    # we cannot configure a RAP that was created above in check mode as it
-    # won't actually exist
+    $diff_text += "$diff_text_added_prefix[$name]`n"
+
+    # We cannot configure a RAP that was created above in check mode as it won't actually exist
     if($rap_exist) {
         $rap = Get-RAP -Name $name
 
-        if ($state -in @('enabled', 'disabled')) {
+        if ($state -in @('disabled', 'enabled')) {
             $rap_enabled = $state -ne 'disabled'
             if ($rap.Enabled -ne $rap_enabled) {
+                $diff_text += "-State = $(@('disabled', 'enabled')[[int]$rap.Enabled])`n+State = $state`n"
                 Set-RAPPropertyValue -Name $name -Property Status -Value ([int]$rap_enabled) -ResultObj $result -WhatIf:$check_mode
                 $result.changed = $true
             }
@@ -174,16 +180,19 @@ if ($state -eq 'absent') {
 
         if ($null -ne $description -and $description -ne $rap.Description) {
             Set-RAPPropertyValue -Name $name -Property Description -Value $description -ResultObj $result -WhatIf:$check_mode
+            $diff_text += "-Description = $($rap.Description)`n+Description = $description`n"
             $result.changed = $true
         }
 
         if ($null -ne $allowed_ports -and @(Compare-Object $rap.PortNumbers $allowed_ports -SyncWindow 0).Count -ne 0) {
+            $diff_text += "-AllowedPorts = [$($rap.PortNumbers -join ',')]`n+AllowedPorts = [$($allowed_ports -join ',')]`n"
             if ($allowed_ports -contains 'any') { $allowed_ports = '*' }
             Set-RAPPropertyValue -Name $name -Property PortNumbers -Value $allowed_ports -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
 
         if ($null -ne $computer_group_type -and $computer_group_type -ne $rap.ComputerGroupType) {
+            $diff_text += "-ComputerGroupType = $($rap.ComputerGroupType)`n+ComputerGroupType = $computer_group_type`n"
             if ($computer_group_type -eq "allow_any") {
                 Set-RAPPropertyValue -Name $name -Property ComputerGroupType -Value ([array]::IndexOf($computer_group_types, $computer_group_type)) -ResultObj $result -WhatIf:$check_mode
             } else {
@@ -193,6 +202,7 @@ if ($state -eq 'absent') {
                         -ComputerGroup $computer_group `
                         -ErrorAction Stop `
                         -WhatIf:$check_mode
+                    $diff_text += "+ComputerGroup = $computer_group`n"
                 } catch {
                     Fail-Json -obj $resultobj -message "Failed to set property ComputerGroupType of RAP ${name}: $($_.Exception.Message)"
                 }
@@ -201,6 +211,7 @@ if ($state -eq 'absent') {
             $result.changed = $true
 
         } elseif ($null -ne $computer_group -and $computer_group -ne $rap.ComputerGroup) {
+            $diff_text += "-ComputerGroup = $($rap.ComputerGroup)`n+ComputerGroup = $computer_group`n"
             Set-RAPPropertyValue -Name $name -Property ComputerGroup -Value $computer_group -ResultObj $result -WhatIf:$check_mode
             $result.changed = $true
         }
@@ -209,19 +220,32 @@ if ($state -eq 'absent') {
             $groups_to_remove = @($rap.UserGroups | where { $user_groups -notcontains $_ })
             $groups_to_add = @($user_groups | where { $rap.UserGroups -notcontains $_ })
 
+            $user_groups_diff = $null
             foreach($group in $groups_to_add) {
                 New-Item -Path "RDS:\GatewayServer\RAP\$name\UserGroups" -Name $group -WhatIf:$check_mode
+                $user_groups_diff += "  +$group`n"
                 $result.changed = $true
             }
 
             foreach($group in $groups_to_remove) {
                 Remove-Item -Path "RDS:\GatewayServer\RAP\$name\UserGroups\$group" -WhatIf:$check_mode
+                $user_groups_diff += "  -$group`n"
                 $result.changed = $true
+            }
+
+            if($user_groups_diff) {
+                $diff_text += "~UserGroups`n$user_groups_diff"
             }
         }
 
         # ASK Should we return the full RAP object?
         # $result.rap = Get-RAP -Name $name
+    }
+}
+
+if ($diff_mode -and $result.changed -eq $true) {
+    $result.diff = @{
+        prepared = $diff_text
     }
 }
 
