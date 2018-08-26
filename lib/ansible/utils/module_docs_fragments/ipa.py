@@ -50,5 +50,13 @@ options:
     - This should only set to C(no) used on personally controlled sites using self-signed certificates.
     default: true
     type: bool
+  ipa_timeout:
+    description:
+    - Specifies idle timeout (in seconds) for the connection.
+    - For bulk operations, you may want to increase this in order to avoid timeout from IPA server.
+    - If the value is not specified in the task, the value of environment variable C(IPA_TIMEOUT) will be used instead.
+    - If both the environment variable C(IPA_TIMEOUT) and the value are not specified in the task, then default value is set.
+    default: 10
+    version_added: 2.7
 
 '''
