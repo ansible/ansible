@@ -752,6 +752,7 @@ class TaskParameters(DockerBaseClass):
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
+        self.comparisons = client.comparisons
 
         # If state is 'absent', parameters do not have to be parsed or interpreted.
         # Only the container's name is needed.
@@ -1223,6 +1224,19 @@ class Container(DockerBaseClass):
         self.parameters.expected_sysctls = None
         self.parameters.expected_etc_hosts = None
         self.parameters.expected_env = None
+        self.parameters_map = dict()
+        self.parameters_map['expected_links'] = 'links'
+        self.parameters_map['expected_ports'] = 'published_ports'
+        self.parameters_map['expected_exposed'] = 'exposed_ports'
+        self.parameters_map['expected_volumes'] = 'volumes'
+        self.parameters_map['expected_ulimits'] = 'ulimits'
+        self.parameters_map['expected_sysctls'] = 'sysctls'
+        self.parameters_map['expected_etc_hosts'] = 'etc_hosts'
+        self.parameters_map['expected_env'] = 'env'
+        self.parameters_map['expected_entrypoint'] = 'entrypoint'
+        self.parameters_map['expected_binds'] = 'volumes'
+        self.parameters_map['expected_cmd'] = 'command'
+        self.parameters_map['expected_devices'] = 'devices'
 
     def fail(self, msg):
         self.parameters.client.module.fail_json(msg=msg)
@@ -1237,6 +1251,76 @@ class Container(DockerBaseClass):
             if self.container['State'].get('Running') and not self.container['State'].get('Ghost', False):
                 return True
         return False
+
+    def _compare_dict_allow_more_present(self, av, bv):
+        '''
+        Compare two dictionaries for whether every entry of the first is in the second.
+        '''
+        for key, value in av.items():
+            if key not in bv:
+                return False
+            if bv[key] != value:
+                return False
+        return True
+
+    def _compare(self, a, b, compare):
+        '''
+        Compare values a and b as described in compare.
+        '''
+        method = compare['comparison']
+        if method == 'igore':
+            return True
+        # If a or b is None:
+        if a is None or b is None:
+            # If both are None: equality
+            if a == b:
+                return True
+            # Otherwise, not equal for values, and equal
+            # if the other is empty for set/list/dict
+            if compare['type'] == 'value':
+                return False
+            return len(b if a is None else a) == 0
+        # Do proper comparison (both objects not None)
+        if compare['type'] == 'value':
+            return a == b
+        elif compare['type'] == 'list':
+            if method == 'strict':
+                return a == b
+            else:
+                set_a = set(a)
+                set_b = set(b)
+                return set_b >= set_a
+        elif compare['type'] == 'dict':
+            if method == 'strict':
+                return a == b
+            else:
+                return self._compare_dict_allow_more_present(a, b)
+        elif compare['type'] == 'set':
+            set_a = set(a)
+            set_b = set(b)
+            if method == 'strict':
+                return set_a == set_b
+            else:
+                return set_b >= set_a
+        elif compare['type'] == 'set(dict)':
+            for av in a:
+                found = False
+                for bv in b:
+                    if self._compare_dict_allow_more_present(av, bv):
+                        found = True
+                        break
+                if not found:
+                    return False
+            if method == 'strict':
+                for bv in b:
+                    found = False
+                    for av in a:
+                        if self._compare_dict_allow_more_present(av, bv):
+                            found = True
+                            break
+                    if not found:
+                        return False
+            return True
 
     def has_different_configuration(self, image):
         '''
@@ -1341,36 +1425,10 @@ class Container(DockerBaseClass):
 
         differences = []
         for key, value in config_mapping.items():
-            self.log('check differences %s %s vs %s' % (key, getattr(self.parameters, key), str(value)))
+            compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
+            self.log('check differences %s %s vs %s (%s)' % (key, getattr(self.parameters, key), str(value), compare))
             if getattr(self.parameters, key, None) is not None:
-                if isinstance(getattr(self.parameters, key), list) and isinstance(value, list):
-                    if len(getattr(self.parameters, key)) > 0 and isinstance(getattr(self.parameters, key)[0], dict):
-                        # compare list of dictionaries
-                        self.log("comparing list of dict: %s" % key)
-                        match = self._compare_dictionary_lists(getattr(self.parameters, key), value)
-                    else:
-                        # compare two lists. Is list_a in list_b?
-                        self.log("comparing lists: %s" % key)
-                        set_a = set(getattr(self.parameters, key))
-                        set_b = set(value)
-                        match = (set_b >= set_a)
-                elif isinstance(getattr(self.parameters, key), list) and not len(getattr(self.parameters, key)) \
-                        and value is None:
-                    # an empty list and None are ==
-                    continue
-                elif isinstance(getattr(self.parameters, key), dict) and isinstance(value, dict):
-                    # compare two dicts
-                    self.log("comparing two dicts: %s" % key)
-                    match = self._compare_dicts(getattr(self.parameters, key), value)
-
-                elif isinstance(getattr(self.parameters, key), dict) and \
-                        not len(list(getattr(self.parameters, key).keys())) and value is None:
-                    # an empty dict and None are ==
-                    continue
-                else:
-                    # primitive compare
-                    self.log("primitive compare: %s" % key)
-                    match = (getattr(self.parameters, key) == value)
+                match = self._compare(getattr(self.parameters, key), value, compare)
 
                 if not match:
                     # no match. record the differences
@@ -1383,43 +1441,6 @@ class Container(DockerBaseClass):
 
         has_differences = True if len(differences) > 0 else False
         return has_differences, differences
-
-    def _compare_dictionary_lists(self, list_a, list_b):
-        '''
-        If all of list_a exists in list_b, return True
-        '''
-        if not isinstance(list_a, list) or not isinstance(list_b, list):
-            return False
-        matches = 0
-        for dict_a in list_a:
-            for dict_b in list_b:
-                if self._compare_dicts(dict_a, dict_b):
-                    matches += 1
-                    break
-        result = (matches == len(list_a))
-        return result
-
-    def _compare_dicts(self, dict_a, dict_b):
-        '''
-        If dict_a in dict_b, return True
-        '''
-        if not isinstance(dict_a, dict) or not isinstance(dict_b, dict):
-            return False
-        for key, value in dict_a.items():
-            if isinstance(value, dict):
-                match = self._compare_dicts(value, dict_b.get(key))
-            elif isinstance(value, list):
-                if len(value) > 0 and isinstance(value[0], dict):
-                    match = self._compare_dictionary_lists(value, dict_b.get(key))
-                else:
-                    set_a = set(value)
-                    set_b = set(dict_b.get(key))
-                    match = (set_a == set_b)
-            else:
-                match = (value == dict_b.get(key))
-            if not match:
-                return False
-        return True
 
     def has_different_resource_limits(self):
         '''
@@ -1449,14 +1470,18 @@ class Container(DockerBaseClass):
 
         differences = []
         for key, value in config_mapping.items():
-            if getattr(self.parameters, key, None) and getattr(self.parameters, key) != value:
-                # no match. record the differences
-                item = dict()
-                item[key] = dict(
-                    parameter=getattr(self.parameters, key),
-                    container=value
-                )
-                differences.append(item)
+            if getattr(self.parameters, key, None):
+                compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
+                match = self._compare(getattr(self.parameters, key), value, compare)
+
+                if not match:
+                    # no match. record the differences
+                    item = dict()
+                    item[key] = dict(
+                        parameter=getattr(self.parameters, key),
+                        container=value
+                    )
+                    differences.append(item)
         different = (len(differences) > 0)
         return different, differences
 
@@ -1805,7 +1830,7 @@ class ContainerManager(DockerBaseClass):
                 # Existing container
                 different, differences = container.has_different_configuration(image)
                 image_different = False
-                if not self.parameters.ignore_image:
+                if self.parameters.comparisons['image']['comparison'] == 'strict':
                     image_different = self._image_is_different(image, container)
                 if image_different or different or self.parameters.recreate:
                     self.diff['differences'] = differences
@@ -2065,6 +2090,49 @@ class ContainerManager(DockerBaseClass):
 
 class AnsibleDockerClientContainer(AnsibleDockerClient):
 
+    def _setup_comparisons(self):
+        comparisons = {}
+        comp_aliases = {}
+        # Put in defaults
+        explicit_types = dict(
+            command='list',
+            devices='set(dict)',
+            env='set',
+            entrypoint='list',
+            etc_hosts='set',
+            ulimits='set(dict)',
+        )
+        for option, data in self.module.argument_spec.items():
+            # Ignore options which aren't used as container properties
+            if option in ('docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
+                          'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
+                          'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks', 'recreate',
+                          'restart', 'state', 'stop_timeout', 'trust_image_content', 'networks'):
+                continue
+            # Determine option type
+            if option in explicit_types:
+                type = explicit_types[option]
+            elif data['type'] == 'list':
+                type = 'set'
+            elif data['type'] == 'dict':
+                type = 'dict'
+            else:
+                type = 'value'
+            # Determine comparison type
+            if type in ('list', 'value'):
+                comparison = 'strict'
+            else:
+                comparison = 'allow_more_present'
+            comparisons[option] = dict(type=type, comparison=comparison, name=option)
+            # Keep track of aliases
+            comp_aliases[option] = option
+            for alias in data.get('aliases', []):
+                comp_aliases[alias] = option
+        # Process legacy ignore options
+        if self.module.params['ignore_image']:
+            comparisons['image']['comparison'] = 'ignore'
+        self.comparisons = comparisons
+
     def __init__(self, **kwargs):
         super(AnsibleDockerClientContainer, self).__init__(**kwargs)
 
@@ -2082,6 +2150,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
         if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
             self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
+
+        self._setup_comparisons()
 
 
 def main():
