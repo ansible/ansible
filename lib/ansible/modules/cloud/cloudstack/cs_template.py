@@ -111,7 +111,25 @@ options:
     description:
       - Name the hypervisor to be used for creating the new template.
       - Relevant when using C(state=present).
-    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
+    choices:
+    - KVM
+    - kvm
+    - VMware
+    - vmware
+    - BareMetal
+    - baremetal
+    - XenServer
+    - xenserver
+    - LXC
+    - lxc
+    - HyperV
+    - hyperv
+    - UCS
+    - ucs
+    - OVM
+    - ovm
+    - Simulator
+    - simulator
   requires_hvm:
     description:
       - Whether the template requires HVM or not.
@@ -153,6 +171,7 @@ options:
     description:
       - 32 or 64 bits support.
     default: 64
+    choices: [ 32, 64 ]
   display_text:
     description:
       - Display text of the template.
@@ -667,7 +686,7 @@ def main():
         snapshot=dict(),
         os_type=dict(),
         is_ready=dict(type='bool', removed_in_version='2.11'),
-        is_public=dict(type='bool', default=True),
+        is_public=dict(type='bool', default=False),
         is_featured=dict(type='bool', default=False),
         is_dynamically_scalable=dict(type='bool', default=False),
         is_extractable=dict(type='bool', default=False),
@@ -680,7 +699,7 @@ def main():
         password_enabled=dict(type='bool', default=False),
         template_tag=dict(),
         sshkey_enabled=dict(type='bool', default=False),
-        format=dict(choices=['QCOW2', 'RAW', 'VHD', 'OVA'], ),
+        format=dict(choices=['QCOW2', 'RAW', 'VHD', 'OVA']),
         details=dict(),
         bits=dict(type='int', choices=[32, 64], default=64),
         state=dict(choices=['present', 'absent', 'extracted'], default='present'),
