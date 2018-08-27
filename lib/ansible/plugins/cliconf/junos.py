@@ -169,7 +169,7 @@ class Cliconf(CliconfBase):
         resp = self.send_command(command)
 
         r = resp.splitlines()
-        if len(r) == 1 and r[0] == '[edit]':
+        if len(r) == 1 and '[edit]' in r[0]:
             resp = ''
 
         return resp
