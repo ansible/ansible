@@ -132,7 +132,7 @@
           <<: *aws_connection_info
         register: subnets
         ignore_errors: yes
-        tries: 30
+        retries: 30
         until: subnets is not failed
         delay: 10
         loop:
@@ -152,7 +152,7 @@
           <<: *aws_connection_info
         register: vpc_result
         ignore_errors: yes
-        tries: 30
+        retries: 30
         until: vpc_result is not failed
         delay: 10
 

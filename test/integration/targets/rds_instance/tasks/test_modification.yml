@@ -159,7 +159,7 @@
           publicly_accessible: False
           <<: *aws_connection_info
         register: result
-        tries: 30
+        retries: 30
         delay: 10
         until: result is not failed
 
