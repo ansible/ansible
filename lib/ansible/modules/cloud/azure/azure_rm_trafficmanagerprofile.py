@@ -264,7 +264,8 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str'
+                type='str',
+                default='global'
             ),
             profile_status=dict(
                 type='str',

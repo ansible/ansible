@@ -212,7 +212,7 @@
     name: "{{ endpointname2 }}"
     type: externalEndpoints
     location: westus
-    priority: `
+    priority: 1
     weight: 3
     target: test.com
   register: output

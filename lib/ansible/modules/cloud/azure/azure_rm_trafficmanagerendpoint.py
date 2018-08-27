@@ -55,6 +55,7 @@ options:
         description:
             - The status of the endpoint.
         type: bool
+        default: true
     weight:
         description:
             - The weight of this endpoint when using the 'Weighted' traffic routing method.
@@ -113,6 +114,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 def traffic_manager_endpoint_to_dict(endpoint):
     return dict(
         id=endpoint.id,
@@ -132,6 +134,7 @@ def traffic_manager_endpoint_to_dict(endpoint):
 
 class Actions:
     NoAction, CreateOrUpdate, Delete = range(3)
+
 
 class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
 
@@ -191,8 +194,8 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
         )
 
         super(AzureRMTrafficManagerEndpoint, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=False)
+                                                            supports_check_mode=True,
+                                                            supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -292,7 +295,11 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
                               geo_mapping=self.geo_mapping)
 
         try:
-            response = self.traffic_manager_management_client.endpoints.create_or_update(self.resource_group, self.profile_name, self.type, self.name, parameters)
+            response = self.traffic_manager_management_client.endpoints.create_or_update(self.resource_group,
+                                                                                         self.profile_name,
+                                                                                         self.type,
+                                                                                         self.name,
+                                                                                         parameters)
             return traffic_manager_endpoint_to_dict(response)
         except CloudError as exc:
             request_id = exc.request_id if exc.request_id else ''
