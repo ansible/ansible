@@ -23,23 +23,27 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
 module: opx_cps
-version_added: "2.5"
+version_added: "2.7"
 author: "Senthil Kumar Ganesan (@skg-net)"
-short_description: Executes the given operation on the YANG object, using CPS API in the networking device running OpenSwitch (OPX).
+short_description: CPS operations on networking device running Openswitch (OPX)
 description:
-  -  Executes the given operation on the YANG object, using CPS API in the networking device running OpenSwitch (OPX).
-  -  It uses the YANG models provided in https://github.com/open-switch/opx-base-model
+  -  Executes the given operation on the YANG object, using CPS API in the
+     networking device running OpenSwitch (OPX). It uses the YANG models
+     provided in https://github.com/open-switch/opx-base-model.
 options:
   module_name:
     description:
       - Yang path to be configured.
+  attr_type:
+    description:
+      - Attribute Yang type.
   attr_data:
     description:
       - Attribute Yang path and thier correspoding data.
@@ -48,31 +52,65 @@ options:
       - Operation to be performed on the object.
     default: create
     choices: ['delete', 'create', 'set', 'action', 'get']
+  db:
+    description:
+      - Queries/Writes the specified yang path from/to the db.
+    type: bool
+    default: 'no'
   qualifier:
     description:
       - A qualifier provides the type of object data to retrieve or act on.
     default: target
-    choices: ['target, 'observed', 'proposed', 'realtime', 'registration', 'running', 'startup']
+    choices: ['target', 'observed', 'proposed', 'realtime', 'registration', 'running', 'startup']
+  commit_event:
+    description:
+      - Attempts to force the auto-commit event to the specified yang object.
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
-- name: Get all VLAN
-  opx_get:
-    module_name: 20
+- name: Create VLAN
+  opx_cps:
+    module_name: "dell-base-if-cmn/if/interfaces/interface"
     attr_data: {
+         "base-if-vlan/if/interfaces/interface/id": 230,
+         "if/interfaces/interface/name": "br230",
          "if/interfaces/interface/type": "ianaift:l2vlan"
     }
-    state: present
+    operation: "create"
+- name: Get VLAN
+  opx_cps:
+    module_name: "dell-base-if-cmn/if/interfaces/interface"
+    attr_data: {
+         "if/interfaces/interface/name": "br230",
+    }
+    operation: "get"
 """
 
 RETURN = """
+response:
+  description: Output from the CPS transaction.
+  returned: always
+  type: dict
+  sample: {'...':'...'}
+changed:
+  description: Returns if the CPS transaction was performed.
+  returned: when a CPS traction is performed.
+  type: dict
+  sample: {'...':'...'}
 """
 
-from ansible.module_utils.basic import *   # NOQA
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
 
-import cps_object
-import cps
-import cps_utils
+try:
+    import cps
+    import cps_object
+    import cps_utils
+    HAS_CPS = True
+except ImportError:
+    HAS_CPS = False
 
 
 def get_config(module):
@@ -91,7 +129,7 @@ def get_config(module):
     cpsconfig = cps_get(configobj)
 
     if cpsconfig['response']:
-        for key, val in cpsconfig['response'][0]['data'].iteritems():
+        for key, val in iteritems(cpsconfig['response'][0]['data']):
             if key == 'cps/key_data':
                 config.update(val)
             else:
@@ -156,8 +194,8 @@ def convert_cps_raw_list(raw_list):
                 raw_key = raw_elem['key']
                 individual_element = {}
                 individual_element['data'] = processed_element
-                individual_element['key'] = cps.qual_from_key(raw_key) + \
-                                            "/" + cps.name_from_key(raw_key, 1)
+                individual_element['key'] = (cps.qual_from_key(raw_key) + "/" +
+                                             cps.name_from_key(raw_key, 1))
                 resp_list.append(individual_element)
     return resp_list
 
@@ -180,10 +218,10 @@ def parse_cps_parameters(module_name, qualifier, attr_type,
         obj.set_property('oper', operation)
 
     if attr_type:
-        for key, val in attr_type.iteritems():
+        for key, val in iteritems(attr_type):
             cps_utils.cps_attr_types_map.add_type(key, val)
 
-    for key, val in attr_data.iteritems():
+    for key, val in iteritems(attr_data):
 
         embed_attrs = key.split(',')
         embed_attrs_len = len(embed_attrs)
@@ -223,7 +261,7 @@ def cps_get(obj):
     resp_list = convert_cps_raw_list(l)
 
     RESULT["response"] = resp_list
-    RESULT["changed"] = True
+    RESULT["changed"] = False
     return RESULT
 
 
@@ -246,22 +284,26 @@ def main():
     """
     argument_spec = dict(
         qualifier=dict(required=False,
-                       default=cps.QUALIFIERS[0],
+                       default="target",
                        type='str',
-                       choices=cps.QUALIFIERS),
+                       choices=['target', 'observed', 'proposed', 'realtime',
+                                'registration', 'running', 'startup']),
         module_name=dict(required=True, type='str'),
         attr_type=dict(required=False, type='dict'),
         attr_data=dict(required=True, type='dict'),
         operation=dict(required=False,
                        default="create",
                        type='str',
-                       choices=cps.OPERATIONS.extend(["get"])),
+                       choices=['delete', 'create', 'set', 'action', 'get']),
         db=dict(required=False, default=False, type='bool'),
         commit_event=dict(required=False, default=False, type='bool')
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)
+
+    if not HAS_CPS:
+        module.fail_json(msg='CPS library required for this module')
 
     qualifier = module.params['qualifier']
     module_name = module.params['module_name']
@@ -288,7 +330,7 @@ def main():
 
             if config:
                 candidate = dict()
-                for key, val in attr_data.iteritems():
+                for key, val in iteritems(attr_data):
                     if key == 'cps/key_data':
                         candidate.update(val)
                     else:
