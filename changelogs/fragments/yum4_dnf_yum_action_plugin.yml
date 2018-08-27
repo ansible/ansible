@@ -1,14 +1,10 @@
 ---
 major_changes:
   - yum and dnf modules now at feature parity
-  - YUM4 Compatibility In the past, there was only yum which is now known as
-    yum3 or yum 3.x but now there is a "new yum" known as yum4 or yum 4.x which
-    is actually just a yum command-line compatibility layer on top of dnf and
-    since the Ansible modules for yum(aka yum3) and dnf(aka yum4) call each of
-    yum3 and yum4 python APIs natively on the backend, the Ansible now features
-    a yum action plugin that will hand off to the correct package manager
-    backend Ansible module
-  - New yumdnf module that defines the shared argument specification for both
+  - new yum action plugin enables the yum module to work with both yum3
+    and dnf-based yum4 by detecting the backend package manager and routing
+    commands through the correct Ansible module for that python API
+  - New yumdnf module defines the shared argument specification for both
     yum and dnf modules and provides an entry point to share code when
     applicable
 

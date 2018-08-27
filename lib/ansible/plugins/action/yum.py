@@ -65,7 +65,7 @@ class ActionModule(ActionBase):
             facts = self._execute_module(module_name="setup", module_args=dict(filter="ansible_pkg_mgr", gather_subset="!all"), task_vars=task_vars)
             display.debug("Facts %s" % facts)
             module = facts.get("ansible_facts", {}).get("ansible_pkg_mgr", "auto")
-            if not self._task.delegate_to and module in ('dnf', 'yum', 'yum4'):
+            if (not self._task.delegate_to or self._task.delegate_facts) and module != 'auto':
                 result['ansible_facts'] = {'pkg_mgr': module}
 
         if module != "auto":
