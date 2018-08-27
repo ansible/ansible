@@ -49,10 +49,11 @@ EXAMPLES = """
     elb_target_facts:
       instance_id: "{{ ansible_ec2_instance_id }}"
       region: "{{ ansible_ec2_placement_region }}"
+    register: target_facts
 
   - name: save fact for later
     set_fact:
-      original_tgs: "{{ ec2_tgs }}"
+      original_tgs: "{{ target_facts.instance_target_groups }}"
 
   - name: Deregister instance from all target groups
     delegate_to: localhost
@@ -74,11 +75,12 @@ EXAMPLES = """
 
   - name: wait for all targets to deregister simultaneously
     delegate_to: localhost
-    msys_elb_target_facts:
+    elb_target_facts:
       get_unused_target_groups: false
       instance_id: "{{ ansible_ec2_instance_id }}"
       region: "{{ ansible_ec2_placement_region }}"
-    until: (ec2_tgs | length) == 0
+    register: target_facts
+    until: (target_facts.instance_target_groups | length) == 0
     retries: 60
     delay: 10
 
@@ -102,7 +104,8 @@ EXAMPLES = """
       get_unused_target_groups: false
       instance_id: "{{ ansible_ec2_instance_id }}"
       region: "{{ ansible_ec2_placement_region }}"
-    until: (ec2_tgs |
+    register: target_facts
+    until: (target_facts.instance_target_groups |
             map(attribute='targets') |
             flatten |
             map(attribute='target_health') |
@@ -113,7 +116,7 @@ EXAMPLES = """
     retries: 61
     delay: 10
 
-# using the ec2_tgs fact to generate AWS CLI commands to reregister the
+# using the target groups to generate AWS CLI commands to reregister the
 # instance - useful in case the playbook fails mid-run and manual
 #            rollback is required
   - name: "reregistration commands: ELBv2s"
@@ -126,12 +129,12 @@ EXAMPLES = """
              Port={{target.target_port}}{%if target.target_az%},AvailabilityZone={{target.target_az}}
              {%endif%}
              {%endfor%}
-    with_items: "{{ec2_tgs}}"
+    with_items: "{{target_facts.instance_target_groups}}"
 
 """
 
 RETURN = """
-ec2_tgs:
+instance_target_groups:
     description: a list of target groups to which the instance is registered to
     returned: always
     type: complex
@@ -257,6 +260,26 @@ class TargetFactsGatherer:
 
     def __init__(self, module, instance_id, get_unused_target_groups):
         self.module = module
+        try:
+            self.ec2 = self.module.client(
+                "ec2",
+                retry_decorator=AWSRetry.jittered_backoff(retries=10)
+            )
+        except (ClientError, BotoCoreError) as e:
+            self.module.fail_json_aws(e,
+                                      msg="Couldn't connect to ec2"
+                                      )
+
+        try:
+            self.elbv2 = self.module.client(
+                "elbv2",
+                retry_decorator=AWSRetry.jittered_backoff(retries=10)
+            )
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e,
+                                      msg="Could not connect to elbv2"
+                                      )
+
         self.instance_id = instance_id
         self.get_unused_target_groups = get_unused_target_groups
         self.tgs = self._get_target_groups()
@@ -265,19 +288,8 @@ class TargetFactsGatherer:
         """Fetch all IPs associated with this instance so that we can determine
            whether or not an instance is in an IP-based target group"""
         try:
-            ec2 = self.module.client(
-                "ec2",
-                retry_decorator=AWSRetry.jittered_backoff(retries=10)
-            )
-        except (ClientError, BotoCoreError) as e:
-            self.module.fail_json_aws(e,
-                                      msg="Couldn't connect to ec2 during" +
-                                      " attempt to get instance IPs"
-                                      )
-
-        try:
             # get ahold of the instance in the API
-            reservations = ec2.describe_instances(
+            reservations = self.ec2.describe_instances(
                 InstanceIds=[self.instance_id],
                 aws_retry=True
             )["Reservations"]
@@ -307,11 +319,11 @@ class TargetFactsGatherer:
 
         return list(ips)
 
-    def _get_target_group_objects(self, elbv2_connection):
+    def _get_target_group_objects(self):
         """helper function to build a list of TargetGroup objects based on
            the AWS API"""
         try:
-            paginator = elbv2_connection.get_paginator(
+            paginator = self.elbv2.get_paginator(
                 "describe_target_groups"
             )
             tg_response = paginator.paginate().build_full_result()
@@ -338,7 +350,7 @@ class TargetFactsGatherer:
             )
         return target_groups
 
-    def _get_target_descriptions(self, elbv2_connection, target_groups):
+    def _get_target_descriptions(self, target_groups):
         """Helper function to build a list of all the target descriptions
            for this target in a target group"""
         # Build a list of all the target groups pointing to this instance
@@ -348,7 +360,7 @@ class TargetFactsGatherer:
         for tg in target_groups:
             try:
                 # Get the list of targets for that target group
-                response = elbv2_connection.describe_target_health(
+                response = self.elbv2.describe_target_health(
                     TargetGroupArn=tg.target_group_arn,
                     aws_retry=True
                 )
@@ -388,20 +400,9 @@ class TargetFactsGatherer:
         # do this first since we need the IPs later on in this function
         self.instance_ips = self._get_instance_ips()
 
-        try:
-            elbv2 = self.module.client(
-                "elbv2",
-                retry_decorator=AWSRetry.jittered_backoff(retries=10)
-            )
-        except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e,
-                                      msg="Could not connect to elbv2 when" +
-                                          " attempting to get target groups"
-                                      )
-
         # build list of target groups
-        target_groups = self._get_target_group_objects(elbv2)
-        return self._get_target_descriptions(elbv2, target_groups)
+        target_groups = self._get_target_group_objects()
+        return self._get_target_descriptions(target_groups)
 
 
 def main():
@@ -416,9 +417,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_BOTO3:
-        module.fail_json(msg="boto3 and botocore are required for this module")
-
     instance_id = module.params["instance_id"]
     get_unused_target_groups = module.params["get_unused_target_groups"]
 
@@ -427,10 +425,9 @@ def main():
                                       get_unused_target_groups
                                       )
 
-    ansible_facts = {"ec2_tgs": [each.to_dict() for each in tg_gatherer.tgs]}
-    facts_result = dict(ansible_facts=ansible_facts)
+    instance_target_groups = [each.to_dict() for each in tg_gatherer.tgs]
 
-    module.exit_json(**facts_result)
+    module.exit_json(instance_target_groups=instance_target_groups)
 
 
 if __name__ == "__main__":

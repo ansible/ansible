@@ -220,14 +220,15 @@
       elb_target_facts:
         instance_id: "{{ ec2.instance_ids[0]}}"
         <<: *aws_connection_info
+      register: target_facts
 
     - assert:
         that:
-          - "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - "{{ idle_target_group.target_group_arn not in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - (ec2_tgs | length) == 2
-        msg: "ec2_tgs showed the target in the right target groups"
+          - "{{ alb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - "{{ nlb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - "{{ idle_target_group.target_group_arn not in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - (target_facts.instance_target_groups | length) == 2
+        msg: "target facts showed the target in the right target groups"
 
 
     - name: register with unused target group
@@ -242,28 +243,30 @@
       elb_target_facts:
         instance_id: "{{ ec2.instance_ids[0]}}"
         <<: *aws_connection_info
+      register: target_facts
 
     - assert:
         that:
-          - "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - "{{ idle_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - (ec2_tgs | length) == 3
-        msg: "ec2_tgs reflected the addition of the target to the idle group"
+          - "{{ alb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - "{{ nlb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - "{{ idle_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - (target_facts.instance_target_groups | length) == 3
+        msg: "target facts reflected the addition of the target to the idle group"
 
     - name: gather facts again, this time excluding the idle group
       elb_target_facts:
         instance_id: "{{ ec2.instance_ids[0]}}"
         get_unused_target_groups: false
         <<: *aws_connection_info
+      register: target_facts
 
     - assert:
         that:
-          - "{{ alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - "{{ nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - "{{ idle_target_group.target_group_arn not in (ec2_tgs | map(attribute='target_group_arn')) }}"
-          - (ec2_tgs | length) == 2
-        msg: "ec2_tgs did not gather unused target groups when variable was set"
+          - "{{ alb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - "{{ nlb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - "{{ idle_target_group.target_group_arn not in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
+          - (target_facts.instance_target_groups | length) == 2
+        msg: "target_facts.instance_target_groups did not gather unused target groups when variable was set"
         
     - name: register twice in the same target group
       elb_target:
@@ -280,13 +283,14 @@
         instance_id: "{{ ec2.instance_ids[0] }}"
         get_unused_target_groups: false
         <<: *aws_connection_info
+      register: target_facts
 
     - assert:
         that:
-          - alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn'))
-          - nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn'))
-          - (ec2_tgs | length) == 2 
-          - (ec2_tgs |
+          - alb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn'))
+          - nlb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn'))
+          - (target_facts.instance_target_groups | length) == 2 
+          - (target_facts.instance_target_groups |
              selectattr('target_group_arn', 'equalto', nlb_target_group.target_group_arn) |
              map(attribute='targets') |
              flatten |
@@ -295,7 +299,7 @@
         msg: "registering a target twice didn't affect the overall target group count, increased target count"
 
     - set_fact:
-        original_target_groups: "{{ ec2_tgs }}"
+        original_target_groups: "{{ target_facts.instance_target_groups }}"
 
     - name: Deregister instance from all target groups
       elb_target:
@@ -315,7 +319,8 @@
         get_unused_target_groups: false
         instance_id: "{{ ec2.instance_ids[0] }}"
         <<: *aws_connection_info
-      until: (ec2_tgs | length) == 0
+      register: target_facts
+      until: (target_facts.instance_target_groups | length) == 0
       retries: 60
       delay: 10
 
@@ -339,8 +344,9 @@
         get_unused_target_groups: false
         instance_id: "{{ ec2.instance_ids[0] }}"
         <<: *aws_connection_info
+      register: target_facts
       until: >
-                (ec2_tgs |
+                (target_facts.instance_target_groups |
                  map(attribute='targets') |
                  flatten |
                  map(attribute='target_health') |
@@ -353,10 +359,10 @@
 
     - assert:
         that:
-          - alb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn'))
-          - nlb_target_group.target_group_arn in (ec2_tgs | map(attribute='target_group_arn'))
-          - (ec2_tgs | length) == 2 
-          - (ec2_tgs |
+          - alb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn'))
+          - nlb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn'))
+          - (target_facts.instance_target_groups | length) == 2 
+          - (target_facts.instance_target_groups |
              selectattr('target_group_arn', 'equalto', nlb_target_group.target_group_arn) |
              map(attribute='targets') |
              flatten |
