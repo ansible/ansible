@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -141,7 +143,7 @@ options:
   instance_profile_name:
     version_added: "1.3"
     description:
-      - Name of the IAM instance profile to use. Boto library must be 2.5.0+
+      - Name of the IAM instance profile (i.e. what the EC2 console refers to as an “IAM Role”) to use. Boto library must be 2.5.0+
   instance_ids:
     version_added: "1.3"
     description:
