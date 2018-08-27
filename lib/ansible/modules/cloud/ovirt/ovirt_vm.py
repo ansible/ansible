@@ -858,7 +858,10 @@ EXAMPLES = '''
         - spice
         - vnc
 <<<<<<< HEAD:lib/ansible/modules/cloud/ovirt/ovirt_vm.py
+<<<<<<< HEAD:lib/ansible/modules/cloud/ovirt/ovirt_vm.py
 =======
+=======
+>>>>>>> a047b751a2dc2674da2649f5fe1d852d0f7b8591:lib/ansible/modules/cloud/ovirt/ovirt_vms.py
 
 # Default value of host_device state is present
 - name: Attach host devices to virtual machine
@@ -872,9 +875,13 @@ EXAMPLES = '''
         state: absent
       - name: pci_0000_00_08_0
         state: present
+<<<<<<< HEAD:lib/ansible/modules/cloud/ovirt/ovirt_vm.py
 >>>>>>> pep8 syntax correct:lib/ansible/modules/cloud/ovirt/ovirt_vms.py
 
 <<<<<<< HEAD:lib/ansible/modules/cloud/ovirt/ovirt_vm.py
+=======
+
+>>>>>>> a047b751a2dc2674da2649f5fe1d852d0f7b8591:lib/ansible/modules/cloud/ovirt/ovirt_vms.py
 # Execute remote viever to VM
 - block:
   - name: Create a ticket for console for a running VM
