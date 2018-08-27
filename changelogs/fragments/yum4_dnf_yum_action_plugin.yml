@@ -1,0 +1,22 @@
+---
+major_changes:
+  - yum and dnf modules now at feature parity
+  - new yum action plugin enables the yum module to work with both yum3
+    and dnf-based yum4 by detecting the backend package manager and routing
+    commands through the correct Ansible module for that python API
+  - New yumdnf module defines the shared argument specification for both
+    yum and dnf modules and provides an entry point to share code when
+    applicable
+
+minor_changes:
+  - Fixed group actions in check mode to report correct changed state
+  - Better error handling for depsolve and transaction errors in DNF
+  - Fixed group action idempotent transactions in dnf backend
+  - Add use_backend to yum module/action plugin
+  - Fix dnf handling of autoremove to be compatible with yum
+  - Enable installroot tests for yum4(dnf) integration testing, dnf
+    backend now supports that
+  - Switch from zip to bc for certain package install/remove test
+    cases in yum integration tests. The dnf depsolver downgrades
+    python when you uninstall zip which alters the test environment
+    and we have no control over that.
