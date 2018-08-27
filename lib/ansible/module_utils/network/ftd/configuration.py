@@ -1,8 +1,7 @@
 from functools import partial
 
 from ansible.module_utils.network.ftd.common import HTTPMethod, equal_objects, copy_identity_properties, \
-    FtdConfigurationError, FtdServerError
-from ansible.plugins.httpapi.ftd import ResponseParams
+    FtdConfigurationError, FtdServerError, ResponseParams
 
 DEFAULT_PAGE_SIZE = 10
 DEFAULT_OFFSET = 0

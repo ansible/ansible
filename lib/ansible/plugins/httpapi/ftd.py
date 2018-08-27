@@ -12,14 +12,13 @@ import re
 from ansible.module_utils.basic import to_text
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.network.ftd.fdm_swagger_client import FdmSwaggerParser, SpecProp, FdmSwaggerValidator
-from ansible.module_utils.network.ftd.common import HTTPMethod
+from ansible.module_utils.network.ftd.common import HTTPMethod, ResponseParams
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.plugins.httpapi import HttpApiBase
 from urllib3 import encode_multipart_formdata
 from urllib3.fields import RequestField
 from ansible.module_utils.connection import ConnectionError
-
 
 BASE_HEADERS = {
     'Content-Type': 'application/json',
@@ -31,12 +30,6 @@ API_SPEC_PATH = '/apispec/ngfw.json'
 
 TOKEN_EXPIRATION_STATUS_CODE = 408
 UNAUTHORIZED_STATUS_CODE = 401
-
-
-class ResponseParams:
-    SUCCESS = 'success'
-    STATUS_CODE = 'status_code'
-    RESPONSE = 'response'
 
 
 class HttpApi(HttpApiBase):
@@ -68,7 +61,7 @@ class HttpApi(HttpApiBase):
         else:
             raise AnsibleConnectionFailure('Username and password are required for login in absence of refresh token')
 
-        _, response_data = self.connection.send(
+        dummy, response_data = self.connection.send(
             self._get_api_token_path(), json.dumps(payload), method=HTTPMethod.POST, headers=BASE_HEADERS
         )
         response = self._response_to_json(response_data.getvalue())
@@ -130,7 +123,7 @@ class HttpApi(HttpApiBase):
             headers['Content-Type'] = content_type
             headers['Content-Length'] = len(body)
 
-            _, response_data = self.connection.send(url, data=body, method=HTTPMethod.POST, headers=headers)
+            dummy, response_data = self.connection.send(url, data=body, method=HTTPMethod.POST, headers=headers)
             return self._response_to_json(response_data.getvalue())
 
     def download_file(self, from_url, to_path, path_params=None):

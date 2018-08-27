@@ -8,10 +8,10 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import mock_open, patch
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.connection import ConnectionError
-from ansible.module_utils.network.ftd.common import HTTPMethod
+from ansible.module_utils.network.ftd.common import HTTPMethod, ResponseParams
 from ansible.module_utils.network.ftd.fdm_swagger_client import SpecProp, FdmSwaggerParser
 from ansible.module_utils.six import BytesIO, PY3, StringIO
-from ansible.plugins.httpapi.ftd import HttpApi, API_TOKEN_PATH_ENV_VAR, ResponseParams
+from ansible.plugins.httpapi.ftd import HttpApi, API_TOKEN_PATH_ENV_VAR
 
 if PY3:
     BUILTINS_NAME = 'builtins'
@@ -160,7 +160,7 @@ class TestFtdHttpApi(unittest.TestCase):
         filename = 'test_file.txt'
         response = mock.Mock()
         response.info.return_value = {'Content-Disposition': 'attachment; filename="%s"' % filename}
-        _, response_data = self._connection_response('File content')
+        dummy, response_data = self._connection_response('File content')
         self.connection_mock.send.return_value = response, response_data
 
         open_mock = mock_open()

@@ -3,6 +3,9 @@
 # Copyright (c) 2018 Cisco Systems, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -11,7 +14,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ftd_configuration
-short_description: Manages ConfigEntity objects on Cisco FTD devices over REST API.
+short_description: Manages configuration on Cisco FTD devices over REST API
+description:
+  - Manages configuration on Cisco FTD devices including creating, updating, removing configuration objects, 
+    scheduling and staring jobs, deploying pending changes, etc. All operation are performed over REST API.
 version_added: "2.7"
 author: "Cisco Systems, Inc."
 options:

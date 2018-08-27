@@ -13,6 +13,12 @@ class HTTPMethod:
     DELETE = 'delete'
 
 
+class ResponseParams:
+    SUCCESS = 'success'
+    STATUS_CODE = 'status_code'
+    RESPONSE = 'response'
+
+
 class FtdConfigurationError(Exception):
     pass
 
