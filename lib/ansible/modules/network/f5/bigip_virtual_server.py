@@ -638,6 +638,8 @@ from collections import namedtuple
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_VERSION
+    from library.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_MODIFIED
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
@@ -646,11 +648,15 @@ try:
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import mark_managed_by
+    from library.module_utils.network.f5.common import only_has_managed_metadata
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import ip_interface
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_VERSION
+    from ansible.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_MODIFIED
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
@@ -659,6 +665,8 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import mark_managed_by
+    from ansible.module_utils.network.f5.common import only_has_managed_metadata
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import ip_interface
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
@@ -1255,8 +1263,13 @@ class ApiParameters(Parameters):
     def metadata(self):
         if self._values['metadata'] is None:
             return None
+        if only_has_managed_metadata(self._values['metadata']):
+            return None
         result = []
         for md in self._values['metadata']:
+            if md['name'] in [MANAGED_BY_ANNOTATION_VERSION, MANAGED_BY_ANNOTATION_MODIFIED]:
+                continue
+
             tmp = dict(name=str(md['name']))
             if 'value' in md:
                 tmp['value'] = str(md['value'])
@@ -2892,6 +2905,10 @@ class ModuleManager(object):
 
     def update_on_device(self):
         params = self.changes.api_params()
+
+        # Mark the resource as managed by Ansible.
+        params = mark_managed_by(self.module.ansible_version, params)
+
         uri = "https://{0}:{1}/mgmt/tm/ltm/virtual/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
@@ -2933,6 +2950,10 @@ class ModuleManager(object):
         params = self.changes.api_params()
         params['name'] = self.want.name
         params['partition'] = self.want.partition
+
+        # Mark the resource as managed by Ansible.
+        params = mark_managed_by(self.module.ansible_version, params)
+
         uri = "https://{0}:{1}/mgmt/tm/ltm/virtual/".format(
             self.client.provider['server'],
             self.client.provider['server_port']
