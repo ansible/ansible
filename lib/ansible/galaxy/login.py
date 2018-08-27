@@ -24,9 +24,10 @@ __metaclass__ = type
 
 import getpass
 import json
-import sys
 
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.six import PY2
+from ansible.module_utils.six import binary_type
 from ansible.module_utils.six.moves import input
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlparse
 from ansible.module_utils.six.moves.urllib.error import HTTPError
@@ -83,11 +84,14 @@ class GalaxyLogin(object):
                               url_password=self.github_password,
                               force_basic_auth=True,)
             resp = opened.read()
-            if sys.version_info.major > 2:
+            if not PY2:
                 resp = resp.decode()
             tokens = json.loads(resp)
         except HTTPError as e:
-            res = json.load(e)
+            flat_resp = e.read()
+            if isinstance(flat_resp, binary_type):
+                flat_resp = flat_resp.decode()
+            res = json.loads(flat_resp)
             raise AnsibleError(res['message'])
 
         for token in tokens:
@@ -97,7 +101,10 @@ class GalaxyLogin(object):
                     open_url('https://api.github.com/authorizations/%d' % token['id'], url_username=self.github_username,
                              url_password=self.github_password, method='DELETE', force_basic_auth=True)
                 except HTTPError as e:
-                    res = json.load(e)
+                    flat_resp = e.read()
+                    if isinstance(flat_resp, binary_type):
+                        flat_resp = flat_resp.decode()
+                    res = json.loads(e)
                     raise AnsibleError(res['message'])
 
     def create_github_token(self):
@@ -112,10 +119,13 @@ class GalaxyLogin(object):
                               url_password=self.github_password,
                               force_basic_auth=True, data=args)
             resp = opened.read()
-            if sys.version_info.major > 2:
+            if not PY2:
                 resp = resp.decode()
             data = json.loads(resp)
         except HTTPError as e:
-            res = json.load(e)
+            flat_resp = e.read()
+            if isinstance(flat_resp, binary_type):
+                flat_resp = flat_resp.decode()
+            res = json.loads(e)
             raise AnsibleError(res['message'])
         return data['token']
