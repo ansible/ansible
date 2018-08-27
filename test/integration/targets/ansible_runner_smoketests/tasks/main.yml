@@ -1,0 +1,4 @@
+#- shell: env
+#- shell: which ansible
+#- shell: which ansible-playbook
+- include_tasks: setup.yml

@@ -1,0 +1,12 @@
+- name: get the container host and port
+  set_fact:
+    runner_container_host: "{{ lookup('env', 'ANSIBLE_RUNNER_HOST') }}"
+    runner_container_port: "{{ lookup('env', 'ANSIBLE_RUNNER_PORT') }}"
+    runner_container_url: "{{ 'http://' + lookup('env', 'ANSIBLE_RUNNER_HOST') + ':' + lookup('env', 'ANSIBLE_RUNNER_PORT') }}"
+- name: check for ansible install path on container
+  uri:
+    url: "{{ runner_container_url + '/' + 'run_command' }}"
+    method: POST
+    body_format: json
+    body:
+        command: ansible --version
