@@ -102,12 +102,14 @@ releases of Ansible, there can sometimes be exceptions for critical issues.
 Changelogs
 ~~~~~~~~~~~~~~~~~~
 
-Since 2.5, we have switched to generating changelogs based on fragments. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
+Older versions logged changes in ``stable-<version>`` branches at ``stable-<version>/CHANGELOG.md``. For example, here's the changelog for 2.4_ on GitHub.
+
+We now generate changelogs based on fragments. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
 Creating New Fragments
 ----------------------
 
-Create a new file with a unique and descriptive name in ``changelogs/fragments/`` that ends in ``.yaml``.
+Create a new file with a unique and descriptive name in ``changelogs/fragments/`` that ends in ``.yaml`` such as ``user-40696-backup-shadow-file.yaml``
 
 A single changelog fragment may contain multiple sections but most will only contain one section. Here are the valid sections and a description of each:
 
@@ -142,6 +144,9 @@ Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a
     - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
 
 Commit the changelog fragment and include it with the pull request.
+
+Older versions logged changes to ``stable-<version>/CHANGELOG.md``. For example, here's the CHANGELOG for 2.5_.
+
 
 
 Release candidates
