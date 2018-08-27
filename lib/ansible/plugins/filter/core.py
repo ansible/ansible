@@ -257,13 +257,17 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
     # TODO: find a way to construct dynamically from system
     cryptmethod = {
         'md5': '1',
-        'blowfish': '2a',
+        'blowfish': '2b',
         'sha256': '5',
         'sha512': '6',
     }
 
     if hashtype in cryptmethod:
-        if salt is None:
+        # For Blowfish, skip generating salt manually because what is generated
+        # below contains incorrectly set padding bits. Also the length used to
+        # be incorrect (16 instead of 22). Besides, Passlib recommends NOT
+        # generating a salt string manually.
+        if salt is None and hashtype is not 'blowfish':
             r = SystemRandom()
             if hashtype in ['md5']:
                 saltsize = 8
