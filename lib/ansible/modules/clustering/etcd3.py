@@ -138,7 +138,7 @@ def run_module():
         port=dict(type='int', default=2379),
         state=dict(type='str', required=True, choices=['present', 'absent']),
         user=dict(type='str'),
-        password=dict(type='str'),
+        password=dict(type='str', no_log=True),
         ca_cert=dict(type='path'),
         client_cert=dict(type='path'),
         client_key=dict(type='path'),
@@ -170,14 +170,16 @@ def run_module():
     # Due to `required_together=[['client_cert', 'client_key']]`, checking the presence
     # of either `client_cert` or `client_key` is enough
     if module.params['ca_cert'] is None and module.params['client_cert'] is not None:
-        module.fail_json(msg="The 'ca_cert' parameter must be defined when 'client_cert' and 'key_cert' are present.")
+        module.fail_json(msg="The 'ca_cert' parameter must be defined when 'client_cert' and 'client_key' are present.")
 
     result['key'] = module.params.get('key')
+    module.params['cert_cert'] = module.params.pop('client_cert')
+    module.params['cert_key'] = module.params.pop('client_key')
 
     if not etcd_found:
         module.fail_json(msg="the python etcd3 module is required")
 
-    allowed_keys = ['host', 'port', 'ca_cert', 'cert_key', 'cert_cert',
+    allowed_keys = ['host', 'port', 'ca_cert', 'cert_cert', 'cert_key',
                     'timeout', 'user', 'password']
     # TODO(evrardjp): Move this back to a dict comprehension when python 2.7 is
     # the minimum supported version
