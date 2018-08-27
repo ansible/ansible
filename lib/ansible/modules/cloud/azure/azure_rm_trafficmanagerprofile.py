@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_trafficmanagerprofile
 version_added: "2.7"
-short_description: Manage a Traffic Manager profile.
+short_description: Manage Azure Traffic Manager profile.
 description:
     - Create, update and delete a Traffic Manager profile.
 
@@ -39,6 +39,7 @@ options:
         description:
             - Valid azure location. Defaults to 'global' because in default public Azure cloud, Traffic Manager profile can only be deployed globally.
             - Reference https://docs.microsoft.com/en-us/azure/traffic-manager/quickstart-create-traffic-manager-profile#create-a-traffic-manager-profile
+        default: global
     profile_status:
         description:
             - The status of the Traffic Manager profile.
@@ -147,7 +148,7 @@ endpoints:
         "/subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/externalEndpoints/e1"
     ]
 '''
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -305,7 +306,9 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
             changed=False
         )
 
-        super(AzureRMTrafficManagerProfile, self).__init__(derived_arg_spec=self.module_arg_spec, supports_check_mode=True)
+        super(AzureRMTrafficManagerProfile, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                           supports_check_mode=True,
+                                                           supports_tags=True)
 
     def exec_module(self, **kwargs):
 
@@ -418,19 +421,20 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
             self.fail("Error creating the Traffic Manager: {0}".format(exc.message))
 
     def check_update(self, response):
-        if response['location'] != self.location:
+        if self.location and normalize_location_name(response['location']) != normalize_location_name(self.location):
             self.log("Location Diff - Origin {0} / Update {1}".format(response['location'], self.location))
             return True
 
-        if response['profile_status'].lower() != self.profile_status.lower():
+        if self.profile_status and response['profile_status'].lower() != self.profile_status.lower():
             self.log("Profile Status Diff - Origin {0} / Update {1}".format(response['profile_status'], self.profile_status))
             return True
 
-        if response['routing_method'].lower() != self.routing_method.lower():
+        if self.routing_method and response['routing_method'].lower() != self.routing_method.lower():
             self.log("Traffic Routing Method Diff - Origin {0} / Update {1}".format(response['routing_method'], self.routing_method))
             return True
 
-        if (response['dns_config']['relative_name'] != self.dns_config['relative_name'] or response['dns_config']['ttl'] != self.dns_config['ttl']):
+        if self.dns_config and \
+           (response['dns_config']['relative_name'] != self.dns_config['relative_name'] or response['dns_config']['ttl'] != self.dns_config['ttl']):
             self.log("DNS Config Diff - Origin {0} / Update {1}".format(response['dns_config'], self.dns_config))
             return True
 

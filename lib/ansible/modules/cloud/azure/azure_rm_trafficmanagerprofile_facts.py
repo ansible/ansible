@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Hai Cao, <t-haicao@microsoft.com>
+# Copyright (c) 2018 Hai Cao, <t-haicao@microsoft.com>, Yunge Zhu <yungez@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -18,10 +18,10 @@ module: azure_rm_trafficmanagerprofile_facts
 
 version_added: "2.7"
 
-short_description: Get Traffic Manager profile facts
+short_description: Get Azure Traffic Manager profile facts
 
 description:
-    - Get facts for a specific Traffic Manager profile or all Traffic Manager profiles.
+    - Get facts for a Azure specific Traffic Manager profile or all Traffic Manager profiles.
 
 options:
     name:
@@ -39,6 +39,7 @@ extends_documentation_fragment:
 
 author:
     - "Hai Cao <t-haicao@microsoft.com>"
+    - "Yunge Zhu <yungez@microsoft.com>"
 '''
 
 EXAMPLES = '''
@@ -168,7 +169,7 @@ tms:
                         - The fully-qualified DNS name of the endpoint.
                     type: str
                     sample: 8.8.8.8
-                endpoint_status:
+                status:
                     description:
                         - The status of the endpoint.
                     type: str
@@ -183,7 +184,7 @@ tms:
                         - The priority of this endpoint when using the 'Priority' traffic routing method.
                     type: str
                     sample: 3
-                endpoint_location:
+                location:
                     description:
                         - The location of the external or nested endpoints when using the 'Performance' traffic routing method.
                     type: str
@@ -224,10 +225,10 @@ def serialize_endpoint(endpoint):
         type=endpoint.type,
         target_resource_id=endpoint.target_resource_id,
         target=endpoint.target,
-        endpoint_status=endpoint.endpoint_status,
+        status=endpoint.endpoint_status,
         weight=endpoint.weight,
         priority=endpoint.priority,
-        endpoint_location=endpoint.endpoint_location,
+        location=endpoint.endpoint_location,
         min_child_endpoints=endpoint.min_child_endpoints,
         geo_mapping=endpoint.geo_mapping,
     )
@@ -296,7 +297,7 @@ class AzureRMTrafficManagerProfileFacts(AzureRMModuleBase):
         return result
 
     def list_resource_group(self):
-        """Get all Azure Traffic Manager profiles within a resource group"""
+        """Get all Azure Traffic Managers profiles within a resource group"""
 
         self.log('List all Azure Traffic Managers within a resource group')
 
