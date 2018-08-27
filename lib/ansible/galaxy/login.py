@@ -38,6 +38,14 @@ from ansible.utils.display import Display
 display = Display()
 
 
+def http_error_message(error):
+    flat_resp = e.read()
+    if isinstance(flat_resp, binary_type):
+        flat_resp = flat_resp.decode()
+    res = json.loads(flat_resp)
+    return res['message']
+
+
 class GalaxyLogin(object):
     ''' Class to handle authenticating user with Galaxy API prior to performing CUD operations '''
 
@@ -88,11 +96,8 @@ class GalaxyLogin(object):
                 resp = resp.decode()
             tokens = json.loads(resp)
         except HTTPError as e:
-            flat_resp = e.read()
-            if isinstance(flat_resp, binary_type):
-                flat_resp = flat_resp.decode()
-            res = json.loads(flat_resp)
-            raise AnsibleError(res['message'])
+            msg = http_error_message(e)
+            raise AnsibleError(msg)
 
         for token in tokens:
             if token['note'] == 'ansible-galaxy login':
@@ -101,11 +106,8 @@ class GalaxyLogin(object):
                     open_url('https://api.github.com/authorizations/%d' % token['id'], url_username=self.github_username,
                              url_password=self.github_password, method='DELETE', force_basic_auth=True)
                 except HTTPError as e:
-                    flat_resp = e.read()
-                    if isinstance(flat_resp, binary_type):
-                        flat_resp = flat_resp.decode()
-                    res = json.loads(e)
-                    raise AnsibleError(res['message'])
+                    msg = http_error_message(e)
+                    raise AnsibleError(msg)
 
     def create_github_token(self):
         '''
@@ -123,9 +125,6 @@ class GalaxyLogin(object):
                 resp = resp.decode()
             data = json.loads(resp)
         except HTTPError as e:
-            flat_resp = e.read()
-            if isinstance(flat_resp, binary_type):
-                flat_resp = flat_resp.decode()
-            res = json.loads(e)
-            raise AnsibleError(res['message'])
+            msg = http_error_message(e)
+            raise AnsibleError(msg)
         return data['token']
