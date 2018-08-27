@@ -366,8 +366,10 @@ def main():
 
                 is_systemd = 'LoadState' in result['status'] and result['status']['LoadState'] != 'not-found'
 
+                is_masked = 'LoadState' in result['status'] and result['status']['LoadState'] == 'masked'
+
                 # Check for loading error
-                if is_systemd and 'LoadError' in result['status']:
+                if is_systemd and not is_masked and 'LoadError' in result['status']:
                     module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
         else:
             # Check for systemctl command
