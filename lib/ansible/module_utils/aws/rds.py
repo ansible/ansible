@@ -26,7 +26,7 @@ instance_method_names = [
     'create_db_instance', 'restore_db_instance_to_point_in_time', 'restore_db_instance_from_s3',
     'restore_db_instance_from_db_snapshot', 'create_db_instance_read_replica', 'modify_db_instance',
     'delete_db_instance', 'add_tags_to_resource', 'remove_tags_from_resource', 'list_tags_for_resource',
-    'promote_read_replica', 'stop_db_instance', 'start_db_instance'
+    'promote_read_replica', 'stop_db_instance', 'start_db_instance', 'reboot_db_instance'
 ]
 
 
