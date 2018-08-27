@@ -145,7 +145,7 @@ import os
 import json
 import tempfile
 import traceback
-from six.moves import shlex_quote
+from ansible.module_utils.six.moves import shlex_quote
 
 from ansible.module_utils.basic import AnsibleModule
 
