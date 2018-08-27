@@ -1,7 +1,7 @@
 ---
 - name: setup template first template
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     display_text: first template
     state: absent
     template_find_options: display_text
@@ -13,7 +13,7 @@
 
 - name: setup template second template
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     display_text: second template
     state: absent
     template_find_options: display_text
@@ -25,7 +25,7 @@
 
 - name: test register first template
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     display_text: first template
     url: "{{ cs_template_url }}"
     format: "{{ cs_template_format }}"
@@ -38,13 +38,13 @@
   assert:
     that:
     - template_first is changed
-    - template_first.name == "ansible-template"
+    - template_first.name == "ansible-template-test2"
     - template_first.display_text == "first template"
     - template_first.cross_zones == true
 
 - name: test register second template
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     display_text: second template
     url: "{{ cs_template_url }}"
     format: "{{ cs_template_format }}"
@@ -57,14 +57,14 @@
   assert:
     that:
     - template_second is changed
-    - template_second.name == "ansible-template"
+    - template_second.name == "ansible-template-test2"
     - template_second.display_text == "second template"
     - template_second.cross_zones == true
     - template_second.id != template_first.id
 
 - name: test multiple template same name absent without find options
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     state: absent
   register: template
   ignore_errors: yes
@@ -76,7 +76,7 @@
 
 - name: test update second template
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     display_text: second template
     url: "{{ cs_template_url }}"
     format: "{{ cs_template_format }}"
@@ -91,7 +91,7 @@
   assert:
     that:
     - template is changed
-    - template.name == "ansible-template"
+    - template.name == "ansible-template-test2"
     - template.display_text == "second template"
     - template.cross_zones == true
     - template.id == template_second.id
@@ -100,13 +100,14 @@
 
 - name: test update second template idempotence
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     display_text: second template
     url: "{{ cs_template_url }}"
     format: "{{ cs_template_format }}"
     hypervisor: "{{ cs_template_hypervisor }}"
     os_type: "{{ cs_template_os_type }}"
     is_featured: yes
+    is_public: yes
     cross_zones: yes
     template_find_options: display_text
   register: template
@@ -114,7 +115,7 @@
   assert:
     that:
     - template is not changed
-    - template.name == "ansible-template"
+    - template.name == "ansible-template-test2"
     - template.display_text == "second template"
     - template.cross_zones == true
     - template.id == template_second.id
@@ -122,7 +123,7 @@
 
 - name: test delete first template
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     display_text: first template
     state: absent
     template_find_options: display_text
@@ -131,7 +132,7 @@
   assert:
     that:
     - template is changed
-    - template.name == "ansible-template"
+    - template.name == "ansible-template-test2"
     - template.display_text == "first template"
     - template.cross_zones == true
     - template.id == template_first.id
@@ -139,7 +140,7 @@
 
 - name: test delete second template
   cs_template:
-    name: ansible-template
+    name: ansible-template-test2
     display_text: second template
     state: absent
     template_find_options: display_text
@@ -148,7 +149,7 @@
   assert:
     that:
     - template is changed
-    - template.name == "ansible-template"
+    - template.name == "ansible-template-test2"
     - template.display_text == "second template"
     - template.cross_zones == true
     - template.id == template_second.id
