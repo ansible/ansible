@@ -1,8 +1,8 @@
-************************************************
-User Guide to to Network Automation with Ansible
-************************************************
+***************************************************
+Advanced Topics with Ansible for Network Automation
+***************************************************
 
-More content coming soon!
+Once you have mastered the basics of network automation with Ansible, as presented in the :doc:`Getting Started Guide<../getting_started/index>`, use this guide understand platform-specific details, optimization, and troubleshooting tips for Ansible for network automation.
 
 Who should use this guide?
 ================================================================================
@@ -13,3 +13,10 @@ If you're new to Ansible, or new to using Ansible for network automation, start 
 
 .. toctree::
    :maxdepth: 2
+   :caption: Advanced Topics
+
+   faq
+   network_best_practices_2.5
+   network_debug_troubleshooting
+   network_working_with_command_output
+   platform_index
