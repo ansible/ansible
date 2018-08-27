@@ -51,6 +51,7 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 # scaleway_inventory.yml file in YAML format
 # Example command line: ansible-inventory --list -i scaleway_inventory.yml
+# Warning: You need to have scaleway in your inventory name
 
 plugin: scaleway
 regions:
@@ -156,6 +157,7 @@ class InventoryModule(BaseInventoryPlugin):
     NAME = 'scaleway'
 
     def verify_file(self, path):
+        # It is mandatory to have "scaleway" in the path name of your inventory
         return "scaleway" in path
 
     def _fill_host_variables(self, host, server_info):
