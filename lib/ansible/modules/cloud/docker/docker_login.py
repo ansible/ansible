@@ -89,7 +89,6 @@ EXAMPLES = '''
   docker_login:
     username: docker
     password: rekcod
-    email: docker@docker.io
 
 - name: Log into private registry and force re-authorization
   docker_login:
@@ -102,13 +101,11 @@ EXAMPLES = '''
   docker_login:
     username: docker
     password: rekcod
-    email: docker@docker.io
     config_path: /tmp/.mydockercfg
 
 - name: Log out of DockerHub
   docker_login:
     state: absent
-    email: docker@docker.com
 '''
 
 RETURN = '''
@@ -314,9 +311,6 @@ def main():
         actions=[],
         login_result={}
     )
-
-    if client.module.params['state'] == 'present' and client.module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not client.module.params['email']:
-        client.module.fail_json(msg="'email' is required when logging into DockerHub")
 
     LoginManager(client, results)
     if 'actions' in results:
