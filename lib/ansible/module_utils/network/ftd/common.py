@@ -88,19 +88,59 @@ def equal_lists(l1, l2):
         return False
 
     for v1, v2 in zip(l1, l2):
-        if type(v1) != type(v2):
-            return False
-        value_type = type(v1)
-
-        if value_type == dict and is_object_ref(v1) and is_object_ref(v2):
-            equal_values = equal_object_refs(v1, v2)
-        else:
-            equal_values = v1 == v2
-
-        if not equal_values:
+        if not equal_values(v1, v2):
             return False
 
     return True
+
+
+def equal_dicts(d1, d2, compare_by_reference=True):
+    """
+    Checks whether two dictionaries are equal. If `compare_by_reference` is set to True, dictionaries referencing
+    objects are compared using `equal_object_refs` method. Otherwise, every key and value is checked.
+
+    :type d1: dict
+    :type d2: dict
+    :param compare_by_reference: if True, dictionaries referencing objects are compared using `equal_object_refs` method
+    :return: True if passed dicts are equal. Otherwise, returns False.
+    """
+    if compare_by_reference and is_object_ref(d1) and is_object_ref(d2):
+        return equal_object_refs(d1, d2)
+
+    if len(d1) != len(d2):
+        return False
+
+    for key, v1 in d1.items():
+        if key not in d2:
+            return False
+
+        v2 = d2[key]
+        if not equal_values(v1, v2):
+            return False
+
+    return True
+
+
+def equal_values(v1, v2):
+    """
+    Checks whether types and content of two values are the same. In case of complex objects, the method might be
+    called recursively.
+
+    :param v1: first value
+    :param v2: second value
+    :return: True if types and content of passed values are equal. Otherwise, returns False.
+    :rtype: bool
+    """
+    if type(v1) != type(v2):
+        return False
+    value_type = type(v1)
+
+    if value_type == list:
+        return equal_lists(v1, v2)
+    elif value_type == dict:
+        return equal_dicts(v1, v2)
+    else:
+        return v1 == v2
 
 
 def equal_objects(d1, d2):
@@ -116,27 +156,4 @@ def equal_objects(d1, d2):
     d1 = dict((k, d1[k]) for k in d1.keys() if k not in NON_COMPARABLE_PROPERTIES and d1[k])
     d2 = dict((k, d2[k]) for k in d2.keys() if k not in NON_COMPARABLE_PROPERTIES and d2[k])
 
-    if len(d1) != len(d2):
-        return False
-
-    for key, v1 in d1.items():
-        if key not in d2:
-            return False
-
-        v2 = d2[key]
-
-        if type(v1) != type(v2):
-            return False
-        value_type = type(v1)
-
-        if value_type == list:
-            equal_values = equal_lists(v1, v2)
-        elif value_type == dict and is_object_ref(v1) and is_object_ref(v2):
-            equal_values = equal_object_refs(v1, v2)
-        else:
-            equal_values = v1 == v2
-
-        if not equal_values:
-            return False
-
-    return True
+    return equal_dicts(d1, d2, compare_by_reference=False)

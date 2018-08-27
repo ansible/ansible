@@ -129,3 +129,95 @@ def test_equal_objects_return_true_with_equal_ref_arrays():
             {'id': '1', 'type': 'network', 'ignored_field': 'bar'}
         ]}
     )
+
+
+# objects with nested structures and object references
+
+def test_equal_objects_return_true_with_equal_nested_object_references():
+    assert equal_objects(
+        {
+            'name': 'foo',
+            'config': {
+                'version': '1',
+                'port': {
+                    'name': 'oldPortName',
+                    'type': 'port',
+                    'id': '123'
+                }
+            }
+        },
+        {
+            'name': 'foo',
+            'config': {
+                'version': '1',
+                'port': {
+                    'name': 'newPortName',
+                    'type': 'port',
+                    'id': '123'
+                }
+            }
+        }
+    )
+
+
+def test_equal_objects_return_false_with_different_nested_object_references():
+    assert not equal_objects(
+        {
+            'name': 'foo',
+            'config': {
+                'version': '1',
+                'port': {
+                    'name': 'oldPortName',
+                    'type': 'port',
+                    'id': '123'
+                }
+            }
+        },
+        {
+            'name': 'foo',
+            'config': {
+                'version': '1',
+                'port': {
+                    'name': 'oldPortName',
+                    'type': 'port',
+                    'id': '234'
+                }
+            }
+        }
+    )
+
+
+def test_equal_objects_return_true_with_equal_nested_list_of_object_references():
+    assert equal_objects(
+        {
+            'name': 'foo',
+            'config': {
+                'version': '1',
+                'ports': [{
+                    'name': 'oldPortName',
+                    'type': 'port',
+                    'id': '123'
+                }, {
+                    'name': 'oldPortName2',
+                    'type': 'port',
+                    'id': '234'
+                }]
+            }
+        },
+        {
+            'name': 'foo',
+            'config': {
+                'version': '1',
+                'ports': [{
+                    'name': 'newPortName',
+                    'type': 'port',
+                    'id': '123'
+                }, {
+                    'name': 'newPortName2',
+                    'type': 'port',
+                    'id': '234',
+                    'extraField': 'foo'
+                }]
+            }
+        }
+    )

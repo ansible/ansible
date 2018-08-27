@@ -141,13 +141,12 @@ class HttpApi(HttpApiBase):
             output_file.write(response_data.getvalue())
 
     def handle_httperror(self, exc):
-        # None means that the exception will be passed further to the caller
-        retry_request = None
         if exc.code == TOKEN_EXPIRATION_STATUS_CODE or exc.code == UNAUTHORIZED_STATUS_CODE:
             self.connection._auth = None
             self.login(self.connection.get_option('remote_user'), self.connection.get_option('password'))
-            retry_request = True
-        return retry_request
+            return True
+        # None means that the exception will be passed further to the caller
+        return None
 
     def _authorized_headers(self):
         headers = dict(BASE_HEADERS)
