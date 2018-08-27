@@ -113,6 +113,20 @@ def find_mapper_device_name(module, dm_device):
     return mapper_device
 
 
+def find_real_udev_path(module, dev_path):
+    """
+    Return the real path used by the lvm commands. The symlink path returned will be the latest added by udev.
+    """
+    udevadm_cmd = module.get_bin_path('udevadm', True)
+    # Get the list of symlinks link the device.
+    # Example of output:
+    # disk/by-id/lvm-pv-uuid-KOGoxI-aiDA-Ki35-34fg-67if-ozxn-pdgWP0 ... sdb <-- the latest is used by pv/vg/lv commands
+    rc, udev_paths, err = module.run_command("%s info --query=symlink --name=%s" % (udevadm_cmd, dev_path))
+    if rc != 0:
+        module.fail_json(mgs="Failed executing udevadm command.", rc=rc, err=err)
+    return "/dev/%s" % udev_paths.split()[-1]
+
+
 def parse_pvs(module, data):
     pvs = []
     dm_prefix = '/dev/dm-'
@@ -153,6 +167,10 @@ def main():
         dev_list = module.params['pvs']
     elif state == 'present':
         module.fail_json(msg="No physical volumes given.")
+
+    # LVM always uses real path from udev (see: https://github.com/ansible/ansible/pull/43160)
+    for idx, dev in enumerate(dev_list):
+        dev_list[idx] = find_real_udev_path(module, dev)
 
     if state == 'present':
         # check given devices
@@ -231,7 +249,7 @@ def main():
                     module.fail_json(msg="Refuse to remove non-empty volume group %s without force=yes" % (vg))
 
         # resize VG
-        current_devs = [pv['name'] for pv in pvs if pv['vg_name'] == vg]
+        current_devs = [find_real_udev_path(module, pv['name']) for pv in pvs if pv['vg_name'] == vg]
         devs_to_remove = list(set(current_devs) - set(dev_list))
         devs_to_add = list(set(dev_list) - set(current_devs))
 
