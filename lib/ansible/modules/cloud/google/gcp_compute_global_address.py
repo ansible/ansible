@@ -68,17 +68,18 @@ options:
         required: false
         choices: ['IPV4', 'IPV6']
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/globalAddresses)"
+    - "Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address)"
 '''
 
 EXAMPLES = '''
 - name: create a global address
   gcp_compute_global_address:
-      name: testObject
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      name: "test_object"
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -122,7 +123,7 @@ RETURN = '''
         type: str
     region:
         description:
-            - A reference to Region resource.
+            - A reference to the region where the regional address resides.
         returned: success
         type: str
 '''
@@ -153,6 +154,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#address'
 
@@ -162,10 +166,10 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                fetch = update(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -185,12 +189,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -299,7 +303,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#address')

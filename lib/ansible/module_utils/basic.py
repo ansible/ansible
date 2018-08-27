@@ -109,26 +109,14 @@ NoneType = type(None)
 try:
     import json
     # Detect the python-json library which is incompatible
-    # Look for simplejson if that's the case
     try:
         if not isinstance(json.loads, types.FunctionType) or not isinstance(json.dumps, types.FunctionType):
             raise ImportError
     except AttributeError:
         raise ImportError
 except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        print('\n{"msg": "Error: ansible requires the stdlib json or simplejson module, neither was found!", "failed": true}')
-        sys.exit(1)
-    except SyntaxError:
-        print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
-        sys.exit(1)
-    else:
-        sj_version = json.__version__.split('.')
-        if sj_version < ['1', '6']:
-            # Version 1.5 released 2007-01-18 does not have the encoding parameter which we need
-            print('\n{"msg": "Error: Ansible requires the stdlib json or simplejson >= 1.6.  Neither was found!", "failed": true}')
+    print('\n{"msg": "Error: ansible requires the stdlib json and was not found!", "failed": true}')
+    sys.exit(1)
 
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:
@@ -144,13 +132,19 @@ try:
         algorithms = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
     for algorithm in algorithms:
         AVAILABLE_HASH_ALGORITHMS[algorithm] = getattr(hashlib, algorithm)
-except ImportError:
+
+    # we may have been able to import md5 but it could still not be available
+    try:
+        hashlib.md5()
+    except ValueError:
+        algorithms.pop('md5', None)
+except Exception:
     import sha
     AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
     try:
         import md5
         AVAILABLE_HASH_ALGORITHMS['md5'] = md5.md5
-    except ImportError:
+    except Exception:
         pass
 
 from ansible.module_utils.common._collections_compat import (

@@ -36,7 +36,7 @@
   assert:
     that:
       - lib_result.failed
-      - "lib_result.msg=='No package libbdplus available.'"
+      - "lib_result.msg=='Failed to install some of the specified packages'"
 
 - name: re-add rpmfusion
   yum_repository:

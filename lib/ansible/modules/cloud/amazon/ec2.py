@@ -141,7 +141,7 @@ options:
   instance_profile_name:
     version_added: "1.3"
     description:
-      - Name of the IAM instance profile to use. Boto library must be 2.5.0+
+      - Name of the IAM instance profile (i.e. what the EC2 console refers to as an "IAM Role") to use. Boto library must be 2.5.0+
   instance_ids:
     version_added: "1.3"
     description:
@@ -1055,7 +1055,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                     module.fail_json(
                         msg="instance_profile_name parameter requires Boto version 2.5.0 or higher")
 
-            if assign_public_ip:
+            if assign_public_ip is not None:
                 if not boto_supports_associate_public_ip_address(ec2):
                     module.fail_json(
                         msg="assign_public_ip parameter requires Boto version 2.13.0 or higher.")

@@ -1,0 +1,7 @@
+---
+bugfixes:
+- The fix for `CVE-2018-10875 <https://access.redhat.com/security/cve/cve-2018-10875>`_
+  prints out a warning message about skipping a config file from a world
+  writable current working directory.  However, if the user is in a world
+  writable current working directory which does not contain a config file, it
+  should not print a warning message.  This release fixes that extaneous warning.

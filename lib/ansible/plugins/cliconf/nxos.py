@@ -151,7 +151,7 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
         results = []
         requests = []
 
@@ -202,7 +202,7 @@ class Cliconf(CliconfBase):
             try:
                 out = self.send_command(**cmd)
             except AnsibleConnectionFailure as e:
-                if check_rc:
+                if check_rc is True:
                     raise
                 out = getattr(e, 'err', e)
 

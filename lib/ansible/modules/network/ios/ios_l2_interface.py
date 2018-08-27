@@ -118,7 +118,7 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 def get_interface_type(interface):
     intf_type = 'unknown'
-    if interface.upper()[:2] in ('ET', 'GI'):
+    if interface.upper()[:2] in ('ET', 'GI', 'FA', 'TE', 'FO'):
         intf_type = 'ethernet'
     elif interface.upper().startswith('VL'):
         intf_type = 'svi'
@@ -303,11 +303,12 @@ def vlan_range_to_list(vlans):
         for part in vlans.split(','):
             if part.lower() == 'none':
                 break
-            if '-' in part:
-                start, stop = (int(i) for i in part.split('-'))
-                result.extend(range(start, stop + 1))
-            else:
-                result.append(int(part))
+            if part:
+                if '-' in part:
+                    start, stop = (int(i) for i in part.split('-'))
+                    result.extend(range(start, stop + 1))
+                else:
+                    result.append(int(part))
     return sorted(result)
 
 

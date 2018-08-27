@@ -31,7 +31,7 @@ While primarily used to kickoff OS installations and manage DHCP and DNS, Cobble
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
 been referred to as a 'lightweight CMDB' by some admins.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file.  cobblerd will now need
+To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file.  cobblerd will now need
 to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
 This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
 
@@ -103,7 +103,7 @@ So in other words, you can use those variables in arguments/actions as well.
 Example: AWS EC2 External Inventory Script
 ``````````````````````````````````````````
 
-If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
+If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
 
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script after
 marking it executable::

@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
 
             elif 'var' in self._task.args:
                 try:
-                    results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
+                    results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True)
                     if results == self._task.args['var']:
                         # if results is not str/unicode type, raise an exception
                         if not isinstance(results, string_types):

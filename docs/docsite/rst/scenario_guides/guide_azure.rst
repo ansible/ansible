@@ -38,7 +38,7 @@ instructions on how to actually use the modules and authenticate with the Azure 
 Using Service Principal
 .......................
 
-There is now a detailed official tutorial describing `how to create a service principal <https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/>`_.
+There is now a detailed official tutorial describing `how to create a service principal <https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal>`_.
 
 After stepping through the tutorial you will have:
 
@@ -244,7 +244,7 @@ virtual network already with an existing subnet, you can run the following to cr
       name: testvm10
       vm_size: Standard_D1
       admin_username: chouseknecht
-      ssh_password: false
+      ssh_password_enabled: false
       ssh_public_keys: "{{ ssh_keys }}"
       image:
         offer: CentOS

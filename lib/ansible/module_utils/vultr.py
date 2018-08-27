@@ -14,6 +14,7 @@ from ansible.module_utils.urls import fetch_url
 
 
 VULTR_API_ENDPOINT = "https://api.vultr.com"
+VULTR_USER_AGENT = 'Ansible Vultr'
 
 
 def vultr_argument_spec():
@@ -30,6 +31,10 @@ def vultr_argument_spec():
 class Vultr:
 
     def __init__(self, module, namespace):
+
+        if module._name.startswith('vr_'):
+            module.deprecate("The Vultr modules were renamed. The prefix of the modules changed from vr_ to vultr_", version='2.11')
+
         self.module = module
 
         # Namespace use for returns
@@ -45,7 +50,7 @@ class Vultr:
 
         try:
             config = self.read_env_variables()
-            config.update(self.read_ini_config())
+            config.update(Vultr.read_ini_config(self.module.params.get('api_account')))
         except KeyError:
             config = {}
 
@@ -75,7 +80,7 @@ class Vultr:
         # Headers to be passed to the API
         self.headers = {
             'API-Key': "%s" % self.api_config['api_key'],
-            'User-Agent': "Ansible Vultr",
+            'User-Agent': VULTR_USER_AGENT,
             'Accept': 'application/json',
         }
 
@@ -89,9 +94,8 @@ class Vultr:
 
         return env_conf
 
-    def read_ini_config(self):
-        ini_group = self.module.params.get('api_account')
-
+    @staticmethod
+    def read_ini_config(ini_group):
         paths = (
             os.path.join(os.path.expanduser('~'), '.vultr.ini'),
             os.path.join(os.getcwd(), 'vultr.ini'),
@@ -215,18 +219,31 @@ class Vultr:
 
         if not r_list:
             return {}
-
-        for r_id, r_data in r_list.items():
-            if r_data[key] == value:
-                self.api_cache.update({
-                    resource: r_data
-                })
-                return r_data
+        elif isinstance(r_list, list):
+            for r_data in r_list:
+                if str(r_data[key]) == str(value):
+                    self.api_cache.update({
+                        resource: r_data
+                    })
+                    return r_data
+        elif isinstance(r_list, dict):
+            for r_id, r_data in r_list.items():
+                if str(r_data[key]) == str(value):
+                    self.api_cache.update({
+                        resource: r_data
+                    })
+                    return r_data
 
         self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
-    def normalize_result(self, resource):
-        for search_key, config in self.returns.items():
+    @staticmethod
+    def normalize_result(resource, schema, remove_missing_keys=True):
+        if remove_missing_keys:
+            fields_to_remove = set(resource.keys()) - set(schema.keys())
+            for field in fields_to_remove:
+                resource.pop(field)
+
+        for search_key, config in schema.items():
             if search_key in resource:
                 if 'convert_to' in config:
                     if config['convert_to'] == 'int':
@@ -235,6 +252,9 @@ class Vultr:
                         resource[search_key] = float(resource[search_key])
                     elif config['convert_to'] == 'bool':
                         resource[search_key] = True if resource[search_key] == 'yes' else False
+
+                if 'transform' in config:
+                    resource[search_key] = config['transform'](resource[search_key])
 
                 if 'key' in config:
                     resource[config['key']] = resource[search_key]
@@ -245,8 +265,49 @@ class Vultr:
     def get_result(self, resource):
         if resource:
             if isinstance(resource, list):
-                self.result[self.namespace] = [self.normalize_result(item) for item in resource]
+                self.result[self.namespace] = [Vultr.normalize_result(item, self.returns) for item in resource]
             else:
-                self.result[self.namespace] = self.normalize_result(resource)
+                self.result[self.namespace] = Vultr.normalize_result(resource, self.returns)
 
         return self.result
+
+    def get_plan(self, plan=None, key='name'):
+        value = plan or self.module.params.get('plan')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='plans',
+            use_cache=True
+        )
+
+    def get_firewallgroup(self, firewallgroup=None, key='description'):
+        value = firewallgroup or self.module.params.get('firewallgroup')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='firewall',
+            query_by='group_list',
+            use_cache=True
+        )
+
+    def get_application(self, application=None, key='name'):
+        value = application or self.module.params.get('application')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='app',
+            use_cache=True
+        )
+
+    def get_region(self, region=None, key='name'):
+        value = region or self.module.params.get('region')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='regions',
+            use_cache=True
+        )

@@ -117,26 +117,25 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         self.assertFalse(res)
 
     def test_template_convert_bare_string(self):
-        # Note: no bare_deprecated=False so we hit the deprecation path
         res = self.templar.template('foo', convert_bare=True)
         self.assertEqual(res, 'bar')
 
     def test_template_convert_bare_nested(self):
-        res = self.templar.template('bam', convert_bare=True, bare_deprecated=False)
+        res = self.templar.template('bam', convert_bare=True)
         self.assertEqual(res, 'bar')
 
     def test_template_convert_bare_unsafe(self):
-        res = self.templar.template('some_unsafe_var', convert_bare=True, bare_deprecated=False)
+        res = self.templar.template('some_unsafe_var', convert_bare=True)
         self.assertEqual(res, 'unsafe_blip')
         # self.assertIsInstance(res, AnsibleUnsafe)
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
 
     def test_template_convert_bare_filter(self):
-        res = self.templar.template('bam|capitalize', convert_bare=True, bare_deprecated=False)
+        res = self.templar.template('bam|capitalize', convert_bare=True)
         self.assertEqual(res, 'Bar')
 
     def test_template_convert_bare_filter_unsafe(self):
-        res = self.templar.template('some_unsafe_var|capitalize', convert_bare=True, bare_deprecated=False)
+        res = self.templar.template('some_unsafe_var|capitalize', convert_bare=True)
         self.assertEqual(res, 'Unsafe_blip')
         # self.assertIsInstance(res, AnsibleUnsafe)
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)

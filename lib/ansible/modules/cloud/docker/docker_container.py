@@ -98,7 +98,7 @@ options:
   env_file:
     version_added: "2.2"
     description:
-      - Path to a file containing environment variables I(FOO=BAR).
+      - Path to a file, present on the target, containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
   entrypoint:
     description:
@@ -168,8 +168,10 @@ options:
       - Override default signal used to kill a running container.
   kernel_memory:
     description:
-      - "Kernel memory limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g. Minimum is 4M."
+      - "Kernel memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte). Minimum is C(4M)."
+      - Omitting the unit defaults to bytes.
     default: 0
   labels:
      description:
@@ -180,16 +182,9 @@ options:
       - Setting this will force container to be restarted.
   log_driver:
     description:
-      - Specify the logging driver. Docker uses json-file by default.
-    choices:
-      - none
-      - json-file
-      - syslog
-      - journald
-      - gelf
-      - fluentd
-      - awslogs
-      - splunk
+      - Specify the logging driver. Docker uses I(json-file) by default.
+      - See L(here,https://docs.docker.com/config/containers/logging/configure/) for possible choices.
+    required: false
   log_options:
     description:
       - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/
@@ -201,18 +196,24 @@ options:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
   memory:
     description:
-      - "Memory limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g"
+      - "Memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: '0'
   memory_reservation:
     description:
-      - "Memory soft limit (format: <number>[<unit>]). Number is a positive integer.
-        Unit can be one of b, k, m, or g"
+      - "Memory soft limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: 0
   memory_swap:
     description:
-      - Total memory limit (memory + swap, format:<number>[<unit>]).
-        Number is a positive integer. Unit can be one of b, k, m, or g.
+      - "Total memory limit (memory + swap, format: C(<number>[<unit>])).
+        Number is a positive integer. Unit can be C(B) (byte), C(K) (kibibyte, 1024B),
+        C(M) (mebibyte), C(G) (gibibyte), C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes.
     default: 0
   memory_swappiness:
     description:
@@ -325,9 +326,10 @@ options:
     default: 0
   shm_size:
     description:
-      - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
-        Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes).
-      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
+      - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses C(64M).
   security_opts:
     description:
       - List of security options in the form of C("label:user:User")
@@ -565,6 +567,12 @@ EXAMPLES = '''
     name: sleepy
     purge_networks: yes
 
+- name: Start a container and use an env file
+  docker_container:
+    name: agent
+    image: jenkinsci/ssh-slave
+    env_file: /var/tmp/jenkins/agent.env
+
 - name: Create a container with limited capabilities
   docker_container:
     name: sleepy
@@ -642,6 +650,7 @@ except:
 
 
 REQUIRES_CONVERSION_TO_BYTES = [
+    'kernel_memory',
     'memory',
     'memory_reservation',
     'memory_swap',
@@ -1309,7 +1318,7 @@ class Container(DockerBaseClass):
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
             volume_driver=host_config.get('VolumeDriver'),
-            working_dir=host_config.get('WorkingDir')
+            working_dir=config.get('WorkingDir')
         )
 
         differences = []
@@ -2086,9 +2095,7 @@ def main():
         kill_signal=dict(type='str'),
         labels=dict(type='dict'),
         links=dict(type='list'),
-        log_driver=dict(type='str',
-                        choices=['none', 'json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'],
-                        default=None),
+        log_driver=dict(type='str'),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
         memory=dict(type='str', default='0'),

@@ -20,7 +20,7 @@ short_description: useradmin configuration and management
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Sumit Kumar (sumit4@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
 - Create or destroy user roles
@@ -112,7 +112,7 @@ class NetAppOntapUserRole(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=self.vserver)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def get_role(self):
         """
@@ -141,6 +141,9 @@ class NetAppOntapUserRole(object):
         except netapp_utils.zapi.NaApiError as e:
             # Error 16031 denotes a role not being found.
             if to_native(e.code) == "16031":
+                return False
+            # Error 16039 denotes command directory not found.
+            elif to_native(e.code) == "16039":
                 return False
             else:
                 self.module.fail_json(msg='Error getting role %s: %s' % (self.name, to_native(e)),
@@ -181,7 +184,8 @@ class NetAppOntapUserRole(object):
 
     def apply(self):
         changed = False
-        netapp_utils.ems_log_event("na_ontap_user_role", self.server)
+        vserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=self.vserver)
+        netapp_utils.ems_log_event("na_ontap_user_role", vserver)
         role_exists = self.get_role()
         if role_exists:
             if self.state == 'absent':

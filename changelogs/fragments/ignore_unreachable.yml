@@ -1,0 +1,2 @@
+major_changes:
+- New keyword `ignore_unreachable` for plays and blocks. Allows ignoring tasks that fail due to unreachable hosts, and check results with `is unreachable` test.

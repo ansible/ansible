@@ -1,0 +1,2 @@
+bugfixes:
+- vault - fix error message encoding, and ensure we present a friendlier error when the EDITOR is missing (https://github.com/ansible/ansible/pull/44423)

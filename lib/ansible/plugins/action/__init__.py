@@ -341,8 +341,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # If ssh breaks we could leave tmp directories out on the remote system.
             tmp_rm_res = self._low_level_execute_command(cmd, sudoable=False)
 
-            tmp_rm_data = self._parse_returned_data(tmp_rm_res)
-            if tmp_rm_data.get('rc', 0) != 0:
+            if tmp_rm_res.get('rc', 0) != 0:
                 display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
                                 % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
             else:
@@ -377,30 +376,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             os.unlink(afile)
 
         return remote_path
-
-    def _fixup_perms(self, remote_path, remote_user=None, execute=True, recursive=True):
-        """
-        We need the files we upload to be readable (and sometimes executable)
-        by the user being sudo'd to but we want to limit other people's access
-        (because the files could contain passwords or other private
-        information.
-
-        Deprecated in favor of _fixup_perms2. Ansible code has been updated to
-        use _fixup_perms2. This code is maintained to provide partial support
-        for custom actions (non-recursive mode only).
-
-        """
-        if remote_user is None:
-            remote_user = self._play_context.remote_user
-
-        display.deprecated('_fixup_perms is deprecated. Use _fixup_perms2 instead.', version='2.4', removed=False)
-
-        if recursive:
-            raise AnsibleError('_fixup_perms with recursive=True (the default) is no longer supported. ' +
-                               'Use _fixup_perms2 if support for previous releases is not required. '
-                               'Otherwise use fixup_perms with recursive=False.')
-
-        return self._fixup_perms2([remote_path], remote_user, execute)
 
     def _fixup_perms2(self, remote_paths, remote_user=None, execute=True):
         """
@@ -575,8 +550,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 x = "2"  # cannot read file
             elif errormsg.endswith(u'MODULE FAILURE'):
                 x = "4"  # python not found or module uncaught exception
-            elif 'json' in errormsg or 'simplejson' in errormsg:
-                x = "5"  # json or simplejson modules needed
+            elif 'json' in errormsg:
+                x = "5"  # json module needed
         finally:
             return x  # pylint: disable=lost-exception
 

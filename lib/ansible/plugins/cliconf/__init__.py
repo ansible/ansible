@@ -124,7 +124,10 @@ class CliconfBase(AnsiblePlugin):
             else:
                 kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
-            kwargs['answer'] = to_bytes(answer)
+            if isinstance(answer, list):
+                kwargs['answer'] = [to_bytes(p) for p in answer]
+            else:
+                kwargs['answer'] = to_bytes(answer)
 
         resp = self._connection.send(**kwargs)
 
@@ -402,7 +405,7 @@ class CliconfBase(AnsiblePlugin):
         """
         pass
 
-    def check_edit_config_capabiltiy(self, operations, candidate=None, commit=True, replace=None, comment=None):
+    def check_edit_config_capability(self, operations, candidate=None, commit=True, replace=None, comment=None):
 
         if not candidate and not replace:
             raise ValueError("must provide a candidate or replace to load configuration")

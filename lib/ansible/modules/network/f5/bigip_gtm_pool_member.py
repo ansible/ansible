@@ -417,6 +417,13 @@ class Difference(object):
             return attr1
 
     @property
+    def description(self):
+        if self.want.description == '' and self.have.description is None:
+            return None
+        if self.want.description != self.have.description:
+            return self.want.description
+
+    @property
     def enabled(self):
         if self.want.state == 'enabled' and self.have.disabled:
             result = dict(
