@@ -149,6 +149,7 @@ author:
 - Vincent Viallet (@zbal)
 notes:
   - C(LINODE_API_KEY) env variable can be used instead.
+  - Please review U(https://www.linode.com/api/linode) for determining the required parameters.
 '''
 
 EXAMPLES = '''
