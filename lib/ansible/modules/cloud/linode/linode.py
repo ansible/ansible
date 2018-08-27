@@ -29,7 +29,7 @@ options:
   name:
     description:
      - Name to give the instance (alphanumeric, dashes, underscore).
-     - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID_).
+     - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID-).
     required: true
   displaygroup:
     description:
@@ -350,7 +350,7 @@ def linodeServers(module, api, state, name,
                                         PaymentTerm=payment_term)
                 linode_id = res['LinodeID']
                 # Update linode Label to match name
-                api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
+                api.linode_update(LinodeId=linode_id, Label='%s-%s' % (linode_id, name))
                 # Update Linode with Ansible configuration options
                 api.linode_update(LinodeId=linode_id, LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog, **kwargs)
                 # Save server
