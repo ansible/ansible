@@ -42,7 +42,7 @@ except ImportError:
 
 
 def http_error_message(error):
-    flat_resp = e.read()
+    flat_resp = error.read()
     if isinstance(flat_resp, binary_type):
         flat_resp = flat_resp.decode()
     res = json.loads(flat_resp)
