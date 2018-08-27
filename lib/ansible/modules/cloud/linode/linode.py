@@ -148,6 +148,7 @@ author:
 - Vincent Viallet (@zbal)
 notes:
   - Please note, linode-python does not have python 3 support.
+  - This module uses the now deprecated v3 of the Linode API.
   - C(LINODE_API_KEY) env variable can be used instead.
 '''
 
