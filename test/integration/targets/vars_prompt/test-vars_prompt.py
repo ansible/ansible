@@ -94,7 +94,7 @@ tests = [
      'test_spec': [
          [('password', 'Scenic-Improving-Payphone\r'),
           ('confirm password', 'Scenic-Improving-Payphone\r')],
-         r'"password": "\$6\$rounds=']},
+         r'"password": "\$6\$']},
 
     # Test variables in prompt field
     # https://github.com/ansible/ansible/issues/32723

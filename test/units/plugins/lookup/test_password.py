@@ -292,15 +292,6 @@ class TestRandomPassword(unittest.TestCase):
                               (char, candidate_chars, params['chars']))
 
 
-class TestRandomSalt(unittest.TestCase):
-    def test(self):
-        res = password._random_salt()
-        expected_salt_candidate_chars = u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./'
-        self.assertEquals(len(res), 8)
-        for res_char in res:
-            self.assertIn(res_char, expected_salt_candidate_chars)
-
-
 class TestParseContent(unittest.TestCase):
     def test_empty_password_file(self):
         plaintext_password, salt = password._parse_content(u'')

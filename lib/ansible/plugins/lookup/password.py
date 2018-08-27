@@ -100,7 +100,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.encrypt import do_encrypt, random_password
+from ansible.utils.encrypt import do_encrypt, random_password, random_salt
 from ansible.utils.path import makedirs_safe
 
 
@@ -205,15 +205,6 @@ def _gen_candidate_chars(characters):
                      errors='strict'))
     chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
-
-
-def _random_salt():
-    """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
-    """
-    # Note passlib salt values must be pure ascii so we can't let the user
-    # configure this
-    salt_chars = _gen_candidate_chars(['ascii_letters', 'digits', './'])
-    return random_password(length=8, chars=salt_chars)
 
 
 def _parse_content(content):
@@ -329,7 +320,7 @@ class LookupModule(LookupBase):
 
             if params['encrypt'] and not salt:
                 changed = True
-                salt = _random_salt()
+                salt = random_salt()
 
             if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
