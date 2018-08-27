@@ -29,6 +29,7 @@ notes:
   - Best run as a local_action in your playbook
   - Tested with manager and above account privilege level
   - C(provision) facts were added in 2.2
+  - This module is deprecated. Use the C(bigip_device_facts) module instead.
 requirements:
   - bigsuds
 options:
@@ -75,7 +76,9 @@ EXAMPLES = r'''
     server: lb.mydomain.com
     user: admin
     password: secret
-    include: interface,vlan
+    include:
+      - interface
+      - vlan
   delegate_to: localhost
 '''
 
