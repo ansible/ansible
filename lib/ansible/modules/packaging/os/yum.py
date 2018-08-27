@@ -1384,7 +1384,8 @@ class YumModule(YumDnf):
             my = self.yum_base()
             try:
                 if self.disablerepo:
-                    my.repos.disableRepo(self.disablerepo)
+                    for rid in self.disablerepo:
+                        my.repos.disableRepo(rid)
                 current_repos = my.repos.repos.keys()
                 if self.enablerepo:
                     try:
