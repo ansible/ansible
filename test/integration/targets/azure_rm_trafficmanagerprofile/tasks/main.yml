@@ -59,7 +59,6 @@
   assert:
     that:
       - output.changed
-      - output.name == "{{ tmname }}"
 
 - name: Gather Traffic Manager profile facts
   azure_rm_trafficmanagerprofile_facts:
