@@ -91,7 +91,7 @@ def handle_errors(module, exception, method_name, parameters):
     elif method_name == 'create_db_instance' and exception.response['Error']['Code'] == 'InvalidParameterValue':
         accepted_engines = [
             'aurora', 'aurora-mysql', 'aurora-postgresql', 'mariadb', 'mysql', 'oracle-ee', 'oracle-se',
-            'oracle-se1',  'oracle-se2', 'postgres', 'sqlserver-ee', 'sqlserver-ex', 'sqlserver-se', 'sqlserver-web'
+            'oracle-se1', 'oracle-se2', 'postgres', 'sqlserver-ee', 'sqlserver-ex', 'sqlserver-se', 'sqlserver-web'
         ]
         if parameters.get('Engine') not in accepted_engines:
             module.fail_json_aws(exception, msg='DB engine {0} should be one of {1}'.format(parameters.get('Engine'), accepted_engines))
