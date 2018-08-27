@@ -32,4 +32,5 @@
     # On Ubuntu trusty, blkid (2.20.1) is unable to identify F2FS filesystem. blkid handles F2FS since v2.23, see:
     # https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.23/v2.23-ReleaseNotes
     - 'not (item.key == "f2fs" and ansible_distribution == "Ubuntu" and ansible_distribution_version is version("14.04", "<="))'
+    - 'not (item.key == "btrfs") and (btrfsprogs_installed is defined and btrfsprogs_installed == false)'
   loop: "{{ lookup('dict', tested_filesystems) }}"

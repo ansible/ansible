@@ -14,6 +14,12 @@
       name: btrfs-progs
       state: present
     when: ansible_os_family != 'Suse' and not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+    ignore_errors: true
+    register: install_btrfs_progs
+
+  - set_fact:
+      btrfsprogs_installed: "{{ install_btrfs_progs is successful }}"
+    when: install_btrfs_progs is defined
 
   - name: install btrfs progs (Ubuntu <= 16.04)
     package:
