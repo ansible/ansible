@@ -301,6 +301,11 @@
         - "'changed' in dnf_result"
         - "'msg' in dnf_result"
 
+- name: verify that bc is not installed
+  dnf:
+    name: bc
+    state: absent
+
 - name: install the group again but also with a package that is not yet installed
   dnf:
     name:
