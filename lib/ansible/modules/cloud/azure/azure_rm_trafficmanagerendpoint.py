@@ -205,7 +205,7 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
 
-        if self.enable is not None and self.enable == False:
+        if self.enable is not None and self.enable is False:
             self.endpoint_status = 'Disabled'
 
         response = self.get_traffic_manager_endpoint()
@@ -235,7 +235,7 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
 
             response = self.create_update_traffic_manager_endpoint()
             self.results['id'] = response['id']
-        
+
         if self.action == Actions.Delete:
             self.results['changed'] = True
             if self.check_mode:

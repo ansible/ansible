@@ -233,8 +233,8 @@ class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
         except CloudError:
             pass
 
-        if self.type:
-            if endpoint.type == self.type:
+        if item:
+            if (self.type and self.type == item.type) or self.type is None:
                 result = [self.serialize_tm(item)]
 
         return result
