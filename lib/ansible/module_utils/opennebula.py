@@ -28,9 +28,9 @@ class OpenNebulaModule:
     """
 
     common_args = dict(
-        api_url=dict(type='str', aliases=['api_endpoint']),
-        api_username=dict(type='str'),
-        api_password=dict(type='str', no_log=True, aliases=['api_token']),
+        api_url=dict(type='str', aliases=['api_endpoint'], default=environ.get("ONE_URL")),
+        api_username=dict(type='str', default=environ.get("ONE_USERNAME")),
+        api_password=dict(type='str', no_log=True, aliases=['api_token'], default=environ.get("ONE_PASSWORD")),
         validate_certs=dict(default=True, type='bool'),
         wait_timeout=dict(type='int', default=300),
     )
@@ -68,18 +68,18 @@ class OpenNebulaModule:
         if not HAS_PYONE:
             self.fail("pyone is required for this module")
 
-        if 'api_url' in self.module.params:
-            url = self.module.params.get("api_url", environ.get("ONE_URL", False))
+        if self.module.params.get("api_url"):
+            url = self.module.params.get("api_url")
         else:
             self.fail("Either api_url or the environment variable ONE_URL must be provided")
 
-        if 'api_username' in self.module.params:
-            username = self.module.params.get("api_username", environ.get("ONE_USERNAME", False))
+        if self.module.params.get("api_username"):
+            username = self.module.params.get("api_username")
         else:
             self.fail("Either api_username or the environment vairable ONE_USERNAME must be provided")
 
-        if 'api_password' in self.module.params:
-            password = self.module.params.get("api_password", environ.get("ONE_PASSWORD", False))
+        if self.module.params.get("api_password"):
+            password = self.module.params.get("api_password")
         else:
             self.fail("Either api_password or the environment vairable ONE_PASSWORD must be provided")
 
