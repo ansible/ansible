@@ -638,6 +638,7 @@ from collections import namedtuple
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import MANAGED_BY_ANNOTATION
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
@@ -646,11 +647,13 @@ try:
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import mark_managed_by
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import ip_interface
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import MANAGED_BY_ANNOTATION
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
@@ -659,6 +662,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import mark_managed_by
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import ip_interface
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
@@ -1254,6 +1258,8 @@ class ApiParameters(Parameters):
     @property
     def metadata(self):
         if self._values['metadata'] is None:
+            return None
+        if len(self._values['metadata']) == 1 and self._values['metadata'][0]['name'] == MANAGED_BY_ANNOTATION:
             return None
         result = []
         for md in self._values['metadata']:
@@ -2892,6 +2898,10 @@ class ModuleManager(object):
 
     def update_on_device(self):
         params = self.changes.api_params()
+
+        # Mark the resource as managed by Ansible.
+        params = mark_managed_by(self.module.ansible_version, params)
+
         uri = "https://{0}:{1}/mgmt/tm/ltm/virtual/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
@@ -2933,6 +2943,10 @@ class ModuleManager(object):
         params = self.changes.api_params()
         params['name'] = self.want.name
         params['partition'] = self.want.partition
+
+        # Mark the resource as managed by Ansible.
+        params = mark_managed_by(self.module.ansible_version, params)
+
         uri = "https://{0}:{1}/mgmt/tm/ltm/virtual/".format(
             self.client.provider['server'],
             self.client.provider['server_port']

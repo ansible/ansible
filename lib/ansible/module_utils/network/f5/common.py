@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import copy
 import os
 import re
 
@@ -24,6 +25,9 @@ try:
     HAS_F5SDK = True
 except ImportError:
     HAS_F5SDK = False
+
+
+MANAGED_BY_ANNOTATION='f5-ansible'
 
 
 f5_provider_spec = {
@@ -417,6 +421,33 @@ def on_bigip():
     if os.path.exists('/usr/bin/tmsh'):
         return True
     return False
+
+
+def mark_managed_by(ansible_version, params):
+    metadata = []
+    result = copy.deepcopy(params)
+    found = False
+    mark = dict(
+        name=MANAGED_BY_ANNOTATION,
+        value=ansible_version,
+        persist='true'
+    )
+
+    if 'metadata' not in result:
+        result['metadata'] = [mark]
+        return result
+
+    for x in params['metadata']:
+        if x['name'] == MANAGED_BY_ANNOTATION:
+            found = True
+            metadata.append(mark)
+        else:
+            metadata.append(x)
+    if not found:
+        metadata.append(mark)
+
+    result['metadata'] = metadata
+    return result
 
 
 class Noop(object):
