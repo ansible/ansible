@@ -233,3 +233,22 @@
         version: "6.6"
   register: fail_linux_one_framework_only
   failed_when: fail_linux_one_framework_only.msg != "Can specify one framework only for Linux web app."
+
+- name: Create a linux web app with java tomcat container
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}8"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    frameworks:
+      - name: java
+        version: "8"
+        settings:
+          java_container: "tomcat"
+          java_container_version: "8.5"
+  register: output
+
+- name: Assert the web app was created
+  assert:
+    that: output.changed
