@@ -145,7 +145,7 @@
   win_nssm:
     name: '{{ test_service_name }}'
     application: C:\Windows\System32\cmd.exe
-    app_parameters_free_form: '-v -Dcom.test.string=value test'
+    app_parameters_free_form: '-v -Dcom.test.string=value "C:\with space\\"'
     state: present
   register: free_params
 
@@ -159,13 +159,14 @@
     - free_params.changed == true
     - (free_params_actual.stdout|from_json).Exists == true
     - (free_params_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
-    - (free_params_actual.stdout|from_json).Parameters.AppParameters == "-v -Dcom.test.string=value test"
+    # Expected value: -v -Dcom.test.string=value "C:\with space\\" (backslashes doubled for jinja)
+    - (free_params_actual.stdout|from_json).Parameters.AppParameters == '-v -Dcom.test.string=value "C:\\with space\\\\"'
 
 - name: install service with free form parameters (idempotent)
   win_nssm:
     name: '{{ test_service_name }}'
     application: C:\Windows\System32\cmd.exe
-    app_parameters_free_form: '-v -Dcom.test.string=value test'
+    app_parameters_free_form: '-v -Dcom.test.string=value "C:\with space\\"'
     state: present
   register: free_params_again
 
@@ -179,7 +180,8 @@
     - free_params_again.changed == false
     - (free_params_again_actual.stdout|from_json).Exists == true
     - (free_params_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
-    - (free_params_again_actual.stdout|from_json).Parameters.AppParameters == "-v -Dcom.test.string=value test"
+    # Expected value: -v -Dcom.test.string=value "C:\with space\\" (backslashes doubled for jinja)
+    - (free_params_again_actual.stdout|from_json).Parameters.AppParameters == '-v -Dcom.test.string=value "C:\\with space\\\\"'
 
 - name: install service with dict parameters
   win_nssm:
@@ -188,6 +190,8 @@
     app_parameters:
       foo: true
       '-file.out': 'output.bat'
+      '-path': 'C:\with space\'
+      '-str': 'test"quotes'
       _: bar
   register: mixed_params
 
@@ -201,7 +205,8 @@
     - mixed_params.changed == true
     - (mixed_params_actual.stdout|from_json).Exists == true
     - (mixed_params_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
-    - (mixed_params_actual.stdout|from_json).Parameters.AppParameters == "bar -file.out output.bat foo True"
+    # Expected value: bar -str "test\"quotes" -file.out output.bat foo True -path "C:\with space\\" (backslashes doubled for jinja)
+    - (mixed_params_actual.stdout|from_json).Parameters.AppParameters == 'bar -str "test\\"quotes" -file.out output.bat foo True -path "C:\\with space\\\\"'
 
 - name: install service with dict parameters (idempotent)
   win_nssm:
@@ -210,6 +215,8 @@
     app_parameters:
       foo: true
       '-file.out': 'output.bat'
+      '-path': 'C:\with space\'
+      '-str': 'test"quotes'
       _: bar
   register: mixed_params_again
 
@@ -223,7 +230,8 @@
     - mixed_params_again.changed == false
     - (mixed_params_again_actual.stdout|from_json).Exists == true
     - (mixed_params_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
-    - (mixed_params_again_actual.stdout|from_json).Parameters.AppParameters == "bar -file.out output.bat foo True"
+    # Expected value: bar -str "test\"quotes" -file.out output.bat foo True -path "C:\with space\\" (backslashes doubled for jinja)
+    - (mixed_params_again_actual.stdout|from_json).Parameters.AppParameters == 'bar -str "test\\"quotes" -file.out output.bat foo True -path "C:\\with space\\\\"'
 
 - name: remove service
   win_nssm:
