@@ -54,25 +54,26 @@ class ActionModule(RebootActionModule, ActionBase):
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY)))
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
-        if reboot_result['rc'] == 1190 or (reboot_result['rc'] != 0 and b"(1190)" in reboot_result['stderr']):
+        stdout = reboot_result['stdout']
+        stderr = reboot_result['stderr']
+        if reboot_result['rc'] == 1190 or (reboot_result['rc'] != 0 and "(1190)" in reboot_result['stderr']):
             display.warning('A scheduled reboot was pre-empted by Ansible.')
 
             # Try to abort (this may fail if it was already aborted)
             result1 = self._low_level_execute_command('shutdown /a', sudoable=self.DEFAULT_SUDOABLE)
-            # (reboot_result['rc'], stdout1, stderr1) = self._connection.exec_command('shutdown /a')
 
             # Initiate reboot again
-            result2 = self._connection.exec_command('shutdown /r /t %d' % pre_reboot_delay)
-            # (reboot_result['rc'], stdout2, stderr2) = self._connection.exec_command('shutdown /r /t %d' % pre_reboot_delay)
+            result2 = self._low_level_execute_command('shutdown /r /t %d' % pre_reboot_delay, sudoable=self.DEFAULT_SUDOABLE)
 
-            stdout = reboot_result['stdout'] + result1['stdout'] + result2['stdout']
-            stderr = reboot_result['stderr'] + result1['stderr'] + result2['stderr']
+            reboot_result['rc'] = result2['rc']
+            stdout += result1['stdout'] + result2['stdout']
+            stderr += result1['stderr'] + result2['stderr']
 
         result = {}
         if reboot_result['rc'] != 0:
             result['failed'] = True
             result['rebooted'] = False
-            result['msg'] = "Shutdown command failed, error was: %s %s" % (to_native(stdout.strip()), to_native('stderr'.strip()))
+            result['msg'] = "Shutdown command failed, error was: %s %s" % (to_native(stdout.strip()), to_native(stderr.strip()))
             return result
 
         result['failed'] = False
