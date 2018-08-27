@@ -26,8 +26,8 @@ options:
     required: true
   url:
     description:
-      - URL of where the template is hosted on C(state=present).
-      - URL to which the template would be extracted on C(state=extracted).
+      - URL of where the template is hosted on I(state=present).
+      - URL to which the template would be extracted on I(state=extracted).
       - Mutually exclusive with C(vm).
   vm:
     description:
@@ -54,19 +54,16 @@ options:
     description:
       - Register the template to be publicly available to all users.
       - Only used if C(state) is present.
-    default: no
     type: bool
   is_featured:
     description:
       - Register the template to be featured.
       - Only used if C(state) is present.
-    default: no
     type: bool
   is_dynamically_scalable:
     description:
       - Register the template having XS/VMWare tools installed in order to support dynamic scaling of VM CPU/memory.
       - Only used if C(state) is present.
-    default: no
     type: bool
   cross_zones:
     description:
@@ -77,7 +74,7 @@ options:
   mode:
     description:
       - Mode for the template extraction.
-      - Only used if C(state=extracted).
+      - Only used if I(state=extracted).
     default: http_download
     choices: [ http_download, ftp_upload ]
   domain:
@@ -110,7 +107,7 @@ options:
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new template.
-      - Relevant when using C(state=present).
+      - Relevant when using I(state=present).
     choices:
     - KVM
     - kvm
@@ -134,12 +131,10 @@ options:
     description:
       - Whether the template requires HVM or not.
       - Only considered while creating the template.
-    default: no
     type: bool
   password_enabled:
     description:
       - Enable template password reset support.
-    default: no
     type: bool
   template_tag:
     description:
@@ -147,7 +142,7 @@ options:
   sshkey_enabled:
     description:
       - True if the template supports the sshkey upload feature.
-    default: no
+      - Only considered if C(url) is used (API limitation).
     type: bool
   is_routing:
     description:
@@ -157,12 +152,11 @@ options:
   format:
     description:
       - The format for the template.
-      - Relevant when using C(state=present).
+      - Only considered if I(state=present).
     choices: [ QCOW2, RAW, VHD, OVA ]
   is_extractable:
     description:
       - Allows the template or its derivatives to be extractable.
-    default: no
     type: bool
   details:
     description:
@@ -686,19 +680,19 @@ def main():
         snapshot=dict(),
         os_type=dict(),
         is_ready=dict(type='bool', removed_in_version='2.11'),
-        is_public=dict(type='bool', default=False),
-        is_featured=dict(type='bool', default=False),
-        is_dynamically_scalable=dict(type='bool', default=False),
-        is_extractable=dict(type='bool', default=False),
+        is_public=dict(type='bool'),
+        is_featured=dict(type='bool'),
+        is_dynamically_scalable=dict(type='bool'),
+        is_extractable=dict(type='bool'),
         is_routing=dict(type='bool'),
         checksum=dict(),
         template_filter=dict(default='self', choices=['all', 'featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
         template_find_options=dict(type='list', choices=['display_text', 'checksum', 'cross_zones'], aliases=['template_find_option'], default=[]),
         hypervisor=dict(choices=CS_HYPERVISORS),
-        requires_hvm=dict(type='bool', default=False),
-        password_enabled=dict(type='bool', default=False),
+        requires_hvm=dict(type='bool'),
+        password_enabled=dict(type='bool'),
         template_tag=dict(),
-        sshkey_enabled=dict(type='bool', default=False),
+        sshkey_enabled=dict(type='bool'),
         format=dict(choices=['QCOW2', 'RAW', 'VHD', 'OVA']),
         details=dict(),
         bits=dict(type='int', choices=[32, 64], default=64),
