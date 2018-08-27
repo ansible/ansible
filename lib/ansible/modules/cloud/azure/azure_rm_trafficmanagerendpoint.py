@@ -233,7 +233,7 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
 
-            response = self.ceate_update_traffic_manager_endpoint()
+            response = self.create_update_traffic_manager_endpoint()
             self.results['id'] = response['id']
         
         if self.action == Actions.Delete:
@@ -274,7 +274,7 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
             self.fail("Error deleting the Traffic Manager endpoint {0}, request id {1} - {2}".format(self.name, request_id, str(exc)))
             return False
 
-    def ceate_update_traffic_manager_endpoint(self):
+    def create_update_traffic_manager_endpoint(self):
         '''
         Creates or updates a Traffic Manager endpoint.
 

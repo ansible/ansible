@@ -345,7 +345,7 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
                 self.log("Need to Create / Update the Traffic Manager profile")
 
                 if not self.check_mode:
-                    self.results = shorten_traffic_manager_dict(self.ceate_update_traffic_manager_profile())
+                    self.results = shorten_traffic_manager_dict(self.create_update_traffic_manager_profile())
                     self.log("Creation / Update done.")
 
                 self.results['changed'] = True
@@ -396,7 +396,7 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
             self.fail("Error deleting the Traffic Manager profile: {0}".format(e.message))
             return False
 
-    def ceate_update_traffic_manager_profile(self):
+    def create_update_traffic_manager_profile(self):
         '''
         Creates or updates a Traffic Manager profile.
 
