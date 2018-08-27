@@ -1,11 +1,11 @@
 import pytest
-import jenkins
 import os
 import xml.etree.ElementTree as ET
 
 from mock import patch
 
 from ansible.modules.web_infrastructure.jenkins_job_generator import get_job_builder, ActionRunner
+import jenkins
 
 
 class TestJobBuilder(object):
