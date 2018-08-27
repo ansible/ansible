@@ -29,7 +29,7 @@ DOCUMENTATION = """
 module: iptables_raw
 short_description: Modify runtime iptables rules
 requirements: []
-version_added: "2.6"
+version_added: "2.7"
 author: Tyler Gates <tgates81@gmail.com>
 description:
   - Iptables manages the system firewall backed by netfilter in the kernel.
@@ -50,32 +50,32 @@ options:
     required: false
     default: "4"
     choices: [ "4", "6" ]
-    version_added: "2.6"
+    version_added: "2.7"
   table:
     description:
       - The netfilter table to work on.
     required: false
     choices: ["filter", "nat", "mangle", "raw", "security"]
     default: "filter"
-    version_added: "2.6"
+    version_added: "2.7"
   chains_present:
     description:
       - List of chains to be present.
     required: false
     default: null
-    version_added: "2.6"
+    version_added: "2.7"
   chains_absent:
     description:
       - List of chains to be absent.
     required: false
     default: null
-    version_added: "2.6"
+    version_added: "2.7"
   chains_policy:
     description:
       - List of chains and policy, separated by space in that order, to enforce.
     required: false
     default: null
-    version_added: "2.6"
+    version_added: "2.7"
   chains_rename:
     description:
       - List of source chains and destination chains, separated by space in that
@@ -85,14 +85,14 @@ options:
         Similarly, failure is also set if both are present at the same time.
     required: false
     default: null
-    version_added: "2.6"
+    version_added: "2.7"
   chains_flush:
     description:
       - List of chains to flush. When there are no underlying rules, nothing
         will be done and therefore change will not be set.
     required: false
     default: null
-    version_added: "2.6"
+    version_added: "2.7"
   rules_append:
     description:
       - List of rules to append into the chain, if not present. This should
@@ -100,7 +100,7 @@ options:
         preceding '-A '.
     required: false
     default: null
-    version_added: "2.6"
+    version_added: "2.7"
   rules_insert:
     description:
       - List of rules to insert into the chain, if not present. This should
@@ -108,13 +108,13 @@ options:
         preceding '-I '.
     required: false
     default: null
-    version_added: "2.6"
+    version_added: "2.7"
   rules_absent:
     description:
       - List of rules that should be absent from the chain.
     required: false
     default: null
-    version_added: "2.6"
+    version_added: "2.7"
 """
 
 EXAMPLES = """
