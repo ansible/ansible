@@ -23,7 +23,33 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: present
   register: managed_zone
+- name: delete a resource record set
+  gcp_dns_resource_record_set:
+      name: www.testzone-4.com.
+      managed_zone: "{{ managed_zone }}"
+      type: A
+      ttl: 600
+      target:
+      - 10.1.2.3
+      - 40.5.6.7
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      state: absent
 #----------------------------------------------------------
+- name: create a resource record set
+  gcp_dns_resource_record_set:
+      name: www.testzone-4.com.
+      managed_zone: "{{ managed_zone }}"
+      type: A
+      ttl: 600
+      target:
+      - 10.1.2.3
+      - 40.5.6.7
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      state: present
   register: result
 - name: assert changed is true
   assert:
@@ -31,6 +57,19 @@
       - result.changed == true
       - "result.kind == 'dns#resourceRecordSet'"
 # ----------------------------------------------------------------------------
+- name: create a resource record set that already exists
+  gcp_dns_resource_record_set:
+      name: www.testzone-4.com.
+      managed_zone: "{{ managed_zone }}"
+      type: A
+      ttl: 600
+      target:
+      - 10.1.2.3
+      - 40.5.6.7
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      state: present
   register: result
 - name: assert changed is false
   assert:
@@ -38,6 +77,19 @@
       - result.changed == false
       - "result.kind == 'dns#resourceRecordSet'"
 #----------------------------------------------------------
+- name: delete a resource record set
+  gcp_dns_resource_record_set:
+      name: www.testzone-4.com.
+      managed_zone: "{{ managed_zone }}"
+      type: A
+      ttl: 600
+      target:
+      - 10.1.2.3
+      - 40.5.6.7
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -45,6 +97,19 @@
       - result.changed == true
       - result.has_key('kind') == False
 # ----------------------------------------------------------------------------
+- name: delete a resource record set that does not exist
+  gcp_dns_resource_record_set:
+      name: www.testzone-4.com.
+      managed_zone: "{{ managed_zone }}"
+      type: A
+      ttl: 600
+      target:
+      - 10.1.2.3
+      - 40.5.6.7
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      state: absent
   register: result
 - name: assert changed is false
   assert:
