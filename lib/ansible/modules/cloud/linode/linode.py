@@ -147,6 +147,7 @@ requirements:
 author:
 - Vincent Viallet (@zbal)
 notes:
+  - Please note, linode-python does not have python 3 support.
   - C(LINODE_API_KEY) env variable can be used instead.
 '''
 
