@@ -136,12 +136,12 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description: The ID of the traffic manager profile
-    returned: always
+    returned: when traffic manager profile exists
     type: str
     example: "/subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tmtest"
 endpoints:
   description: List of endpoint IDs attached to the profile
-  returned: always
+  returned: when traffic manager profile exists
   type: list
   sample: [
         "/subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/externalEndpoints/e2",
@@ -355,6 +355,7 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
         elif self.state == 'absent' and response:
             self.log("Need to delete the Traffic Manager profile")
             self.results['changed'] = True
+            self.results = shorten_traffic_manager_dict(response)
 
             if self.check_mode:
                 return self.results
@@ -426,11 +427,11 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
             self.log("Location Diff - Origin {0} / Update {1}".format(response['location'], self.location))
             return True
 
-        if self.profile_status and response['profile_status'].lower() != self.profile_status.lower():
+        if self.profile_status and response['profile_status'].lower() != self.profile_status:
             self.log("Profile Status Diff - Origin {0} / Update {1}".format(response['profile_status'], self.profile_status))
             return True
 
-        if self.routing_method and response['routing_method'].lower() != self.routing_method.lower():
+        if self.routing_method and response['routing_method'].lower() != self.routing_method:
             self.log("Traffic Routing Method Diff - Origin {0} / Update {1}".format(response['routing_method'], self.routing_method))
             return True
 
