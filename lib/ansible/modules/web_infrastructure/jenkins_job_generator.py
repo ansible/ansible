@@ -81,7 +81,8 @@ options:
            - disabled
 
 requirements:
-    - "python-jenkins >= 0.4.12"
+    - "python >= 2.7"
+    - python-jenkins
     - jenkins-job-builder
 
 author: "Aleksei Philippov (@lelik9)"

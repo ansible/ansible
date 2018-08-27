@@ -36,5 +36,5 @@ pexpect
 linode-python
 
 # requirement for jenkins_job_generator module
-python-jenkins >= 0.4.12
+python-jenkins
 jenkins-job-builder
