@@ -1,0 +1,2 @@
+bugfixes:
+- win_domain_computer - fixed deletion of computer active directory object that have dependent objects (https://github.com/ansible/ansible/pull/44500)
