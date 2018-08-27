@@ -1,0 +1,17 @@
+- name: Install pika
+  pip:
+    name: pika
+    state: latest
+
+- rabbitmq_basic_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'hello'
+    body: "Hello world from ansible module rabitmq_basic_publish"
+    content_type: "text/plain"
+  register: rabbitmq_publish_result
+  delegate_to: localhost
+
+- assert:
+    that:
+      - "rabbitmq_publish_result.changed"
+      - "'Hello world from ansible module rabitmq_basic_publish' in rabbitmq_publish_result.msg"
