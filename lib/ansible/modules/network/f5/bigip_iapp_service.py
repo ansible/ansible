@@ -372,6 +372,26 @@ class Parameters(AnsibleF5Parameters):
             # This seems to happen only on 12.0.0
             elif tmp['value'] == 'none':
                 tmp['value'] = ''
+            elif tmp['value'] == 'True':
+                tmp['value'] = 'yes'
+            elif tmp['value'] == 'False':
+                tmp['value'] = 'no'
+            elif isinstance(tmp['value'], bool):
+                if tmp['value'] is True:
+                    tmp['value'] = 'yes'
+                else:
+                    tmp['value'] = 'no'
+
+            if tmp['encrypted'] == 'True':
+                tmp['encrypted'] = 'yes'
+            elif tmp['encrypted'] == 'False':
+                tmp['encrypted'] = 'no'
+            elif isinstance(tmp['encrypted'], bool):
+                if tmp['encrypted'] is True:
+                    tmp['encrypted'] = 'yes'
+                else:
+                    tmp['encrypted'] = 'no'
+
             result.append(tmp)
         result = sorted(result, key=lambda k: k['name'])
         return result
@@ -390,6 +410,17 @@ class Parameters(AnsibleF5Parameters):
                     # BIG-IP removes empty values entries, so mimic this behavior
                     # for user-supplied values.
                     tmp['value'] = [str(x) for x in list['value']]
+
+            if tmp['encrypted'] == 'True':
+                tmp['encrypted'] = 'yes'
+            elif tmp['encrypted'] == 'False':
+                tmp['encrypted'] = 'no'
+            elif isinstance(tmp['encrypted'], bool):
+                if tmp['encrypted'] is True:
+                    tmp['encrypted'] = 'yes'
+                else:
+                    tmp['encrypted'] = 'no'
+
             result.append(tmp)
         result = sorted(result, key=lambda k: k['name'])
         return result

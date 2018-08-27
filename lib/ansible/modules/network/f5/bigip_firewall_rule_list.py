@@ -31,8 +31,8 @@ options:
         versions it will simply be ignored.
   state:
     description:
-      - When C(state) is C(present), ensures that the policy exists.
-      - When C(state) is C(absent), ensures that the policy is removed.
+      - When C(state) is C(present), ensures that the rule list exists.
+      - When C(state) is C(absent), ensures that the rule list is removed.
     choices:
       - present
       - absent

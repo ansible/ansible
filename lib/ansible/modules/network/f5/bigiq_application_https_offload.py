@@ -56,7 +56,7 @@ options:
           - This parameter is required when creating a new application.
       netmask:
         description:
-          - Specifies the netmask to associate with the given C(destination).
+          - Specifies the netmask to associate with the given C(address).
           - This parameter is required when creating a new application.
       port:
         description:
@@ -80,7 +80,7 @@ options:
           - This parameter is required when creating a new application.
       netmask:
         description:
-          - Specifies the netmask to associate with the given C(destination).
+          - Specifies the netmask to associate with the given C(address).
           - This parameter is required when creating a new application.
       port:
         description:
@@ -130,8 +130,8 @@ options:
               - Passphrases are encrypted on the remote BIG-IP device.
   service_environment:
     description:
-      - Specifies the name of service environment or the hostname of the BIG-IP that the application will be
-        deployed to.
+      - Specifies the name of service environment or the hostname of the BIG-IP that
+        the application will be deployed to.
       - When creating a new application, this parameter is required.
   add_analytics:
     description:

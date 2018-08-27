@@ -207,6 +207,7 @@ from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.six import string_types
 from collections import deque
 
+
 try:
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
@@ -237,6 +238,10 @@ try:
     HAS_CLI_TRANSPORT = True
 except ImportError:
     HAS_CLI_TRANSPORT = False
+
+
+if HAS_F5SDK:
+    from f5.sdk_exception import LazyAttributesRequired
 
 
 class NoChangeReporter(object):
@@ -635,6 +640,10 @@ class V2Manager(BaseManager):
                     responses.append(output.strip())
             except F5ModuleError:
                 raise
+            except LazyAttributesRequired:
+                # This can happen if there is no "commandResult" attribute in
+                # the output variable above.
+                pass
         return responses
 
 
