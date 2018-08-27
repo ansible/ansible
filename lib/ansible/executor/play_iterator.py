@@ -175,10 +175,14 @@ class PlayIterator:
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
-        setup_task.tags = ['always']
         setup_task.args = {
             'gather_subset': gather_subset,
         }
+
+        # Unless play is specifically tagged, gathering should 'always' run
+        if self._play.tags is None:
+            setup_task.tags = ['always']
+
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout
         if fact_path:
