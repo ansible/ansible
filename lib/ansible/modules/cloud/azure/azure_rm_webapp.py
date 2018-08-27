@@ -158,7 +158,7 @@ options:
             - Purge any existing application settings. Replace web app application settings with app_settings.
         type: bool
 
-    power_action:
+    app_state:
         description:
             - Start/Stop/Restart the web app.
         type: str
@@ -420,7 +420,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 type='bool',
                 default=False
             ),
-            power_action=dict(
+            app_state=dict(
                 type='str',
                 choices=['start', 'stop', 'restart'],
                 default='start'
@@ -465,7 +465,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         self.container_settings = None
 
         self.purge_app_settings = False
-        self.power_action = 'start'
+        self.app_state = 'start'
 
         self.results = dict(
             changed=False,
@@ -720,15 +720,15 @@ class AzureRMWebApps(AzureRMModuleBase):
             webapp = response
 
         if webapp:
-            if (webapp['state'] != 'Stopped' and self.power_action == 'stop') or \
-               (webapp['state'] != 'Running' and self.power_action == 'start') or \
-               self.power_action == 'restart':
+            if (webapp['state'] != 'Stopped' and self.app_state == 'stop') or \
+               (webapp['state'] != 'Running' and self.app_state == 'start') or \
+               self.app_state == 'restart':
 
                 self.results['changed'] = True
                 if self.check_mode:
                     return self.results
 
-                self.start_webapp(self.power_action)
+                self.change_webapp_state(self.app_state)
 
         return self.results
 
@@ -978,7 +978,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             return False
 
-    def start_webapp(self, action):
+    def change_webapp_state(self, action):
         '''
         Start/stop/restart web app
         :return: deserialized updating response

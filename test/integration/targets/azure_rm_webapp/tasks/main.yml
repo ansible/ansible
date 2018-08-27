@@ -27,7 +27,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}2"
     plan: "{{ win_plan_name }}"
-    power_action: stop
+    app_state: stop
   register: output
 
 - name: assert output changed
