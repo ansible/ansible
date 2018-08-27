@@ -525,16 +525,16 @@ Function Nssm-Start
         Throw "Error starting service ""$name"""
     }
 
-    switch ($currentStatus.stdout)
+    switch -wildcard ($currentStatus.stdout)
     {
-        "SERVICE_RUNNING" { <# Nothing to do #> }
-        "SERVICE_STOPPED" { Nssm-Start-Service-Command -name $name }
+        "*SERVICE_RUNNING*" { <# Nothing to do #> }
+        "*SERVICE_STOPPED*" { Nssm-Start-Service-Command -name $name }
 
-        "SERVICE_CONTINUE_PENDING" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
-        "SERVICE_PAUSE_PENDING" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
-        "SERVICE_PAUSED" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
-        "SERVICE_START_PENDING" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
-        "SERVICE_STOP_PENDING" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
+        "*SERVICE_CONTINUE_PENDING*" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
+        "*SERVICE_PAUSE_PENDING*" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
+        "*SERVICE_PAUSED*" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
+        "*SERVICE_START_PENDING*" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
+        "*SERVICE_STOP_PENDING*" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
     }
 }
 
