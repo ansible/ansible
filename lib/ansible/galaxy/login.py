@@ -24,7 +24,6 @@ __metaclass__ = type
 
 import getpass
 import json
-import sys
 
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import PY2
