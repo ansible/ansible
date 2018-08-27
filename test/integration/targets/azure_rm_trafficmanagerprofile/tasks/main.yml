@@ -118,11 +118,10 @@
         path: '/'
   register: output
 
-- name: Assert the Traffic Manager profile is upgraded
+- name: Assert the Traffic Manager profile is updated
   assert:
     that:
-      - output.changed
-      - output.traffic_routing_method == 'Priority'
+      - output.changed 
 
 - name: Create Traffic Manager endpoint(check mode)
   azure_rm_trafficmanagerendpoint:
