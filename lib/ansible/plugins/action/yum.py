@@ -32,15 +32,13 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         '''
-        Action plugin handler for yum3 vs yum4(dnf) operations
+        Action plugin handler for yum3 vs yum4(dnf) operations.
 
-        In the past, there was only yum which is now known as yum3 or yum 3.x
-        but now there is a "new yum" known as yum4 or yum 4.x which is actually
-        just a yum command-line compatibility layer on top of dnf and since the
-        Ansible modules for yum(aka yum3) and dnf(aka yum4) call each of yum3
-        and yum4's python APIs natively on the backend, we need to handle this
-        here and pass off to the correct Ansible module to execute on the remote
-        system
+        Enables the yum module to use yum3 and/or yum4. Yum4 is a yum
+        command-line compatibility layer on top of dnf. Since the Ansible
+        modules for yum(aka yum3) and dnf(aka yum4) call each of yum3 and yum4's
+        python APIs natively on the backend, we need to handle this here and
+        pass off to the correct Ansible module to execute on the remote system.
         '''
 
         self._supports_check_mode = True
