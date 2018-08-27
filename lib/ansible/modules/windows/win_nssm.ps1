@@ -20,7 +20,7 @@ $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $tru
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","started","stopped","restarted" -resultobj $result
 
 $application = Get-AnsibleParam -obj $params -name "application" -type "str"
-$appParameters = Get-AnsibleParam -obj $params -name "app_parameters" -type "str"
+$appParameters = Get-AnsibleParam -obj $params -name "app_parameters"
 $appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","delayed","manual","disabled" -resultobj $result
 
@@ -34,6 +34,9 @@ $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 if (($appParameters -ne $null) -and ($appParametersFree -ne $null))
 {
     Fail-Json $result "Use either app_parameters or app_parameteres_free_form, but not both"
+}
+if (($appParameters -ne $null) -and ($appParameters -isnot [System.Collections.Hashtable])) {
+    Fail-Json -obj $result -message "The app_parameters parameter must be a dict"
 }
 
 Function Nssm-Invoke
@@ -167,30 +170,13 @@ Function Nssm-Install
      }
 }
 
-Function ParseAppParameters()
-{
-   [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [AllowEmptyString()]
-        [string]$appParameters
-    )
-
-    $escapedAppParameters = $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n").Replace("\","\\")
-
-    return ConvertFrom-StringData -StringData $escapedAppParameters
-}
-
-
 Function Nssm-Update-AppParameters
 {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
         [string]$name,
-        [Parameter(Mandatory=$true)]
-        [AllowEmptyString()]
-        [string]$appParameters,
+        $appParameters,
         [string]$appParametersFree
     )
 
@@ -208,10 +194,9 @@ Function Nssm-Update-AppParameters
     $appParamVals = @()
     $singleLineParams = ""
 
-    if ($appParameters)
+    if ($null -ne $appParameters)
     {
-        $appParametersHash = ParseAppParameters -appParameters $appParameters
-        $appParametersHash.GetEnumerator() |
+        $appParameters.GetEnumerator() |
             % {
                 $key = $($_.Name)
                 $val = $($_.Value)
@@ -222,15 +207,14 @@ Function Nssm-Update-AppParameters
                 if ($key -eq "_") {
                     $singleLineParams = "$val " + $singleLineParams
                 } else {
-                    $singleLineParams = $singleLineParams + "$key ""$val"""
+                    $singleLineParams = $singleLineParams + " $key ""$val"""
                 }
             }
 
-        $result.nssm_app_parameters_parsed = $appParametersHash
         $result.nssm_app_parameters_keys = $appParamKeys
         $result.nssm_app_parameters_vals = $appParamVals
     }
-    elseif ($appParametersFree) {
+    elseif ($null -ne $appParametersFree) {
         $result.nssm_app_parameters_free_form = $appParametersFree
         $singleLineParams = $appParametersFree
     }
