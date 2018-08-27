@@ -64,7 +64,6 @@ lib/ansible/modules/windows/win_iis_website.ps1 PSUseBOMForUnicodeEncodedFile
 lib/ansible/modules/windows/win_iis_website.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_mapped_drive.ps1 PSAvoidUsingConvertToSecureStringWithPlainText
 lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingPlainTextForPassword
 lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingUserNameAndPassWordParams
 lib/ansible/modules/windows/win_nssm.ps1 PSUseApprovedVerbs
