@@ -1,3 +1,14 @@
 ---
+# Workaround until https://github.com/ansible/cloudstack-test-container/pull/5 is merged
+- name: setup simulator hypervisor support
+  cs_configuration:
+    name: hypervisor.list
+    value: simulator
+  register: config
+- name: verify setup simulator hypervisor support
+  assert:
+    that:
+    - config is successful
+
 - import_tasks: test1.yml
 - import_tasks: test2.yml
