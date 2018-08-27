@@ -1,0 +1,20 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_security_groups_facts.yml
+
+- name: Test security groups information retrival from Scaleway
+  hosts: localhost
+  gather_facts: no
+  environment:
+    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
+
+  tasks:
+
+  - name: Get security groups information and register it in a variable
+    scaleway_security_groups_facts:
+
+    register: security_groups_fetch_task
+
+  - debug: var=security_groups_fetch_task
+
+  - assert:
+      that:
+        - security_groups_fetch_task is success
