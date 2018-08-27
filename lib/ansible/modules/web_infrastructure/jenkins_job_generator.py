@@ -155,6 +155,18 @@ import xml.etree.ElementTree as ET
 
 from ansible.module_utils.basic import AnsibleModule
 
+# To avoid AttributeError: 'module' object has no attribute 'NullHandler' on python 2.6
+try:
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+logging.getLogger(__name__).addHandler(NullHandler())
+# for stevedore module
+logging.getLogger('stevedore').addHandler(NullHandler())
+
+
 # Import Jenkins builder
 try:
     from jenkins import NotFoundException
@@ -176,16 +188,6 @@ try:
     is_jenkins_builder_lib = True
 except ImportError as e:
     is_jenkins_builder_lib = False
-
-# To support Python < 2.7 version and avoid AttributeError: 'module' object has no attribute 'NullHandler'
-try:
-    from logging import NullHandler
-except ImportError:
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-
-logging.getLogger(__name__).addHandler(NullHandler())
 
 
 def test_dependencies(module):
