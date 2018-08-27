@@ -49,8 +49,7 @@ base = {
                                  "schema": {"type": "object",
                                             "$ref": "#/definitions/NetworkObjectWrapper"}},
                          "422": {"description": "",
-                                 "schema": {"type": "object", "$ref": "#/definitions/ErrorWrapper"}}
-                     },
+                                 "schema": {"type": "object", "$ref": "#/definitions/ErrorWrapper"}}},
                      "parameters": [{"in": "body", "name": "body",
                                      "required": True,
                                      "schema": {"$ref": "#/definitions/NetworkObject"}}]}

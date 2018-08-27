@@ -39,11 +39,8 @@ class TestBaseConfigurationResource(object):
 
         resource = BaseConfigurationResource(None)
 
-        assert [
-                   {'name': 'obj1', 'type': 'foo'},
-                   {'name': 'obj3', 'type': 'foo'},
-
-               ] == resource.get_objects_by_filter('/objects', {'type': 'foo'})
+        assert [{'name': 'obj1', 'type': 'foo'}, {'name': 'obj3', 'type': 'foo'}] == resource.get_objects_by_filter(
+            '/objects', {'type': 'foo'})
 
 
 class TestIterateOverPageableResource(object):

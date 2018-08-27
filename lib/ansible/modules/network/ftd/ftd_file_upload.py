@@ -22,7 +22,7 @@ author: "Cisco Systems, Inc."
 options:
   operation:
     description:
-      - The name of the operation to execute. 
+      - The name of the operation to execute.
       - Only operations that upload file can be used in this module.
     required: true
   fileToUpload:

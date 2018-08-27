@@ -2,7 +2,6 @@ import os
 import unittest
 
 import pytest
-
 from ansible.module_utils.network.ftd.fdm_swagger_client import FdmSwaggerValidator, IllegalArgumentException
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -432,9 +431,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
         validator = FdmSwaggerValidator(local_mock_spec)
         valid, rez = getattr(validator, method)('getNetwork', None)
         assert not valid
-        assert {
-                   'required': ['objId']
-               } == rez
+        assert {'required': ['objId']} == rez
 
         self.check_illegal_argument_exception(lambda: getattr(validator, method)('getNetwork', ''),
                                               "The params parameter must be a dict")
@@ -444,9 +441,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
 
         valid, rez = getattr(validator, method)('getNetwork', {})
         assert not valid
-        assert {
-                   'required': ['objId']
-               } == rez
+        assert {'required': ['objId']} == rez
 
         self.check_illegal_argument_exception(lambda: getattr(validator, method)(None, {'name': 'test'}),
                                               "The operation_name parameter must be a non-empty string")
@@ -524,9 +519,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
         }
         valid, rez = FdmSwaggerValidator(mock_data).validate_data('getNetworkObjectList', data)
         assert not valid
-        assert {
-                   'required': ['type']
-               } == rez
+        assert {'required': ['type']} == rez
 
     def test_types_of_required_fields_are_incorrect(self):
         data = {
@@ -855,10 +848,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
 
         valid, rez = FdmSwaggerValidator(nested_mock_data1).validate_data('getdata', invalid_data)
         assert not valid
-        assert {
-
-                   'required': ['nested_model']
-               } == rez
+        assert {'required': ['nested_model']} == rez
 
         invalid_data = {
             'nested_model': {
@@ -868,10 +858,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
 
         valid, rez = FdmSwaggerValidator(nested_mock_data1).validate_data('getdata', invalid_data)
         assert not valid
-        assert {
-
-                   'required': ['nested_model.f_string']
-               } == rez
+        assert {'required': ['nested_model.f_string']} == rez
 
     def test_invalid_type_in_nested_fields(self):
         invalid_data = {

@@ -16,7 +16,7 @@ DOCUMENTATION = """
 module: ftd_configuration
 short_description: Manages configuration on Cisco FTD devices over REST API
 description:
-  - Manages configuration on Cisco FTD devices including creating, updating, removing configuration objects, 
+  - Manages configuration on Cisco FTD devices including creating, updating, removing configuration objects,
     scheduling and staring jobs, deploying pending changes, etc. All operation are performed over REST API.
 version_added: "2.7"
 author: "Cisco Systems, Inc."
@@ -24,7 +24,7 @@ options:
   operation:
     description:
       - The name of the operation to execute. Commonly, the operation starts with 'add', 'edit', 'get'
-       or 'delete' verbs, but can have an arbitrary name too. 
+       or 'delete' verbs, but can have an arbitrary name too.
     required: true
   data:
     description:
