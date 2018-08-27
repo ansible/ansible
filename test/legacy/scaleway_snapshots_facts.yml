@@ -1,0 +1,20 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_snapshots_facts.yml
+
+- name: Test snapshots information retrival from Scaleway
+  hosts: localhost
+  gather_facts: no
+  environment:
+    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
+
+  tasks:
+
+  - name: Get snapshots information and register it in a variable
+    scaleway_snapshots_facts:
+
+    register: snapshots_fetch_task
+
+  - debug: var=snapshots_fetch_task
+
+  - assert:
+      that:
+        - snapshots_fetch_task is success
