@@ -19,7 +19,7 @@ module: jenkins_job_generator
 
 short_description: Manage jenkins jobs through YAML config files.
 
-version_added: "0.1"
+version_added: "2.7"
 
 description:
     - Manage jenkins jobs through YAML config files.
@@ -138,6 +138,15 @@ EXAMPLES = '''
     jobs:
       - build
     state: disabled
+'''
+
+RETURN = '''
+---
+state:
+  description: State of the jenkins jobs.
+  returned: success
+  type: string
+  sample: "Disabled jenkins job(s): test"
 '''
 
 import xml.etree.ElementTree as ET
@@ -407,7 +416,7 @@ class ActionRunner(object):
 
         if disabled_jobs:
             self.result['changed'] = True
-            self.result['status'] = "Enabled jenkins job(s): %s" % ", ".join(disabled_jobs)
+            self.result['status'] = "Disabled jenkins job(s): %s" % ", ".join(disabled_jobs)
         else:
             self.result['status'] = "Nothing to enable"
 

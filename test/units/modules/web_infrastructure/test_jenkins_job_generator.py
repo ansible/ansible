@@ -217,16 +217,16 @@ class TestJobBuilder(object):
 </flow-definition>
         """
     test_job_xml2 = test_job_xml
-    empty_xml = """<?xml version="1.0" encoding="UTF-8"?><com.cloudbees.hudson.plugins.folder.Folder 
-    plugin="cloudbees-folder"> <actions/>  <icon 
-    class="com.cloudbees.hudson.plugins.folder.icons.StockFolderIcon"/> <views/>  <viewsTabBar 
-    class="hudson.views.DefaultViewsTabBar"/>  <primaryView>All</primaryView>  <healthMetrics/>  <actions/>  
-    <description>&lt;!-- Managed by Jenkins Job Builder --&gt;</description>  
-    <keepDependencies>false</keepDependencies>  
-    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>  
-    <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>  
-    <concurrentBuild>false</concurrentBuild>  <canRoam>true</canRoam>  <properties/>  <scm 
-    class="hudson.scm.NullSCM"/>  <publishers/>  <buildWrappers/></com.cloudbees.hudson.plugins.folder.Folder> 
+    empty_xml = """<?xml version="1.0" encoding="UTF-8"?><com.cloudbees.hudson.plugins.folder.Folder
+plugin="cloudbees-folder"> <actions/>  <icon
+class="com.cloudbees.hudson.plugins.folder.icons.StockFolderIcon"/> <views/>  <viewsTabBar
+class="hudson.views.DefaultViewsTabBar"/>  <primaryView>All</primaryView>  <healthMetrics/>  <actions/>
+<description>&lt;!-- Managed by Jenkins Job Builder --&gt;</description>
+<keepDependencies>false</keepDependencies>
+<blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+<blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+<concurrentBuild>false</concurrentBuild>  <canRoam>true</canRoam>  <properties/>  <scm
+class="hudson.scm.NullSCM"/>  <publishers/>  <buildWrappers/></com.cloudbees.hudson.plugins.folder.Folder>
     """
 
     def setup(self):
