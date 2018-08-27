@@ -14,6 +14,9 @@ With Ansible integration, you can use Ansible playbooks to automate Infoblox Cor
 
 See the `Infoblox <https://www.infoblox.com/>`_ website for mor information on the Infoblox product.
 
+NOTE: You can retrieve most of the example playbooks used in this guide from the  `network-automation/infoblox_ansible
+ <https://github.com/network-automation/infoblox_ansible>`_ Github repository.
+
 Prerequisites
 -------------
 Before using Ansible ``nios`` modules with Infoblox, you must install the ``infoblox-client`` on your Ansible control node:
@@ -59,7 +62,7 @@ For these examples, you need to set up your NIOS credentials. See `Credentials a
 Configuring an IPv4 network
 ---------------------------
 
-The following example playbook uses the ``nios_network`` module to configure an IPv4 network:
+The following example ``configure_network`` playbook uses the ``nios_network`` module to configure an IPv4 network:
 
 .. code-block:: yaml
 
@@ -79,12 +82,28 @@ The following example playbook uses the ``nios_network`` module to configure an 
 
 Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``group_vars/`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
 
-You can find other sample playbooks at  `Infoblox playbooks  <https://github.com/network-automation/infoblox_ansible/tree/master/module_playbooks>`_.
+Creating a host record
+----------------------
+
+This example ``host_record.yml`` playbook builds on the newly-created IPv4 network to create a host record named `testhost`:
+
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: configure an ipv4 host record
+      nios_host_record:
+        name: testhost
+        ipv4:
+          - address: "192.168.100.200"
+        state: present
+provider: "{{nios_provider}}"
+
 
 Creating a forward DNS zone
 --------------------------------------
 
-The following example playbook uses ``nios_zone`` module to configure an IPv4 network:
+The following example playbook uses the ``nios_zone`` module to configure a forward DNS zone:
 
 .. code-block:: yaml
 
@@ -92,15 +111,13 @@ The following example playbook uses ``nios_zone`` module to configure an IPv4 ne
     - hosts: localhost
       connection: local
       tasks:
-        - name: "Create a forward DNS zone called {{ ansible_zone }}"
+        - name: "Create a forward DNS zone called {{ ansible.local }}"
           nios_zone:
-            name: "{{ ansible_zone }}"
+            name: "{{ ansible.local }}"
             comment: local DNS zone
             state: present
             provider: "{{ nios_provider }}"
 
-Creating a host record for the gateway address
-----------------------------------------------
 
 NIOS lookup plugin
 ==================
@@ -109,19 +126,57 @@ The `nios <https://docs.ansible.com/ansible/devel/plugins/lookup/nios.html>`_ lo
 
 .. note:: You must run this lookup locally by specifying ``connection: local``.
 
+
+Retrieving all network views
+----------------------------
+
+This example playbook uses the ``set_fact`` module with the ``nios`` lookup to retrieve all the network views, which are then saved in the ``networkviews`` variable:
+
+.. code-block:: yaml
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: fetch all networkview objects
+      set_fact:
+        networkviews: "{{ lookup('nios', 'networkview', provider=nios_provider) }}"
+
+    - name: check the networkviews
+      debug:
+        var: networkviews
+
+
 Retrieving a host record
 ------------------------
 
-This example task uses the ``set_fact`` module with the ``nios`` lookup to retrieve the host records, and filters the result for a host called ``leaf01``, which is then saved in the ``host`` variable:
+This example playbook uses the ``set_fact`` module with the ``nios`` lookup to retrieve the host records, and filters the result for a host called ``leaf01``, which is then saved in the ``host`` variable:
 
 .. code-block:: yaml
 
+---
+- hosts: localhost
+  connection: local
+  tasks:
     - name: fetch host leaf01
-          set_fact:
-            host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf01'}, provider=nios_provider) }}"
+      set_fact:
+        host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf01'}, provider=nios_provider) }}"
 
+    - name: check the leaf01 return variable
+      debug:
+        var: host
 
-This task is part of an example `get_host_record.yml <https://github.com/network-automation/infoblox_ansible/blob/master/lookup_playbooks/get_host_record.yml>`_ lookup playbook.
+    - name: debug specific variable (ipv4 address)
+      debug:
+        var: host.ipv4addrs[0].ipv4addr
+
+    - name: fetch host leaf02
+      set_fact:
+        host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf02'}, provider=nios_provider) }}"
+
+    - name: check the leaf02 return variable
+      debug:
+        var: host
+
 
 If you run this ``get_host_record.yml`` playbook, you should see results similar to the following:
 
@@ -177,6 +232,8 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
 The output above shows the host record for ``leaf01`` and ``leaf02`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See `Ansible variables <http://docs.ansible.com/ansible/latest/playbooks_variables.html>`_ for more information on using Ansible variables.
 
 See the `nios lookup plugin examples <https://docs.ansible.com/ansible/latest/plugins/lookup/nios.html#examples>`_ for more data options that you can retreive.
+
+You can access these playbooks at `Infoblox lookup playbooks <https://github.com/network-automation/infoblox_ansible/tree/master/lookup_playbooks>`_.
 
 Dynamic inventory script
 ========================
