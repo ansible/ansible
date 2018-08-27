@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.ArgvParser
 #Requires -Module Ansible.ModuleUtils.CommandUtil
 
 $ErrorActionPreference = "Stop"
@@ -135,7 +136,7 @@ Function Nssm-Install
             Throw "Error installing service ""$name"""
         }
 
-        if ($nssm_result.stdout -cnotlike $application)
+        if ($nssm_result.stdout.split("`n`r")[0] -ne $application)
         {
             $cmd = "set ""$name"" Application ""$application"""
 
@@ -196,6 +197,7 @@ Function Nssm-Update-AppParameters
 
     if ($null -ne $appParameters)
     {
+        $appParamsArray = @()
         $appParameters.GetEnumerator() |
             % {
                 $key = $($_.Name)
@@ -204,15 +206,17 @@ Function Nssm-Update-AppParameters
                 $appParamKeys += $key
                 $appParamVals += $val
 
-                if ($key -eq "_") {
-                    $singleLineParams = "$val " + $singleLineParams
-                } else {
-                    $singleLineParams = $singleLineParams + " $key ""$val"""
+                if ($key -ne "_") {
+                    $appParamsArray += $key
                 }
+
+                $appParamsArray += $val
             }
 
         $result.nssm_app_parameters_keys = $appParamKeys
         $result.nssm_app_parameters_vals = $appParamVals
+
+        $singleLineParams = Argv-ToString -arguments $appParamsArray
     }
     elseif ($null -ne $appParametersFree) {
         $result.nssm_app_parameters_free_form = $appParametersFree
@@ -222,14 +226,12 @@ Function Nssm-Update-AppParameters
     $result.nssm_app_parameters = $appParameters
     $result.nssm_single_line_app_parameters = $singleLineParams
 
-    if ($nssm_result.stdout -ne $singleLineParams)
+    if ($nssm_result.stdout.split("`n`r")[0] -ne $singleLineParams)
     {
-        if ($appParameters -or $appParametersFree)
-        {
-            $cmd = "set ""$name"" AppParameters $singleLineParams"
-        } else {
-            $cmd = "set ""$name"" AppParameters '""""'"
-        }
+        # Escape argument line to preserve possible quotes and spaces
+        $singleLineParams = Escape-Argument -argument $singleLineParams
+        $cmd = "set ""$name"" AppParameters $singleLineParams"
+
         $nssm_result = Nssm-Invoke $cmd
 
         if ($nssm_result.rc -ne 0)
@@ -264,7 +266,7 @@ Function Nssm-Set-Output-Files
         Throw "Error retrieving existing stdout file for service ""$name"""
     }
 
-    if ($nssm_result.stdout -cnotlike $stdout)
+    if ($nssm_result.stdout.split("`n`r")[0] -ne $stdout)
     {
         if (!$stdout)
         {
@@ -296,7 +298,7 @@ Function Nssm-Set-Output-Files
         Throw "Error retrieving existing stderr file for service ""$name"""
     }
 
-    if ($nssm_result.stdout -cnotlike $stderr)
+    if ($nssm_result.stdout.split("`n`r")[0] -ne $stderr)
     {
         if (!$stderr)
         {
@@ -386,7 +388,7 @@ Function Nssm-Update-Credentials
                 $fullUser = ".\" + $user
             }
 
-            If ($nssm_result.stdout -ne $fullUser) {
+            If ($nssm_result.stdout.split("`n`r")[0] -ne $fullUser) {
                 $cmd = "set ""$name"" ObjectName $fullUser '$password'"
                 $nssm_result = Nssm-Invoke $cmd
 
@@ -411,8 +413,13 @@ Function Nssm-Update-Dependencies
         [Parameter(Mandatory=$true)]
         [string]$name,
         [Parameter(Mandatory=$false)]
-        [string]$dependencies
+        $dependencies
     )
+
+    if($null -eq $dependencies) {
+        # Don't make any change to dependencies if the parameter is omitted
+        return
+    }
 
     $cmd = "get ""$name"" DependOnService"
     $nssm_result = Nssm-Invoke $cmd
@@ -424,7 +431,10 @@ Function Nssm-Update-Dependencies
         Throw "Error updating dependencies for service ""$name"""
     }
 
-    If (($dependencies) -and ($nssm_result.stdout.Tolower() -ne $dependencies.Tolower())) {
+    $dependencies_array = @($dependencies.split(" ") | where { $_ -ne '' })
+    $current_dependencies = @($nssm_result.stdout.split("`n`r") | where { $_ -ne '' })
+
+    If (@(Compare-Object -ReferenceObject $current_dependencies -DifferenceObject $dependencies_array).Length -ne 0) {
         $cmd = "set ""$name"" DependOnService $dependencies"
         $nssm_result = Nssm-Invoke $cmd
 
@@ -462,7 +472,7 @@ Function Nssm-Update-StartMode
 
     $modes=@{"auto" = "SERVICE_AUTO_START"; "delayed" = "SERVICE_DELAYED_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
     $mappedMode = $modes.$mode
-    if ($nssm_result.stdout -cnotlike $mappedMode) {
+    if ($nssm_result.stdout -notlike "*$mappedMode*") {
         $cmd = "set ""$name"" Start $mappedMode"
         $nssm_result = Nssm-Invoke $cmd
 
@@ -585,7 +595,7 @@ Function Nssm-Stop
         Throw "Error stopping service ""$name"""
     }
 
-    if ($currentStatus.stdout -ne "SERVICE_STOPPED")
+    if ($currentStatus.stdout -notlike "*SERVICE_STOPPED*")
     {
         $cmd = "stop ""$name"""
 
