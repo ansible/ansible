@@ -349,8 +349,6 @@ files:
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/django_manage.py: scottanderson42
   $modules/web_infrastructure/htpasswd.py: $team_ansible
-  $modules/web_infrastructure/jboss.py:
-    labels: jboss
   $modules/web_infrastructure/jboss/: $team_jboss
   $modules/web_infrastructure/jira.py: Slezhuk
   $modules/windows/:
@@ -376,7 +374,6 @@ files:
     maintainers: BondAnthony
     labels:
     - cloud
-    - digital_ocean
     support: community
   contrib/inventory/linode.py:
     keywords:
@@ -389,13 +386,11 @@ files:
     maintainers: $team_openstack
     labels:
     - cloud
-    - openstack
   contrib/inventory/infoblox.py:
     keywords:
       - infoblox dynamic inventory script
     labels:
       - ipam
-      - infoblox
       - networking
     maintainers: $team_networking
   contrib/inventory/azure_rm.py:
@@ -426,7 +421,6 @@ files:
     - vmware dynamic inventory script
     labels:
     - cloud
-    - vmware
     maintainers: $team_vmware
   contrib/inventory/vmware_inventory.py:
     keywords:
@@ -553,7 +547,6 @@ files:
     maintainers: $team_openstack
     labels:
     - cloud
-    - openstack
   $module_utils/network/ordnance:
     maintainers: alexanderturner djh00t
     labels: networking
@@ -561,7 +554,6 @@ files:
     maintainers: joshainglis karmab machacekondra
     labels:
     - cloud
-    - ovirt
   $module_utils/powershell:
     maintainers: $team_windows_core
     labels:
@@ -573,11 +565,9 @@ files:
   $module_utils/vultr.py: &vultr
     maintainers: $team_vultr
     labels:
-    - vultr
     - cloud
   $module_utils/vmware:
     maintainers: $team_vmware
-    labels: vmware
     support: community
   $module_utils/network/voss:
     maintainers: $team_extreme
@@ -595,7 +585,6 @@ files:
   $module_utils/scaleway.py: &scaleway
     maintainers: $team_scaleway
     labels:
-      - scaleway
       - cloud
     support: community
   lib/ansible/playbook/handler.py:
@@ -683,7 +672,6 @@ files:
     maintainers: $team_nxos
     labels:
     - networking
-    - nxos
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
     labels: networking
@@ -714,7 +702,6 @@ files:
     - inventory
     labels:
     - cloud
-    - openstack
   lib/ansible/plugins/cliconf/voss.py:
     maintainers: $team_extreme
     labels: networking
@@ -804,7 +791,6 @@ files:
     maintainers: $team_networking
     labels:
     - networking
-    - nxos
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
     labels: networking
@@ -835,7 +821,6 @@ files:
     keywords:
     - validate-modules
   docs/:
-    labels: docs
     maintainers:
       - acozine
   docs/docsite/rst/network/:
@@ -868,18 +853,15 @@ files:
   test/integration/targets/aci:
     maintainers: $team_aci
     labels:
-    - aci
     - networking
   test/integration/targets/meraki:
     maintainers: $team_meraki
     labels:
-    - meraki
     - networking
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
     - networking
-    - nxos
   test/integration/targets/setup_acme:
     maintainers: resmo felixfontein
   test/integration/targets/setup_zabbix:
@@ -888,7 +870,6 @@ files:
     maintainers: $team_ucs
     labels:
     - remote_management
-    - ucs
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
@@ -896,9 +877,7 @@ files:
     maintainers: $team_nxos
     labels:
     - networking
-    - nxos
   test/sanity/pep8/legacy-files.txt:
-    labels: pep8
   hacking/report.py:
     notify: mattclay
   shippable.yml:
