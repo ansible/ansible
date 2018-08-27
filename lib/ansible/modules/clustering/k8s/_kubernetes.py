@@ -349,7 +349,7 @@ def main():
         mutually_exclusive=(('file_reference', 'inline_data'),
                             ('url_username', 'insecure'),
                             ('url_password', 'insecure')),
-        required_one_of=(('file_reference', 'inline_data')),
+        required_one_of=(('file_reference', 'inline_data'),),
     )
 
     if not HAS_LIB_YAML:

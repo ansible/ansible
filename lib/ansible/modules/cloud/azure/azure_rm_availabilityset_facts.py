@@ -32,7 +32,6 @@ options:
     tags:
         description:
             - List of tags to be matched
-        version_added: 2.6
 
 extends_documentation_fragment:
     - azure
@@ -172,6 +171,7 @@ def main():
     """Main module execution code path"""
 
     AzureRMAvailabilitySetFacts()
+
 
 if __name__ == '__main__':
     main()

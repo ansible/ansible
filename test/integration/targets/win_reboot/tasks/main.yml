@@ -1,0 +1,78 @@
+---
+- name: make sure win output dir exists
+  win_file:
+    path: "{{win_output_dir}}"
+    state: directory
+
+- name: reboot with defaults
+  win_reboot:
+
+- name: schedule a reboot for sometime in the future
+  win_command: shutdown.exe /r /t 599
+
+- name: reboot with a shutdown already scheduled
+  win_reboot:
+
+# test a reboot that reboots again during the test_command phase
+- name: create test file
+  win_file:
+    path: '{{win_output_dir}}\win_reboot_test'
+    state: touch
+
+- name: reboot with secondary reboot stage
+  win_reboot:
+    test_command: powershell.exe -NoProfile -EncodedCommand {{lookup('template', 'post_reboot.ps1')|b64encode(encoding='utf-16-le')}}
+
+# try and reboot the host with a non admin user, we expect an error here
+# this requires a bit of setup to create the user and allow it to connect
+# over WinRM
+- name: create password fact
+  set_fact:
+    standard_user: ansible_user_test
+    standard_pass: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+
+- name: get original SDDL for WinRM listener
+  win_shell: (Get-Item -Path WSMan:\localhost\Service\RootSDDL).Value
+  register: original_sddl
+
+- name: create standard user
+  win_user:
+    name: '{{standard_user}}'
+    password: '{{standard_pass}}'
+    update_password: always
+    groups: Users
+    state: present
+  register: user_res
+
+- name: add standard user to WinRM listener
+  win_shell: |
+    $sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "{{user_res.sid}}"
+    $sd = New-Object -TypeName System.Security.AccessControl.CommonSecurityDescriptor -ArgumentList $false, $false, "{{original_sddl.stdout_lines[0]}}"
+    $sd.DiscretionaryAcl.AddAccess(
+        [System.Security.AccessControl.AccessControlType]::Allow,
+        $sid,
+        (0x80000000 -bor 0x20000000),
+        [System.Security.AccessControl.InheritanceFlags]::None,
+        [System.Security.AccessControl.PropagationFlags]::None
+    )
+    $new_sddl = $sd.GetSddlForm([System.Security.AccessControl.AccessControlSections]::All)
+    Set-Item -Path WSMan:\localhost\Service\RootSDDL -Value $new_sddl -Force
+
+- block:
+  - name: fail to reboot with non admin user
+    win_reboot:
+    vars:
+      ansible_user: '{{standard_user}}'
+      ansible_password: '{{standard_pass}}'
+      ansible_winrm_transport: ntlm
+    register: fail_shutdown
+    failed_when: fail_shutdown.msg != "Shutdown command failed, error text was 'Access is denied.(5)\n'"
+
+  always:
+  - name: set the original SDDL to the WinRM listener
+    win_shell: Set-Item -Path WSMan:\localhost\Service\RootSDDL -Value "{{original_sddl.stdout_lines[0]}}" -Force
+
+  - name: remove standard user
+    win_user:
+      name: '{{standard_user}}'
+      state: absent

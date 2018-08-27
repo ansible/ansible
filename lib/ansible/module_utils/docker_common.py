@@ -80,7 +80,6 @@ DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
 DEFAULT_TLS_HOSTNAME = 'localhost'
 MIN_DOCKER_VERSION = "1.7.0"
-DEFAULT_SSL_VERSION = "1.0"
 DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
@@ -91,7 +90,7 @@ DOCKER_COMMON_ARGS = dict(
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
-    ssl_version=dict(type='str', default=DEFAULT_SSL_VERSION),
+    ssl_version=dict(type='str'),
     tls=dict(type='bool', default=DEFAULT_TLS),
     tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY),
     debug=dict(type='bool', default=False)
@@ -167,14 +166,15 @@ class AnsibleDockerClient(Client):
 
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
             self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
-                      "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python module")
+                      "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
+                      "module. It is recommended to install the docker module if no support for Python 2.6 is required.")
 
         if not HAS_DOCKER_PY:
-            self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
+            self.fail("Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)" % HAS_DOCKER_ERROR)
 
         if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
-            self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
-                                                                                           MIN_DOCKER_VERSION))
+            self.fail("Error: docker / docker-py version is %s. Minimum version required is %s." % (docker_version,
+                                                                                                    MIN_DOCKER_VERSION))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode

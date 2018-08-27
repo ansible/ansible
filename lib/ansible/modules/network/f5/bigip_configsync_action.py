@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -285,6 +285,11 @@ class ModuleManager(object):
                 pass
             elif status == 'In Sync':
                 return
+            elif status == 'Disconnected':
+                raise F5ModuleError(
+                    "One or more devices are unreachable (disconnected). "
+                    "Resolve any communication problems before attempting to sync."
+                )
             else:
                 raise F5ModuleError(status)
 

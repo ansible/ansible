@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 DOCUMENTATION = r'''
 ---
@@ -92,11 +92,18 @@ options:
           - The system uses this number with the Ratio load balancing method.
     version_added: 2.5
   irules:
-    version_added: 2.6
     description:
       - List of rules to be applied.
       - If you want to remove all existing iRules, specify a single empty value; C("").
         See the documentation for an example.
+    version_added: 2.6
+  aliases:
+    description:
+      - Specifies alternate domain names for the web site content you are load
+        balancing.
+      - You can use the same wildcard characters for aliases as you can for actual
+        wide IP names.
+    version_added: 2.7
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -174,6 +181,11 @@ irules:
   returned: changed
   type: list
   sample: ['/Common/irule1', '/Common/irule2']
+aliases:
+  description: Aliases set on the Wide IP.
+  returned: changed
+  type: list
+  sample: ['alias1.foo.com', '*.wildcard.domain']
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -217,15 +229,31 @@ class Parameters(AnsibleF5Parameters):
     }
 
     updatables = [
-        'pool_lb_method', 'state', 'pools', 'irules', 'enabled', 'disabled'
+        'pool_lb_method',
+        'state',
+        'pools',
+        'irules',
+        'enabled',
+        'disabled',
+        'aliases',
     ]
 
     returnables = [
-        'name', 'pool_lb_method', 'state', 'pools', 'irules'
+        'name',
+        'pool_lb_method',
+        'state',
+        'pools',
+        'irules',
+        'aliases',
     ]
 
     api_attributes = [
-        'poolLbMode', 'enabled', 'disabled', 'pools', 'rules'
+        'poolLbMode',
+        'enabled',
+        'disabled',
+        'pools',
+        'rules',
+        'aliases',
     ]
 
 
@@ -358,6 +386,15 @@ class ModuleParameters(Parameters):
             results.append(result)
         return results
 
+    @property
+    def aliases(self):
+        if self._values['aliases'] is None:
+            return None
+        if len(self._values['aliases']) == 1 and self._values['aliases'][0] == '':
+            return ''
+        self._values['aliases'].sort()
+        return self._values['aliases']
+
 
 class Changes(Parameters):
     def to_return(self):
@@ -457,6 +494,19 @@ class Difference(object):
             return []
         if sorted(set(self.want.irules)) != sorted(set(self.have.irules)):
             return self.want.irules
+
+    @property
+    def aliases(self):
+        if self.want.aliases is None:
+            return None
+        if self.want.aliases == '' and self.have.aliases is None:
+            return None
+        if self.want.aliases == '' and len(self.have.aliases) > 0:
+            return []
+        if self.have.aliases is None:
+            return self.want.aliases
+        if set(self.want.aliases) != set(self.have.aliases):
+            return self.want.aliases
 
 
 class ModuleManager(object):
@@ -748,6 +798,9 @@ class ArgumentSpec(object):
             irules=dict(
                 type='list',
             ),
+            aliases=dict(
+                type='list'
+            )
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)

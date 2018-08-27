@@ -2,7 +2,7 @@
 
 set -eu
 
-# Using set -x for this test causes the Shippable console to stop receiving updates and the job to time out for OS X.
+# Using set -x for this test causes the Shippable console to stop receiving updates and the job to time out for macOS.
 # Once that issue is resolved the set -x option can be added above.
 
 # Run these using en_US.UTF-8 because list-tasks is a user output function and so it tailors its output to the

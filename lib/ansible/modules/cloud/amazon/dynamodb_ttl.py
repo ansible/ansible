@@ -35,7 +35,7 @@ options:
     - this appears to be required by the API even when disabling TTL.
     required: true
 
-author: "Ted (@tedder)"
+author: Ted Timmons (@tedder)
 extends_documentation_fragment:
 - aws
 - ec2

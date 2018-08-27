@@ -112,6 +112,7 @@ EXAMPLES = r'''
     esxi_username: '{{ esxi_username }}'
     esxi_password: '{{ esxi_password }}'
     state: present
+  delegate_to: localhost
 
 - name: Add ESXi Host to vCenter under a specific folder
   vmware_host:
@@ -125,6 +126,7 @@ EXAMPLES = r'''
     esxi_password: '{{ esxi_password }}'
     state: present
     add_connected: True
+  delegate_to: localhost
 
 - name: Reconnect ESXi Host (with username/password set)
   vmware_host:
@@ -137,6 +139,7 @@ EXAMPLES = r'''
     esxi_username: '{{ esxi_username }}'
     esxi_password: '{{ esxi_password }}'
     state: reconnect
+  delegate_to: localhost
 
 - name: Reconnect ESXi Host (with default username/password)
   vmware_host:
@@ -147,6 +150,7 @@ EXAMPLES = r'''
     cluster_name: cluster_name
     esxi_hostname: '{{ esxi_hostname }}'
     state: reconnect
+  delegate_to: localhost
 
 - name: Add ESXi Host with SSL Thumbprint to vCenter
   vmware_host:
@@ -160,6 +164,7 @@ EXAMPLES = r'''
     esxi_password: '{{ esxi_password }}'
     esxi_ssl_thumbprint: "3C:A5:60:6F:7A:B7:C4:6C:48:28:3D:2F:A5:EC:A3:58:13:88:F6:DD"
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -260,7 +265,7 @@ class VMwareHost(PyVmomi):
                     host_connect_spec.sslThumbprint = task_error.thumbprint
                 else:
                     self.module.fail_json(msg="Failed to add host %s to vCenter: %s" % (self.esxi_hostname,
-                                                                                        to_native(task_error.msg)))
+                                                                                        to_native(task_error)))
             except vmodl.fault.NotSupported:
                 self.module.fail_json(msg="Failed to add host %s to vCenter as host is"
                                           " being added to a folder %s whose childType"

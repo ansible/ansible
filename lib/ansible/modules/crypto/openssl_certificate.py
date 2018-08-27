@@ -24,9 +24,11 @@ version_added: "2.4"
 short_description: Generate and/or check OpenSSL certificates
 description:
     - "This module allows one to (re)generate OpenSSL certificates. It implements a notion
-       of provider (ie. C(selfsigned), C(acme), C(assertonly)) for your certificate.
+       of provider (ie. C(selfsigned), C(ownca), C(acme), C(assertonly)) for your certificate.
        The 'assertonly' provider is intended for use cases where one is only interested in
        checking properties of a supplied certificate.
+       The 'ownca' provider is intended for generate OpenSSL certificate signed with your own
+       CA (Certificate Authority) certificate (self-signed certificate).
        Many properties that can be specified in this module are for validation of an
        existing or newly generated certificate. The proper place to specify them, if you
        want to receive a certificate with these properties is a CSR (Certificate Signing Request).
@@ -48,7 +50,7 @@ options:
 
     provider:
         required: true
-        choices: [ 'selfsigned', 'assertonly', 'acme' ]
+        choices: [ 'selfsigned', 'ownca', 'assertonly', 'acme' ]
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
               The C(assertonly) provider will not generate files and fail if the certificate file is missing.
@@ -93,6 +95,45 @@ options:
             - The timestamp at which the certificate stops being valid. The timestamp is formatted as an ASN.1 TIME.
               If this value is not specified, certificate will stop being valid 10 years from now.
         aliases: [ selfsigned_notAfter ]
+
+    ownca_path:
+        description:
+            - Remote absolute path of the CA (Certificate Authority) certificate.
+        version_added: "2.7"
+
+    ownca_privatekey_path:
+        description:
+            - Path to the CA (Certificate Authority) private key to use when signing the certificate.
+        version_added: "2.7"
+
+    ownca_privatekey_passphrase:
+        description:
+            - The passphrase for the I(ownca_privatekey_path).
+        version_added: "2.7"
+
+    ownca_digest:
+        default: "sha256"
+        description:
+            - Digest algorithm to be used for the C(ownca) certificate.
+        version_added: "2.7"
+
+    ownca_version:
+        default: 3
+        description:
+            - Version of the C(ownca) certificate. Nowadays it should almost always be C(3).
+        version_added: "2.7"
+
+    ownca_not_before:
+        description:
+            - The timestamp at which the certificate starts being valid. The timestamp is formatted as an ASN.1 TIME.
+              If this value is not specified, certificate will start being valid from now.
+        version_added: "2.7"
+
+    ownca_not_after:
+        description:
+            - The timestamp at which the certificate stops being valid. The timestamp is formatted as an ASN.1 TIME.
+              If this value is not specified, certificate will stop being valid 10 years from now.
+        version_added: "2.7"
 
     acme_accountkey_path:
         description:
@@ -209,6 +250,9 @@ extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
       Date specified should be UTC. Minutes and seconds are mandatory.
+    - For security reason, when you use C(ownca) provider, you should NOT run M(openssl_certificate) on
+      a target machine, but on a dedicated CA machine. It is recommended not to store the CA private key
+      on the target machine. Once signed, the certificate can be moved to the target machine.
 '''
 
 
@@ -219,6 +263,14 @@ EXAMPLES = '''
     privatekey_path: /etc/ssl/private/ansible.com.pem
     csr_path: /etc/ssl/csr/ansible.com.csr
     provider: selfsigned
+
+- name: Generate an OpenSSL certificate signed with your own CA certificate
+  openssl_certificate:
+    path: /etc/ssl/crt/ansible.com.crt
+    csr_path: /etc/ssl/csr/ansible.com.csr
+    ownca_path: /etc/ssl/crt/ansible_CA.crt
+    ownca_privatekey_path: /etc/ssl/private/ansible_CA.pem
+    provider: ownca
 
 - name: Generate a Let's Encrypt Certificate
   openssl_certificate:
@@ -381,6 +433,7 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.csr_path = module.params['csr_path']
         self.cert = None
         self.privatekey = None
+        self.csr = None
         self.module = module
 
     def check(self, module, perms_required=True):
@@ -399,6 +452,24 @@ class Certificate(crypto_utils.OpenSSLObject):
                 except OpenSSL.SSL.Error:
                     return False
 
+        def _validate_csr():
+            try:
+                self.csr.verify(self.cert.get_pubkey())
+            except OpenSSL.crypto.Error:
+                return False
+            if self.csr.get_subject() != self.cert.get_subject():
+                return False
+            csr_extensions = self.csr.get_extensions()
+            cert_extension_count = self.cert.get_extension_count()
+            if len(csr_extensions) != cert_extension_count:
+                return False
+            for extension_number in range(0, cert_extension_count):
+                cert_extension = self.cert.get_extension(extension_number)
+                csr_extension = filter(lambda extension: extension.get_short_name() == cert_extension.get_short_name(), csr_extensions)
+                if cert_extension.get_data() != list(csr_extension)[0].get_data():
+                    return False
+            return True
+
         if not state_and_perms:
             return False
 
@@ -410,6 +481,11 @@ class Certificate(crypto_utils.OpenSSLObject):
                 self.privatekey_passphrase
             )
             return _validate_privatekey()
+
+        if self.csr_path:
+            self.csr = crypto_utils.load_certificate_request(self.csr_path)
+            if not _validate_csr():
+                return False
 
         return True
 
@@ -482,6 +558,105 @@ class SelfSignedCertificate(Certificate):
             'filename': self.path,
             'privatekey': self.privatekey_path,
             'csr': self.csr_path
+        }
+
+        if check_mode:
+            now = datetime.datetime.utcnow()
+            ten = now.replace(now.year + 10)
+            result.update({
+                'notBefore': self.notBefore if self.notBefore else now.strftime("%Y%m%d%H%M%SZ"),
+                'notAfter': self.notAfter if self.notAfter else ten.strftime("%Y%m%d%H%M%SZ"),
+                'serial_number': self.serial_number,
+            })
+        else:
+            result.update({
+                'notBefore': self.cert.get_notBefore(),
+                'notAfter': self.cert.get_notAfter(),
+                'serial_number': self.cert.get_serial_number(),
+            })
+
+        return result
+
+
+class OwnCACertificate(Certificate):
+    """Generate the own CA certificate."""
+
+    def __init__(self, module):
+        super(OwnCACertificate, self).__init__(module)
+        self.notBefore = module.params['ownca_not_before']
+        self.notAfter = module.params['ownca_not_after']
+        self.digest = module.params['ownca_digest']
+        self.version = module.params['ownca_version']
+        self.serial_number = randint(1000, 99999)
+        self.ca_cert_path = module.params['ownca_path']
+        self.ca_privatekey_path = module.params['ownca_privatekey_path']
+        self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
+        self.csr = crypto_utils.load_certificate_request(self.csr_path)
+        self.ca_cert = crypto_utils.load_certificate(self.ca_cert_path)
+        self.ca_privatekey = crypto_utils.load_privatekey(
+            self.ca_privatekey_path, self.ca_privatekey_passphrase
+        )
+
+    def generate(self, module):
+
+        if not os.path.exists(self.ca_cert_path):
+            raise CertificateError(
+                'The CA certificate %s does not exist' % self.ca_cert_path
+            )
+
+        if not os.path.exists(self.ca_privatekey_path):
+            raise CertificateError(
+                'The CA private key %s does not exist' % self.ca_privatekey_path
+            )
+
+        if not os.path.exists(self.csr_path):
+            raise CertificateError(
+                'The certificate signing request file %s does not exist' % self.csr_path
+            )
+
+        if not self.check(module, perms_required=False) or self.force:
+            cert = crypto.X509()
+            cert.set_serial_number(self.serial_number)
+            if self.notBefore:
+                cert.set_notBefore(self.notBefore.encode())
+            else:
+                cert.gmtime_adj_notBefore(0)
+            if self.notAfter:
+                cert.set_notAfter(self.notAfter.encode())
+            else:
+                # If no NotAfter specified, expire in
+                # 10 years. 315360000 is 10 years in seconds.
+                cert.gmtime_adj_notAfter(315360000)
+            cert.set_subject(self.csr.get_subject())
+            cert.set_issuer(self.ca_cert.get_subject())
+            cert.set_version(self.version - 1)
+            cert.set_pubkey(self.csr.get_pubkey())
+            cert.add_extensions(self.csr.get_extensions())
+
+            cert.sign(self.ca_privatekey, self.digest)
+            self.cert = cert
+
+            try:
+                with open(self.path, 'wb') as cert_file:
+                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
+            except EnvironmentError as exc:
+                raise CertificateError(exc)
+
+            self.changed = True
+
+        file_args = module.load_file_common_arguments(module.params)
+        if module.set_fs_attributes_if_different(file_args, False):
+            self.changed = True
+
+    def dump(self, check_mode=False):
+
+        result = {
+            'changed': self.changed,
+            'filename': self.path,
+            'privatekey': self.privatekey_path,
+            'csr': self.csr_path,
+            'ca_cert': self.ca_cert_path,
+            'ca_privatekey': self.ca_privatekey_path
         }
 
         if check_mode:
@@ -661,7 +836,7 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_valid_at():
             if self.valid_at:
-                if not (self.valid_at >= self.cert.get_notBefore() and self.valid_at <= self.cert.get_notAfter()):
+                if not (self.cert.get_notBefore() <= self.valid_at <= self.cert.get_notAfter()):
                     self.message.append(
                         'Certificate is not valid for the specified date (%s) - notBefore: %s - notAfter: %s' % (self.valid_at,
                                                                                                                  self.cert.get_notBefore(),
@@ -680,8 +855,8 @@ class AssertOnlyCertificate(Certificate):
         def _validate_valid_in():
             if self.valid_in:
                 valid_in_date = datetime.datetime.utcnow() + datetime.timedelta(seconds=self.valid_in)
-                valid_in_date = valid_in_date.strftime('%Y%m%d%H%M%SZ')
-                if not (valid_in_date >= self.cert.get_notBefore() and valid_in_date <= self.cert.get_notAfter()):
+                valid_in_date = to_bytes(valid_in_date.strftime('%Y%m%d%H%M%SZ'), errors='surrogate_or_strict')
+                if not (self.cert.get_notBefore() <= valid_in_date <= self.cert.get_notAfter()):
                     self.message.append(
                         'Certificate is not valid in %s seconds from now (%s) - notBefore: %s - notAfter: %s' % (self.valid_in,
                                                                                                                  valid_in_date,
@@ -779,6 +954,7 @@ class AcmeCertificate(Certificate):
                                          check_rc=True)[1]
                 with open(self.path, 'wb') as certfile:
                     certfile.write(to_bytes(crt))
+                self.changed = True
             except OSError as exc:
                 raise CertificateError(exc)
 
@@ -804,7 +980,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', choices=['present', 'absent'], default='present'),
             path=dict(type='path', required=True),
-            provider=dict(type='str', choices=['selfsigned', 'assertonly', 'acme']),
+            provider=dict(type='str', choices=['selfsigned', 'ownca', 'assertonly', 'acme']),
             force=dict(type='bool', default=False,),
             csr_path=dict(type='path'),
 
@@ -836,6 +1012,15 @@ def main():
             selfsigned_notBefore=dict(type='str', aliases=['selfsigned_not_before']),
             selfsigned_notAfter=dict(type='str', aliases=['selfsigned_not_after']),
 
+            # provider: ownca
+            ownca_path=dict(type='path'),
+            ownca_privatekey_path=dict(type='path'),
+            ownca_privatekey_passphrase=dict(type='path', no_log=True),
+            ownca_digest=dict(type='str', default='sha256'),
+            ownca_version=dict(type='int', default='3'),
+            ownca_not_before=dict(type='str'),
+            ownca_not_after=dict(type='str'),
+
             # provider: acme
             acme_accountkey_path=dict(type='path'),
             acme_challenge_path=dict(type='path'),
@@ -847,11 +1032,14 @@ def main():
 
     if not pyopenssl_found:
         module.fail_json(msg='The python pyOpenSSL library is required')
-    if module.params['provider'] in ['selfsigned', 'assertonly']:
+    if module.params['provider'] in ['selfsigned', 'ownca', 'assertonly']:
         try:
             getattr(crypto.X509Req, 'get_extensions')
         except AttributeError:
             module.fail_json(msg='You need to have PyOpenSSL>=0.15')
+
+    if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
+        module.fail_json(msg='csr_path is required when provider is not assertonly')
 
     base_dir = os.path.dirname(module.params['path'])
     if not os.path.isdir(base_dir):
@@ -866,6 +1054,8 @@ def main():
         certificate = SelfSignedCertificate(module)
     elif provider == 'acme':
         certificate = AcmeCertificate(module)
+    elif provider == 'ownca':
+        certificate = OwnCACertificate(module)
     else:
         certificate = AssertOnlyCertificate(module)
 

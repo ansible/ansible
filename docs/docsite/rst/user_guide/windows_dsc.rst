@@ -60,7 +60,7 @@ The ``win_dsc`` module takes in a free-form of options so that it changes
 according to the resource it is managing. A list of built in resources can be
 found at `resources <https://docs.microsoft.com/en-us/powershell/dsc/resources>`_.
 
-Using the the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
+Using the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
 resource as an example, this is the DSC definition as documented by Microsoft::
 
     Registry [string] #ResourceName
@@ -128,7 +128,7 @@ a custom class defined by that resource. Defining a value that takes in a
 For example, to define a ``[CimInstance]`` value in Ansible::
 
     # [CimInstance]AuthenticationInfo == MSFT_xWebAuthenticationInformation
-    AuthenticationInfo
+    AuthenticationInfo:
       Anonymous: no
       Basic: yes
       Digest: no
@@ -389,7 +389,7 @@ Setup IIS Website
        Best practices advice
    `List of Windows Modules :ref:`<windows_modules>`
        Windows specific module list, all implemented in PowerShell
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

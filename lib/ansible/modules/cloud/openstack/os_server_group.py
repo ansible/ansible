@@ -45,8 +45,8 @@ options:
        - Ignored. Present for backwards compatibility
      required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -134,7 +134,7 @@ def main():
     policies = module.params['policies']
     state = module.params['state']
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         server_group = cloud.get_server_group(name)
 
@@ -164,7 +164,7 @@ def main():
                 cloud.delete_server_group(server_group['id'])
                 changed = True
             module.exit_json(changed=changed)
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

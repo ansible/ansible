@@ -10,6 +10,7 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: configure domain_list using platform agnostic module
@@ -17,6 +18,7 @@
     domain_search:
       - ansible.com
       - redhat.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -31,5 +33,6 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
+    provider: "{{ connection }}"
 
 - debug: msg="END nxos nxapi/net_system.yaml on connection={{ ansible_connection }}"

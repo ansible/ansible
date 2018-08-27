@@ -9,6 +9,7 @@ import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
+from ansible.plugins.httpapi import HttpApiBase
 
 try:
     from __main__ import display
@@ -17,17 +18,29 @@ except ImportError:
     display = Display()
 
 
-class HttpApi:
-    def __init__(self, connection):
-        self.connection = connection
-
+class HttpApi(HttpApiBase):
     def _run_queue(self, queue, output):
-        request = request_builder(queue, output)
+        if self._become:
+            display.vvvv('firing event: on_become')
+            queue.insert(0, 'enable')
 
+        request = request_builder(queue, output)
         headers = {'Content-Type': 'application/json'}
-        response = self.connection.send('/ins', request, headers=headers, method='POST')
-        response = json.loads(to_text(response.read()))
-        return handle_response(response)
+
+        response, response_data = self.connection.send('/ins', request, headers=headers, method='POST')
+
+        try:
+            response_data = json.loads(to_text(response_data.getvalue()))
+        except ValueError:
+            raise ConnectionError('Response was not valid JSON, got {0}'.format(
+                to_text(response_data.getvalue())
+            ))
+
+        results = handle_response(response_data)
+
+        if self._become:
+            results = results[1:]
+        return results
 
     def send_request(self, data, **message_kwargs):
         output = None
@@ -62,10 +75,26 @@ class HttpApi:
             return responses[0]
         return responses
 
-    # Migrated from module_utils
-    def edit_config(self, command):
-        responses = self.send_request(command, output='config')
-        return json.dumps(responses)
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
+        resp = list()
+
+        operations = self.connection.get_device_operations()
+        self.connection.check_edit_config_capability(operations, candidate, commit, replace, comment)
+
+        if replace:
+            device_info = self.connection.get_device_info()
+            if '9K' not in device_info.get('network_os_platform', ''):
+                raise ConnectionError(msg=u'replace is supported only on Nexus 9K devices')
+            candidate = 'config replace {0}'.format(replace)
+
+        responses = self.send_request(candidate, output='config')
+        for response in to_list(responses):
+            if response != '{}':
+                resp.append(response)
+        if not resp:
+            resp = ['']
+
+        return resp
 
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
@@ -73,14 +102,18 @@ class HttpApi:
         try:
             out = self.send_request(commands)
         except ConnectionError as exc:
-            if check_rc:
+            if check_rc is True:
                 raise
             out = to_text(exc)
 
         out = to_list(out)
+        if not out[0]:
+            return out
+
         for index, response in enumerate(out):
             if response[0] == '{':
                 out[index] = json.loads(response)
+
         return out
 
 

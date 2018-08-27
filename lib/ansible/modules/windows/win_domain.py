@@ -35,12 +35,14 @@ options:
     - The path to a directory on a fixed disk of the Windows host where the
       domain database will be created.
     - If not set then the default path is C(%SYSTEMROOT%\NTDS).
+    type: path
     version_added: '2.5'
   sysvol_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the
       Sysvol file will be created.
     - If not set then the default path is C(%SYSTEMROOT%\SYSVOL).
+    type: path
     version_added: '2.5'
 author:
     - Matt Davis (@nitzmahone)

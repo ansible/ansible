@@ -30,7 +30,7 @@
 - name: Configure interface ipv4 address
   ios_l3_interface:
     name: "{{ test_interface }}"
-    ipv4: 192.168.0.1/24
+    ipv4: 192.168.20.1/24
     state: present
     provider: "{{ cli }}"
   register: result
@@ -39,12 +39,12 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
-      - '"ip address 192.168.0.1 255.255.255.0" in result.commands'
+      - '"ip address 192.168.20.1 255.255.255.0" in result.commands'
 
 - name: test invalid subnet
   ios_l3_interface:
     name: "{{ test_interface }}"
-    ipv4: 192.168.0.1/45
+    ipv4: 192.168.20.1/45
     state: present
     provider: "{{ cli }}"
   register: result

@@ -31,24 +31,28 @@ class AnsibleVersionMunger(object):
 
         match = self._parsed_regex_match
 
-        if v.is_prerelease:
+        # treat dev/post as prerelease for now; treat dev/post as equivalent and disallow together
+        if v.is_prerelease or match.group('dev') or match.group('post'):
+            if match.group('dev') and match.group('post'):
+                raise Exception("dev and post may not currently be used together")
             if match.group('pre'):
                 tag_value = match.group('pre')
                 tag_type = match.group('pre_l')
-                tag_ver = match.group('pre_n')
+                if match.group('dev'):
+                    tag_value += ('~%s' % match.group('dev').strip('.'))
+                if match.group('post'):
+                    tag_value += ('~%s' % match.group('post').strip('.'))
             elif match.group('dev'):
                 tag_type = "dev"
-                tag_value = match.group('dev')
-                tag_ver = match.group('dev_n')
+                tag_value = match.group('dev').strip('.')
+            elif match.group('post'):
+                tag_type = "dev"
+                tag_value = match.group('post').strip('.')
             else:
                 raise Exception("unknown prerelease type for version {0}".format(self._raw_version))
-
-        elif v.is_postrelease:
-            raise Exception("post-release identifiers are not supported")
         else:
             tag_type = None
             tag_value = ''
-            tag_ver = 0
 
         # not a pre/post/dev release, just return base version
         if not tag_type:
@@ -66,20 +70,28 @@ class AnsibleVersionMunger(object):
         v = self._parsed_version
         match = self._parsed_regex_match
 
-        if v.is_prerelease:
+        # treat presence of dev/post as prerelease for now; treat dev/post the same and disallow together
+        if v.is_prerelease or match.group('dev') or match.group('post'):
+            if match.group('dev') and match.group('post'):
+                raise Exception("dev and post may not currently be used together")
             if match.group('pre'):
                 tag_value = match.group('pre')
                 tag_type = match.group('pre_l')
                 tag_ver = match.group('pre_n')
+                if match.group('dev'):
+                    tag_value += match.group('dev')
+                if match.group('post'):
+                    tag_value += match.group('post')
             elif match.group('dev'):
                 tag_type = "dev"
                 tag_value = match.group('dev')
                 tag_ver = match.group('dev_n')
+            elif match.group('post'):
+                tag_type = "dev"
+                tag_value = match.group('post')
+                tag_ver = match.group('post_n')
             else:
                 raise Exception("unknown prerelease type for version {0}".format(self._raw_version))
-
-        elif v.is_postrelease:
-            raise Exception("post-release identifiers are not supported")
         else:
             tag_type = None
             tag_value = ''
@@ -177,6 +189,7 @@ def main():
 
         for propname in props:
             print('{0}: {1}'.format(propname, getattr(v, propname)))
+
 
 if __name__ == '__main__':
     main()

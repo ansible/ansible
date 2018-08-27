@@ -25,6 +25,8 @@ version_added: "2.6"
 author: Remy Leone (@sieben)
 description:
     - "This module manages compute instances on Scaleway."
+extends_documentation_fragment: scaleway
+
 options:
 
   enable_ipv6:
@@ -64,11 +66,6 @@ options:
     required: false
     default: []
 
-  oauth_token:
-    description:
-     - Scaleway OAuth token.
-    required: true
-
   region:
     description:
     - Scaleway compute zone
@@ -95,19 +92,14 @@ options:
       - C2S
       - C2M
       - C2L
-      - VC1S
-      - VC1M
-      - VC1L
+      - START1-XS
+      - START1-S
+      - START1-M
+      - START1-L
       - X64-15GB
       - X64-30GB
       - X64-60GB
       - X64-120GB
-
-  timeout:
-    description:
-    - Timeout for API calls
-    required: false
-    default: 30
 
   wait:
     description:
@@ -158,9 +150,8 @@ import datetime
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote
-from ansible.module_utils.scaleway import ScalewayAPI, SCALEWAY_LOCATION
+from ansible.module_utils.scaleway import SCALEWAY_LOCATION, scaleway_argument_spec, Scaleway
 
 SCALEWAY_COMMERCIAL_TYPES = [
 
@@ -180,9 +171,10 @@ SCALEWAY_COMMERCIAL_TYPES = [
     'C2L',  # x86-64 (8 cores) - 32 GB
 
     # Virtual X86-64 compute instance
-    'VC1S',  # Starter X86-64 (2 cores) - 2GB
-    'VC1M',  # Starter X86-64 (4 cores) - 4GB
-    'VC1L',  # Starter X86-64 (6 cores) - 8GB
+    'START1-XS',  # Starter X86-64 (1 core) - 1GB - 25 GB NVMe
+    'START1-S',  # Starter X86-64 (2 cores) - 2GB - 50 GB NVMe
+    'START1-M',  # Starter X86-64 (4 cores) - 4GB - 100 GB NVMe
+    'START1-L',  # Starter X86-64 (8 cores) - 8GB - 200 GB NVMe
     'X64-15GB',
     'X64-30GB',
     'X64-60GB',
@@ -571,7 +563,6 @@ def server_change_attributes(compute_api, target_server, wished_server):
 
 
 def core(module):
-    api_token = module.params['oauth_token']
     region = module.params["region"]
     wished_server = {
         "state": module.params["state"],
@@ -582,37 +573,31 @@ def core(module):
         "tags": module.params["tags"],
         "organization": module.params["organization"]
     }
+    module.params['api_url'] = SCALEWAY_LOCATION[region]["api_endpoint"]
 
-    compute_api = ScalewayAPI(module=module,
-                              headers={'X-Auth-Token': api_token},
-                              base_url=SCALEWAY_LOCATION[region]["api_endpoint"])
+    compute_api = Scaleway(module=module)
 
     changed, summary = state_strategy[wished_server["state"]](compute_api=compute_api, wished_server=wished_server)
     module.exit_json(changed=changed, msg=summary)
 
 
 def main():
+    argument_spec = scaleway_argument_spec()
+    argument_spec.update(dict(
+        image=dict(required=True),
+        name=dict(),
+        region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
+        commercial_type=dict(required=True, choices=SCALEWAY_COMMERCIAL_TYPES),
+        enable_ipv6=dict(default=False, type="bool"),
+        state=dict(choices=state_strategy.keys(), default='present'),
+        tags=dict(type="list", default=[]),
+        organization=dict(required=True),
+        wait=dict(type="bool", default=False),
+        wait_timeout=dict(type="int", default=300),
+        wait_sleep_time=dict(type="int", default=3),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            oauth_token=dict(
-                no_log=True,
-                # Support environment variable for Scaleway OAuth Token
-                fallback=(env_fallback, ['SCW_TOKEN', 'SCW_API_KEY', 'SCW_OAUTH_TOKEN']),
-                required=True,
-            ),
-            image=dict(required=True),
-            name=dict(),
-            region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
-            commercial_type=dict(required=True, choices=SCALEWAY_COMMERCIAL_TYPES),
-            enable_ipv6=dict(default=False, type="bool"),
-            state=dict(choices=state_strategy.keys(), default='present'),
-            tags=dict(type="list", default=[]),
-            organization=dict(required=True),
-            timeout=dict(type="int", default=30),
-            wait=dict(type="bool", default=False),
-            wait_timeout=dict(type="int", default=300),
-            wait_sleep_time=dict(type="int", default=3),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 

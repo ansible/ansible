@@ -33,7 +33,6 @@ options:
     env:
       - name: ANSIBLE_REMOTE_PORT
     vars:
-      - name: ansible_port
       - name: ansible_httpapi_port
   network_os:
     description:
@@ -67,6 +66,13 @@ options:
     default: False
     vars:
       - name: ansible_httpapi_use_ssl
+  validate_certs:
+    version_added: '2.7'
+    description:
+      - Whether to validate SSL certificates
+    default: True
+    vars:
+      - name: ansible_httpapi_validate_certs
   timeout:
     type: int
     description:
@@ -134,19 +140,15 @@ options:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
 
-import os
-
-from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six import PY3
+from ansible.module_utils.six import PY3, BytesIO
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.six.moves.urllib.error import URLError
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import cliconf_loader, connection_loader, httpapi_loader
-from ansible.plugins.connection import ConnectionBase
-from ansible.utils.path import unfrackpath
+from ansible.plugins.loader import cliconf_loader, httpapi_loader
+from ansible.plugins.connection import NetworkConnectionBase
 
 try:
     from __main__ import display
@@ -155,68 +157,24 @@ except ImportError:
     display = Display()
 
 
-class Connection(ConnectionBase):
+class Connection(NetworkConnectionBase):
     '''Network API connection'''
 
     transport = 'httpapi'
     has_pipelining = True
-    force_persistence = True
-    # Do not use _remote_is_local in other connections
-    _remote_is_local = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self._matched_prompt = None
-        self._matched_pattern = None
-        self._last_response = None
-        self._history = list()
+        self._url = None
+        self._auth = None
 
-        self._local = connection_loader.get('local', play_context, '/dev/null')
-        self._local.set_options()
-
-        self._cliconf = None
-
-        self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
-
-        network_os = self._play_context.network_os
-        if not network_os:
+        if not self._network_os:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
             )
-
-        self._httpapi = httpapi_loader.get(network_os, self)
-        if self._httpapi:
-            display.vvvv('loaded API plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
-        else:
-            raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % network_os)
-
-        self._url = None
-        self._auth = None
-
-        # reconstruct the socket_path and set instance values accordingly
-        self._update_connection_state()
-
-    def __getattr__(self, name):
-        try:
-            return self.__dict__[name]
-        except KeyError:
-            if not name.startswith('_'):
-                for plugin in (self._httpapi, self._cliconf):
-                    method = getattr(plugin, name, None)
-                    if method:
-                        return method
-            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
-
-    def exec_command(self, cmd, in_data=None, sudoable=True):
-        return self._local.exec_command(cmd, in_data, sudoable)
-
-    def put_file(self, in_path, out_path):
-        return self._local.put_file(in_path, out_path)
-
-    def fetch_file(self, in_path, out_path):
-        return self._local.fetch_file(in_path, out_path)
+        display.display('network_os is set to %s' % self._network_os, log_only=True)
 
     def update_play_context(self, pc_data):
         """Updates the play context information for the connection"""
@@ -229,86 +187,87 @@ class Connection(ConnectionBase):
         play_context.deserialize(pc_data)
 
         messages = ['updating play_context for connection']
-        if self._play_context.become is False and play_context.become is True:
-            self._enable = True
-            messages.append('authorizing connection')
-
-        elif self._play_context.become is True and not play_context.become:
-            self._enable = False
-            messages.append('deauthorizing connection')
+        if self._play_context.become ^ play_context.become:
+            self.set_become(play_context)
+            if play_context.become is True:
+                messages.append('authorizing connection')
+            else:
+                messages.append('deauthorizing connection')
 
         self._play_context = play_context
         return messages
 
     def _connect(self):
-        if self.connected:
-            return
-        network_os = self._play_context.network_os
+        if not self.connected:
+            protocol = 'https' if self.get_option('use_ssl') else 'http'
+            host = self.get_option('host')
+            port = self.get_option('port') or (443 if protocol == 'https' else 80)
+            self._url = '%s://%s:%s' % (protocol, host, port)
 
-        protocol = 'https' if self.get_option('use_ssl') else 'http'
-        host = self.get_option('host')
-        port = self.get_option('port') or (443 if protocol == 'https' else 80)
-        self._url = '%s://%s:%s' % (protocol, host, port)
+            httpapi = httpapi_loader.get(self._network_os, self)
+            if httpapi:
+                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
+                self._implementation_plugins.append(httpapi)
+                httpapi.set_become(self._play_context)
+                httpapi.login(self.get_option('remote_user'), self.get_option('password'))
+            else:
+                raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 
-        self._cliconf = cliconf_loader.get(network_os, self)
-        if self._cliconf:
-            display.vvvv('loaded cliconf plugin for network_os %s' % network_os, host=host)
-        else:
-            display.vvvv('unable to load cliconf for network_os %s' % network_os)
+            cliconf = cliconf_loader.get(self._network_os, self)
+            if cliconf:
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
+                self._implementation_plugins.append(cliconf)
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 
-        self._connected = True
-
-    def _update_connection_state(self):
-        '''
-        Reconstruct the connection socket_path and check if it exists
-
-        If the socket path exists then the connection is active and set
-        both the _socket_path value to the path and the _connected value
-        to True.  If the socket path doesn't exist, leave the socket path
-        value to None and the _connected value to False
-        '''
-        ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(
-            self._play_context.remote_addr, self._play_context.port,
-            self._play_context.remote_user, self._play_context.connection,
-            self._ansible_playbook_pid
-        )
-
-        tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
-        socket_path = unfrackpath(cp % dict(directory=tmp_path))
-
-        if os.path.exists(socket_path):
             self._connected = True
-            self._socket_path = socket_path
-
-    def reset(self):
-        '''
-        Reset the connection
-        '''
-        if self._socket_path:
-            display.vvvv('resetting persistent connection for socket_path %s' % self._socket_path, host=self._play_context.remote_addr)
-            self.close()
-        display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
 
     def close(self):
+        '''
+        Close the active session to the device
+        '''
+        # only close the connection if its connected.
         if self._connected:
-            self._connected = False
+            display.vvvv("closing http(s) connection to device", host=self._play_context.remote_addr)
+            self.logout()
+
+        super(Connection, self).close()
 
     def send(self, path, data, **kwargs):
         '''
         Sends the command to the device over api
         '''
         url_kwargs = dict(
-            url_username=self.get_option('remote_user'), url_password=self.get_option('password'),
-            timeout=self.get_option('timeout'),
+            timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
+            headers={},
         )
         url_kwargs.update(kwargs)
+        if self._auth:
+            # Avoid modifying passed-in headers
+            headers = dict(kwargs.get('headers', {}))
+            headers.update(self._auth)
+            url_kwargs['headers'] = headers
+        else:
+            url_kwargs['url_username'] = self.get_option('remote_user')
+            url_kwargs['url_password'] = self.get_option('password')
 
         try:
             response = open_url(self._url + path, data=data, **url_kwargs)
+        except HTTPError as exc:
+            is_handled = self.handle_httperror(exc)
+            if is_handled is True:
+                return self.send(path, data, **kwargs)
+            elif is_handled is False:
+                raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
+            else:
+                raise
         except URLError as exc:
-            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
+            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
 
-        self._auth = response.info().get('Set-Cookie')
+        response_buffer = BytesIO()
+        response_buffer.write(response.read())
 
-        return response
+        # Try to assign a new auth token if one is given
+        self._auth = self.update_auth(response, response_buffer) or self._auth
+
+        return response, response_buffer

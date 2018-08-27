@@ -1,2 +1,0 @@
-bugfixes:
-  - user - only change the expiration time when necessary (https://github.com/ansible/ansible/issues/13235)

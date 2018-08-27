@@ -8,8 +8,8 @@
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
     sku:
-      name: PGSQLS100
-      tier: basic
+      name: GP_Gen4_2
+      tier: GeneralPurpose
     location: westus
     storage_mb: 51200
     enforce_ssl: True
@@ -27,8 +27,8 @@
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
     sku:
-      name: PGSQLS100
-      tier: basic
+      name: GP_Gen4_2
+      tier: GeneralPurpose
     location: westus
     storage_mb: 51200
     enforce_ssl: True
@@ -46,8 +46,8 @@
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
     sku:
-      name: PGSQLS100
-      tier: basic
+      name: GP_Gen4_2
+      tier: GeneralPurpose
     location: westus
     storage_mb: 51200
     enforce_ssl: True
@@ -59,6 +59,66 @@
     that:
       - output.changed == false
       - output.state == 'Ready'
+
+- name: Create second instance of PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}second
+    sku:
+      name: GP_Gen4_2
+      tier: GeneralPurpose
+    location: westus
+    storage_mb: 51200
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+
+- name: Gather facts PostgreSQL Server
+  azure_rm_postgresqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+  register: output 
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers[0]['id'] != None
+      - output.servers[0]['name'] != None
+      - output.servers[0]['location'] != None
+      - output.servers[0]['sku']['name'] != None
+      - output.servers[0]['sku']['tier'] != None
+      - output.servers[0]['sku']['capacity'] != None
+      - output.servers[0]['version'] != None
+      - output.servers[0]['user_visible_state'] != None
+      - output.servers[0]['fully_qualified_domain_name'] != None
+
+- name: Gather facts PostgreSQL Server
+  azure_rm_postgresqlserver_facts:
+    resource_group: "{{ resource_group }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers[0]['id'] != None
+      - output.servers[0]['name'] != None
+      - output.servers[0]['location'] != None
+      - output.servers[0]['sku']['name'] != None
+      - output.servers[0]['sku']['tier'] != None
+      - output.servers[0]['sku']['capacity'] != None
+      - output.servers[0]['version'] != None
+      - output.servers[0]['user_visible_state'] != None
+      - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.servers[1]['id'] != None
+      - output.servers[1]['name'] != None
+      - output.servers[1]['location'] != None
+      - output.servers[1]['sku']['name'] != None
+      - output.servers[1]['sku']['tier'] != None
+      - output.servers[1]['sku']['capacity'] != None
+      - output.servers[1]['version'] != None
+      - output.servers[1]['user_visible_state'] != None
+      - output.servers[1]['fully_qualified_domain_name'] != None
 
 - name: Delete instance of PostgreSQL Server -- check mode
   azure_rm_postgresqlserver:

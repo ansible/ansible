@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - command module - Add support for check mode when passing creates or removes arguments.
+    (https://github.com/ansible/ansible/pull/40428)
+  - shell module - Add support for check mode when passing creates or removes arguments.
+    (https://github.com/ansible/ansible/pull/40428)

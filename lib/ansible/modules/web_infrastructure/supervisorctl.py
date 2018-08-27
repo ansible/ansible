@@ -55,6 +55,7 @@ options:
 notes:
   - When C(state) = I(present), the module will call C(supervisorctl reread) then C(supervisorctl add) if the program/group does not exist.
   - When C(state) = I(restarted), the module will call C(supervisorctl update) then call C(supervisorctl restart).
+  - When C(state) = I(absent), the module will call C(supervisorctl reread) then C(supervisorctl remove) to remove the target program/group.
 requirements: [ "supervisorctl" ]
 author:
     - "Matt Wright (@mattupstate)"
@@ -234,6 +235,7 @@ def main():
         if len(processes) == 0:
             module.fail_json(name=name, msg="ERROR (no such process)")
         take_action_on_processes(processes, lambda s: s in ('RUNNING', 'STARTING'), 'stop', 'stopped')
+
 
 if __name__ == '__main__':
     main()

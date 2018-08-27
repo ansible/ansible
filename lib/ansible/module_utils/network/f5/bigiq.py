@@ -29,32 +29,33 @@ except ImportError:
 
 
 class F5Client(F5BaseClient):
+    def __init__(self, *args, **kwargs):
+        super(F5Client, self).__init__(*args, **kwargs)
+        self.provider = self.merge_provider_params()
+
     @property
     def api(self):
         exc = None
         if self._client:
             return self._client
-        for x in range(0, 3):
+        for x in range(0, 10):
             try:
-                server = self.params['provider']['server'] or self.params['server']
-                user = self.params['provider']['user'] or self.params['user']
-                password = self.params['provider']['password'] or self.params['password']
-                server_port = self.params['provider']['server_port'] or self.params['server_port'] or 443
-                validate_certs = self.params['provider']['validate_certs'] or self.params['validate_certs']
-
                 result = ManagementRoot(
-                    server,
-                    user,
-                    password,
-                    port=server_port,
-                    verify=validate_certs
+                    self.provider['server'],
+                    self.provider['user'],
+                    self.provider['password'],
+                    port=self.provider['server_port'],
+                    verify=self.provider['validate_certs']
                 )
                 self._client = result
                 return self._client
             except Exception as ex:
                 exc = ex
                 time.sleep(1)
-        error = 'Unable to connect to {0} on port {1}.'.format(self.params['server'], self.params['server_port'])
+        error = 'Unable to connect to {0} on port {1}.'.format(
+            self.provider['server'], self.provider['server_port']
+        )
+
         if exc is not None:
             error += ' The reported error was "{0}".'.format(str(exc))
         raise F5ModuleError(error)
@@ -62,9 +63,7 @@ class F5Client(F5BaseClient):
 
 class F5RestClient(F5BaseClient):
     def __init__(self, *args, **kwargs):
-        params = kwargs.get('module').params
-        module = kwargs.pop('module')
-        super(F5RestClient, self).__init__(module=module, **params)
+        super(F5RestClient, self).__init__(*args, **kwargs)
         self.provider = self.merge_provider_params()
 
     @property
@@ -88,7 +87,7 @@ class F5RestClient(F5BaseClient):
 
                 if response.status not in [200]:
                     raise F5ModuleError('Status code: {0}. Unexpected Error: {1} for uri: {2}\nText: {3}'.format(
-                        response.status, response.reason, response.url, response._content
+                        response.status, response.reason, response.url, response.content
                     ))
 
                 session.headers['X-F5-Auth-Token'] = response.json()['token']['token']

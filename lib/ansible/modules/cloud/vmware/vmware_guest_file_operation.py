@@ -107,14 +107,14 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Create directory inside a vm
   vmware_guest_file_operation:
-    hostname: myVSphere
-    username: myUsername
-    password: mySecret
-    datacenter: myDatacenter
-    validate_certs: True
-    vm_id: NameOfVM
-    vm_username: root
-    vm_password: superSecret
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    vm_id: "{{ guest_name }}"
+    vm_username: "{{ guest_username }}"
+    vm_password: "{{ guest_userpassword }}"
     directory:
       path: "/test"
       operation: create
@@ -123,14 +123,13 @@ EXAMPLES = '''
 
 - name: copy file to vm
   vmware_guest_file_operation:
-    hostname: myVSphere
-    username: myUsername
-    password: mySecret
-    datacenter: myDatacenter
-    validate_certs: True
-    vm_id: NameOfVM
-    vm_username: root
-    vm_password: superSecret
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    vm_id: "{{ guest_name }}"
+    vm_username: "{{ guest_username }}"
+    vm_password: "{{ guest_userpassword }}"
     copy:
         src: "files/test.zip"
         dest: "/root/test.zip"
@@ -139,14 +138,13 @@ EXAMPLES = '''
 
 - name: fetch file from vm
   vmware_guest_file_operation:
-    hostname: myVSphere
-    username: myUsername
-    password: mySecret
-    datacenter: myDatacenter
-    validate_certs: True
-    vm_id: NameOfVM
-    vm_username: root
-    vm_password: superSecret
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    vm_id: "{{ guest_name }}"
+    vm_username: "{{ guest_username }}"
+    vm_password: "{{ guest_userpassword }}"
     fetch:
         src: "/root/test.zip"
         dest: "files/test.zip"

@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -41,9 +41,6 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
-notes:
-   - Requires the netaddr Python package on the host. This is as easy as
-     pip install netaddr
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -103,6 +100,7 @@ try:
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -114,16 +112,11 @@ except ImportError:
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    from netaddr import IPAddress, AddrFormatError
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -174,11 +167,10 @@ class Parameters(AnsibleF5Parameters):
         return result
 
     def _format_member_address(self, member):
-        try:
-            address = str(IPAddress(member))
-            address = '/{0}/{1}'.format(self.partition, address)
+        if is_valid_ip(member):
+            address = '/{0}/{1}'.format(self.partition, member)
             return address
-        except (AddrFormatError, ValueError):
+        else:
             raise F5ModuleError(
                 'The provided member address is not a valid IP address'
             )
@@ -401,8 +393,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

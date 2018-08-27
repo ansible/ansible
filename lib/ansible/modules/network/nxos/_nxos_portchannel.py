@@ -138,22 +138,6 @@ def get_custom_value(arg, config, module):
     return value
 
 
-def execute_show_command(command, module):
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        if 'show port-channel summary' in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
-
-
 def get_portchannel_members(pchannel):
     try:
         members = pchannel['TABLE_member']['ROW_member']
@@ -187,13 +171,13 @@ def get_portchannel_mode(interface, protocol, module, netcfg):
 
 
 def get_portchannel(module, netcfg=None):
-    command = 'show port-channel summary'
+    command = 'show port-channel summary | json'
     portchannel = {}
     portchannel_table = {}
     members = []
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         pc_table = body['TABLE_channel']['ROW_channel']
 
         if isinstance(pc_table, dict):

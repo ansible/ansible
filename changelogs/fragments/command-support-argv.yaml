@@ -1,4 +1,0 @@
----
-features:
-  - command module - Added argv option to allow command to be specified as a list vs. a string
-    (https://github.com/ansible/ansible/issues/19392)

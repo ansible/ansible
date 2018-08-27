@@ -37,7 +37,7 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = """
-# All this examples depends on hiera.yml  that describes the hierarchy
+# All this examples depends on hiera.yml that describes the hierarchy
 
 - name: "a value from Hiera 'DB'"
   debug: msg={{ lookup('hiera', 'foo') }}

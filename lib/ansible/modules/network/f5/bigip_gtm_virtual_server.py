@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -252,6 +252,8 @@ try:
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import compare_dictionary
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.sdk_exception import LazyAttributesRequired
@@ -266,17 +268,13 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import compare_dictionary
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.sdk_exception import LazyAttributesRequired
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -357,8 +355,11 @@ class ApiParameters(Parameters):
         else:
             # IPv4
             parts = self._values['destination'].split(':')
-        addr = netaddr.IPAddress(parts[0])
-        return str(addr)
+        if is_valid_ip(parts[0]):
+            return str(parts[0])
+        raise F5ModuleError(
+            "'address' parameter from API was not an IP address."
+        )
 
     @property
     def port(self):
@@ -532,8 +533,11 @@ class ModuleParameters(Parameters):
     def address(self):
         if self._values['address'] is None:
             return None
-        addr = netaddr.IPAddress(self._values['address'])
-        return str(addr)
+        if is_valid_ip(self._values['address']):
+            return self._values['address']
+        raise F5ModuleError(
+            "Specified 'address' is not an IP address."
+        )
 
     @property
     def port(self):
@@ -549,11 +553,10 @@ class ModuleParameters(Parameters):
             return None
         if self.port is None:
             return None
-        addr = netaddr.IPAddress(self.address)
-        if addr.version == 4:
-            result = '{0}:{1}'.format(self.address, self.port)
-        else:
+        if validate_ip_v6_address(self.address):
             result = '{0}.{1}'.format(self.address, self.port)
+        else:
+            result = '{0}:{1}'.format(self.address, self.port)
         return result
 
     @property
@@ -1061,8 +1064,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

@@ -55,29 +55,21 @@ options:
   dest:
     description:
     - Output the response body to a file.
+    type: path
     version_added: '2.3'
   headers:
     description:
     - Extra headers to set on the request, see the examples for more details on
       how to set this.
-  use_basic_parsing:
-    description:
-    - As of Ansible 2.5, this option is no longer valid and cannot be changed from C(yes), this option will be removed
-      in Ansible 2.7.
-    - Before Ansible 2.5, this module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine
-      to parse a webpage.
-    - There's an edge-case where if a user hasn't run IE before, this will fail.
-    - The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a powershell script.
-    - That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
-    type: bool
-    default: 'yes'
   creates:
     description:
     - A filename, when it already exists, this step will be skipped.
+    type: path
     version_added: '2.4'
   removes:
     description:
     - A filename, when it does not exist, this step will be skipped.
+    type: path
     version_added: '2.4'
   return_content:
     description:
@@ -92,6 +84,7 @@ options:
     description:
     - A valid, numeric, HTTP status code that signifies success of the request.
     - Can also be comma separated list of status codes.
+    type: list
     default: 200
     version_added: '2.4'
   timeout:
@@ -102,6 +95,7 @@ options:
       If your request contains a host name that requires resolution, and you set
       C(timeout) to a value greater than zero, but less than 15 seconds, it can
       take 15 seconds or more before your request times out.
+    type: int
     default: 30
     version_added: '2.4'
   follow_redirects:
@@ -121,6 +115,7 @@ options:
     - If C(maximum_redirection) is set to 0 (zero)
       or C(follow_redirects) is set to C(none),
       or set to C(safe) when not doing C(GET) or C(HEAD) it prevents all redirection.
+    type: int
     default: 5
     version_added: '2.4'
   validate_certs:
@@ -138,6 +133,7 @@ options:
       certificate file is not password protected.
     - Other authentication types can set I(client_cert_password) when the cert
       is password protected.
+    type: path
     version_added: '2.4'
   client_cert_password:
     description:
@@ -189,7 +185,7 @@ status_code:
   type: int
   sample: 200
 status_description:
-  description: A summery of the status.
+  description: A summary of the status.
   returned: success
   type: string
   sample: OK

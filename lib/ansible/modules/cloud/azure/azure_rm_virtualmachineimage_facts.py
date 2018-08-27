@@ -215,5 +215,6 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 def main():
     AzureRMVirtualMachineImageFacts()
 
+
 if __name__ == '__main__':
     main()

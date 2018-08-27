@@ -37,7 +37,7 @@ DOCUMENTATION = """
       port:
         description:
             - port for winrm to connect on remote target
-            - The default is the https (5896) port, if using http it should be 5895
+            - The default is the https (5986) port, if using http it should be 5985
         vars:
           - name: ansible_port
           - name: ansible_winrm_port
@@ -181,12 +181,11 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def set_options(self, task_keys=None, var_options=None, direct=None):
-        if not HAS_WINRM:
-            return
-
-        super(Connection, self).set_options(task_keys=None, var_options=var_options, direct=direct)
-
+    def _build_winrm_kwargs(self):
+        # this used to be in set_options, as win_reboot needs to be able to
+        # override the conn timeout, we need to be able to build the args
+        # after setting individual options. This is called by _connect before
+        # starting the WinRM connection
         self._winrm_host = self.get_option('remote_addr')
         self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
@@ -294,7 +293,7 @@ class Connection(ConnectionBase):
                          % principal)
             try:
                 child = pexpect.spawn(command, kinit_cmdline, timeout=60,
-                                      env=krb5env)
+                                      env=krb5env, echo=False)
             except pexpect.ExceptionPexpect as err:
                 err_msg = "Kerberos auth failure when calling kinit cmd " \
                           "'%s': %s" % (command, to_native(err))
@@ -336,8 +335,13 @@ class Connection(ConnectionBase):
             rc = p.returncode != 0
 
         if rc != 0:
+            # one last attempt at making sure the password does not exist
+            # in the output
+            exp_msg = to_native(stderr.strip())
+            exp_msg = exp_msg.replace(to_native(password), "<redacted>")
+
             err_msg = "Kerberos auth failure for principal %s with %s: %s" \
-                      % (principal, proc_mechanism, to_native(stderr.strip()))
+                      % (principal, proc_mechanism, exp_msg)
             raise AnsibleConnectionFailure(err_msg)
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
@@ -474,11 +478,12 @@ class Connection(ConnectionBase):
 
         super(Connection, self)._connect()
         if not self.protocol:
+            self._build_winrm_kwargs()  # build the kwargs from the options set
             self.protocol = self._winrm_connect()
             self._connected = True
         return self
 
-    def _reset(self):  # used by win_reboot (and any other action that might need to bounce the state)
+    def reset(self):
         self.protocol = None
         self.shell_id = None
         self._connect()

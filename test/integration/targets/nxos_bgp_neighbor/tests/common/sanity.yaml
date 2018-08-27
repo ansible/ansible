@@ -18,14 +18,16 @@
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
+    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
 - name: "Setup"
   nxos_bgp_neighbor: &removenp
     asn: 65535
-    neighbor: 3.3.3.3
+    neighbor: 192.0.2.3
     vrf: "{{ item }}"
+    provider: "{{ connection }}"
     state: absent
   with_items: "{{ vrfs }}"
   ignore_errors: yes
@@ -33,8 +35,9 @@
 - name: "Setup"
   nxos_bgp_neighbor: &remove
     asn: 65535
-    neighbor: 3.3.3.3/32
+    neighbor: 192.0.2.3/32
     vrf: "{{ item }}"
+    provider: "{{ connection }}"
     state: absent
   with_items: "{{ vrfs }}"
   ignore_errors: yes
@@ -43,7 +46,7 @@
   - name: "Configure BGP neighbor1"
     nxos_bgp_neighbor: &configure1
       asn: 65535
-      neighbor: 3.3.3.3/32
+      neighbor: 192.0.2.3/32
       vrf: "{{ item }}"
       connected_check: true
       capability_negotiation: true
@@ -60,6 +63,7 @@
       description: "just a description"
       update_source: "{{ intname.capitalize() }}"
       shutdown: true
+      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -80,7 +84,7 @@
   - name: "Configure BGP neighbor2"
     nxos_bgp_neighbor: &configure2
       asn: 65535
-      neighbor: 3.3.3.3/32
+      neighbor: 192.0.2.3/32
       vrf: "{{ item }}"
       connected_check: False
       capability_negotiation: False
@@ -97,6 +101,7 @@
       description: default
       update_source: default
       shutdown: False
+      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -127,10 +132,11 @@
   - name: "Configure BGP neighbor3"
     nxos_bgp_neighbor: &configure3
       asn: 65535
-      neighbor: 3.3.3.3/32
+      neighbor: 192.0.2.3/32
       vrf: "{{ item }}"
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asa|default(omit)}}"
+      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -147,10 +153,11 @@
   - name: "Configure BGP neighbor4"
     nxos_bgp_neighbor: &configure4
       asn: 65535
-      neighbor: 3.3.3.3/32
+      neighbor: 192.0.2.3/32
       vrf: "{{ item }}"
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asr|default(omit)}}"
+      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -174,7 +181,7 @@
   - name: "Configure BGP neighbor 3des password"
     nxos_bgp_neighbor: &configure_3des_password
       asn: 65535
-      neighbor: 3.3.3.3/32
+      neighbor: 192.0.2.3/32
       vrf: "{{ item }}"
       remote_as: 30
       pwd: '386c0565965f89de'
@@ -201,7 +208,7 @@
   - name: "Configure BGP neighbor type 7 password"
     nxos_bgp_neighbor: &configure_type7_password
       asn: 65535
-      neighbor: 3.3.3.3/32
+      neighbor: 192.0.2.3/32
       vrf: "{{ item }}"
       remote_as: 30
       pwd: '386c0565965f89de'
@@ -221,7 +228,7 @@
   - name: "Remove BGP neighbor password"
     nxos_bgp_neighbor: &remove_password
       asn: 65535
-      neighbor: 3.3.3.3/32
+      neighbor: 192.0.2.3/32
       vrf: "{{ item }}"
       remote_as: 30
       pwd: default
@@ -248,7 +255,7 @@
   - name: "Configure BGP neighbor transport type passive"
     nxos_bgp_neighbor: &configure_transport_passive
       asn: 65535
-      neighbor: 3.3.3.3
+      neighbor: 192.0.2.3
       vrf: "{{ item }}"
       remote_as: 30
       transport_passive_only: true
@@ -267,7 +274,7 @@
   - name: "Configure BGP neighbor transport type default"
     nxos_bgp_neighbor: &configure_transport_default
       asn: 65535
-      neighbor: 3.3.3.3
+      neighbor: 192.0.2.3
       vrf: "{{ item }}"
       remote_as: 30
       transport_passive_only: false
@@ -307,6 +314,7 @@
   - name: "Disable feature bgp"
     nxos_feature: &disable_bgp
       feature: bgp
+      provider: "{{ connection }}"
       state: disabled
 
 - debug: msg="END connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"

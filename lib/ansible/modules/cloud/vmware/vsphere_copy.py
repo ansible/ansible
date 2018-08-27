@@ -67,19 +67,19 @@ notes:
 
 EXAMPLES = '''
 - vsphere_copy:
-    host: vhost
-    login: vuser
-    password: vpass
+    host: '{{ vhost }}'
+    login: '{{ vuser }}'
+    password: '{{ vpass }}'
     src: /some/local/file
     datacenter: DC1 Someplace
     datastore: datastore1
     path: some/remote/file
-  transport: local
+  delegate_to: localhost
 
 - vsphere_copy:
-    host: vhost
-    login: vuser
-    password: vpass
+    host: '{{ vhost }}'
+    login: '{{ vuser }}'
+    password: '{{ vpass }}'
     src: /other/local/file
     datacenter: DC2 Someplace
     datastore: datastore2

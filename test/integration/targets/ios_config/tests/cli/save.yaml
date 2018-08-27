@@ -9,13 +9,11 @@
     parents:
       - interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 
 - name: save config
   ios_config:
     save: true
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -25,7 +23,6 @@
 - name: save should always run
   ios_config:
     save: true
-    provider: "{{ cli }}"
   register: result
 
 - name: delete config (setup)
@@ -34,7 +31,6 @@
     lines:
       - "no ip http server"
     save_when: modified
-    provider: "{{ cli }}"
   register: result
 
 - name: save should always run
@@ -43,7 +39,6 @@
     lines:
       - "ip http server"
     save_when: modified
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -54,7 +49,6 @@
   ios_config:
     lines:
       - "no ip http server"
-    provider: "{{ cli }}"
   register: result
 
 - debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

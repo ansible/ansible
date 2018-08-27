@@ -1,7 +1,13 @@
+- name: Prepare random number
+  set_fact:
+    secgroupname: "sg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+
 - name: Create security group
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: on-exit
@@ -39,7 +45,7 @@
 - name: Add/Update rules on existing security group
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       rules:
           - name: AllowSSH
             protocol: Tcp
@@ -62,7 +68,7 @@
 - name: Test idempotence
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       rules:
           - name: AllowSSH
             protocol: Tcp
@@ -83,11 +89,12 @@
 - name: Update tags
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: never
           baz: bar
+      append_tags: false
   register: output
 
 - assert:
@@ -98,7 +105,8 @@
 - name: Purge tags
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
+      append_tags: false
       tags:
           testing: testing
           delete: on-exit
@@ -112,7 +120,7 @@
 - name: Gather facts for one accounts
   azure_rm_securitygroup_facts:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
   register: output
 
 - assert:
@@ -131,7 +139,7 @@
 - name: Create security group with source_address_prefixes
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: on-exit
@@ -159,7 +167,7 @@
 - name: Create security group with source_address_prefixes(idempontent)
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: mysecgroup
+      name: "{{ secgroupname }}"
       tags:
           testing: testing
           delete: on-exit
@@ -180,6 +188,30 @@
 
 - assert:
       that: not output.changed
+
+- name: Add a single one group
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ secgroupname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      rules:
+          - name: DenySSH
+            protocol: Tcp
+            source_address_prefix:
+            - 54.120.120.240
+            destination_port_range: 22
+            access: Deny
+            priority: 102
+            direction: Inbound
+  register: output
+
+- assert:
+     that: 
+      - output.changed
+      - "{{ output.state.rules | length }} == 2"
 
 - name: Delete all security groups
   azure_rm_securitygroup:

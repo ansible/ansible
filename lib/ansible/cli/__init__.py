@@ -180,10 +180,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             ver = deprecated[1]['version']
             display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
 
-        # warn about typing issues with configuration entries
-        for unable in C.config.UNABLE:
-            display.warning("Unable to set correct type for configuration entry: %s" % unable)
-
     @staticmethod
     def split_vault_id(vault_id):
         # return (before_@, after_@)
@@ -348,7 +344,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
 
         def _dep(which):
-            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.6')
+            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.9')
 
         if self.options.become:
             pass
@@ -587,13 +583,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             # optparse defaults does not do what's expected
             self.options.tags = ['all']
         if hasattr(self.options, 'tags') and self.options.tags:
-            if not C.MERGE_MULTIPLE_CLI_TAGS:
-                if len(self.options.tags) > 1:
-                    display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. '
-                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
-                                       version=2.5, removed=False)
-                    self.options.tags = [self.options.tags[-1]]
-
             tags = set()
             for tag_set in self.options.tags:
                 for tag in tag_set.split(u','):
@@ -602,13 +591,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # process skip_tags
         if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
-            if not C.MERGE_MULTIPLE_CLI_TAGS:
-                if len(self.options.skip_tags) > 1:
-                    display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. '
-                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
-                                       version=2.5, removed=False)
-                    self.options.skip_tags = [self.options.skip_tags[-1]]
-
             skip_tags = set()
             for tag_set in self.options.skip_tags:
                 for tag in tag_set.split(u','):
@@ -662,7 +644,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible_versions[counter] = 0
             try:
                 ansible_versions[counter] = int(ansible_versions[counter])
-            except:
+            except Exception:
                 pass
         if len(ansible_versions) < 3:
             for counter in range(len(ansible_versions), 3):
@@ -806,6 +788,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager(loader=loader, inventory=inventory)
+
+        if hasattr(options, 'basedir'):
+            if options.basedir:
+                variable_manager.safe_basedir = True
+        else:
+            variable_manager.safe_basedir = True
 
         # load vars from cli options
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=options)

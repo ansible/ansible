@@ -12,8 +12,7 @@
   net_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - name: Configure interface ipv4 address using platform agnostic module
@@ -21,8 +20,7 @@
     name: "{{ test_interface_1 }}"
     ipv4: 192.108.0.1/24
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -35,8 +33,7 @@
   net_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - debug: msg="END eos eapi/net_l3_interface.yaml on connection={{ ansible_connection }}"

@@ -51,29 +51,29 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 - name: Get Canonical name of particular target on particular ESXi host system
-  local_action:
-    module: vmware_target_canonical_facts
-    hostname: vcenter_hostname
-    username: vcenter_user
-    password: vcenter_pass
+  vmware_target_canonical_facts:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     target_id: 7
     esxi_hostname: esxi_hostname
+  delegate_to: localhost
 
 - name: Get Canonical name of all target on particular ESXi host system
-  local_action:
-    module: vmware_target_canonical_facts
-    hostname: vcenter_hostname
-    username: vcenter_user
-    password: vcenter_pass
-    esxi_hostname: esxi_hostname
+  vmware_target_canonical_facts:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
 
 - name: Get Canonical name of all ESXi hostname on particular Cluster
-  local_action:
-    module: vmware_target_canonical_facts
-    hostname: vcenter_hostname
-    username: vcenter_user
-    password: vcenter_pass
-    cluster_name: cluster_name
+  vmware_target_canonical_facts:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    cluster_name: '{{ cluster_name }}'
+  delegate_to: localhost
 '''
 
 RETURN = r"""
@@ -108,11 +108,6 @@ scsi_tgt_facts:
         },
     }
 """
-
-try:
-    from pyVmomi import vim, vmodl
-except ImportError:
-    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec

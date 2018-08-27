@@ -141,13 +141,13 @@ EXAMPLES = '''
       purge_rules: yes
       rules:
           - name: DenySSH
-            protocol: TCP
+            protocol: Tcp
             destination_port_range: 22
             access: Deny
             priority: 100
             direction: Inbound
           - name: 'AllowSSH'
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix:
               - '174.109.158.0/24'
               - '174.109.159.0/24'
@@ -155,6 +155,16 @@ EXAMPLES = '''
             access: Allow
             priority: 101
             direction: Inbound
+          - name: 'AllowMultiplePorts'
+            protocol: Tcp
+            source_address_prefix:
+              - '174.109.158.0/24'
+              - '174.109.159.0/24'
+            destination_port_range:
+              - 80
+              - 443
+            access: Allow
+            priority: 102
 
 # Update rules on existing security group
 - azure_rm_securitygroup:
@@ -162,13 +172,13 @@ EXAMPLES = '''
       name: mysecgroup
       rules:
           - name: DenySSH
-            protocol: TCP
+            protocol: Tcp
             destination_port_range: 22-23
             access: Deny
             priority: 100
             direction: Inbound
           - name: AllowSSHFromHome
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix: '174.109.158.0/24'
             destination_port_range: 22-23
             access: Allow
@@ -338,6 +348,7 @@ except ImportError:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six import integer_types
+from ansible.module_utils._text import to_native
 
 
 def validate_rule(self, rule, rule_type=None):
@@ -376,6 +387,11 @@ def compare_rules_change(old_list, new_list, purge_list):
             new_list.append(old_rule)
         else:  # one rule is removed
             changed = True
+    # Compare new list and old list is the same? here only compare names
+    if not changed:
+        new_names = [to_native(x['name']) for x in new_list]
+        old_names = [to_native(x['name']) for x in old_list]
+        changed = (set(new_names) != set(old_names))
     return changed, new_list
 
 
@@ -536,7 +552,6 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.rules = None
         self.state = None
         self.tags = None
-        self.client = None  # type: azure.mgmt.network.NetworkManagementClient
         self.nsg_models = None  # type: azure.mgmt.network.models
 
         self.results = dict(
@@ -548,11 +563,10 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
-        self.client = self.get_mgmt_svc_client(NetworkManagementClient)
         # tighten up poll interval for security groups; default 30s is an eternity
         # this value is still overridden by the response Retry-After header (which is set on the initial operation response to 10s)
-        self.client.config.long_running_operation_timeout = 3
-        self.nsg_models = self.client.network_security_groups.models
+        self.network_client.config.long_running_operation_timeout = 3
+        self.nsg_models = self.network_client.network_security_groups.models
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -580,7 +594,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
 
         try:
-            nsg = self.client.network_security_groups.get(self.resource_group, self.name)
+            nsg = self.network_client.network_security_groups.get(self.resource_group, self.name)
             results = create_network_security_group_dict(nsg)
             self.log("Found security group:")
             self.log(results, pretty_print=True)
@@ -668,9 +682,9 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         parameters.location = results.get('location')
 
         try:
-            poller = self.client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
-                                                                          network_security_group_name=self.name,
-                                                                          parameters=parameters)
+            poller = self.network_client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                  network_security_group_name=self.name,
+                                                                                  parameters=parameters)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
@@ -678,7 +692,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def delete(self):
         try:
-            poller = self.client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
+            poller = self.network_client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))

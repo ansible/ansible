@@ -85,6 +85,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
     def parse(self, inventory, loader, path, cache=None):
 
         super(InventoryModule, self).parse(inventory, loader, path)
+        self.set_options()
 
         if cache is None:
             cache = self.get_option('cache')

@@ -55,20 +55,18 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example from Ansible playbook
-
-    - name: Migrate Management vmk
-      local_action:
-        module: vmware_migrate_vmk
-        hostname: vcsa_host
-        username: vcsa_user
-        password: vcsa_pass
-        esxi_hostname: esxi_hostname
-        device: vmk1
-        current_switch_name: temp_vswitch
-        current_portgroup_name: esx-mgmt
-        migrate_switch_name: dvSwitch
-        migrate_portgroup_name: Management
+- name: Migrate Management vmk
+  vmware_migrate_vmk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: "{{ esxi_hostname }}"
+    device: vmk1
+    current_switch_name: temp_vswitch
+    current_portgroup_name: esx-mgmt
+    migrate_switch_name: dvSwitch
+    migrate_portgroup_name: Management
+  delegate_to: localhost
 '''
 try:
     from pyVmomi import vim, vmodl

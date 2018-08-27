@@ -80,3 +80,29 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
             raise
 
     return data
+
+
+def read_docstub(filename):
+    """
+    Quickly find short_description using string methods instead of node parsing.
+    This does not return a full set of documentation strings and is intended for
+    operations like ansible-doc -l.
+    """
+
+    t_module_data = open(filename, 'r')
+    capturing = False
+    doc_stub = []
+
+    for line in t_module_data:
+        # start capturing the stub until indentation returns
+        if capturing and line[0] == ' ':
+            doc_stub.append(line)
+        elif capturing and line[0] != ' ':
+            break
+        if 'short_description:' in line:
+            capturing = True
+            doc_stub.append(line)
+
+    data = AnsibleLoader(r"".join(doc_stub), file_name=filename).get_single_data()
+
+    return data

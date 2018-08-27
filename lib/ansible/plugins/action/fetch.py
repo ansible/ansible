@@ -159,7 +159,7 @@ class ActionModule(ActionBase):
                 elif remote_checksum == '4':
                     result['msg'] = "python isn't present on the system.  Unable to compute checksum"
                 elif remote_checksum == '5':
-                    result['msg'] = "stdlib json or simplejson was not found on the remote machine. Only the raw module can work without those installed"
+                    result['msg'] = "stdlib json was not found on the remote machine. Only the raw module can work without those installed"
                 # Historically, these don't fail because you may want to transfer
                 # a log file that possibly MAY exist but keep going to fetch other
                 # log files. Today, this is better achieved by adding

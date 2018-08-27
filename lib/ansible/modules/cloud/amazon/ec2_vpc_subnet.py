@@ -18,7 +18,9 @@ short_description: Manage subnets in AWS virtual private clouds
 description:
     - Manage subnets in AWS virtual private clouds
 version_added: "2.0"
-author: Robert Estelle (@erydo), Brad Davidson (@brandond)
+author:
+- Robert Estelle (@erydo)
+- Brad Davidson (@brandond)
 requirements: [ boto3 ]
 options:
   az:
@@ -205,7 +207,6 @@ subnet:
 
 import time
 import traceback
-from distutils.version import LooseVersion
 
 try:
     import botocore
@@ -255,7 +256,7 @@ def describe_subnets_with_backoff(client, **params):
 
 
 def waiter_params(module, params, start_time):
-    if LooseVersion(botocore.__version__) >= "1.7.0":
+    if not module.botocore_at_least("1.7.0"):
         remaining_wait_timeout = int(module.params['wait_timeout'] + start_time - time.time())
         params['WaiterConfig'] = {'Delay': 5, 'MaxAttempts': remaining_wait_timeout // 5}
     return params
@@ -578,7 +579,7 @@ def main():
     if module.params.get('assign_instances_ipv6') and not module.params.get('ipv6_cidr'):
         module.fail_json(msg="assign_instances_ipv6 is True but ipv6_cidr is None or an empty string")
 
-    if LooseVersion(botocore.__version__) < "1.7.0":
+    if not module.botocore_at_least("1.7.0"):
         module.warn("botocore >= 1.7.0 is required to use wait_timeout for custom wait times")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)

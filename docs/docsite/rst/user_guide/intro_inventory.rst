@@ -322,7 +322,7 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
     a_group:
         testvar: a
         ansible_group_priority: 10
-    b_group
+    b_group：
         testvar: b
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
@@ -486,7 +486,7 @@ Here is an example of how to instantly deploy to created containers::
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning Ansible's configuration, deployment, and orchestration language.
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

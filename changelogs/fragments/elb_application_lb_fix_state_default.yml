@@ -1,0 +1,4 @@
+---
+bugfixes:
+- elb_application_lb - Fix a dangerous behavior of deleting an ELB if state was omitted from the task.
+  Now state defaults to 'present', which is typical throughout AWS modules.

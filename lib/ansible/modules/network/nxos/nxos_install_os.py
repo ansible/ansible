@@ -34,14 +34,10 @@ notes:
     - Tested against the following platforms and images
       - N9k 7.0(3)I4(6), 7.0(3)I5(3), 7.0(3)I6(1), 7.0(3)I7(1), 7.0(3)F2(2), 7.0(3)F3(2)
       - N3k 6.0(2)A8(6), 6.0(2)A8(8), 7.0(3)I6(1), 7.0(3)I7(1)
-      - N7k 7.3(0)D1(1), 8.0(1), 8.2(1)
-    - This module executes longer then the default ansible timeout value and
-      will generate errors unless the module timeout parameter is set to a
-      value of 500 seconds or higher.
-      The example time is sufficent for most upgrades but this can be
-      tuned higher based on specific upgrade time requirements.
-      The module will exit with a failure message if the timer is
-      not set to 500 seconds or higher.
+      - N7k 7.3(0)D1(1), 8.0(1), 8.1(1), 8.2(1)
+    - This module requires both the ANSIBLE_PERSISTENT_CONNECT_TIMEOUT and
+      ANSIBLE_PERSISTENT_COMMAND_TIMEOUT timers to be set to 600 seconds or higher.
+      The module will exit if the timers are not set properly.
     - Do not include full file paths, just the name of the file(s) stored on
       the top level flash directory.
     - This module attempts to install the software immediately,
@@ -65,7 +61,7 @@ options:
         version_added: "2.5"
         description:
             - Upgrade using In Service Software Upgrade (ISSU).
-              (Only supported on N9k platforms)
+              (Supported on N5k, N7k, N9k platforms)
             - Selecting 'required' or 'yes' means that upgrades will only
               proceed if the switch is capable of ISSU.
             - Selecting 'desired' means that upgrades will use ISSU if possible
@@ -81,7 +77,6 @@ EXAMPLES = '''
   nxos_install_os:
     system_image_file: nxos.7.0.3.I6.1.bin
     issu: desired
-    provider: "{{ connection | combine({'timeout': 500}) }}"
 
 - name: Wait for device to come back up with new image
   wait_for:
@@ -127,25 +122,6 @@ from time import sleep
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-
-
-def check_ansible_timer(module):
-    '''Check Ansible Timer Values'''
-    msg = "The 'timeout' provider param value for this module to execute\n"
-    msg = msg + 'properly is too low.\n'
-    msg = msg + 'Upgrades can take a long time so the value needs to be set\n'
-    msg = msg + 'to the recommended value of 500 seconds or higher in the\n'
-    msg = msg + 'ansible playbook for the nxos_install_os module.\n'
-    msg = msg + '\n'
-    msg = msg + 'provider: "{{ connection | combine({\'timeout\': 500}) }}"'
-    data = module.params.get('provider')
-    timer_low = False
-    if data.get('timeout') is None:
-        timer_low = True
-    if data.get('timeout') is not None and data.get('timeout') < 500:
-        timer_low = True
-    if timer_low:
-        module.fail_json(msg=msg.split('\n'))
 
 
 # Output options are 'text' or 'json'
@@ -274,6 +250,9 @@ def parse_show_install(data):
             ud['upgrade_succeeded'] = True
             break
         if re.search(r'Install has been successful', x):
+            ud['upgrade_succeeded'] = True
+            break
+        if re.search(r'Switching over onto standby', x):
             ud['upgrade_succeeded'] = True
             break
 
@@ -495,8 +474,14 @@ def do_install_all(module, issu, image, kick=None):
         # needs to be upgraded.
         if impact_data['disruptive']:
             # Check mode indicated that ISSU is not possible so issue the
-            # upgrade command without the non-disruptive flag.
-            issu = 'no'
+            # upgrade command without the non-disruptive flag unless the
+            # playbook specified issu: yes/required.
+            if issu == 'yes':
+                msg = 'ISSU/ISSD requested but impact data indicates ISSU/ISSD is not possible'
+                module.fail_json(msg=msg, raw_data=impact_data['list_data'])
+            else:
+                issu = 'no'
+
         commands = build_install_cmd_set(issu, image, kick, 'install')
         opts = {'ignore_timeout': True}
         # The system may be busy from the call to check_mode so loop until
@@ -539,15 +524,14 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    # This module will error out if the Ansible task timeout value is not
-    # tuned high enough.
-    check_ansible_timer(module)
-
     # Get system_image_file(sif), kickstart_image_file(kif) and
     # issu settings from module params.
     sif = module.params['system_image_file']
     kif = module.params['kickstart_image_file']
     issu = module.params['issu']
+
+    if re.search(r'(yes|required)', issu):
+        issu = 'yes'
 
     if kif == 'null' or kif == '':
         kif = None

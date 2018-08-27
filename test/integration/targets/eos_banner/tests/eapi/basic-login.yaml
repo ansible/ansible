@@ -4,19 +4,17 @@
 - name: Remove previous login banner
   eos_config:
     lines: no banner login
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: Create login banner
-  eos_banner:
+  eos_banner: &multiline
     banner: login
     text: |
       this is my login banner
       that has a multiline
       string
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -27,15 +25,8 @@
       - "'ansible_1' in result.session_name"
 
 - name: Create login banner again (idempotent)
-  eos_banner:
-    banner: login
-    text: |
-      this is my login banner
-      that has a multiline
-      string
-    state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  eos_banner: *multiline
+  become: yes
   register: result
 
 - assert:
@@ -46,15 +37,14 @@
       - "result.session_name is not defined"
 
 - name: Remove login
-  eos_banner:
+  eos_banner: &remove
     banner: login
     text: |
       this is my login banner
       that has a multiline
       string
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -65,15 +55,8 @@
       - "'ansible_1' in result.session_name"
 
 - name: Remove login again (idempotent)
-  eos_banner:
-    banner: login
-    text: |
-      this is my login banner
-      that has a multiline
-      string
-    state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  eos_banner: *remove
+  become: yes
   register: result
 
 - assert:

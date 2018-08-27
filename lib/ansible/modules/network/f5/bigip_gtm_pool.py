@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -177,12 +177,7 @@ options:
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
     version_added: 2.6
-notes:
-  - Requires the netaddr Python package on the host. This is as easy as
-    pip install netaddr.
 extends_documentation_fragment: f5
-requirements:
-  - netaddr
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -262,6 +257,7 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.sdk_exception import LazyAttributesRequired
@@ -275,17 +271,12 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.sdk_exception import LazyAttributesRequired
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    from netaddr import IPAddress, AddrFormatError
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -384,14 +375,9 @@ class Parameters(AnsibleF5Parameters):
             return 'any'
         if self._values['fallback_ip'] == 'any6':
             return 'any6'
-        try:
-            address = IPAddress(self._values['fallback_ip'])
-            if address.version == 4:
-                return str(address.ip)
-            elif address.version == 6:
-                return str(address.ip)
-            return None
-        except AddrFormatError:
+        if is_valid_ip(self._values['fallback_ip']):
+            return self._values['fallback_ip']
+        else:
             raise F5ModuleError(
                 'The provided fallback address is not a valid IPv4 address'
             )
@@ -1123,8 +1109,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

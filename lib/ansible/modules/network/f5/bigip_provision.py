@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -342,7 +342,7 @@ class ModuleManager(object):
         # Sleep a little to let rebooting take effect
         time.sleep(20)
 
-        while nops < 6:
+        while nops < 3:
             try:
                 self.client.reconnect()
                 next_reboot = self._get_last_reboot()

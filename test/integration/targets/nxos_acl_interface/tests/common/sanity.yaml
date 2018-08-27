@@ -13,6 +13,7 @@
   nxos_config: &default
     lines:
       - "default interface {{ intname }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup: Put interface into no switch port mode"
@@ -22,12 +23,14 @@
     parents:
       - "interface {{ intname }}"
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup: Cleanup possibly existing acl"
   nxos_acl: &remove
     name: ANSIBLE_ACL
     seq: 10
+    provider: "{{ connection }}"
     state: delete_acl
   ignore_errors: yes
 
@@ -37,8 +40,9 @@
     seq: 10
     action: permit
     proto: tcp
-    src: 1.1.1.1/24
+    src: 192.0.2.1/24
     dest: any
+    provider: "{{ connection }}"
 
 - block:
   - name: Configure acl interface egress
@@ -46,6 +50,7 @@
       name: ANSIBLE_ACL
       interface: "{{ intname }}"
       direction: egress
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -66,6 +71,7 @@
       name: ANSIBLE_ACL
       interface: "{{ intname }}"
       direction: ingress
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -82,6 +88,7 @@
       name: ANSIBLE_ACL
       interface: "{{ intname }}"
       direction: egress
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -98,6 +105,7 @@
       name: ANSIBLE_ACL
       interface: "{{ intname }}"
       direction: ingress
+      provider: "{{ connection }}"
       state: absent
     register: result
 

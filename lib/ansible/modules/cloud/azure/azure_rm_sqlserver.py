@@ -54,7 +54,6 @@ options:
         choices:
             - absent
             - present
-        version_added: "2.6"
 
 extends_documentation_fragment:
     - azure
@@ -321,6 +320,7 @@ class AzureRMServers(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMServers()
+
 
 if __name__ == '__main__':
     main()

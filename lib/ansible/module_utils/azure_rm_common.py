@@ -9,6 +9,7 @@ import types
 import copy
 import inspect
 import traceback
+import json
 
 from os.path import expanduser
 
@@ -23,8 +24,7 @@ except ImportError:
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
         type='str',
-        choices=['auto', 'cli', 'env', 'credential_file', 'msi'],
-        default='auto'
+        choices=['auto', 'cli', 'env', 'credential_file', 'msi']
     ),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
@@ -37,7 +37,6 @@ AZURE_COMMON_ARGS = dict(
     cert_validation_mode=dict(type='str', choices=['validate', 'ignore']),
     api_profile=dict(type='str', default='latest'),
     adfs_authority_url=dict(type='str', default=None)
-    # debug=dict(type='bool', default=False),
 )
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
@@ -67,7 +66,8 @@ AZURE_API_PROFILES = {
         ),
         'NetworkManagementClient': '2017-11-01',
         'ResourceManagementClient': '2017-05-10',
-        'StorageManagementClient': '2017-10-01'
+        'StorageManagementClient': '2017-10-01',
+        'WebsiteManagementClient': '2016-08-01'
     },
 
     '2017-03-09-profile': {
@@ -151,6 +151,8 @@ try:
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from adal.authentication_context import AuthenticationContext
+    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
+    from azure.mgmt.rdbms.mysql import MySQLManagementClient
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -195,23 +197,23 @@ AZURE_PKG_VERSIONS = {
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
-        'expected_version': '2.0.0'
+        'expected_version': '2.1.0'
     },
     'ContainerInstanceManagementClient': {
         'package_name': 'containerinstance',
-        'expected_version': '0.3.1'
+        'expected_version': '0.4.0'
     },
     'NetworkManagementClient': {
         'package_name': 'network',
-        'expected_version': '1.3.0'
+        'expected_version': '1.7.1'
     },
     'ResourceManagementClient': {
         'package_name': 'resource',
-        'expected_version': '1.1.0'
+        'expected_version': '1.2.2'
     },
     'DnsManagementClient': {
         'package_name': 'dns',
-        'expected_version': '1.0.1'
+        'expected_version': '1.2.0'
     },
     'WebSiteManagementClient': {
         'package_name': 'web',
@@ -272,13 +274,14 @@ class AzureRMModuleBase(object):
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
+        self._mysql_client = None
+        self._postgresql_client = None
         self._adfs_authority_url = None
         self._resource = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
         self.facts_module = facts_module
-        # self.debug = self.module.params.get('debug')
 
         # authenticate
         self.credentials = self._get_credentials(self.module.params)
@@ -408,8 +411,11 @@ class AzureRMModuleBase(object):
                 return
             expected_version = package_version.get('expected_version')
             if Version(client_version) < Version(expected_version):
-                self.fail("Installed azure-mgmt-{0} client version is {1}. The supported version is {2}. Try "
+                self.fail("Installed azure-mgmt-{0} client version is {1}. The minimum supported version is {2}. Try "
                           "`pip install ansible[azure]`".format(client_name, client_version, expected_version))
+            if Version(client_version) != Version(expected_version):
+                self.module.warn("Installed azure-mgmt-{0} client version is {1}. The expected version is {2}. Try "
+                                 "`pip install ansible[azure]`".format(client_name, client_version, expected_version))
 
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
@@ -428,14 +434,10 @@ class AzureRMModuleBase(object):
         self.module.deprecate(msg, version)
 
     def log(self, msg, pretty_print=False):
-        pass
-        # Use only during module development
-        # if self.debug:
-        #     log_file = open('azure_rm.log', 'a')
-        #     if pretty_print:
-        #         log_file.write(json.dumps(msg, indent=4, sort_keys=True))
-        #     else:
-        #         log_file.write(msg + u'\n')
+        if pretty_print:
+            self.module.debug(json.dumps(msg, indent=4, sort_keys=True))
+        else:
+            self.module.debug(msg)
 
     def validate_tags(self, tags):
         '''
@@ -461,17 +463,20 @@ class AzureRMModuleBase(object):
         :return: bool, dict
         '''
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
+        param_tags = self.module.params.get('tags') if isinstance(self.module.params.get('tags'), dict) else dict()
+        append_tags = self.module.params.get('append_tags') if self.module.params.get('append_tags') is not None else True
         changed = False
-        if isinstance(self.module.params.get('tags'), dict):
-            for key, value in self.module.params['tags'].items():
-                if not new_tags.get(key) or new_tags[key] != value:
+        # check add or update
+        for key, value in param_tags.items():
+            if not new_tags.get(key) or new_tags[key] != value:
+                changed = True
+                new_tags[key] = value
+        # check remove
+        if not append_tags:
+            for key, value in tags.items():
+                if not param_tags.get(key):
+                    new_tags.pop(key)
                     changed = True
-                    new_tags[key] = value
-            if isinstance(tags, dict):
-                for key, value in tags.items():
-                    if not self.module.params['tags'].get(key):
-                        new_tags.pop(key)
-                        changed = True
         return changed, new_tags
 
     def has_tags(self, obj_tags, tag_list):
@@ -923,16 +928,16 @@ class AzureRMModuleBase(object):
 
         client_argspec = inspect.getargspec(client_type.__init__)
 
+        if not base_url:
+            # most things are resource_manager, don't make everyone specify
+            base_url = self._cloud_environment.endpoints.resource_manager
+
         client_kwargs = dict(credentials=self.azure_credentials, subscription_id=self.subscription_id, base_url=base_url)
 
         api_profile_dict = {}
 
         if self.api_profile:
             api_profile_dict = self.get_api_profile(client_type.__name__, self.api_profile)
-
-        if not base_url:
-            # most things are resource_manager, don't make everyone specify
-            base_url = self._cloud_environment.endpoints.resource_manager
 
         # unversioned clients won't accept profile; only send it if necessary
         # clients without a version specified in the profile will use the default
@@ -945,6 +950,9 @@ class AzureRMModuleBase(object):
             profile_default_version = api_profile_dict.get('default_api_version', None)
             if api_version or profile_default_version:
                 client_kwargs['api_version'] = api_version or profile_default_version
+                if 'profile' in client_kwargs:
+                    # remove profile; only pass API version if specified
+                    client_kwargs.pop('profile')
 
         client = client_type(**client_kwargs)
 
@@ -983,7 +991,6 @@ class AzureRMModuleBase(object):
 
     @property
     def storage_models(self):
-        self.log('Getting storage models...')
         return StorageManagementClient.models("2017-10-01")
 
     @property
@@ -1041,7 +1048,8 @@ class AzureRMModuleBase(object):
         self.log('Getting web client')
         if not self._web_client:
             self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+                                                        base_url=self._cloud_environment.endpoints.resource_manager,
+                                                        api_version='2016-08-01')
         return self._web_client
 
     @property
@@ -1051,3 +1059,19 @@ class AzureRMModuleBase(object):
             self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
                                                                      base_url=self._cloud_environment.endpoints.resource_manager)
         return self._containerservice_client
+
+    @property
+    def postgresql_client(self):
+        self.log('Getting PostgreSQL client')
+        if not self._postgresql_client:
+            self._postgresql_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._postgresql_client
+
+    @property
+    def mysql_client(self):
+        self.log('Getting MySQL client')
+        if not self._mysql_client:
+            self._mysql_client = self.get_mgmt_svc_client(MySQLManagementClient,
+                                                          base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._mysql_client

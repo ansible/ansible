@@ -7,11 +7,13 @@
       - "snmp-server contact ansible"
       - "hostname {{ inventory_hostname_short }}"
     match: none
+  become: yes
 
 - name: configure top level command with before
   eos_config:
     lines: hostname foo
     before: snmp-server contact bar
+  become: yes
   register: result
 
 - assert:
@@ -24,6 +26,7 @@
   eos_config:
     lines: hostname foo
     before: snmp-server contact foo
+  become: yes
   register: result
 
 - assert:
@@ -33,8 +36,9 @@
 - name: teardown
   eos_config:
     lines:
-      - no snmp-server contact ansible
-      - hostname {{ inventory_hostname_short }}
+      - no snmp-server contact
+      - "hostname {{ inventory_hostname_short }}"
     match: none
+  become: yes
 
 - debug: msg="END eapi/toplevel_before.yaml"

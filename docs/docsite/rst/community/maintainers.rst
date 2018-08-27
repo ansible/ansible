@@ -21,7 +21,7 @@ When you contribute a new module to the `ansible/ansible <https://github.com/ans
 
 Maintainers of Ansible modules are expected to provide feedback, responses, or actions on pull requests or issues to the module(s) they maintain in a reasonably timely manner.
 
-It is also recommended that you occasionally revisit the `contribution guidelines <https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md>`_, as they are continually refined. Occasionally, you may be requested to update your module to move it closer to the general accepted standard requirements. We hope for this to be infrequent, and will always be a request with a fair amount of lead time (ie: not by tomorrow!).
+It is also recommended that you occasionally revisit the `contribution guidelines <https://github.com/ansible/ansible/blob/devel/.github/CONTRIBUTING.md>`_, as they are continually refined. Occasionally, you may be requested to update your module to move it closer to the general accepted standard requirements. We hope for this to be infrequent, and will always be a request with a fair amount of lead time (ie: not by tomorrow!).
 
 Finally, following the `ansible-devel <https://groups.google.com/forum/#!forum/ansible-devel>`_ mailing list can be a great way to participate in the broader Ansible community, and a place where you can influence the overall direction, quality, and goals of Ansible and its modules. If you're not on this relatively low-volume list, please join us here: https://groups.google.com/forum/#!forum/ansible-devel
 

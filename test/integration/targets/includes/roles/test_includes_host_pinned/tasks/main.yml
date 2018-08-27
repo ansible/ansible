@@ -1,0 +1,6 @@
+- name: this needs to be here
+  debug:
+    msg: "hello"
+- include: inner.yml
+  with_items:
+  - '1'

@@ -1,0 +1,2 @@
+bugfixes:
+- win_lineinfile - changed `-Path` to `-LiteralPath` so that square brackes in the path are interpreted literally -  https://github.com/ansible/ansible/issues/44508

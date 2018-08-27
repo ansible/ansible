@@ -272,5 +272,6 @@ def main():
     return avi_ansible_api(module, 'cloud',
                            set([]))
 
+
 if __name__ == '__main__':
     main()

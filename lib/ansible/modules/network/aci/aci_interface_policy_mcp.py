@@ -35,8 +35,8 @@ options:
   admin_state:
     description:
     - Enable or disable admin state.
-    - The APIC defaults to C(enable) when unset during creation.
-    choices: [ disable, enable ]
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -55,6 +55,7 @@ EXAMPLES = r'''
     mcp: '{{ mcp }}'
     description: '{{ descr }}'
     admin_state: '{{ admin_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -195,8 +196,8 @@ def main():
         root_class=dict(
             aci_class='mcpIfPol',
             aci_rn='infra/mcpIfP-{0}'.format(mcp),
-            filter_target='eq(mcpIfPol.name, "{0}")'.format(mcp),
             module_object=mcp,
+            target_filter={'name': mcp},
         ),
     )
 

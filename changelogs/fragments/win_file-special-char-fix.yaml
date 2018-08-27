@@ -1,2 +1,0 @@
-bugfixes:
-- win_file - fix issue where special chars like [ and ] were not being handled correctly https://github.com/ansible/ansible/pull/37901

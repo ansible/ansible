@@ -85,7 +85,8 @@ options:
       - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <algorithm>:<checksum>, e.g. checksum="sha256:D98291AC[...]B6DC7B97"'
+        Format: <algorithm>:<checksum|url>, e.g. checksum="sha256:D98291AC[...]B6DC7B97",
+        checksum="sha256:http://example.com/path/sha256sum.txt"'
       - If you worry about portability, only the sha1 algorithm is available
         on all platforms and python versions.
       - The third party hashlib library can be installed for access to additional algorithms.
@@ -192,6 +193,12 @@ EXAMPLES = r'''
     dest: /etc/foo.conf
     checksum: md5:66dffb5228a211e61d6d7ef4a86f5758
 
+- name: Download file with checksum url (sha256)
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
+    checksum: 'sha256:http://example.com/path/sha256sum.txt'
+
 - name: Download file from a file path
   get_url:
     url: file:///tmp/afile.txt
@@ -269,7 +276,7 @@ state:
     returned: success
     type: string
     sample: file
-status:
+status_code:
     description: the HTTP status code from the request
     returned: always
     type: int
@@ -342,7 +349,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
             else:
                 module.fail_json(msg="%s directory does not exist." % tmp_dest)
     else:
-        tmp_dest = getattr(module, 'tmpdir', None)
+        tmp_dest = module.tmpdir
 
     fd, tempname = tempfile.mkstemp(dir=tmp_dest)
 
@@ -398,7 +405,7 @@ def main():
         argument_spec=argument_spec,
         add_file_common_args=True,
         supports_check_mode=True,
-        mutually_exclusive=(['checksum', 'sha256sum']),
+        mutually_exclusive=[['checksum', 'sha256sum']],
     )
 
     url = module.params['url']
@@ -433,7 +440,16 @@ def main():
     # checksum specified, parse for algorithm and checksum
     if checksum:
         try:
-            algorithm, checksum = checksum.rsplit(':', 1)
+            algorithm, checksum = checksum.split(':', 1)
+            if checksum.startswith('http://') or checksum.startswith('https://') or checksum.startswith('ftp://'):
+                checksum_url = checksum
+                # download checksum file to checksum_tmpsrc
+                checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
+                lines = [line.rstrip('\n') for line in open(checksum_tmpsrc)]
+                os.remove(checksum_tmpsrc)
+                lines = dict(s.split(None, 1) for s in lines)
+                filename = url_filename(url)
+                [checksum] = (k for (k, v) in lines.items() if v == filename)
             # Remove any non-alphanumeric characters, including the infamous
             # Unicode zero-width space
             checksum = re.sub(r'\W+', '', checksum).lower()
@@ -451,21 +467,17 @@ def main():
             destination_checksum = module.digest_from_file(dest, algorithm)
 
             if checksum == destination_checksum:
-                module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+                # Not forcing redownload, unless checksum does not match
+                # allow file attribute changes
+                module.params['path'] = dest
+                file_args = module.load_file_common_arguments(module.params)
+                file_args['path'] = dest
+                changed = module.set_fs_attributes_if_different(file_args, False)
+                if changed:
+                    module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
+                module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
             checksum_mismatch = True
-
-        # Not forcing redownload, unless checksum does not match
-        if not force and not checksum_mismatch:
-            # allow file attribute changes
-            module.params['path'] = dest
-            file_args = module.load_file_common_arguments(module.params)
-            file_args['path'] = dest
-            changed = module.set_fs_attributes_if_different(file_args, False)
-
-            if changed:
-                module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
-            module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
         # If the file already exists, prepare the last modified time for the
         # request.

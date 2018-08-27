@@ -150,11 +150,11 @@ options:
       - If you want to add a profile to the list of profiles currently active
         on the virtual, then simply add it to the C(profiles) list. See
         examples for an illustration of this.
-      - B(Profiles matter). There is a good chance that this module will fail to configure
-        a BIG-IP if you mix up your profiles, or, if you attempt to set an IP protocol
-        which your current, or new, profiles do not support. Both this module, and BIG-IP,
-        will tell you when you are wrong, with an error resembling C(lists profiles
-        incompatible with its protocol).
+      - B(Profiles matter). This module will fail to configure a BIG-IP if you mix up
+        your profiles, or, if you attempt to set an IP protocol which your current,
+        or new, profiles do not support. Both this module, and BIG-IP, will tell you
+        when you are wrong, with an error resembling C(lists profiles incompatible
+        with its protocol).
       - If you are unsure what correct profile combinations are, then have a BIG-IP
         available to you in which you can make changes and copy what the correct
         combinations are.
@@ -331,12 +331,35 @@ options:
       - The C(Log all requests) and C(Log illegal requests) are mutually exclusive and
         therefore, this module will raise an error if the two are specified together.
     version_added: 2.6
-notes:
-  - Requires BIG-IP software version >= 11
-  - Requires the netaddr Python package on the host. This is as easy as pip
-    install netaddr.
-requirements:
-  - netaddr
+  security_nat_policy:
+    description:
+      - Specify the Firewall NAT policies for the virtual server.
+      - You can specify one or more NAT policies to use.
+      - The most specific policy is used. For example, if you specify that the
+        virtual server use the device policy and the route domain policy, the route
+        domain policy overrides the device policy.
+    version_added: 2.7
+    suboptions:
+      policy:
+        description:
+          - Policy to apply a NAT policy directly to the virtual server.
+          - The virtual server NAT policy is the most specific, and overrides a
+            route domain and device policy, if specified.
+          - To remove the policy, specify an empty string value.
+      use_device_policy:
+        description:
+          - Specify that the virtual server uses the device NAT policy, as specified
+            in the Firewall Options.
+          - The device policy is used if no route domain or virtual server NAT
+            setting is specified.
+        type: bool
+      use_route_domain_policy:
+        description:
+          - Specify that the virtual server uses the route domain policy, as
+            specified in the Route Domain Security settings.
+          - When specified, the route domain policy overrides the device policy, and
+            is overridden by a virtual server policy.
+        type: bool
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -621,6 +644,9 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import ip_interface
+    from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -633,16 +659,13 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import ip_interface
+    from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -660,7 +683,8 @@ class Parameters(AnsibleF5Parameters):
         'ipProtocol': 'ip_protocol',
         'fwEnforcedPolicy': 'firewall_enforced_policy',
         'fwStagedPolicy': 'firewall_staged_policy',
-        'securityLogProfiles': 'security_log_profiles'
+        'securityLogProfiles': 'security_log_profiles',
+        'securityNatPolicy': 'security_nat_policy',
     }
 
     api_attributes = [
@@ -669,7 +693,7 @@ class Parameters(AnsibleF5Parameters):
         'disabled',
         'enabled',
         'fallbackPersistence',
-        # 'ipProtocol',
+        'ipProtocol',
         'metadata',
         'persist',
         'policies',
@@ -692,6 +716,7 @@ class Parameters(AnsibleF5Parameters):
         'fwEnforcedPolicy',
         'fwStagedPolicy',
         'securityLogProfiles',
+        'securityNatPolicy',
     ]
 
     updatables = [
@@ -703,7 +728,7 @@ class Parameters(AnsibleF5Parameters):
         'enabled',
         'enabled_vlans',
         'fallback_persistence_profile',
-        # 'ip_protocol',
+        'ip_protocol',
         'irules',
         'metadata',
         'pool',
@@ -717,6 +742,7 @@ class Parameters(AnsibleF5Parameters):
         'firewall_enforced_policy',
         'firewall_staged_policy',
         'security_log_profiles',
+        'security_nat_policy',
     ]
 
     returnables = [
@@ -729,7 +755,7 @@ class Parameters(AnsibleF5Parameters):
         'enabled',
         'enabled_vlans',
         'fallback_persistence_profile',
-        # 'ip_protocol',
+        'ip_protocol',
         'irules',
         'metadata',
         'pool',
@@ -746,11 +772,23 @@ class Parameters(AnsibleF5Parameters):
         'firewall_enforced_policy',
         'firewall_staged_policy',
         'security_log_profiles',
+        'security_nat_policy',
     ]
 
     profiles_mutex = [
-        'sip', 'sipsession', 'iiop', 'rtsp', 'http', 'diameter',
-        'diametersession', 'radius', 'ftp', 'tftp', 'dns', 'pptp', 'fix'
+        'sip',
+        'sipsession',
+        'iiop',
+        'rtsp',
+        'http',
+        'diameter',
+        'diametersession',
+        'radius',
+        'ftp',
+        'tftp',
+        'dns',
+        'pptp',
+        'fix',
     ]
 
     ip_protocols_map = [
@@ -784,16 +822,8 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
-    def is_valid_ip(self, value):
-        try:
-            netaddr.IPAddress(value)
-            return True
-        except (netaddr.core.AddrFormatError, ValueError):
-            return False
-
     def _format_port_for_destination(self, ip, port):
-        addr = netaddr.IPAddress(ip)
-        if addr.version == 6:
+        if validate_ip_v6_address(ip):
             if port == 0:
                 result = '.any'
             else:
@@ -959,10 +989,10 @@ class ApiParameters(Parameters):
         if self._values['source'] is None:
             return None
         try:
-            addr = netaddr.IPNetwork(self._values['source'])
-            result = '{0}/{1}'.format(str(addr.ip), addr.prefixlen)
+            addr = ip_interface(u'{0}'.format(self._values['source']))
+            result = '{0}/{1}'.format(str(addr.ip), addr.network.prefixlen)
             return result
-        except netaddr.core.AddrFormatError:
+        except ValueError:
             raise F5ModuleError(
                 "The source IP address must be specified in CIDR format: address/prefix"
             )
@@ -977,7 +1007,7 @@ class ApiParameters(Parameters):
             return result
         destination = re.sub(r'^/[a-zA-Z0-9_.-]+/', '', self._values['destination'])
 
-        if self.is_valid_ip(destination):
+        if is_valid_ip(destination):
             result = Destination(
                 ip=destination,
                 port=None,
@@ -1004,7 +1034,7 @@ class ApiParameters(Parameters):
                 if port == 'any':
                     port = 0
             ip = matches.group('ip')
-            if not self.is_valid_ip(ip):
+            if not is_valid_ip(ip):
                 raise F5ModuleError(
                     "The provided destination is not a valid IP address"
                 )
@@ -1019,7 +1049,7 @@ class ApiParameters(Parameters):
         matches = re.search(pattern, destination)
         if matches:
             ip = matches.group('ip')
-            if not self.is_valid_ip(ip):
+            if not is_valid_ip(ip):
                 raise F5ModuleError(
                     "The provided destination is not a valid IP address"
                 )
@@ -1034,7 +1064,7 @@ class ApiParameters(Parameters):
         if len(parts) == 4:
             # IPv4
             ip, port = destination.split(':')
-            if not self.is_valid_ip(ip):
+            if not is_valid_ip(ip):
                 raise F5ModuleError(
                     "The provided destination is not a valid IP address"
                 )
@@ -1053,7 +1083,7 @@ class ApiParameters(Parameters):
                 # Can be a port of "any". This only happens with IPv6
                 if port == 'any':
                     port = 0
-            if not self.is_valid_ip(ip):
+            if not is_valid_ip(ip):
                 raise F5ModuleError(
                     "The provided destination is not a valid IP address"
                 )
@@ -1152,8 +1182,7 @@ class ApiParameters(Parameters):
     def enabled(self):
         if 'enabled' in self._values:
             return True
-        else:
-            return False
+        return False
 
     @property
     def disabled(self):
@@ -1188,6 +1217,34 @@ class ApiParameters(Parameters):
         result = list(set([x.strip('"') for x in self._values['security_log_profiles']]))
         result.sort()
         return result
+
+    @property
+    def sec_nat_use_device_policy(self):
+        if self._values['security_nat_policy'] is None:
+            return None
+        if 'useDevicePolicy' not in self._values['security_nat_policy']:
+            return None
+        if self._values['security_nat_policy']['useDevicePolicy'] == "no":
+            return False
+        return True
+
+    @property
+    def sec_nat_use_rd_policy(self):
+        if self._values['security_nat_policy'] is None:
+            return None
+        if 'useRouteDomainPolicy' not in self._values['security_nat_policy']:
+            return None
+        if self._values['security_nat_policy']['useRouteDomainPolicy'] == "no":
+            return False
+        return True
+
+    @property
+    def sec_nat_policy(self):
+        if self._values['security_nat_policy'] is None:
+            return None
+        if 'policy' not in self._values['security_nat_policy']:
+            return None
+        return self._values['security_nat_policy']['policy']
 
 
 class ModuleParameters(Parameters):
@@ -1241,7 +1298,7 @@ class ModuleParameters(Parameters):
     @property
     def destination(self):
         addr = self._values['destination'].split("%")[0]
-        if not self.is_valid_ip(addr):
+        if not is_valid_ip(addr):
             raise F5ModuleError(
                 "The provided destination is not a valid IP address"
             )
@@ -1263,10 +1320,10 @@ class ModuleParameters(Parameters):
         if self._values['source'] is None:
             return None
         try:
-            addr = netaddr.IPNetwork(self._values['source'])
-            result = '{0}/{1}'.format(str(addr.ip), addr.prefixlen)
+            addr = ip_interface(u'{0}'.format(self._values['source']))
+            result = '{0}/{1}'.format(str(addr.ip), addr.network.prefixlen)
             return result
-        except netaddr.core.AddrFormatError:
+        except ValueError:
             raise F5ModuleError(
                 "The source IP address must be specified in CIDR format: address/prefix"
             )
@@ -1390,7 +1447,7 @@ class ModuleParameters(Parameters):
                 self._values['__warnings'].append(
                     dict(
                         msg="Usage of the 'ALL' value for 'enabled_vlans' parameter is deprecated. Use '*' instead",
-                        version='2.5'
+                        version='2.9'
                     )
                 )
             return result
@@ -1537,6 +1594,45 @@ class ModuleParameters(Parameters):
         result.sort()
         return result
 
+    @property
+    def sec_nat_use_device_policy(self):
+        if self._values['security_nat_policy'] is None:
+            return None
+        if 'use_device_policy' not in self._values['security_nat_policy']:
+            return None
+        return self._values['security_nat_policy']['use_device_policy']
+
+    @property
+    def sec_nat_use_rd_policy(self):
+        if self._values['security_nat_policy'] is None:
+            return None
+        if 'use_route_domain_policy' not in self._values['security_nat_policy']:
+            return None
+        return self._values['security_nat_policy']['use_route_domain_policy']
+
+    @property
+    def sec_nat_policy(self):
+        if self._values['security_nat_policy'] is None:
+            return None
+        if 'policy' not in self._values['security_nat_policy']:
+            return None
+        if self._values['security_nat_policy']['policy'] == '':
+            return ''
+        return fq_name(self.partition, self._values['security_nat_policy']['policy'])
+
+    @property
+    def security_nat_policy(self):
+        result = dict()
+        if self.sec_nat_policy:
+            result['policy'] = self.sec_nat_policy
+        if self.sec_nat_use_device_policy is not None:
+            result['use_device_policy'] = self.sec_nat_use_device_policy
+        if self.sec_nat_use_rd_policy is not None:
+            result['use_route_domain_policy'] = self.sec_nat_use_rd_policy
+        if result:
+            return result
+        return None
+
 
 class Changes(Parameters):
     pass
@@ -1642,6 +1738,22 @@ class UsableChanges(Changes):
             )
         return self._values['security_log_profiles']
 
+    @property
+    def security_nat_policy(self):
+        if self._values['security_nat_policy'] is None:
+            return None
+        result = dict()
+        sec = self._values['security_nat_policy']
+        if 'policy' in sec:
+            result['policy'] = sec['policy']
+        if 'use_device_policy' in sec:
+            result['useDevicePolicy'] = 'yes' if sec['use_device_policy'] else 'no'
+        if 'use_route_domain_policy' in sec:
+            result['useRouteDomainPolicy'] = 'yes' if sec['use_route_domain_policy'] else 'no'
+        if result:
+            return result
+        return None
+
 
 class ReportableChanges(Changes):
     @property
@@ -1706,6 +1818,20 @@ class ReportableChanges(Changes):
         if self._values['port_translation'] == 'enabled':
             return True
         return False
+
+    @property
+    def ip_protocol(self):
+        if self._values['ip_protocol'] is None:
+            return None
+        try:
+            int(self._values['ip_protocol'])
+        except ValueError:
+            return self._values['ip_protocol']
+
+        protocol = next((x[0] for x in self.ip_protocols_map if x[1] == self._values['ip_protocol']), None)
+        if protocol:
+            return protocol
+        return self._values['ip_protocol']
 
 
 class VirtualServerValidator(object):
@@ -1831,19 +1957,19 @@ class VirtualServerValidator(object):
                 self.want.update({'type': 'performance-l4'})
                 self.module.deprecate(
                     msg="Specifying 'performance-l4' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.6'
+                    version='2.10'
                 )
             if self.want.has_fasthttp_profiles:
                 self.want.update({'type': 'performance-http'})
                 self.module.deprecate(
                     msg="Specifying 'performance-http' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.6'
+                    version='2.10'
                 )
             if self.want.has_message_routing_profiles:
                 self.want.update({'type': 'message-routing'})
                 self.module.deprecate(
                     msg="Specifying 'message-routing' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.6'
+                    version='2.10'
                 )
 
     def _check_source_and_destination_match(self):
@@ -1860,8 +1986,8 @@ class VirtualServerValidator(object):
             F5ModuleError: Raised when the IP versions of source and destination differ.
         """
         if self.want.source and self.want.destination:
-            want = netaddr.IPNetwork(self.want.source)
-            have = netaddr.IPNetwork(self.want.destination_tuple.ip)
+            want = ip_interface(u'{0}'.format(self.want.source))
+            have = ip_interface(u'{0}'.format(self.want.destination_tuple.ip))
             if want.version != have.version:
                 raise F5ModuleError(
                     "The source and destination addresses for the virtual server must be be the same type (IPv4 or IPv6)."
@@ -2248,8 +2374,8 @@ class Difference(object):
     def source(self):
         if self.want.source is None:
             return None
-        want = netaddr.IPNetwork(self.want.source)
-        have = netaddr.IPNetwork(self.have.destination_tuple.ip)
+        want = ip_interface(u'{0}'.format(self.want.source))
+        have = ip_interface(u'{0}'.format(self.have.destination_tuple.ip))
         if want.version != have.version:
             raise F5ModuleError(
                 "The source and destination addresses for the virtual server must be be the same type (IPv4 or IPv6)."
@@ -2480,6 +2606,23 @@ class Difference(object):
         if set(self.want.security_log_profiles) != set(self.have.security_log_profiles):
             return self.want.security_log_profiles
 
+    @property
+    def security_nat_policy(self):
+        result = dict()
+        if self.want.sec_nat_use_device_policy is not None:
+            if self.want.sec_nat_use_device_policy != self.have.sec_nat_use_device_policy:
+                result['use_device_policy'] = self.want.sec_nat_use_device_policy
+        if self.want.sec_nat_use_rd_policy is not None:
+            if self.want.sec_nat_use_rd_policy != self.have.sec_nat_use_rd_policy:
+                result['use_route_domain_policy'] = self.want.sec_nat_use_rd_policy
+        if self.want.sec_nat_policy is not None:
+            if self.want.sec_nat_policy == '' and self.have.sec_nat_policy is None:
+                pass
+            elif self.want.sec_nat_policy != self.have.sec_nat_policy:
+                result['policy'] = self.want.sec_nat_policy
+        if result:
+            return dict(security_nat_policy=result)
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
@@ -2699,7 +2842,15 @@ class ArgumentSpec(object):
             ),
             firewall_staged_policy=dict(),
             firewall_enforced_policy=dict(),
-            security_log_profiles=dict(type='list')
+            security_log_profiles=dict(type='list'),
+            security_nat_policy=dict(
+                type='dict',
+                options=dict(
+                    policy=dict(),
+                    use_device_policy=dict(type='bool'),
+                    use_route_domain_policy=dict(type='bool')
+                )
+            )
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -2719,8 +2870,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

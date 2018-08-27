@@ -121,10 +121,10 @@ EXAMPLES = '''
     msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
-# Don't do md5 checksum
+# Don't do checksum
 - stat:
     path: /path/to/myhugefile
-    get_md5: no
+    get_checksum: no
 
 # Use sha256 to calculate checksum
 - stat:
@@ -424,7 +424,7 @@ def format_output(module, path, st):
             ('st_ftype', 'file_type'),
             ('st_attrs', 'attrs'),
             ('st_obtype', 'object_type'),
-            # OS X
+            # macOS
             ('st_rsize', 'real_size'),
             ('st_creator', 'creator'),
             ('st_type', 'file_type'),

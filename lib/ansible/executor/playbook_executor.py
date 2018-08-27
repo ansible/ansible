@@ -102,16 +102,13 @@ class PlaybookExecutor:
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
-                    # Create a temporary copy of the play here, so we can run post_validate
-                    # on it without the templating changes affecting the original object.
-                    # Doing this before vars_prompt to allow for using variables in prompt.
+                    # Allow variables to be used in vars_prompt fields.
                     all_vars = self._variable_manager.get_vars(play=play)
                     templar = Templar(loader=self._loader, variables=all_vars)
-                    new_play = play.copy()
-                    new_play.post_validate(templar)
+                    setattr(play, 'vars_prompt', templar.template(play.vars_prompt))
 
                     if play.vars_prompt:
-                        for var in new_play.vars_prompt:
+                        for var in play.vars_prompt:
                             vname = var['name']
                             prompt = var.get("prompt", vname)
                             default = var.get("default", None)
@@ -128,17 +125,17 @@ class PlaybookExecutor:
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 
-                        # Post validating again in case variables were entered in the prompt.
-                        all_vars = self._variable_manager.get_vars(play=play)
-                        templar = Templar(loader=self._loader, variables=all_vars)
-                        new_play.post_validate(templar)
+                    # Post validate so any play level variables are templated
+                    all_vars = self._variable_manager.get_vars(play=play)
+                    templar = Templar(loader=self._loader, variables=all_vars)
+                    play.post_validate(templar)
 
                     if self._options.syntax:
                         continue
 
                     if self._tqm is None:
                         # we are just doing a listing
-                        entry['plays'].append(new_play)
+                        entry['plays'].append(play)
 
                     else:
                         self._tqm._unreachable_hosts.update(self._unreachable_hosts)
@@ -148,9 +145,9 @@ class PlaybookExecutor:
 
                         break_play = False
                         # we are actually running plays
-                        batches = self._get_serialized_batches(new_play)
+                        batches = self._get_serialized_batches(play)
                         if len(batches) == 0:
-                            self._tqm.send_callback('v2_playbook_on_play_start', new_play)
+                            self._tqm.send_callback('v2_playbook_on_play_start', play)
                             self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
                         for batch in batches:
                             # restrict the inventory to the hosts in the serialized batch

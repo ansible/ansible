@@ -49,7 +49,7 @@ options:
       - Traffic destined to the C(redirect_virtual) will be offloaded to this
         parameter to ensure that proper redirection from insecure, to secure, occurs.
     suboptions:
-      destination:
+      address:
         description:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
@@ -73,7 +73,7 @@ options:
         C(inbound_virtual) parameter to ensure that proper redirection from insecure,
         to secure, occurs.
     suboptions:
-      destination:
+      address:
         description:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
@@ -107,8 +107,7 @@ options:
             per profile.
           - If you attempt to assign two RSA, DSA, or ECDSA certificate/key combo,
             the device will reject this.
-          - This list is a complex list that specifies a number of keys. There are
-            several supported keys.
+          - This list is a complex list that specifies a number of keys.
           - When creating a new profile, if this parameter is not specified, the
             default value of C(inherit) will be used.
         suboptions:
@@ -131,7 +130,7 @@ options:
               - Passphrases are encrypted on the remote BIG-IP device.
   service_environment:
     description:
-      - Specifies the name of service environment that the application will be
+      - Specifies the name of service environment or the hostname of the BIG-IP that the application will be
         deployed to.
       - When creating a new application, this parameter is required.
   add_analytics:
@@ -172,11 +171,11 @@ EXAMPLES = r'''
       - address: 5.6.7.8
         port: 8080
     inbound_virtual:
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 443
     redirect_virtual:
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 80
     provider:
@@ -245,6 +244,7 @@ try:
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -253,12 +253,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import fq_name
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
@@ -335,11 +330,10 @@ class ModuleParameters(Parameters):
 
     @property
     def default_device_reference(self):
-        try:
+        if is_valid_ip(self.service_environment):
             # An IP address was specified
-            netaddr.IPAddress(self.service_environment)
             filter = "address+eq+'{0}'".format(self.service_environment)
-        except netaddr.core.AddrFormatError:
+        else:
             # Assume a hostname was specified
             filter = "hostname+eq+'{0}'".format(self.service_environment)
 
@@ -394,9 +388,12 @@ class ModuleParameters(Parameters):
 class Changes(Parameters):
     def to_return(self):
         result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
         return result
 
 
@@ -971,11 +968,9 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        client = F5RestClient(module=module)
+        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

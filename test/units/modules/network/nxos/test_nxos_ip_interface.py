@@ -63,17 +63,17 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'],
                          ['interface eth2/1',
-                          'no ip address 1.1.1.1/8',
+                          'no ip address 192.0.2.1/8',
                           'ip address 1.1.1.2/8'])
 
     def test_nxos_ip_interface_ip_idempotent(self):
-        set_module_args(dict(interface='eth2/1', addr='1.1.1.1', mask=8))
+        set_module_args(dict(interface='eth2/1', addr='192.0.2.1', mask=8))
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
 
     def test_nxos_ip_interface_ip_absent(self):
         set_module_args(dict(interface='eth2/1', state='absent',
-                             addr='1.1.1.1', mask=8))
+                             addr='192.0.2.1', mask=8))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'],
-                         ['interface eth2/1', 'no ip address 1.1.1.1/8'])
+                         ['interface eth2/1', 'no ip address 192.0.2.1/8'])

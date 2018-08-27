@@ -12,9 +12,11 @@ import re
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from collections import defaultdict
 
 try:
@@ -52,6 +54,7 @@ f5_provider_spec = {
         default='rest'
     ),
     'timeout': dict(type='int'),
+    'auth_provider': dict()
 }
 
 f5_argument_spec = {
@@ -86,6 +89,9 @@ f5_top_spec = {
     'transport': dict(
         removed_in_version=2.9,
         choices=['cli', 'rest']
+    ),
+    'auth_provider': dict(
+        default=None
     )
 }
 f5_argument_spec.update(f5_top_spec)
@@ -101,6 +107,13 @@ def load_params(params):
         if key in f5_argument_spec:
             if params.get(key) is None and value is not None:
                 params[key] = value
+
+
+def is_empty_list(seq):
+    if len(seq) == 1:
+        if seq[0] == '' or seq[0] == 'none':
+            return True
+    return False
 
 
 # Fully Qualified name (with the partition)
@@ -191,13 +204,46 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-def cleanup_tokens(client):
+def flatten_boolean(value):
+    truthy = list(BOOLEANS_TRUE) + ['enabled']
+    falsey = list(BOOLEANS_FALSE) + ['disabled']
+    if value is None:
+        return None
+    elif value in truthy:
+        return 'yes'
+    elif value in falsey:
+        return 'no'
+
+
+def cleanup_tokens(client=None):
+    if client is None:
+        return
     try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
+        # isinstance cannot be used here because to import it creates a
+        # circular dependency with teh module_utils.network.f5.bigip file.
+        #
+        # TODO(consider refactoring cleanup_tokens)
+        if 'F5RestClient' in type(client).__name__:
+            token = client._client.headers.get('X-F5-Auth-Token', None)
+            if not token:
+                return
+            uri = "https://{0}:{1}/mgmt/shared/authz/tokens/{2}".format(
+                client.provider['server'],
+                client.provider['server_port'],
+                token
+            )
+            resp = client.api.delete(uri)
+            try:
+                resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+            return True
+        else:
+            resource = client.api.shared.authz.tokens_s.token.load(
+                name=client.api.icrs.token
+            )
+            resource.delete()
+    except Exception as ex:
         pass
 
 
@@ -260,6 +306,27 @@ def is_valid_fqdn(host):
         if len(parts) > 1:
             return True
     return False
+
+
+def transform_name(partition='', name='', sub_path=''):
+    if name:
+        name = name.replace('/', '~')
+    if partition:
+        partition = '~' + partition
+    else:
+        if sub_path:
+            raise F5ModuleError(
+                'When giving the subPath component include partition as well.'
+            )
+
+    if sub_path and partition:
+        sub_path = '~' + sub_path
+
+    if name and partition:
+        name = '~' + name
+
+    result = partition + sub_path + name
+    return result
 
 
 def dict2tuple(items):
@@ -346,6 +413,12 @@ def is_uuid(uuid=None):
     return False
 
 
+def on_bigip():
+    if os.path.exists('/usr/bin/tmsh'):
+        return True
+    return False
+
+
 class Noop(object):
     """Represent no-operation required
 
@@ -388,62 +461,71 @@ class F5BaseClient(object):
         """
         self._client = None
 
+    @staticmethod
+    def validate_params(key, store):
+        if key in store and store[key] is not None:
+            return True
+        else:
+            return False
+
     def merge_provider_params(self):
         result = dict()
 
         provider = self.params.get('provider', {})
 
-        if provider.get('server', None):
-            result['server'] = provider.get('server', None)
-        elif self.params.get('server', None):
-            result['server'] = self.params.get('server', None)
-        elif os.environ.get('F5_SERVER', None):
-            result['server'] = os.environ.get('F5_SERVER', None)
+        if self.validate_params('server', provider):
+            result['server'] = provider['server']
+        elif self.validate_params('server', self.params):
+            result['server'] = self.params['server']
+        elif self.validate_params('F5_SERVER', os.environ):
+            result['server'] = os.environ['F5_SERVER']
+        else:
+            raise F5ModuleError('Server parameter cannot be None or missing, please provide a valid value')
 
-        if provider.get('server_port', None):
-            result['server_port'] = provider.get('server_port', None)
-        elif self.params.get('server_port', None):
-            result['server_port'] = self.params.get('server_port', None)
-        elif os.environ.get('F5_SERVER_PORT', None):
-            result['server_port'] = os.environ.get('F5_SERVER_PORT', None)
+        if self.validate_params('server_port', provider):
+            result['server_port'] = provider['server_port']
+        elif self.validate_params('server_port', self.params):
+            result['server_port'] = self.params['server_port']
+        elif self.validate_params('F5_SERVER_PORT', os.environ):
+            result['server_port'] = os.environ['F5_SERVER_PORT']
         else:
             result['server_port'] = 443
 
-        if provider.get('validate_certs', None) is not None:
-            result['validate_certs'] = provider.get('validate_certs', None)
-        elif self.params.get('validate_certs', None) is not None:
-            result['validate_certs'] = self.params.get('validate_certs', None)
-        elif os.environ.get('F5_VALIDATE_CERTS', None) is not None:
-            result['validate_certs'] = os.environ.get('F5_VALIDATE_CERTS', None)
+        if self.validate_params('validate_certs', provider):
+            result['validate_certs'] = provider['validate_certs']
+        elif self.validate_params('validate_certs', self.params):
+            result['validate_certs'] = self.params['validate_certs']
+        elif self.validate_params('F5_VALIDATE_CERTS', os.environ):
+            result['validate_certs'] = os.environ['F5_VALIDATE_CERTS']
         else:
             result['validate_certs'] = True
 
-        if provider.get('auth_provider', None):
-            result['auth_provider'] = provider.get('auth_provider', None)
-        elif self.params.get('auth_provider', None):
-            result['auth_provider'] = self.params.get('auth_provider', None)
+        if self.validate_params('auth_provider', provider):
+            result['auth_provider'] = provider['auth_provider']
+        elif self.validate_params('auth_provider', self.params):
+            result['auth_provider'] = self.params['auth_provider']
         else:
             result['auth_provider'] = None
 
-        if provider.get('user', None):
-            result['user'] = provider.get('user', None)
-        elif self.params.get('user', None):
-            result['user'] = self.params.get('user', None)
-        elif os.environ.get('F5_USER', None):
-            result['user'] = os.environ.get('F5_USER', None)
-        elif os.environ.get('ANSIBLE_NET_USERNAME', None):
-            result['user'] = os.environ.get('ANSIBLE_NET_USERNAME', None)
+        if self.validate_params('user', provider):
+            result['user'] = provider['user']
+        elif self.validate_params('user', self.params):
+            result['user'] = self.params['user']
+        elif self.validate_params('F5_USER', os.environ):
+            result['user'] = os.environ.get('F5_USER')
+        elif self.validate_params('ANSIBLE_NET_USERNAME', os.environ):
+            result['user'] = os.environ.get('ANSIBLE_NET_USERNAME')
         else:
             result['user'] = None
 
-        if provider.get('password', None):
-            result['password'] = provider.get('password', None)
-        elif self.params.get('user', None):
-            result['password'] = self.params.get('password', None)
-        elif os.environ.get('F5_PASSWORD', None):
-            result['password'] = os.environ.get('F5_PASSWORD', None)
-        elif os.environ.get('ANSIBLE_NET_PASSWORD', None):
-            result['password'] = os.environ.get('ANSIBLE_NET_PASSWORD', None)
+        if self.validate_params('password', provider):
+            result['password'] = provider['password']
+        elif self.validate_params('password', self.params):
+            result['password'] = self.params['password']
+        elif self.validate_params('F5_PASSWORD', os.environ):
+            result['password'] = os.environ.get('F5_PASSWORD')
+        elif self.validate_params('ANSIBLE_NET_PASSWORD', os.environ):
+            result['password'] = os.environ.get('ANSIBLE_NET_PASSWORD')
         else:
             result['password'] = None
 

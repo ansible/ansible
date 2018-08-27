@@ -43,14 +43,14 @@ qos-mapping
 default-max-frame-size 9216
 cpu-usage on
 aaa authentication login default tacacs+ local enable
-tacacs-server host 5.5.5.5
+tacacs-server host 192.0.2.5
 tacacs-server key 2 $X3FSZjgzKGzPIXVd
 !
 !
 enable password-display
 enable super-user-password 8 $1$WV1..Pi2$B6acbjDxeHsof2BKrpyqQ0
 enable aaa console
-logging host 5.5.5.5
+logging host 192.0.2.5
 logging facility local7
 logging buffered 5000
 logging console
@@ -244,13 +244,13 @@ router mpls
     cos 1
 
  lsp LSP1
-  to 1.1.1.1
+  to 192.0.2.1
   no cspf
   adaptive
   enable
 
  lsp LSP3
-  to 3.3.3.3
+  to 192.0.2.3
   shortcuts isis level2
   adaptive
   reoptimize-timer 1800
@@ -260,7 +260,7 @@ router mpls
   enable
 
  vll TEST-VLL 111 raw-mode cos 1
-  vll-peer 1.1.1.1
+  vll-peer 192.0.2.1
   vlan 2005
    tagged e 2/1
 
@@ -271,7 +271,7 @@ router mpls
    tag e 2/9
 
  vpls TEST-VPLS 333
-  vpls-peer 3.3.3.3
+  vpls-peer 192.0.2.3
   vlan 5
    untagged ethe 2/4
   vlan 6

@@ -88,8 +88,8 @@ be used.  The default is ``False``, but this setting as ``True`` uses more stric
 
 .. _math_tests:
 
-Group theory tests
-``````````````````
+Set theory tests
+````````````````
 
 .. versionadded:: 2.1
 
@@ -119,7 +119,7 @@ You can use `any` and `all` to check if any or all elements in a list are true o
   vars:
     mylist:
         - 1
-        - 3 == 3
+        - "{{ 3 == 3 }}"
         - True
     myotherlist:
         - False
@@ -138,7 +138,7 @@ You can use `any` and `all` to check if any or all elements in a list are true o
 Testing paths
 `````````````
 
-.. note:: In 2.5 the follwing tests were renamed to remove the ``is_`` prefix
+.. note:: In 2.5 the following tests were renamed to remove the ``is_`` prefix
 
 The following tests can provide information about a path on the controller::
 
@@ -224,7 +224,7 @@ The following tasks are illustrative of the tests meant to check the status of t
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

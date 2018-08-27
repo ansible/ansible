@@ -4,7 +4,7 @@
 Junos OS Platform Options
 ***************************************
 
-Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it. 
+Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible 2.6 and how to use it. 
 
 .. contents:: Topics
 
@@ -34,7 +34,7 @@ Connections Available
 
 For legacy playbooks, Ansible still supports ``ansible_connection=local`` on all JUNOS modules. We recommend modernizing to use ``ansible_connection=netconf`` or ``ansible_connection=network_cli`` as soon as possible.
 
-Using CLI in Ansible 2.5
+Using CLI in Ansible 2.6
 ================================================================================
 
 Example CLI inventory ``[junos:vars]``
@@ -65,7 +65,7 @@ Example CLI Task
      when: ansible_network_os == 'junos'
 
 
-Using NETCONF in Ansible 2.5
+Using NETCONF in Ansible 2.6
 ================================================================================
 
 Enabling NETCONF

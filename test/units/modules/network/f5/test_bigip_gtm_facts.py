@@ -115,7 +115,7 @@ class TestManager(unittest.TestCase):
     def test_get_typed_pool_facts(self, *args):
         set_module_args(dict(
             include='pool',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

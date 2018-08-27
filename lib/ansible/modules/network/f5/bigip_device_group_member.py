@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -36,7 +36,7 @@ options:
     required: True
   state:
     description:
-      - When C(present), ensures that the device group member.
+      - When C(present), ensures that the device group member exists.
       - When C(absent), ensures the device group member is removed.
     default: present
     choices:

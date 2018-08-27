@@ -73,7 +73,7 @@ options:
       - A short, user-defined function description. Lambda does not use this value. Assign a meaningful description as you see fit.
   timeout:
     description:
-      - The function execution time at which Lambda should terminate the function.
+      - The function maximum execution time in seconds after which Lambda should terminate the function.
     default: 3
   memory_size:
     description:
@@ -277,8 +277,8 @@ def set_tag(client, module, tags, function):
     try:
         current_tags = client.list_tags(Resource=arn).get('Tags', {})
     except ClientError as e:
-        module.fail_json(msg="Unable to list tags: {0}".format(to_native(e),
-                         exception=traceback.format_exc()))
+        module.fail_json(msg="Unable to list tags: {0}".format(to_native(e)),
+                         exception=traceback.format_exc())
 
     tags_to_add, tags_to_remove = compare_aws_tags(current_tags, tags, purge_tags=True)
 

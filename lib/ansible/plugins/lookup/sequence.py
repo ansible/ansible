@@ -32,7 +32,7 @@ DOCUMENTATION = """
         description: increments between sequence numbers, the default is 1 unless the end is less than the start, then it is -1.
         type: number
       format:
-        description: return a string with the generated number formated in
+        description: return a string with the generated number formatted in
 """
 
 EXAMPLES = """

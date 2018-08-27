@@ -232,6 +232,37 @@
   dnf: name=sos installroot='/'
   register: dnf_result
 
+# Test download_only
+- name: uninstall sos for downloadonly test
+  dnf:
+    name: sos
+    state: absent
+
+- name: install sos
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+  register: dnf_result
+
+- name: verify download of sos (part 1 -- dnf "install" succeeded)
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- name: uninstall sos (noop)
+  dnf:
+    name: sos
+    state: absent
+  register: dnf_result
+
+- name: verify download of sos (part 2 -- nothing removed during uninstall)
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+
 # GROUP INSTALL
 # Using 'Books and Guides' because it is only 5 packages and a 7.3 M download on Fedora 26.
 # It also doesn't install anything that will tamper with our Python environment.
@@ -308,7 +339,8 @@
         - "'msg' in dnf_result"
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
+- shell: 'dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"'
+  register: shell_dnf_result
 
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
@@ -426,3 +458,188 @@
         - "'non-existent-rpm' in dnf_result['failures'][0]"
         - "'no package matched' in dnf_result['failures'][0]"
         - "'Failed to install some of the specified packages' in dnf_result['msg']"
+
+- name: use latest to install httpd
+  dnf:
+    name: httpd
+    state: latest
+  register: dnf_result
+
+- name: verify httpd was installed
+  assert:
+    that:
+      - "'changed' in dnf_result"
+
+- name: uninstall httpd
+  dnf:
+    name: httpd
+    state: removed
+
+- name: update httpd only if it exists
+  dnf:
+    name: httpd
+    state: latest
+    update_only: yes
+  register: dnf_result
+
+- name: verify httpd not installed
+  assert:
+    that:
+      - "not dnf_result is changed"
+
+- name: try to install not compatible arch rpm, should fail
+  dnf:
+    name: http://download.fedoraproject.org/pub/epel/7/ppc64le/Packages/b/banner-1.3.4-3.el7.ppc64le.rpm
+    state: present
+  register: dnf_result
+  ignore_errors: True
+
+- name: verify that dnf failed
+  assert:
+    that:
+        - "not dnf_result is changed"
+        - "dnf_result is failed"
+
+# setup for testing installing an RPM from url
+
+- set_fact:
+    pkg_name: fpaste
+
+- name: cleanup
+  dnf:
+    name: "{{ pkg_name }}"
+    state: absent
+
+- set_fact:
+    pkg_url: https://download.fedoraproject.org/pub/fedora/linux/releases/27/Everything/x86_64/os/Packages/f/fpaste-0.3.9.1-1.fc27.noarch.rpm
+# setup end
+
+- name: download an rpm
+  get_url:
+    url: "{{ pkg_url }}"
+    dest: "/tmp/{{ pkg_name }}.rpm"
+
+- name: install the downloaded rpm
+  dnf:
+    name: "/tmp/{{ pkg_name }}.rpm"
+    state: present
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- name: install the downloaded rpm again
+  dnf:
+    name: "/tmp/{{ pkg_name }}.rpm"
+    state: present
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+
+- name: clean up
+  dnf:
+    name: "{{ pkg_name }}"
+    state: absent
+
+- name: install from url
+  dnf:
+    name: "{{ pkg_url }}"
+    state: present
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+        - "dnf_result is not failed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: Create a temp RPM file which does not contain nevra information
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: touch
+
+- name: Try installing RPM file which does not contain nevra information
+  dnf:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: present
+  register: no_nevra_info_result
+  ignore_errors: yes
+
+- name: Verify RPM failed to install
+  assert:
+    that:
+      - "'changed' in no_nevra_info_result"
+      - "'msg' in no_nevra_info_result"
+
+- name: Delete a temp RPM file
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: absent
+
+- name: uninstall lsof
+  dnf:
+    name: lsof
+    state: removed
+
+- name: check lsof with rpm
+  shell: rpm -q lsof
+  ignore_errors: True
+  register: rpm_lsof_result
+
+- name: verify lsof is uninstalled
+  assert:
+    that:
+      - "rpm_lsof_result is failed"
+
+- name: exclude lsof
+  lineinfile:
+    dest: /etc/dnf/dnf.conf
+    regexp: (^exclude=)(.)*
+    line: "exclude=lsof*"
+    state: present
+
+# begin test case where disable_excludes is supported
+- name: Try install lsof without disable_excludes
+  dnf: name=lsof state=latest
+  register: dnf_lsof_result
+  ignore_errors: True
+
+- name: verify lsof did not install because it is in exclude list
+  assert:
+    that:
+      - "dnf_lsof_result is failed"
+
+- name: install lsof with disable_excludes
+  dnf: name=lsof state=latest disable_excludes=all
+  register: dnf_lsof_result_using_excludes
+
+- name: verify lsof did install using disable_excludes=all
+  assert:
+    that:
+      - "dnf_lsof_result_using_excludes is success"
+      - "dnf_lsof_result_using_excludes is changed"
+      - "dnf_lsof_result_using_excludes is not failed"
+
+- name: remove exclude lsof (cleanup dnf.conf)
+  lineinfile:
+    dest: /etc/dnf/dnf.conf
+    regexp: (^exclude=lsof*)
+    line: "exclude="
+    state: present
+
+
+# end test case where disable_excludes is supported

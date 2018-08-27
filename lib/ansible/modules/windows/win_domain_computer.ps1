@@ -1,5 +1,5 @@
 #!powershell
-#
+
 # Copyright: (c) 2017, AMTEGA - Xunta de Galicia
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -25,14 +25,14 @@ If (-not $sam_account_name.EndsWith("$")) {
   Fail-Json -obj $result -message "sam_account_name must end in $"
 }
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
-$description = Get-AnsibleParam -obj $params -name "description" -default ""
+$description = Get-AnsibleParam -obj $params -name "description" -default $null
 $state = Get-AnsibleParam -obj $params -name "state" -ValidateSet "present","absent" -default "present"
 If ($state -eq "present") {
   $dns_hostname = Get-AnsibleParam -obj $params -name "dns_hostname" -failifempty $true -resultobj $result
   $ou = Get-AnsibleParam -obj $params -name "ou" -failifempty $true -resultobj $result
   $distinguished_name = "CN=$name,$ou"
 
-  $desired_state = @{
+  $desired_state = [ordered]@{
     name = $name
     sam_account_name = $sam_account_name
     dns_hostname = $dns_hostname
@@ -43,7 +43,7 @@ If ($state -eq "present") {
     state = $state
   }
 } Else {
-  $desired_state = @{
+  $desired_state = [ordered]@{
     name = $name
     state = $state
   }
@@ -58,7 +58,7 @@ Function Get-InitialState($desired_state) {
       -Properties DistinguishedName,DNSHostName,Enabled,Name,SamAccountName,Description,ObjectClass
   } Catch { $null }
   If ($computer) {
-      $initial_state = @{
+      $initial_state = [ordered]@{
         name = $computer.Name
         sam_account_name = $computer.SamAccountName
         dns_hostname = $computer.DNSHostName
@@ -70,7 +70,7 @@ Function Get-InitialState($desired_state) {
         state = "present"
       }
   } Else {
-    $initial_state = @{
+    $initial_state = [ordered]@{
       name = $desired_state.name
       state = "absent"
     }
@@ -129,8 +129,9 @@ Function Add-ConstructedState($desired_state) {
 # ------------------------------------------------------------------------------
 Function Remove-ConstructedState($initial_state) {
   Try {
-    Remove-ADComputer `
-      -Identity $initial_state.name `
+    Get-ADComputer $initial_state.name `
+    | Remove-ADObject `
+      -Recursive `
       -Confirm:$False `
       -WhatIf:$check_mode
   } Catch {

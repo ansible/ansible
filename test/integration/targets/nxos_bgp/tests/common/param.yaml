@@ -6,12 +6,14 @@
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
+    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
+    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -20,7 +22,7 @@
     nxos_bgp: &set_multi_vrf
       asn: 65535
       vrf: "{{ item }}"
-      router_id: 1.1.1.1
+      router_id: 192.0.2.1
       bestpath_always_compare_med: true
       bestpath_aspath_multipath_relax: true
       bestpath_compare_routerid: true
@@ -33,6 +35,7 @@
       graceful_restart_helper: true
       log_neighbor_changes: true
       maxas_limit: 50
+      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -64,6 +67,7 @@
       log_neighbor_changes: false
       maxas_limit: default
       router_id: default
+      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -81,6 +85,7 @@
       asn: 65535
       vrf: "{{ item }}"
       cluster_id: 10.0.0.1
+      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -98,6 +103,7 @@
       asn: 65535
       vrf: "{{ item }}"
       cluster_id: default
+      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -118,6 +124,7 @@
         - 16
         - 22
         - 18
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -133,6 +140,7 @@
       asn: 65535
       confederation_id: default
       confederation_peers: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -153,6 +161,7 @@
         - 16
         - 22
         - 18
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -170,6 +179,7 @@
       local_as: default
       confederation_id: default
       confederation_peers: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -186,6 +196,7 @@
       vrf: myvrf
       local_as: 33
       confederation_id: 99
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -202,6 +213,7 @@
       vrf: myvrf
       confederation_id: default
       local_as: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -223,6 +235,7 @@
       fast_external_fallover: false
       flush_routes: true
       shutdown: true
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -241,6 +254,7 @@
       fast_external_fallover: true
       flush_routes: false
       shutdown: false
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -255,6 +269,7 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

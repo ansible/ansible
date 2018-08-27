@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - Added inventory.any_unparsed_is_failed configuration setting. In an
+    inventory with a static hosts file and (say) ec2.py, enabling this
+    setting will cause a failure instead of a warning if ec2.py fails.

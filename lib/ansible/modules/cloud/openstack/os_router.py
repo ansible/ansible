@@ -42,7 +42,6 @@ options:
      description:
         - Enable Source NAT (SNAT) attribute.
      type: bool
-     default: 'yes'
    network:
      description:
         - Unique name or ID of the external gateway network.
@@ -72,7 +71,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -307,7 +306,8 @@ def _build_kwargs(cloud, module, router, network):
     if network:
         kwargs['ext_gateway_net_id'] = network['id']
         # can't send enable_snat unless we have a network
-        kwargs['enable_snat'] = module.params['enable_snat']
+        if module.params['enable_snat']:
+            kwargs['enable_snat'] = module.params['enable_snat']
 
     if module.params['external_fixed_ips']:
         kwargs['ext_fixed_ips'] = []
@@ -371,7 +371,7 @@ def main():
         state=dict(default='present', choices=['absent', 'present']),
         name=dict(required=True),
         admin_state_up=dict(type='bool', default=True),
-        enable_snat=dict(type='bool', default=True),
+        enable_snat=dict(type='bool'),
         network=dict(default=None),
         interfaces=dict(type='list', default=None),
         external_fixed_ips=dict(type='list', default=None),
@@ -383,11 +383,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if module.params['project']:
-        min_version = '1.10.0'
-    else:
-        min_version = None
-
     state = module.params['state']
     name = module.params['name']
     network = module.params['network']
@@ -396,7 +391,7 @@ def main():
     if module.params['external_fixed_ips'] and not network:
         module.fail_json(msg='network is required when supplying external_fixed_ips')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if project is not None:
             proj = cloud.get_project(project)
@@ -482,7 +477,7 @@ def main():
                 cloud.delete_router(router_id)
                 module.exit_json(changed=True)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

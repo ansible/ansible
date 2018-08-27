@@ -30,8 +30,8 @@ from ansible.module_utils._text import to_bytes, to_text
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br'[\r\n]?(?!\s*<)?(\x1b\S+)*[a-zA-Z_]{1}[a-zA-Z0-9-_.]*[>|#|%](?:\s*)*(\x1b\S+)*$'),
-        re.compile(br'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-_.]*\(.+\)#(?:\s*)$')
+        re.compile(br'[\r\n]?(?!\s*<)?(\x1b\S+)*[a-zA-Z_0-9]{1}[a-zA-Z0-9-_.]*[>|#](?:\s*)*(\x1b\S+)*$'),
+        re.compile(br'[\r\n]?[a-zA-Z0-9]{1}[a-zA-Z0-9-_.]*\(.+\)#(?:\s*)$')
     ]
 
     terminal_stderr_re = [
@@ -47,7 +47,8 @@ class TerminalModule(TerminalBase):
         re.compile(br"syntax error"),
         re.compile(br"unknown command"),
         re.compile(br"user not present"),
-        re.compile(br"invalid (.+?)at '\^' marker", re.I)
+        re.compile(br"invalid (.+?)at '\^' marker", re.I),
+        re.compile(br"baud rate of console should be (\d*) to increase severity level", re.I),
     ]
 
     def on_become(self, passwd=None):

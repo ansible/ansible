@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -46,7 +46,7 @@ options:
     description:
       - Lists the self IP addresses and translations for each device. When creating a
         new GTM server, this value is required. This list is a complex list that
-        specifies a number of keys. There are several supported keys.
+        specifies a number of keys.
       - The C(name) key specifies a name for the device. The device name must
         be unique per server. This key is required.
       - The C(address) key contains an IP address, or list of IP addresses, for the
@@ -106,6 +106,27 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
+  iquery_options:
+    description:
+      - Specifies whether the Global Traffic Manager uses this BIG-IP
+        system to conduct a variety of probes before delegating traffic to it.
+    suboptions:
+      allow_path:
+        description:
+          - Specifies that the system verifies the logical network route between a data
+            center server and a local DNS server.
+        type: bool
+      allow_service_check:
+        description:
+          - Specifies that the system verifies that an application on a server is running,
+            by remotely running the application using an external service checker program.
+        type: bool
+      allow_snmp:
+        description:
+          - Specifies that the system checks the performance of a server running an SNMP
+            agent.
+        type: bool
+    version_added: 2.7
 extends_documentation_fragment: f5
 author:
   - Robert Teller
@@ -195,6 +216,7 @@ try:
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import fq_name
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -206,6 +228,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import fq_name
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -225,28 +248,46 @@ class Parameters(AnsibleF5Parameters):
         'product': 'server_type',
         'virtualServerDiscovery': 'virtual_server_discovery',
         'linkDiscovery': 'link_discovery',
-        'addresses': 'devices'
+        'addresses': 'devices',
+        'iqAllowPath': 'iquery_allow_path',
+        'iqAllowServiceCheck': 'iquery_allow_service_check',
+        'iqAllowSnmp': 'iquery_allow_snmp',
     }
 
+    api_attributes = [
+        'linkDiscovery',
+        'virtualServerDiscovery',
+        'product',
+        'addresses',
+        'datacenter',
+        'enabled',
+        'disabled',
+        'iqAllowPath',
+        'iqAllowServiceCheck',
+        'iqAllowSnmp',
+    ]
+
     updatables = [
-        'link_discovery', 'virtual_server_discovery', 'server_type_and_devices',
-        'datacenter', 'state'
+        'link_discovery',
+        'virtual_server_discovery',
+        'server_type_and_devices',
+        'datacenter',
+        'state',
+        'iquery_allow_path',
+        'iquery_allow_service_check',
+        'iquery_allow_snmp',
     ]
 
     returnables = [
-        'link_discovery', 'virtual_server_discovery', 'server_type', 'datacenter',
-        'enabled'
+        'link_discovery',
+        'virtual_server_discovery',
+        'server_type',
+        'datacenter',
+        'enabled',
+        'iquery_allow_path',
+        'iquery_allow_service_check',
+        'iquery_allow_snmp',
     ]
-
-    api_attributes = [
-        'linkDiscovery', 'virtualServerDiscovery', 'product', 'addresses',
-        'datacenter', 'enabled', 'disabled'
-    ]
-
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
 
 
 class ApiParameters(Parameters):
@@ -282,6 +323,30 @@ class ApiParameters(Parameters):
         if self._values['disabled'] is None:
             return None
         return True
+
+    @property
+    def iquery_allow_path(self):
+        if self._values['iquery_allow_path'] is None:
+            return None
+        elif self._values['iquery_allow_path'] == 'yes':
+            return True
+        return False
+
+    @property
+    def iquery_allow_service_check(self):
+        if self._values['iquery_allow_service_check'] is None:
+            return None
+        elif self._values['iquery_allow_service_check'] == 'yes':
+            return True
+        return False
+
+    @property
+    def iquery_allow_snmp(self):
+        if self._values['iquery_allow_snmp'] is None:
+            return None
+        elif self._values['iquery_allow_snmp'] == 'yes':
+            return True
+        return False
 
 
 class ModuleParameters(Parameters):
@@ -333,7 +398,7 @@ class ModuleParameters(Parameters):
     def datacenter(self):
         if self._values['datacenter'] is None:
             return None
-        return self._fqdn_name(self._values['datacenter'])
+        return fq_name(self.partition, self._values['datacenter'])
 
     def _determine_translation(self, device):
         if 'translation' not in device:
@@ -346,6 +411,30 @@ class ModuleParameters(Parameters):
             return 'present'
         return self._values['state']
 
+    @property
+    def iquery_allow_path(self):
+        if self._values['iquery_options'] is None:
+            return None
+        elif self._values['iquery_options']['allow_path'] is None:
+            return None
+        return self._values['iquery_options']['allow_path']
+
+    @property
+    def iquery_allow_service_check(self):
+        if self._values['iquery_options'] is None:
+            return None
+        elif self._values['iquery_options']['allow_service_check'] is None:
+            return None
+        return self._values['iquery_options']['allow_service_check']
+
+    @property
+    def iquery_allow_snmp(self):
+        if self._values['iquery_options'] is None:
+            return None
+        elif self._values['iquery_options']['allow_snmp'] is None:
+            return None
+        return self._values['iquery_options']['allow_snmp']
+
 
 class Changes(Parameters):
     def to_return(self):
@@ -357,7 +446,29 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-    pass
+    @property
+    def iquery_allow_path(self):
+        if self._values['iquery_allow_path'] is None:
+            return None
+        elif self._values['iquery_allow_path']:
+            return 'yes'
+        return 'no'
+
+    @property
+    def iquery_allow_service_check(self):
+        if self._values['iquery_allow_service_check'] is None:
+            return None
+        elif self._values['iquery_allow_service_check']:
+            return 'yes'
+        return 'no'
+
+    @property
+    def iquery_allow_snmp(self):
+        if self._values['iquery_allow_snmp'] is None:
+            return None
+        elif self._values['iquery_allow_snmp']:
+            return 'yes'
+        return 'no'
 
 
 class ReportableChanges(Changes):
@@ -381,13 +492,13 @@ class Difference(object):
             return self.__default(param)
 
     def __default(self, param):
-        attr1 = getattr(self.want, param)
+        want = getattr(self.want, param)
         try:
-            attr2 = getattr(self.have, param)
-            if attr1 != attr2:
-                return attr1
+            have = getattr(self.have, param)
+            if want != have:
+                return want
         except AttributeError:
-            return attr1
+            return want
 
     def _discovery_constraints(self):
         if self.want.virtual_server_discovery is None:
@@ -810,6 +921,14 @@ class ArgumentSpec(object):
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
+            ),
+            iquery_options=dict(
+                type='dict',
+                options=dict(
+                    allow_path=dict(type='bool'),
+                    allow_service_check=dict(type='bool'),
+                    allow_snmp=dict(type='bool')
+                )
             )
         )
         self.argument_spec = {}
@@ -836,6 +955,7 @@ def main():
     except F5ModuleError as ex:
         cleanup_tokens(client)
         module.fail_json(msg=str(ex))
+
 
 if __name__ == '__main__':
     main()

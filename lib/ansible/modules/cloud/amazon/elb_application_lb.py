@@ -48,6 +48,13 @@ options:
     required: false
     default: no
     type: bool
+  http2:
+    description:
+      - Indicates whether to enable HTTP2 routing.
+    required: false
+    default: no
+    type: bool
+    version_added: 2.6
   idle_timeout:
     description:
       - The number of seconds to wait before an idle connection is closed.
@@ -95,7 +102,7 @@ options:
   state:
     description:
       - Create or destroy the load balancer.
-    required: true
+    default: present
     choices: [ 'present', 'absent' ]
   tags:
     description:
@@ -112,6 +119,12 @@ options:
     description:
       - The time in seconds to use in conjunction with I(wait).
     version_added: 2.6
+  purge_rules:
+    description:
+      - When set to no, keep the existing load balancer rules in place. Will modify and add, but will not delete.
+    default: yes
+    type: bool
+    version_added: 2.7
 extends_documentation_fragment:
     - aws
     - ec2
@@ -320,6 +333,11 @@ load_balancer_name:
     returned: when state is present
     type: string
     sample: my-elb
+routing_http2_enabled:
+    description: Indicates whether HTTP/2 is enabled.
+    returned: when state is present
+    type: string
+    sample: true
 scheme:
     description: Internet-facing or internal load balancer.
     returned: when state is present
@@ -432,10 +450,11 @@ def create_or_update_elb(elb_obj):
             rules_to_add, rules_to_modify, rules_to_delete = rules_obj.compare_rules()
 
             # Delete rules
-            for rule in rules_to_delete:
-                rule_obj = ELBListenerRule(elb_obj.connection, elb_obj.module, {'RuleArn': rule}, rules_obj.listener_arn)
-                rule_obj.delete()
-                elb_obj.changed = True
+            if elb_obj.module.params['purge_rules']:
+                for rule in rules_to_delete:
+                    rule_obj = ELBListenerRule(elb_obj.connection, elb_obj.module, {'RuleArn': rule}, rules_obj.listener_arn)
+                    rule_obj.delete()
+                    elb_obj.changed = True
 
             # Add rules
             for rule in rules_to_add:
@@ -490,6 +509,7 @@ def main():
             access_logs_s3_bucket=dict(type='str'),
             access_logs_s3_prefix=dict(type='str'),
             deletion_protection=dict(type='bool'),
+            http2=dict(type='bool'),
             idle_timeout=dict(type='int'),
             listeners=dict(type='list',
                            elements='dict',
@@ -508,10 +528,11 @@ def main():
             subnets=dict(type='list'),
             security_groups=dict(type='list'),
             scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
-            state=dict(choices=['present', 'absent'], type='str'),
-            tags=dict(default={}, type='dict'),
+            state=dict(choices=['present', 'absent'], default='present'),
+            tags=dict(type='dict'),
             wait_timeout=dict(type='int'),
-            wait=dict(default=False, type='bool')
+            wait=dict(default=False, type='bool'),
+            purge_rules=dict(default=True, type='bool')
         )
     )
 
@@ -519,9 +540,9 @@ def main():
                               required_if=[
                                   ('state', 'present', ['subnets', 'security_groups'])
                               ],
-                              required_together=(
+                              required_together=[
                                   ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
-                              )
+                              ]
                               )
 
     # Quick check of listeners parameters
@@ -547,6 +568,7 @@ def main():
         create_or_update_elb(elb)
     else:
         delete_elb(elb)
+
 
 if __name__ == '__main__':
     main()

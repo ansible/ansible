@@ -12,6 +12,7 @@
 # GNU General Public License for more details.
 #
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
 # Module to Collect facts from Lenovo Switches running Lenovo ENOS commands
 # Lenovo Networking
 #
@@ -420,6 +421,7 @@ class Interfaces(FactsBase):
                     key = match.group(1)
                     parsed.append(line)
         return parsed
+
 
 FACT_SUBSETS = dict(
     default=Default,

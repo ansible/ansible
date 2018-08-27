@@ -1,5 +1,0 @@
----
-bugfixes:
-- Implement mode=preserve for the template module
-- Fix mode=preserve with remote_src=True for the copy module
-- Document mode=preserve for both the copy and template module

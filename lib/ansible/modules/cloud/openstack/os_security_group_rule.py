@@ -61,10 +61,15 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   project:
+     description:
+        - Unique name or ID of the project.
+     required: false
+     version_added: "2.7"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -114,6 +119,14 @@ EXAMPLES = '''
     security_group: loadbalancer_sg
     protocol: 112
     remote_group: loadbalancer-node_sg
+
+# Create a security group rule for a given project
+- os_security_group_rule:
+    cloud: mordred
+    security_group: foo
+    protocol: icmp
+    remote_ip_prefix: 0.0.0.0/0
+    project: myproj
 '''
 
 RETURN = '''
@@ -168,15 +181,15 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
     Capture the complex port matching logic.
 
     The port values coming in for the module might be -1 (for ICMP),
-    which will work only for Nova, but this is handled by shade. Likewise,
+    which will work only for Nova, but this is handled by sdk. Likewise,
     they might be None, which works for Neutron, but not Nova. This too is
-    handled by shade. Since shade will consistently return these port
+    handled by sdk. Since sdk will consistently return these port
     values as None, we need to convert any -1 values input to the module
     to None here for comparison.
 
     For TCP and UDP protocols, None values for both min and max are
     represented as the range 1-65535 for Nova, but remain None for
-    Neutron. Shade returns the full range when Nova is the backend (since
+    Neutron. sdk returns the full range when Nova is the backend (since
     that is how Nova stores them), and None values for Neutron. If None
     values are input to the module for both values, then we need to adjust
     for comparison.
@@ -271,6 +284,7 @@ def main():
                        choices=['egress', 'ingress']),
         state=dict(default='present',
                    choices=['absent', 'present']),
+        project=dict(default=None),
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -286,14 +300,29 @@ def main():
     state = module.params['state']
     security_group = module.params['security_group']
     remote_group = module.params['remote_group']
+    project = module.params['project']
     changed = False
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        secgroup = cloud.get_security_group(security_group)
+        if project is not None:
+            proj = cloud.get_project(project)
+            if proj is None:
+                module.fail_json(msg='Project %s could not be found' % project)
+            project_id = proj['id']
+        else:
+            project_id = cloud.current_project_id
+
+        if project_id:
+            filters = {'tenant_id': project_id}
+        else:
+            filters = None
+
+        secgroup = cloud.get_security_group(security_group, filters=filters)
 
         if remote_group:
-            remotegroup = cloud.get_security_group(remote_group)
+            remotegroup = cloud.get_security_group(remote_group,
+                                                   filters=filters)
         else:
             remotegroup = {'id': None}
 
@@ -307,6 +336,9 @@ def main():
 
             rule = _find_matching_rule(module, secgroup, remotegroup)
             if not rule:
+                kwargs = {}
+                if project_id:
+                    kwargs['project_id'] = project_id
                 rule = cloud.create_security_group_rule(
                     secgroup['id'],
                     port_range_min=module.params['port_range_min'],
@@ -315,7 +347,8 @@ def main():
                     remote_ip_prefix=module.params['remote_ip_prefix'],
                     remote_group_id=remotegroup['id'],
                     direction=module.params['direction'],
-                    ethertype=module.params['ethertype']
+                    ethertype=module.params['ethertype'],
+                    **kwargs
                 )
                 changed = True
             module.exit_json(changed=changed, rule=rule, id=rule['id'])
@@ -328,7 +361,7 @@ def main():
 
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

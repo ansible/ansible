@@ -34,10 +34,10 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping, MutableSequence
+from collections import MutableMapping
 import datetime
 from functools import partial
-from random import Random, SystemRandom, shuffle
+from random import Random, SystemRandom, shuffle, random
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
@@ -51,11 +51,18 @@ from ansible.errors import AnsibleFilterError
 from ansible.module_utils.six import iteritems, string_types, integer_types
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
@@ -79,25 +86,11 @@ def to_json(a, *args, **kw):
 
 def to_nice_json(a, indent=4, *args, **kw):
     '''Make verbose, human readable JSON'''
-    # python-2.6's json encoder is buggy (can't encode hostvars)
-    if sys.version_info < (2, 7):
-        try:
-            import simplejson
-        except ImportError:
-            pass
-        else:
-            try:
-                major = int(simplejson.__version__.split('.')[0])
-            except Exception:
-                pass
-            else:
-                if major >= 2:
-                    return simplejson.dumps(a, default=AnsibleJSONEncoder.default, indent=indent, sort_keys=True, *args, **kw)
-
     try:
-        return json.dumps(a, indent=indent, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
-    except Exception:
+        return json.dumps(a, indent=indent, sort_keys=True, separators=(',', ': '), cls=AnsibleJSONEncoder, *args, **kw)
+    except Exception as e:
         # Fallback to the to_json filter
+        display.warning(u'Unable to convert data using to_nice_json, falling back to to_json: %s' % to_text(e))
         return to_json(a, *args, **kw)
 
 
@@ -209,6 +202,12 @@ def from_yaml(data):
     return data
 
 
+def from_yaml_all(data):
+    if isinstance(data, string_types):
+        return yaml.safe_load_all(data)
+    return data
+
+
 @environmentfilter
 def rand(environment, end, start=None, step=None, seed=None):
     if seed is None:
@@ -275,7 +274,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
-                raise AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
+                raise AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on macOS/Darwin')
             saltstring = "$%s$%s" % (cryptmethod[hashtype], salt)
             encrypted = crypt.crypt(password, saltstring)
         else:
@@ -300,7 +299,11 @@ def mandatory(a):
 
     ''' Make a variable mandatory '''
     if isinstance(a, Undefined):
-        raise AnsibleFilterError('Mandatory variable not defined.')
+        if a._undefined_name is not None:
+            name = "'%s' " % to_text(a._undefined_name)
+        else:
+            name = ''
+        raise AnsibleFilterError("Mandatory variable %snot defined." % name)
     return a
 
 
@@ -459,7 +462,7 @@ def flatten(mylist, levels=None):
         if element in (None, 'None', 'null'):
             # ignore undefined items
             break
-        elif isinstance(element, MutableSequence):
+        elif is_sequence(element):
             if levels is None:
                 ret.extend(flatten(element))
             elif levels >= 1:
@@ -532,6 +535,49 @@ def dict_to_list_of_dict_key_value_elements(mydict):
     return ret
 
 
+def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='value'):
+    ''' takes a list of dicts with each having a 'key' and 'value' keys, and transforms the list into a dictionary,
+        effectively as the reverse of dict2items '''
+
+    if not is_sequence(mylist):
+        raise AnsibleFilterError("items2dict requires a list, got %s instead." % type(mylist))
+
+    return dict((item[key_name], item[value_name]) for item in mylist)
+
+
+def random_mac(value):
+    ''' takes string prefix, and return it completed with random bytes
+        to get a complete 6 bytes MAC address '''
+
+    if not isinstance(value, string_types):
+        raise AnsibleFilterError('Invalid value type (%s) for random_mac (%s)' % (type(value), value))
+
+    value = value.lower()
+    mac_items = value.split(':')
+
+    if len(mac_items) > 5:
+        raise AnsibleFilterError('Invalid value (%s) for random_mac: 5 colon(:) separated items max' % value)
+
+    err = ""
+    for mac in mac_items:
+        if len(mac) == 0:
+            err += ",empty item"
+            continue
+        if not re.match('[a-f0-9]{2}', mac):
+            err += ",%s not hexa byte" % mac
+    err = err.strip(',')
+
+    if len(err):
+        raise AnsibleFilterError('Invalid value (%s) for random_mac: %s' % (value, err))
+
+    # Generate random float and make it int
+    v = int(random() * 10.0**10)
+    # Select first n chars to complement input prefix
+    remain = 2 * (6 - len(mac_items))
+    rnd = ('%x' % v)[:remain]
+    return value + re.sub(r'(..)', r':\1', rnd)
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -556,6 +602,7 @@ class FilterModule(object):
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': from_yaml,
+            'from_yaml_all': from_yaml_all,
 
             # path
             'basename': partial(unicode_wrap, os.path.basename),
@@ -620,5 +667,9 @@ class FilterModule(object):
             'extract': extract,
             'flatten': flatten,
             'dict2items': dict_to_list_of_dict_key_value_elements,
+            'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
+
+            # Misc
+            'random_mac': random_mac,
         }

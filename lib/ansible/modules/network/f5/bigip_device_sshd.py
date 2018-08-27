@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -101,10 +101,10 @@ EXAMPLES = r'''
 
 RETURN = r'''
 allow:
-  description: >
-    Specifies, if you have enabled SSH access, the IP address or address
-    range for other systems that can use SSH to communicate with this
-    system.
+  description:
+    - Specifies, if you have enabled SSH access, the IP address or address
+      range for other systems that can use SSH to communicate with this
+      system.
   returned: changed
   type: string
   sample: 192.0.2.*
@@ -114,16 +114,16 @@ banner:
   type: string
   sample: true
 banner_text:
-  description: >
-    Specifies the text included on the pre-login banner that
-    displays when a user attempts to login to the system using SSH.
+  description:
+    - Specifies the text included on the pre-login banner that
+      displays when a user attempts to login to the system using SSH.
   returned: changed and success
   type: string
   sample: This is a corporate device. Connecting to it without...
 inactivity_timeout:
-  description: >
-    The number of seconds before inactivity causes an SSH
-    session to log out.
+  description:
+    - The number of seconds before inactivity causes an SSH
+      session to log out.
   returned: changed
   type: int
   sample: 10

@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -117,6 +117,34 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
+  number_of_slots:
+    description:
+      - Specifies the number of slots for the system to use for creating the guest.
+      - This value dictates how many cores a guest is allocated from each slot that
+        it is assigned to.
+      - Possible values are dependent on the type of blades being used in this cluster.
+      - The default value depends on the type of blades being used in this cluster.
+    version_added: 2.7
+  min_number_of_slots:
+    description:
+      - Specifies the minimum number of slots that the guest must be assigned to in
+        order to deploy.
+      - This field dictates the number of slots that the guest must be assigned to.
+      - If at the end of any allocation attempt the guest is not assigned to at least
+        this many slots, the attempt fails and the change that initiated it is reverted.
+      - A guest's C(min_number_of_slots) value cannot be greater than its C(number_of_slots).
+    version_added: 2.7
+  allowed_slots:
+    description:
+      - Contains those slots that the guest is allowed to be assigned to.
+      - When the host determines which slots this guest should be assigned to, only slots
+        in this list will be considered.
+      - This is a good way to force guests to be assigned only to particular slots, or,
+        by configuring disjoint C(allowed_slots) on two guests, that those guests are
+        never assigned to the same slot.
+      - By default this list includes every available slot in the cluster. This means,
+        by default, the guest may be assigned to any slot.
+    version_added: 2.7
 notes:
   - This module can take a lot of time to deploy vCMP guests. This is an intrinsic
     limitation of the vCMP system because it is booting real VMs on the BIG-IP
@@ -126,7 +154,6 @@ notes:
     means that it is not unusual for a vCMP host with many guests to take a
     long time (60+ minutes) to reboot and bring all the guests online. The
     BIG-IP chassis will be available before all vCMP guests are online.
-  - netaddr
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -188,6 +215,8 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.compat.ipaddress import ip_interface
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.utils.responses.handlers import Stats
@@ -201,17 +230,13 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.compat.ipaddress import ip_interface
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    from netaddr import IPAddress, AddrFormatError, IPNetwork
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -221,22 +246,49 @@ class Parameters(AnsibleF5Parameters):
         'managementIp': 'mgmt_address',
         'initialImage': 'initial_image',
         'virtualDisk': 'virtual_disk',
-        'coresPerSlot': 'cores_per_slot'
+        'coresPerSlot': 'cores_per_slot',
+        'slots': 'number_of_slots',
+        'minSlots': 'min_number_of_slots',
+        'allowedSlots': 'allowed_slots',
     }
 
     api_attributes = [
-        'vlans', 'managementNetwork', 'managementIp', 'initialImage', 'managementGw',
-        'state'
+        'vlans',
+        'managementNetwork',
+        'managementIp',
+        'initialImage',
+        'managementGw',
+        'state',
+        'coresPerSlot',
+        'slots',
+        'minSlots',
+        'allowedSlots',
     ]
 
     returnables = [
-        'vlans', 'mgmt_network', 'mgmt_address', 'initial_image', 'mgmt_route',
-        'name'
+        'vlans',
+        'mgmt_network',
+        'mgmt_address',
+        'initial_image',
+        'mgmt_route',
+        'name',
+        'cores_per_slot',
+        'number_of_slots',
+        'min_number_of_slots',
+        'allowed_slots',
     ]
 
     updatables = [
-        'vlans', 'mgmt_network', 'mgmt_address', 'initial_image', 'mgmt_route',
-        'state'
+        'vlans',
+        'mgmt_network',
+        'mgmt_address',
+        'initial_image',
+        'mgmt_route',
+        'state',
+        'cores_per_slot',
+        'number_of_slots',
+        'min_number_of_slots',
+        'allowed_slots',
     ]
 
     def to_return(self):
@@ -255,10 +307,9 @@ class Parameters(AnsibleF5Parameters):
             return None
         elif self._values['mgmt_route'] == 'none':
             return 'none'
-        try:
-            result = IPAddress(self._values['mgmt_route'])
-            return str(result)
-        except AddrFormatError:
+        if is_valid_ip(self._values['mgmt_route']):
+            return self._values['mgmt_route']
+        else:
             raise F5ModuleError(
                 "The specified 'mgmt_route' is not a valid IP address"
             )
@@ -268,10 +319,9 @@ class Parameters(AnsibleF5Parameters):
         if self._values['mgmt_address'] is None:
             return None
         try:
-            addr = IPNetwork(self._values['mgmt_address'])
-            result = '{0}/{1}'.format(addr.ip, addr.prefixlen)
-            return result
-        except AddrFormatError:
+            addr = ip_interface(u'%s' % str(self._values['mgmt_address']))
+            return str(addr.with_prefixlen)
+        except ValueError:
             raise F5ModuleError(
                 "The specified 'mgmt_address' is not a valid IP address"
             )
@@ -287,7 +337,7 @@ class Parameters(AnsibleF5Parameters):
             elif len(parts) < 2:
                 result = Destination(ip=parts[0], subnet=None)
             else:
-                F5ModuleError(
+                raise F5ModuleError(
                     "The provided mgmt_address is malformed."
                 )
         except ValueError:
@@ -327,8 +377,32 @@ class Parameters(AnsibleF5Parameters):
                 return True
         return False
 
+    @property
+    def allowed_slots(self):
+        if self._values['allowed_slots'] is None:
+            return None
+        result = self._values['allowed_slots']
+        result.sort()
+        return result
+
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
 
 class Changes(Parameters):
+    pass
+
+
+class UsableChanges(Parameters):
+    pass
+
+
+class ReportableChanges(Parameters):
     pass
 
 
@@ -363,12 +437,21 @@ class Difference(object):
         if self.want.mgmt_address != self.have.mgmt_address:
             return self.want.mgmt_address
 
+    @property
+    def allowed_slots(self):
+        if self.want.allowed_slots is None:
+            return None
+        if self.have.allowed_slots is None:
+            return self.want.allowed_slots
+        if set(self.want.allowed_slots) != set(self.have.allowed_slots):
+            return self.want.allowed_slots
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.want = Parameters(client=self.client, params=self.module.params)
+        self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.changes = Changes()
 
     def _set_changed_options(self):
@@ -377,7 +460,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -390,7 +473,7 @@ class ModuleManager(object):
             else:
                 changed[k] = change
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -445,6 +528,9 @@ class ModuleManager(object):
             return False
         if self.module.check_mode:
             return True
+        if self.changes.cores_per_slot:
+            if not self.is_configured():
+                self.configure()
         self.update_on_device()
         if self.want.state == 'provisioned':
             self.provision()
@@ -514,7 +600,7 @@ class ModuleManager(object):
             name=self.want.name
         )
         result = resource.attrs
-        return Parameters(params=result)
+        return ApiParameters(params=result)
 
     def remove_virtual_disk(self):
         if self.virtual_disk_exists():
@@ -522,9 +608,27 @@ class ModuleManager(object):
         return False
 
     def virtual_disk_exists(self):
+        """Checks if a virtual disk exists for a guest
+
+        The virtual disk names can differ based on the device vCMP is installed on.
+        For instance, on a shuttle-series device with no slots, you will see disks
+        that resemble the following
+
+          guest1.img
+
+        On an 8-blade Viprion with slots though, you will see
+
+          guest1.img/1
+
+        The "/1" in this case is the slot that it is a part of. This method looks
+        for the virtual-disk without the trailing slot.
+
+        Returns:
+            bool: True on success. False otherwise.
+        """
         collection = self.client.api.tm.vcmp.virtual_disks.get_collection()
         for resource in collection:
-            check = '{0}/'.format(self.have.virtual_disk)
+            check = '{0}'.format(self.have.virtual_disk)
             if resource.name.startswith(check):
                 return True
         return False
@@ -532,7 +636,7 @@ class ModuleManager(object):
     def remove_virtual_disk_from_device(self):
         collection = self.client.api.tm.vcmp.virtual_disks.get_collection()
         for resource in collection:
-            check = '{0}/'.format(self.have.virtual_disk)
+            check = '{0}'.format(self.have.virtual_disk)
             if resource.name.startswith(check):
                 resource.delete()
                 return True
@@ -645,9 +749,13 @@ class ArgumentSpec(object):
                 choices=['configured', 'disabled', 'provisioned', 'absent', 'present']
             ),
             delete_virtual_disk=dict(
-                type='bool', default='no'
+                type='bool',
+                default='no'
             ),
             cores_per_slot=dict(type='int'),
+            number_of_slots=dict(type='int'),
+            min_number_of_slots=dict(type='int'),
+            allowed_slots=dict(type='list'),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
@@ -670,8 +778,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

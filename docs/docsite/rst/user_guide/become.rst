@@ -11,7 +11,7 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 Become
 ======
 
-Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas` and others.
+Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas`, `machinectl` and others.
 
 
 .. note:: Prior to version 1.9, Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user and execute tasks and create resources with the second user's permissions. As of Ansible version 1.9,  `become` supersedes the old sudo/su, while still being backwards compatible. This new implementation also makes it easier to add other privilege escalation tools, including `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
@@ -31,7 +31,7 @@ become_user
     set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level.
 
 become_method
-    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`
+    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`/`machinectl`
 
 become_flags
     (at play or task level) permit the use of specific flags for the tasks or role. One common use is to change the user to nobody when the shell is set to no login. Added in Ansible 2.2.
@@ -91,7 +91,7 @@ Command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu | runas ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu | runas | machinectl ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root), does not imply --become/-b
@@ -207,6 +207,33 @@ a temporary file name which changes every time.  If you have '/sbin/service'
 or '/bin/chmod' as the allowed commands this will fail with ansible as those
 paths won't match with the temporary file that ansible creates to run the
 module.
+
+Environment variables populated by pam_systemd
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For most Linux distributions using ``systemd`` as their init, the default
+methods used by ``become`` do not open a new "session", in the sense of
+systemd.  Because the ``pam_systemd`` module will not fully initialize a new
+session, you might have surprises compared to a normal session opened through
+ssh: some environment variables set by ``pam_systemd``, most notably
+``XDG_RUNTIME_DIR``, are not populated for the new user and instead inherited
+or just emptied.
+
+This might cause trouble when trying to invoke systemd commands that depend on
+``XDG_RUNTIME_DIR`` to access the bus:
+
+.. code-block:: console
+
+   $ echo $XDG_RUNTIME_DIR
+
+   $ systemctl --user status
+   Failed to connect to bus: Permission denied
+
+To force ``become`` to open a new systemd session that goes through
+``pam_systemd``, you can use ``become_method: machinectl``.
+
+For more information, see `this systemd issue
+<https://github.com/systemd/systemd/issues/825#issuecomment-127917622>`_.
 
 .. _become-network:
 
@@ -368,7 +395,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
   full control over the operating system. No user is given this privilege by
   default, and care should be taken if you grant this privilege to a user or group.
   For more information on this privilege, please see
-  `Act as part of the operating system <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
+  `Act as part of the operating system <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn221957(v=ws.11)>`_.
   You can use the below task to set this privilege on a Windows host::
 
     - name: grant the ansible user the SeTcbPrivilege right
@@ -426,7 +453,7 @@ variables like normal but either do not define ``ansible_become_pass`` or set
 ``ansible_become_pass: ''``.
 
 Before become can work on an account like this, the local policy
-`Accounts: Limit local account use of blank passwords to console logon only <https://technet.microsoft.com/en-us/library/jj852174.aspx>`_
+`Accounts: Limit local account use of blank passwords to console logon only <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/jj852174(v=ws.11)>`_
 must be disabled. This can either be done through a Group Policy Object (GPO)
 or with this Ansible task:
 
@@ -484,7 +511,7 @@ can be set to one of the following:
   logon session as running a normal WinRM process with credential delegation.
 
 For more information, see
-`dwLogonType <https://msdn.microsoft.com/en-au/library/windows/desktop/aa378184.aspx>`_.
+`dwLogonType <https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-logonusera>`_.
 
 The ``logon_flags`` key specifies how Windows will log the user on when creating
 the new process. The value can be set to none or multiple of the following:
@@ -501,7 +528,7 @@ By default ``logon_flags=with_profile`` is set, if the profile should not be
 loaded set ``logon_flags=`` or if the profile should be loaded with
 ``netcredentials_only``, set ``logon_flags=with_profile,netcredentials_only``.
 
-For more information, see `dwLogonFlags <https://msdn.microsoft.com/en-us/library/windows/desktop/ms682434.aspx>`_.
+For more information, see `dwLogonFlags <https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-createprocesswithtokenw>`_.
 
 Here are some examples of how to use ``become_flags`` with Windows tasks:
 
@@ -536,7 +563,7 @@ Limitations
 Be aware of the following limitations with ``become`` on Windows:
 
 * Running a task with ``async`` and ``become`` on Windows Server 2008, 2008 R2
-  and Windows 7 does not work.
+  and Windows 7 only works when using Ansible 2.7 or newer.
 
 * By default, the become user logs on with an interactive session, so it must
   have the right to do so on the Windows host. If it does not inherit the

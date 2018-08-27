@@ -4,32 +4,32 @@
 - name: setup
   nxos_config: &reset
     lines:
-      - no ip name-server 1.1.1.1
-      - no ip name-server 2.2.2.2
-      - no ip name-server 3.3.3.3
+      - no ip name-server 192.0.2.1
+      - no ip name-server 192.0.2.2
+      - no ip name-server 192.0.2.3
     match: none
 
 - name: configure name_servers
   nxos_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'ip name-server 1.1.1.1' in result.commands"
-      - "'ip name-server 2.2.2.2' in result.commands"
-      - "'ip name-server 3.3.3.3' in result.commands"
+      - "'ip name-server 192.0.2.1' in result.commands"
+      - "'ip name-server 192.0.2.2' in result.commands"
+      - "'ip name-server 192.0.2.3' in result.commands"
 
 - name: verify name_servers
   nxos_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
   register: result
 
 - assert:
@@ -39,24 +39,24 @@
 #- name: change to vrf
 #  nxos_system:
 #    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
 #  register: result
 
 #- assert:
 #    that:
 #      - result.changed == true
 #      - result.commands|length == 2
-#      - "'no ip name-server 2.2.2.2' in result.commands"
-#      - "'ip name-server 2.2.2.2 vrf ansible' in result.commands"
+#      - "'no ip name-server 192.0.2.2' in result.commands"
+#      - "'ip name-server 192.0.2.2 vrf ansible' in result.commands"
 
 #- name: verify change to vrf
 #  nxos_system:
 #    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
 #  register: result
 #
 #- assert:
@@ -66,15 +66,15 @@
 - name: remove one
   nxos_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
+      - 192.0.2.1
+      - 192.0.2.2
   register: result
 
 - assert:
     that:
       - result.changed == true
       - result.commands|length == 1
-      - "'no ip name-server 3.3.3.3' in result.commands"
+      - "'no ip name-server 192.0.2.3' in result.commands"
 
 - name: default name server
   nxos_system: &defns

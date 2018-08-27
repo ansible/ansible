@@ -26,9 +26,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
-from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
@@ -81,7 +81,11 @@ def get_capabilities(module):
     if hasattr(module, '_vyos_capabilities'):
         return module._vyos_capabilities
 
-    capabilities = Connection(module._socket_path).get_capabilities()
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     module._vyos_capabilities = json.loads(capabilities)
     return module._vyos_capabilities
 
@@ -93,63 +97,30 @@ def get_config(module):
         return _DEVICE_CONFIGS
     else:
         connection = get_connection(module)
-        out = connection.get_config()
+        try:
+            out = connection.get_config()
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS = cfg
         return cfg
 
 
 def run_commands(module, commands, check_rc=True):
-    responses = list()
     connection = get_connection(module)
-
-    for cmd in to_list(commands):
-        try:
-            cmd = json.loads(cmd)
-            command = cmd['command']
-            prompt = cmd['prompt']
-            answer = cmd['answer']
-        except:
-            command = cmd
-            prompt = None
-            answer = None
-
-        out = connection.get(command, prompt, answer)
-
-        try:
-            out = to_text(out, errors='surrogate_or_strict')
-        except UnicodeError:
-            module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
-
-        responses.append(out)
-
-    return responses
+    try:
+        response = connection.run_commands(commands=commands, check_rc=check_rc)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return response
 
 
 def load_config(module, commands, commit=False, comment=None):
     connection = get_connection(module)
 
-    out = connection.edit_config(commands)
+    try:
+        response = connection.edit_config(candidate=commands, commit=commit, comment=comment)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-    diff = None
-    if module._diff:
-        out = connection.get('compare')
-        out = to_text(out, errors='surrogate_or_strict')
-
-        if not out.startswith('No changes'):
-            out = connection.get('show')
-            diff = to_text(out, errors='surrogate_or_strict').strip()
-
-    if commit:
-        try:
-            out = connection.commit(comment)
-        except ConnectionError:
-            connection.discard_changes()
-            module.fail_json(msg='commit failed: %s' % out)
-        else:
-            connection.get('exit')
-    else:
-        connection.discard_changes()
-
-    if diff:
-        return diff
+    return response.get('diff')

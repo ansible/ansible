@@ -43,7 +43,7 @@ options:
       http://docs.rackspace.com/cm/api/v1.0/cm-devguide/content/
       service-notification-types-crud.html for details.
     required: true
-author: Ash Wilson
+author: Ash Wilson (@smashwilson)
 extends_documentation_fragment: rackspace.openstack
 '''
 

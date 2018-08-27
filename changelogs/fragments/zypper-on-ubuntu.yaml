@@ -1,0 +1,4 @@
+bugfixes:
+  - Fixed an issue where ``ansible_facts.pkg_mgr`` would incorrectly set
+    to ``zypper`` on Debian/Ubuntu systems that happened to have the
+    command installed.

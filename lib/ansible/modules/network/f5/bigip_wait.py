@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -105,7 +105,7 @@ except ImportError:
 def hard_timeout(module, want, start):
     elapsed = datetime.datetime.utcnow() - start
     module.fail_json(
-        want.msg or "Timeout when waiting for BIG-IP", elapsed=elapsed.seconds
+        msg=want.msg or "Timeout when waiting for BIG-IP", elapsed=elapsed.seconds
     )
 
 

@@ -449,7 +449,7 @@ def main():
     )
 
     try:
-        client = F5RestClient(module=module)
+        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

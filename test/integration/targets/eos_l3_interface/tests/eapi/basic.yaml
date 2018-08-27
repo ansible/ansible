@@ -10,8 +10,7 @@
   eos_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - name: Configure interface ipv4 address
@@ -19,8 +18,7 @@
     name: "{{ test_interface_1 }}"
     ipv4: 192.168.1.1/24
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -34,8 +32,7 @@
     name: "{{ test_interface_1 }}"
     ipv4: 192.168.1.1/24
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -47,8 +44,7 @@
     name: "{{ test_interface_1 }}"
     ipv4: 197.168.0.1/24
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -62,8 +58,7 @@
     name: "{{ test_interface_1 }}"
     ipv6: fd5d:12c9:2201:1::1/64
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -77,8 +72,7 @@
     name: "{{ test_interface_1 }}"
     ipv6: fd5d:12c9:2201:1::1/64
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -90,8 +84,7 @@
     name: "{{ test_interface_1 }}"
     ipv6: fd58:12c9:2201:1::1/64
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -104,8 +97,7 @@
   eos_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -119,16 +111,14 @@
   eos_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - name: Delete second interface ipv4 and ipv6 address (setup)
   eos_l3_interface:
     name: "{{ test_interface_2 }}"
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - name: Configure ipv4 and ipv6 address using aggregate
@@ -136,8 +126,7 @@
     aggregate:
     - { name: "{{ test_interface_1 }}", ipv4: 192.161.0.1/24, ipv6: "fd5d:12c9:2201:2::2/64" }
     - { name: "{{ test_interface_2 }}", ipv4: 192.162.0.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -155,8 +144,7 @@
     aggregate:
     - { name: "{{ test_interface_1 }}", ipv4: 192.161.0.1/24, ipv6: "fd5d:12c9:2201:2::2/64" }
     - { name: "{{ test_interface_2 }}", ipv4: 192.162.0.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -168,8 +156,7 @@
     aggregate:
     - { name: "{{ test_interface_1 }}", ipv4: 193.167.1.1/8, ipv6: "fd5a:12c9:2201:4::4/32" }
     - { name: "{{ test_interface_2 }}", ipv4: 192.169.2.2/24, ipv6: "fd5b:12c9:2201:5::5/90" }
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -189,8 +176,7 @@
     - { name: "{{ test_interface_1 }}" }
     - { name: "{{ test_interface_2 }}" }
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -209,8 +195,7 @@
     - { name: "{{ test_interface_1 }}" }
     - { name: "{{ test_interface_2 }}" }
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:

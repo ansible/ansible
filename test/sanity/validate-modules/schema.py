@@ -16,9 +16,40 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from voluptuous import PREVENT_EXTRA, Any, Required, Schema, Self
+from voluptuous import PREVENT_EXTRA, All, Any, Length, Required, Schema, Self
 from ansible.module_utils.six import string_types
 list_string_types = list(string_types)
+
+
+def sequence_of_sequences(min=None, max=None):
+    return All(
+        Any(
+            None,
+            [Length(min=min, max=max)],
+            tuple([Length(min=min, max=max)]),
+        ),
+        Any(
+            None,
+            [Any(list, tuple)],
+            tuple([Any(list, tuple)]),
+        ),
+    )
+
+
+ansible_module_kwargs_schema = Schema(
+    {
+        'argument_spec': dict,
+        'bypass_checks': bool,
+        'no_log': bool,
+        'check_invalid_arguments': Any(None, bool),
+        'mutually_exclusive': sequence_of_sequences(min=2),
+        'required_together': sequence_of_sequences(min=2),
+        'required_one_of': sequence_of_sequences(min=2),
+        'add_file_common_args': bool,
+        'supports_check_mode': bool,
+        'required_if': sequence_of_sequences(min=3),
+    }
+)
 
 suboption_schema = Schema(
     {
@@ -50,7 +81,7 @@ option_schema = Schema(
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, "bool")
+        'type': Any(None, 'str', 'list', 'dict', 'bool', 'int', 'float', 'path', 'raw', 'jsonarg', 'json', 'bytes', 'bits')
     },
     extra=PREVENT_EXTRA
 )
@@ -92,7 +123,7 @@ def deprecation_schema():
         # Deprecation cycle changed at 2.4 (though not retroactively)
         # 2.3 -> removed_in: "2.5" + n for docs stub
         # 2.4 -> removed_in: "2.8" + n for docs stub
-        Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10"),
+        Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11"),
         Required('why'): Any(*string_types),
         Required('alternative'): Any(*string_types),
         'removed': Any(True),
@@ -148,10 +179,8 @@ def metadata_1_0_schema(deprecated):
     )
 
 
-def metadata_1_1_schema(deprecated):
+def metadata_1_1_schema():
     valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
-    if deprecated:
-        valid_status = Any('deprecated')
 
     return Schema(
         {

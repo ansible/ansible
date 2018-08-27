@@ -60,6 +60,7 @@ EXAMPLES = r'''
     aep: ACI-AEP
     description: default
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing AEP
   aci_aep:
@@ -68,6 +69,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aep: ACI-AEP
     state: absent
+  delegate_to: localhost
 
 - name: Query all AEPs
   aci_aep:
@@ -75,6 +77,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a specific AEP
   aci_aep:
@@ -83,6 +87,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aep: ACI-AEP
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -229,8 +235,8 @@ def main():
         root_class=dict(
             aci_class='infraAttEntityP',
             aci_rn='infra/attentp-{0}'.format(aep),
-            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
             module_object=aep,
+            target_filter={'name': aep},
         ),
     )
     aci.get_existing()
@@ -253,6 +259,7 @@ def main():
         aci.delete_config()
 
     aci.exit_json()
+
 
 if __name__ == "__main__":
     main()

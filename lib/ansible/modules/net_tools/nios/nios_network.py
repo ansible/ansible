@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -22,7 +22,7 @@ description:
     using the Infoblox WAPI interface over REST.
   - Supports both IPV4 and IPV6 internet protocols
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   network:
@@ -98,7 +98,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: configure a network ipv6
   nios_network:
     network: fe80::/64
@@ -109,7 +108,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: set dhcp options for a network ipv4
   nios_network:
     network: 192.168.10.0/24
@@ -123,7 +121,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: remove a network ipv4
   nios_network:
     network: 192.168.10.0/24
@@ -141,14 +138,14 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.network.common.utils import validate_ip_address, validate_ip_v6_address
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV4_NETWORK
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV6_NETWORK
 
 
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
-
     This function will transform the options argument into a structure that
     is a valid WAPI structure in the format of:
-
         {
             name: <value>,
             num: <value>,
@@ -156,11 +153,9 @@ def options(module):
             use_option: <value>,
             vendor_class: <value>
         }
-
     It will remove any options that are set to None since WAPI will error on
     that condition.  It will also verify that either `name` or `num` is
     set in the structure but does not validate the values are equal.
-
     The remainder of the value validation is performed by WAPI
     '''
     options = list()
@@ -178,9 +173,22 @@ def check_ip_addr_type(ip):
     check_ip = ip.split('/')
 
     if validate_ip_address(check_ip[0]):
-        return 'network'
+        return NIOS_IPV4_NETWORK
     elif validate_ip_v6_address(check_ip[0]):
-        return 'ipv6network'
+        return NIOS_IPV6_NETWORK
+
+
+def check_vendor_specific_dhcp_option(module, ib_spec):
+    '''This function will check if the argument dhcp option belongs to vendor-specific and if yes then will remove
+     use_options flag which is not supported with vendor-specific dhcp options.
+    '''
+    for key, value in iteritems(ib_spec):
+        if isinstance(module.params[key], list):
+            temp_dict = module.params[key][0]
+            if 'num' in temp_dict:
+                if temp_dict['num'] in (43, 124, 125):
+                    del module.params[key][0]['use_option']
+    return ib_spec
 
 
 def main():
@@ -223,6 +231,9 @@ def main():
     network_type = check_ip_addr_type(obj_filter['network'])
 
     wapi = WapiModule(module)
+    # to check for vendor specific dhcp option
+    ib_spec = check_vendor_specific_dhcp_option(module, ib_spec)
+
     result = wapi.run(network_type, ib_spec)
 
     module.exit_json(**result)

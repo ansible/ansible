@@ -35,13 +35,13 @@ options:
   receive_state:
     description:
     - Enable or disable Receive state.
-    - The APIC defaults to C(enabled) when unset during creation.
-    choices: [ disabled, enabled ]
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   transmit_state:
     description:
     - Enable or Disable Transmit state.
-    - The APIC defaults to C(enabled) when unset during creation.
-    choices: [ disabled, enabled ]
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -61,6 +61,7 @@ EXAMPLES = r'''
     description: '{{ description }}'
     receive_state: '{{ receive_state }}'
     transmit_state: '{{ transmit_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -203,8 +204,8 @@ def main():
         root_class=dict(
             aci_class='lldpIfPol',
             aci_rn='infra/lldpIfP-{0}'.format(lldp_policy),
-            filter_target='eq(lldpIfPol.name, "{0}")'.format(lldp_policy),
             module_object=lldp_policy,
+            target_filter={'name': lldp_policy},
         ),
     )
 

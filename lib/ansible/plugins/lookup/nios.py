@@ -30,7 +30,7 @@ description:
     supports adding additional keywords to filter the return data and specify
     the desired set of returned fields.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
     _terms:
@@ -107,7 +107,7 @@ class LookupModule(LookupBase):
         extattrs = normalize_extattrs(kwargs.pop('extattrs', {}))
         provider = kwargs.pop('provider', {})
         wapi = WapiLookup(provider)
-        res = wapi.get_object(obj_type, filter_data, return_fields=return_fields)
+        res = wapi.get_object(obj_type, filter_data, return_fields=return_fields, extattrs=extattrs)
         if res is not None:
             for obj in res:
                 if 'extattrs' in obj:

@@ -19,8 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from ansible.compat.tests.mock import patch, MagicMock
 from ansible.modules.network.eos import eos_config
+from ansible.plugins.cliconf.eos import Cliconf
 from units.modules.utils import set_module_args
 from .eos_module import TestEosModule, load_fixture
 
@@ -34,62 +35,83 @@ class TestEosConfigModule(TestEosModule):
         self.mock_get_config = patch('ansible.modules.network.eos.eos_config.get_config')
         self.get_config = self.mock_get_config.start()
 
+        self.mock_get_connection = patch('ansible.modules.network.eos.eos_config.get_connection')
+        self.get_connection = self.mock_get_connection.start()
+
         self.mock_load_config = patch('ansible.modules.network.eos.eos_config.load_config')
         self.load_config = self.mock_load_config.start()
         self.mock_run_commands = patch('ansible.modules.network.eos.eos_config.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_supports_sessions = patch('ansible.plugins.cliconf.eos.Cliconf.supports_sessions')
+        self.supports_sessions = self.mock_supports_sessions.start()
+        self.mock_supports_sessions.return_value = True
+
+        self.conn = self.get_connection()
+        self.conn.edit_config = MagicMock()
+
+        self.cliconf_obj = Cliconf(MagicMock())
+        self.running_config = load_fixture('eos_config_config.cfg')
+
     def tearDown(self):
         super(TestEosConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_get_connection.stop()
+        self.mock_supports_sessions.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.get_config.return_value = load_fixture('eos_config_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_eos_config_no_change(self):
-        args = dict(lines=['hostname localhost'])
+        lines = ['hostname localhost']
+        config = '\n'.join(lines)
+        args = dict(lines=lines)
         set_module_args(args)
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(config, config))
         result = self.execute_module()
 
     def test_eos_config_src(self):
-        args = dict(src=load_fixture('eos_config_candidate.cfg'))
+        src = load_fixture('eos_config_candidate.cfg')
+        args = dict(src=src)
         set_module_args(args)
-
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(src, self.running_config))
         result = self.execute_module(changed=True)
         config = ['hostname switch01', 'interface Ethernet1',
                   'description test interface', 'no shutdown', 'ip routing']
-
         self.assertEqual(sorted(config), sorted(result['commands']), result['commands'])
 
     def test_eos_config_lines(self):
-        args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'])
+        lines = ['hostname switch01', 'ip domain-name eng.ansible.com']
+        args = dict(lines=lines)
         set_module_args(args)
-
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff('\n'.join(lines), self.running_config))
         result = self.execute_module(changed=True)
         config = ['hostname switch01']
 
         self.assertEqual(sorted(config), sorted(result['commands']), result['commands'])
 
     def test_eos_config_before(self):
-        args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
-                    before=['before command'])
-
+        lines = ['hostname switch01', 'ip domain-name eng.ansible.com']
+        before = ['before command']
+        args = dict(lines=lines,
+                    before=before)
         set_module_args(args)
 
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff('\n'.join(lines), self.running_config))
         result = self.execute_module(changed=True)
         config = ['before command', 'hostname switch01']
-
         self.assertEqual(sorted(config), sorted(result['commands']), result['commands'])
         self.assertEqual('before command', result['commands'][0])
 
     def test_eos_config_after(self):
-        args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
+        lines = ['hostname switch01', 'ip domain-name eng.ansible.com']
+        args = dict(lines=lines,
                     after=['after command'])
 
         set_module_args(args)
-
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff('\n'.join(lines), self.running_config))
         result = self.execute_module(changed=True)
         config = ['after command', 'hostname switch01']
 
@@ -97,8 +119,12 @@ class TestEosConfigModule(TestEosModule):
         self.assertEqual('after command', result['commands'][-1])
 
     def test_eos_config_parents(self):
-        args = dict(lines=['ip address 1.2.3.4/5', 'no shutdown'], parents=['interface Ethernet10'])
+        lines = ['ip address 1.2.3.4/5', 'no shutdown']
+        parents = ['interface Ethernet10']
+        args = dict(lines=lines, parents=parents)
+        candidate = parents + lines
         set_module_args(args)
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff('\n'.join(candidate), self.running_config))
 
         result = self.execute_module(changed=True)
         config = ['interface Ethernet10', 'ip address 1.2.3.4/5', 'no shutdown']

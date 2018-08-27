@@ -60,6 +60,16 @@ options:
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
         required: true
+    quic_override:
+        description:
+            - Specifies the QUIC override policy for this resource. This determines whether the
+              load balancer will attempt to negotiate QUIC with clients or not. Can specify one
+              of NONE, ENABLE, or DISABLE. If NONE is specified, uses the QUIC policy with no
+              user overrides, which is equivalent to DISABLE. Not specifying this field is equivalent
+              to specifying NONE.
+        required: false
+        version_added: 2.7
+        choices: ['NONE', 'ENABLE', 'DISABLE']
     ssl_certificates:
         description:
             - A list of SslCertificate resources that are used to authenticate connections between
@@ -67,26 +77,28 @@ options:
         required: true
     url_map:
         description:
-            - A reference to UrlMap resource.
+            - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetHttpsProxies)"
+    - "Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies)"
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targethttpsproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targethttpsproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
+
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-targethttpsproxy'
+      name: "httphealthcheck-targethttpsproxy"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
@@ -94,41 +106,37 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
+
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targethttpsproxy'
+      name: "backendservice-targethttpsproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
+      - "{{ healthcheck.selfLink }}"
       enable_cdn: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
+
 - name: create a url map
   gcp_compute_url_map:
-      name: 'urlmap-targethttpsproxy'
+      name: "urlmap-targethttpsproxy"
       default_service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: urlmap
+
 - name: create a ssl certificate
   gcp_compute_ssl_certificate:
-      name: 'sslcert-targethttpsproxy'
-      description: |
-        "A certificate for testing. Do not use this certificate in production"
+      name: "sslcert-targethttpsproxy"
+      description: A certificate for testing. Do not use this certificate in production
       certificate: |
         -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
@@ -156,21 +164,18 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: sslcert
+
 - name: create a target https proxy
   gcp_compute_target_https_proxy:
-      name: testObject
+      name: "test_object"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       url_map: "{{ urlmap }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -200,6 +205,15 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
+    quic_override:
+        description:
+            - Specifies the QUIC override policy for this resource. This determines whether the
+              load balancer will attempt to negotiate QUIC with clients or not. Can specify one
+              of NONE, ENABLE, or DISABLE. If NONE is specified, uses the QUIC policy with no
+              user overrides, which is equivalent to DISABLE. Not specifying this field is equivalent
+              to specifying NONE.
+        returned: success
+        type: str
     ssl_certificates:
         description:
             - A list of SslCertificate resources that are used to authenticate connections between
@@ -208,7 +222,7 @@ RETURN = '''
         type: list
     url_map:
         description:
-            - A reference to UrlMap resource.
+            - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
         returned: success
         type: dict
 '''
@@ -234,10 +248,14 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
+            quic_override=dict(type='str', choices=['NONE', 'ENABLE', 'DISABLE']),
             ssl_certificates=dict(required=True, type='list', elements='dict'),
             url_map=dict(required=True, type='dict')
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#targetHttpsProxy'
@@ -286,6 +304,7 @@ def resource_to_request(module):
         u'kind': 'compute#targetHttpsProxy',
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
+        u'quicOverride': module.params.get('quic_override'),
         u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink'),
         u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink')
     }
@@ -356,9 +375,10 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'description': response.get(u'description'),
+        u'description': module.params.get('description'),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name'),
+        u'name': module.params.get('name'),
+        u'quicOverride': response.get(u'quicOverride'),
         u'sslCertificates': response.get(u'sslCertificates'),
         u'urlMap': response.get(u'urlMap')
     }
@@ -376,7 +396,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#targetHttpsProxy')
@@ -399,6 +419,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()
