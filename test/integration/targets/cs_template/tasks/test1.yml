@@ -58,7 +58,7 @@
     - template.display_text == "ansible-template-test1"
     - template.cross_zones == true
 
-- name: test update template in check mdoe
+- name: test update template in check mode
   cs_template:
     name: "ansible-template-test1"
     display_text: "{{ cs_resource_prefix }}-template display_text"
