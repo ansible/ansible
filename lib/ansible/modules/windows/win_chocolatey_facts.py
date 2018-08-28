@@ -26,20 +26,20 @@ EXAMPLES = r'''
   win_chocolatey_facts:
 
 - name: Displays the Configuration
-  debug: 
+  debug:
     var: ansible_facts.chocolatey.config
 
 - name: Displays the Feature
-  debug: 
+  debug:
     var: ansible_facts.chocolatey.feature
- 
+
 - name: Displays the Sources
-  debug: 
+  debug:
     var: ansible_facts.chocolatey.sources
-  
+
 - name: Displays the Packages
   debug:
-    var: ansible_facts.chocolatey.packages 
+    var: ansible_facts.chocolatey.packages
 '''
 
 RETURN = r'''
@@ -65,5 +65,4 @@ ansible_facts:
                 packages:
                     description: List of Packages.
                     returned: always
-
 '''
