@@ -121,7 +121,7 @@ options:
         description: ["Time to delay evaluation (in seconds). It is effective for sparse values."]
         required: false
         default: null
-        version_added: "2.5"
+        version_added: "2.7"
     id:
         description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]
         required: false
