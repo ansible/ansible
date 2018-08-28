@@ -101,7 +101,9 @@ requirements:
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
        For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
        install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time."
+       be installed at the same time. Also note that when both modules are installed
+       and one of them is uninstalled, the other might no longer function and a
+       reinstall of it is required."
     - "The docker server >= 1.9.0"
 '''
 
