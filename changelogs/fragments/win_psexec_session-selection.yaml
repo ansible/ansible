@@ -1,0 +1,2 @@
+minor_changes:
+- win_psexec - Added the ``session`` option to specify a session to start the process in
