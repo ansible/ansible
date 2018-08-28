@@ -129,66 +129,54 @@ def get_collector_names(valid_subsets=None,
     minimal_gather_subsets is a frozenset of matches to always use, even for gather_subset='!all'
     '''
 
+    aliases_map = aliases_map or defaultdict(set)
+
     # Retrieve module parameters
     gather_subset = gather_subset or ['all']
 
+    min_valid = frozenset(('all', 'min'))
     # the list of everything that 'all' expands to
-    valid_subsets = valid_subsets or frozenset()
+    valid_subsets = valid_subsets or min_valid
 
-    # if provided, minimal_gather_subset is always added, even after all negations
+    # if provided, minimal_gather_subset is always added, unless explicitly excluded
     minimal_gather_subset = minimal_gather_subset or frozenset()
 
-    aliases_map = aliases_map or defaultdict(set)
-
-    # Retrieve all facts elements
-    additional_subsets = set()
+    additional_subsets = set(minimal_gather_subset)
+    explicitly_added = set()
     exclude_subsets = set()
 
-    # total always starts with the min set, then
-    # adds of the additions in gather_subset, then
-    # excludes all of the excludes, then add any explicitly
-    # requested subsets.
-    gather_subset_with_min = ['min']
-    gather_subset_with_min.extend(gather_subset)
+    for subset in gather_subset:
+        subset_id = subset.replace('!', '')
+        alias = aliases_map.get(subset, set())
 
-    # subsets we mention in gather_subset explicitly, except for 'all'/'min'
-    explicitly_added = set()
+        if subset_id not in valid_subsets and subset_id not in min_valid:
+            raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" %
+                            (subset_id, ", ".join(sorted(valid_subsets))))
 
-    for subset in gather_subset_with_min:
-        subset_id = subset
-        if subset_id == 'min':
-            additional_subsets.update(minimal_gather_subset)
-            continue
-        if subset_id == 'all':
-            additional_subsets.update(valid_subsets)
-            continue
-        if subset_id.startswith('!'):
-            subset = subset[1:]
-            if subset == 'min':
+        if subset == 'all':
+            explicitly_added.update(valid_subsets)
+        elif subset == 'min':
+            explicitly_added.update(minimal_gather_subset)
+        elif subset.startswith('!'):
+            if subset_id == 'min':
                 exclude_subsets.update(minimal_gather_subset)
-                continue
-            if subset == 'all':
+            elif subset_id == 'all':
                 exclude_subsets.update(valid_subsets - minimal_gather_subset)
-                continue
-            exclude = True
+            else:
+                if alias:
+                    exclude_subsets.update(alias)
+                else:
+                    exclude_subsets.add(subset_id)
         else:
-            exclude = False
+            if alias:
+                explicitly_added.update(alias)
+            else:
+                explicitly_added.add(subset)
 
-        if exclude:
-            # include 'devices', 'dmi' etc for '!hardware'
-            exclude_subsets.update(aliases_map.get(subset, set()))
-            exclude_subsets.add(subset)
-        else:
-            # NOTE: this only considers adding an unknown gather subsetup an error. Asking to
-            #       exclude an unknown gather subset is ignored.
-            if subset_id not in valid_subsets:
-                raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" %
-                                (subset, ", ".join(sorted(valid_subsets))))
-
-            explicitly_added.add(subset)
-            additional_subsets.add(subset)
-
-    if not additional_subsets:
+    # add 'all' by default unless a specific subset was added
+    if explicitly_added:
+        additional_subsets.update(explicitly_added)
+    else:
         additional_subsets.update(valid_subsets)
 
     additional_subsets.difference_update(exclude_subsets - explicitly_added)

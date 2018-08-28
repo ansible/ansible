@@ -1,0 +1,2 @@
+bugfixes:
+    - assume 'all' if only excluding facts https://github.com/ansible/ansible/issues/30929
