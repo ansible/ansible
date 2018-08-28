@@ -150,5 +150,8 @@ class LookupModule(LookupBase):
             else:
                 break
 
-        connection.close()
-        return [ret]
+        if connection.is_closing or connection.is_closed:
+            return [ret]
+        else:
+            connection.close()
+            return [ret]
