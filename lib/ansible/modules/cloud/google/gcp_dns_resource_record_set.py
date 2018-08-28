@@ -33,10 +33,10 @@ DOCUMENTATION = '''
 module: gcp_dns_resource_record_set
 description:
     - A single DNS record that exists on a domain name (i.e. in a managed zone).
-    - This record defines the information about the domain and where the domain
-      / subdomains direct to.
-    - The record will include the domain/subdomain name, a type (i.e. A, AAA,
-      CAA, MX, CNAME, NS, etc).
+    - This record defines the information about the domain and where the domain / subdomains
+      direct to.
+    - The record will include the domain/subdomain name, a type (i.e. A, AAA, CAA, MX,
+      CNAME, NS, etc) .
 short_description: Creates a GCP ResourceRecordSet
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
@@ -48,12 +48,11 @@ options:
     state:
         description:
             - Whether the given object should exist in GCP
-        required: true
         choices: ['present', 'absent']
         default: 'present'
     name:
         description:
-            - For example, www.example.com.
+            - For example, U(www.example.com.)
         required: true
     type:
         description:
@@ -62,16 +61,16 @@ options:
         choices: ['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NAPTR', 'NS', 'PTR', 'SOA', 'SPF', 'SRV', 'TXT']
     ttl:
         description:
-            - Number of seconds that this ResourceRecordSet can be cached by
-              resolvers.
+            - Number of seconds that this ResourceRecordSet can be cached by resolvers.
         required: false
     target:
         description:
-            - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1).
+            - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) .
         required: false
     managed_zone:
         description:
-            - A reference to ManagedZone resource.
+            - Identifies the managed zone addressed by this request.
+            - Can be the managed zone name or id.
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -79,38 +78,34 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a managed zone
   gcp_dns_managed_zone:
-      name: 'managedzone-rrs'
-      dns_name: 'testzone-4.com.'
-      description: 'test zone'
+      name: "managedzone-rrs"
+      dns_name: testzone-4.com.
+      description: test zone
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/ndev.clouddns.readwrite
       state: present
   register: managed_zone
 
 - name: create a resource record set
   gcp_dns_resource_record_set:
-      name: 'www.testzone-4.com.'
+      name: www.testzone-4.com.
       managed_zone: "{{ managed_zone }}"
-      type: 'A'
+      type: A
       ttl: 600
       target:
-        - 10.1.2.3
-        - 40.5.6.7
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/ndev.clouddns.readwrite
+      - 10.1.2.3
+      - 40.5.6.7
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
     name:
         description:
-            - For example, www.example.com.
+            - For example, U(www.example.com.)
         returned: success
         type: str
     type:
@@ -120,18 +115,18 @@ RETURN = '''
         type: str
     ttl:
         description:
-            - Number of seconds that this ResourceRecordSet can be cached by
-              resolvers.
+            - Number of seconds that this ResourceRecordSet can be cached by resolvers.
         returned: success
         type: int
     target:
         description:
-            - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1).
+            - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) .
         returned: success
         type: list
     managed_zone:
         description:
-            - A reference to ManagedZone resource.
+            - Identifies the managed zone addressed by this request.
+            - Can be the managed zone name or id.
         returned: success
         type: dict
 '''
@@ -164,6 +159,9 @@ def main():
             managed_zone=dict(required=True, type='dict')
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
 
     state = module.params['state']
     kind = 'dns#resourceRecordSet'
@@ -227,7 +225,6 @@ def delete(module, link, kind, fetch):
 def resource_to_request(module):
     request = {
         u'kind': 'dns#resourceRecordSet',
-        u'managed_zone': replace_resource_dict(module.params.get(u'managed_zone', {}), 'name'),
         u'name': module.params.get('name'),
         u'type': module.params.get('type'),
         u'ttl': module.params.get('ttl'),
@@ -263,11 +260,21 @@ def fetch_wrapped_resource(module, kind, wrap_kind, wrap_path):
 
 
 def self_link(module):
-    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/rrsets?name={name}&type={type}".format(**module.params)
+    res = {
+        'project': module.params['project'],
+        'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name'),
+        'name': module.params['name'],
+        'type': module.params['type']
+    }
+    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/rrsets?name={name}&type={type}".format(**res)
 
 
 def collection(module, extra_url=''):
-    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**module.params) + extra_url
+    res = {
+        'project': module.params['project'],
+        'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name')
+    }
+    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**res) + extra_url
 
 
 def return_if_object(module, response, kind):
@@ -346,6 +353,9 @@ class SOAForwardable(object):
     def fail_json(self, *args, **kwargs):
         self.module.fail_json(*args, **kwargs)
 
+    def raise_for_status(self, *args, **kwargs):
+        self.module.raise_for_status(*args, **kwargs)
+
 
 def prefetch_soa_resource(module):
     name = module.params['name'].split('.')[1:]
@@ -365,7 +375,7 @@ def prefetch_soa_resource(module):
                                     'dns#resourceRecordSetsListResponse',
                                     'rrsets')
     if not result:
-        raise ValueError("Google DNS Managed Zone %s not found" % module.params['managed_zone'])
+        raise ValueError("Google DNS Managed Zone %s not found" % module.params['managed_zone']['name'])
     return result
 
 
