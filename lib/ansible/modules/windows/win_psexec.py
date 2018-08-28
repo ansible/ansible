@@ -67,7 +67,9 @@ options:
     default: 'no'
   session:
     description:
-    - In conjunction with interactive, specify a session for psexec to attach to. Has no effect if interactive is 'no'.
+    - Specifies the session ID to use.
+    - This parameter works in conjunction with I(interactive).
+    - It has no effect when I(interactive) is set to C(no).
     type: int
     version_added: '2.7'
   limited:
