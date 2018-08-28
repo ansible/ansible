@@ -177,9 +177,8 @@ examples to get you started:
 
     # Simple playbook to invoke with the above example:
 
-        - name: Test docker_inventory
+        - name: Test docker_inventory, this will not connect to any hosts
           hosts: all
-          connection: local
           gather_facts: no
           tasks:
             - debug: msg="Container - {{ inventory_hostname }}"

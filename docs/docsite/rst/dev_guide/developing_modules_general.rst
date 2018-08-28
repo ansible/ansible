@@ -234,7 +234,6 @@ Ansible playbook.
 -  Add the following to the new playbook file::
 
     - name: test my new module
-      connection: local
       hosts: localhost
       tasks:
       - name: run the new module
