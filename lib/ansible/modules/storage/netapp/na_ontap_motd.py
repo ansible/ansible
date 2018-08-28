@@ -26,8 +26,8 @@ options:
     state:
         description:
         - If C(state=present) sets MOTD given in I(message) C(state=absent) removes it.
-        required: true
         choices: ['present', 'absent']
+        default: present
     message:
         description:
         - MOTD Text message, required when C(state=present).
@@ -76,6 +76,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+from ansible.module_utils.netapp_module import NetAppModule
 
 try:
     import xmltodict
@@ -92,7 +93,7 @@ class CDotMotd(object):
     def __init__(self):
         argument_spec = netapp_utils.na_ontap_host_argument_spec()
         argument_spec.update(dict(
-            state=dict(required=True, choices=['present', 'absent']),
+            state=dict(required=False, default='present', choices=['present', 'absent']),
             vserver=dict(required=True, type='str'),
             message=dict(default='', type='str'),
             show_cluster_motd=dict(default=True, type='bool')
@@ -103,12 +104,8 @@ class CDotMotd(object):
             supports_check_mode=True
         )
 
-        params = self.module.params
-
-        self.vserver = params['vserver']
-        self.message = params['message']
-        self.state = params['state']
-        self.show_cluster_motd = params['show_cluster_motd']
+        self.na_helper = NetAppModule()
+        self.parameters = self.na_helper.set_parameters(self.module.params)
 
         if HAS_XMLTODICT_LIB is False:
             self.module.fail_json(msg="the python xmltodict module is required")
@@ -120,19 +117,19 @@ class CDotMotd(object):
 
     def _create_call(self):
         api_call = netapp_utils.zapi.NaElement('vserver-motd-modify-iter')
-        api_call.add_new_child('message', self.message)
-        api_call.add_new_child('is-cluster-message-enabled', 'true' if self.show_cluster_motd else 'false')
+        api_call.add_new_child('message', self.parameters['message'])
+        api_call.add_new_child('is-cluster-message-enabled', 'true' if self.parameters['show_cluster_motd'] else 'false')
         query = netapp_utils.zapi.NaElement('query')
         motd_info = netapp_utils.zapi.NaElement('vserver-motd-info')
-        motd_info.add_new_child('vserver', self.vserver)
+        motd_info.add_new_child('vserver', self.parameters['vserver'])
         query.add_child_elem(motd_info)
         api_call.add_child_elem(query)
         return api_call
 
     def commit_changes(self):
-        if self.state == 'absent':
+        if self.parameters['state'] == 'absent':
             # Just make sure it is empty
-            self.message = ''
+            self.parameters['message'] = ''
 
         call = self._create_call()
 
@@ -150,7 +147,7 @@ class CDotMotd(object):
 
         changed = bool(num_succeeded >= 1)
 
-        result = {'state': self.state, 'changed': changed}
+        result = {'state': self.parameters['state'], 'changed': changed}
         self.module.exit_json(**result)
 
 
