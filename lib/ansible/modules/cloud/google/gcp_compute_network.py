@@ -280,8 +280,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
