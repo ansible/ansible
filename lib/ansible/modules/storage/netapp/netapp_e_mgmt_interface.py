@@ -130,7 +130,7 @@ options:
         description:
             - Enable ssh access to the controller for debug purposes.
             - This is a controller-level setting.
-            - Older controllers may enable rlogin or telnet instead of ssh.
+            - rlogin/telnet will be enabled for ancient equipment where ssh is not available.
         required: no
     log_path:
         description:
@@ -277,14 +277,14 @@ class MgmtInterface(object):
             ["ntp_config_method", "static", ["ntp_address"]],
         ]
 
-        one_of = [
+        mutually_exclusive = [
             ["name", "channel"],
         ]
 
         self.module = AnsibleModule(argument_spec=argument_spec,
                                     supports_check_mode=True,
                                     required_if=required_if,
-                                    required_one_of=one_of)
+                                    mutually_exclusive=mutually_exclusive)
         args = self.module.params
 
         self.controller = args["controller"]
