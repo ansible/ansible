@@ -60,7 +60,8 @@ ontap_facts:
             "lun_info": {...},
             "storage_failover_info": {...},
             "vserver_login_banner_info": {...},
-            "vserver_motd_info": {...}
+            "vserver_motd_info": {...},
+            "vserver_info": {...}
     }'
 '''
 
@@ -231,6 +232,12 @@ class NetAppGatherFacts(object):
             'security-key-manager-key-get-iter',
             attribute='security-key-manager-key-info',
             field=('node', 'key-id'),
+            query={'max-records': '1024'}
+        )
+        self.netapp_info['vserver_info'] = self.get_generic_get_iter(
+            'vserver-get-iter',
+            attribute='vserver-info',
+            field='vserver-name',
             query={'max-records': '1024'}
         )
 
