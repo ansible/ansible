@@ -283,9 +283,8 @@ class ActionModule(ActionBase):
 
         if reboot_result['failed']:
             result = reboot_result
-            if 'start' in reboot_result:
-                elapsed = datetime.utcnow() - reboot_result['start']
-                result['elapsed'] = elapsed.seconds
+            elapsed = datetime.utcnow() - reboot_result['start']
+            result['elapsed'] = elapsed.seconds
             return result
 
         # Make sure reboot was successful

@@ -50,6 +50,8 @@ class ActionModule(RebootActionModule, ActionBase):
 
         remote_command = self.construct_command()
         reboot_result = self._low_level_execute_command(remote_command, sudoable=self.DEFAULT_SUDOABLE)
+        result = {}
+        result['start'] = datetime.utcnow()
 
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY)))
 
@@ -69,7 +71,6 @@ class ActionModule(RebootActionModule, ActionBase):
             stdout += result1['stdout'] + result2['stdout']
             stderr += result1['stderr'] + result2['stderr']
 
-        result = {}
         if reboot_result['rc'] != 0:
             result['failed'] = True
             result['rebooted'] = False
@@ -77,7 +78,6 @@ class ActionModule(RebootActionModule, ActionBase):
             return result
 
         result['failed'] = False
-        result['start'] = datetime.utcnow()
 
         # Get the original connection_timeout option var so it can be reset after
         try:
