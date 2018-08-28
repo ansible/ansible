@@ -31,7 +31,7 @@ options:
     - unpinned
     default: pinned
   version:
-     description:
+    description:
     - Specific version of the package to be installed.
     - Ignored when C(unpinned).
 author:
