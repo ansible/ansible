@@ -1,3 +1,7 @@
+# Rabbitmq lookup
+- set_fact:
+    test_rabbitmq: True
+
 - name: Test failure without pika installed
   set_fact:
     rabbit_missing_pika: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F', channel='hello', count=3) }}"
@@ -13,10 +17,6 @@
     name: pika
     state: latest
 
-# Rabbitmq lookup
-- set_fact:
-    test_rabbitmq: True
-
 - name: Test that giving an incorrect amqp protocol in URL will error
   set_fact:
     rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='zzzamqp://guest:guest@192.168.250.1:5672/%2F', channel='hello', count=3) }}"
@@ -27,12 +27,13 @@
 - set_fact:
     test_rabbitmq: False
   when:
-    - "'pika is required for ampq lookup' in rabbitmq_protocol_error.msg"
+    - "'pika python package is required' in rabbitmq_protocol_error.msg"
 
 - assert:
     that:
       - "rabbitmq_protocol_error.failed"
-      - "'supported scheme values: amqp, amqps' in rabbitmq_protocol_error.msg"
+ #     - "'supported scheme values: amqp, amqps' in rabbitmq_protocol_error.msg"
+      - "'URL malformed' in rabbitmq_protocol_error.msg"
   when:
     - test_rabbitmq != False
   
@@ -48,7 +49,7 @@
 - assert:
     that:
       - "rabbitmq_ip_error.failed"
-      - "'Name or service not known' in rabbitmq_ip_error.msg"
+      - "'Connection issue' in rabbitmq_ip_error.msg"
   when:
     - test_rabbitmq != False
  

@@ -114,9 +114,20 @@ class LookupModule(LookupBase):
 
         display.vvv(u"terms:%s : variables:%s url:%s channel:%s count:%s" % (terms, variables, url, channel, count))
 
-        parameters = pika.URLParameters(url)
-        connection = pika.BlockingConnection(parameters)
-        conn_channel = connection.channel()
+        try:
+            parameters = pika.URLParameters(url)
+        except Exception as e:
+            raise AnsibleError("URL malformed: %s" % to_native(e))
+
+        try:
+            connection = pika.BlockingConnection(parameters)
+        except Exception as e:
+            raise AnsibleError("Connection issue: %s" % to_native(e))
+
+        try:
+            conn_channel = connection.channel()
+        except Exception as e:
+            raise AnsibleError("Channel issue: %s" % to_native(e))
 
         ret = []
         idx = 0
