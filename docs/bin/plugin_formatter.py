@@ -422,8 +422,12 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         doc['plugin_type'] = plugin_type
 
-        if module_map[module]['deprecated'] and 'deprecated' not in doc:
-            display.warning("%s PLUGIN MISSING DEPRECATION DOCUMENTATION: %s" % (fname, 'deprecated'))
+        if module_map[module]['deprecated']:
+            if 'deprecated' not in doc:
+                display.warning("%s PLUGIN MISSING DEPRECATION DOCUMENTATION: %s" % (fname, 'deprecated'))
+            else:
+                module_map[module]['removed'] = doc['deprecated'].get('removed', False)
+
 
         required_fields = ('short_description',)
         for field in required_fields:
