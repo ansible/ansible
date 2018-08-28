@@ -22,7 +22,7 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Create facts of chocolatey
+- name: Gather facts from chocolatey
   win_chocolatey_facts:
 
 - name: Displays the Configuration
