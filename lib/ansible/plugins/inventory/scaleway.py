@@ -177,6 +177,9 @@ class InventoryModule(BaseInventoryPlugin):
             self.inventory.set_variable(host, "public_ipv4", extract_public_ipv4(server_info=server_info))
             self.inventory.set_variable(host, "ansible_host", extract_public_ipv4(server_info=server_info))
 
+        if extract_private_ipv4(server_info=server_info):
+            self.inventory.set_variable(host, "private_ipv4", extract_private_ipv4(server_info=server_info))
+
     def _get_zones(self, config_zones):
         return set(SCALEWAY_LOCATION.keys()).intersection(config_zones)
 
