@@ -134,9 +134,9 @@ class AnsibleRunnerProvider(CloudProvider):
                 ['-d', '--name', self.container_name] + publish_ports,
             )
 
-        #if self.args.docker:
+        # if self.args.docker:
         #    runner_host = self.DOCKER_SIMULATOR_NAME
-        #elif container_id:
+        # elif container_id:
         if True:
             runner_host = self._get_simulator_address()
             display.info(
@@ -153,7 +153,6 @@ class AnsibleRunnerProvider(CloudProvider):
     def _get_simulator_address(self):
         results = docker_inspect(self.args, self.container_name)
         ip_address = results[0]['NetworkSettings']['IPAddress']
-        #import epdb; epdb.st()
         return ip_address
 
     def _get_docker_container_id(self):
@@ -164,17 +163,19 @@ class AnsibleRunnerProvider(CloudProvider):
         raise NotImplementedError
 
     def delegate_checkout(self):
+        ''' This injects the PR's checkout into the container for ansible-runner to use '''
         with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
             try:
                 tar_filter = pytar.DefaultTarFilter()
                 pytar.create_tarfile(local_source_fd.name, '.', tar_filter)
-            except Exception as e:
-                raise e
+            except Exception as error:
+                raise error
             container_id = self._get_docker_container_id()
             docker_put(self.args, container_id, local_source_fd.name, '/root/ansible.tgz')
             docker_exec(self.args, container_id, ['mkdir', '/root/ansible'])
             docker_exec(self.args, container_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
             docker_exec(self.args, container_id, ['pip', 'install', '/root/ansible'])
+
 
 
 class AnsibleRunnerEnvironment(CloudEnvironment):
