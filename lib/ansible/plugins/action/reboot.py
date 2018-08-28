@@ -134,7 +134,16 @@ class ActionModule(ActionBase):
     def run_test_command(self, **kwargs):
         test_command = self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND)
         display.vvv("%s: attempting post-reboot test command '%s'" % (self._task.action, test_command))
-        command_result = self._low_level_execute_command(test_command, sudoable=self.DEFAULT_SUDOABLE)
+        try:
+            command_result = self._low_level_execute_command(test_command, sudoable=self.DEFAULT_SUDOABLE)
+        except Exception:
+            # may need to reset the connection in case another reboot occurred
+            # which has invalidated our connection
+            try:
+                self._connection.reset()
+            except AttributeError:
+                pass
+            raise
 
         result = {}
         if command_result['rc'] != 0:
