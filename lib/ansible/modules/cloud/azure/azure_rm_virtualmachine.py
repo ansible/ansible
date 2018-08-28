@@ -1127,6 +1127,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']
                             ),
                             image_reference=self.compute_models.ImageReference(
+                                id=vm_dict['properties']['storageProfile']['imageReference']['id'],
+                            ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
                                 offer=vm_dict['properties']['storageProfile']['imageReference']['offer'],
                                 sku=vm_dict['properties']['storageProfile']['imageReference']['sku'],
