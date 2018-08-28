@@ -237,7 +237,7 @@
 - name: Create a linux web app with java tomcat container
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
-    name: "{{ win_app_name }}8"
+    name: "{{ win_app_name }}13"
     plan:
       resource_group: "{{ linux_app_plan_resource_group }}"
       name: "{{ linux_plan_name }}"
