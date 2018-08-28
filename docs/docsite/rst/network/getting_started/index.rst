@@ -12,8 +12,7 @@ Ansible modules support a wide range of vendors, device types, and actions, so y
 - Benefit from community and vendor-generated sample playbooks and roles to help accelerate network automation projects
 - Communicate securely with network hardware over SSH or HTTPS
 
-Who should use this guide?
-================================================================================
+**Who should use this guide?**
 
 This guide is intended for network engineers using Ansible for the first time. If you understand networks but have never used Ansible, work through the guide from start to finish.
 
