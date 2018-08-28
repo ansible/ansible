@@ -374,7 +374,7 @@
 
 - name: try to install from non existing url
   dnf:
-    name: http://non-existing.com/non-existing-1.0.0.fc26.noarch.rpm
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/non-existing-1.0.0.fc26.noarch.rpm
     state: present
   register: dnf_result
   ignore_errors: yes
