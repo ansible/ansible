@@ -1,0 +1,63 @@
+- name: Create local network gateway
+  azure_rm_localnetworkgateway:
+    name: test-local-network-gateway
+    local_address_prefixes:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    gateway_ip_address: 35.200.187.67
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+
+- name: Update local network gateway with bgp settings
+  azure_rm_localnetworkgateway:
+    name: test-local-network-gateway
+    local_address_prefixes:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    gateway_ip_address: 35.200.187.67
+    bgp_settings:
+      asn: 65000
+      bgp_peering_address: 169.254.53.201
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Update local network gateway with address prefixes and tags
+  azure_rm_localnetworkgateway:
+    name: test-local-network-gateway
+    local_address_prefixes:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+      - 10.107.0.0/16
+    gateway_ip_address: 35.200.187.67
+    bgp_settings:
+      asn: 65000
+      bgp_peering_address: 169.254.53.201
+    resource_group: "{{ resource_group }}"
+    tags:
+      testing2: testing2
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Catch required argument gateway_ip_address
+  azure_rm_localnetworkgateway:
+    name: test-local-network-gateway
+    resource_group: "{{ resource_group }}"
+    gateway_ip_address: 35.200.187.67
+  register: output
+  ignore_errors: yes
+
+- assert:
+    that: output.failed
+
+- name: Delete local network gateway
+  azure_rm_localnetworkgateway:
+    name: test-local-network-gateway
+    resource_group: "{{ resource_group }}"
+    state: absent
