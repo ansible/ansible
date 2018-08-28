@@ -14,7 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: netapp_e_lun_mapping
-author: Kevin Hulquest (@hulquest)
+author:
+    - Kevin Hulquest (@hulquest)
+    - Nathan Swartz (@ndswartz)
 short_description: NetApp E-Series create, delete, or modify lun mappings
 description:
      - Create, delete, or modify mappings between a volume and a targeted host/host+ group.
@@ -37,6 +39,20 @@ options:
     description:
       - The name of the volume you wish to include in the mapping.
     required: True
+    aliases:
+        - volume
+  lun:
+    description:
+      - This option is deprecated and will have no effect on the module's outcome
+      - LUN value will be determine by the storage-system.
+    version_added: 2.7
+    required: no
+  target_type:
+    description:
+      - This option is deprecated and will have no effect on the module's outcome
+      - Target type is determined by the host or host group definition.
+    version_added: 2.7
+    required: no
 '''
 
 EXAMPLES = '''
@@ -50,7 +66,7 @@ EXAMPLES = '''
         validate_certs: no
         state: present
         target: host1
-        volume_name: volume1
+        volume: volume1
     - name: Delete the lun mapping between volume1 and host1
       netapp_e_lun_mapping:
         ssid: 1
@@ -60,7 +76,7 @@ EXAMPLES = '''
         validate_certs: yes
         state: absent
         target: host1
-        volume_name: volume1
+        volume: volume1
 '''
 RETURN = '''
 msg:
@@ -89,7 +105,9 @@ class LunMapping(object):
         argument_spec.update(dict(
             state=dict(required=True, choices=["present", "absent"]),
             target=dict(required=False, default=None),
-            volume_name=dict(required=True)))
+            volume_name=dict(required=True, aliases=["volume"]),
+            lun=dict(required=False),
+            target_type=dict(required=False)))
         self.module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
         args = self.module.params
 
@@ -103,6 +121,9 @@ class LunMapping(object):
                           url_password=args["api_password"],
                           validate_certs=args["validate_certs"])
         self.mapping_info = None
+
+        if not self.url.endswith('/'):
+            self.url += '/'
 
     def update_mapping_info(self):
         """Collect the current state of the storage array."""
