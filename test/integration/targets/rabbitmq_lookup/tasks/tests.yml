@@ -1,3 +1,13 @@
+- name: Test failure without pika installed
+  set_fact:
+    rabbit_missing_pika: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F', channel='hello', count=3) }}"
+  ignore_errors: yes
+  register: rabbitmq_missing_pika_error
+
+- assert:
+    that:
+      - "'pika python package is required' in rabbitmq_missing_pika_error.msg"
+
 - name: Install pika
   pip:
     name: pika
