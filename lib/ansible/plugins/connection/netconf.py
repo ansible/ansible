@@ -307,6 +307,8 @@ class Connection(NetworkConnectionBase):
             display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
         self._implementation_plugins.append(netconf)
 
+        super(Connection, self)._connect()
+
         return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 
     def close(self):

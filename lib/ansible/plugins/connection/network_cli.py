@@ -300,6 +300,8 @@ class Connection(NetworkConnectionBase):
             else:
                 display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 
+            super(Connection, self)._connect()
+
             self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
                          newline=self._terminal.terminal_inital_prompt_newline)
 
