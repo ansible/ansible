@@ -46,7 +46,6 @@ options:
     description:
       - List of mail server(s) used to deliver AutoSupport messages via SMTP.
       - Both host names and IP addresses may be used as valid input.
-      - One can optionally specify a username/password for authentication with the mail server
   support:
     description:
       - Specifies whether AutoSupport notification to technical support is enabled.
