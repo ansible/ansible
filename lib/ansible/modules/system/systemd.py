@@ -312,8 +312,8 @@ def main():
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
             user=dict(type='bool', default=False),
             scope=dict(type='str', default='system', choices=['system', 'user', 'global']),
-            no_block=dict(type='bool', default=False),'
-            root=dict(type='str', default='')
+            no_block=dict(type='bool', default=False),
+            root=dict(type='str', default=''),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
