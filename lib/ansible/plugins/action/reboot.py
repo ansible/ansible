@@ -28,6 +28,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
+    VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command'))
 
     DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = None
