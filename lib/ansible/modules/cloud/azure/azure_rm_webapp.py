@@ -163,10 +163,10 @@ options:
             - Start/Stop/Restart the web app.
         type: str
         choices:
-            - start
-            - stop
-            - restart
-        default: start
+            - started
+            - stopped
+            - restarted
+        default: started
 
     state:
       description:
@@ -422,8 +422,8 @@ class AzureRMWebApps(AzureRMModuleBase):
             ),
             app_state=dict(
                 type='str',
-                choices=['start', 'stop', 'restart'],
-                default='start'
+                choices=['started', 'stopped', 'restarted'],
+                default='started'
             ),
             state=dict(
                 type='str',
@@ -465,7 +465,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         self.container_settings = None
 
         self.purge_app_settings = False
-        self.app_state = 'start'
+        self.app_state = 'started'
 
         self.results = dict(
             changed=False,
@@ -720,9 +720,9 @@ class AzureRMWebApps(AzureRMModuleBase):
             webapp = response
 
         if webapp:
-            if (webapp['state'] != 'Stopped' and self.app_state == 'stop') or \
-               (webapp['state'] != 'Running' and self.app_state == 'start') or \
-               self.app_state == 'restart':
+            if (webapp['state'] != 'Stopped' and self.app_state == 'stopped') or \
+               (webapp['state'] != 'Running' and self.app_state == 'started') or \
+               self.app_state == 'restarted':
 
                 self.results['changed'] = True
                 if self.check_mode:
@@ -978,20 +978,20 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             return False
 
-    def change_webapp_state(self, action):
+    def set_webapp_state(self, appstate):
         '''
         Start/stop/restart web app
         :return: deserialized updating response
         '''
         try:
-            if action == 'start':
+            if appstate == 'started':
                 response = self.web_client.web_apps.start(resource_group_name=self.resource_group, name=self.name)
-            elif action == 'stop':
+            elif appstate == 'stopped':
                 response = self.web_client.web_apps.stop(resource_group_name=self.resource_group, name=self.name)
-            elif action == 'restart':
+            elif appstate == 'restarted':
                 response = self.web_client.web_apps.restart(resource_group_name=self.resource_group, name=self.name)
             else:
-                self.fail("Invalid web app power action {0}".format(action))
+                self.fail("Invalid web app state {0}".format(appstate))
 
             self.log("Response : {0}".format(response))
 
@@ -999,7 +999,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         except CloudError as ex:
             request_id = ex.request_id if ex.request_id else ''
             self.log("Failed to {0} web app {1} in resource group {2}, request_id {3} - {4}".format(
-                action, self.name, self.resource_group, request_id, str(ex)))
+                appstate, self.name, self.resource_group, request_id, str(ex)))
 
 
 def main():
