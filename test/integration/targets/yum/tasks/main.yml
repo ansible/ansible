@@ -68,4 +68,4 @@
 # so don't run the yum group remove tests there
 - include: 'yum_group_remove.yml'
   when:
-    - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int > 6) or ansible_distribution in ['Fedora']
+    - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int > 6)

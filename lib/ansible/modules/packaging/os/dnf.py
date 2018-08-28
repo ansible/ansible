@@ -186,6 +186,10 @@ options:
     version_added: "2.7"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
+  - Group removal doesn't work if the group was installed with Ansible because
+    upstream dnf's API doesn't properly mark groups as installed, therefore upon
+    removal the module is unable to detect that the group is installed
+    (https://bugzilla.redhat.com/show_bug.cgi?id=1620324)
 requirements:
   - "python >= 2.6"
   - python-dnf
@@ -581,35 +585,6 @@ class DnfModule(YumDnf):
         else:
             return False
 
-    def _is_group_installed(self, group):
-        """
-        Check if a group is installed (the sum of the package set that makes up a group)
-
-        This is necessary until the upstream dnf API bug is fixed where installing
-        a group via the dnf API doesn't actually mark the group as installed
-            https://bugzilla.redhat.com/show_bug.cgi?id=1620324
-        """
-        pkg_set = []
-        dnf_group = self.base.comps.group_by_pattern(group)
-        try:
-            if dnf_group:
-                for pkg_type in dnf.const.GROUP_PACKAGE_TYPES:
-                    for pkg in getattr(dnf_group, '{0}_packages'.format(pkg_type)):
-                        pkg_set.append(pkg.name)
-        except AttributeError as e:
-            self.module.fail_json(
-                msg="Error attempting to determine package group installed status: {0}".format(group),
-                results=[],
-                rc=1,
-                failures=[to_native(e), ],
-            )
-
-        for pkg in pkg_set:
-            if not self._is_installed(pkg):
-                return False
-
-        return True
-
     def _is_newer_version_installed(self, pkg_name):
         candidate_pkg = self._packagename_dict(pkg_name)
         if not candidate_pkg:
@@ -833,10 +808,10 @@ class DnfModule(YumDnf):
                 # Install groups.
                 for group in groups:
                     try:
-                        if self._is_group_installed(group):
+                        group_pkg_count_installed = self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                        if group_pkg_count_installed == 0:
                             response['results'].append("Group {0} already installed.".format(group))
                         else:
-                            self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
                             response['results'].append("Group {0} installed.".format(group))
                     except dnf.exceptions.DepsolveError as e:
                         failure_response['msg'] = "Depsolve Error occured attempting to install group: {0}".format(group)
@@ -884,8 +859,11 @@ class DnfModule(YumDnf):
                         except dnf.exceptions.CompsError:
                             if not self.update_only:
                                 # If not already installed, try to install.
-                                self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
-                                response['results'].append("Group {0} installed.".format(group))
+                                group_pkg_count_installed = self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                                if group_pkg_count_installed == 0:
+                                    response['results'].append("Group {0} already installed.".format(group))
+                                else:
+                                    response['results'].append("Group {0} installed.".format(group))
                     except dnf.exceptions.Error as e:
                         failure_response['failures'].append(" ".join((group, to_native(e))))
 
@@ -931,24 +909,14 @@ class DnfModule(YumDnf):
                     except dnf.exceptions.CompsError:
                         # Group is already uninstalled.
                         pass
-
-                    # This is necessary until the upstream dnf API bug is fixed where installing
-                    # a group via the dnf API doesn't actually mark the group as installed
-                    #   https://bugzilla.redhat.com/show_bug.cgi?id=1620324
-                    if self._is_group_installed(group):
-                        dnf_group = self.base.comps.group_by_pattern(group)
-                        try:
-                            if dnf_group:
-                                for pkg_type in dnf.const.GROUP_PACKAGE_TYPES:
-                                    for pkg_spec in getattr(dnf_group, '{0}_packages'.format(pkg_type)):
-                                        self.base.remove(pkg_spec.name)
-                        except AttributeError as e:
-                            self.module.fail_json(
-                                msg="Error attempting to determine package group installed status: {0}".format(group),
-                                results=[],
-                                rc=1,
-                                failures=[to_native(e), ],
-                            )
+                    except AttributeError:
+                        # Group either isn't installed or wasn't marked installed at install time
+                        # because of DNF bug
+                        #
+                        # This is necessary until the upstream dnf API bug is fixed where installing
+                        # a group via the dnf API doesn't actually mark the group as installed
+                        #   https://bugzilla.redhat.com/show_bug.cgi?id=1620324
+                        pass
 
                 for environment in environments:
                     try:
