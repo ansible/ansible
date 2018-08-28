@@ -1,0 +1,26 @@
+- name: send the playbook script
+  shell: "{{ 'curl -X POST -F \"file=@' + role_path + '/files/' + 'adhoc_example1.py\" ' + runner_container_url + '/upload_file' }}"
+
+- name: check the script
+  uri:
+    method: POST
+    url: "{{ runner_container_url + '/run_command' }}" 
+    body_format: json
+    body:
+        command: ls -al /tmp/uploads
+
+- name: execute the script
+  uri:
+    method: POST
+    url: "{{ runner_container_url + '/execute_file' }}" 
+    body_format: json
+    body:
+        filename: adhoc_example1.py
+  register: adexec1
+
+- debug: var=adexec1
+- assert:
+    that:
+        - "adexec1.json.rc == 0"
+        - "adexec1.json.events|length == 2"
+        - "'localhost' in adexec1.json.stats.ok"
