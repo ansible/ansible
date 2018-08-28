@@ -592,20 +592,33 @@ def main():
         changed = False
 
     if checksum_src is None and checksum_dest is None:
-        if remote_src and os.path.isdir(b_src):
-            if os.path.isdir(b_dest):
+        if remote_src and os.path.isdir(module.params['src']):
+            b_src = to_bytes(module.params['src'], errors='surrogate_or_strict')
+            b_dest = to_bytes(module.params['dest'], errors='surrogate_or_strict')
+            if os.path.isdir(module.params['dest']) and src.endswith(os.path.sep):
+                module.fail_json(msg="aaa")
                 diff_files_changed = copy_diff_files(b_src, b_dest, module)
                 left_only_changed = copy_left_only(b_src, b_dest, module)
                 common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
                 owner_group_changed = chown_recursive(b_dest, module)
                 if diff_files_changed or left_only_changed or common_dirs_changed or owner_group_changed:
                     changed = True
-
-            if not os.path.exists(b_dest):
-                if not src.endswith(os.path.sep):
-                    b_basename = to_bytes(os.path.basename(src), errors='surrogate_or_strict')
-                    dest = os.path.join(b_dest, b_basename)
-                    b_dest = to_bytes(dest, errors='surrogate_or_strict')
+            if os.path.isdir(module.params['dest']) and not src.endswith(os.path.sep):
+                b_basename = to_bytes(os.path.basename(module.params['src']), errors='surrogate_or_strict')
+                b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
+                if not os.path.exists(b_dest):
+                    os.makedirs(b_dest)
+                b_src = to_bytes(os.path.join(b_src, ""), errors='surrogate_or_strict')
+                diff_files_changed = copy_diff_files(b_src, b_dest, module)
+                left_only_changed = copy_left_only(b_src, b_dest, module)
+                common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
+                owner_group_changed = chown_recursive(b_dest, module)
+                if diff_files_changed or left_only_changed or common_dirs_changed or owner_group_changed:
+                    changed = True
+            if not os.path.exists(module.params['dest']) and not src.endswith(os.path.sep):
+                module.fail_json(msg=module.params['dest'])
+                b_basename = to_bytes(os.path.basename(src), errors='surrogate_or_strict')
+                b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
                 if not module.check_mode:
                     shutil.copytree(b_src, b_dest, symlinks=not(follow))
                 chown_recursive(dest, module)
