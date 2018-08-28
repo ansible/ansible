@@ -25,30 +25,30 @@
 - name: failed invalid packges (check mode)
   win_chocolatey_pin:
     name: fake
-  register: register_failed_invalid_packges
+  register: register_failed_invalid_packages
   check_mode: true
 
-- name: assert failed invalid Packges (check mode)
+- name: assert failed invalid packages (check mode)
   assert:
     that:
-    - register_failed_invalid_packges is changed
+    - register_failed_invalid_packages is changed
 
 - name: failed invalid packges
   win_chocolatey_pin:
     name: fake
-  register: register_failed_invalid_packges
+  register: register_failed_invalid_packages
   ignore_errors: true
 
-- name: assert failed invalid Packges
+- name: assert failed invalid packages
   assert:
     that:
-    - register_failed_invalid_packges is changed
+    - register_failed_invalid_packages is changed
   ignore_errors: true
 
 - name: remove Pin firefox (check mode)
   win_chocolatey_pin:
     name: firefox
-    state: remove
+    state: unpinned
   register: register_remove_pin_firefox
   check_mode: true
 
@@ -60,7 +60,7 @@
 - name: remove pin firefox
   win_chocolatey_pin:
     name: firefox
-    state: remove
+    state: unpinned
   register: register_remove_pin_firefox
 
 - name: assert pin firefox

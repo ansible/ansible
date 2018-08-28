@@ -15,26 +15,25 @@ module: win_chocolatey_facts
 version_added: '2.7'
 short_description: Pin Chocolatey Packages
 description:
-   - This module can be chocolatey Packete pinted and unpinted.
+   - This module pins and unpins chocolatey packages.
 options:
   name:
     description:
-    - The name of the Software to set pin.
-    - Run C(choco.exe list -lo) to get a list of Software that can be
-      pinted.
+    - The name of the Packages to pin.
+    - Run C(choco.exe list -lo) to get a list of Packages that can be pinned.
     required: yes
   state:
     description:
-    - When C(add) then the Software will be pinted.
-    - When C(remove) then the Software will be unpinted.
+    - When C(pinned) then the Packages will be pinned.
+    - When C(unpinned) then the Packages will be unpinned.
     choices:
-    - add
-    - remove
-    default: add
+    - pinned
+    - unpinned
+    default: pinned
   version:
      description:
     - Specific version of the package to be installed.
-    - Ignored when C(remove). 
+    - Ignored when C(unpinned). 
 author:
     - Simon Bärlocher (@sbaerlocher)
     - ITIGO AG (@itigoag)
@@ -48,18 +47,18 @@ EXAMPLES = r'''
 - name: pin firefox with state
   win_chocolatey_pin:
     name: firefox
-    state: add
+    state: pinned
   
 - name: pin firefox with state and version
   win_chocolatey_pin:
     name: firefox
-    state: add
+    state: pinned
     version: 60.0.0.1
 
 - name: remove pin firefox
   win_chocolatey_pin:
     name: firefox
-    state: remove
+    state: unpinned
 '''
 
 RETURN = r'''

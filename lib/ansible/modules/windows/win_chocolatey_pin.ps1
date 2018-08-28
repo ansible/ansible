@@ -15,7 +15,7 @@ $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "add" -validateset "add", "remove"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "pinned" -validateset "pinned", "unpinned"
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 
 # Create a new result object
@@ -38,7 +38,7 @@ function Get-ChocolateyPin {
 
     $res = Run-Command -command "`"$($choco_app.Path)`" pin list -r"
     if ($res.rc -ne 0) {
-        Fail-Json -obj $result -message "Failed to list Chocolatey features: $($res.stderr)"
+        Fail-Json -obj $result -message "Failed to list pinned packages: $($res.stderr)"
     }
 
     $res.stdout -split "`r`n" | Where-Object { $_ -ne "" } | ForEach-Object {
@@ -56,7 +56,6 @@ function Set-ChocolateyPin {
     param(
         $choco_app,
         $name,
-        $state,
         $version
     )
 
@@ -65,7 +64,7 @@ function Set-ChocolateyPin {
         $res = Run-Command -command $command
         if ($res.rc -ne 0) {
             $res.stderr = $res.stdout -split "`r`n"
-            Fail-Json -obj $result -message "Failed add Chocolatey Pin $($name): $($res.stderr[2])"
+            Fail-Json -obj $result -message "Failed to pin Chocolatey Package $($name): $($res.stderr[2])"
         }
     } else {
         $command = Argv-ToString -arguments @($choco_app.Path, "pin", "add", "--name", $name, "--version", $version)
@@ -73,7 +72,7 @@ function Set-ChocolateyPin {
         $result.new_result = $res
         if ($res.rc -ne 0) {
             $res.stderr = $res.stdout -split "`r`n"
-            Fail-Json -obj $result -message "Failed add Chocolatey Pin $($name) ($($version)): $($res.stderr[2])"
+            Fail-Json -obj $result -message "Failed to pin Chocolatey Package $($name) ($($version)): $($res.stderr[2])"
         }
     }
 }
@@ -89,19 +88,19 @@ function Remove-ChocolateyPin {
     $res = Run-Command -command $command
     if ($res.rc -ne 0) {
         $res.stderr = $res.stdout -split "`r`n"
-        Fail-Json -obj $result -message "Failed remove Chocolatey Pin for '$name': $($res.stderr[2])"
+        Fail-Json -obj $result -message "Failed to unpin Chocolatey Package '$name': $($res.stderr[2])"
     }
 }
 
 $pin_info = Get-ChocolateyPin -choco_app $choco_app -name $name
-if ($state -eq "add") {
+if ($state -eq "pinned") {
     if (-not $pin_info) {
         if (-not $check_mode) {
             Set-ChocolateyPin -choco_app $choco_app -name $name -version $version
         }
         $result.changed = $true
     }
-} elseif ($state -eq "remove") {
+} elseif ($state -eq "unpinned") {
     if ($pin_info) {
         if (-not $check_mode) {
             Remove-ChocolateyPin -choco_app $choco_app -name $name
