@@ -5,7 +5,7 @@
     runner_container_url: "{{ 'http://' + lookup('env', 'ANSIBLE_RUNNER_HOST') + ':' + lookup('env', 'ANSIBLE_RUNNER_PORT') }}"
 - name: check for ansible install path on container
   uri:
-    url: "{{ runner_container_url + '/' + 'run_command' }}"
+    url: "{{ runner_container_url + '/run_command' }}"
     method: POST
     body_format: json
     body:
