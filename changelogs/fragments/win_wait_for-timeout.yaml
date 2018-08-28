@@ -1,0 +1,2 @@
+bugfixes:
+- win_wait_for - fix issue where timeout doesn't wait unless state=drained - https://github.com/ansible/ansible/issues/43446
