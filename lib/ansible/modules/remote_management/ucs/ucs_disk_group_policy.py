@@ -22,8 +22,9 @@ extends_documentation_fragment: ucs
 options:
   state:
     description:
+    - Desired state of the disk group policy.
     - If C(present), will verify that the disk group policy is present and will create if needed.
-      If C(absent), will verify that the disk group policy is absent and will delete if needed.
+    - If C(absent), will verify that the disk group policy is absent and will delete if needed.
     choices: [present, absent]
     default: present
   name:
@@ -61,36 +62,48 @@ options:
     default: automatic
   num_drives:
     description:
-    - Option applies when configuration mode is automatic. Specify the number of drives for the disk group. This can be from 0 to 24.
-    default: '1'
+    - Specify the number of drives for the disk group.
+    - This can be from 0 to 24.
+    - Option only applies when configuration mode is automatic.
+    default: 1
   drive_type:
     description:
-    - "Option applies when configuration mode is automatic. This can be one of the following:"
+    - Specify the drive type to use in the drive group.
+    - "This can be one of the following:"
     - "unspecified — Selects the first available drive type, and applies that to all drives in the group."
     - "HDD — Hard disk drive"
     - "SSD — Solid state drive"
+    - Option only applies when configuration mode is automatic.
     choices: [unspecified, HDD, SSD]
     default: unspecified
   num_ded_hot_spares:
     description:
-    - Option applies when configuration mode is automatic. Specify the number of hot spares for the disk group. This can be from 0 to 24.
+    - Specify the number of hot spares for the disk group.
+    - This can be from 0 to 24.
+    - Option only applies when configuration mode is automatic.
     default: unspecified
   num_glob_hot_spares:
     description:
-    - Option applies when configuration mode is automatic. Specify the number of global hot spares for the disk group. This can be from 0 to 24.
+    - Specify the number of global hot spares for the disk group.
+    - This can be from 0 to 24.
+    - Option only applies when configuration mode is automatic.
     default: unspecified
   min_drive_size:
     description:
-    - Option applies when configuration mode is automatic. Enter the minimum drive size or unspecified to allow all drive sizes. This can be from 0 to 10240 GB.
+    - Specify the minimum drive size or unspecified to allow all drive sizes.
+    - This can be from 0 to 10240 GB.
+    - Option only applies when configuration mode is automatic.
     default: 'unspecified'
   use_remaining_disks:
     description:
-    - Option applies when configuration mode is automatic. Specifies whether you can use all the remaining disks in the disk group or not.
+    - Specifies whether you can use all the remaining disks in the disk group or not.
+    - Option only applies when configuration mode is automatic.
     choices: ['yes', 'no']
     default: 'no'
   manual_disks:
     description:
-    - List of manually configured disks. Options are only used when you choose manual configuration_mode.
+    - List of manually configured disks.
+    - Options are only used when you choose manual configuration_mode.
     suboptions:
       name:
         description:
@@ -117,30 +130,36 @@ options:
         default: present
   virtual_drive:
     description:
-    - configuraiton of virtual drive options
+    - Configuraiton of virtual drive options.
     suboptions:
       access_policy:
-        description: Configure access policy to virtual drive
+        description:
+        - Configure access policy to virtual drive.
         choices: [blocked, hidden, platform-default, read-only, read-write, transport-ready]
         default: platform-default
       drive_cache:
-        description: Configure drive caching
+        description:
+        - Configure drive caching.
         choices: [disable, enable, no-change, platform-default]
         default: platform-default
       io_policy:
-        description: Direct or Cached IO path
+        description:
+        - Direct or Cached IO path.
         choices: [cached, direct, platform-default]
         default: platform-default
       read_policy:
-        description: Read access policy to virtual drive
+        description:
+        - Read access policy to virtual drive.
         choices: [normal, platform-default, read-ahead]
         default: platform-default
       strip_size:
-        description: Virtual drive strip size
+        description:
+        - Virtual drive strip size.
         choices: [ present, absent ]
         default: platform-default
       write_cache_policy:
-        description: Write back cache policy
+        description:
+        - Write back cache policy.
         choices: [always-write-back, platform-default, write-back-good-bbu, write-through]
         default: platform-default
   org_dn:
