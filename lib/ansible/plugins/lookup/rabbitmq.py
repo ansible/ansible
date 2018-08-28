@@ -8,13 +8,14 @@ DOCUMENTATION = """
     lookup: rabbitmq
     author: John Imison <john+github@imison.net>
     version_added: "2.7"
-    short_description: collect messages from a queue
+    short_description: Retrieve messages from an AMQP/AMQPS RabitMQ queue/channel
     description:
-        - This lookup returns the messages on a queue
+        - This lookup uses a basic get to retrieve all, or a limited number C(count), messages from a queue
     options:
       url:
         description:
-          - An URL connection string to connect to the amqp/amqps rabbitmq server.
+          - An URI connection string to connect to the AMQP/AMQPS RabbitMQ server.
+          - For more information refer to the URI spec U(https://www.rabbitmq.com/uri-spec.html)
         required: True
       channel:
         description:
@@ -28,7 +29,10 @@ DOCUMENTATION = """
     requirements:
         - The python pika package U(https://pika.readthedocs.io/en/stable/modules/parameters.html)
     notes:
-        - This lookup implements BlockingChannel.basic_get to get message from a RabbitMQ
+        - This lookup implements BlockingChannel.basic_get to get message from a RabbitMQ server
+        - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library
+        - More information about pika can be found at U(https://pika.readthedocs.io/en/0.12.0/index.html)
+        - This plugin is tested against RabbitMQ.  Other AMQP 0.9.1 protocol based servers may work but not tested/gaurenteed
 """
 
 
@@ -46,7 +50,7 @@ EXAMPLES = """
 RETURN = """
   _list:
     description:
-      - list of dictonaries with keys and value from the queue
+      - list of dictionaries with keys and value from the queue
     type: list
     contains:
       content_type:
@@ -69,12 +73,12 @@ RETURN = """
         type: str
       redelivered:
         description: The redelivered flag.  True if the message has been delivered before.
-        type: str
+        type: bool
       routing_key:
         description: The routing_key on the message in the queue
         type: str
       json:
-        description: If application/json is specified in content_typa, json will be loaded into variables
+        description: If application/json is specified in content_type, json will be loaded into variables
         type: dict
 
 """
@@ -102,7 +106,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, url=None, channel=None, count=None):
         if not HAS_PIKA:
-            raise AnsibleError('pika is required for ampq lookup.')
+            raise AnsibleError('pika python package is required for rabbitmq lookup.')
         if not url:
             raise AnsibleError('URL is required for ampq lookup.')
         if not channel:
