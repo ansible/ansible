@@ -176,7 +176,6 @@ class AnsibleRunnerProvider(CloudProvider):
             docker_exec(self.args, container_id, ['pip', 'install', '/root/ansible'])
 
 
-
 class AnsibleRunnerEnvironment(CloudEnvironment):
 
     def configure_environment(self, env, cmd):
