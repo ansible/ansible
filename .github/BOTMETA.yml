@@ -900,7 +900,7 @@ files:
     ignored: azenk
   lib/ansible/plugins/lookup/rabbitmq.py:
     maintainers: Im0
-    labels: community
+    support: community
   lib/ansible/plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
