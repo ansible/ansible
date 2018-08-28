@@ -53,17 +53,19 @@ options:
       - Message to display to users before reboot.
     default: Reboot initiated by Ansible
     type: str
+notes:
+    - For Windows targets, use the M(win_reboot) module instead.
 author:
     - Matt Davis (@nitzmahone)
     - Sam Doran (@samdoran)
 '''
 
 EXAMPLES = r'''
-# Unconditionally reboot the machine with all defaults
-- reboot:
+- name: Unconditionally reboot the machine with all defaults
+  reboot:
 
-# Reboot a slow machine that might have lots of updates to apply
-- reboot:
+- name: Reboot a slow machine that might have lots of updates to apply
+  reboot:
     reboot_timeout: 3600
 '''
 
