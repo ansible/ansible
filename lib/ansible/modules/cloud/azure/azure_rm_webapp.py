@@ -77,6 +77,7 @@ options:
                     - node supported value sample, 6.6, 6.9.
                     - dotnetcore supported value sample, 1.0, 1,1, 1.2.
                     - ruby supported value sample, 2.3.
+                    - java supported value sample, 1.8, 1.9 for windows web app. 8 for linux web app.
             settings:
                 description:
                     - List of settings of the framework.
@@ -254,10 +255,10 @@ EXAMPLES = '''
           testkey: testvalue
         frameworks:
           - name: "java"
-            version: "1.8"
+            version: "8"
             settings:
               java_container: "Tomcat"
-              java_container_version: "8.0"
+              java_container_version: "8.5"
 '''
 
 RETURN = '''
@@ -299,8 +300,8 @@ deployment_source_spec = dict(
 
 
 framework_settings_spec = dict(
-    java_container=dict(type='str'),
-    java_container_version=dict(type='str')
+    java_container=dict(type='str', required=True),
+    java_container_version=dict(type='str', required=True)
 )
 
 
@@ -536,6 +537,17 @@ class AzureRMWebApps(AzureRMModuleBase):
                         self.fail('Unsupported framework {0} for Linux web app.'.format(self.frameworks[0]['name']))
 
                     self.site_config['linux_fx_version'] = (self.frameworks[0]['name'] + '|' + self.frameworks[0]['version']).upper()
+
+                    if self.frameworks[0]['name'] == 'java':
+                        if self.frameworks[0]['version'] != '8':
+                            self.fail("Linux web app only supports java 8.")
+                        if self.frameworks[0]['settings'] and self.frameworks[0]['settings']['java_container'].lower() != 'tomcat':
+                            self.fail("Linux web app only supports tomcat container.")
+
+                        if self.frameworks[0]['settings'] and self.frameworks[0]['settings']['java_container'].lower() == 'tomcat':
+                            self.site_config['linux_fx_version'] = 'TOMCAT|' + self.frameworks[0]['settings']['java_container_version'] + '-jre8'
+                        else:
+                            self.site_config['linux_fx_version'] = 'JAVA|8-jre8'
                 else:
                     for fx in self.frameworks:
                         if fx.get('name') not in self.supported_windows_frameworks:
@@ -543,10 +555,11 @@ class AzureRMWebApps(AzureRMModuleBase):
                         else:
                             self.site_config[fx.get('name') + '_version'] = fx.get('version')
 
-                for fx in self.frameworks:
-                    if 'settings' in fx and fx['settings'] is not None:
-                        for key, value in fx['settings'].items():
-                            self.site_config[key] = value
+                if not is_linux:
+                    for fx in self.frameworks:
+                        if 'settings' in fx and fx['settings'] is not None:
+                            for key, value in fx['settings'].items():
+                                self.site_config[key] = value
 
             if not self.app_settings:
                 self.app_settings = dict()
