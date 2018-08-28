@@ -150,7 +150,7 @@
 - name: Check no endpoint created in check mode
   assert:
     that:
-      - facts.endpoints.length == 0
+      - facts.endpoints | length == 0
 
 - name: Create Traffic Manager endpoint
   azure_rm_trafficmanagerendpoint:
@@ -178,7 +178,7 @@
 - name: Check endpoint created
   assert:
     that:
-      - facts.endpoints.length == 1
+      - facts.endpoints | length == 1
       - facts.endpoints[0].name == "{{ endpointname1 }}"
 
 - name: Create second Traffic Manager endpoint
@@ -201,7 +201,7 @@
 - name: Check 2 endpoint in profile
   assert:
     that:
-      - facts.endpoints.length == 2
+      - facts.endpoints | length == 2
 
 - name: Create endpoint (idempotent)
   azure_rm_trafficmanagerendpoint:
@@ -243,7 +243,7 @@
 - name: Check 1 endpoint left in profile
   assert:
     that:
-      - facts.endpoints.length == 1
+      - facts.endpoints | length == 1
 
 - name: Delete the Traffic Manager profile(check mode)
   azure_rm_trafficmanagerprofile:
