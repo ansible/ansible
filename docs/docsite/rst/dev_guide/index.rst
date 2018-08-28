@@ -7,13 +7,13 @@ Welcome to the Ansible Developer Guide!
 Who should use this guide?
 ================================================================================
 
-If you want to extend Ansible by using a non-core module or plugin locally, creating a module or plugin, adding functionality to an existing module, or expanding test coverage, this guide is for you. We've included detailed information for developers on how to test and document modules, as well as the pre-requisites for getting your module or plugin accepted into Ansible Core. 
+If you want to extend Ansible by using a non-core module or plugin locally, creating a module or plugin, adding functionality to an existing module, or expanding test coverage, this guide is for you. We've included detailed information for developers on how to test and document modules, as well as the pre-requisites for getting your module or plugin accepted into Ansible Core.
 
 Find the task that best describes what you want to do:
 
 * I'm looking for a way to address a use case:
 
-   * I want to :ref:`use a custom plugin or module locally <developing_locally>`.
+   * I want to :ref:`add a custom plugin or module locally <developing_locally>`.
    * I have a use case, and I wonder if :ref:`developing a module is the right approach <module_dev_should_you>`?
 
 * I'm ready to start developing:
@@ -33,7 +33,7 @@ Find the task that best describes what you want to do:
 * I want to work on other development projects:
 
    * I want to :ref:`write a plugin <developing_plugins>`.
-   * I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`. 
+   * I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`.
    * I want to :ref:`deprecate an outdated module <deprecating_modules>`.
 
 * I want to :ref:`contribute my module or plugin to Ansible Core <developing_modules_checklist>`.

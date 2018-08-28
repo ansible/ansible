@@ -1,9 +1,9 @@
 .. _using_local_modules_and_plugins:
 .. _developing_locally:
 
-*******************************
-Using Local Modules and Plugins
-*******************************
+**********************************
+Adding Modules and Plugins Locally
+**********************************
 
 .. contents:: Topics
    :local:
@@ -18,7 +18,7 @@ Extending Ansible with local modules and plugins offers lots of shortcuts:
 * you don't have to open a pull request
 * you don't have to add tests (though we recommend that you do!)
 
-To save a local module or plugin so Ansible can find and use it, drop the module or plugin in the correct "magic" directory. For local modules, use the name of the file as the module name: for example, if the module file is `~/.ansible/plugins/modules/local_users.py`, use `local_users` as the module name. 
+To save a local module or plugin so Ansible can find and use it, drop the module or plugin in the correct "magic" directory. For local modules, use the name of the file as the module name: for example, if the module file is `~/.ansible/plugins/modules/local_users.py`, use `local_users` as the module name.
 
 .. _modules_vs_plugins:
 
@@ -31,8 +31,8 @@ If you're looking to add local functionality to Ansible, you may be wondering wh
 
 .. _local_modules:
 
-Using Local Modules
-===================
+Adding a Module Locally
+=======================
 Ansible automatically loads all executable files found in certain directories as modules, so you can create or add a local module in any of these locations:
 
 * any directory added to the ``ANSIBLE_LIBRARY`` environment variable (``$ANSIBLE_LIBRARY`` takes a colon-separated list like ``$PATH``)
@@ -45,7 +45,7 @@ To confirm that ``my_custom_module`` is available:
 
 * type ``ansible-doc -t module my_custom_module``. You should see the documentation for that module.
 
-To use a local module only in certain playbooks: 
+To use a local module only in certain playbooks:
 
 * store it in a sub-directory called ``library`` in the directory that contains the playbook(s)
 
@@ -56,8 +56,8 @@ To use a local module only in a single role:
 .. _distributing_plugins:
 .. _local_plugins:
 
-Using Local Plugins
-===================
+Adding a Plugin Locally
+=======================
 Ansible loads plugins automatically too, loading each type of plugin separately from a directory named for the type of plugin. Here's the full list of plugin directory names:
 
     * action_plugins*
@@ -78,7 +78,7 @@ You can create or add a local plugin in any of these locations:
 * the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback_plugins``
 * the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/plugin_type/action_plugins``
 
-Once your plugin file is in one of these locations, Ansible will load it and you can use it in a any local module, task, playbook, or role. 
+Once your plugin file is in one of these locations, Ansible will load it and you can use it in a any local module, task, playbook, or role.
 
 To confirm that ``plugins/plugin_type/my_custom_plugin`` is available:
 
@@ -92,4 +92,4 @@ To use your local plugin only in a single role:
 
 * store it in a sub-directory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role
 
-When shipped as part of a role, the plugin will be available as soon as the role is called in the play. 
+When shipped as part of a role, the plugin will be available as soon as the role is called in the play.
