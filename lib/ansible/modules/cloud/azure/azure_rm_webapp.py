@@ -555,8 +555,6 @@ class AzureRMWebApps(AzureRMModuleBase):
                         else:
                             self.site_config[fx.get('name') + '_version'] = fx.get('version')
 
-                if not is_linux:
-                    for fx in self.frameworks:
                         if 'settings' in fx and fx['settings'] is not None:
                             for key, value in fx['settings'].items():
                                 self.site_config[key] = value
