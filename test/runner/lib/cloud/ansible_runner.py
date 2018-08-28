@@ -133,17 +133,11 @@ class AnsibleRunnerProvider(CloudProvider):
                 ['-d', '--name', self.container_name] + publish_ports,
             )
 
-        # if self.args.docker:
-        #    runner_host = self.DOCKER_SIMULATOR_NAME
-        # elif container_id:
-        if True:
-            runner_host = self._get_simulator_address()
-            display.info(
-                'Found ansible runner test container address: %s'
-                % runner_host, verbosity=1
-            )
-        else:
-            runner_host = 'localhost'
+        runner_host = self._get_simulator_address()
+        display.info(
+            'Found ansible runner test container address: %s'
+            % runner_host, verbosity=1
+        )
 
         self._set_cloud_config('ANSIBLE_RUNNER_HOST', runner_host)
         self._set_cloud_config('ANSIBLE_RUNNER_PORT', str(runner_port))
