@@ -72,8 +72,8 @@ AWS
 * Count support for `ec2_instance`
 * `aws_eks` module `pr #41183 <https://github.com/ansible/ansible/pull/41183>`_
 * Cloudformation stack sets support (`PR#41669 <https://github.com/ansible/ansible/pull/41669>`_)
-* RDS instance and snapshot modules `pr #39994 <https://github.com/ansible/ansible/pull/39994>`_ `issue #19524 <https://github.com/ansible/ansible/issues/19524>`_
-* Diff mode improvements for cloud modules `pr #37212 <https://github.com/ansible/ansible/pull/37212>`_
+* RDS instance and snapshot modules `pr #39994 <https://github.com/ansible/ansible/pull/39994>`_ `pr #43789 <https://github.com/ansible/ansible/pull/43789>`_
+* Diff mode improvements for cloud modules `pr #44533 <https://github.com/ansible/ansible/pull/44533>`_
 
 Azure
 =====
