@@ -150,8 +150,8 @@ def _check_instance_status(connection, module, cluster, container_instance, curr
             if current_instance_detail['containerInstanceArn'] == container_instance and current_instance_detail['status'] == status.upper():
                 instance_status_correct = True
                 break
-        else:
-            if _get_container_id_from_arn(current_instance_detail['containerInstanceArn']) == container_instance and current_instance_detail['status'] == status.upper():
+        elif _get_container_id_from_arn(current_instance_detail['containerInstanceArn']
+                    ) == container_instance and current_instance_detail['status'] == status.upper():
                 instance_status_correct = True
                 break
 
