@@ -596,7 +596,6 @@ def main():
             b_src = to_bytes(module.params['src'], errors='surrogate_or_strict')
             b_dest = to_bytes(module.params['dest'], errors='surrogate_or_strict')
             if os.path.isdir(module.params['dest']) and src.endswith(os.path.sep):
-                module.fail_json(msg="aaa")
                 diff_files_changed = copy_diff_files(b_src, b_dest, module)
                 left_only_changed = copy_left_only(b_src, b_dest, module)
                 common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
@@ -616,7 +615,6 @@ def main():
                 if diff_files_changed or left_only_changed or common_dirs_changed or owner_group_changed:
                     changed = True
             if not os.path.exists(module.params['dest']) and not src.endswith(os.path.sep):
-                module.fail_json(msg=module.params['dest'])
                 b_basename = to_bytes(os.path.basename(src), errors='surrogate_or_strict')
                 b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
                 if not module.check_mode:
