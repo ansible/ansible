@@ -237,7 +237,7 @@ if ($return_content -or $dest) {
             if ($result.ContainsKey("content_type") -and $result.content_type -Match ($JSON_CANDIDATES -join '|')) {
                 try {
                     $result.json = ConvertFrom-Json -InputObject $result.content
-                } catch {
+                } catch [System.ArgumentException] {
                     # Simply continue, since 'text' might be anything
                 }
             }
