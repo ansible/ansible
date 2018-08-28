@@ -26,7 +26,7 @@ To contribute a module to Ansible, you must:
 Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via `Ansible's IRC chat channel <http://irc.freenode.net>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_.
 
 Contributing to Ansible: Subjective requirements
------------------------------------------------
+------------------------------------------------
 
 If your module meets our objective requirements, we'll review your code to see if we think it's clear, concise, secure, and maintainable. We'll consider whether your module provides a good user experience, helpful error messages, reasonable defaults, and more. This process is subjective, and we can't list exact standards for acceptance. For the best chance of getting your module accepted into the Ansible repo, follow our :ref:`best practices for module development <developing_modules_best_practices>`.
 
