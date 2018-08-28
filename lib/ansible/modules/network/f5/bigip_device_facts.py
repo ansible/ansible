@@ -127,7 +127,7 @@ EXAMPLES = r'''
 - name: Collect BIG-IP facts
   bigip_device_facts:
     gather_subset:
-      - interface
+      - interfaces
       - vlans
     provider:
       server: lb.mydomain.com
