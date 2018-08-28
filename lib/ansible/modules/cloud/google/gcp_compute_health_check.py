@@ -32,8 +32,15 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_health_check
 description:
-    - An HealthCheck resource. This resource defines a template for how individual virtual
-      machines should be checked for health, via one of the supported protocols.
+    - Health Checks determine whether instances are responsive and able to do work.
+    - They are an important part of a comprehensive load balancing configuration, as they
+      enable monitoring instances behind load balancers.
+    - Health Checks poll instances at a specified interval. Instances that do not respond
+      successfully to some number of probes in a row are marked as unhealthy. No new connections
+      are sent to unhealthy instances, though existing connections will continue. The
+      health check will continue to poll unhealthy instances. If an instance later responds
+      successfully to some number of consecutive probes, it is marked healthy again and
+      can receive new connections.
 short_description: Creates a GCP HealthCheck
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
@@ -62,6 +69,7 @@ options:
             - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
               The default value is 2.
         required: false
+        default: 2
     name:
         description:
             - Name of the resource. Provided by the client when the resource is created. The name
@@ -70,7 +78,7 @@ options:
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
-        required: false
+        required: true
     timeout_sec:
         description:
             - How long (in seconds) to wait before claiming failure.
@@ -91,7 +99,7 @@ options:
               the default is TCP. Exactly one of the protocol-specific health check field must
               be specified, which must match type field.
         required: false
-        choices: ['TCP', 'SSL', 'HTTP']
+        choices: ['TCP', 'SSL', 'HTTP', 'HTTPS']
     http_health_check:
         description:
             - A nested object resource.
@@ -108,6 +116,7 @@ options:
                     - The request path of the HTTP health check request.
                     - The default value is /.
                 required: false
+                default: /
             port:
                 description:
                     - The TCP port number for the HTTP health check request.
@@ -123,6 +132,7 @@ options:
                     - Specifies the type of proxy header to append before sending data to the backend,
                       either NONE or PROXY_V1. The default is NONE.
                 required: false
+                default: NONE
                 choices: ['NONE', 'PROXY_V1']
     https_health_check:
         description:
@@ -140,6 +150,7 @@ options:
                     - The request path of the HTTPS health check request.
                     - The default value is /.
                 required: false
+                default: /
             port:
                 description:
                     - The TCP port number for the HTTPS health check request.
@@ -155,6 +166,7 @@ options:
                     - Specifies the type of proxy header to append before sending data to the backend,
                       either NONE or PROXY_V1. The default is NONE.
                 required: false
+                default: NONE
                 choices: ['NONE', 'PROXY_V1']
     tcp_health_check:
         description:
@@ -188,6 +200,7 @@ options:
                     - Specifies the type of proxy header to append before sending data to the backend,
                       either NONE or PROXY_V1. The default is NONE.
                 required: false
+                default: NONE
                 choices: ['NONE', 'PROXY_V1']
     ssl_health_check:
         description:
@@ -221,8 +234,12 @@ options:
                     - Specifies the type of proxy header to append before sending data to the backend,
                       either NONE or PROXY_V1. The default is NONE.
                 required: false
+                default: NONE
                 choices: ['NONE', 'PROXY_V1']
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/latest/healthChecks)"
+    - "Official Documentation: U(https://cloud.google.com/load-balancing/docs/health-checks)"
 '''
 
 EXAMPLES = '''
@@ -474,38 +491,38 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             check_interval_sec=dict(default=5, type='int'),
             description=dict(type='str'),
-            healthy_threshold=dict(type='int'),
-            name=dict(type='str'),
+            healthy_threshold=dict(default=2, type='int'),
+            name=dict(required=True, type='str'),
             timeout_sec=dict(default=5, type='int', aliases=['timeout_seconds']),
             unhealthy_threshold=dict(default=2, type='int'),
-            type=dict(type='str', choices=['TCP', 'SSL', 'HTTP']),
+            type=dict(type='str', choices=['TCP', 'SSL', 'HTTP', 'HTTPS']),
             http_health_check=dict(type='dict', options=dict(
                 host=dict(type='str'),
-                request_path=dict(type='str'),
+                request_path=dict(default='/', type='str'),
                 port=dict(type='int'),
                 port_name=dict(type='str'),
-                proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1'])
+                proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1'])
             )),
             https_health_check=dict(type='dict', options=dict(
                 host=dict(type='str'),
-                request_path=dict(type='str'),
+                request_path=dict(default='/', type='str'),
                 port=dict(type='int'),
                 port_name=dict(type='str'),
-                proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1'])
+                proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1'])
             )),
             tcp_health_check=dict(type='dict', options=dict(
                 request=dict(type='str'),
                 response=dict(type='str'),
                 port=dict(type='int'),
                 port_name=dict(type='str'),
-                proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1'])
+                proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1'])
             )),
             ssl_health_check=dict(type='dict', options=dict(
                 request=dict(type='str'),
                 response=dict(type='str'),
                 port=dict(type='int'),
                 port_name=dict(type='str'),
-                proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1'])
+                proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1'])
             ))
         )
     )
@@ -641,7 +658,7 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'healthyThreshold': response.get(u'healthyThreshold'),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name'),
+        u'name': module.params.get('name'),
         u'timeoutSec': response.get(u'timeoutSec'),
         u'unhealthyThreshold': response.get(u'unhealthyThreshold'),
         u'type': response.get(u'type'),
