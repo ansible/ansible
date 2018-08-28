@@ -96,22 +96,29 @@ state:
     description: The current state of the local network gateway.
     returned: always
     type: dict
-    sample: {
-        "bgp_settings": null,
-        "etag": "W/\"a126580a-5221-1222-ac4d-3c12bc1212111\"",
-        "gateway_ip_address": "13.71.1.148",
-        "id": "/subscriptions/xyz/resourceGroups/testrg/providers/Microsoft.Network/localNetworkGateways/testlocalgw",
-        "local_network_address_space": [
-            "10.108.0.0/24",
-            "10.109.1.0/29",
-            "10.106.0.0/27"
-        ],
+    example: {
+        "bgp_settings": {
+            "asn": 65000,
+            "bgp_peering_address": "169.254.53.63",
+            "peer_weight": 0
+        },
+        "etag": "W/\"e4e0f965-b04b-11c7-0210-1c1d57c034d2\"",
+        "gateway_ip_address": "35.200.15.12",
+        "id": "/subscriptions/xyz/resourceGroups/test-resource-group/providers/Microsoft.Network/localNetworkGateways/testlgw",
+        "local_network_address_space": {
+            "address_prefixes": [
+                "10.108.0.0/24",
+                "10.108.1.0/24"
+            ]
+        },
         "location": "centralindia",
-        "name": "testlocalgw",
+        "name": "testlgw",
         "provisioning_state": "Succeeded",
+        "resource_guid": "5ad12037-1307-4a23-1f50-ec876d08b26f",
         "tags": {
-            "common": "a"
-        }
+            "foo": "bar"
+        },
+        "type": "Microsoft.Network/localNetworkGateways"
     }
 '''
 
@@ -126,7 +133,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
 
 bgp_spec = dict(
     asn=dict(type='int', required=True),
-    bgp_peering_address=dict(),
+    bgp_peering_address=dict(required=True),
     peer_weight=dict(type='int', default=0)
 )
 
@@ -137,25 +144,6 @@ def bgp_settings_to_dict(bgp_settings):
         bgp_peering_address=bgp_settings.get('bgp_peering_address'),
         peer_weight=bgp_settings.get('peer_weight')
     )
-
-
-def lgw_to_dict(lgw):
-    results = dict(
-        id=lgw.id,
-        name=lgw.name,
-        location=lgw.location,
-        gateway_ip_address=lgw.gateway_ip_address,
-        tags=lgw.tags,
-        provisioning_state=lgw.provisioning_state,
-        local_network_address_space=lgw.local_network_address_space.address_prefixes,
-        bgp_settings=dict(
-            asn=long(lgw.bgp_settings.asn),
-            bgp_peering_address=lgw.bgp_settings.bgp_peering_address,
-            peer_weight=lgw.bgp_settings.peer_weight
-        ) if lgw.bgp_settings else None,
-        etag=lgw.etag
-    )
-    return results
 
 
 class AzureRMLocalNetworkGateway(AzureRMModuleBase):
@@ -169,8 +157,12 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
             location=dict(type='str'),
             local_address_prefixes=dict(type='list'),
             gateway_ip_address=dict(required=True),
-            bgp_settings=dict(type='dict', options=bgp_spec),
+            bgp_settings=dict(type='dict', default=None, options=bgp_spec),
         )
+
+        required_if = [
+            ('state', 'present', ['gateway_ip_address'])
+        ]
 
         self.resource_group = None
         self.name = None
@@ -186,7 +178,9 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
         )
 
         super(AzureRMLocalNetworkGateway, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                         supports_check_mode=True)
+                                                         supports_check_mode=True,
+                                                         required_if=required_if,
+                                                         supports_tags=True)
 
     def exec_module(self, **kwargs):
 
@@ -203,7 +197,7 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
         try:
             lgw = self.network_client.local_network_gateways.get(self.resource_group, self.name)
             self.check_provisioning_state(lgw, self.state)
-            results = lgw_to_dict(lgw)
+            results = lgw.as_dict()
             if self.state == 'present':
                 update_tags, results['tags'] = self.update_tags(results['tags'])
                 if update_tags:
@@ -211,9 +205,10 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
                 if results['gateway_ip_address'] != self.gateway_ip_address:
                     changed = True
                 self.bgp_settings = bgp_settings_to_dict(self.bgp_settings) if self.bgp_settings else None
-                if self.bgp_settings != results['bgp_settings']:
+                if self.bgp_settings != results.get('bgp_settings'):
                     changed = True
-                if sorted(results['local_network_address_space']) != sorted(self.local_address_prefixes):
+                self.local_address_prefixes = sorted(self.local_address_prefixes) if self.local_address_prefixes else []
+                if sorted(results['local_network_address_space']['address_prefixes']) != self.local_address_prefixes:
                     changed = True
             elif self.state == 'absent':
                 self.log("CHANGED: local network gateway exists but requested state is 'absent'")
@@ -230,8 +225,6 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
             return self.results
         if changed:
             if self.state == 'present':
-                if not self.gateway_ip_address:
-                    self.fail('Parameter error: gateway_ip_address is required when creating a local network gateway')
                 lgw_bgp_settings = self.network_models.BgpSettings(
                     asn=self.bgp_settings.get('asn'),
                     bgp_peering_address=self.bgp_settings.get('bgp_peering_address'),
@@ -256,7 +249,7 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
         try:
             poller = self.network_client.local_network_gateways.create_or_update(self.resource_group, self.name, lgw)
             new_lgw = self.get_poller_result(poller)
-            return lgw_to_dict(new_lgw)
+            return new_lgw.as_dict()
         except Exception as exc:
             self.fail("Error creating or updating local network gateway {0} - {1}".format(self.name, str(exc)))
 
