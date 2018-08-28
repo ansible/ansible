@@ -71,17 +71,6 @@ options:
         - locked - No reads or writes are allowed.
         - replicationTarget - Identify a volume as the target volume for a paired set of volumes. If the volume is not paired, the access status is locked.
 
-    password:
-        description:
-        - Element OS Software access account password
-        aliases:
-        - pass
-
-    username:
-        description:
-        - Element OS Software access account user-name
-        aliases:
-        - user
 '''
 
 EXAMPLES = """
