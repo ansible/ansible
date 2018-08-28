@@ -37,4 +37,4 @@ data = {
 
 # insert this header for the flask controller
 print('#STARTJSON')
-print(json.dumps(data))
+json.dump(data, sys.stdout)
