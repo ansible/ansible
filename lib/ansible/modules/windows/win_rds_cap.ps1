@@ -215,7 +215,7 @@ if ($state -eq 'absent') {
                     -ErrorAction Stop `
                     -WhatIf:$check_mode
             } catch {
-                Fail-Json -obj $resultobj -message "Failed to set property ComputerGroupType of RAP ${name}: $($_.Exception.Message)"
+                Fail-Json -obj $result -message "Failed to set property ComputerGroupType of RAP ${name}: $($_.Exception.Message)"
             }
 
             $diff_text += "-SessionTimeoutAction = $($cap.SessionTimeoutAction)`n+SessionTimeoutAction = $session_timeout_action`n"

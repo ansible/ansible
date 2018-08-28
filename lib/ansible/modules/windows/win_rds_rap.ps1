@@ -204,7 +204,7 @@ if ($state -eq 'absent') {
                         -WhatIf:$check_mode
                     $diff_text += "+ComputerGroup = $computer_group`n"
                 } catch {
-                    Fail-Json -obj $resultobj -message "Failed to set property ComputerGroupType of RAP ${name}: $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "Failed to set property ComputerGroupType of RAP ${name}: $($_.Exception.Message)"
                 }
             }
 
