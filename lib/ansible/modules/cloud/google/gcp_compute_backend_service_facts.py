@@ -242,6 +242,39 @@ items:
                 - The unique identifier for the resource.
             returned: success
             type: int
+        iap:
+            description:
+                - Settings for enabling Cloud Identity Aware Proxy.
+            returned: success
+            type: complex
+            contains:
+                enabled:
+                    description:
+                        - Enables IAP.
+                    returned: success
+                    type: bool
+                oauth2_client_id:
+                    description:
+                        - OAuth2 Client ID for IAP.
+                    returned: success
+                    type: str
+                oauth2_client_secret:
+                    description:
+                        - OAuth2 Client Secret for IAP.
+                    returned: success
+                    type: str
+                oauth2_client_secret_sha256:
+                    description:
+                        - OAuth2 Client Secret SHA-256 for IAP.
+                    returned: success
+                    type: str
+        load_balancing_scheme:
+            description:
+                - Indicates whether the backend service will be used with internal or external load
+                  balancing. A backend service created for one type of load balancing cannot be used
+                  with the other.
+            returned: success
+            type: str
         name:
             description:
                 - Name of the resource. Provided by the client when the resource is created. The name
