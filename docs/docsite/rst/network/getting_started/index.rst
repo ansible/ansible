@@ -1,4 +1,4 @@
-.. _network_guetting_started:
+.. _network_getting_started:
 
 ***************************************************
 Getting Started with Ansible for Network Automation
