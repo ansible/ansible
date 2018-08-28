@@ -141,7 +141,7 @@ id:
     example: "/subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tmtest"
 endpoints:
   description: List of endpoint IDs attached to the profile
-  returned: when traffic manager profile exists
+  returned: when traffic manager endpoints exists
   type: list
   sample: [
         "/subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/externalEndpoints/e2",
@@ -354,8 +354,8 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
 
         elif self.state == 'absent' and response:
             self.log("Need to delete the Traffic Manager profile")
-            self.results['changed'] = True
             self.results = shorten_traffic_manager_dict(response)
+            self.results['changed'] = True
 
             if self.check_mode:
                 return self.results

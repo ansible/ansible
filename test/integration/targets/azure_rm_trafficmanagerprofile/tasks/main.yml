@@ -277,18 +277,6 @@
     that:
       - output.changed
 
-- name: Delete the Traffic Manager profile (idempotent)
-  azure_rm_trafficmanagerprofile:
-    resource_group: "{{ resource_group }}"
-    name: "{{ tmname }}"
-    state: absent
-  register: output
-
-- name: Assert idempotent
-  assert:
-    that:
-      - not output.changed
-
 - name: Get Traffic Manager profile fact
   azure_rm_trafficmanagerprofile_facts:
       resource_group: "{{ resource_group }}"
