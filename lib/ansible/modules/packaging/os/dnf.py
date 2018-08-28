@@ -283,6 +283,16 @@ class DnfModule(YumDnf):
 
         self._ensure_dnf()
 
+    def _sanitize_dnf_error_msg(self, spec, error):
+        """
+        For unhandled dnf.exceptions.Error scenarios, there are certain error
+        messages we want to filter. Do that here.
+        """
+        if to_text("no package matched") in to_text(error):
+            return "No package {0} available.".format(spec)
+
+        return error
+
     def _package_dict(self, package):
         """Return a dictionary of information for the package."""
         # NOTE: This no longer contains the 'dnfstate' field because it is
@@ -856,7 +866,9 @@ class DnfModule(YumDnf):
                         install_result = self._mark_package_install(pkg_spec)
                         if install_result['failed']:
                             failure_response['msg'] += install_result['msg']
-                            failure_response['failures'].append(install_result['failure'])
+                            failure_response['failures'].append(self._sanitize_dnf_error_msg(pkg_spec, install_result['failure']))
+                        else:
+                            response['results'].append(install_result['msg'])
 
             elif self.state == 'latest':
                 # "latest" is same as "installed" for filenames.
@@ -901,7 +913,9 @@ class DnfModule(YumDnf):
                         install_result = self._mark_package_install(pkg_spec, upgrade=True)
                         if install_result['failed']:
                             failure_response['msg'] += install_result['msg']
-                            failure_response['failures'].append(install_result['failure'])
+                            failure_response['failures'].append(self._sanitize_dnf_error_msg(pkg_spec, install_result['failure']))
+                        else:
+                            response['results'].append(install_result['msg'])
 
             else:
                 # state == absent
@@ -1075,7 +1089,12 @@ def main():
     try:
         module_implementation.run()
     except dnf.exceptions.RepoError as de:
-        module.exit_json(msg="Failed to synchronize repodata: {0}".format(to_native(de)))
+        module.fail_json(
+            msg="Failed to synchronize repodata: {0}".format(to_native(de)),
+            rc=1,
+            results=[],
+            changed=False
+        )
 
 
 if __name__ == '__main__':
