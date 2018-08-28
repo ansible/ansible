@@ -45,6 +45,13 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+   all_projects:
+     description:
+       - Whether to list servers from all projects or just the current auth
+         scoped project.
+     type: bool
+     default: 'no'
+     version_added: "2.8"
 extends_documentation_fragment: openstack
 '''
 
@@ -70,7 +77,8 @@ def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=False),
         detailed=dict(required=False, type='bool'),
-        filters=dict(required=False, type='dict', default=None)
+        filters=dict(required=False, type='dict', default=None),
+        all_projects=dict(required=False, type='bool'),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
@@ -78,7 +86,8 @@ def main():
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         openstack_servers = cloud.search_servers(
-            detailed=module.params['detailed'], filters=module.params['filters'])
+            detailed=module.params['detailed'], filters=module.params['filters'],
+            all_projects=module.params['all_projects'])
 
         if module.params['server']:
             # filter servers by name
