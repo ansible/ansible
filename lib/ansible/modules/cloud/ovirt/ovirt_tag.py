@@ -34,6 +34,10 @@ description:
     - "This module manage tags in oVirt/RHV. It can also manage assignments
        of those tags to entities."
 options:
+    id:
+        description:
+            - "ID of the tag to manage."
+        version_added: "2.7"
     name:
         description:
             - "Name of the tag to manage."
@@ -130,6 +134,7 @@ class TagsModule(BaseModule):
 
     def build_entity(self):
         return otypes.Tag(
+            id=self._module.params['id'],
             name=self._module.params['name'],
             description=self._module.params['description'],
             parent=otypes.Tag(
@@ -195,6 +200,7 @@ class TagsModule(BaseModule):
         self._update_tag_assignments(entity, 'hosts')
         return (
             equal(self._module.params.get('description'), entity.description) and
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('parent'), self._get_parent(entity))
         )
 
@@ -205,6 +211,7 @@ def main():
             choices=['present', 'absent', 'attached', 'detached'],
             default='present',
         ),
+        id=dict(default=None),
         name=dict(required=True),
         description=dict(default=None),
         parent=dict(default=None),

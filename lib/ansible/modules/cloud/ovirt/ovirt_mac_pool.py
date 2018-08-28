@@ -18,6 +18,10 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "This module manage MAC pools in oVirt/RHV."
 options:
+    id:
+        description:
+            - "ID of the mac pool to manage."
+        version_added: "2.7"
     name:
         description:
             - "Name of the MAC pool to manage."
@@ -58,6 +62,11 @@ EXAMPLES = '''
 - ovirt_mac_pool:
     state: absent
     name: mymacpool
+
+# Change MAC pool Name
+- ovirt_nic:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new mac pool name"
 '''
 
 RETURN = '''
@@ -95,6 +104,7 @@ class MACPoolModule(BaseModule):
     def build_entity(self):
         return otypes.MacPool(
             name=self._module.params['name'],
+            id=self._module.params['id'],
             allow_duplicates=self._module.params['allow_duplicates'],
             description=self._module.params['description'],
             ranges=[
@@ -103,7 +113,7 @@ class MACPoolModule(BaseModule):
                     to=mac_range.split(',')[1],
                 )
                 for mac_range in self._module.params['ranges']
-            ],
+            ] if self._module.params['ranges'] else None,
         )
 
     def _compare_ranges(self, entity):
@@ -120,7 +130,8 @@ class MACPoolModule(BaseModule):
         return (
             self._compare_ranges(entity) and
             equal(self._module.params['allow_duplicates'], entity.allow_duplicates) and
-            equal(self._module.params['description'], entity.description)
+            equal(self._module.params['description'], entity.description) and 
+            equal(self._module.params['name'], entity.name)
         )
 
 
@@ -131,6 +142,7 @@ def main():
             default='present',
         ),
         name=dict(required=True),
+        id=dict(default=None),
         allow_duplicates=dict(default=None, type='bool'),
         description=dict(default=None),
         ranges=dict(default=None, type='list'),

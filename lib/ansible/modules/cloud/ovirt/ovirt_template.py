@@ -185,6 +185,11 @@ EXAMPLES = '''
     state: absent
     name: mytemplate
 
+# Change Pool Name
+- ovirt_template:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new template name"
+
 # Register template
 - ovirt_template:
   state: registered
@@ -326,6 +331,7 @@ class TemplatesModule(BaseModule):
             equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster)) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self.param('operating_system'), str(entity.os.type)) and
+            equal(self.param('name'), str(entity.name)) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
             equal(convert_to_bytes(self.param('memory')), entity.memory) and

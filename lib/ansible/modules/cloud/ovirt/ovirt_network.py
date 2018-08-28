@@ -33,6 +33,10 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage logical networks in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the network to manage."
+        version_added: "2.7"
     name:
         description:
             - "Name of the network to manage."
@@ -93,6 +97,12 @@ EXAMPLES = '''
 - ovirt_network:
     state: absent
     name: mynetwork
+
+# Change Network Name
+- ovirt_network:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new network name"
+    data_center: mydatacenter
 '''
 
 RETURN = '''
@@ -134,6 +144,7 @@ class NetworksModule(BaseModule):
             name=self._module.params['name'],
             comment=self._module.params['comment'],
             description=self._module.params['description'],
+            id=self._module.params['id'],
             data_center=otypes.DataCenter(
                 name=self._module.params['data_center'],
             ) if self._module.params['data_center'] else None,
@@ -168,6 +179,7 @@ class NetworksModule(BaseModule):
         self._update_label_assignments(entity)
         return (
             equal(self._module.params.get('comment'), entity.comment) and
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None)) and
             equal(self._module.params.get('vm_network'), True if entity.usages else False) and
@@ -226,6 +238,7 @@ def main():
             default='present',
         ),
         data_center=dict(required=True),
+        id=dict(default=None),
         name=dict(required=True),
         description=dict(default=None),
         comment=dict(default=None),

@@ -18,6 +18,10 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage clusters in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the cluster to manage."
+        version_added: "2.7"
     name:
         description:
             - "Name of the cluster to manage."
@@ -381,6 +385,7 @@ class ClustersModule(BaseModule):
     def build_entity(self):
         sched_policy = self._get_sched_policy()
         return otypes.Cluster(
+            id=self.param('id'),
             name=self.param('name'),
             comment=self.param('comment'),
             description=self.param('description'),
@@ -543,6 +548,7 @@ class ClustersModule(BaseModule):
 
         return (
             check_custom_scheduling_policy_properties() and
+            equal(self.param('name'), entity.name) and
             equal(self.param('comment'), entity.comment) and
             equal(self.param('description'), entity.description) and
             equal(self.param('switch_type'), str(entity.switch_type)) and
@@ -599,6 +605,7 @@ def main():
             default='present',
         ),
         name=dict(default=None, required=True),
+        id=dict(default=None),
         ballooning=dict(default=None, type='bool', aliases=['balloon']),
         gluster=dict(default=None, type='bool'),
         virt=dict(default=None, type='bool'),
