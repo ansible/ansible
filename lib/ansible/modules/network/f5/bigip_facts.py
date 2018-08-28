@@ -93,9 +93,11 @@ from ansible.module_utils.six.moves import map, zip
 try:
     from library.module_utils.network.f5.legacy import bigip_api, bigsuds_found
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import F5BaseClient
 except ImportError:
     from ansible.module_utils.network.f5.legacy import bigip_api, bigsuds_found
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import F5BaseClient
 
 try:
     from suds import MethodNotFound, WebFault
@@ -1652,36 +1654,46 @@ def generate_provision_dict(f5):
     return generate_simple_dict(provisioned, fields)
 
 
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = False
+        argument_spec = dict(
+            session=dict(type='bool', default='no'),
+            include=dict(
+                type='raw',
+                required=True,
+                choices=[
+                    'address_class', 'certificate', 'client_ssl_profile', 'device',
+                    'device_group', 'interface', 'key', 'node', 'pool', 'provision',
+                    'rule', 'self_ip', 'software', 'system_info', 'traffic_group',
+                    'trunk', 'virtual_address', 'virtual_server', 'vlan'
+                ]
+            ),
+            filter=dict(type='str'),
+        )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
+
+
 def main():
-    argument_spec = f5_argument_spec
-    meta_args = dict(
-        session=dict(type='bool', default='no'),
-        include=dict(
-            type='raw',
-            required=True,
-            choices=[
-                'address_class', 'certificate', 'client_ssl_profile', 'device',
-                'device_group', 'interface', 'key', 'node', 'pool', 'provision',
-                'rule', 'self_ip', 'software', 'system_info', 'traffic_group',
-                'trunk', 'virtual_address', 'virtual_server', 'vlan'
-            ]
-        ),
-        filter=dict(type='str'),
-    )
-    argument_spec.update(meta_args)
+    spec = ArgumentSpec()
 
     module = AnsibleModule(
-        argument_spec=argument_spec
+        argument_spec=spec.argument_spec
     )
+    client = F5BaseClient(**module.params)
+    provider = client.merge_provider_params()
 
     if not bigsuds_found:
         module.fail_json(msg="the python suds and bigsuds modules are required")
 
-    server = module.params['server']
-    server_port = module.params['server_port']
-    user = module.params['user']
-    password = module.params['password']
-    validate_certs = module.params['validate_certs']
+    server = provider['server']
+    server_port = provider['server_port']
+    user = provider['user']
+    password = provider['password']
+    validate_certs = provider['validate_certs']
+
     session = module.params['session']
     fact_filter = module.params['filter']
 
