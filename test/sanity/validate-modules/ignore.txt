@@ -1090,9 +1090,9 @@ lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E323
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E324
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E325
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E326
-lib/ansible/modules/storage/netapp/sf_snapshot_schedule_manager.py E325
-lib/ansible/modules/storage/netapp/sf_volume_manager.py E322
-lib/ansible/modules/storage/netapp/sf_volume_manager.py E325
+lib/ansible/modules/storage/netapp/_sf_snapshot_schedule_manager.py E325
+lib/ansible/modules/storage/netapp/_sf_volume_manager.py E322
+lib/ansible/modules/storage/netapp/_sf_volume_manager.py E325
 lib/ansible/modules/storage/purestorage/purefb_fs.py E324
 lib/ansible/modules/storage/zfs/zfs.py E322
 lib/ansible/modules/storage/zfs/zfs.py E323
