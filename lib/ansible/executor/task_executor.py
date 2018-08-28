@@ -170,10 +170,10 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._task.no_log)
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._play_context.no_log)
         except Exception as e:
             return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
-                        stdout='', _ansible_no_log=self._task.no_log)
+                        stdout='', _ansible_no_log=self._play_context.no_log)
         finally:
             try:
                 self._connection.close()
