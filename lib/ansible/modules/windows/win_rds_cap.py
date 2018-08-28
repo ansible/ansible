@@ -21,7 +21,7 @@ author:
 options:
   name:
     description:
-      - Name of the connection authorization policy
+      - Name of the connection authorization policy.
     required: yes
   state:
     description:
@@ -79,23 +79,23 @@ options:
     type: list
   redirect_clipboard:
     description:
-      - Allow clipboard redirection
+      - Allow clipboard redirection.
     type: bool
   redirect_drives:
     description:
-      - Allow disk drive redirection
+      - Allow disk drive redirection.
     type: bool
   redirect_printers:
     description:
-      - Allow printers redirection
+      - Allow printers redirection.
     type: bool
   redirect_serial:
     description:
-      - Allow serial port redirection
+      - Allow serial port redirection.
     type: bool
   redirect_pnp:
     description:
-      - Allow Plug and Play devices redirection
+      - Allow Plug and Play devices redirection.
     type: bool
 requirements:
   - Windows Server 2008R2 (6.1) or higher with RDS features

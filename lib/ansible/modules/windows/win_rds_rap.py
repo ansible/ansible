@@ -22,7 +22,7 @@ author:
 options:
   name:
     description:
-      - Name of the resource authorization policy
+      - Name of the resource authorization policy.
     required: yes
   state:
     description:
@@ -35,7 +35,7 @@ options:
     default: present
   description:
     description:
-      - Optionnal description of the resource authorization policy
+      - Optionnal description of the resource authorization policy.
   user_groups:
     description:
       - List of user groups that are associated with this resource authorization policy (RAP).
