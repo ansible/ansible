@@ -74,7 +74,7 @@ EXAMPLES = """
 
     - name: list groups for user that have them, dont error if they don't
       debug: var=item
-      with_list: "{{lookup('subelements', users, 'groups', 'skip_missing=True')}}"
+      loop: "{{lookup('subelements', users, 'groups', {'skip_missing': True})}}"
 """
 
 RETURN = """
