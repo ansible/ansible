@@ -1,0 +1,51 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: NetApp Test Global Settings module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars: &vars
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+      name: TestArray
+- name: set credentials
+  set_fact:
+    credentials: *creds
+
+- name: Show some debug information
+  debug:
+    msg: "Using user={{ credentials.api_username }} on server={{ credentials.api_url }}."
+
+- name: Set the name to the default
+  netapp_e_global:
+    <<: *creds
+
+- name: Set a few different names
+  netapp_e_global:
+    <<: *creds
+    name: "{{ item }}"
+  loop:
+    - a
+    - x
+    - "000001111122222333334444455555"
+
+- name: Set an explicit name
+  netapp_e_global:
+    <<: *creds
+    name: abc
+  register: result
+
+- name: Validate name
+  assert:
+    that: result.name == "abc"
+
+- name: Restore the original name
+  netapp_e_global:
+    <<: *creds
