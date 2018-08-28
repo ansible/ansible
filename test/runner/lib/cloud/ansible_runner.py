@@ -171,7 +171,7 @@ class AnsibleRunnerProvider(CloudProvider):
 
 
 class AnsibleRunnerEnvironment(CloudEnvironment):
-
+    ''' Ansible Runner Env '''
     def configure_environment(self, env, cmd):
         """
         :type env: dict[str, str]
