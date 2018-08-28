@@ -190,7 +190,7 @@
     location: westus
     priority: 1
     weight: 3
-    target: test.com
+    target: 4.3.2.1
 
 - name: Get endpoint
   azure_rm_trafficmanagerendpoint_facts:
@@ -212,7 +212,7 @@
     location: westus
     priority: 1
     weight: 3
-    target: test.com
+    target: 4.3.2.1
   register: output
 
 - name: Assert endpoint creation idempotent
