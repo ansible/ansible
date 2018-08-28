@@ -28,7 +28,7 @@ options:
 
   from_name:
     description:
-    - The name of the node to be renamed.
+    - The name of the node to be renamed.  If I(name) already exists, no action will be performed.
     required: true
 
 '''
@@ -101,7 +101,7 @@ class NetAppOntapNode(object):
         node_obj = netapp_utils.zapi.NaElement('system-node-get')
         node_obj.add_new_child('node', name)
         try:
-            result = self.cluster.invoke_successfully(node_obj, True)
+            self.cluster.invoke_successfully(node_obj, True)
         except netapp_utils.zapi.NaApiError as error:
             if to_native(error.code) == "13115":
                 # 13115 (EINVALIDINPUTERROR) if the node does not exist
