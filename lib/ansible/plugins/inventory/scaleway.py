@@ -155,9 +155,6 @@ extractors = {
 class InventoryModule(BaseInventoryPlugin):
     NAME = 'scaleway'
 
-    def verify_file(self, path):
-        return "scaleway" in path
-
     def _fill_host_variables(self, host, server_info):
         targeted_attributes = (
             "arch",
