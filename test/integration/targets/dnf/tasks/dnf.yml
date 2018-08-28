@@ -461,7 +461,7 @@
     that:
         - "dnf_result is failed"
         - "'non-existent-rpm' in dnf_result['failures'][0]"
-        - "'no package matched' in dnf_result['failures'][0]"
+        - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
         - "'Failed to install some of the specified packages' in dnf_result['msg']"
 
 - name: use latest to install httpd
