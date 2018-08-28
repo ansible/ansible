@@ -728,7 +728,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if self.check_mode:
                     return self.results
 
-                self.change_webapp_state(self.app_state)
+                self.set_webapp_state(self.app_state)
 
         return self.results
 
