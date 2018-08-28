@@ -29,9 +29,9 @@ from .. import pytar
 
 
 class AnsibleRunnerProvider(CloudProvider):
-    """Foreman plugin.
+    """AnsibleRunner plugin.
 
-    Sets up Foreman stub server for tests.
+    Prepares the ansible-runner test container.
     """
 
     DOCKER_SIMULATOR_NAME = 'ansible_runner_test'
@@ -93,11 +93,9 @@ class AnsibleRunnerProvider(CloudProvider):
         if self.container_name:
             docker_rm(self.args, self.container_name)
         super(AnsibleRunnerProvider, self).cleanup()
-        #pass
 
     def _setup_dynamic(self):
-        """Spawn a Runner container."""
-        #runner_port = 8080
+        """Spawn an ansible-runner test container."""
         runner_port = 5000
         container_id = get_docker_container_id()
 
@@ -130,9 +128,6 @@ class AnsibleRunnerProvider(CloudProvider):
                     '-p', ':'.join((str(runner_port), ) * 2),
                 ]
 
-            #if not self.__container_from_env:
-            #    docker_pull(self.args, self.image)
-
             docker_run(
                 self.args,
                 self.image,
@@ -145,7 +140,7 @@ class AnsibleRunnerProvider(CloudProvider):
         if True:
             runner_host = self._get_simulator_address()
             display.info(
-                'Found Runner container address: %s'
+                'Found ansible runner test container address: %s'
                 % runner_host, verbosity=1
             )
         else:
@@ -153,9 +148,6 @@ class AnsibleRunnerProvider(CloudProvider):
 
         self._set_cloud_config('ANSIBLE_RUNNER_HOST', runner_host)
         self._set_cloud_config('ANSIBLE_RUNNER_PORT', str(runner_port))
-        import q; q(runner_host)
-        import q; q(runner_port)
-
         self.delegate_checkout()
 
     def _get_simulator_address(self):
@@ -179,10 +171,6 @@ class AnsibleRunnerProvider(CloudProvider):
             except Exception as e:
                 raise e
             container_id = self._get_docker_container_id()
-            import q; q(container_id)
-            import q; q(local_source_fd)
-            import q; q(local_source_fd.name)
-            #import epdb; epdb.st()
             docker_put(self.args, container_id, local_source_fd.name, '/root/ansible.tgz')
             docker_exec(self.args, container_id, ['mkdir', '/root/ansible'])
             docker_exec(self.args, container_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
