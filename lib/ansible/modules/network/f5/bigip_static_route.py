@@ -162,7 +162,11 @@ try:
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
+    from library.module_utils.compat.ipaddress import ip_address
     from library.module_utils.compat.ipaddress import ip_network
+    from library.module_utils.compat.ipaddress import ip_interface
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -173,7 +177,11 @@ except ImportError:
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
+    from ansible.module_utils.compat.ipaddress import ip_address
     from ansible.module_utils.compat.ipaddress import ip_network
+    from ansible.module_utils.compat.ipaddress import ip_interface
 
 
 class Parameters(AnsibleF5Parameters):
@@ -264,7 +272,7 @@ class ModuleParameters(Parameters):
         if self._values['destination'].startswith('default'):
             self._values['destination'] = '0.0.0.0/0'
         if self._values['destination'].startswith('default-inet6'):
-            self._values['destination'] = '::/::'
+            self._values['destination'] = '::/0'
         try:
             ip = ip_network(u'%s' % str(self.destination_ip))
             if self.route_domain:
@@ -286,22 +294,36 @@ class ModuleParameters(Parameters):
     def netmask(self):
         if self._values['netmask'] is None:
             return None
-        # Check if numeric
         try:
             result = int(self._values['netmask'])
-            if 0 <= result < 256:
+
+            # CIDRs between 0 and 128 are allowed
+            if 0 <= result <= 128:
                 return result
+            else:
+                raise F5ModuleError(
+                    "The provided netmask must be between 0 and 32 for IPv4, or "
+                    "0 and 128 for IPv6."
+                )
+        except ValueError:
+            # not a number, but that's ok. Further processing necessary
+            pass
+
+        if not is_valid_ip(self._values['netmask']):
             raise F5ModuleError(
                 'The provided netmask {0} is neither in IP or CIDR format'.format(result)
             )
-        except ValueError:
-            try:
-                ip = ip_network(u'%s' % str(self._values['netmask']))
-            except ValueError:
-                raise F5ModuleError(
-                    'The provided netmask {0} is neither in IP or CIDR format'.format(self._values['netmask'])
-                )
-            result = int(ip.prefixlen)
+
+        # Create a temporary address to check if the netmask IP is v4 or v6
+        addr = ip_address(u'{0}'.format(str(self._values['netmask'])))
+        if addr.version == 4:
+            # Create a more real v4 address using a wildcard, so that we can determine
+            # the CIDR value from it.
+            ip = ip_network(u'0.0.0.0/%s' % str(self._values['netmask']))
+            result = ip.prefixlen
+        else:
+            result = ipv6_netmask_to_cidr(self._values['netmask'])
+
         return result
 
 
@@ -343,9 +365,9 @@ class ApiParameters(Parameters):
         if destination.startswith('default%'):
             destination = '0.0.0.0%{0}/0'.format(destination.split('%')[1])
         elif destination.startswith('default-inet6%'):
-            destination = '::%{0}/::'.format(destination.split('%')[1])
+            destination = '::%{0}/0'.format(destination.split('%')[1])
         elif destination.startswith('default-inet6'):
-            destination = '::/::'
+            destination = '::/0'
         elif destination.startswith('default'):
             destination = '0.0.0.0/0'
         return destination
