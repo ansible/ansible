@@ -53,12 +53,12 @@
         protocol: HTTPS
         port: 80
         path: '/'
-  register: output
+  register: tm
 
 - name: Assert the Traffic Manager profile is well created
   assert:
     that:
-      - output.changed
+      - tm.changed
 
 - name: Gather Traffic Manager profile facts
   azure_rm_trafficmanagerprofile_facts:
@@ -70,7 +70,7 @@
   assert:
       that:
         - "fact.tms | length == 1"
-        - fact.tms[0].id == output.id
+        - fact.tms[0].id == tm.id
         - fact.tms[0].endpoints | length == 0
 
 - name: Create a Traffic Manager profile (idempotent)
@@ -220,7 +220,7 @@
     that:
       - output.changed == False
 
-- name: Delete endpoint
+- name: Delete second endpoint
   azure_rm_trafficmanagerendpoint:
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
@@ -258,11 +258,11 @@
       name: "{{ tmname }}"
   register: fact
 
-- name: Assert the traffic manager is still there
+- name: Assert the traffic manager profile is still there
   assert:
       that:
         - "fact.tms | length == 1"
-        - fact.tms[0].id == output.id
+        - fact.tms[0].id == tm.id
         - fact.tms[0].endpoints | length == 1
 
 - name: Delete the Traffic Manager profile
