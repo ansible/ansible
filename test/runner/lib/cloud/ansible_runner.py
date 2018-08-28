@@ -35,7 +35,6 @@ class AnsibleRunnerProvider(CloudProvider):
     """
 
     DOCKER_SIMULATOR_NAME = 'ansible_runner_test'
-
     DOCKER_IMAGE = 'jctanner/ansible-runner'
 
     def __init__(self, args):
@@ -46,7 +45,7 @@ class AnsibleRunnerProvider(CloudProvider):
         super(AnsibleRunnerProvider, self).__init__(args)
 
         self.__container_from_env = os.getenv('ANSIBLE_RUNNER_CONTAINER')
-        self.image = self.__container_from_env or self.DOCKER_IMAGE
+        self.image = 'quay.io/ansible/ansible-runner-test-container:1.0'
         self.container_name = ''
 
     def filter(self, targets, exclude):
