@@ -606,7 +606,7 @@ import shlex
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, sanitize_result
 from ansible.module_utils.six import string_types
 
 try:
@@ -1774,7 +1774,7 @@ class ContainerManager(DockerBaseClass):
             self.container_remove(container.Id)
 
     def fail(self, msg, **kwargs):
-        self.client.module.fail_json(msg=msg, **kwargs)
+        self.client.module.fail_json(msg=msg, **sanitize_result(kwargs))
 
     def _get_container(self, container):
         '''
@@ -2101,7 +2101,7 @@ def main():
     )
 
     cm = ContainerManager(client)
-    client.module.exit_json(**cm.results)
+    client.module.exit_json(**sanitize_result(cm.results))
 
 
 if __name__ == '__main__':
