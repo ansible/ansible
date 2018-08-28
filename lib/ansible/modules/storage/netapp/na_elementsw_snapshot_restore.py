@@ -51,18 +51,6 @@ options:
         - Account ID or Name of Parent/Source Volume.
         required: true
 
-    password:
-        description:
-        - Element OS access account password
-        aliases:
-        - pass
-
-    username:
-        description:
-        - Element OS access account user-name
-        aliases:
-        - user
-
 '''
 
 EXAMPLES = """
