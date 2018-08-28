@@ -7,14 +7,17 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
 
 module: sf_snapshot_schedule_manager
-
+deprecated:
+  removed_in: "2.11"
+  why: This Module has been replaced
+  alternative: please use na_elementsw_snapshot_schedule
 short_description: Manage SolidFire snapshot schedules
 extends_documentation_fragment:
     - netapp.solidfire
