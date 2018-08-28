@@ -33,7 +33,7 @@ options:
   version:
      description:
     - Specific version of the package to be installed.
-    - Ignored when C(unpinned). 
+    - Ignored when C(unpinned).
 author:
     - Simon Bärlocher (@sbaerlocher)
     - ITIGO AG (@itigoag)
@@ -48,7 +48,7 @@ EXAMPLES = r'''
   win_chocolatey_pin:
     name: firefox
     state: pinned
-  
+
 - name: pin firefox with state and version
   win_chocolatey_pin:
     name: firefox
