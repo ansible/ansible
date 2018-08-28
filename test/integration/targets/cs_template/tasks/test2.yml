@@ -4,6 +4,7 @@
     name: ansible-template-test2
     display_text: first template
     state: absent
+    cross_zones: yes
     template_find_options: display_text
   register: template
 - name: verify setup template first template
@@ -16,6 +17,7 @@
     name: ansible-template-test2
     display_text: second template
     state: absent
+    cross_zones: yes
     template_find_options: display_text
   register: template
 - name: verify setup template second template
@@ -66,6 +68,7 @@
   cs_template:
     name: ansible-template-test2
     state: absent
+    cross_zones: yes
   register: template
   ignore_errors: yes
 - name: verify test multiple template same name absent without find options
@@ -146,6 +149,7 @@
     name: ansible-template-test2
     display_text: first template
     state: absent
+    cross_zones: yes
     template_find_options: display_text
   register: template
 - name: verify test delete first template
@@ -163,6 +167,7 @@
     name: ansible-template-test2
     display_text: second template
     state: absent
+    cross_zones: yes
     template_find_options: display_text
   register: template
 - name: verify test delete second template
