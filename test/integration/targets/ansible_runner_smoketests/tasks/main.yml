@@ -2,4 +2,4 @@
 #- shell: which ansible
 #- shell: which ansible-playbook
 - include_tasks: setup.yml
-- include_tasks: pbexp1.yml
+- include_tasks: playbook_example1.yml

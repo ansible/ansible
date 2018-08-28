@@ -1,14 +1,5 @@
 - name: send the playbook script
-  #uri:
-  #  method: POST
-  #  url: "{{ runner_container_url + '/upload_file' }}" 
-  #  body: "{{ lookup('file','playbook_example1.py') }}"
-  #set_fact: 
-  #  pwd: "{{ lookup('pipe', 'pwd') }}"
   shell: "{{ 'curl -X POST -F \"file=@' + role_path + '/files/' + 'playbook_example1.py\" ' + runner_container_url + '/upload_file' }}"
-
-- debug: var=pwd
-- debug: var=role_path
 
 - name: check the script
   uri:
@@ -25,3 +16,11 @@
     body_format: json
     body:
         filename: playbook_example1.py
+  register: pbexec
+
+- debug: var=pbexec
+- assert:
+    that:
+        - "pbexec.json.rc == 0"
+        - "pbexec.json.events|length == 5"
+        - "'localhost' in pbexec.json.stats.ok"

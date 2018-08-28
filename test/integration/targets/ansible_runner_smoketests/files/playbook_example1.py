@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import json
 import os
 import sys
 import ansible_runner
@@ -26,9 +27,21 @@ with open(pbfile, 'w') as f:
     f.write(PLAYBOOK)
 
 r = ansible_runner.run(private_data_dir=output_dir, playbook='test.yml')
+'''
 print("{}: {}".format(r.status, r.rc))
 # successful: 0
 for each_host_event in r.events:
     print(each_host_event['event'])
 print("Final status:")
 print(r.stats)
+'''
+
+data = {
+    'rc': r.rc,
+    'status': r.status,
+    'events': [x['event'] for x in r.events],
+    'stats': r.stats
+}
+
+print('#STARTJSON')
+print(json.dumps(data))
