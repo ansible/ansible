@@ -185,7 +185,8 @@ class AnsibleDockerClient(Client):
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
             self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
                       "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
-                      "module. It is recommended to install the docker module if no support for Python 2.6 is required.")
+                      "module. It is recommended to install the docker module if no support for Python 2.6 is required. "
+                      "Please note that simply uninstalling one of the modules can leave the other module in a broken state.")
 
         if not HAS_DOCKER_PY:
             self.fail("Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)" % HAS_DOCKER_ERROR)
