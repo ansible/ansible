@@ -24,12 +24,15 @@ options:
       - If you want to create a snapshot.
     default: present
   vserver:
+    required: true
     description:
       - Name of the vserver.
   volumes:
+    required: true
     description:
       - A list of volumes in this filer that is part of this CG operation.
   snapshot:
+    required: true
     description:
       - The provided name of the snapshot that is created in each volume.
   timeout:
@@ -176,7 +179,7 @@ class NetAppONTAPCGSnapshot(object):
             try:
                 cgresult = self.server.invoke_successfully(
                     cgstart, enable_tunneling=True)
-                if cgresult.has_attr('cg-id'):
+                if cgresult.get_child_by_name('cg-id'):
                     self.cgid = cgresult['cg-id']
             except netapp_utils.zapi.NaApiError as error:
                 self.module.fail_json(msg="Error creating CG snapshot %s: %s" %
