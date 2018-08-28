@@ -72,7 +72,7 @@ EXAMPLES = """
         - "{{ users }}"
         - mysql.hosts
 
-    - name: list groups for user that have them, dont error if they don't
+    - name: list groups for users that have them, don't error if groups key is missing
       debug: var=item
       loop: "{{lookup('subelements', users, 'groups', {'skip_missing': True})}}"
 """
