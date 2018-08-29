@@ -150,7 +150,7 @@
           - 80
           - 81
     state: absent
-    register: output
+  register: output
 
 - name: Assert the container instance is deleted
   assert:
