@@ -87,6 +87,38 @@ container_groups:
             type: complex
             sample: containers
             contains:
+                name:
+                    description:
+                        - The name of the container instance.
+                    returned: always
+                    type: str
+                    sample: "/subscriptions/ae43b1e3-c35d-4c8c-bc0d-f148b4c52b78/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
+                            containers"
+                image:
+                    description:
+                        - The container image name.
+                    returned: always
+                    type: str
+                    sample: "/subscriptions/ae43b1e3-c35d-4c8c-bc0d-f148b4c52b78/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
+                            containers"
+                memory:
+                    description:
+                        - The required memory of the containers in GB.
+                    returned: always
+                    type: float
+                    sample: 1.5
+                cpu:
+                    description:
+                        - The required number of CPU cores of the containers.
+                    returned: always
+                    type: int
+                    sample: 1
+                ports:
+                    description:
+                        - List of ports exposed within the container group.
+                    returned: always
+                    type: list
+                    sample: [ 80, 81 ]
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -191,9 +223,6 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
             'ip_address': 'public' if d['ip_address']['type'] == 'Public' else 'none',
             'ports': ports,
             'location': d['location'],
-            # registry_login_server
-            # registry_login_username
-            # registry_password
             'containers': containers,
             'state': 'present'
         }
