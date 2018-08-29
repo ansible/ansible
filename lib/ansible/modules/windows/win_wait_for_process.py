@@ -24,10 +24,9 @@ options:
   process_name_exact:
     description:
       - The name of the process(es) for which to wait.
-      - Must inclue the file extension of the process binary (.exe)
   process_name_pattern:
      description:
-      - RegEx pattern matching desired process(es)
+      - RegEx pattern matching desired process(es).
   sleep:
     description:
     - Number of seconds to sleep between checks.
@@ -66,34 +65,40 @@ author:
 EXAMPLES = r'''
 - name: Wait 300 seconds for all Oracle VirtualBox processes to stop. (VBoxHeadless, VirtualBox, VBoxSVC)
   win_wait_for_process:
-    process_name: "v(irtual)?box(headless|svc)?"
+    process_name: 'v(irtual)?box(headless|svc)?'
     state: absent
     timeout: 500
 
 
 - name: Wait 300 seconds for 3 instances of cmd to start, waiting 5 seconds between each check
   win_wait_for_process:
-    process_name: "cmd\\.exe"
+    process_name_exact: cmd
     state: present
     timeout: 500
     sleep: 5
     process_min_count: 3
-
 '''
 
 RETURN = r'''
 elapsed:
-  description: The elapsed seconds between the start of poll and the end of the
-    module.
+  description: The elapsed seconds between the start of poll and the end of the module.
   returned: always
   type: float
   sample: 3.14159265
-changed:
-  description: True if a process was started or stopped during the module execution.
-  returned: always
-  type: bool
 matched_processes:
   description: Count of processes stopped or started.
   returned: always
-  type: int
+  type: list
+  sample: [
+        {
+            "Id": 7908,
+            "ProcessName": "svchost",
+            "UserName": "NT AUTHORITY\\SYSTEM"
+        },
+        {
+            "Id": 15916,
+            "ProcessName": "svchost",
+            "UserName": "NT AUTHORITY\\SYSTEM"
+        }
+    ]
 '''
