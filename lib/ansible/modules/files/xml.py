@@ -131,6 +131,7 @@ options:
       - This parameter requires C(xpath) to be set.
     type: bool
     default: 'no'
+    version_added: '2.7'
   insertafter:
     description:
       - Add additional child-element(s) after the last selected element for a given C(xpath)
@@ -140,6 +141,7 @@ options:
       - This parameter requires C(xpath) to be set.
     type: bool
     default: 'no'
+    version_added: '2.7'
 requirements:
 - lxml >= 2.3.0
 notes:
