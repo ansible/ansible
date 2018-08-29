@@ -154,7 +154,7 @@ class LookupModule(LookupBase):
                     try:
                         msg_details['json'] = json.loads(body)
                     except ValueError as e:
-                        raise AnsibleError("Unable to decode JSON for message %s" % method_frame.delivery_tag)
+                        raise AnsibleError("Unable to decode JSON for message %s: %s" % (method_frame.delivery_tag, to_native(e)))
 
                 ret.append(msg_details)
                 conn_channel.basic_ack(method_frame.delivery_tag)
