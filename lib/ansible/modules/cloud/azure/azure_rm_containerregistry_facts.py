@@ -139,7 +139,7 @@ except ImportError:
     pass
 
 
-class AzureRMRegistryFacts(AzureRMModuleBase):
+class AzureRMContainerRegistryFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -160,7 +160,7 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        super(AzureRMRegistryFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMContainerRegistryFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -247,7 +247,7 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMRegistryFacts()
+    AzureRMContainerRegistryFacts()
 
 
 if __name__ == '__main__':
