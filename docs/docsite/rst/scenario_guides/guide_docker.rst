@@ -43,11 +43,23 @@ Requirements
 ------------
 
 Using the docker modules requires having `docker-py <https://docker-py.readthedocs.io/en/stable/>`_
-installed on the host running Ansible. You will need to have >= 1.7.0 installed.
+installed on the host running Ansible. You will need to have >= 1.7.0 installed. For Python 2.7 or
+Python 3, you can install it as follows:
+
+.. code-block:: bash
+
+    $ pip install docker
+
+For Python 2.6, you need a version before 2.0. For these versions, the module was called ``docker-py``,
+so you need to install it as follows:
 
 .. code-block:: bash
 
     $ pip install 'docker-py>=1.7.0'
+
+Please note that only one of ``docker`` and ``docker-py`` must be installed. Installing both will
+result in a broken installation, which can be recovered by first uninstalling both and then re-installing
+one of them.
 
 The docker_service module also requires `docker-compose <https://github.com/docker/compose>`_
 
