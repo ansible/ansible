@@ -110,21 +110,21 @@ registries:
                 username:
                     description:
                         - The user name for container registry.
-                    returned: always
+                    returned: when registry exists and C(admin_user_enabled) is set
                     type: str
                     sample: zim
                 password:
                     description:
-                        - Password 1 for container registry.
-                    returned: always
+                        - password value
+                    returned: when registry exists and C(admin_user_enabled) is set
                     type: str
-                    sample: Password1!!
+                    sample: pass1value
                 password2:
                     description:
-                        - Password 2 for container registry.
-                    returned: always
+                        - password2 value
+                    returned: when registry exists and C(admin_user_enabled) is set
                     type: str
-                    sample: Password2!!
+                    sample: pass2value
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -225,7 +225,7 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
         d = item.as_dict()
         resource_group = d['id'].split('resourceGroups/')[1].split('/')[0]
         name = d['name']
-        credentials = {'username': None, 'password': None, 'password2': None}
+        credentials = {}
         admin_user_enabled = d['admin_user_enabled']
 
         if admin_user_enabled:
