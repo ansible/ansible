@@ -7,7 +7,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-# Ansible boilerplate: https://docs.ansible.com/ansible/2.6/dev_guide/testing/sanity/boilerplate.html
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
