@@ -25,9 +25,9 @@ description:
 options:
   config:
     description:
-      - The config to be pushed to the network device. This is a
-        argument is mutually exclusive with C(rollback) and either
-        one of the option should be given as input.
+      - The config to be pushed to the network device. This argument
+        is mutually exclusive with C(rollback) and either one of the
+        option should be given as input.
     type: 'str'
   commit:
     description:
