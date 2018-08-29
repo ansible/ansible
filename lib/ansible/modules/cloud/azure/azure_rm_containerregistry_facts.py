@@ -225,23 +225,23 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
         d = item.as_dict()
         resource_group = d['id'].split('resourceGroups/')[1].split('/')[0]
         name = d['name']
-        credentials = { 'username': None, 'password': '', 'password2': ''}
-        try:
+        credentials = {'username': None, 'password': None, 'password2': None}
+        admin_user_enabled = d['admin_user_enabled']
+
+        if admin_user_enabled:
             credentials = self.containerregistry_client.registries.list_credentials(resource_group, name)
-        except CloudError as e:
-            self.log('Credentials not available.')
 
         d = {
             'resource_group': resource_group,
             'name': d['name'],
             'location': d['location'],
-            'admin_user_enabled': d['admin_user_enabled'],
+            'admin_user_enabled': admin_user_enabled,
             'sku': d['sku']['tier'].lower(),
             'provisioning_state': d['provisioning_state'],
             'login_server': d['login_server'],
             'id': d['id'],
             'tags': d.get('tags', None),
-            'credentials' : credentials
+            'credentials': credentials
         }
         return d
 
