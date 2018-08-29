@@ -52,12 +52,12 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get endpoints fact of a Traffic Manager profile
+    - name: Get endpoints facts of a Traffic Manager profile
       azure_rm_trafficmanagerendpoint_facts:
         resource_group: TestRG
         profile_name: Testing
 
-    - name: Get specific endpoint of a Traffic Manager profiel
+    - name: Get specific endpoint of a Traffic Manager profie
       azure_rm_trafficmanager_facts:
         resource_group: TestRG
         profile_name: Testing
