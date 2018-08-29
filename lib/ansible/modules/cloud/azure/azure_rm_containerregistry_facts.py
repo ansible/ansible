@@ -201,7 +201,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'name': self.name,
+            'name': d['name'],
             'location': d['location'],
             'admin_user_enabled': d['admin_user_enabled'],
             'sku': d['sku']['tier'].lower(),
