@@ -150,6 +150,12 @@
           - 80
           - 81
     state: absent
+    register: output
+
+- name: Assert the container instance is deleted
+  assert:
+    that:
+      - output.changed
 
 - name: Remove container instance
   azure_rm_containerinstance:
@@ -168,11 +174,6 @@
           - 80
           - 81
     state: absent
-
-- name: Assert the container instance is deleted
-  assert:
-    that:
-      - output.changed
 
 - name: Remove container instance again
   azure_rm_containerinstance:
