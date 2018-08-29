@@ -23,7 +23,7 @@ import sys
 import copy
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 
@@ -83,16 +83,16 @@ MIN_DOCKER_VERSION = "1.7.0"
 DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
-    docker_host=dict(type='str', aliases=['docker_url'], default=DEFAULT_DOCKER_HOST),
-    tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME),
-    api_version=dict(type='str', aliases=['docker_api_version'], default='auto'),
-    timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS),
+    docker_host=dict(type='str', aliases=['docker_url'], default=DEFAULT_DOCKER_HOST, fallback=(env_fallback, ['DOCKER_HOST'])),
+    tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME, fallback=(env_fallback, ['DOCKER_TLS_HOSTNAME'])),
+    api_version=dict(type='str', aliases=['docker_api_version'], default='auto', fallback=(env_fallback, ['DOCKER_API_VERSION'])),
+    timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS, fallback=(env_fallback, ['DOCKER_TIMEOUT'])),
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
-    ssl_version=dict(type='str'),
-    tls=dict(type='bool', default=DEFAULT_TLS),
-    tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY),
+    ssl_version=dict(type='str', fallback=(env_fallback, ['DOCKER_SSL_VERSION'])),
+    tls=dict(type='bool', default=DEFAULT_TLS, fallback=(env_fallback, ['DOCKER_TLS'])),
+    tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY, fallback=(env_fallback, ['DOCKER_TLS_VERIFY'])),
     debug=dict(type='bool', default=False)
 )
 
@@ -252,7 +252,7 @@ class AnsibleDockerClient(Client):
             docker_host=self._get_value('docker_host', params['docker_host'], 'DOCKER_HOST',
                                         DEFAULT_DOCKER_HOST),
             tls_hostname=self._get_value('tls_hostname', params['tls_hostname'],
-                                         'DOCKER_TLS_HOSTNAME', 'localhost'),
+                                         'DOCKER_TLS_HOSTNAME', DEFAULT_TLS_HOSTNAME),
             api_version=self._get_value('api_version', params['api_version'], 'DOCKER_API_VERSION',
                                         'auto'),
             cacert_path=self._get_value('cacert_path', params['cacert_path'], 'DOCKER_CERT_PATH', None),
