@@ -153,6 +153,8 @@ try:
     from adal.authentication_context import AuthenticationContext
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from azure.mgmt.containerregistry import ContainerRegistryManagementClient
+    from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -276,6 +278,8 @@ class AzureRMModuleBase(object):
         self._containerservice_client = None
         self._mysql_client = None
         self._postgresql_client = None
+        self._containerregistry_client = None
+        self._containerinstance_client = None
         self._adfs_authority_url = None
         self._resource = None
 
@@ -1075,3 +1079,23 @@ class AzureRMModuleBase(object):
             self._mysql_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                           base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mysql_client
+
+    @property
+    def containerregistry_client(self):
+        self.log('Getting container registry mgmt client')
+        if not self._containerregistry_client:
+            self._containerregistry_client = self.get_mgmt_svc_client(ContainerRegistryManagementClient,
+                                                                      base_url=self._cloud_environment.endpoints.resource_manager,
+                                                                      api_version='2017-10-01')
+
+        return self._containerregistry_client
+
+    @property
+    def containerinstance_client(self):
+        self.log('Getting container registry mgmt client')
+        if not self._containerregistry_client:
+            self._containerregistry_client = self.get_mgmt_svc_client(ContainerInstanceManagementClient,
+                                                                      base_url=self._cloud_environment.endpoints.resource_manager,
+                                                                      api_version='2018-06-01')
+
+        return self._containerregistry_client
