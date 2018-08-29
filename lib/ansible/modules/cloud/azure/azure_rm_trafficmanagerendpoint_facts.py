@@ -191,7 +191,7 @@ class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
             type=dict(
                 type='str',
                 choices=[
-                    'azure_ndpoints',
+                    'azure_endpoints',
                     'external_endpoints',
                     'nested_endpoints'
                 ])
