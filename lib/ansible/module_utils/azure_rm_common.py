@@ -151,6 +151,7 @@ try:
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from adal.authentication_context import AuthenticationContext
+    from azure.mgmt.sql import SqlManagementClient
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
 except ImportError as exc:
@@ -274,6 +275,7 @@ class AzureRMModuleBase(object):
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
+        self._sql_client = None
         self._mysql_client = None
         self._postgresql_client = None
         self._adfs_authority_url = None
@@ -1059,6 +1061,14 @@ class AzureRMModuleBase(object):
             self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
                                                                      base_url=self._cloud_environment.endpoints.resource_manager)
         return self._containerservice_client
+
+    @property
+    def sql_client(self):
+        self.log('Getting SQL client')
+        if not self._sql_client:
+            self._sql_client = self.get_mgmt_svc_client(SqlManagementClient,
+                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._sql_client
 
     @property
     def postgresql_client(self):
