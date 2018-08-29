@@ -192,7 +192,7 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
             response = self.containerregistry_client.registries.list()
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Registries.')
+            self.fail('Could not get facts for Registries.')
 
         if response is not None:
             for item in response:
@@ -207,7 +207,7 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
             response = self.containerregistry_client.registries.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Registries.')
+            self.fail('Could not get facts for Registries.')
 
         if response is not None:
             for item in response:
@@ -219,12 +219,11 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
         d = item.as_dict()
         resource_group = d['id'].split('resourceGroups/')[1].split('/')[0]
         name = d['name']
-
+        credentials = None
         try:
-            credentials = self.containerregistry_client.registries.list_credentials(resource_group_name=resource_group,
-                                                                                    registry_name=name)
+            credentials = self.containerregistry_client.registries.list_credentials(resource_group_name=resource_group,                                                                                 registry_name=name)
         except CloudError as e:
-            self.log('Could not list credentials.')
+            self.fail('Could not list credentials.')
 
         d = {
             'resource_group': resource_group,
