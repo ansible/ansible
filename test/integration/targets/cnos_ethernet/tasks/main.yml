@@ -1,0 +1,98 @@
+### This contain sample execution tasks
+---
+- name: Test Interface Ethernet - aggregation-group
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data1}}"
+
+#- name: Test Interface Ethernet - aggregation-group - Interface Range
+#  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+#  with_items: "{{test_ethernet_data24}}"
+
+- name: Test Interface Ethernet - bridge-port
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt   interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data2}}"
+
+- name: Test Interface Ethernet - bridgeport mode
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data3}}"
+
+- name: Test Interface Ethernet  - Description
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_ethernet_data4}}"
+
+- name: Test Interface Ethernet - Duplex
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_ethernet_data5}}"
+
+- name: Test Interface Ethernet - flowcontrol
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data6}}"
+
+- name: Test Interface Ethernet - lacp
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data7}}"
+
+- name: Test Interface Ethernet  - lldp
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data8}}"
+
+- name: Test Interface Ethernet - load-interval
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}'
+  with_items: "{{test_ethernet_data9}}"
+
+#- name: Test Interface Ethernet - mac
+#  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+#  with_items: "{{test_ethernet_data10}}"
+
+- name: Test Interface Ethernet - microburst-detection
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_ethernet_data11}}"
+
+- name: Test Interface Ethernet  - mtu
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_ethernet_data12}}"
+
+- name: Test Interface Ethernet - service-policy
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data13}}"
+
+- name: Test Interface Ethernet - speed
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_ethernet_data14}}"
+
+- name: Test Interface Ethernet - storm
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data15}}"
+
+#- name: Test Interface Ethernet - vlan
+#  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+#  with_items: "{{test_ethernet_data16}}"
+
+- name: Test Interface Ethernet - vrrp
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_ethernet_data17}}"
+
+- name: Test Interface Ethernet - spanning tree1
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data18}}"
+
+- name: Test Interface Ethernet - spanning tree 2
+  cnos_interface: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}' interfaceArg5='{{item.interfaceArg5}}'
+  with_items: "{{test_ethernet_data19}}"
+
+- name: Test Interface Ethernet - ip1
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}'
+  with_items: "{{test_ethernet_data20}}"
+
+- name: Test Interface Ethernet - ip2
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_ethernet_data21}}"
+
+- name: Test Interface Ethernet - bfd
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}' interfaceArg5='{{item.interfaceArg5}}'
+  with_items: "{{test_ethernet_data22}}"
+
+- name: Test Interface Ethernet - bfd
+  cnos_interface:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_ethernet_{{ inventory_hostname }}_output.txt  interfaceOption='{{item.interfaceOption}}' interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}' interfaceArg5='{{item.interfaceArg5}}' interfaceArg6='{{item.interfaceArg6}}'
+  with_items: "{{test_ethernet_data23}}"
+# Completed file

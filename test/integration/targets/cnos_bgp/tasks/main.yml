@@ -1,0 +1,78 @@
+## This contain sample BGP execution tasks
+---
+- name: Test BGP  - neighbor
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}' bgpArg3='{{item.bgpArg3}}' bgpArg4='{{item.bgpArg4}}' bgpArg5='{{item.bgpArg5}}' bgpArg6='{{item.bgpArg6}}'
+  with_items: "{{test_bgp_data13}}"
+
+- name: Test BGP  - BFD
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}' bgpArg3='{{item.bgpArg3}}' bgpArg4='{{item.bgpArg4}}'
+  with_items: "{{test_bgp_data19}}"
+
+- name: Test BGP  - address-family - dampening
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}' bgpArg3='{{item.bgpArg3}}' bgpArg4='{{item.bgpArg4}}' bgpArg5='{{item.bgpArg5}}' bgpArg6='{{item.bgpArg6}}' bgpArg7='{{item.bgpArg7}}' bgpArg8='{{item.bgpArg8}}'
+  with_items: "{{test_bgp_data1}}"
+
+- name: Test BGP  - address-family - network
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}' bgpArg3='{{item.bgpArg3}}' bgpArg4='{{item.bgpArg4}}' bgpArg5='{{item.bgpArg5}}'
+  with_items: "{{test_bgp_data18}}"
+  
+- name: Test BGP - bestpath - always-compare-med
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}'
+  with_items: "{{test_bgp_data2}}"
+
+- name: Test BGP - bestpath-compare-confed-aspat
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt  asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}'
+  with_items: "{{test_bgp_data3}}"
+
+- name: Test BGP - bgp
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}'
+  with_items: "{{test_bgp_data4}}"
+
+- name: Test BGP  - cluster-id
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}'
+  with_items: "{{test_bgp_data5}}"
+
+- name: Test BGP - confederation-identifier
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}' bgpArg3='{{item.bgpArg3}}'
+  with_items: "{{test_bgp_data6}}"
+
+- name: Test BGP - enforce-first-as
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}'
+  with_items: "{{test_bgp_data7}}"
+
+- name: Test BGP - fast-external-failover
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}'
+  with_items: "{{test_bgp_data8}}"
+
+- name: Test BGP  - graceful-restart
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}'
+  with_items: "{{test_bgp_data9}}"
+
+- name: Test BGP - graceful-restart-helper
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}'
+  with_items: "{{test_bgp_data10}}"
+
+- name: Test BGP - maxas-limit
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}'
+  with_items: "{{test_bgp_data11}}"
+
+#- name: Test BGP  - neighbor
+#  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}' bgpArg3='{{item.bgpArg3}}'
+#  with_items: "{{test_bgp_data13}}"
+
+- name: Test BGP - router-id
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}'
+  with_items: "{{test_bgp_data14}}"
+
+- name: Test BGP - synchronization
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}'
+  with_items: "{{test_bgp_data15}}"
+
+- name: Test BGP - timers
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}' bgpArg2='{{item.bgpArg2}}' bgpArg3='{{item.bgpArg3}}'
+  with_items: "{{test_bgp_data16}}"
+
+- name: Test BGP - vrf
+  cnos_bgp:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_bgp_{{ inventory_hostname }}_output.txt asNum='{{item.asNum}}' bgpArg1='{{item.bgpArg1}}'
+  with_items: "{{test_bgp_data17}}"
+# Completed file
