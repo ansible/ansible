@@ -130,10 +130,6 @@ if ($state -eq "present" ) {
         }
     } While ($ProcessCount -lt $process_min_count)
 
-    if ($attempts -gt 0)
-    {
-        $result.changed = $true
-    }
     if ($Processes -is [array]) {
         $result.matched_processes = $Processes
     } elseif ($null -ne $Processes) {
@@ -157,15 +153,11 @@ elseif ($state -eq "absent") {
     {
         try {
             Wait-Process -Id $($Processes | Select-Object -ExpandProperty ProcessId) -Timeout $timeout -ErrorAction Stop
-            $result.changed = $true
         }
         catch {
             $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             Fail-Json -obj $result -message "$($_.Exception.Message). timeout while waiting for $process_name to stop.  waited $timeout seconds"
         }
-    }
-    else{
-        $result.changed = $false
     }
 }
 Start-Sleep -Seconds $post_wait_delay
