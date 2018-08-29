@@ -1145,8 +1145,6 @@ files:
     notify: mattclay
   test/sanity/:
     notify: mattclay
-  test/utils/docker/:
-    notify: mattclay
   test/utils/shippable/:
     notify: mattclay
   test/integration/group_vars/:
