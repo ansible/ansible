@@ -71,7 +71,6 @@ Ansible releases a new major release of Ansible approximately every two months. 
    :caption: Ansible for Network Automation
 
    network/index
-   network/getting_started/index
 
 .. toctree::
    :maxdepth: 2
