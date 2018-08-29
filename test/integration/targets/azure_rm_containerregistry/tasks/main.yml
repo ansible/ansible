@@ -74,8 +74,8 @@
        - output.registries[0]['location'] != None
        - output.registries[0]['admin_user_enabled'] != None
        - output.registries[0]['sku'] != None
-       - output.registries[0]['status_message'] != None
-       - output.registries[0]['status_timestamp'] != None
+       - output.registries[0]['provisioning_state'] != None
+       - output.registries[0]['login_server'] != None
        - output.registries[0]['id'] != None
 
  - name: Gather facts for all Container Registries in the resource group
@@ -91,15 +91,15 @@
        - output.registries[0]['location'] != None
        - output.registries[0]['admin_user_enabled'] != None
        - output.registries[0]['sku'] != None
-       - output.registries[0]['status_message'] != None
-       - output.registries[0]['status_timestamp'] != None
+       - output.registries[0]['provisioning_state'] != None
+       - output.registries[0]['login_server'] != None
        - output.registries[0]['id'] != None
        - output.registries[1]['name'] != None
        - output.registries[1]['location'] != None
        - output.registries[1]['admin_user_enabled'] != None
        - output.registries[1]['sku'] != None
-       - output.registries[1]['status_message'] != None
-       - output.registries[1]['status_timestamp'] != None
+       - output.registries[1]['provisioning_state'] != None
+       - output.registries[1]['login_server'] != None
        - output.registries[1]['id'] != None
 
  - name: Delete first container registry

@@ -86,18 +86,18 @@ registries:
             returned: always
             type: str
             sample: Classic
-        status_message:
+        provisioning_state:
             description:
-                - The detailed status message of there registry, including alerts and error messages.
+                - Provisioning state of the container registry
             returned: always
             type: str
-            sample: The registry is ready.
-        status_timestamp:
+            sample: Succeeded
+        login_server:
             description:
-                - The timestamp when the status was changed to the current value.
+                - Login server for the registry.
             returned: always
             type: str
-            sample: 2017-03-01T23:15:37.0707808Z
+            sample: acrd08521b.azurecr.io
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -182,10 +182,9 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
             'location': d['location'],
             'admin_user_enabled': d['admin_user_enabled'],
             'sku': d['sku']['tier'].lower(),
-            'xxxx': d
-            #'status_message': d['status']['message'],
-            #'status_timestamp': d['status']['timestamp'],
-            #'id': d['id']
+            'provisioning_state': d['provisioning_state'],
+            'login_server': d['login_server'],
+            'id': d['id']
         }
         return d
 
