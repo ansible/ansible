@@ -478,12 +478,6 @@ class ModuleManager(object):
         self.update_on_device()
         return True
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
-
     def remove(self):
         if self.module.check_mode:
             return True
