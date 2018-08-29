@@ -135,21 +135,22 @@ def main():
     with settings.runtime_values(**tower_auth):
         tower_check_mode(module)
         credential_type_res = tower_cli.get_resource('credential_type')
+
+        params = {}
+        params['name'] = name
+        params['kind'] = kind
+        params['managed_by_tower'] = False
+
+        if module.params.get('description'):
+            params['description'] = module.params.get('description')
+
+        if module.params.get('inputs'):
+            params['inputs'] = module.params.get('inputs')
+
+        if module.params.get('injectors'):
+            params['injectors'] = module.params.get('injectors')
+
         try:
-            params = {}
-            params['name'] = name
-            params['kind'] = kind
-            params['managed_by_tower'] = False
-
-            if module.params.get('description'):
-                params['description'] = module.params.get('description')
-
-            if module.params.get('inputs'):
-                params['inputs'] = module.params.get('inputs')
-
-            if module.params.get('injectors'):
-                params['injectors'] = module.params.get('injectors')
-
             if state == 'present':
                 params['create_on_missing'] = True
                 result = credential_type_res.modify(**params)
