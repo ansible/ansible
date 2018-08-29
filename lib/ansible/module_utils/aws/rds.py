@@ -111,7 +111,13 @@ def call_method(client, module, method_name, parameters):
         # TODO: stabilize by adding get_rds_method_attribute(method_name).extra_retry_codes
         method = getattr(client, method_name)
         try:
-            result = AWSRetry.jittered_backoff()(method)(**parameters)
+            if method_name == 'modify_db_instance':
+                # check if instance is in an available state first, if possible
+                if wait:
+                    wait_for_status(client, module, module.params['db_instance_identifier'], method_name)
+                result = AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidDBInstanceState'])(method)(**parameters)
+            else:
+                result = AWSRetry.jittered_backoff()(method)(**parameters)
         except (BotoCoreError, ClientError) as e:
             changed = handle_errors(module, e, method_name, parameters)
 
@@ -129,7 +135,7 @@ def wait_for_instance_status(client, module, db_instance_id, waiter_name):
         except ValueError:
             # using a waiter in ansible.module_utils.aws.waiters
             waiter = get_waiter(client, waiter_name)
-        waiter.wait(WaiterConfig={'Delay': 60, 'MaxAttempts': 30})
+        waiter.wait(WaiterConfig={'Delay': 60, 'MaxAttempts': 60}, DBInstanceIdentifier=db_instance_id)
 
     waiter_expected_status = {
         'db_instance_deleted': 'deleted',
