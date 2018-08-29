@@ -250,7 +250,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         # nested includes, and we want the include order printed correctly
                         display.vv("statically imported: %s" % include_file)
                     except AnsibleFileNotFound:
-                        if t.static or \
+                        if action != 'include' or t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
                            C.DEFAULT_HANDLER_INCLUDES_STATIC and use_handlers:
                             raise

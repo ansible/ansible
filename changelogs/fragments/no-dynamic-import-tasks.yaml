@@ -1,0 +1,2 @@
+minor_changes:
+- import_tasks - Do not allow import_tasks to transition to dynamic if the file is missing (https://github.com/ansible/ansible/issues/44822)
