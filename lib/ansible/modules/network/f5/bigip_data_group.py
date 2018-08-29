@@ -265,7 +265,7 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import compare_dictionary
+    from library.module_utils.network.f5.common import compare_complex_list
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import is_valid_ip_network
@@ -283,7 +283,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import compare_dictionary
+    from ansible.module_utils.network.f5.common import compare_complex_list
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip_network
@@ -351,33 +351,24 @@ class RecordsEncoder(object):
             return self.encode_string_from_dict(record)
 
     def encode_address_from_dict(self, record):
-        if is_valid_ip_network(record['key']):
-            key = ip_network(u"{0}".format(str(record['key'])))
-        elif is_valid_ip(record['key']):
-            key = ip_address(u"{0}".format(str(record['key'])))
-        elif is_valid_ip_interface(record['key']):
+        if is_valid_ip_interface(record['key']):
             key = ip_interface(u"{0}".format(str(record['key'])))
         else:
             raise F5ModuleError(
                 "When specifying an 'address' type, the value to the left of the separator must be an IP."
             )
         if key and 'value' in record:
-            try:
-                # Only ip_address's have max_prefixlen
-                if key.max_prefixlen in [32, 128]:
-                    return self.encode_host(str(key), record['value'])
-            except ValueError:
-                return self.encode_network(
-                    str(key.network_address), key.prefixlen, record['value'])
+            if key.network.prefixlen in [32, 128]:
+                return self.encode_host(str(key.ip), record['value'])
+            return self.encode_network(
+                str(key.network.network_address), key.network.prefixlen, record['value']
+            )
         elif key:
-            try:
-                # Only ip_address's have max_prefixlen
-                if key.max_prefixlen in [32, 128]:
-                    return self.encode_host(str(key), str(key))
-            except ValueError:
-                return self.encode_network(
-                    str(key.network_address), key.prefixlen, str(key.network_address)
-                )
+            if key.network.prefixlen in [32, 128]:
+                return self.encode_host(str(key.ip), str(key.ip))
+            return self.encode_network(
+                str(key.network.network_address), key.network.prefixlen, str(key.network.network_address)
+            )
 
     def encode_integer_from_dict(self, record):
         try:
@@ -418,37 +409,27 @@ class RecordsEncoder(object):
         else:
             # 192.168.0.0/16 := "Network3",
             # 2402:9400:1000:0::/64 := "Network4",
-                parts = record.split(self._separator)
-                if is_valid_ip_network(parts[0]):
-                    key = ip_network(u"{0}".format(str(parts[0])))
-                elif is_valid_ip(parts[0]):
-                    key = ip_address(u"{0}".format(str(parts[0])))
-                elif is_valid_ip_interface(parts[0]):
-                    key = ip_interface(u"{0}".format(str(parts[0])))
-                elif parts[0] == '':
-                    pass
-                else:
-                    raise F5ModuleError(
-                        "When specifying an 'address' type, the value to the left of the separator must be an IP."
-                    )
+            parts = record.split(self._separator)
+            if parts[0] == '':
+                return
+            if not is_valid_ip_interface(parts[0]):
+                raise F5ModuleError(
+                    "When specifying an 'address' type, the value to the left of the separator must be an IP."
+                )
+            key = ip_interface(u"{0}".format(str(parts[0])))
 
-                if len(parts) == 2:
-                    try:
-                        # Only ip_address's have max_prefixlen
-                        if key.max_prefixlen in [32, 128]:
-                            return self.encode_host(str(key), parts[1])
-                    except ValueError:
-                        return self.encode_network(
-                            str(key.network_address), key.prefixlen, parts[1])
-                elif len(parts) == 1 and parts[0] != '':
-                    try:
-                        # Only ip_address's have max_prefixlen
-                        if key.max_prefixlen in [32, 128]:
-                            return self.encode_host(str(key), str(key))
-                    except ValueError:
-                        return self.encode_network(
-                            str(key.network_address), key.prefixlen, str(key.network_address)
-                        )
+            if len(parts) == 2:
+                if key.network.prefixlen in [32, 128]:
+                    return self.encode_host(str(key.ip), parts[1])
+                return self.encode_network(
+                    str(key.network.network_address), key.network.prefixlen, parts[1]
+                )
+            elif len(parts) == 1 and parts[0] != '':
+                if key.network.prefixlen in [32, 128]:
+                    return self.encode_host(str(key.ip), str(key.ip))
+                return self.encode_network(
+                    str(key.network.network_address), key.network.prefixlen, str(key.network.network_address)
+                )
 
     def encode_host(self, key, value):
         return 'host {0} {1} {2}'.format(str(key), self._separator, str(value))
@@ -706,7 +687,7 @@ class Difference(object):
             return None
         if self.have.records is None:
             return self.want.records
-        result = compare_dictionary(self.want.records, self.have.records)
+        result = compare_complex_list(self.want.records, self.have.records)
         return result
 
     @property
