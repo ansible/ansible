@@ -19,6 +19,7 @@ $result = @{changed=$false}
 $image_path = Get-AnsibleParam $parsed_args "image_path" -failifempty $result
 $state = Get-AnsibleParam $parsed_args "state" -default "present" -validateset "present","absent"
 $check_mode = Get-AnsibleParam $parsed_args "_ansible_check_mode" -default $false
+$vhd_part = Get-AnsibleParam $parsed_args "vhd_part" -default 0
 
 $di = Get-DiskImage $image_path
 
@@ -52,8 +53,7 @@ If($state -eq "present") {
       $drive_letter = ($di | Get-Volume).DriveLetter
     }
     ElseIf($di.StorageType -in @(2,3)) { # VHD/VHDX, need Get-Disk + Get-Partition to discover mountpoint
-      # FUTURE: support multi-partition VHDs
-      $drive_letter = ($di | Get-Disk | Get-Partition)[0].DriveLetter
+      $drive_letter = ($di | Get-Disk | Get-Partition)[$vhd_part].DriveLetter
     }
 
 

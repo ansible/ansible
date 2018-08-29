@@ -26,6 +26,11 @@ options:
       - Whether the image should be present as a drive-letter mount or not.
     choices: [ absent, present ]
     default: present
+  vhd_part:
+    description:
+      - The VHD/VHDX partition number that will be mounted.
+    default: 0
+    version_added: 2.7
 author:
     - Matt Davis (@nitzmahone)
 '''
@@ -56,4 +61,12 @@ EXAMPLES = r'''
   win_disk_image:
     image_path: C:\install.iso
     state: absent
+
+# Mount a specific VHDX Partition and record the drive letter for future use.
+- name: Mount VHDX partition 3
+  win_disk_image:
+    image_path: C:\multi-part.vhdx
+    state: present
+    vhd_part: 3
+  register: disk_image_out
 '''
