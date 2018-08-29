@@ -202,5 +202,7 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
 
 def main():
     AzureRMContainerGroupsFacts()
+
+
 if __name__ == '__main__':
     main()
