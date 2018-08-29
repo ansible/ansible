@@ -1,0 +1,95 @@
+- name: Ensure Spooler is started
+  win_service:
+    name: Spooler
+    state: started
+
+- name: Wait for non-existing process to not exist
+  win_wait_for_process:
+    process_name_exact:
+    - ansible_foobar
+    state: absent
+  register: absent_nonexisting_process
+
+- assert:
+    that:
+    - absent_nonexisting_process is success
+    - absent_nonexisting_process is not changed
+    - absent_nonexisting_process.elapsed < 3  # May not be sufficient, we will see
+    - absent_nonexisting_process.matched_processes|length == 0
+
+- name: Wait for existing process to exist
+  win_wait_for_process:
+    process_name_exact:
+    - svchost.exe
+    owner: SYSTEM
+    state: present
+  register: present_existing_process
+
+- assert:
+    that:
+    - present_existing_process is success
+    - present_existing_process is changed
+    - present_existing_process.elapsed < 10  # May not be sufficient, we will see
+    - present_existing_process.matched_processes|length > 10
+
+- name: Wait for Spooler service to stop
+  win_wait_for_process:
+    process_name_exact:
+    - spoolsv.exe
+    owner: SYSTEM
+    state: absent
+  async: 30
+  poll: 0
+  register: spoolsv_process
+
+- name: Stop the Spooler service
+  win_service:
+    name: Spooler
+    state: stopped
+
+- name: Check on async task
+  async_status:
+    jid: '{{ spoolsv_process.ansible_job_id }}'
+  until: absent_spoolsv_process is finished
+  retries: 30
+  register: absent_spoolsv_process
+
+- assert:
+    that:
+    - absent_spoolsv_process is success
+    - absent_spoolsv_process is changed
+    - absent_spoolsv_process is finished
+    - absent_spoolsv_process.elapsed > 2  # May not be sufficient, we will see
+    - absent_spoolsv_process.elapsed < 30
+    - absent_spoolsv_process.matched_processes|length == 1
+
+- name: Wait for Spooler service to start
+  win_wait_for_process:
+    process_name_exact:
+    - spoolsv.exe
+    owner: SYSTEM
+    state: present
+  async: 30
+  poll: 0
+  register: spoolsv_process
+
+- name: Start the spooler service
+  win_service:
+    name: Spooler
+    state: started
+
+- name: Check on async task
+  async_status:
+    jid: '{{ spoolsv_process.ansible_job_id }}'
+  until: present_spoolsv_process is finished
+  retries: 30
+  register: present_spoolsv_process
+
+- assert:
+    that:
+    - present_spoolsv_process is success
+    - present_spoolsv_process is changed
+    - present_spoolsv_process is finished
+    - present_spoolsv_process.elapsed > 2  # May not be sufficient, we will see
+    - present_spoolsv_process.elapsed < 30
+    - present_spoolsv_process.matched_processes|length == 1
