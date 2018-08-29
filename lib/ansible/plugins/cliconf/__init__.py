@@ -95,7 +95,7 @@ class CliconfBase(AnsiblePlugin):
         display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
         self.close()
 
-    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
+    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False, check_all=False):
         """Executes a command over the device connection
 
         This method will execute a command over the device connection and
@@ -108,14 +108,16 @@ class CliconfBase(AnsiblePlugin):
         :param sendonly: Bool value that will send the command but not wait for a result.
         :param newline: Bool value that will append the newline character to the command
         :param prompt_retry_check: Bool value for trying to detect more prompts
-
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
         :returns: The output from the device after executing the command
         """
         kwargs = {
             'command': to_bytes(command),
             'sendonly': sendonly,
             'newline': newline,
-            'prompt_retry_check': prompt_retry_check
+            'prompt_retry_check': prompt_retry_check,
+            'check_all': check_all
         }
 
         if prompt is not None:

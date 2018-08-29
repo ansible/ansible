@@ -337,7 +337,7 @@ class Connection(NetworkConnectionBase):
                 display.debug("ssh connection has been closed successfully")
         super(Connection, self).close()
 
-    def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
+    def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
         '''
         Handles receiving of output from command
         '''
@@ -363,13 +363,13 @@ class Connection(NetworkConnectionBase):
             window_count += 1
 
             if prompts and not handled:
-                handled = self._handle_prompt(window, prompts, answer, newline)
+                handled = self._handle_prompt(window, prompts, answer, newline, check_all)
                 matched_prompt_window = window_count
             elif prompts and handled and prompt_retry_check and matched_prompt_window + 1 == window_count:
                 # check again even when handled, if same prompt repeats in next window
                 # (like in the case of a wrong enable password, etc) indicates
                 # value of answer is wrong, report this as error.
-                if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check):
+                if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all):
                     raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
             if self._find_prompt(window):
@@ -377,7 +377,7 @@ class Connection(NetworkConnectionBase):
                 resp = self._strip(self._last_response)
                 return self._sanitize(resp, command)
 
-    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False):
+    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False, check_all=False):
         '''
         Sends the command to the device in the opened shell
         '''
@@ -386,7 +386,7 @@ class Connection(NetworkConnectionBase):
             self._ssh_shell.sendall(b'%s\r' % command)
             if sendonly:
                 return
-            response = self.receive(command, prompt, answer, newline, prompt_retry_check)
+            response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
@@ -400,7 +400,7 @@ class Connection(NetworkConnectionBase):
             data = regex.sub(b'', data)
         return data
 
-    def _handle_prompt(self, resp, prompts, answer, newline, prompt_retry_check=False):
+    def _handle_prompt(self, resp, prompts, answer, newline, prompt_retry_check=False, check_all=False):
         '''
         Matches the command prompt and responds
 
@@ -408,7 +408,11 @@ class Connection(NetworkConnectionBase):
         :arg prompts: Sequence of byte strings that we consider prompts for input
         :arg answer: Sequence of Byte string to send back to the remote if we find a prompt.
                 A carriage return is automatically appended to this string.
-        :returns: True if a prompt was found in ``resp``.  False otherwise
+        :param prompt_retry_check: Bool value for trying to detect more prompts
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
+        :returns: True if a prompt was found in ``resp``. If check_all is True
+                  will True only after all the prompt in the prompts list are matched. False otherwise.
         '''
         if not isinstance(prompts, list):
             prompts = [prompts]
@@ -426,6 +430,10 @@ class Connection(NetworkConnectionBase):
                     if newline:
                         self._ssh_shell.sendall(b'\r')
                 self._matched_cmd_prompt = match.group()
+                if check_all and prompts:
+                    prompts.pop()
+                    answer.pop()
+                    return False
                 return True
         return False
 
