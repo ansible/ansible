@@ -132,47 +132,46 @@ def main():
     with settings.runtime_values(**tower_auth):
         tower_check_mode(module)
         wfjt_res = tower_cli.get_resource('workflow')
+        params = {}
+        params['name'] = name
+
+        if module.params.get('description'):
+            params['description'] = module.params.get('description')
+
+        if module.params.get('organization'):
+            organization_res = tower_cli.get_resource('organization')
+            try:
+                organization = organization_res.get(
+                    name=module.params.get('organization'))
+                params['organization'] = organization['id']
+            except exc.NotFound as excinfo:
+                module.fail_json(
+                    msg='Failed to update organization source,'
+                    'organization not found: {0}'.format(excinfo),
+                    changed=False
+                )
+
+        if module.params.get('survey'):
+            params['survey_spec'] = module.params.get('survey')
+
+        for key in ('allow_simultaneous', 'extra_vars', 'survey_enabled',
+                    'description'):
+            if module.params.get(key):
+                params[key] = module.params.get(key)
+
         try:
-            params = {}
-            params['name'] = name
-
-            if module.params.get('description'):
-                params['description'] = module.params.get('description')
-
-            if module.params.get('organization'):
-                organization_res = tower_cli.get_resource('organization')
-                try:
-                    organization = organization_res.get(
-                        name=module.params.get('organization'))
-                    params['organization'] = organization['id']
-                except exc.NotFound as excinfo:
-                    module.fail_json(
-                        msg='Failed to update organization source,'
-                        'organization not found: {0}'.format(excinfo),
-                        changed=False
-                    )
-
-            if module.params.get('survey'):
-                params['survey_spec'] = module.params.get('survey')
-
-            for key in ('allow_simultaneous', 'extra_vars', 'survey_enabled',
-                        'description'):
-                if module.params.get(key):
-                    params[key] = module.params.get(key)
-
             if state == 'present':
                 params['create_on_missing'] = True
                 result = wfjt_res.modify(**params)
                 json_output['id'] = result['id']
+                if module.params.get('schema'):
+                    wfjt_res.schema(
+                        result['id'],
+                        module.params.get('schema')
+                    )
             elif state == 'absent':
                 params['fail_on_missing'] = False
                 result = wfjt_res.delete(**params)
-
-            if module.params.get('schema') and state == 'present':
-                wfjt_res.schema(
-                    result['id'],
-                    module.params.get('schema')
-                )
 
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update workflow template: \
