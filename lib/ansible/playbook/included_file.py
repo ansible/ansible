@@ -61,7 +61,7 @@ class IncludedFile:
             original_host = res._host
             original_task = res._task
 
-            if original_task.action in ('include', 'include_tasks', 'include_role'):
+            if original_task.action in ('include', 'include_tasks', 'include_role', 'import_tasks'):
                 if original_task.loop:
                     if 'results' not in res._result:
                         continue
@@ -92,7 +92,7 @@ class IncludedFile:
                     if index_var and index_var in include_result:
                         task_vars[index_var] = include_variables[index_var] = include_result[index_var]
 
-                    if original_task.action in ('include', 'include_tasks'):
+                    if original_task.action in ('include', 'include_tasks', 'import_tasks'):
                         include_file = None
                         if original_task:
                             if original_task.static:
