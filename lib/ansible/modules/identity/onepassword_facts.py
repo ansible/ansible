@@ -24,12 +24,12 @@ version_added: "2.7"
 requirements:
     - C(op) 1Password command line utility (v0.5.1). See U(https://support.1password.com/command-line/)
 notes:
-    - "Based on the `onepassword` lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
+    - "Based on the C(onepassword) lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
 short_description: Fetch facts from 1Password items
 description:
     - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1password items and return as Ansible facts.
     - A fatal error occurs if any of the items being searched for can not be found.
-    - Recommend using with the I(no_log) option to avoid logging the values of the secrets being retrieved.
+    - Recommend using with the C(no_log) option to avoid logging the values of the secrets being retrieved.
 options:
     search_terms:
         description:
