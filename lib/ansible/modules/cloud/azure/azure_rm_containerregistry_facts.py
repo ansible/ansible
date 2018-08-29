@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerregistry_facts
 version_added: "2.7"
-short_description: Get Registry facts.
+short_description: Get Azure Container Registry facts.
 description:
     - Get facts of Registry.
 
@@ -88,7 +88,7 @@ registries:
                 - The SKU name of the container registry.
             returned: always
             type: str
-            sample: Classic
+            sample: classic
         provisioning_state:
             description:
                 - Provisioning state of the container registry
@@ -101,6 +101,24 @@ registries:
             returned: always
             type: str
             sample: acrd08521b.azurecr.io
+        username:
+            description:
+                - The user name for container registry.
+            returned: always
+            type: str
+            sample: zim
+        password:
+            description:
+                - Password 1 for container registry.
+            returned: always
+            type: str
+            sample: Password1!!
+        password2:
+            description:
+                - Password 2 for container registry.
+            returned: always
+            type: str
+            sample: Password2!!
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -115,7 +133,7 @@ except ImportError:
     pass
 
 
-class AzureRMRegistriesFacts(AzureRMModuleBase):
+class AzureRMRegistryFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -136,7 +154,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        super(AzureRMRegistriesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMRegistryFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -147,7 +165,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         elif self.resource_group:
             self.results['registries'] = self.list_by_resource_group()
         else:
-            self.results['registries'] = self.list()
+            self.results['registries'] = self.list_all()
 
         return self.results
 
@@ -167,7 +185,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
 
         return results
 
-    def list(self):
+    def list_all(self):
         response = None
         results = []
         try:
@@ -199,8 +217,17 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
 
     def format_item(self, item):
         d = item.as_dict()
+        resource_group = d['id'].split('resourceGroups/')[1].split('/')[0]
+        name = d['name']
+
+        try:
+            credentials = self.containerregistry_client.registries.list_credentials(resource_group_name=resource_group,
+                                                                                    registry_name=name)
+        except CloudError as e:
+            self.log('Could not list credentials.')
+
         d = {
-            'resource_group': self.resource_group,
+            'resource_group': resource_group,
             'name': d['name'],
             'location': d['location'],
             'admin_user_enabled': d['admin_user_enabled'],
@@ -208,13 +235,16 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
             'provisioning_state': d['provisioning_state'],
             'login_server': d['login_server'],
             'id': d['id'],
-            'tags': d.get('tags', None)
+            'tags': d.get('tags', None),
+            'username': credentials['username'],
+            'password': credentials['passwords']['password'],
+            'password2': credentials['passwords']['password2']
         }
         return d
 
 
 def main():
-    AzureRMRegistriesFacts()
+    AzureRMRegistryFacts()
 
 
 if __name__ == '__main__':
