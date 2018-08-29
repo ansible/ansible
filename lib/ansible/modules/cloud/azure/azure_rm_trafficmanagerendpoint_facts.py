@@ -168,7 +168,7 @@ def serialize_endpoint(endpoint, resource_group):
 
     if endpoint.endpoint_status and endpoint.endpoint_status == 'Disabled':
         result['enabled'] = False
-    
+
     if endpoint.type:
         result['type'] = _camel_to_snake(endpoint.type.split("/")[-1])
 
