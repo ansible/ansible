@@ -239,11 +239,11 @@ def extract_statement(policy, sid):
             try:
                 policy_statement['principal'] = statement['Principal']['Service']
             except KeyError:
-               pass
+                pass
             try:
                 policy_statement['principal'] = statement['Principal']['AWS']
             except KeyError:
-               pass
+                pass
             try:
                 policy_statement['source_arn'] = statement['Condition']['ArnLike']['AWS:SourceArn']
             except KeyError:
