@@ -39,14 +39,37 @@ The only requirement for using an inventory plugin after it is enabled is to pro
 Ansible will try to use the list of enabled inventory plugins, in order, against each inventory source provided.
 Once an inventory plugin succeeds at parsing a source, any remaining inventory plugins will be skipped for that source.
 
-To start using an inventory plugin with a YAML configuration source, first create a file with the accepted filename schema for the plugin in question (each plugin should document any naming restrictions). For example, the aws_ec2 inventory plugin takes a file in the format ``<name>.aws_ec2.<yml/yaml>`` and the openstack inventory plugin parses ``<clouds/openstack>.<yml/yaml>``. After creating the file add ``plugin: plugin_name`` (where plugin_name might be aws_ec2) to the first line.
+To start using an inventory plugin with a YAML configuration source, create a file with the accepted filename schema for the plugin in question, then add ``plugin: plugin_name``. Each plugin documents any naming restrictions. For example, the aws_ec2 inventory plugin:
 
-The 'auto' inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it (which is aws_ec2 here). The whitelist is also configurable. After the plugin is enabled and any required options or credentials have been provided, the output of ``ansible-inventory -i demo.aws_ec2.yml --graph`` should be populated. To make a YAML configuration file accessible by default without specifying ``-i`` you can set the default inventory path (via ``inventory`` in the `ansible.cfg` [defaults] section or the :envvar:`ANSIBLE_HOSTS` environment variable) to your inventory source(s). Now running ``ansible-inventory --graph`` should yield the same output as when you passed your YAML configuration source(s) directly. Custom inventory plugins and the documentation required to parse sources may also be added in your plugin path to be used in the same way.
+.. code-block:: yaml
 
-The inventory source you provide may be a directory of inventory configuration files. The constructed inventory plugin only operates on those hosts already in inventory, so you may want the constructed inventory configuration parsed at a particular point (such as last). The directory is parsed recursively alphabetically and is not configurable so things should be named accordingly for it to work predictably with constructed in this way. If an inventory plugin you are using supports constructed itself you can work around this by adding your constructed groups to those inventory plugin configuration files (as now it will not use constructed until it has added your hosts from that source). You can use ``-i`` with multiple sources to impose a specific order, e.g. ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``. You may also want to reorder the precedence of which plugin attempts to parse a source first using the using the `ansible.cfg` ['inventory'] ``enable_plugins`` list.
+    # demo.aws_ec2.yml
+    plugin: aws_ec2
 
-Many inventory plugins extend features of the constructed inventory plugin that can be used to create custom groups and hostvars from the hosts that have already been added to inventory. The constructed ``keyed_groups`` option may be used to generate dynamic groups for certain host variables. The options ``groups`` and ``compose`` may also be used to create groups from the host variables and create/modify host variables. An example utilizing constructed features::
+Or for the openstack plugin:
 
+.. code-block:: yaml
+
+    # clouds.yml
+    plugin: openstack
+
+The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``::
+
+    @all:
+      |--@aws_ec2:
+      |  |--ec2-12-345-678-901.compute-1.amazonaws.com
+      |  |--ec2-98-765-432-10.compute-1.amazonaws.com
+      |--@ungrouped:
+
+You can set the default inventory path (via ``inventory`` in the `ansible.cfg` [defaults] section or the :envvar:`ANSIBLE_HOSTS` environment variable) to your inventory source(s). Now running ``ansible-inventory --graph`` should yield the same output as when you passed your YAML configuration source(s) directly. You can add custom inventory plugins to your plugin path to use in the same way.
+
+Your inventory source might be a directory of inventory configuration files. The constructed inventory plugin only operates on those hosts already in inventory, so you may want the constructed inventory configuration parsed at a particular point (such as last). Ansible parses the directory recursively, alphabetically. You cannot configure the parsing approach, so name your files to make it work predictably. Inventory plugins that extend constructed features directly can work around that restriction by adding constructed options in addition to the inventory plugin options. Otherwise, you can use ``-i`` with multiple sources to impose a specific order, e.g. ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``.
+
+You can create dynamic groups using host variables with the constructed ``keyed_groups`` option. The option ``groups`` can also be used to create groups and ``compose`` creates and modifies host variables. Here is an aws_ec2 example utilizing constructed features:
+
+.. code-block:: yaml
+
+    # demo.aws_ec2.yml
     plugin: aws_ec2
     regions:
       - us-east-1
@@ -54,7 +77,7 @@ Many inventory plugins extend features of the constructed inventory plugin that 
     keyed_groups:
       # add hosts to tag_Name_value groups for each aws_ec2 host's tags.Name variable
       - key: tags.Name
-        prefix: tag_Name
+        prefix: tag_Name_
         separator: ""
     groups:
       # add hosts to the group development if any of the dictionary's keys or values is the word 'devel'
@@ -62,6 +85,22 @@ Many inventory plugins extend features of the constructed inventory plugin that 
     compose:
       # set the ansible_host variable to connect with the private IP address without changing the hostname
       ansible_host: private_ip_address
+
+Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``::
+
+    @all:
+      |--@aws_ec2:
+      |  |--ec2-12-345-678-901.compute-1.amazonaws.com
+      |  |--ec2-98-765-432-10.compute-1.amazonaws.com
+      |  |--...
+      |--@development:
+      |  |--ec2-12-345-678-901.compute-1.amazonaws.com
+      |  |--ec2-98-765-432-10.compute-1.amazonaws.com
+      |--@tag_Name_ECS_Instance:
+      |  |--ec2-98-765-432-10.compute-1.amazonaws.com
+      |--@tag_Name_Test_Server:
+      |  |--ec2-12-345-678-901.compute-1.amazonaws.com
+      |--@ungrouped
 
 If a host does not have the variables in the configuration above (i.e. ``tags.Name``, ``tags``, ``private_ip_address``), the host will not be added to groups other than those that the inventory plugin creates and the ``ansible_host`` host variable will not be modified.
 
