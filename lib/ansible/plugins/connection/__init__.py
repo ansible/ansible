@@ -319,8 +319,7 @@ class NetworkConnectionBase(ConnectionBase):
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
     def _connect(self):
-        for plugin in self._implementation_plugins:
-            plugin.set_options(*self._cached_variables)
+        self.set_implementation_plugin_options(*self._cached_variables)
         self._cached_variables = (None, None, None)
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
@@ -350,7 +349,18 @@ class NetworkConnectionBase(ConnectionBase):
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-        self._cached_variables = (task_keys, var_options, direct)
+
+        if self._implementation_plugins:
+            self.set_implementation_plugin_options(task_keys, var_options, direct)
+        else:
+            self._cached_variables = (task_keys, var_options, direct)
+
+    def set_implementation_plugin_options(self, task_keys=None, var_options=None, direct=None):
+        '''
+        initialize implementation plugin options
+        '''
+        for plugin in self._implementation_plugins:
+            plugin.set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
     def _update_connection_state(self):
         '''
