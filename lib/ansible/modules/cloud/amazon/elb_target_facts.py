@@ -220,7 +220,7 @@ from ansible.module_utils.ec2 import (HAS_BOTO3, camel_dict_to_snake_dict,
                                       AWSRetry)
 
 
-class Target:
+class Target(object):
     """Models a target in a target group"""
     def __init__(self, target_id, port, az, raw_target_health):
         self.target_port = port
@@ -232,7 +232,7 @@ class Target:
         return camel_dict_to_snake_dict(raw_target_health)
 
 
-class TargetGroup:
+class TargetGroup(object):
     """Models an elbv2 target group"""
 
     def __init__(self, **kwargs):
@@ -256,7 +256,7 @@ class TargetGroup:
         return list(self.targets)
 
 
-class TargetFactsGatherer:
+class TargetFactsGatherer(object):
 
     def __init__(self, module, instance_id, get_unused_target_groups):
         self.module = module
