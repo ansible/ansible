@@ -1752,6 +1752,11 @@ class ContainerManager(DockerBaseClass):
 
         super(ContainerManager, self).__init__()
 
+        if client.module.params.get('log_options') and not client.module.params.get('log_driver'):
+            client.module.warn('log_options is ignored when log_driver is not specified')
+        if client.module.params.get('restart_retries') and not client.module.params.get('restart_policy'):
+            client.module.warn('restart_retries is ignored when restart_policy is not specified')
+
         self.client = client
         self.parameters = TaskParameters(client)
         self.check_mode = self.client.check_mode
