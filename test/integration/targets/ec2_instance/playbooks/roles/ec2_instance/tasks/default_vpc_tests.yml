@@ -14,6 +14,10 @@
       TestId: "{{ resource_prefix }}"
     security_groups: "{{ sg.group_id }}"
     instance_type: t2.micro
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
     <<: *aws_connection_info
   register: in_default_vpc
 - name: Terminate instance
