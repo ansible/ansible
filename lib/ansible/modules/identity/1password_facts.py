@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-module: 1password_facts
+module: onepassword_facts
 author:
     - Ryan Conway (@rylon)
 version_added: "2.7"
@@ -28,7 +28,7 @@ notes:
     - "Based on the `onepassword` lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
 short_description: Fetch facts from 1Password items
 description:
-    - M(1password_facts) wraps the C(op) command line utility to fetch data about one or more 1password items and return as Ansible facts.
+    - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1password items and return as Ansible facts.
     - A fatal error occurs if any of the items being searched for can not be found.
     - Recommend using with the I(no_log) option to avoid logging the values of the secrets being retrieved.
 options:
@@ -54,7 +54,7 @@ options:
         required: True
     auto_login:
         description:
-            - A dictionary containing authentication details. If this is set, M(1password_facts) will attempt to login to 1password automatically.
+            - A dictionary containing authentication details. If this is set, M(onepassword_facts) will attempt to login to 1password automatically.
             - The required values can be stored in Ansible Vault, and passed to the module securely that way.
             - Without this option, you must have already logged in via the 1Password CLI before running Ansible.
         suboptions:
@@ -81,14 +81,14 @@ options:
 EXAMPLES = '''
 # Gather secrets from 1Password, assuming there is a 'password' field:
 - name: Get a password
-  1password_facts:
+  onepassword_facts:
     search_terms: My 1Password item
   delegate_to: local
   no_log:      true   # Don't want to log the secrets to the console!
 
 # Gather secrets from 1Password, with more advanced search terms:
 - name: Get a password
-  1password_facts:
+  onepassword_facts:
     search_terms:
       - name:    My 1Password item
         field:   Custom field name       # optional, defaults to 'password'
@@ -101,7 +101,7 @@ EXAMPLES = '''
 # fields. In the first 'password' is fetched, as a field name is not specified (default behaviour) and in the
 # second, 'Custom field name' is fetched, as that is specified explicitly.
 - name: Get a password
-  1password_facts:
+  onepassword_facts:
     search_terms:
       - My 1Password item                # 'name' is optional when passing a simple string...
       - name: My Other 1Password item    # ...but it can also be set for consistency
@@ -118,7 +118,7 @@ RETURN = '''
 ---
 # One or more dictionaries for each matching item from 1Password, along with the appropriate fields.
 # This shows the response you would expect to receive from the third example documented above.
-1password:
+onepassword:
     description: Dictionary of each 1password item matching the given search terms, shows what would be returned from the third example above.
     returned: success
     type: dict
@@ -304,7 +304,7 @@ def main():
         supports_check_mode=True
     )
 
-    ansible_facts = {'1password': OnePasswordFacts().run()}
+    ansible_facts = {'onepassword': OnePasswordFacts().run()}
     module_return = dict(changed=False, ansible_facts=ansible_facts)
     module.exit_json(**module_return)
 
