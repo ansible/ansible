@@ -181,8 +181,8 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
             'name': self.name,
             'location': d['location'],
             'admin_user_enabled': d['admin_user_enabled'],
-            'sku': d['sku']['tier'].lower()
-            'xxxx': d,
+            'sku': d['sku']['tier'].lower(),
+            'xxxx': d
             #'status_message': d['status']['message'],
             #'status_timestamp': d['status']['timestamp'],
             #'id': d['id']
