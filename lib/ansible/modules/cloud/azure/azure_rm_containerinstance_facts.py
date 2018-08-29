@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerinstance_facts
 version_added: "2.7"
-short_description: Get Container Group facts.
+short_description: Get Container Instance facts.
 description:
     - Get facts of Container Group.
 
@@ -39,12 +39,12 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of Container Group
+  - name: Get specific Container Instance facts
     azure_rm_containerinstance_facts:
       resource_group: resource_group_name
       name: container_group_name
 
-  - name: List instances of Container Group
+  - name: List Container Instances in a specified resource group name
     azure_rm_containerinstance_facts:
       resource_group: resource_group_name
 '''
