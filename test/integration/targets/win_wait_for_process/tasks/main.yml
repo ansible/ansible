@@ -1,3 +1,8 @@
+---
+- name: Get powershell version
+  win_shell: $PSVersionTable.PSVersion.Major
+  register: powershell_version
+
 - name: Ensure Spooler service is started
   win_service:
     name: Spooler
@@ -32,13 +37,12 @@
     - present_nonexisting_process is failed
     - present_nonexisting_process is not changed
     - present_nonexisting_process.elapsed > 30
-    - "present_nonexisting_process.msg == 'Timed out while waiting for process(es) to start'"
+    - present_nonexisting_process.msg == 'Timed out while waiting for process(es) to start'
     - present_nonexisting_process.matched_processes|length == 0
 
 - name: Wait for existing process to exist
   win_wait_for_process:
     process_name_exact: svchost
-    owner: SYSTEM
     timeout: 30
     state: present
   register: present_existing_process
@@ -55,7 +59,6 @@
   win_wait_for_process:
     process_name_exact:
     - svchost
-    owner: SYSTEM
     timeout: 30
     state: absent
   ignore_errors: yes
@@ -67,13 +70,39 @@
     - absent_existing_process is not changed
     - absent_existing_process.elapsed > 30
     - absent_existing_process.matched_processes|length > 1
-    - "absent_existing_process.msg == 'Timeout while waiting for process(es) to stop'"
+    - absent_existing_process.msg == 'Timeout while waiting for process(es) to stop'
+
+- name: Wait for existing process to exist (using owner)
+  win_wait_for_process:
+    process_name_exact: svchost
+    owner: SYSTEM
+    timeout: 30
+    state: present
+  ignore_errors: yes
+  register: present_existing_owner_process
+
+- assert:
+    that:
+    - present_existing_owner_process is success
+    - present_existing_owner_process is not changed
+    - present_existing_owner_process.elapsed > 0
+    - present_existing_owner_process.elapsed < 30
+    - present_existing_owner_process.matched_processes|length > 1
+  when: powershell_version.stdout_lines[0]|int >= 4
+
+- assert:
+    that:
+    - present_existing_owner_process is failed
+    - present_existing_owner_process is not changed
+    - present_existing_owner_process.elapsed == 0
+    - present_existing_owner_process.matched_processes|length == 0
+    - present_existing_owner_process.msg ==  "This version of Powershell does not support filtering processes by 'owner'."
+  when: powershell_version.stdout_lines[0]|int < 4
 
 - name: Wait for Spooler service to stop
   win_wait_for_process:
     process_name_exact:
     - spoolsv
-    owner: SYSTEM
     timeout: 60
     state: absent
   async: 30
@@ -105,7 +134,6 @@
 - name: Wait for Spooler service to start
   win_wait_for_process:
     process_name_exact: spoolsv
-    owner: SYSTEM
     timeout: 60
     state: present
   async: 60
