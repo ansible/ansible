@@ -118,7 +118,10 @@ def main():
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
-    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = TowerModule(
+        argument_spec=argument_spec,
+        supports_check_mode=False
+    )
 
     name = module.params.get('name')
     state = module.params.get('state')

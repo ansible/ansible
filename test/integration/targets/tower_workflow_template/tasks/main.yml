@@ -68,3 +68,13 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Delete a workflow job template
+  tower_workflow_template:
+    name: my-workflow
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
