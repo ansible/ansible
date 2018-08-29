@@ -106,9 +106,12 @@ If ($extra_opts) {
 }
 
 $arguments += "-accepteula"
-$arguments += $command
 
 $argument_string = Argv-ToString -arguments $arguments
+
+# add the command at the end of the argument string, we don't want to escape
+# that as psexec doesn't expect it to be one arg
+$argument_string += " $command"
 
 $start_datetime = [DateTime]::UtcNow
 $result.psexec_command = "$executable $argument_string"
