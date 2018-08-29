@@ -29,6 +29,9 @@ options:
     name:
         description:
             - The name of the container registry.
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -122,6 +125,9 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
             ),
             name=dict(
                 type='str'
+            ),
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
@@ -137,16 +143,18 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        if (self.resource_group is not None and
-                self.name is not None):
+        if self.name:
             self.results['registries'] = self.get()
-        elif (self.resource_group is not None):
+        elif self.resource_group:
             self.results['registries'] = self.list_by_resource_group()
+        else:
+            self.results['registries'] = self.list()
+
         return self.results
 
     def get(self):
         response = None
-        results = {}
+        results = []
         try:
             response = self.containerregistry_client.registries.get(resource_group_name=self.resource_group,
                                                                     registry_name=self.name)
@@ -155,13 +163,29 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
             self.log('Could not get facts for Registries.')
 
         if response is not None:
-            results[response.name] = self.format_item(response)
+            if self.has_tags(response.tags, self.tags):
+                results.append(self.format_item(response))
 
+        return results
+
+    def list(self):
+        response = None
+        results = []
+        try:
+            response = self.containerregistry_client.registries.list()
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Registries.')
+
+        if response is not None:
+            for item in response:
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_item(item))
         return results
 
     def list_by_resource_group(self):
         response = None
-        results = {}
+        results = []
         try:
             response = self.containerregistry_client.registries.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
@@ -170,8 +194,8 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = self.format_item(item)
-
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_item(item))
         return results
 
     def format_item(self, item):
@@ -184,7 +208,8 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
             'sku': d['sku']['tier'].lower(),
             'provisioning_state': d['provisioning_state'],
             'login_server': d['login_server'],
-            'id': d['id']
+            'id': d['id'],
+            'tags': d.get('tags', None)
         }
         return d
 
