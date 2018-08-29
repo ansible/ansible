@@ -16,7 +16,8 @@ You can find installation instructions
 `here <https://docs.ansible.com/intro_getting_started.html>`_ for a
 variety of platforms.
 
-Most users should probably install a released version of Ansible from ``pip``, a package manager or
+Most users should probably install a released version of Ansible
+from ``pip``, a package manager or
 our `release repository <https://releases.ansible.com/ansible/>`_. `Officially supported
 <https://www.ansible.com/ansible-engine>`_ builds of Ansible are also available. Some power users
 run directly from the development branch - while significant efforts are made to ensure that
