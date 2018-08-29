@@ -26,7 +26,7 @@ options:
         description:
             - The name of the resource group to which the container registry belongs.
         required: True
-    registry_name:
+    name:
         description:
             - The name of the container registry.
 
@@ -41,88 +41,63 @@ author:
 EXAMPLES = '''
   - name: Get instance of Registry
     azure_rm_containerregistry_facts:
-      resource_group: resource_group_name
-      registry_name: registry_name
+      resource_group: sampleresourcegroup
+      name: sampleregistry
 
   - name: List instances of Registry
     azure_rm_containerregistry_facts:
-      resource_group: resource_group_name
+      resource_group: sampleresourcegroup
 '''
 
 RETURN = '''
 registries:
-    description: A list of dict results where the key is the name of the Registry and the values are the facts for that Registry.
+    description: A list of dictionaries containing facts for registries.
     returned: always
     type: complex
     contains:
-        registry_name:
-            description: The key is the name of the server that the values relate to.
-            type: complex
-            contains:
-                id:
-                    description:
-                        - The resource ID.
-                    returned: always
-                    type: str
-                    sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registr
-                            ies/myRegistry"
-                name:
-                    description:
-                        - The name of the resource.
-                    returned: always
-                    type: str
-                    sample: myRegistry
-                type:
-                    description:
-                        - The type of the resource.
-                    returned: always
-                    type: str
-                    sample: Microsoft.ContainerRegistry/registries
-                location:
-                    description:
-                        - The location of the resource. This cannot be changed after the resource is created.
-                    returned: always
-                    type: str
-                    sample: westus
-                sku:
-                    description:
-                        - The SKU of the container registry.
-                    returned: always
-                    type: complex
-                    sample: sku
-                    contains:
-                        name:
-                            description:
-                                - "The SKU name of the container registry. Required for registry creation. Possible values include: 'Classic', 'Basic', 'Stan
-                                  dard', 'Premium'"
-                            returned: always
-                            type: str
-                            sample: Standard
-                        tier:
-                            description:
-                                - "The SKU tier based on the SKU name. Possible values include: 'Classic', 'Basic', 'Standard', 'Premium'"
-                            returned: always
-                            type: str
-                            sample: Standard
-                status:
-                    description:
-                        - The status of the container registry at the time the operation was called.
-                    returned:
-                    type: complex
-                    sample: status
-                    contains:
-                        message:
-                            description:
-                                - The detailed message for the status, including alerts and error messages.
-                            returned: always
-                            type: str
-                            sample: The registry is ready.
-                        timestamp:
-                            description:
-                                - The timestamp when the status was changed to the current value.
-                            returned: always
-                            type: datetime
-                            sample: "2017-03-01T23:15:37.0707808Z"
+        id:
+            description:
+                - The resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registr
+                    ies/myRegistry"
+        name:
+            description:
+                - The name of the resource.
+            returned: always
+            type: str
+            sample: myRegistry
+        location:
+            description:
+                - The location of the resource. This cannot be changed after the resource is created.
+            returned: always
+            type: str
+            sample: westus
+        admin_user_enabled:
+            description:
+                - Is admin user enabled.
+            returned: always
+            type: bool
+            sample: yes
+        sku:
+            description:
+                - The SKU name of the container registry.
+            returned: always
+            type: str
+            sample: Classic
+        status_message:
+            description:
+                - The detailed status message of there registry, including alerts and error messages.
+            returned: always
+            type: str
+            sample: The registry is ready.
+        status_timestamp:
+            description:
+                - The timestamp when the status was changed to the current value.
+            returned: always
+            type: str
+            sample: 2017-03-01T23:15:37.0707808Z
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -145,7 +120,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            registry_name=dict(
+            name=dict(
                 type='str'
             )
         )
@@ -156,7 +131,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         )
         self.mgmt_client = None
         self.resource_group = None
-        self.registry_name = None
+        self.name = None
         super(AzureRMRegistriesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -166,7 +141,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
-                self.registry_name is not None):
+                self.name is not None):
             self.results['registries'] = self.get()
         elif (self.resource_group is not None):
             self.results['registries'] = self.list_by_resource_group()
@@ -177,7 +152,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         results = {}
         try:
             response = self.mgmt_client.registries.get(resource_group_name=self.resource_group,
-                                                       registry_name=self.registry_name)
+                                                       registry_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Registries.')
@@ -206,11 +181,13 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'name': self.registry_name,
+            'name': self.name,
             'location': d['location'],
             'admin_user_enabled': d['admin_user_enabled'],
             'sku': d['sku']['tier'].lower(),
-            'state': 'present'
+            'status_message': d['status']['message'],
+            'status_timestamp': d['status']['timestamp'],
+            'id': d['id']
         }
         return d
 
