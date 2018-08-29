@@ -185,6 +185,8 @@ options:
     - 'Valid attributes are:'
     - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
     - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is set C(iso).'
+    - ' - C(controller) (string): Specify which type of controller should be specified. Default is C(ide). Valid options are C(sata) and C(ide).
+    version_added 2.8.'
     version_added: '2.5'
   resource_pool:
     description:
@@ -600,21 +602,23 @@ class PyVmomiDeviceHelper(object):
             isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
 
     @staticmethod
-    def create_ide_controller():
-        ide_ctl = vim.vm.device.VirtualDeviceSpec()
-        ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        ide_ctl.device = vim.vm.device.VirtualIDEController()
-        ide_ctl.device.deviceInfo = vim.Description()
-        ide_ctl.device.busNumber = 0
-
-        return ide_ctl
+    def create_controller(ctl_type='ide'):
+        ctl = vim.vm.device.VirtualDeviceSpec()
+        ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        if ctl_type == 'ide':
+            ctl.device = vim.vm.device.VirtualIDEController()
+        elif ctl_type == 'sata':
+            ctl.device = vim.vm.device.VirtualAHCIController()
+        ctl.device.deviceInfo = vim.Description()
+        ctl.device.busNumber = 0
+        return ctl
 
     @staticmethod
-    def create_cdrom(ide_ctl, cdrom_type, iso_path=None):
+    def create_cdrom(cdrom_ctl, cdrom_type, iso_path=None):
         cdrom_spec = vim.vm.device.VirtualDeviceSpec()
         cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         cdrom_spec.device = vim.vm.device.VirtualCdrom()
-        cdrom_spec.device.controllerKey = ide_ctl.device.key
+        cdrom_spec.device.controllerKey = cdrom_ctl.device.key
         cdrom_spec.device.key = -1
         cdrom_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         cdrom_spec.device.connectable.allowGuestControl = True
@@ -984,11 +988,19 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
+        cdrom_sata = False
         if "cdrom" in self.params and self.params["cdrom"]:
             if "type" not in self.params["cdrom"] or self.params["cdrom"]["type"] not in ["none", "client", "iso"]:
                 self.module.fail_json(msg="cdrom.type is mandatory")
             if self.params["cdrom"]["type"] == "iso" and ("iso_path" not in self.params["cdrom"] or not self.params["cdrom"]["iso_path"]):
                 self.module.fail_json(msg="cdrom.iso_path is mandatory in case cdrom.type is iso")
+
+            cdrom_controller = self.params["cdrom"].get('controller', 'ide')
+            if cdrom_controller not in ["sata", "ide"]:
+                self.module.fail_json(msg="Please specify cdrom.controller value as either 'sata' or 'ide'.")
+
+            if cdrom_controller == "sata":
+                cdrom_sata = True
 
             if vm_obj and vm_obj.config.template:
                 # Changing CD-ROM settings on a template is not supported
@@ -999,16 +1011,27 @@ class PyVmomiHelper(PyVmomi):
             iso_path = self.params["cdrom"]["iso_path"] if "iso_path" in self.params["cdrom"] else None
             if cdrom_device is None:
                 # Creating new CD-ROM
-                ide_device = self.get_vm_ide_device(vm=vm_obj)
-                if ide_device is None:
-                    # Creating new IDE device
-                    ide_device = self.device_helper.create_ide_controller()
-                    self.change_detected = True
-                    self.configspec.deviceChange.append(ide_device)
-                elif len(ide_device.device) > 3:
-                    self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4 IDE devices of which none are a cdrom")
+                ctl_device = None
+                if not cdrom_sata:
+                    ctl_device = self.get_vm_ide_device(vm=vm_obj)
+                    if ctl_device is None:
+                        # Creating new IDE device
+                        ctl_device = self.device_helper.create_controller()
+                        self.change_detected = True
+                        self.configspec.deviceChange.append(ctl_device)
+                    elif len(ctl_device.device) > 3:
+                        self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4 IDE devices of which none are a cdrom")
+                else:
+                    ctl_device = self.get_vm_sata_device(vm=vm_obj)
+                    if ctl_device is None:
+                        # Creating new SATA device
+                        ctl_device = self.device_helper.create_controller(ctl_type='sata')
+                        self.change_detected = True
+                        self.configspec.deviceChange.append(ctl_device)
+                    elif len(ctl_device.device) > 30:
+                        self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 30 SATA devices of which none are a cdrom")
 
-                cdrom_spec = self.device_helper.create_cdrom(ide_ctl=ide_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path)
+                cdrom_spec = self.device_helper.create_cdrom(cdrom_ctl=ctl_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path)
                 if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
                     cdrom_spec.device.connectable.connected = (self.params["cdrom"]["type"] != "none")
 
@@ -1106,6 +1129,16 @@ class PyVmomiHelper(PyVmomi):
 
         for device in vm.config.hardware.device:
             if isinstance(device, vim.vm.device.VirtualIDEController):
+                return device
+
+        return None
+
+    def get_vm_sata_device(self, vm=None):
+        if vm is None:
+            return None
+
+        for device in vm.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualAHCIController):
                 return device
 
         return None
