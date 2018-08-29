@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 module: scaleway_compute
 short_description: Scaleway compute management module
 version_added: "2.6"
-author: 
+author:
     - Remy Leone (@sieben)
     - Guillaume Francois (@g1franc)
 description:
@@ -364,6 +364,7 @@ def absent_strategy(compute_api, wished_server):
 
     return changed, {"status": "Server %s deleted" % target_server["id"]}
 
+
 def terminate_strategy(compute_api, wished_server):
     compute_api.module.debug("Starting terminate strategy")
     changed = False
@@ -381,7 +382,6 @@ def terminate_strategy(compute_api, wished_server):
         return changed, {"status": "Server %s would be made terminated." % target_server["id"]}
 
     # Here we should check that the server is running and not locked.
-    
     # Terminate a server WITHOUT snapshot before
     response = terminate_server(compute_api=compute_api, server=target_server,)
 
@@ -600,7 +600,7 @@ def server_change_attributes(compute_api, target_server, wished_server):
 def core(module):
     region = module.params["region"]
     wished_server = {
-        "state": "absent" if module.params["state"]== "terminate" else module.params["state"],
+        "state": "absent" if module.params["state"] == "terminate" else module.params["state"],
         "image": module.params["image"],
         "name": module.params["name"],
         "commercial_type": module.params["commercial_type"],
