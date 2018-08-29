@@ -196,6 +196,8 @@ Noteworthy module changes
 
 * The ``interface_name`` module option for ``na_ontap_net_vlan`` has been removed and should be removed from your playbooks
 
+* The ``win_disk_image`` module has deprecated the return value ``mount_path``, use ``mount_paths[0]`` instead. This will
+  be removed in Ansible 2.11.
 
 Plugins
 =======
