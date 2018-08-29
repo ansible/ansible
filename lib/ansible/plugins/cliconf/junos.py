@@ -174,6 +174,17 @@ class Cliconf(CliconfBase):
 
         return resp
 
+    @configure
+    def rollback(self, rollback_id, commit=True):
+        resp = {}
+        self.send_command('rollback %s' % int(rollback_id))
+        resp['diff'] = self.compare_configuration()
+        if commit:
+            self.commit()
+        else:
+            self.discard_changes()
+        return resp
+
     def get_diff(self, rollback_id=None):
         diff = {'config_diff': None}
         response = self.compare_configuration(rollback_id=rollback_id)
