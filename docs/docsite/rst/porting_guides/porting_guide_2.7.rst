@@ -170,6 +170,11 @@ The following modules will be removed in Ansible 2.11. Please update your playbo
 * ``na_cdot_user`` use :ref:`na_ontap_user <na_ontap_user_module>` instead.
 * ``na_cdot_user_role`` use :ref:`na_ontap_user_role <na_ontap_user_role_module>` instead.
 * ``na_cdot_volume`` use :ref:`na_ontap_volume <na_ontap_volume_module>` instead.
+* ``sf_account_manager`` use :ref:`na_elementsw_account<na_elementsw_account_module>` instead.
+* ``sf_check_connections`` use :ref:`na_elementsw_check_connections<na_elementsw_check_connections_module>` instead.
+* ``sf_snapshot_schedule_manager`` use :ref:`na_elementsw_snapshot_schedule<na_elementsw_snapshot_schedule_module>` instead.
+* ``sf_volume_access_group_manager`` use :ref:`na_elementsw_access_group<na_elementsw_access_group_module>` instead.
+* ``sf_volume_manager`` use :ref:`na_elementsw_volume<na_elementsw_volume_module>` instead.
 
 Noteworthy module changes
 -------------------------
