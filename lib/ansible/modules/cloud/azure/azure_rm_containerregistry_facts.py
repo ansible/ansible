@@ -101,24 +101,30 @@ registries:
             returned: always
             type: str
             sample: acrd08521b.azurecr.io
-        username:
+        credentials:
             description:
-                - The user name for container registry.
-            returned: always
-            type: str
-            sample: zim
-        password:
-            description:
-                - Password 1 for container registry.
-            returned: always
-            type: str
-            sample: Password1!!
-        password2:
-            description:
-                - Password 2 for container registry.
-            returned: always
-            type: str
-            sample: Password2!!
+                - Credentials, fields will be empty if admin user is not enabled for ACR
+            return: always
+            type: complex
+            contains:
+                username:
+                    description:
+                        - The user name for container registry.
+                    returned: always
+                    type: str
+                    sample: zim
+                password:
+                    description:
+                        - Password 1 for container registry.
+                    returned: always
+                    type: str
+                    sample: Password1!!
+                password2:
+                    description:
+                        - Password 2 for container registry.
+                    returned: always
+                    type: str
+                    sample: Password2!!
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -219,11 +225,11 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
         d = item.as_dict()
         resource_group = d['id'].split('resourceGroups/')[1].split('/')[0]
         name = d['name']
-        credentials = None
+        credentials = { 'username': None, 'password': '', 'password2': ''}
         try:
             credentials = self.containerregistry_client.registries.list_credentials(resource_group_name=resource_group,                                                                                 registry_name=name)
         except CloudError as e:
-            self.fail('Could not list credentials.')
+            self.log('Credentials not available.')
 
         d = {
             'resource_group': resource_group,
@@ -235,9 +241,7 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
             'login_server': d['login_server'],
             'id': d['id'],
             'tags': d.get('tags', None),
-            'username': credentials['username'],
-            'password': credentials['passwords']['password'],
-            'password2': credentials['passwords']['password2']
+            'credentials' : credentials
         }
         return d
 

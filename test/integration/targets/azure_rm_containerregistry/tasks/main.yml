@@ -77,9 +77,9 @@
        - output.registries[0]['provisioning_state'] != None
        - output.registries[0]['login_server'] != None
        - output.registries[0]['id'] != None
-       - output.registries[0]['username'] != None
-       - output.registries[0]['password'] != None
-       - output.registries[0]['password2'] != None
+       - output.registries[0]['credentials']['username'] is defined
+       - output.registries[0]['credentials']['password'] is defined
+       - output.registries[0]['credentials']['password2'] is defined
 
  - name: Gather facts for all Container Registries in the resource group
    azure_rm_containerregistry_facts:
@@ -97,9 +97,9 @@
        - output.registries[0]['provisioning_state'] != None
        - output.registries[0]['login_server'] != None
        - output.registries[0]['id'] != None
-       - output.registries[0]['username'] != None
-       - output.registries[0]['password'] != None
-       - output.registries[0]['password2'] != None
+       - output.registries[0]['credentials']['username'] is defined
+       - output.registries[0]['credentials']['password'] is defined
+       - output.registries[0]['credentials']['password2'] is defined
        - output.registries[1]['name'] != None
        - output.registries[1]['location'] != None
        - output.registries[1]['admin_user_enabled'] != None
@@ -107,9 +107,9 @@
        - output.registries[1]['provisioning_state'] != None
        - output.registries[1]['login_server'] != None
        - output.registries[1]['id'] != None
-       - output.registries[1]['username'] != None
-       - output.registries[1]['password'] != None
-       - output.registries[1]['password2'] != None
+       - output.registries[1]['credentials']['username'] is defined
+       - output.registries[1]['credentials']['password'] is defined
+       - output.registries[1]['credentials']['password2'] is defined
 
  - name: Delete first container registry
    azure_rm_containerregistry:
