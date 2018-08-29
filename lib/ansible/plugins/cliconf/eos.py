@@ -268,7 +268,7 @@ class Cliconf(CliconfBase):
         return {
             'supports_diff_replace': True,
             'supports_commit': True if self.supports_sessions else False,
-            'supports_rollback': True if self.supports_sessions else False,
+            'supports_rollback': False,
             'supports_defaults': False,
             'supports_onbox_diff': True if self.supports_sessions else False,
             'supports_commit_comment': False,
