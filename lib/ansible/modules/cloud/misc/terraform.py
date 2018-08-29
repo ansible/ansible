@@ -98,6 +98,11 @@ options:
     default: false
     required: false
     type: bool
+  backend_config:
+    description:
+      - A group of key-values to provide at init stage to the -backend-config parameter.
+    required: false
+    version_added: 2.7
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
@@ -109,6 +114,16 @@ EXAMPLES = """
 - terraform:
     project_path: '{{ project_dir }}'
     state: present
+
+# Define the backend configuration at init
+- terraform:
+    project_path: 'project/'
+    state: "{{ state }}"
+    force_init: true
+    backend_config:
+      region: "eu-west-1"
+      bucket: "some-bucket"
+      key: "random.tfstate"
 """
 
 RETURN = """
@@ -175,8 +190,14 @@ def _state_args(state_file):
     return []
 
 
-def init_plugins(bin_path, project_path):
+def init_plugins(bin_path, project_path, backend_config):
     command = [bin_path, 'init', '-input=false']
+    if backend_config:
+        for key, val in backend_config.items():
+            command.extend([
+                '-backend-config',
+                shlex_quote('{0}={1}'.format(key, val))
+            ])
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
@@ -262,6 +283,7 @@ def main():
             lock=dict(type='bool', default=True),
             lock_timeout=dict(type='int',),
             force_init=dict(type='bool', default=False),
+            backend_config=dict(type='dict', default=None),
         ),
         required_if=[('state', 'planned', ['plan_file'])],
         supports_check_mode=True,
@@ -277,6 +299,7 @@ def main():
     plan_file = module.params.get('plan_file')
     state_file = module.params.get('state_file')
     force_init = module.params.get('force_init')
+    backend_config = module.params.get('backend_config')
 
     if bin_path is not None:
         command = [bin_path]
@@ -284,7 +307,7 @@ def main():
         command = [module.get_bin_path('terraform', required=True)]
 
     if force_init:
-        init_plugins(command[0], project_path)
+        init_plugins(command[0], project_path, backend_config)
 
     workspace_ctx = get_workspace_context(command[0], project_path)
     if workspace_ctx["current"] != workspace:
