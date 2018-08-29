@@ -73,6 +73,66 @@
       - output.changed
       - output.provisioning_state == 'Succeeded'
 
+- name: Create second container instance for testing purposes
+  azure_rm_containerinstance:
+    resource_group: "{{ resource_group }}"
+    name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}sec"
+    os_type: linux
+    ip_address: public
+    location: eastus
+    ports:
+      - 80
+    containers:
+      - name: mycontainer1
+        image: httpd
+        memory: 1.5
+        ports:
+          - 80
+          - 81
+  register: output
+
+ - name: Gather facts for single Container Instance
+   azure_rm_containerinstance_facts:
+     resource_group: "{{ resource_group }}"
+     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}sec"
+   register: output 
+
+ - name: Assert that facts are returned
+   assert:
+     that:
+       - output.changed == False
+       - output.containerinstances[0]['resource_group'] != None
+       - output.containerinstances[0]['name'] != None
+       - output.containerinstances[0]['os_type'] != None
+       - output.containerinstances[0]['location'] != None
+       - output.containerinstances[0]['ip_address'] != None
+       - output.containerinstances[0]['ports'] != None
+       - output.containerinstances[0]['containers'] != None
+
+ - name: Gather facts for all Container Instances in the resource group
+   azure_rm_containerinstance_facts:
+     resource_group: "{{ resource_group }}"
+   register: output
+
+ - name: Assert that facts are returned
+   assert:
+     that:
+       - output.changed == False
+       - output.containerinstances[0]['resource_group'] != None
+       - output.containerinstances[0]['name'] != None
+       - output.containerinstances[0]['os_type'] != None
+       - output.containerinstances[0]['location'] != None
+       - output.containerinstances[0]['ip_address'] != None
+       - output.containerinstances[0]['ports'] != None
+       - output.containerinstances[0]['containers'] != None
+       - output.containerinstances[1]['resource_group'] != None
+       - output.containerinstances[1]['name'] != None
+       - output.containerinstances[1]['os_type'] != None
+       - output.containerinstances[1]['location'] != None
+       - output.containerinstances[1]['ip_address'] != None
+       - output.containerinstances[1]['ports'] != None
+       - output.containerinstances[1]['containers'] != None
+
 - name: Remove container instance
   azure_rm_containerinstance:
     resource_group: "{{ resource_group }}"
@@ -90,7 +150,24 @@
           - 80
           - 81
     state: absent
-  register: output
+
+- name: Remove container instance
+  azure_rm_containerinstance:
+    resource_group: "{{ resource_group }}"
+    name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}sec"
+    os_type: linux
+    ip_address: public
+    location: eastus
+    ports:
+      - 80
+    containers:
+      - name: mycontainer1
+        image: httpd
+        memory: 1.5
+        ports:
+          - 80
+          - 81
+    state: absent
 
 - name: Assert the container instance is deleted
   assert:
