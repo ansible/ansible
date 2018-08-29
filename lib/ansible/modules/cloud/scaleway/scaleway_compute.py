@@ -22,7 +22,9 @@ DOCUMENTATION = '''
 module: scaleway_compute
 short_description: Scaleway compute management module
 version_added: "2.6"
-author: Remy Leone (@sieben)
+author: 
+    - Remy Leone (@sieben)
+    - Guillaume François (@g1franc)
 description:
     - "This module manages compute instances on Scaleway."
 extends_documentation_fragment: scaleway
@@ -59,6 +61,7 @@ options:
       - running
       - restarted
       - stopped
+      - terminate
 
   tags:
     description:
@@ -271,6 +274,10 @@ def start_server(compute_api, server):
     return perform_action(compute_api=compute_api, server=server, action="poweron")
 
 
+def terminate_server(compute_api, server):
+    return perform_action(compute_api=compute_api, server=server, action="terminate")
+
+
 def perform_action(compute_api, server, action):
     response = compute_api.post(path="servers/%s/action" % server["id"],
                                 data={"action": action})
@@ -356,6 +363,33 @@ def absent_strategy(compute_api, wished_server):
         compute_api.module.fail_json(msg=err_msg)
 
     return changed, {"status": "Server %s deleted" % target_server["id"]}
+
+def terminate_strategy(compute_api, wished_server):
+    compute_api.module.debug("Starting terminate strategy")
+    changed = False
+    target_server = None
+    query_results = find(compute_api=compute_api, wished_server=wished_server, per_page=1)
+
+    if not query_results:
+        return changed, {"status": "Server already terminated."}
+    else:
+        target_server = query_results[0]
+
+    changed = True
+
+    if compute_api.module.check_mode:
+        return changed, {"status": "Server %s would be made terminated." % target_server["id"]}
+
+    # Here we should check that the server is running and not locked.
+    
+    # Terminate a server WITHOUT snapshot before
+    response = terminate_server(compute_api=compute_api, server=target_server,)
+
+    if not response.ok:
+        err_msg = 'Error while removing server [{0}: {1}]'.format(response.status_code, response.json)
+        compute_api.module.fail_json(msg=err_msg)
+
+    return changed, {"status": "Server %s terminated" % target_server["id"]}
 
 
 def running_strategy(compute_api, wished_server):
@@ -502,7 +536,8 @@ state_strategy = {
     "restarted": restart_strategy,
     "stopped": stop_strategy,
     "running": running_strategy,
-    "absent": absent_strategy
+    "absent": absent_strategy,
+    "terminate": terminate_strategy
 }
 
 
@@ -565,7 +600,7 @@ def server_change_attributes(compute_api, target_server, wished_server):
 def core(module):
     region = module.params["region"]
     wished_server = {
-        "state": module.params["state"],
+        "state": "state": "absent" if module.params["state"]== "terminate" else module.params["state"],
         "image": module.params["image"],
         "name": module.params["name"],
         "commercial_type": module.params["commercial_type"],
