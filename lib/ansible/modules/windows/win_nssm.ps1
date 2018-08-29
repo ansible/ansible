@@ -27,7 +27,7 @@ $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -defau
 
 $stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "str"
 $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "str"
-$dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "str"
+$dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "list"
 
 $user = Get-AnsibleParam -obj $params -name "user" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
@@ -431,11 +431,11 @@ Function Nssm-Update-Dependencies
         Throw "Error updating dependencies for service ""$name"""
     }
 
-    $dependencies_array = @($dependencies.split(" ") | where { $_ -ne '' })
     $current_dependencies = @($nssm_result.stdout.split("`n`r") | where { $_ -ne '' })
 
-    If (@(Compare-Object -ReferenceObject $current_dependencies -DifferenceObject $dependencies_array).Length -ne 0) {
-        $cmd = "set ""$name"" DependOnService $dependencies"
+    If (@(Compare-Object -ReferenceObject $current_dependencies -DifferenceObject $dependencies).Length -ne 0) {
+        $dependencies_str = Argv-ToString -arguments $dependencies
+        $cmd = "set ""$name"" DependOnService $dependencies_str"
         $nssm_result = Nssm-Invoke $cmd
 
         if ($nssm_result.rc -ne 0)

@@ -58,7 +58,7 @@ options:
       - Use either this or C(app_parameters), not both.
   dependencies:
     description:
-      - Service dependencies that has to be started to trigger startup, separated by space.
+      - Service dependencies that has to be started to trigger startup, separated by comma.
   user:
     description:
       - User to be used for service startup.
@@ -140,7 +140,7 @@ EXAMPLES = r'''
 - win_nssm:
     name: foo
     application: C:\windows\foo.exe
-    dependencies: 'adf tcpip'
+    dependencies: 'adf,tcpip'
 
 # Install and start the foo service with dedicated user
 - win_nssm:
