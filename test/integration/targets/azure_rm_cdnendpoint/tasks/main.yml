@@ -1,0 +1,201 @@
+- name: Prepare random number
+  set_fact:
+    profile_name: "pro{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    endpointname: "end{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create a Azure CDN profile
+  azure_rm_cdnprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ profile_name }}"
+      sku: Standard_Akamai
+  register: output
+
+- name: Assert the Azure CDN profile is well created
+  assert:
+    that:
+      - output.changed
+      - output.name == "{{ profile_name }}"
+
+- name: Create a Azure CDN endpoint(check mode)
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      origin:
+        name: "org{{ endpointname }}"
+        host_name: "www.google.com"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+  check_mode: yes
+
+- name: Create a Azure CDN endpoint
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      origin:
+        name: "org{{ endpointname }}"
+        host_name: "www.google.com"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+  register: output
+
+- name: Assert the Azure CDN endpoint is well created
+  assert:
+    that:
+      - output.changed
+      - output.name == "{{ endpointname }}"
+      - output.origins | length == 1
+      - output.tags | length == 3
+
+- name: Create a Azure CDN endpoint(idempotent)
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      origin:
+        name: "org{{ endpointname }}"
+        host_name: "www.google.com"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+  register: output
+
+- name: Assert idempotent
+  assert:
+    that:
+      - not output.changed
+
+- name: Stop a Azure CDN endpoint
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      started: False
+  register: output
+
+- name: Assert stopped
+  assert:
+    that:
+      - output.changed
+      - output.resource_state == 'Stopped'
+
+- name: Stop a Azure CDN endpoint(idempotent)
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      started: False
+  register: output
+
+- name: Assert still stopped and not changed
+  assert:
+    that:
+      - not output.changed
+      - output.resource_state == 'Stopped'
+
+- name: Start a Azure CDN endpoint
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      started: True
+  register: output
+
+- name: Assert started
+  assert:
+    that:
+      - output.changed
+      - output.resource_state == 'Running'
+
+- name: Start a Azure CDN endpoint(idempotent)
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      started: True
+  register: output
+
+- name: Assert still started and not changed
+  assert:
+    that:
+      - not output.changed
+      - output.resource_state == 'Running'
+
+- name: Update the Azure CDN endpoint
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      origin_path: /test/
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: baz
+  register: output
+
+- name: Assert the Azure CDN endpoint is well updated
+  assert:
+    that:
+      - output.changed
+      - output.origin_path == "/test/"
+      - output.tags.foo == 'baz'
+
+- name: Delete a Azure CDN endpoint(check mode)
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      state: absent
+  check_mode: yes
+
+- name: Delete a Azure CDN endpoint
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      state: absent
+
+- name: Assert error when stop a deleted Azure CDN endpoint
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      started: False
+  register: output
+  ignore_errors: yes
+
+- name: Assert stop failure
+  assert:
+    that: output.failed
+
+- name: Assert error when start a deleted Azure CDN endpoint
+  azure_rm_cdnendpoint:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ profile_name }}"
+      started: True
+  register: output
+  ignore_errors: yes
+
+- name: Assert start failure
+  assert:
+    that: output.failed
+
+- name: Delete the Azure CDN profile
+  azure_rm_cdnprofile:
+    resource_group: "{{ resource_group }}"
+    name: "{{ profile_name }}"
+    state: absent
+  register: output
+
+- name: Assert the Azure CDN profile is well deleted
+  assert:
+    that:
+      - output.changed
