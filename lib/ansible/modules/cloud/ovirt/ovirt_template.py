@@ -185,7 +185,7 @@ EXAMPLES = '''
     state: absent
     name: mytemplate
 
-# Change Pool Name
+# Change Template Name
 - ovirt_template:
     id: 00000000-0000-0000-0000-000000000000
     name: "new template name"
@@ -294,6 +294,7 @@ class TemplatesModule(BaseModule):
 
     def build_entity(self):
         return otypes.Template(
+            id=self._module.params['id'],
             name=self._module.params['name'],
             cluster=otypes.Cluster(
                 name=self._module.params['cluster']

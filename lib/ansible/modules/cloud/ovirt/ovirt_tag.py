@@ -97,6 +97,11 @@ EXAMPLES = '''
 - ovirt_tag:
     state: absent
     name: mytag
+
+# Change cluster Name
+- ovirt_tag:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new tag name"
 '''
 
 RETURN = '''
