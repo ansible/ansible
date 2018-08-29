@@ -129,7 +129,6 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
             changed=False,
             ansible_facts=dict()
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.name = None
         super(AzureRMRegistriesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
@@ -137,8 +136,6 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(ContainerRegistryManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
                 self.name is not None):
@@ -151,7 +148,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         response = None
         results = {}
         try:
-            response = self.mgmt_client.registries.get(resource_group_name=self.resource_group,
+            response = self.containerregistry_mgmt_client.registries.get(resource_group_name=self.resource_group,
                                                        registry_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
@@ -166,7 +163,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         response = None
         results = {}
         try:
-            response = self.mgmt_client.registries.list_by_resource_group(resource_group_name=self.resource_group)
+            response = self.containerregistry_mgmt_client.registries.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Registries.')
