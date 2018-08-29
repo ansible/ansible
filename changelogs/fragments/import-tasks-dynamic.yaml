@@ -1,0 +1,2 @@
+bugfixes:
+- import_tasks - Prevent connection error message if file is missing and import_tasks is transitioned to dynamic (https://github.com/ansible/ansible/issues/44822)

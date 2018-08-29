@@ -492,7 +492,7 @@ class TaskExecutor:
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
-        if self._task.action in ('include', 'include_tasks'):
+        if self._task.action in ('include', 'include_tasks', 'import_tasks'):
             include_variables = self._task.args.copy()
             include_file = include_variables.pop('_raw_params', None)
             if not include_file:
