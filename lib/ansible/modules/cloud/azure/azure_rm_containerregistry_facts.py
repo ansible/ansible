@@ -149,7 +149,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
         results = {}
         try:
             response = self.containerregistry_mgmt_client.registries.get(resource_group_name=self.resource_group,
-                                                       registry_name=self.name)
+                                                                         registry_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Registries.')
