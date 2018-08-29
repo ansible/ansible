@@ -24,7 +24,7 @@
        - output.credentials['password'] is defined
        - output.credentials['password2'] is defined
 
- - name: Update the ACS instance sku, tags and admin_user_enabled
+ - name: Update the ACR instance sku, tags and admin_user_enabled
    azure_rm_containerregistry:
      name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
@@ -43,7 +43,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus2
      state: present
-     admin_user_enabled: true
+     admin_user_enabled: false
      sku: Premium
      tags:
          Release: beta1
