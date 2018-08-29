@@ -1092,10 +1092,10 @@ class AzureRMModuleBase(object):
 
     @property
     def containerinstance_client(self):
-        self.log('Getting container registry mgmt client')
-        if not self._containerregistry_client:
-            self._containerregistry_client = self.get_mgmt_svc_client(ContainerInstanceManagementClient,
+        self.log('Getting container instance mgmt client')
+        if not self._containerinstance_client:
+            self._containerinstance_client = self.get_mgmt_svc_client(ContainerInstanceManagementClient,
                                                                       base_url=self._cloud_environment.endpoints.resource_manager,
                                                                       api_version='2018-06-01')
 
-        return self._containerregistry_client
+        return self._containerinstance_client
