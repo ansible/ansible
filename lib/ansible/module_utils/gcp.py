@@ -264,7 +264,8 @@ def _validate_credentials_file(module, credentials_file, require_valid_json=True
         return False
     except ValueError as e:
         module.fail_json(
-            msg='GCP Credentials File %s invalid.  Must be valid JSON.' % credentials_file, changed=False)
+            msg='Non-JSON credentials file provided. Please generate a new JSON key from the Google Cloud console',
+            changed=False)
 
 
 def gcp_connect(module, provider, get_driver, user_agent_product, user_agent_version):

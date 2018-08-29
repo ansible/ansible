@@ -160,7 +160,7 @@ class GCPAuthTestCase(unittest.TestCase):
                                                   credentials_file=credentials_file,
                                                   require_valid_json=False,
                                                   check_libcloud=False)
-            self.assertTrue(is_valid)
+            module.fail_json.assert_called()
 
     @mock.patch('ansible.module_utils.gcp._get_gcp_environ_var',
                 side_effect=fake_get_gcp_environ_var)
