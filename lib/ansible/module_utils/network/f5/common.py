@@ -335,28 +335,34 @@ def transform_name(partition='', name='', sub_path=''):
     return result
 
 
-def dict2tuple(items):
-    """Convert a dictionary to a list of tuples
+def compare_complex_list(want, have):
+    """Performs a complex list comparison
 
-    This method is used in cases where dictionaries need to be compared. Due
-    to dictionaries inherently having no order, it is easier to compare list
-    of tuples because these lists can be converted to sets.
-
-    This conversion only supports dicts of simple values. Do not give it dicts
-    that contain sub-dicts. This will not give you the result you want when using
-    the returned tuple for comparison.
+    A complex list is a list of dictionaries
 
     Args:
-        items (dict): The dictionary of items that should be converted
+        want (list): List of dictionaries to compare with second parameter.
+        have (list): List of dictionaries compare with first parameter.
 
     Returns:
-        list: Returns a list of tuples upon success. Otherwise, an empty list.
+        bool:
     """
-    result = []
-    for x in items:
+    if want == [] and have is None:
+        return None
+    if want is None:
+        return None
+    w = []
+    h = []
+    for x in want:
         tmp = [(str(k), str(v)) for k, v in iteritems(x)]
-        result += tmp
-    return result
+        w += tmp
+    for x in have:
+        tmp = [(str(k), str(v)) for k, v in iteritems(x)]
+        h += tmp
+    if set(w) == set(h):
+        return None
+    else:
+        return want
 
 
 def compare_dictionary(want, have):
@@ -369,12 +375,12 @@ def compare_dictionary(want, have):
     Returns:
         bool:
     """
-    if want == [] and have is None:
+    if want == {} and have is None:
         return None
     if want is None:
         return None
-    w = dict2tuple(want)
-    h = dict2tuple(have)
+    w = [(str(k), str(v)) for k, v in iteritems(want)]
+    h = [(str(k), str(v)) for k, v in iteritems(have)]
     if set(w) == set(h):
         return None
     else:
