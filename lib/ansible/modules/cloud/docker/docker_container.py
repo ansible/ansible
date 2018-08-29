@@ -1292,8 +1292,6 @@ class Container(DockerBaseClass):
             ipc_mode=host_config.get("IpcMode"),
             labels=config.get('Labels'),
             expected_links=host_config.get('Links'),
-            log_driver=log_config.get('Type'),
-            log_options=log_config.get('Config'),
             mac_address=network.get('MacAddress'),
             memory_swappiness=host_config.get('MemorySwappiness'),
             network_mode=host_config.get('NetworkMode'),
@@ -1305,7 +1303,6 @@ class Container(DockerBaseClass):
             expected_ports=host_config.get('PortBindings'),
             read_only=host_config.get('ReadonlyRootfs'),
             restart_policy=restart_policy.get('Name'),
-            restart_retries=restart_policy.get('MaximumRetryCount'),
             # Cannot test shm_size, as shm_size is not included in container inspection results.
             # shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
@@ -1320,6 +1317,11 @@ class Container(DockerBaseClass):
             volumes_from=host_config.get('VolumesFrom'),
             working_dir=config.get('WorkingDir')
         )
+        if self.parameters.restart_policy:
+            config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
+        if self.parameters.log_driver:
+            config_mapping['log_driver'] = log_config.get('Type')
+            config_mapping['log_options'] = log_config.get('Config')
 
         if self.parameters.client.HAS_AUTO_REMOVE_OPT:
             # auto_remove is only supported in docker>=2
