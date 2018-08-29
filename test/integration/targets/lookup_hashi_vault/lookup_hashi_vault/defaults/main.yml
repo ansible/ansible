@@ -1,0 +1,3 @@
+---
+vault_base_path: 'secret/data/testproject'
+vault_base_path_kv: 'secret/testproject'  # required by KV 2 engine
