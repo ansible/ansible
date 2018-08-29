@@ -257,7 +257,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.containers = None
 
         self.results = dict(changed=False, state=dict())
-        self.client = None
         self.cgmodels = None
 
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
@@ -274,10 +273,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         response = None
         results = dict()
 
-        self.client = self.get_mgmt_svc_client(ContainerInstanceManagementClient)
-
         # since this client hasn't been upgraded to expose models directly off the OperationClass, fish them out
-        self.cgmodels = self.client.container_groups.models
+        self.cgmodels = self.containerinstance_client.container_groups.models
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -380,9 +377,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                   os_type=self.os_type,
                                                   volumes=None)
 
-        response = self.client.container_groups.create_or_update(resource_group_name=self.resource_group,
-                                                                 container_group_name=self.name,
-                                                                 container_group=parameters)
+        response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                   container_group_name=self.name,
+                                                                                   container_group=parameters)
 
         if isinstance(response, AzureOperationPoller):
             response = self.get_poller_result(response)
@@ -396,7 +393,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         :return: True
         '''
         self.log("Deleting the container instance {0}".format(self.name))
-        response = self.client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
+        response = self.containerinstance_client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
         return True
 
     def get_containerinstance(self):
@@ -408,7 +405,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.log("Checking if the container instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.client.container_groups.get(resource_group_name=self.resource_group, container_group_name=self.name)
+            response = self.containerinstance_client.container_groups.get(resource_group_name=self.resource_group, container_group_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Container instance : {0} found".format(response.name))
