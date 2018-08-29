@@ -54,7 +54,7 @@ options:
         values will be added if they're missing. If C(absent), all given
         values will be removed if present. If C(exact), the set of values
         will be forced to exactly those provided and no others. If
-        I(state=exact) and I(value) is empty, all values for this
+        I(state=exact) and I(value) is an empty list, all values for this
         attribute will be removed.
     choices: [present, absent, exact]
     default: present
@@ -117,7 +117,7 @@ EXAMPLES = """
   ldap_attr:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     name: shadowExpire
-    values: ""
+    values: []
     state: exact
     server_uri: ldap://localhost/
     bind_dn: cn=admin,dc=example,dc=com
@@ -135,7 +135,7 @@ EXAMPLES = """
   ldap_attr:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     name: shadowExpire
-    values: ""
+    values: []
     state: exact
     params: "{{ ldap_auth }}"
 """
