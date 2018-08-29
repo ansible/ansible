@@ -600,7 +600,7 @@ def server_change_attributes(compute_api, target_server, wished_server):
 def core(module):
     region = module.params["region"]
     wished_server = {
-        "state": "state": "absent" if module.params["state"]== "terminate" else module.params["state"],
+        "state": "absent" if module.params["state"]== "terminate" else module.params["state"],
         "image": module.params["image"],
         "name": module.params["name"],
         "commercial_type": module.params["commercial_type"],
