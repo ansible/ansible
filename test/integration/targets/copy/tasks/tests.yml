@@ -1491,7 +1491,7 @@
 
 
 #
-# Recursive copying on remote host with symlinks tests
+# Recursive copying on remote host
 #
 
 ## prepare for test
@@ -1556,7 +1556,7 @@
       remote_src: True
       src: '{{ remote_dir }}/remote_dir_src/'
       dest: '{{ remote_dir }}/new_dir_with_follow'
-      follow: True
+      local_follow: True
     register: testcase1_with_follow
 
   - name: gather - Stat the new_dir_with_follow
@@ -1630,7 +1630,7 @@
       remote_src: True
       src: '{{ remote_dir }}/remote_dir_src/'
       dest: '{{ remote_dir }}/new_dir_without_follow'
-      follow: False
+      local_follow: False
     register: testcase1_without_follow
 
   - name: gather - Stat the new_dir_without_follow
@@ -1784,7 +1784,7 @@
       remote_src: True
       src: '{{ remote_dir }}/remote_dir_src/'
       dest: '{{ remote_dir }}/new_dir_without_follow'
-      follow: False
+      local_follow: False
     register: testcase3_without_follow
 
   - name: gather - Stat the new_dir_without_follow/file1
