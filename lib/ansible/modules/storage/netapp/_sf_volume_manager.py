@@ -18,7 +18,7 @@ module: sf_volume_manager
 deprecated:
   removed_in: "2.11"
   why: This Module has been replaced
-  alternative: please use na_elementsw_volume
+  alternative: please use M(na_elementsw_volume)
 short_description: Manage SolidFire volumes
 extends_documentation_fragment:
     - netapp.solidfire

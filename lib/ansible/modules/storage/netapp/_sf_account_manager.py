@@ -18,7 +18,7 @@ module: sf_account_manager
 deprecated:
   removed_in: "2.11"
   why: This Module has been replaced
-  alternative: please use na_elementsw_account
+  alternative: please use M(na_elementsw_account)
 short_description: Manage SolidFire accounts
 extends_documentation_fragment:
     - netapp.solidfire

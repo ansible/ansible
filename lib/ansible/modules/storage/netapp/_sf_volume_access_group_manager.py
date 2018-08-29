@@ -18,7 +18,7 @@ module: sf_volume_access_group_manager
 deprecated:
   removed_in: "2.11"
   why: This Module has been replaced
-  alternative: please use na_elementsw_access_group
+  alternative: please use M(na_elementsw_access_group)
 short_description: Manage SolidFire Volume Access Groups
 extends_documentation_fragment:
     - netapp.solidfire
