@@ -201,6 +201,7 @@ logging.getLogger('ncclient').setLevel(logging.INFO)
 NETWORK_OS_DEVICE_PARAM_MAP = {
     "nxos": "nexus",
     "ios": "default",
+    "dellos10": "default",
     "sros": "alu",
     "ce": "huawei"
 }
