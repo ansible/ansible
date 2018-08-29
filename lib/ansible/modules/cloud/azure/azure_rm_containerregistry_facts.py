@@ -194,5 +194,7 @@ class AzureRMRegistriesFacts(AzureRMModuleBase):
 
 def main():
     AzureRMRegistriesFacts()
+
+
 if __name__ == '__main__':
     main()

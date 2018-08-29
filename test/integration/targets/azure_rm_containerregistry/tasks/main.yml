@@ -79,7 +79,7 @@
        - output.registries[0]['id'] != None
 
  - name: Gather facts for all Container Registries in the resource group
-   azure_rm_containerresgistry_facts:
+   azure_rm_containerregistry_facts:
      resource_group: "{{ resource_group }}"
    register: output
 
