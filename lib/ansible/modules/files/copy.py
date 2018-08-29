@@ -60,9 +60,9 @@ options:
   mode:
     description:
       - "Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that
-        modes are actually octal numbers.  You must either specify the leading zero so that
-        Ansible's YAML parser knows it is an octal number (like C(0644) or C(01777)) or quote it
-        (like C('644') or C('0644') so Ansible receives a string and can do its own conversion from
+        modes are actually octal numbers. You must either add a leading zero so that Ansible's
+        YAML parser knows it is an octal number (like C(0644) or C(01777)) or quote it
+        (like C('644') or C('1777')) so Ansible receives a string and can do its own conversion from
         string into number.  Giving Ansible a number without following one of these rules will end
         up with a decimal number which will have unexpected results.  As of version 1.8, the mode
         may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).  As of
