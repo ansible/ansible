@@ -227,7 +227,7 @@ class AzureRMRegistryFacts(AzureRMModuleBase):
         name = d['name']
         credentials = { 'username': None, 'password': '', 'password2': ''}
         try:
-            credentials = self.containerregistry_client.registries.list_credentials(resource_group_name=resource_group, registry_name=d['name'])                                                                                registry_name=name)
+            credentials = self.containerregistry_client.registries.list_credentials(resource_group, name)
         except CloudError as e:
             self.log('Credentials not available.')
 
