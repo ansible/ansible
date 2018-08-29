@@ -81,7 +81,7 @@
     name: '{{ test_service_name }}'
     application: C:\Windows\System32\cmd.exe
     start_mode: manual
-    dependencies: 'tcpip dnscache'
+    dependencies: 'tcpip,dnscache'
     user: '{{ test_win_nssm_username }}'
     password: '{{ test_win_nssm_password }}'
     stdout_file: '{{ test_win_nssm_path }}\log.txt'
@@ -114,7 +114,7 @@
     application: C:\Windows\System32\cmd.exe
     start_mode: manual
     # Dependencies order should not trigger a change
-    dependencies: 'dnscache tcpip'
+    dependencies: 'dnscache,tcpip'
     user: '{{ test_win_nssm_username }}'
     password: '{{ test_win_nssm_password }}'
     stdout_file: '{{ test_win_nssm_path }}\log.txt'
