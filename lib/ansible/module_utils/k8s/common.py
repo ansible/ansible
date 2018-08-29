@@ -214,9 +214,9 @@ class K8sAnsibleMixin(object):
             return dict(items=[])
 
         if 'items' in result:
-            return result
+            return dict(resources=result['items'])
         else:
-            return dict(items=[result])
+            return dict(resources=[result])
 
     def remove_aliases(self):
         """
