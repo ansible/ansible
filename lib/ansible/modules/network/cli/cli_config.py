@@ -26,8 +26,8 @@ options:
   config:
     description:
       - The config to be pushed to the network device. This is a
-        required argument.
-    required: true
+        argument is mutually exclusive with C(rollback) and either
+        one of the option should be given as input.
     type: 'str'
   commit:
     description:
@@ -51,6 +51,7 @@ options:
         argument.  If the specified rollback identifier does not
         exist on the remote device, the module will fail. To rollback
         to the most recent commit, set the C(rollback) argument to 0.
+        This option is mutually exclusive with C(config).
   commit_comment:
     description:
       - The C(commit_comment) argument specifies a text string to be used
