@@ -754,15 +754,13 @@ class AzureRMModuleBase(object):
         try:
             self.log('Create blob service')
             if storage_blob_type == 'page':
-                return PageBlobService(
-                                    endpoint_suffix=self._cloud_environment.endpoints.storage_endpoint,
-                                    account_name=storage_account_name,
-                                    account_key=account_keys.keys[0].value)
+                return PageBlobService(endpoint_suffix=self._cloud_environment.endpoints.storage_endpoint,
+                                       account_name=storage_account_name,
+                                       account_key=account_keys.keys[0].value)
             elif storage_blob_type == 'block':
-                return BlockBlobService(
-                                    endpoint_suffix=self._cloud_environment.endpoints.storage_endpoint,
-                                    account_name=storage_account_name,
-                                    account_key=account_keys.keys[0].value)
+                return BlockBlobService(endpoint_suffix=self._cloud_environment.endpoints.storage_endpoint,
+                                        account_name=storage_account_name,
+                                        account_key=account_keys.keys[0].value)
             else:
                 raise Exception("Invalid storage blob type defined.")
         except Exception as exc:
