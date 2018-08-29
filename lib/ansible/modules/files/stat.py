@@ -322,13 +322,13 @@ stat:
             returned: success, path exists and user can read stats and installed python supports it
             type: string
             sample: www-data
-        mime_type:
+        mimetype:
             description: file magic data or mime-type
             returned: success, path exists and user can read stats and
                 installed python supports it and the `mime` option was true, will
                 return 'unknown' on error.
             type: string
-            sample: PDF document, version 1.2
+            sample: application/pdf; charset=binary
         charset:
             description: file character set or encoding
             returned: success, path exists and user can read stats and
