@@ -1,0 +1,98 @@
+# This contain sample template execution tasks
+---
+- name: Test Port Channel - aggregation-group
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data1}}"
+ 
+- name: Test Port Channel - aggregation-group - Interface Range
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data24}}"
+
+- name: Test Port Channel - bridge-port
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt  interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data2}}"
+
+- name: Test Port Channel - bridgeport mode
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data3}}"
+
+- name: Test Port Channel  - Description
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_portchannel_data4}}"
+
+- name: Test Port Channel - Duplex
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_portchannel_data5}}"
+
+- name: Test Port Channel - flowcontrol
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data6}}"
+
+- name: Test Port Channel - lacp
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data7}}"
+
+- name: Test Port Channel  - lldp
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data8}}"
+
+- name: Test Port Channel - load-interval
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}'
+  with_items: "{{test_portchannel_data9}}"
+
+#- name: Test Port Channel - mac
+#  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+#  with_items: "{{test_portchannel_data10}}"
+
+- name: Test Port Channel - microburst-detection
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_portchannel_data11}}"
+
+- name: Test Port Channel  - mtu
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_portchannel_data12}}"
+
+- name: Test Port Channel - service-policy
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data13}}"
+
+- name: Test Port Channel - speed
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_portchannel_data14}}"
+
+- name: Test Port Channel - storm
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data15}}"
+
+#- name: Test Port Channel - vlan
+#  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+#  with_items: "{{test_portchannel_data16}}"
+
+- name: Test Port Channel - vrrp
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}'
+  with_items: "{{test_portchannel_data17}}"
+
+- name: Test Port Channel - spanning tree1
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data18}}"
+
+- name: Test Port Channel - spanning tree 2
+  cnos_portchannel: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}' interfaceArg5='{{item.interfaceArg5}}'
+  with_items: "{{test_portchannel_data19}}"
+
+- name: Test Port Channel - ip1
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}'
+  with_items: "{{test_portchannel_data20}}"
+
+- name: Test Port Channel - ip2
+  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}'
+  with_items: "{{test_portchannel_data21}}"
+
+#- name: Test Port Channel - bfd
+#  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}' interfaceArg5='{{item.interfaceArg5}}'
+#  with_items: "{{test_portchannel_data22}}"
+
+#- name: Test Port Channel - bfd
+#  cnos_portchannel:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_portchannel_{{ inventory_hostname }}_output.txt interfaceRange='{{item.interfaceRange}}' interfaceArg1='{{item.interfaceArg1}}' interfaceArg2='{{item.interfaceArg2}}' interfaceArg3='{{item.interfaceArg3}}' interfaceArg4='{{item.interfaceArg4}}' interfaceArg5='{{item.interfaceArg5}}' interfaceArg6='{{item.interfaceArg6}}'
+#  with_items: "{{test_portchannel_data23}}"
+## Completed file

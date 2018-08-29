@@ -1,0 +1,50 @@
+---
+- debug: msg="START cli/defaults.yaml"
+
+- name: setup
+  enos_config:
+    commands:
+      - no vlan 13\n
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  become: True
+  become_method: enable
+
+- name: configure device with defaults included
+  enos_config:
+    src: roles/enos_config/templates/defaults/config.j2
+    provider: "{{ cli }}"
+  register: result
+  become: True
+  become_method: enable
+
+- debug: var=result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.updates is not defined"
+
+- name: check device with defaults included Hell
+  enos_config:
+    src: roles/enos_config/templates/defaults/config.j2
+    provider: "{{ cli }}"
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.updates is not defined"
+
+- name: teardown
+  enos_config:
+    commands:
+      - no vlan 13\n
+    provider: "{{ cli }}"
+  become: true
+  become_method: enable
+  ignore_errors: yes
+
+- debug: msg="END cli/defaults.yaml"

@@ -1,0 +1,16 @@
+#Demo Template
+vlan {{item.vlanid1}}
+name anil
+exit
+#config d
+interface ethernet {{item.slot_chassis_number1}}
+#aggregation-group {{item.portchannel_interface_number1}} mode {{item.portchannel_mode1}}
+description anil
+mtu 600
+exit
+#config d
+interface port-aggregation {{item.portchannel_interface_number1}}
+shut
+lacp suspend-individual
+no shut
+exit
