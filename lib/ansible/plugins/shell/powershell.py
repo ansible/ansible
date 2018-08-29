@@ -1417,6 +1417,9 @@ Function Run($payload) {
 
             $result.failed = $true
             $result.msg = "failed to parse module output: $excep"
+            # return the output back to Ansible to help with debugging errors
+            $result.stdout = $job_output | Out-String
+            $result.stderr = $job_error | Out-String
         }
 
         # TODO: determine success/fail, or always include stderr if nonempty?
