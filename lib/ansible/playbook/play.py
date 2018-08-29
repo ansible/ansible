@@ -239,6 +239,8 @@ class Play(Base, Taggable, Become):
 
         if len(self.roles) > 0:
             for r in self.roles:
+                if r.from_include:
+                    continue
                 block_list.extend(r.get_handler_blocks(play=self))
 
         return block_list
