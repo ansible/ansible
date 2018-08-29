@@ -126,6 +126,16 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
+    schema = None
+    if module.params.get('schema'):
+        schema = module.params.get('schema')
+
+    if schema and state == 'absent':
+        module.fail_json(
+            msg='Setting schema when state is absent is not allowed',
+            changed=False
+        )
+
     json_output = {'workflow_template': name, 'state': state}
 
     tower_auth = tower_auth_config(module)
@@ -164,15 +174,11 @@ def main():
                 params['create_on_missing'] = True
                 result = wfjt_res.modify(**params)
                 json_output['id'] = result['id']
-                if module.params.get('schema'):
-                    wfjt_res.schema(
-                        result['id'],
-                        module.params.get('schema')
-                    )
+                if schema:
+                    wfjt_res.schema(result['id'], schema)
             elif state == 'absent':
                 params['fail_on_missing'] = False
                 result = wfjt_res.delete(**params)
-
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update workflow template: \
                     {0}'.format(excinfo), changed=False)
