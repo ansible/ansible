@@ -10,7 +10,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -32,6 +32,13 @@ notes:
   - This module is deprecated. Use the C(bigip_device_facts) module instead.
 requirements:
   - bigsuds
+deprecated:
+  removed_in: '2.11'
+  alternative: bigip_device_facts
+  why: >
+    The bigip_facts module relies on SOAP to communicate with the BIG-IP,
+    and has a large amount of code that does not conform to existing F5 standards.
+    The M(bigip_device_facts) module is easier to maintain and use.
 options:
   session:
     description:
