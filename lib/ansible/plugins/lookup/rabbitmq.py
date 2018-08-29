@@ -41,6 +41,9 @@ EXAMPLES = """
   debug:
     msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.0.10:5672/%2F', channel='hello') }}"
 
+
+# If you are intending on using the returned messages as a variable in more than one task, it is recommended to set_fact.
+
 - name: Get 2 messages off a queue and set a fact for re-use
   set_fact:
     messages: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.0.10:5672/%2F', channel='hello', count=2) }}"
