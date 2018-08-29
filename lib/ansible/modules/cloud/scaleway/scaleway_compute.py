@@ -24,7 +24,7 @@ short_description: Scaleway compute management module
 version_added: "2.6"
 author: 
     - Remy Leone (@sieben)
-    - Guillaume François (@g1franc)
+    - Guillaume Francois (@g1franc)
 description:
     - "This module manages compute instances on Scaleway."
 extends_documentation_fragment: scaleway
