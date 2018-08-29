@@ -156,9 +156,9 @@ tms:
                     sample: e1
                 type:
                     description:
-                        - The type of the endpoint. Ex- Microsoft.network/TrafficManagerProfiles/ExternalEndpoints.
+                        - The type of the endpoint.
                     type: str
-                    sample: Microsoft.Network/trafficManagerProfiles/externalEndpoints
+                    sample: external_endpoints
                 target_resource_id:
                     description:
                         - The Azure Resource URI of the of the endpoint.
@@ -176,17 +176,17 @@ tms:
                     sample: Enabled
                 weight:
                     description:
-                        - The weight of this endpoint when using the 'Weighted' traffic routing method.
+                        - The weight of this endpoint when the profile has routing_method C(weighted).
                     type: int
                     sample: 10
                 priority:
                     description:
-                        - The priority of this endpoint when using the 'Priority' traffic routing method.
+                        - The priority of this endpoint when the profile has routing_method C(priority).
                     type: str
                     sample: 3
                 location:
                     description:
-                        - The location of the external or nested endpoints when using the 'Performance' traffic routing method.
+                        - The location of endpoints when type is C(external_endpoints) or C(nested_endpoints), and profile routing_method is (performance).
                     type: str
                     sample: East US
                 min_child_endpoints:
@@ -196,7 +196,7 @@ tms:
                     sample: 3
                 geo_mapping:
                     description:
-                        - The list of countries/regions mapped to this endpoint when using the 'Geographic' traffic routing method.
+                        - The list of countries/regions mapped to this endpoint when the profile has routing_method C(geographic).
                     type: list
                     sample: [
                         "GEO-NA",
@@ -205,6 +205,9 @@ tms:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import (
+  _camel_to_snake
+)
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -219,10 +222,9 @@ AZURE_OBJECT_CLASS = 'trafficManagerProfiles'
 
 
 def serialize_endpoint(endpoint):
-    return dict(
+    result = dict(
         id=endpoint.id,
         name=endpoint.name,
-        type=endpoint.type,
         target_resource_id=endpoint.target_resource_id,
         target=endpoint.target,
         status=endpoint.endpoint_status,
@@ -232,6 +234,11 @@ def serialize_endpoint(endpoint):
         min_child_endpoints=endpoint.min_child_endpoints,
         geo_mapping=endpoint.geo_mapping,
     )
+
+    if endpoint.type:
+        result['type'] = _camel_to_snake(endpoint.type.split("/")[-1])
+
+    return result
 
 
 class AzureRMTrafficManagerProfileFacts(AzureRMModuleBase):
@@ -343,7 +350,7 @@ class AzureRMTrafficManagerProfileFacts(AzureRMModuleBase):
         new_result['state'] = 'present'
         new_result['location'] = tm.location
         new_result['profile_status'] = tm.profile_status
-        new_result['routing_method'] = tm.traffic_routing_method
+        new_result['routing_method'] = tm.traffic_routing_method.lower()
         new_result['dns_config'] = dict(
             relative_name=tm.dns_config.relative_name,
             fqdn=tm.dns_config.fqdn,

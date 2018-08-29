@@ -39,31 +39,31 @@ options:
             - The type of the endpoint.
         required: true
         choices:
-            - azureEndpoints
-            - externalEndpoints
-            - nestedEndpoints
+            - azure_endpoints
+            - external_endpoints
+            - nested_endpoints
     target_resource_id:
         description:
             - The Azure Resource URI of the of the endpoint.
-            - Not applicable to endpoints of type 'ExternalEndpoints'.
+            - Not applicable to endpoints of I(type) C(external_endpoints).
         type: str
     target:
         description:
             - The fully-qualified DNS name of the endpoint.
         type: str
-    enable:
+    enabled:
         description:
             - The status of the endpoint.
         type: bool
         default: true
     weight:
         description:
-            - The weight of this endpoint when using the 'Weighted' traffic routing method.
+            - The weight of this endpoint when traffic manager profile has routing_method of C(weighted).
             - Possible values are from 1 to 1000.
         type: int
     priority:
         description:
-            - The priority of this endpoint when using the 'Priority' traffic routing method.
+            - The priority of this endpoint when traffic manager profile has routing_method of C(priority).
             - Possible values are from 1 to 1000, lower values represent higher priority.
             - This is an optional parameter. If specified, it must be specified on all endpoints.
             - No two endpoints can share the same priority value.
@@ -75,11 +75,11 @@ options:
     min_child_endpoints:
         description:
             - The minimum number of endpoints that must be available in the child profile in order for the parent profile to be considered available.
-            - Only applicable to endpoint of type 'NestedEndpoints'.
+            - Only applicable to endpoint of I(type) (nested_endpoints).
         type: int
     geo_mapping:
         description:
-            - The list of countries/regions mapped to this endpoint when using the 'Geographic' traffic routing method.
+            - The list of countries/regions mapped to this endpoint when traffic manager profile has routing_method of C(geographic).
         type: str
     state:
         description:
@@ -102,8 +102,17 @@ EXAMPLES = '''
 
 '''
 RETURN = '''
+id:
+  description: The ID of the traffic manager endpoint
+  returned: when traffic manager endpoint exists
+  type: str
+  example:
+    "/subscriptions/<subsid>/resourceGroups/testRg/providers/Microsoft.Network/trafficManagerProfiles/testProfile/externalEndpoints/testendpoint"
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
+from ansible.module_utils.common.dict_transformations import (
+    _snake_to_camel
+)
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -154,12 +163,12 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
             ),
             type=dict(
                 type='str',
-                choices=['azureEndpoints', 'externalEndpoints', 'nestedEndpoints'],
+                choices=['azure_endpoints', 'external_endpoints', 'nested_endpoints'],
                 required=True
             ),
             target=dict(type='str'),
             target_resource_id=dict(type='str'),
-            enable=dict(type='bool', default=True),
+            enabled=dict(type='bool', default=True),
             weight=dict(type='int'),
             priority=dict(type='int'),
             location=dict(type='str'),
@@ -179,7 +188,7 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
         self.profile_name = None
         self.type = None
         self.target_resource_id = None
-        self.enable = None
+        self.enabled = None
         self.weight = None
         self.priority = None
         self.location = None
@@ -202,19 +211,23 @@ class AzureRMTrafficManagerEndpoint(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
 
+        if self.type:
+            self.type = _snake_to_camel(self.type)
+
         to_be_updated = False
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
 
-        if self.enable is not None and self.enable is False:
+        if self.enabled is not None and self.enabled is False:
             self.endpoint_status = 'Disabled'
 
         response = self.get_traffic_manager_endpoint()
 
         if response:
             self.log('Results : {0}'.format(response))
+            self.results['id'] = response['id']
             if self.state == 'present':
                 # check update
                 to_be_update = self.check_update(response)

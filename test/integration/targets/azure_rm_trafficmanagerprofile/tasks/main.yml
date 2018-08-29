@@ -128,7 +128,7 @@
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
     name: "{{ endpointname1 }}"
-    type: externalEndpoints
+    type: external_endpoints
     location: westus
     priority: 2
     weight: 1
@@ -157,7 +157,7 @@
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
     name: "{{ endpointname1 }}"
-    type: externalEndpoints
+    type: external_endpoints
     location: westus
     priority: 2
     weight: 1
@@ -186,7 +186,7 @@
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
     name: "{{ endpointname2 }}"
-    type: externalEndpoints
+    type: external_endpoints
     location: westus
     priority: 1
     weight: 3
@@ -208,7 +208,7 @@
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
     name: "{{ endpointname2 }}"
-    type: externalEndpoints
+    type: external_endpoints
     location: westus
     priority: 1
     weight: 3
@@ -225,7 +225,7 @@
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
     name: "{{ endpointname2 }}"
-    type: externalEndpoints
+    type: external_endpoints
     state: absent
   register: output
 

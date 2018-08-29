@@ -333,7 +333,7 @@ class AzureRMTrafficManagerProfile(AzureRMModuleBase):
             if not response:
                 to_be_updated = True
             else:
-                self.results = response
+                self.results = shorten_traffic_manager_dict(response)
                 self.log('Results : {0}'.format(response))
                 update_tags, response['tags'] = self.update_tags(response['tags'])
 

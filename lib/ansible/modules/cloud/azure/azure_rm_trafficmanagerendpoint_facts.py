@@ -39,9 +39,9 @@ options:
         description:
             - Type of endpoint.
         choices:
-            - azureEndpoints
-            - externalEndpoints
-            - nestedEndpoints
+            - azure_endpoints
+            - external_endpoints
+            - nested_endpoints
 
 extends_documentation_fragment:
     - azure
@@ -85,9 +85,9 @@ endpoints:
             sample: testendpoint
         type:
             description:
-                - The type of the endpoint. Ex- Microsoft.network/TrafficManagerProfiles/ExternalEndpoints.
+                - The type of the endpoint.
             type: str
-            sample: Microsoft.Network/trafficManagerProfiles/externalEndpoints
+            sample: external_endpoints
         target_resource_id:
             description:
                 - The Azure Resource URI of the of the endpoint.
@@ -98,7 +98,7 @@ endpoints:
                 - The fully-qualified DNS name of the endpoint.
             type: str
             sample: 8.8.8.8
-        enable:
+        enabled:
             description:
                 - The status of the endpoint.
             type: str
@@ -134,6 +134,9 @@ endpoints:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import (
+    _snake_to_camel, _camel_to_snake
+)
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -147,21 +150,29 @@ import re
 AZURE_OBJECT_CLASS = 'TrafficManagerEndpoints'
 
 
-def serialize_endpoint(endpoint):
-    return dict(
+def serialize_endpoint(endpoint, resource_group):
+    result = dict(
         id=endpoint.id,
         name=endpoint.name,
-        type=endpoint.type,
         target_resource_id=endpoint.target_resource_id,
         target=endpoint.target,
-        status=endpoint.endpoint_status,
+        enabled=True,
         weight=endpoint.weight,
         priority=endpoint.priority,
         location=endpoint.endpoint_location,
         min_child_endpoints=endpoint.min_child_endpoints,
         geo_mapping=endpoint.geo_mapping,
-        monitor_status=endpoint.endpoint_monitor_status
+        monitor_status=endpoint.endpoint_monitor_status,
+        resource_group=resource_group
     )
+
+    if endpoint.endpoint_status and endpoint.endpoint_status == 'Disabled':
+        result['enabled'] = False
+    
+    if endpoint.type:
+        result['type'] = _camel_to_snake(endpoint.type.split("/")[-1])
+
+    return result
 
 
 class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
@@ -180,9 +191,9 @@ class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
             type=dict(
                 type='str',
                 choices=[
-                    'azureEndpoints',
-                    'externalEndpoints',
-                    'nestedEndpoints'
+                    'azure_ndpoints',
+                    'external_endpoints',
+                    'nested_endpoints'
                 ])
         )
 
@@ -206,6 +217,9 @@ class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
+
+        if self.type:
+            self.type = _snake_to_camel(self.type)
 
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
@@ -252,7 +266,7 @@ class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
         results = []
         if response and response.endpoints:
             for endpoint in response.endpoints:
-                results.append(serialize_endpoint(endpoint))
+                results.append(serialize_endpoint(endpoint, self.resource_group))
 
         return results
 
@@ -269,7 +283,7 @@ class AzureRMTrafficManagerEndpointFacts(AzureRMModuleBase):
             if item.endpoints:
                 for endpoint in item.endpoints:
                     if endpoint.type == self.type:
-                        results.append(serialize_endpoint(endpoint))
+                        results.append(serialize_endpoint(endpoint, self.resource_group))
         return results
 
 
