@@ -6,40 +6,44 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: rabbitmq
-    author: John Imison <john+github@imison.net>
+    author: John Imison <@Im0>
     version_added: "2.7"
-    short_description: Retrieve messages from an AMQP/AMQPS RabitMQ queue/channel
+    short_description: Retrieve messages from an AMQP/AMQPS RabitMQ queue/channel.
     description:
-        - This lookup uses a basic get to retrieve all, or a limited number C(count), messages from a queue
+        - This lookup uses a basic get to retrieve all, or a limited number C(count), messages from a RabbitMQ queue.
     options:
       url:
         description:
           - An URI connection string to connect to the AMQP/AMQPS RabbitMQ server.
-          - For more information refer to the URI spec U(https://www.rabbitmq.com/uri-spec.html)
+          - For more information refer to the URI spec U(https://www.rabbitmq.com/uri-spec.html).
         required: True
       channel:
         description:
-          - The channel/queue to get messages from
+          - The channel/queue to get messages from.
         required: True
       count:
         description:
-          - How many messages to collect from the queue
-        required: False
+          - How many messages to collect from the queue.
+          - If not set, defaults to retrieving all the mesages from the queue.
         default: All messages
     requirements:
-        - The python pika package U(https://pika.readthedocs.io/en/stable/modules/parameters.html)
+        - The python pika package U(https://pypi.org/project/pika/).
     notes:
-        - This lookup implements BlockingChannel.basic_get to get message from a RabbitMQ server
-        - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library
-        - More information about pika can be found at U(https://pika.readthedocs.io/en/0.12.0/index.html)
-        - This plugin is tested against RabbitMQ.  Other AMQP 0.9.1 protocol based servers may work but not tested/gaurenteed
+        - This lookup implements BlockingChannel.basic_get to get message from a RabbitMQ server.
+        - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library.
+        - More information about pika can be found at U(https://pika.readthedocs.io/en/stable/).
+        - This plugin is tested against RabbitMQ.  Other AMQP 0.9.1 protocol based servers may work but not tested/gaurenteed.
 """
 
 
 EXAMPLES = """
-- name: Get 2 messages off a queue
+- name: Get all messages off a queue
+  debug:
+    msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.0.10:5672/%2F', channel='hello') }}"
+
+- name: Get 2 messages off a queue and set a fact for re-use
   set_fact:
-    messages: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.0.10:5672/%2F', channel='hello', count=2 ) }}"
+    messages: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.0.10:5672/%2F', channel='hello', count=2) }}"
 
 - name: Dump out contents of the messages
   debug:
@@ -50,35 +54,35 @@ EXAMPLES = """
 RETURN = """
   _list:
     description:
-      - list of dictionaries with keys and value from the queue
+      - A list of dictionaries with keys and value from the queue.
     type: list
     contains:
       content_type:
-        description: The content_type on the message in the queue
+        description: The content_type on the message in the queue.
         type: str
       delivery_mode:
-        description: The delivery_mode on the message in the queue
+        description: The delivery_mode on the message in the queue.
         type: str
       delivery_tag:
-        description: The delivery_tag on the message in the queue
+        description: The delivery_tag on the message in the queue.
         type: str
       exchange:
-        description: The exchange the message came from
+        description: The exchange the message came from.
         type: str
       message_count:
-        description: The message_count for the message on the queue
+        description: The message_count for the message on the queue.
         type: str
       msg:
-        description: The content of the message
+        description: The content of the message.
         type: str
       redelivered:
         description: The redelivered flag.  True if the message has been delivered before.
         type: bool
       routing_key:
-        description: The routing_key on the message in the queue
+        description: The routing_key on the message in the queue.
         type: str
       json:
-        description: If application/json is specified in content_type, json will be loaded into variables
+        description: If application/json is specified in content_type, json will be loaded into variables.
         type: dict
 
 """

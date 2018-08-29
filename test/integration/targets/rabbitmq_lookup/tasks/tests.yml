@@ -23,7 +23,6 @@
   ignore_errors: yes
   register: rabbitmq_protocol_error
 
-# If pika is not installed, don't carry out rest of tests.
 - set_fact:
     test_rabbitmq: False
   when:
@@ -32,7 +31,6 @@
 - assert:
     that:
       - "rabbitmq_protocol_error.failed"
- #     - "'supported scheme values: amqp, amqps' in rabbitmq_protocol_error.msg"
       - "'URL malformed' in rabbitmq_protocol_error.msg"
   when:
     - test_rabbitmq != False
