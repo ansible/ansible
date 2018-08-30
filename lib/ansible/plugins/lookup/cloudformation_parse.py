@@ -44,7 +44,7 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             var = term.split()[0]
-            with open(var,"r") as f:
+            with open(var, "r") as f:
                 data = f.read()
             parsed = cfn_load(data)[0]
             ret.append(parsed)
