@@ -22,6 +22,10 @@
       source_dest_check: false
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     instance_type: t2.micro
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
     <<: *aws_connection_info
   register: in_test_vpc
 

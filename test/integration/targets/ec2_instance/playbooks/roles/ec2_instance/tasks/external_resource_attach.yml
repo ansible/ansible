@@ -37,6 +37,10 @@
     availability_zone: '{{ aws_region }}b'
     tags:
       TestId: "{{ resource_prefix }}"
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
     instance_type: t2.micro
     <<: *aws_connection_info
   register: in_test_vpc
