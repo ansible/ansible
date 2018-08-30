@@ -388,18 +388,36 @@ def copy_left_only(src, dest, module):
             b_src_item_path = to_bytes(src_item_path, errors='surrogate_or_strict')
             b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
 
-            if os.path.islink(b_src_item_path) and local_follow is False:
+            if os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path) and local_follow is True:
+                shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not(local_follow))
+                chown_recursive(b_dest_item_path, module)
+
+            if os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path) and local_follow is False:
                 linkto = os.readlink(b_src_item_path)
                 os.symlink(linkto, b_dest_item_path)
-            if os.path.isfile(b_src_item_path) and not os.path.islink(b_src_item_path):
+
+            if os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path) and local_follow is True:
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
                 if owner is not None:
                     module.set_owner_if_different(b_dest_item_path, owner, False)
                 if group is not None:
                     module.set_group_if_different(b_dest_item_path, group, False)
-            if os.path.isdir(b_src_item_path) and not os.path.islink(b_src_item_path):
+
+            if os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path) and local_follow is False:
+                linkto = os.readlink(b_src_item_path)
+                os.symlink(linkto, b_dest_item_path)
+
+            if not os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path):
+                shutil.copyfile(b_src_item_path, b_dest_item_path)
+                if owner is not None:
+                    module.set_owner_if_different(b_dest_item_path, owner, False)
+                if group is not None:
+                    module.set_group_if_different(b_dest_item_path, group, False)
+
+            if not os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path):
                 shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not(local_follow))
                 chown_recursive(b_dest_item_path, module)
+
             changed = True
     return changed
 
@@ -620,9 +638,11 @@ def main():
                 b_src = to_bytes(os.path.join(b_src, ""), errors='surrogate_or_strict')
                 if not module.check_mode and not os.path.exists(b_dest):
                     shutil.copytree(b_src, b_dest, symlinks=not(local_follow))
-                    chown_recursive(dest, module)
                     changed = True
-                if not module.check_mode and os.path.exists(b_dest):
+                    chown_recursive(dest, module)
+                if module.check_mode and not os.path.exists(b_dest):
+                    changed = True
+                if os.path.exists(b_dest):
                     diff_files_changed = copy_diff_files(b_src, b_dest, module)
                     left_only_changed = copy_left_only(b_src, b_dest, module)
                     common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
@@ -633,14 +653,16 @@ def main():
             if not src.endswith(os.path.sep) and not os.path.exists(module.params['dest']):
                 b_basename = to_bytes(os.path.basename(module.params['src']), errors='surrogate_or_strict')
                 b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
-                if not os.path.exists(b_dest):
+                if not module.check_mode and not os.path.exists(b_dest):
                     os.makedirs(b_dest)
-                b_src = to_bytes(os.path.join(b_src, ""), errors='surrogate_or_strict')
-                diff_files_changed = copy_diff_files(b_src, b_dest, module)
-                left_only_changed = copy_left_only(b_src, b_dest, module)
-                common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
-                owner_group_changed = chown_recursive(b_dest, module)
-                if diff_files_changed or left_only_changed or common_dirs_changed or owner_group_changed:
+                    b_src = to_bytes(os.path.join(b_src, ""), errors='surrogate_or_strict')
+                    diff_files_changed = copy_diff_files(b_src, b_dest, module)
+                    left_only_changed = copy_left_only(b_src, b_dest, module)
+                    common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
+                    owner_group_changed = chown_recursive(b_dest, module)
+                    if diff_files_changed or left_only_changed or common_dirs_changed or owner_group_changed:
+                        changed = True
+                if module.check_mode and not os.path.exists(b_dest):
                     changed = True
 
     res_args = dict(
