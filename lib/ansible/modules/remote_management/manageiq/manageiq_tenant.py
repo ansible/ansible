@@ -55,6 +55,12 @@ options:
   parent_id:
     description:
     - The id of the parent tenant. If not supplied the root tenant is used.
+    - The C(parent_id) takes president over C(parent) when supplied
+    required: false
+    default: null
+  parent:
+    description:
+    - The name of the parent tenant. If not supplied and no C(parent_id) is supplied the root tenant is used.
     required: false
     default: null
   quotas:
@@ -136,6 +142,10 @@ tenant:
   returned: success
   type: complex
   contains:
+    id:
+      description: The tenant id
+      returned: success
+      type: int
     name:
       description: The tenant name
       returned: success
@@ -144,10 +154,17 @@ tenant:
       description: The tenant description
       returned: success
       type: string
-    id:
-      description: The tenant id
+    parent_id:
+      description: The id of the parent tenant
       returned: success
       type: int
+    quotas:
+      description: List of tenant quotas
+      returned: success
+      type: list
+      sample:
+        cpu_allocated: 100
+        mem_allocated: 50
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -166,25 +183,61 @@ class ManageIQTenant(object):
         self.api_url = self.manageiq.api_url
         self.client = self.manageiq.client
 
-    def tenant(self, name, parent_id):
-        """ Search for tenant object by name and parent_id
-            or the root tenant if no parent_is is supplied.
+    def tenant(self, name, parent_id, parent):
+        """ Search for tenant object by name and parent_id or parent
+            or the root tenant if no parent or parent_id is supplied.
         Returns:
-            the tenant, or None if tenant was not found.
+            the parent tenant, None for the root tenant
+            the tenant or None if tenant was not found.
         """
 
         if parent_id:
-
+            parent_tenant_res = self.client.collections.tenants.find_by(id=parent_id)
+            if not parent_tenant_res:
+                self.module.fail_json(msg="Parent tenant with id '%s' not found in manageiq" % str(parent_id))
+            parent_tenant = parent_tenant_res[0]
             tenants = self.client.collections.tenants.find_by(name=name)
 
             for tenant in tenants:
-                tenant_parent_id = tenant['ancestry'].split("/")[-1]
-                if int(tenant_parent_id) == parent_id:
-                    return tenant
+                try:
+                    ancestry = tenant['ancestry']
+                except AttributeError:
+                    ancestry = None
 
-            return None
+                if ancestry:
+                    tenant_parent_id = int(ancestry.split("/")[-1])
+                    if int(tenant_parent_id) == parent_id:
+                        return parent_tenant, tenant
+
+            return parent_tenant, None
         else:
-            return self.client.collections.tenants.find_by(ancestry=None)[0]
+            if parent:
+                parent_tenant_res = self.client.collections.tenants.find_by(name=parent)
+                if not parent_tenant_res:
+                    self.module.fail_json(msg="Parent tenant '%s' not found in manageiq" % parent)
+
+                if len(parent_tenant_res) > 1:
+                    self.module.fail_json(msg="Multiple parent tenants not found in manageiq with name '%s" % parent)
+
+                parent_tenant = parent_tenant_res[0]
+                parent_id = parent_tenant['id']
+                tenants = self.client.collections.tenants.find_by(name=name)
+
+                for tenant in tenants:
+                    try:
+                        ancestry = tenant['ancestry']
+                    except AttributeError:
+                        ancestry = None
+
+                    if ancestry:
+                        tenant_parent_id = int(ancestry.split("/")[-1])
+                        if tenant_parent_id == parent_id:
+                            return parent_tenant, tenant
+
+                return parent_tenant, None
+            else:
+                # No parent or parent id supplied we select the root tenant
+                return None, self.client.collections.tenants.find_by(ancestry=None)[0]
 
     def compare_tenant(self, tenant, name, description):
         """ Compare tenant fields with new field values.
@@ -203,7 +256,7 @@ class ManageIQTenant(object):
         """ Deletes a tenant from manageiq.
 
         Returns:
-            a short message describing the operation executed.
+            dict with `msg` and `changed`
         """
         try:
             url = '%s/tenants/%s' % (self.api_url, tenant['id'])
@@ -217,7 +270,7 @@ class ManageIQTenant(object):
         """ Edit a manageiq tenant.
 
         Returns:
-            a short message describing the operation executed.
+            dict with `msg` and `changed`
         """
         resource = dict(name=name, description=description, use_config_for_attributes=False)
 
@@ -236,39 +289,39 @@ class ManageIQTenant(object):
 
         return dict(
             changed=True,
-            msg="successfully updated the tenant with id %s" % (tenant['id']),
-            tenant=result)
+            msg="successfully updated the tenant with id %s" % (tenant['id']))
 
-    def create_tenant(self, name, description, parent_id):
+    def create_tenant(self, name, description, parent_tenant):
         """ Creates the tenant in manageiq.
 
         Returns:
-            the created tenant id, name, created_on timestamp,
-            updated_on timestamp.
+            dict with `msg`, `changed` and `tenant_id`
         """
+        parent_id = parent_tenant['id']
         # check for required arguments
         for key, value in dict(name=name, description=description, parent_id=parent_id).items():
             if value in (None, ''):
                 self.module.fail_json(msg="missing required argument: %s" % key)
 
-        url = '%s/tenants' % (self.api_url)
+        url = '%s/tenants' % self.api_url
 
         resource = {'name': name, 'description': description, 'parent': {'id': parent_id}}
 
         try:
             result = self.client.post(url, action='create', resource=resource)
+            tenant_id = result['results'][0]['id']
         except Exception as e:
             self.module.fail_json(msg="failed to create tenant %s: %s" % (name, str(e)))
 
         return dict(
             changed=True,
-            msg="successfully created tenant %s with id " % name,
-            tenant=result['results'])
+            msg="successfully created tenant '%s' with id '%s'" % (name, tenant_id),
+            tenant_id=tenant_id)
 
     def tenant_quota(self, tenant, quota_key):
-        """ Search for tenant quotas object by tenant and quota_key.
+        """ Search for tenant quota object by tenant and quota_key.
         Returns:
-            the quotas for the tenant, or None if no tenant quotas were not found.
+            the quota for the tenant, or None if the tenant quota was not found.
         """
 
         tenant_quotas = self.client.get("%s/quotas?expand=resources&filter[]=name=%s" % (tenant['href'], quota_key))
@@ -289,7 +342,7 @@ class ManageIQTenant(object):
         """ Creates the tenant quotas in manageiq.
 
         Returns:
-            result
+            dict with `msg` and `changed`
         """
 
         changed = False
@@ -315,7 +368,7 @@ class ManageIQTenant(object):
                 if current_quota:
                     res = self.delete_tenant_quota(tenant, current_quota)
                 else:
-                    res = dict(changed=False, msg="tenant quota %s does not exist" % quota_key)
+                    res = dict(changed=False, msg="tenant quota '%s' does not exist" % quota_key)
 
             if res['changed']:
                 changed = True
@@ -374,12 +427,55 @@ class ManageIQTenant(object):
             result
         """
         try:
-            url = '%s/%s' % (tenant['href'], quota['id'])
-            result = self.client.post(url, action='delete')
+            result = self.client.post(quota['href'], action='delete')
         except Exception as e:
-            self.module.fail_json(msg="failed to delete tenant %s: %s" % (tenant['name'], str(e)))
+            self.module.fail_json(msg="failed to delete tenant quota '%s': %s" % (quota['name'], str(e)))
 
         return dict(changed=True, msg=result['message'])
+
+    def create_tenant_response(self, tenant, parent_tenant):
+        """ Creates the ansible result object from a manageiq tenant entity
+
+        Returns:
+            a dict with the tenant id, name, description, parent id,
+            quota's
+        """
+        tenant_quotas = self.create_tenant_quotas_response(tenant['tenant_quotas'])
+
+        try:
+            ancestry = tenant['ancestry']
+            tenant_parent_id = int(ancestry.split("/")[-1])
+        except AttributeError:
+            # The root tenant does not return the ancestry attribute
+            tenant_parent_id = None
+
+        return dict(
+            id=tenant['id'],
+            name=tenant['name'],
+            description=tenant['description'],
+            parent_id=tenant_parent_id,
+            quotas=tenant_quotas
+        )
+
+    @staticmethod
+    def create_tenant_quotas_response(tenant_quotas):
+        """ Creates the ansible result object from a manageiq tenant_quotas entity
+
+        Returns:
+            a dict with the applied quotas, name and value
+        """
+
+        if not tenant_quotas:
+            return {}
+
+        result = {}
+        for quota in tenant_quotas:
+            if quota['unit'] == 'bytes':
+                value = float(quota['value']) / (1024 * 1024 * 1024)
+            else:
+                value = quota['value']
+            result[quota['name']] = value
+        return result
 
 
 def main():
@@ -387,6 +483,7 @@ def main():
         name=dict(required=True, type='str'),
         description=dict(required=True, type='str'),
         parent_id=dict(required=False, type='int'),
+        parent=dict(required=False, type='str'),
         state=dict(choices=['absent', 'present'], default='present'),
         quotas=dict(type='dict', default={})
     )
@@ -400,13 +497,14 @@ def main():
     name = module.params['name']
     description = module.params['description']
     parent_id = module.params['parent_id']
+    parent = module.params['parent']
     state = module.params['state']
     quotas = module.params['quotas']
 
     manageiq = ManageIQ(module)
     manageiq_tenant = ManageIQTenant(manageiq)
 
-    tenant = manageiq_tenant.tenant(name, parent_id)
+    parent_tenant, tenant = manageiq_tenant.tenant(name, parent_id, parent)
 
     # tenant should not exist
     if state == "absent":
@@ -427,18 +525,18 @@ def main():
 
         # if we do not have a tenant, create it
         else:
-            res_args = manageiq_tenant.create_tenant(name, description, parent_id)
+            res_args = manageiq_tenant.create_tenant(name, description, parent_tenant)
+            tenant = manageiq.client.get_entity('tenants', res_args['tenant_id'])
 
         # quotas as supplied and we have a tenant
         if quotas:
-            tenant_quotas_res = manageiq_tenant.update_tenant_quotas(res_args['tenant'], quotas)
+            tenant_quotas_res = manageiq_tenant.update_tenant_quotas(tenant, quotas)
             if tenant_quotas_res['changed']:
                 res_args['changed'] = True
                 res_args['tenant_quotas_msg'] = tenant_quotas_res['msg']
 
-            # reload the tenant with the quota data
-            tenant.reload(expand='resources', attributes=['tenant_quotas'])
-            res_args['tenant'] = tenant._data
+        tenant.reload(expand='resources', attributes=['tenant_quotas'])
+        res_args['tenant'] = manageiq_tenant.create_tenant_response(tenant, parent_tenant)
 
     module.exit_json(**res_args)
 
