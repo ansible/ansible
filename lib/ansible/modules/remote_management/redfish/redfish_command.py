@@ -126,11 +126,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-result:
-    description: different results depending on task
+msg:
+    description: Message with action result or error description
     returned: always
-    type: dict
-    sample: BIOS Attributes set as pending values
+    type: string
+    sample: "Action was successful"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -249,7 +249,8 @@ def main():
     # Return data back or fail with proper message
     if result['ret'] is True:
         del result['ret']
-        module.exit_json(result=result)
+        result['changed'] = True
+        module.exit_json(changed=True, msg='Action was successful')
     else:
         module.fail_json(msg=to_native(result['msg']))
 
