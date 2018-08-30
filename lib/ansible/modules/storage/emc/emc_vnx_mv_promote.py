@@ -104,7 +104,7 @@ def run_module():
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if not HAS_LIB:
@@ -116,9 +116,6 @@ def run_module():
     sp_address = module.params['sp_address']
     sp_password = module.params['sp_password']
 
-    if module.check_mode:
-        return result
-
     if module.params['force']:
         promote_args = dict(promote_type='local')
     else:
@@ -129,7 +126,8 @@ def run_module():
         if mg.existed:
             if mg.role == 'Secondary':
                 try:
-                    mg.promote_group(**promote_args)
+                    if not module.check_mode:
+                        mg.promote_group(**promote_args)
                     result['changed'] = True
                 except VNXMirrorException as e:
                     if module.params['force'] and \
@@ -156,7 +154,8 @@ def run_module():
             if mm.existed:
                 if mm.remote_mirror_status == 'Secondary Copy':
                     try:
-                        mm.promote_image(**promote_args)
+                        if not module.check_mode
+                            mm.promote_image(**promote_args)
                         result['changed'] = True
                     except VNXMirrorException as e:
                         module.fail_json(msg='Promotion failed: '
