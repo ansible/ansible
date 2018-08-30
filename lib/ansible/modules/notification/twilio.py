@@ -100,8 +100,6 @@ EXAMPLES = '''
 # =======================================
 # twilio module support methods
 #
-import json
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
@@ -161,7 +159,7 @@ def main():
         if info['status'] not in [200, 201]:
             body_message = "unknown error"
             if 'body' in info:
-                body = json.loads(info['body'])
+                body = module.from_json(info['body'])
                 body_message = body['message']
             module.fail_json(msg="unable to send message to %s: %s" % (number, body_message))
 
