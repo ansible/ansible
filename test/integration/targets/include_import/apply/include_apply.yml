@@ -29,3 +29,17 @@
           - include_role_result is defined
       tags:
         - always
+
+    - include_role:
+        name: include_role2
+        apply:
+          tags:
+            - foo
+      tags:
+        - not_specified_on_purpose
+
+    - assert:
+        that:
+          - include_role2_result is undefined
+      tags:
+        - always
