@@ -237,7 +237,7 @@ def _validate_credentials_file(module, credentials_file, require_valid_json=True
     :param credentials_file: path to file on disk
     :type credentials_file: ``str``.  Complete path to file on disk.
 
-    :param require_valid_json: If true, require credentials to be valid JSON.  Default is True.
+    :param require_valid_json: This argument is ignored as of Ansible 2.7.
     :type require_valid_json: ``bool``
 
     :params check_libcloud: If true, check the libcloud version available to see if
@@ -263,14 +263,8 @@ def _validate_credentials_file(module, credentials_file, require_valid_json=True
                          credentials_file, changed=False)
         return False
     except ValueError as e:
-        if require_valid_json:
-            module.fail_json(
-                msg='GCP Credentials File %s invalid.  Must be valid JSON.' % credentials_file, changed=False)
-        else:
-            module.deprecate(msg=("Non-JSON credentials file provided. This format is deprecated. "
-                                  " Please generate a new JSON key from the Google Cloud console"),
-                             version=2.5)
-            return True
+        module.fail_json(
+            msg='GCP Credentials File %s invalid.  Must be valid JSON.' % credentials_file, changed=False)
 
 
 def gcp_connect(module, provider, get_driver, user_agent_product, user_agent_version):
