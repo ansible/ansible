@@ -2006,7 +2006,7 @@
        - "stat_new_dir_with_chown_link_file12.stat.gr_name == 'ptux'"
 
 ## testcase last - make sure remote_dir_src not change
- - block:
+- block:
    - name: Stat the remote_dir_src
      stat:
        path: '{{ remote_dir }}/remote_dir_src'
