@@ -16,6 +16,7 @@ DOCUMENTATION = """
     author:
       - Scott Buchanan <sbuchanan@ri.pn>
       - Andrew Zenk <azenk@umn.edu>
+      - Sam Doran <sdoran@redhat.com>
     version_added: "2.6"
     requirements:
       - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
@@ -27,15 +28,27 @@ DOCUMENTATION = """
       _terms:
         description: identifier(s) (UUID, name, or domain; case-insensitive) of item(s) to retrieve
         required: True
+      subdomain:
+        description: The 1Password subdomain to authenticate against.
+        default: None
+        version_added: '2.7'
       vault:
         description: vault containing the item to retrieve (case-insensitive); if absent will search all vaults
         default: None
+      vault_password:
+        description: The password used to unlock the specified vault.
+        default: None
+        version_added: '2.7'
 """
 
 EXAMPLES = """
-- name: "retrieve all data about Wintermute"
+- name: Retrieve all data about Wintermute
   debug:
-    msg: "{{ lookup('onepassword_raw', 'Wintermute') }}"
+    var: lookup('onepassword_raw', 'Wintermute')
+
+- name: Retrieve all data about Wintermute when not signed in to 1Password
+  debug:
+    var: lookup('onepassword_raw', 'Wintermute', subdomain='Turing', vault_password='DmbslfLvasjdl')
 """
 
 RETURN = """
@@ -54,9 +67,11 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         op = OnePass()
 
-        op.assert_logged_in()
-
         vault = kwargs.get('vault')
+        op._subdomain = kwargs.get('subdomain')
+        op._vault_password = kwargs.get('vault_password')
+
+        op.assert_logged_in()
 
         values = []
         for term in terms:
