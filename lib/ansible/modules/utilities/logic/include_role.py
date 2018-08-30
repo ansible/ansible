@@ -28,7 +28,7 @@ version_added: "2.2"
 options:
   apply:
     description:
-      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the include and tasks within.
     version_added: '2.7'
   name:
     description:
@@ -101,14 +101,11 @@ EXAMPLES = """
     name: myrole
   when: not idontwanttorun
 
-- name: Apply tags to tasks within included file
+- name: delegate tasks from include_role to localhost
   include_role:
     name: install
     apply:
-      tags:
-        - install
-  tags:
-    - always
+      delegate_to: localhost
 """
 
 RETURN = """
