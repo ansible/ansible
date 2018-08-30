@@ -760,7 +760,7 @@ def get_final_snapshot(client, module, snapshot_identifier):
 
 def get_parameters(client, module, parameters, method_name):
     required_options = get_boto3_client_method_parameters(client, method_name, required=True)
-    if any([parameters[k] is None for k in required_options]):
+    if any([parameters.get(k) is None for k in required_options]):
         module.fail_json(msg='To {0} requires the parameters: {1}'.format(
             get_rds_method_attribute(method_name, module).operation_description, required_options))
     options = get_boto3_client_method_parameters(client, method_name)
