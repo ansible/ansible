@@ -138,9 +138,11 @@ class LookupModule(LookupBase):
         try:
             conn_channel = connection.channel()
         except Exception as e:
+            try:
+                connection.close()
+            except Exception as ie:
+                raise AnsibleError("Channel and connection closing issues: %s / %s" % to_native(e), to_native(ie))
             raise AnsibleError("Channel issue: %s" % to_native(e))
-        finally:
-            connection.close()
 
         ret = []
         idx = 0
@@ -164,8 +166,6 @@ class LookupModule(LookupBase):
                         msg_details['json'] = json.loads(body)
                     except ValueError as e:
                         raise AnsibleError("Unable to decode JSON for message %s: %s" % (method_frame.delivery_tag, to_native(e)))
-                    finally:
-                        connection.close()
 
                 ret.append(msg_details)
                 conn_channel.basic_ack(method_frame.delivery_tag)
