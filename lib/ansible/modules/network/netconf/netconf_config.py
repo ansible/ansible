@@ -49,7 +49,7 @@ options:
     aliases: ['source']
   format:
     description:
-    - The format of the configuration provided as value of C(content). Accepted values are I(xml) and I(test) and
+    - The format of the configuration provided as value of C(content). Accepted values are I(xml) and I(text) and
       the given configuration format should be supported by remote Netconf server.
     default: xml
     choices: ['xml', 'text']
@@ -78,7 +78,7 @@ options:
     description:
     - This argument will configure a timeout value for the commit to be confirmed before it is automatically
       rolled back. If the C(confirm_commit) argument is set to False, this argument is silently ignored. If the
-      value of this argument is set to 0, the commit is confirmed immediately. The remote host should
+      value of this argument is set to 0, the commit is confirmed immediately. The remote host MUST
       support :candidate and :confirmed-commit capability for this option to .
     default: 0
     version_added: "2.7"
@@ -92,7 +92,7 @@ options:
     description:
     - This option control the netconf server action after a error is occured while editing the configuration.
       If the value is I(stop-on-error) abort the config edit on first error, if value is I(continue-on-error)
-      it continues to process configuration data on erro, error is recorded and negative response is generated
+      it continues to process configuration data on error, error is recorded and negative response is generated
       if any errors occur. If value is C(rollback-on-error) it rollback to the original configuration in case
       any error occurs, this requires the remote Netconf server to support the :rollback-on-error capability.
     default: stop-on-error
