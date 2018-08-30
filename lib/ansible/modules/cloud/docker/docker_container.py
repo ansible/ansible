@@ -239,6 +239,9 @@ options:
        - If included, C(links) or C(aliases) are lists.
        - For examples of the data structure and usage see EXAMPLES below.
        - To remove a container from one or more networks, use the C(purge_networks) option.
+       - Note that as opposed to C(docker run ...), M(docker_container) does not remove the default
+         network if C(networks) is specified. You need to explicity use C(purge_networks) to enforce
+         the removal of the default network (and all other networks not explicitly mentioned in C(networks)).
      version_added: "2.2"
   oom_killer:
     description:
