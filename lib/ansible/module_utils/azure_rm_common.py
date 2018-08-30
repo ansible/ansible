@@ -149,6 +149,7 @@ try:
     from azure.mgmt.dns import DnsManagementClient
     from azure.mgmt.web import WebSiteManagementClient
     from azure.mgmt.containerservice import ContainerServiceClient
+    from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from adal.authentication_context import AuthenticationContext
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
@@ -275,6 +276,7 @@ class AzureRMModuleBase(object):
         self._compute_client = None
         self._dns_client = None
         self._web_client = None
+        self._marketplace_client = None
         self._containerservice_client = None
         self._mysql_client = None
         self._postgresql_client = None
@@ -1099,3 +1101,11 @@ class AzureRMModuleBase(object):
                                                                       api_version='2018-06-01')
 
         return self._containerinstance_client
+
+    @property
+    def marketplace_client(self):
+        self.log('Getting marketplace agreement client')
+        if not self._marketplace_client:
+            self._marketplace_client = self.get_mgmt_svc_client(MarketplaceOrderingAgreements,
+                                                                base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._marketplace_client
