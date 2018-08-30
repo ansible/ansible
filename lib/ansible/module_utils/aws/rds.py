@@ -72,7 +72,7 @@ def get_final_identifier(method_name, module):
 def handle_errors(module, exception, method_name, parameters):
 
     if not isinstance(exception, ClientError):
-        module.fail_json_aws(exception, msg="Unexpected failure")
+        module.fail_json_aws(exception, msg="Unexpected failure for method {0} with parameters {1}".format(method_name, parameters))
 
     changed = True
     error_code = exception.response['Error']['Code']
