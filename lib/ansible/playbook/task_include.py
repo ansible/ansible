@@ -69,22 +69,11 @@ class TaskInclude(Task):
         if not task.args.get('_raw_params'):
             task.args['_raw_params'] = task.args.pop('file')
 
-        apply_attrs = task.args.pop('apply', {})
+        apply_attrs = task.args.get('apply', {})
         if apply_attrs and task.action != 'include_tasks':
             raise AnsibleParserError('Invalid options for %s: apply' % task.action, obj=data)
-        elif apply_attrs:
-            apply_attrs['block'] = []
-            p_block = Block.load(
-                apply_attrs,
-                play=block._play,
-                parent_block=block,
-                role=role,
-                task_include=task_include,
-                use_handlers=block._use_handlers,
-                variable_manager=variable_manager,
-                loader=loader,
-            )
-            task._parent = p_block
+        elif not isinstance(apply_attrs, dict):
+            raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
 
         return task
 
@@ -115,3 +104,24 @@ class TaskInclude(Task):
                 del all_vars['when']
 
         return all_vars
+
+    def build_parent_block(self):
+        '''
+        This method is used to create the parent block for the included tasks
+        when ``apply`` is specified
+        '''
+        apply_attrs = self.args.pop('apply', {})
+        if apply_attrs:
+            apply_attrs['block'] = []
+            p_block = Block.load(
+                apply_attrs,
+                play=self._parent._play,
+                task_include=self,
+                role=self._role,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+            )
+        else:
+            p_block = self
+
+        return p_block

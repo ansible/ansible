@@ -1,0 +1,2 @@
+bugfixes:
+- include - Change order of where the new block is inserted with apply so that apply args are not applied to the include also (https://github.com/ansible/ansible/pull/44912)
