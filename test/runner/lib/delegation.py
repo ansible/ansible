@@ -238,6 +238,9 @@ def delegate_docker(args, exclude, require, integration_targets):
 
             docker_socket = '/var/run/docker.sock'
 
+            if args.docker_seccomp != 'default':
+                test_options += ['--security-opt', 'seccomp=%s' % args.docker_seccomp]
+
             if os.path.exists(docker_socket):
                 test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
