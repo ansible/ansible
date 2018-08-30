@@ -8,7 +8,7 @@ DOCUMENTATION = """
     lookup: rabbitmq
     author: John Imison <@Im0>
     version_added: "2.7"
-    short_description: Retrieve messages from an AMQP/AMQPS RabitMQ queue/channel.
+    short_description: Retrieve messages from an AMQP/AMQPS RabbitMQ queue/channel.
     description:
         - This lookup uses a basic get to retrieve all, or a limited number C(count), messages from a RabbitMQ queue.
     options:
@@ -24,8 +24,7 @@ DOCUMENTATION = """
       count:
         description:
           - How many messages to collect from the queue.
-          - If not set, defaults to retrieving all the mesages from the queue.
-        default: All messages
+          - If not set, defaults to retrieving all the messages from the queue.
     requirements:
         - The python pika package U(https://pypi.org/project/pika/).
     notes:
@@ -119,9 +118,9 @@ class LookupModule(LookupBase):
         if not HAS_PIKA:
             raise AnsibleError('pika python package is required for rabbitmq lookup.')
         if not url:
-            raise AnsibleError('URL is required for ampq lookup.')
+            raise AnsibleError('URL is required for rabbitmq lookup.')
         if not channel:
-            raise AnsibleError('Channel is required for ampq lookup.')
+            raise AnsibleError('Channel is required for rabbitmq lookup.')
 
         display.vvv(u"terms:%s : variables:%s url:%s channel:%s count:%s" % (terms, variables, url, channel, count))
 
@@ -137,10 +136,10 @@ class LookupModule(LookupBase):
 
         try:
             conn_channel = connection.channel()
-        except Exception as e:
+        except pika.exceptions.AMQPChannelError as e:
             try:
                 connection.close()
-            except Exception as ie:
+            except pika.exceptions.AMQPConnectionError as ie:
                 raise AnsibleError("Channel and connection closing issues: %s / %s" % to_native(e), to_native(ie))
             raise AnsibleError("Channel issue: %s" % to_native(e))
 
@@ -181,7 +180,7 @@ class LookupModule(LookupBase):
         else:
             try:
                 connection.close()
-            except Exception:
+            except pika.exceptions.AMQPConnectionError:
                 pass
             finally:
                 return [ret]
