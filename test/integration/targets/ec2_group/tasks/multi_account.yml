@@ -1,0 +1,73 @@
+- block:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc-2"
+        state: present
+        cidr_block: "10.232.233.128/26"
+        <<: *aws_connection_info
+        tags:
+          Description: "Created by ansible-test"
+      register: vpc_result_2
+    - name: Create group in second VPC
+      ec2_group:
+        name: '{{ ec2_group_name }}-external'
+        description: '{{ ec2_group_description }}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result_2.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          cidr_ip: 0.0.0.0/0
+          ports:
+          - 80
+          rule_desc: 'http whoo'
+      register: external
+    - aws_caller_facts:
+        <<: *aws_connection_info
+      register: caller_facts
+    - name: Create group in internal VPC
+      ec2_group:
+        name: '{{ ec2_group_name }}-internal'
+        description: '{{ ec2_group_description }}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: present
+        rules:
+        - proto: "tcp"
+          group_id: '{{ caller_facts.account }}/{{ external.group_id }}/{{ ec2_group_name }}-external'
+          ports:
+          - 80
+  always:
+    - pause: seconds=5
+    - name: Clean up group in second VPC
+      ec2_group:
+        name: '{{ ec2_group_name }}-external'
+        description: '{{ ec2_group_description }}'
+        state: absent
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result_2.vpc.id }}'
+    - name: Clean up group in second VPC
+      ec2_group:
+        name: '{{ ec2_group_name }}-internal'
+        description: '{{ ec2_group_description }}'
+        state: absent
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc-2"
+        state: absent
+        cidr_block: "10.232.233.128/26"
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: removed
+      retries: 10
+      until: removed is not failed
