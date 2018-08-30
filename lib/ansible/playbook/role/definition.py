@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import pprint
 
 from ansible import constants as C  # noqa
 from ansible.errors import AnsibleError, AnsibleAssertionError
@@ -34,9 +33,6 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
 from ansible.utils.path import unfrackpath
-
-import logging
-log = logging.getLogger(__name__)
 
 try:
     from __main__ import display
@@ -62,8 +58,6 @@ def role_name_to_relative_content_path(role_name):
         # namespace, repo, name = role_name.split('.', 2)
         name_parts = role_name.split('.', 2)
     except (ValueError, AttributeError):
-        log.debug('Could not "." split role_name "%s"',
-                  role_name)
         return None
 
     # name_parts namespace, repo, rolename or
@@ -83,14 +77,10 @@ def role_name_to_relative_content_path(role_name):
     if len(name_parts) < 2:
         return None
 
-    log.debug(name_parts)
-
     # catches 'namespace.' (trailing dot) as well as rel path cases
     # like '../some_dir.foo.bar'
     if not all(name_parts):
         return None
-
-    log.debug('name_parts: %s', name_parts)
 
     namespace = name_parts.pop(0)
     repo = name_parts.pop(0)
@@ -99,8 +89,8 @@ def role_name_to_relative_content_path(role_name):
     try:
         name = name_parts.pop(0)
     except IndexError:
-        log.debug('role name "%s" only had two name parts (namespace="%s", repo="%s") and no role name',
-                  role_name, namespace, repo)
+        display.debug('role name "%s" only had two name parts (namespace="%s", repo="%s") and no role name' %
+                      (role_name, namespace, repo))
 
     if name:
         content_rel_role_path = os.path.join(namespace, repo, 'roles', name)
@@ -128,11 +118,7 @@ def find_role_in_content_path(role_name, loader, content_search_paths):
     #       role that matches, the resolver would choose.
     # FIXME: mv to method, deindent, return early, etc
 
-    log.debug('content_search_paths: %s', content_search_paths)
-
     content_rel_role_path = role_name_to_relative_content_path(role_name)
-
-    log.debug('content_rel_role_path: %s', content_rel_role_path)
 
     # didn't parse the role_name, return None
     if not content_rel_role_path:
@@ -145,10 +131,8 @@ def find_role_in_content_path(role_name, loader, content_search_paths):
         fq_role_path = os.path.join(content_search_path, content_rel_role_path)
         fq_role_path = unfrackpath(fq_role_path)
 
-        log.debug('fq_role_path: %s', fq_role_path)
-
         if loader.path_exists(fq_role_path):
-            log.info('FOUND:     %s at content path "%s"', role_name, fq_role_path)
+            display.debug('FOUND:     %s at content path "%s"' % (role_name, fq_role_path))
             return (role_name, fq_role_path)
 
     return None
@@ -230,7 +214,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         '''
 
         if isinstance(ds, string_types):
-            log.debug('role_name: %s (role ds was a string)', ds)
             return ds
 
         role_name = ds.get('role', ds.get('name'))
@@ -245,8 +228,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             if templar._contains_vars(role_name):
                 role_name = templar.template(role_name)
 
-        log.info('using role_name: %s', role_name)
-        log.info('role_name: %s ds:\n%s', role_name, pprint.pformat(ds))
         return role_name
 
     def _load_role_path(self, role_name):
@@ -256,9 +237,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         basename as the role name, otherwise we take the name as-given and
         append it to the default role path
         '''
-
-        log.info('Look for:  %s', role_name)
-        # log.debug('installed_role_spec: %s', installed_role_spec)
 
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
@@ -278,7 +256,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # in the loader (which should be the playbook dir itself) but without
         # the roles/ dir appended
         role_search_paths.append(self._loader.get_basedir())
-        log.debug('role_search_paths: %s', role_search_paths)
+        display.debug('role_search_paths: %s' % role_search_paths)
 
         # create a templar class to template the dependency names, in
         # case they contain variables
@@ -294,11 +272,10 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # names.
         content_results = find_role_in_content_path(role_name, self._loader,
                                                     content_search_paths=C.DEFAULT_CONTENT_PATH)
-        log.debug('content_results: %s', content_results)
 
         if content_results:
-            log.debug('returning %s (found a role in content path for role_name=%s)',
-                      repr(content_results), role_name)
+            display.debug('returning %s (found a role in content_path="%s" for role_name=%s)' %
+                          (repr(content_results), C.DEFAULT_CONTENT_PATH, role_name))
 
             return content_results
 
@@ -309,26 +286,21 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             # fq_role_name = resolve_role_name(role_name)
             role_path = unfrackpath(os.path.join(path, role_name))
 
-            log.debug('search for role=%s in path: %s (role_path=%s)', role_name, path, role_path)
             if self._loader.path_exists(role_path):
-                log.info('FOUND:     %s at role path: "%s"', role_name, role_path)
+                display.debug('FOUND:     %s at role path: "%s"' % (role_name, role_path))
 
                 return (role_name, role_path)
 
         # if not found elsewhere try to extract path from name
         role_path = unfrackpath(role_name)
 
-        log.debug('trying role_name=%s as a path: %s ', role_name, role_path)
-
         if self._loader.path_exists(role_path):
-            log.debug('FOUND:     %s (via relative path) at path: "%s"', role_name, role_path)
-
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
 
-        log.info('Failed to find the role "%s" in content paths %s', role_name, C.DEFAULT_CONTENT_PATH)
-        log.info('Failed to find the role "%s" in any of the roles paths: %s',
-                 role_name, ":".join(role_search_paths))
+        display.debug('Failed to find the role "%s" in content paths %s' % (role_name, C.DEFAULT_CONTENT_PATH))
+        display.debug('Failed to find the role "%s" in any of the roles paths: %s' %
+                      (role_name, ":".join(role_search_paths)))
 
         raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)), obj=self._ds)
 
