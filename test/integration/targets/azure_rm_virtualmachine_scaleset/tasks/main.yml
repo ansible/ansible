@@ -81,7 +81,7 @@
 - name: Assert no VMSS created in check mode
   assert:
     that:
-      -  output_scaleset.ansible_facts.azure_vmss | length == 0
+      - output_scaleset.ansible_facts.azure_vmss | length == 0
 
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
