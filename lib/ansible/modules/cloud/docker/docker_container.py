@@ -1237,7 +1237,6 @@ class Container(DockerBaseClass):
 
         # Map parameters to container inspect results
         config_mapping = dict(
-            auto_remove=host_config.get('AutoRemove'),
             expected_cmd=config.get('Cmd'),
             domainname=config.get('Domainname'),
             hostname=config.get('Hostname'),
@@ -1257,8 +1256,6 @@ class Container(DockerBaseClass):
             ipc_mode=host_config.get("IpcMode"),
             labels=config.get('Labels'),
             expected_links=host_config.get('Links'),
-            log_driver=log_config.get('Type'),
-            log_options=log_config.get('Config'),
             mac_address=network.get('MacAddress'),
             memory_swappiness=host_config.get('MemorySwappiness'),
             network_mode=host_config.get('NetworkMode'),
@@ -1270,7 +1267,6 @@ class Container(DockerBaseClass):
             expected_ports=host_config.get('PortBindings'),
             read_only=host_config.get('ReadonlyRootfs'),
             restart_policy=restart_policy.get('Name'),
-            restart_retries=restart_policy.get('MaximumRetryCount'),
             # Cannot test shm_size, as shm_size is not included in container inspection results.
             # shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
@@ -1283,9 +1279,21 @@ class Container(DockerBaseClass):
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
-            volume_driver=host_config.get('VolumeDriver'),
             working_dir=host_config.get('WorkingDir')
         )
+        if self.parameters.restart_policy:
+            config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
+        if self.parameters.log_driver:
+            config_mapping['log_driver'] = log_config.get('Type')
+            config_mapping['log_options'] = log_config.get('Config')
+
+        if self.parameters.client.HAS_AUTO_REMOVE_OPT:
+            # auto_remove is only supported in docker>=2
+            config_mapping['auto_remove'] = host_config.get('AutoRemove')
+
+        if HAS_DOCKER_PY_3:
+            # volume_driver moved to create_host_config in > 3
+            config_mapping['volume_driver'] = host_config.get('VolumeDriver')
 
         differences = []
         for key, value in config_mapping.items():
@@ -1383,7 +1391,6 @@ class Container(DockerBaseClass):
             cpu_quota=host_config.get('CpuQuota'),
             cpuset_cpus=host_config.get('CpusetCpus'),
             cpuset_mems=host_config.get('CpusetMems'),
-            cpu_shares=host_config.get('CpuShares'),
             kernel_memory=host_config.get("KernelMemory"),
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
@@ -1391,6 +1398,10 @@ class Container(DockerBaseClass):
             oom_score_adj=host_config.get('OomScoreAdj'),
             oom_killer=host_config.get('OomKillDisable'),
         )
+
+        if HAS_DOCKER_PY_3:
+            # cpu_shares moved to create_host_config in > 3
+            config_mapping['cpu_shares'] = host_config.get('CpuShares')
 
         differences = []
         for key, value in config_mapping.items():
@@ -1699,6 +1710,11 @@ class ContainerManager(DockerBaseClass):
     def __init__(self, client):
 
         super(ContainerManager, self).__init__()
+
+        if client.module.params.get('log_options') and not client.module.params.get('log_driver'):
+            client.module.warn('log_options is ignored when log_driver is not specified')
+        if client.module.params.get('restart_retries') and not client.module.params.get('restart_policy'):
+            client.module.warn('restart_retries is ignored when restart_policy is not specified')
 
         self.client = client
         self.parameters = TaskParameters(client)
