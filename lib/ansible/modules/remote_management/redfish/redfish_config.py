@@ -46,18 +46,22 @@ options:
     required: false
     description:
       - name of BIOS attribute to update
+    default: 'null'
   bios_attr_value:
     required: false
     description:
       - value of BIOS attribute to update
+    default: 'null'
   mgr_attr_name:
     required: false
     description:
       - name of Manager attribute to update
+    default: 'null'
   mgr_attr_value:
     required: false
     description:
       - value of Manager attribute to update
+    default: 'null'
 
 author: "Jose Delarosa (github: jose-delarosa)"
 '''
@@ -161,10 +165,10 @@ def main():
             baseuri=dict(required=True),
             user=dict(required=True),
             password=dict(required=True, no_log=True),
-            mgr_attr_name=dict(),
-            mgr_attr_value=dict(),
-            bios_attr_name=dict(),
-            bios_attr_value=dict(),
+            mgr_attr_name=dict(default='null'),
+            mgr_attr_value=dict(default='null'),
+            bios_attr_name=dict(default='null'),
+            bios_attr_value=dict(default='null'),
         ),
         supports_check_mode=False
     )
