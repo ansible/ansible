@@ -25,7 +25,6 @@ from ansible import constants as C  # noqa
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-# from ansible.playbook.attribute import Attribute
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -283,7 +282,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         for path in role_search_paths:
             path = templar.template(path)
 
-            # fq_role_name = resolve_role_name(role_name)
             role_path = unfrackpath(os.path.join(path, role_name))
 
             if self._loader.path_exists(role_path):
