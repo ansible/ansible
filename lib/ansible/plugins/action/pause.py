@@ -73,8 +73,8 @@ def clear_line(stdout):
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
-    PAUSE_TYPES = ['seconds', 'minutes', 'prompt', 'echo', '']
     BYPASS_HOST_LOOP = True
+    _VALID_ARGS = frozenset(('echo', 'minutes', 'prompt', 'seconds'))
 
     def run(self, tmp=None, task_vars=None):
         ''' run the pause action module '''
@@ -99,11 +99,6 @@ class ActionModule(ActionBase):
             delta=None,
             echo=echo
         ))
-
-        if not set(self._task.args.keys()) <= set(self.PAUSE_TYPES):
-            result['failed'] = True
-            result['msg'] = "Invalid argument given. Must be one of: %s" % ", ".join(self.PAUSE_TYPES)
-            return result
 
         # Should keystrokes be echoed to stdout?
         if 'echo' in self._task.args:

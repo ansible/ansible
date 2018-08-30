@@ -28,15 +28,11 @@ class ActionModule(ActionBase):
     ''' Print statements during execution '''
 
     TRANSFERS_FILES = False
-    VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
+    _VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()
-
-        for arg in self._task.args:
-            if arg not in self.VALID_ARGS:
-                return {"failed": True, "msg": "'%s' is not a valid option in debug" % arg}
 
         if 'msg' in self._task.args and 'var' in self._task.args:
             return {"failed": True, "msg": "'msg' and 'var' are incompatible options"}

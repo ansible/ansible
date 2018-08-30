@@ -34,12 +34,24 @@
       command: who -b
       register: after_boot_time
 
-    - name: Enusure system was actually rebooted
+    - name: Ensure system was actually rebooted
       assert:
         that:
           - reboot_result is changed
           - reboot_result.elapsed > 10
           - before_boot_time.stdout != after_boot_time.stdout
+
+    - name: Use invalid parameter
+      reboot:
+        foo: bar
+      ignore_errors: yes
+      register: invalid_parameter
+
+    - name: Ensure task fails with error
+      assert:
+        that:
+        - invalid_parameter is failed
+        - "invalid_parameter.msg == 'Invalid options for reboot: foo'"
 
   always:
     - name: Cleanup temp file
