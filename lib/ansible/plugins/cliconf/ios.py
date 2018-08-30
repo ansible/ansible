@@ -151,6 +151,32 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
+    def edit_macro(self, candidate=None, commit=True, replace=None, comment=None):
+        resp = {}
+        operations = self.get_device_operations()
+        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+
+        results = []
+        requests = []
+        if commit:
+            commands = ''
+            for line in candidate:
+                if line != 'None':
+                    commands += (' ' + line + '\n')
+                self.send_command('config terminal', sendonly=True)
+                obj = {'command': commands, 'sendonly': True}
+                results.append(self.send_command(**obj))
+                requests.append(commands)
+
+            self.send_command('end', sendonly=True)
+            time.sleep(0.1)
+            results.append(self.send_command('\n'))
+            requests.append('\n')
+
+        resp['request'] = requests
+        resp['response'] = results
+        return resp
+
     def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
         if not command:
             raise ValueError('must provide value of command to execute')
