@@ -474,6 +474,28 @@ smaller subnets::
     # {{ address | ipsubnet(18, -5) }}
     192.168.144.0/27
 
+By specifying an other subnet as a second argument, if the second subnet include
+the first you can have the rank of the first subnet in the second ::
+
+    # The rank of the ip in the subnet (the ip is the 36870nth /32 of the subnet)
+    # {{ address | ipsubnet(subnet) }}
+    36870
+
+    # The rank in the /24 that contain the address
+    # {{ address | ipsubnet('192.168.144.0/24') }}
+    6
+
+    # An IP with the subnet in the first /30 in a /24
+    # {{ '192.168.144.1/30' | ipsubnet('192.168.144.0/24') }}
+    1
+
+    # The fifth subnet /30 in a /24
+    # {{ '192.168.144.16/30' | ipsubnet('192.168.144.0/24') }}
+    5
+
+If the secound subnet doesn't include the first it raise an error
+
+
 You can use ``ipsubnet()`` filter with ``ipaddr()`` filter to for example split
 given ``/48`` prefix into smaller, ``/64`` subnets::
 

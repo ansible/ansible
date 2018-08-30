@@ -21,7 +21,7 @@ import pytest
 
 from ansible.compat.tests import unittest
 from ansible.errors import AnsibleFilterError
-from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
+from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet,
                                            previous_nth_usable, network_in_usable, network_in_network,
                                            cidr_merge, ipmath)
 netaddr = pytest.importorskip('netaddr')
@@ -502,3 +502,44 @@ class TestIpFilter(unittest.TestCase):
         with self.assertRaises(AnsibleFilterError) as exc:
             ipmath('1.2.3.4', 'some_number')
         self.assertEqual(exc.exception.message, expected)
+
+    def test_ipsubnet(self):
+        test_cases = (
+            (('1.1.1.1/24', '30'), '64'),
+            (('1.1.1.1/25', '24'), '0'),
+            (('1.12.1.34/32', '1.12.1.34/24'), '35'),
+            (('192.168.50.0/24', '192.168.0.0/16'), '51'),
+            (('192.168.144.5', '192.168.0.0/16'), '36870'),
+            (('192.168.144.5', '192.168.144.5/24'), '6'),
+            (('192.168.144.5/32', '192.168.144.0/24'), '6'),
+            (('192.168.144.16/30', '192.168.144.0/24'), '5'),
+            (('192.168.144.5', ), '192.168.144.5/32'),
+            (('192.168.0.0/16', ), '192.168.0.0/16'),
+            (('192.168.144.5', ), '192.168.144.5/32'),
+            (('192.168.0.0/16', '20'), '16'),
+            (('192.168.0.0/16', '20', '0'), '192.168.0.0/20'),
+            (('192.168.0.0/16', '20', '-1'), '192.168.240.0/20'),
+            (('192.168.0.0/16', '20', '5'), '192.168.80.0/20'),
+            (('192.168.0.0/16', '20', '-5'), '192.168.176.0/20'),
+            (('192.168.144.5', '20'), '192.168.144.0/20'),
+            (('192.168.144.5', '18', '0'), '192.168.128.0/18'),
+            (('192.168.144.5', '18', '-1'), '192.168.144.4/31'),
+            (('192.168.144.5', '18', '5'), '192.168.144.0/23'),
+            (('192.168.144.5', '18', '-5'), '192.168.144.0/27'),
+            (('span', 'test', 'error'), False),
+            (('test', ), False),
+            (('192.168.144.5', '500000', '-5'), False),
+            (('192.168.144.5', '18', '500000'), False),
+            (('200000', '18', '-5'), '0.3.13.64/27'),
+        )
+        for args, res in test_cases:
+            self._test_ipsubnet(args, res)
+
+    def _test_ipsubnet(self, ipsubnet_args, expected_result):
+        self.assertEqual(ipsubnet(*ipsubnet_args), expected_result)
+
+        with self.assertRaisesRegexp(AnsibleFilterError, 'You must pass a valid subnet or IP address; invalid_subnet is invalid'):
+            ipsubnet('192.168.144.5', 'invalid_subnet')
+
+        with self.assertRaisesRegexp(AnsibleFilterError, '192.168.144.0/30 is not in the subnet 192.168.144.4/30'):
+            ipsubnet('192.168.144.1/30', '192.168.144.5/30')
