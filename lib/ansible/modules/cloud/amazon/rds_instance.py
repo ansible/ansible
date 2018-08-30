@@ -725,14 +725,22 @@ def get_rds_method_attribute_name(instance, state, creation_source, read_replica
 
 def get_instance(client, module, db_instance_id):
     try:
-        instance = client.describe_db_instances(DBInstanceIdentifier=db_instance_id)['DBInstances'][0]
-        instance['Tags'] = get_tags(client, module, instance['DBInstanceArn'])
-        if instance.get('ProcessorFeatures'):
-            instance['ProcessorFeatures'] = dict((feature['Name'], feature['Value']) for feature in instance['ProcessorFeatures'])
-        if instance.get('PendingModifiedValues', {}).get('ProcessorFeatures'):
-            instance['PendingModifiedValues']['ProcessorFeatures'] = dict((feature['Name'], feature['Value']) for feature in instance['PendingModifiedValues']['ProcessorFeatures'])
-    except is_boto3_error_code('DBInstanceNotFound'):
-        instance = {}
+        for i in range(3):
+            try:
+                instance = client.describe_db_instances(DBInstanceIdentifier=db_instance_id)['DBInstances'][0]
+                instance['Tags'] = get_tags(client, module, instance['DBInstanceArn'])
+                if instance.get('ProcessorFeatures'):
+                    instance['ProcessorFeatures'] = dict((feature['Name'], feature['Value']) for feature in instance['ProcessorFeatures'])
+                if instance.get('PendingModifiedValues', {}).get('ProcessorFeatures'):
+                    instance['PendingModifiedValues']['ProcessorFeatures'] = dict(
+                        (feature['Name'], feature['Value'])
+                        for feature in instance['PendingModifiedValues']['ProcessorFeatures']
+                    )
+                break
+            except is_boto3_error_code('DBInstanceNotFound'):
+                sleep(3)
+        else:
+            instance = {}
     except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg='Failed to describe DB instances')
     return instance
