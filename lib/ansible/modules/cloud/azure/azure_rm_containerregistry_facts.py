@@ -19,7 +19,7 @@ module: azure_rm_containerregistry_facts
 version_added: "2.7"
 short_description: Get Azure Container Registry facts.
 description:
-    - Get facts of Registry.
+    - Get facts for Container Registry.
 
 options:
     resource_group:
@@ -29,6 +29,11 @@ options:
     name:
         description:
             - The name of the container registry.
+    retrieve_credentials:
+        description:
+            - Retrieve credentials for container registry.
+        type: bool
+        default: no
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -152,6 +157,10 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
             ),
             tags=dict(
                 type='list'
+            ),
+            retrieve_credentials=dict(
+                type='bool',
+                default=False
             )
         )
         # store the results of the module operation
@@ -160,6 +169,7 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
+        self.retrieve_credentials = False
         super(AzureRMContainerRegistryFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -228,7 +238,7 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
         credentials = {}
         admin_user_enabled = d['admin_user_enabled']
 
-        if admin_user_enabled:
+        if self.retrieve_credentials and admin_user_enabled:
             credentials = self.containerregistry_client.registries.list_credentials(resource_group, name)
 
         d = {
