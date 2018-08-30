@@ -111,8 +111,7 @@ elapsed:
 matched_processes:
   description: List of matched processes (either stopped or started)
   returned: always
-  type: list
-  sample:
+  type: complex
   contains:
     Id:
       description: The PID of the matched process
@@ -126,7 +125,7 @@ matched_processes:
       sample: svchost
     UserName:
       description: The owner of the matched process
-      returned: always, when supported by PowerShell (PS4+)
+      returned: when supported by PowerShell
       type: str
       sample: NT AUTHORITY\SYSTEM
 '''

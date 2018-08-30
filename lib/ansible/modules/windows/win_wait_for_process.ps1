@@ -6,7 +6,6 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.SID
-#Requires -Version 4
 
 $ErrorActionPreference = "Stop"
 
