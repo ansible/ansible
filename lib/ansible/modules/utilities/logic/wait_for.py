@@ -662,5 +662,6 @@ def main():
     elapsed = datetime.datetime.utcnow() - start
     module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
 
+
 if __name__ == '__main__':
     main()
