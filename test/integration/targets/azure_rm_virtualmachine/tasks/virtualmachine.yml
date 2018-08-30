@@ -255,6 +255,8 @@
       name: testvmnoip
       state: absent
       vm_size: Standard_A0
+  async: 5000
+  poller: 0
 
 - set_fact:
       niclist:
