@@ -126,7 +126,7 @@
           engine_version: "10.1.26"
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
-          option_group_name: default:mariadb-10-1
+          option_group_name: default:mariadb-10-0
           port: 1150
           publicly_accessible: False
           apply_immediately: True
@@ -154,7 +154,7 @@
           engine_version: "10.1.26"
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
-          option_group_name: default:mariadb-10-1
+          option_group_name: default:mariadb-10-0
           port: 1150
           publicly_accessible: False
           <<: *aws_connection_info
