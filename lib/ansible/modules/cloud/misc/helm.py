@@ -18,26 +18,26 @@ short_description: Manages Kubernetes packages with the Helm package manager
 version_added: "2.4"
 author: "Flavio Percoco (flaper87)"
 description:
-   - Install, upgrade, delete and list packages with the Helm package manage
+   - Install, upgrade, delete and list packages with the Helm package manager.
 requirements:
   - "pyhelm"
   - "grpcio"
 options:
   host:
     description:
-      - Tiller's server host
+      - Tiller's server host.
     default: "localhost"
   port:
     description:
-      - Tiller's server port
+      - Tiller's server port.
     default: 44134
   namespace:
     description:
-      - Kubernetes namespace where the chart should be installed
+      - Kubernetes namespace where the chart should be installed.
     default: "default"
   name:
     description:
-      - Release name to manage
+      - Release name to manage.
   state:
     description:
       - Whether to install C(present), remove C(absent), or purge C(purged) a package.
@@ -45,13 +45,7 @@ options:
     default: "present"
   chart:
     description: |
-      A map describing the chart to install. For example:
-      chart:
-        name: memcached
-        version: 0.4.0
-        source:
-          type: repo
-          location: https://kubernetes-charts.storage.googleapis.com
+      A map describing the chart to install. See examples for available options.
     default: {}
   values:
     description:
@@ -59,7 +53,7 @@ options:
     default: {}
   disable_hooks:
     description:
-      - Whether to disable hooks during the uninstall process
+      - Whether to disable hooks during the uninstall process.
     type: bool
     default: 'no'
 '''
