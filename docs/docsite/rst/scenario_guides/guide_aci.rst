@@ -296,7 +296,7 @@ Signature-based authentication using certificates
 Using signature-based authentication is more efficient and more reliable than password-based authentication.
 
 Generate certificate and private key
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+````````````````````````````````````
 Signature-based authentication requires a (self-signed) X.509 certificate with private key, and a configuration step for your AAA user in ACI. To generate a working X.509 certificate and private key, use the following procedure:
 
 .. code-block:: bash
@@ -304,7 +304,7 @@ Signature-based authentication requires a (self-signed) X.509 certificate with p
     $ openssl req -new -newkey rsa:1024 -days 36500 -nodes -x509 -keyout admin.key -out admin.crt -subj '/CN=Admin/O=Your Company/C=US'
 
 Configure your local user
-,,,,,,,,,,,,,,,,,,,,,,,,,
+`````````````````````````
 Perform the following steps:
 
 - Add the X.509 certificate to your ACI AAA local user at :guilabel:`ADMIN` » :guilabel:`AAA`
@@ -336,7 +336,7 @@ You can automate this by using the following Ansible task:
 
 
 Use signature-based authentication with Ansible
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+```````````````````````````````````````````````
 You need the following parameters with your ACI module(s) for it to work:
 
 .. code-block:: yaml
@@ -348,7 +348,7 @@ You need the following parameters with your ACI module(s) for it to work:
 .. hint:: If you use a certificate name in ACI that matches the private key's basename, you can leave out the ``certificate_name`` parameter like the example above.
 
 More information
-,,,,,,,,,,,,,,,,
+````````````````
 Detailed information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
 
 
