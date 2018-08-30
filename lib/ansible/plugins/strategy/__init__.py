@@ -833,8 +833,7 @@ class StrategyBase:
             block_list = load_list_of_blocks(
                 data,
                 play=iterator._play,
-                parent_block=None,
-                task_include=ti_copy,
+                parent_block=ti_copy.build_parent_block(),
                 role=included_file._task._role,
                 use_handlers=is_handler,
                 loader=self._loader,
