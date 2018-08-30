@@ -42,12 +42,29 @@ There's more planned. See the latest ideas and thinking at the `Ansible proposal
 Requirements
 ------------
 
-Using the docker modules requires having `docker-py <https://docker-py.readthedocs.io/en/stable/>`_
-installed on the host running Ansible. You will need to have >= 1.7.0 installed.
+Using the docker modules requires having the `Docker SDK for Python <https://docker-py.readthedocs.io/en/stable/>`_
+installed on the host running Ansible. You will need to have >= 1.7.0 installed. For Python 2.7 or
+Python 3, you can install it as follows:
+
+.. code-block:: bash
+
+    $ pip install docker
+
+For Python 2.6, you need a version before 2.0. For these versions, the SDK was called ``docker-py``,
+so you need to install it as follows:
 
 .. code-block:: bash
 
     $ pip install 'docker-py>=1.7.0'
+
+Please note that only one of ``docker`` and ``docker-py`` must be installed. Installing both will result in
+a broken installation. If this happens, Ansible will detect it and inform you about it::
+
+    Cannot have both the docker-py and docker python modules installed together as they use the same
+    namespace and cause a corrupt installation. Please uninstall both packages, and re-install only
+    the docker-py or docker python module. It is recommended to install the docker module if no support
+    for Python 2.6 is required. Please note that simply uninstalling one of the modules can leave the
+    other module in a broken state.
 
 The docker_service module also requires `docker-compose <https://github.com/docker/compose>`_
 
