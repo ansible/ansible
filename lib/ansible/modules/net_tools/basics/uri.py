@@ -405,6 +405,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
     else:
         data = body
 
+    kwargs = {}
     if dest is not None:
         # Stash follow_redirects, in this block we don't want to follow
         # we'll reset back to the supplied value soon
@@ -424,15 +425,13 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
             dest = os.path.join(dest, url_filename(url))
         # if destination file already exist, only download if file newer
         if os.path.exists(dest):
-            t = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
-            tstamp = t.strftime('%a, %d %b %Y %H:%M:%S +0000')
-            headers['If-Modified-Since'] = tstamp
+            kwargs['last_mod_time'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
 
         # Reset follow_redirects back to the stashed value
         module.params['follow_redirects'] = follow_redirects
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
-                           method=method, timeout=socket_timeout)
+                           method=method, timeout=socket_timeout, **kwargs)
 
     try:
         content = resp.read()
