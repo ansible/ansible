@@ -9,6 +9,11 @@
 
 $ErrorActionPreference = "Stop"
 
+trap {
+    $result.exception = "$($_ | Out-String)`r`n$($_.ScriptStackTrace)"
+    Fail-Json $result "Uncaught exception: $($_.Exception.Message)"
+}
+
 $params = Parse-Args -arguments $args -supports_check_mode $true
 
 $process_name_exact = Get-AnsibleParam -obj $params -name "process_name_exact" -type "list"
@@ -164,8 +169,8 @@ if ($state -eq "present" ) {
 
     if ($result.matched_processes.count -gt 0 ) {
         try {
-            Wait-Process -Id $($Processes | Select-Object -ExpandProperty Id) -Timeout $timeout -ErrorAction Stop
-        } catch {
+            Wait-Process -Id $($Processes | Select-Object -ExpandProperty Id) -Timeout $timeout
+        } catch [System.TimeoutException] {
             $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             Fail-Json -obj $result -message "Timeout while waiting for process(es) to stop"
         }
