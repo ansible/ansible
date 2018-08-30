@@ -225,7 +225,7 @@ class CliconfBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None,  check_all=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None, check_all=False):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.

@@ -81,7 +81,7 @@ EXAMPLES = """
     - set system syslog file test any any
     - exit
 
-- name: multiple prompt, multiple answer (madatory check for all prompts)
+- name: multiple prompt, multiple answer (mandatory check for all prompts)
   cli_command:
     command: "copy sftp sftp://user@host//user/test.img"
     check_all: True
