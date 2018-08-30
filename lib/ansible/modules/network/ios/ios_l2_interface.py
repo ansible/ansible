@@ -19,7 +19,7 @@ extends_documentation_fragment: ios
 version_added: "2.5"
 short_description: Manage Layer-2 interface on Cisco IOS devices.
 description:
-  - This module provides declarative management of Layer-2 interface on
+  - This module provides declarative management of Layer-2 interfaces on
     Cisco IOS devices.
 author:
   - Nathaniel Case (@qalthos)
