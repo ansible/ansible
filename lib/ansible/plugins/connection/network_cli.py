@@ -363,7 +363,7 @@ class Connection(NetworkConnectionBase):
             window_count += 1
 
             if prompts and not handled:
-                handled = self._handle_prompt(window, prompts, answer, newline, check_all)
+                handled = self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all)
                 matched_prompt_window = window_count
             elif prompts and handled and prompt_retry_check and matched_prompt_window + 1 == window_count:
                 # check again even when handled, if same prompt repeats in next window
@@ -418,21 +418,21 @@ class Connection(NetworkConnectionBase):
             prompts = [prompts]
         if not isinstance(answer, list):
             answer = [answer]
-        prompts = [re.compile(r, re.I) for r in prompts]
-        for index, regex in enumerate(prompts):
+        prompts_regex = [re.compile(r, re.I) for r in prompts]
+        for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
                 # if prompt_retry_check is enabled to check if same prompt is
                 # repeated don't send answer again.
                 if not prompt_retry_check:
-                    answer = answer[index] if len(answer) > index else answer[0]
-                    self._ssh_shell.sendall(b'%s' % answer)
+                    prompt_answer = answer[index] if len(answer) > index else answer[0]
+                    self._ssh_shell.sendall(b'%s' % prompt_answer)
                     if newline:
                         self._ssh_shell.sendall(b'\r')
                 self._matched_cmd_prompt = match.group()
                 if check_all and prompts:
-                    prompts.pop()
-                    answer.pop()
+                    prompts.pop(0)
+                    answer.pop(0)
                     return False
                 return True
         return False

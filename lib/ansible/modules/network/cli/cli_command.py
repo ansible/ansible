@@ -45,6 +45,14 @@ options:
     type: bool
     default: false
     required: false
+  check_all:
+    description:
+      - By default if any one of the prompts mentioned in C(prompt) option is matched it won't check
+        for other prompts. This boolean flag, that when set to I(True) will check for all the prompts
+        mentioned in C(prompt) option in the given order. If the option is set to I(True) all the prompts
+        should be received from remote host if not it will result in timeout.
+    type: bool
+    default: false
 """
 
 EXAMPLES = """
@@ -73,9 +81,10 @@ EXAMPLES = """
     - set system syslog file test any any
     - exit
 
-- name: multiple prompt, multiple answer
+- name: multiple prompt, multiple answer (madatory check for all prompts)
   cli_command:
     command: "copy sftp sftp://user@host//user/test.img"
+    check_all: True
     prompt:
       - "Confirm download operation"
       - "Password"
