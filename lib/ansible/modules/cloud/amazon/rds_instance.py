@@ -901,6 +901,10 @@ def validate_options(client, module, instance):
     read_replica = module.params['read_replica']
     creation_source = module.params['creation_source']
     source_instance = module.params['source_db_instance_identifier']
+    if module.params['source_region'] is not None:
+        same_region = bool(module.params['source_region'] == module.params['region'])
+    else:
+        same_region = True
 
     if modified_id:
         modified_instance = get_instance(client, module, modified_id)
@@ -920,7 +924,8 @@ def validate_options(client, module, instance):
     if read_replica is True and not instance and not source_instance:
         module.fail_json(msg='read_replica is true and the instance does not exist yet but all of the following are missing: source_db_instance_identifier')
     if read_replica is True and not instance and not get_instance(client, module, source_instance):
-        module.fail_json(msg='read_replica is true but the source DB instance {0} does not exist'.format(source_instance))
+        if same_region and not get_instance(client, module, source_instance):
+            module.fail_json(msg='read_replica is true but the source DB instance {0} does not exist'.format(source_instance))
 
 
 def update_instance(client, module, instance, instance_id):
@@ -943,6 +948,8 @@ def update_instance(client, module, instance, instance_id):
 def promote_replication_instance(client, module, instance, read_replica):
     changed = False
     if read_replica is False:
+        changed = bool(instance.get('ReadReplicaSourceDBInstanceIdentifier') or instance.get('StatusInfos'))
+    if changed:
         try:
             call_method(client, module, method_name='promote_read_replica', parameters={'DBInstanceIdentifier': instance['DBInstanceIdentifier']})
             changed = True
