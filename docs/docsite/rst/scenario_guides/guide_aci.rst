@@ -101,14 +101,14 @@ After registering the return values of the :ref:`aci_tenant <aci_tenant_module>`
 
 
 Running on the controller locally
----------------------------------
+.................................
 As originally designed, Ansible modules are shipped to and run on the remote target(s), however the ACI modules (like most network-related modules) do not run on the network devices or controller (in this case the APIC), but they talk directly to the APIC's REST interface.
 
 For this very reason, the modules need to run on the local Ansible controller (or are delegated to another system that *can* connect to the APIC).
 
 
 Delegating to localhost
-.......................
+```````````````````````
 So let us assume we have our target configured in the inventory using the FQDN name as the ``ansible_host`` value, as shown below.
 
 .. code-block:: yaml
@@ -137,7 +137,7 @@ If one would forget to add this directive, Ansible will attempt to connect to th
 
 
 Using the local connection method
-.................................
+`````````````````````````````````
 Another option frequently used, is to tie the ``local`` connection method to this target so that every subsequent task for this target will use the local connection method (hence run it locally, rather than use SSH).
 
 In this case the inventory may look like this:
