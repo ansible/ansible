@@ -94,6 +94,15 @@ options:
         description:
             - A reference to the zone where the instance group resides.
         required: true
+    instances:
+        description:
+            - The list of instances associated with this InstanceGroup.
+            - All instances must be created before being added to an InstanceGroup.
+            - All instances not in this list will be removed from the InstanceGroup and will not
+              be deleted.
+            - Only the full identifier of the instance will be returned.
+        required: false
+        version_added: 2.7
 extends_documentation_fragment: gcp
 '''
 
@@ -186,6 +195,15 @@ RETURN = '''
             - A reference to the zone where the instance group resides.
         returned: success
         type: str
+    instances:
+        description:
+            - The list of instances associated with this InstanceGroup.
+            - All instances must be created before being added to an InstanceGroup.
+            - All instances not in this list will be removed from the InstanceGroup and will not
+              be deleted.
+            - Only the full identifier of the instance will be returned.
+        returned: success
+        type: list
 '''
 
 ################################################################################
@@ -217,7 +235,8 @@ def main():
             network=dict(type='dict'),
             region=dict(type='str'),
             subnetwork=dict(type='dict'),
-            zone=dict(required=True, type='str')
+            zone=dict(required=True, type='str'),
+            instances=dict(type='list', elements='dict')
         )
     )
 
@@ -246,6 +265,10 @@ def main():
         else:
             fetch = {}
 
+    if fetch:
+        instance = InstanceLogic(module)
+        instance.run()
+        fetch.update({'instances': instance.list_instances()})
     fetch.update({'changed': changed})
 
     module.exit_json(**fetch)
@@ -257,7 +280,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="InstanceGroup cannot be edited")
+    instance = InstanceLogic(module)
+    instance.run()
 
 
 def delete(module, link, kind):
@@ -394,6 +418,66 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+class InstanceLogic(object):
+    def __init__(self, module):
+        self.module = module
+        self.current_instances = self.list_instances()
+        self.module_instances = []
+
+        # Transform module list of instances (dicts of instance responses) into a list of selfLinks.
+        instances = self.module.params.get('instances')
+        if instances:
+            for instance in instances:
+                self.module_instances.append(replace_resource_dict(instance, 'selfLink'))
+
+    def run(self):
+        # Find all instances to add and add them
+        instances_to_add = list(set(self.module_instances) - set(self.current_instances))
+        if instances_to_add:
+            self.add_instances(instances_to_add)
+
+        # Find all instances to remove and remove them
+        instances_to_remove = list(set(self.current_instances) - set(self.module_instances))
+        if instances_to_remove:
+            self.remove_instances(instances_to_remove)
+
+    def list_instances(self):
+        auth = GcpSession(self.module, 'compute')
+        response = return_if_object(self.module, auth.post(self._list_instances_url(), {'instanceState': 'ALL'}),
+                                    'compute#instanceGroupsListInstances')
+
+        # Transform instance list into a list of selfLinks for diffing with module parameters
+        instances = []
+        for instance in response.get('items', []):
+            instances.append(instance['instance'])
+        return instances
+
+    def add_instances(self, instances):
+        auth = GcpSession(self.module, 'compute')
+        wait_for_operation(self.module, auth.post(self._add_instances_url(), self._build_request(instances)))
+
+    def remove_instances(self, instances):
+        auth = GcpSession(self.module, 'compute')
+        wait_for_operation(self.module, auth.post(self._remove_instances_url(), self._build_request(instances)))
+
+    def _list_instances_url(self):
+        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instanceGroups/{name}/listInstances".format(**self.module.params)
+
+    def _remove_instances_url(self):
+        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instanceGroups/{name}/removeInstances".format(**self.module.params)
+
+    def _add_instances_url(self):
+        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instanceGroups/{name}/addInstances".format(**self.module.params)
+
+    def _build_request(self, instances):
+        request = {
+            'instances': []
+        }
+        for instance in instances:
+            request['instances'].append({'instance': instance})
+        return request
 
 
 class InstanceGroupNamedPortsArray(object):

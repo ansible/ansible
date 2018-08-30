@@ -135,6 +135,15 @@ items:
                 - A reference to the zone where the instance group resides.
             returned: success
             type: str
+        instances:
+            description:
+                - The list of instances associated with this InstanceGroup.
+                - All instances must be created before being added to an InstanceGroup.
+                - All instances not in this list will be removed from the InstanceGroup and will not
+                  be deleted.
+                - Only the full identifier of the instance will be returned.
+            returned: success
+            type: list
 '''
 
 ################################################################################
