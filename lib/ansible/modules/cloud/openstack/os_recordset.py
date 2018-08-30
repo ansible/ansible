@@ -130,11 +130,11 @@ def _system_state_change(state, records, description, ttl, zone, recordset):
     if state == 'present':
         if recordset is None:
             return True
-        if records is not None and recordset.records != records:
+        if records is not None and recordset['records'] != records:
             return True
-        if description is not None and recordset.description != description:
+        if description is not None and recordset['description'] != description:
             return True
-        if ttl is not None and recordset.ttl != ttl:
+        if ttl is not None and recordset['ttl'] != ttl:
             return True
     if state == 'absent' and recordset:
         return True
@@ -169,8 +169,8 @@ def main():
         recordset_type = module.params.get('recordset_type')
         recordset_filter = {'type': recordset_type}
 
-        recordsets = cloud.search_recordsets(zone, name_or_id=name + '.' + zone, filters=recordset_filter)
-
+        recordsets = cloud.search_recordsets(zone, name_or_id=name, filters=recordset_filter)
+ 
         if len(recordsets) == 1:
             recordset = recordsets[0]
             try:
