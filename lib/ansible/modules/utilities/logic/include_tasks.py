@@ -30,7 +30,7 @@ options:
     version_added: '2.7'
   apply:
     description:
-      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the include and tasks within.
     version_added: '2.7'
   free-form:
     description:
@@ -62,23 +62,17 @@ EXAMPLES = """
       include_tasks: "{{ hostvar }}.yaml"
       when: hostvar is defined
 
-- name: Apply tags to tasks within included file
+- name: delegate tasks from include_tasks to localhost
   include_tasks:
     file: install.yml
     apply:
-      tags:
-        - install
-  tags:
-    - always
+      delegate_to: localhost
 
-- name: Apply tags to tasks within included file when using free-form
+- name: delegate tasks from include_tasks to localhost when using free-form
   include_tasks: install.yml
   args:
     apply:
-      tags:
-        - install
-  tags:
-    - always
+      delegate_to: localhost
 """
 
 RETURN = """
