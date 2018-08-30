@@ -46,7 +46,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     '''
 
     # A set of valid arguments
-    VALID_ARGS = frozenset([])
+    _VALID_ARGS = frozenset([])
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
@@ -99,9 +99,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         # Error if invalid argument is passed
-        if self.VALID_ARGS:
+        if self._VALID_ARGS:
             task_opts = frozenset(self._task.args.keys())
-            bad_opts = task_opts.difference(self.VALID_ARGS)
+            bad_opts = task_opts.difference(self._VALID_ARGS)
             if bad_opts:
                 raise AnsibleActionFail('Invalid options for %s: %s' % (self._task.action, ','.join(list(bad_opts))))
 

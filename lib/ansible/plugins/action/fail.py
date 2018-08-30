@@ -25,7 +25,7 @@ class ActionModule(ActionBase):
     ''' Fail with custom message '''
 
     TRANSFERS_FILES = False
-    VALID_ARGS = frozenset(('msg',))
+    _VALID_ARGS = frozenset(('msg',))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
