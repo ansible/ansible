@@ -321,6 +321,13 @@ def check_args(module, warnings):
                                  'single character')
 
 
+def edit_config_or_macro(connection, commands):
+    if "macro name" in commands[0]:
+        connection.edit_macro(candidate=commands)
+    else:
+        connection.edit_config(candidate=commands)
+
+
 def get_candidate_config(module):
     candidate = ''
     if module.params['src']:
@@ -457,7 +464,7 @@ def main():
             # them with the current running config
             if not module.check_mode:
                 if commands:
-                    connection.edit_config(candidate=commands)
+                    edit_config_or_macro(connection, commands)
                 if banner_diff:
                     connection.edit_banner(candidate=json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
 
