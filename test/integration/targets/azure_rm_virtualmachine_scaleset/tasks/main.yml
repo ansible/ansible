@@ -41,7 +41,7 @@
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: "{{ vmss_name }}"
+    name: testVMSS{{ rpfx }}
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -74,7 +74,7 @@
 - name: Get VMSS to assert no VMSS is created in check mode
   azure_rm_virtualmachine_scaleset_facts:
     resource_group: "{{ resource_group }}"
-    name: "{{ vmss_name }}"
+    name: testVMSS{{ rpfx }}
     format: curated
   register: output_scaleset
 
