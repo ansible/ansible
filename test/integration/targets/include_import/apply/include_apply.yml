@@ -43,3 +43,8 @@
           - include_role2_result is undefined
       tags:
         - always
+
+    - include_role:
+        name: include_role
+        apply:
+          delegate_to: testhost2
