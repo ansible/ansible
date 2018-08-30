@@ -88,6 +88,7 @@
     - present_existing_owner_process.elapsed > 0
     - present_existing_owner_process.elapsed < 30
     - present_existing_owner_process.matched_processes|length > 1
+    - present_existing_owner_process.matched_processes|length < present_existing_process.matched_processes|length
   when: powershell_version.stdout_lines[0]|int >= 4
 
 - assert:

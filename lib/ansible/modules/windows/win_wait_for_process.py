@@ -109,19 +109,24 @@ elapsed:
   type: float
   sample: 3.14159265
 matched_processes:
-  description: Count of processes stopped or started.
+  description: List of matched processes (either stopped or started)
   returned: always
   type: list
-  sample: [
-        {
-            "Id": 7908,
-            "ProcessName": "svchost",
-            "UserName": "NT AUTHORITY\\SYSTEM"
-        },
-        {
-            "Id": 15916,
-            "ProcessName": "svchost",
-            "UserName": "NT AUTHORITY\\SYSTEM"
-        }
-    ]
+  sample:
+  contains:
+    Id:
+      description: The PID of the matched process
+      returned: always
+      type: int
+      sample: 7908
+    ProcessName:
+      description: The name of the matched process
+      returned: always
+      type: str
+      sample: svchost
+    UserName:
+      description: The owner of the matched process
+      returned: always, when supported by PowerShell (PS4+)
+      type: str
+      sample: NT AUTHORITY\SYSTEM
 '''
