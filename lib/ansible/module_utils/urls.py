@@ -822,6 +822,23 @@ def maybe_add_ssl_handler(url, validate_certs):
         return SSLValidationHandler(hostname, port)
 
 
+def rfc2822_date_string(timetuple, zone='-0000'):
+    """Accepts a timetuple and optional zone which defaults to ``-0000``
+    and returns a date string as specified by RFC 2822, e.g.:
+
+    Fri, 09 Nov 2001 01:08:47 -0000
+
+    Copied from email.utils.formatdate and modified for separate use
+    """
+    return '%s, %02d %s %04d %02d:%02d:%02d %s' % (
+        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][timetuple[6]],
+        timetuple[2],
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][timetuple[1] - 1],
+        timetuple[0], timetuple[3], timetuple[4], timetuple[5],
+        zone)
+
+
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
@@ -1037,7 +1054,7 @@ class Request:
             request.add_header('cache-control', 'no-cache')
         # or we do it if the original is more recent than our copy
         elif last_mod_time:
-            tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
+            tstamp = rfc2822_date_string(last_mod_time.timetuple())
             request.add_header('If-Modified-Since', tstamp)
 
         # user defined headers now, which may override things we've set above
