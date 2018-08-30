@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from functools import partial
 import types
+from ansible.module_utils import six
 
 try:
     import netaddr
@@ -736,6 +737,9 @@ def ipv6(value, query=''):
 #
 #  - address | ipsubnet(cidr, index)
 #      returns next indexed subnet which contains given address
+#
+#  - address/prefix | ipsubnet(subnet/prefix)
+#      return the index of the subnet in the subnet
 def ipsubnet(value, query='', index='x'):
     ''' Manipulate IPv4/IPv6 subnets '''
 
@@ -749,11 +753,11 @@ def ipsubnet(value, query='', index='x'):
         value = netaddr.IPNetwork(v)
     except:
         return False
-
+    query_string = str(query)
     if not query:
         return str(value)
 
-    elif str(query).isdigit():
+    elif query_string.isdigit():
         vsize = ipaddr(v, 'size')
         query = int(query)
 
@@ -786,6 +790,21 @@ def ipsubnet(value, query='', index='x'):
                 except:
                     return False
 
+    elif query_string:
+        vtype = ipaddr(query, 'type')
+        if vtype == 'address':
+            v = ipaddr(query, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(query, 'subnet')
+        else:
+            msg = 'You must pass a valid subnet or IP address; {0} is invalid'.format(query_string)
+            raise errors.AnsibleFilterError(msg)
+        query = netaddr.IPNetwork(v)
+        for i, subnet in enumerate(query.subnet(value.prefixlen), 1):
+            if subnet == value:
+                return str(i)
+        msg = '{0} is not in the subnet {1}'.format(value.cidr, query.cidr)
+        raise errors.AnsibleFilterError(msg)
     return False
 
 
