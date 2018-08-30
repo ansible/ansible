@@ -651,6 +651,12 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='transfer git related files into the docker container')
 
+    docker.add_argument('--docker-seccomp',
+                        metavar='SC',
+                        choices=('default', 'unconfined'),
+                        default=None,
+                        help='set seccomp confinement for the test container: %(choices)s')
+
     if not integration:
         return
 
