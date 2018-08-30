@@ -32,10 +32,15 @@ author:
 
 RETURN = r'''
 mount_path:
-    description: filesystem path where the target image is mounted
+    description: filesystem path where the target image is mounted, this has been deprecated in favour of C(mount_paths)
     returned: when C(state) is C(present)
     type: string
     sample: F:\
+mount_paths:
+    description: a list of filesystem paths mounted from the target image
+    returned: when C(state) is C(present)
+    type: list
+    sample: [ 'E:\', 'F:\' ]
 '''
 
 EXAMPLES = r'''
@@ -48,7 +53,7 @@ EXAMPLES = r'''
 
 - name: Run installer from mounted iso
   win_package:
-    path: '{{ disk_image_out.mount_path }}setup\setup.exe'
+    path: '{{ disk_image_out.mount_paths[0] }}setup\setup.exe'
     product_id: 35a4e767-0161-46b0-979f-e61f282fee21
     state: present
 
