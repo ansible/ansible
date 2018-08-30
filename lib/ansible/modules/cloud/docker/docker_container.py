@@ -860,6 +860,7 @@ class TaskParameters(DockerBaseClass):
         if not HAS_DOCKER_PY_3:
             create_params['cpu_shares'] = 'cpu_shares'
             create_params['volume_driver'] = 'volume_driver'
+            create_params['blkio_weight'] = 'blkio_weight'
 
         result = dict(
             host_config=self._host_config(),
@@ -958,6 +959,7 @@ class TaskParameters(DockerBaseClass):
             # cpu_shares and volume_driver moved to create_host_config in > 3
             host_config_params['cpu_shares'] = 'cpu_shares'
             host_config_params['volume_driver'] = 'volume_driver'
+            host_config_params['blkio_weight'] = 'blkio_weight'
 
         if self.client.HAS_INIT_OPT:
             host_config_params['init'] = 'init'
@@ -1420,6 +1422,7 @@ class Container(DockerBaseClass):
             cpuset_cpus=host_config.get('CpusetCpus'),
             cpuset_mems=host_config.get('CpusetMems'),
             cpu_shares=host_config.get('CpuShares'),
+            blkio_weight=host_config.get('BlkioWeight'),
             kernel_memory=host_config.get("KernelMemory"),
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
