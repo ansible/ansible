@@ -1,0 +1,27 @@
+- name: send the playbook script
+  shell: >
+    {{ 'curl -X POST -F "file=@' + role_path + '/files/' + 'playbook_example1.py" ' + runner_container_url + '/upload_file' }}
+
+- name: check the script
+  uri:
+    method: POST
+    url: "{{ runner_container_url + '/run_command' }}" 
+    body_format: json
+    body:
+        command: ls -al /tmp/uploads
+
+- name: execute the script
+  uri:
+    method: POST
+    url: "{{ runner_container_url + '/execute_file' }}" 
+    body_format: json
+    body:
+        filename: playbook_example1.py
+  register: pbexec
+
+- debug: var=pbexec
+- assert:
+    that:
+        - "pbexec.json.rc == 0"
+        - "pbexec.json.events|length == 5"
+        - "'localhost' in pbexec.json.stats.ok"

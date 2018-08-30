@@ -1,0 +1,3 @@
+- include_tasks: setup.yml
+- include_tasks: adhoc_example1.yml
+- include_tasks: playbook_example1.yml
