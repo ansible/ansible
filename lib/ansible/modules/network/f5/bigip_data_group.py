@@ -265,8 +265,14 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import compare_dictionary
+    from library.module_utils.network.f5.common import compare_complex_list
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import is_valid_ip_network
+    from library.module_utils.network.f5.ipaddress import is_valid_ip_interface
+    from library.module_utils.compat.ipaddress import ip_address
+    from library.module_utils.compat.ipaddress import ip_network
+    from library.module_utils.compat.ipaddress import ip_interface
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -277,18 +283,18 @@ except ImportError:
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import compare_dictionary
+    from ansible.module_utils.network.f5.common import compare_complex_list
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip_network
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip_interface
+    from ansible.module_utils.compat.ipaddress import ip_address
+    from ansible.module_utils.compat.ipaddress import ip_network
+    from ansible.module_utils.compat.ipaddress import ip_interface
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 LINE_LIMIT = 65000
@@ -345,22 +351,24 @@ class RecordsEncoder(object):
             return self.encode_string_from_dict(record)
 
     def encode_address_from_dict(self, record):
-        try:
-            key = netaddr.IPNetwork(record['key'])
-        except netaddr.core.AddrFormatError:
+        if is_valid_ip_interface(record['key']):
+            key = ip_interface(u"{0}".format(str(record['key'])))
+        else:
             raise F5ModuleError(
                 "When specifying an 'address' type, the value to the left of the separator must be an IP."
             )
         if key and 'value' in record:
-            if key.prefixlen in [32, 128]:
-                return self.encode_host(key.ip, record['value'])
-            else:
-                return self.encode_network(key.network, key.prefixlen, record['value'])
+            if key.network.prefixlen in [32, 128]:
+                return self.encode_host(str(key.ip), record['value'])
+            return self.encode_network(
+                str(key.network.network_address), key.network.prefixlen, record['value']
+            )
         elif key:
-            if key.prefixlen in [32, 128]:
-                return self.encode_host(key.ip, key.ip)
-            else:
-                return self.encode_network(key.network, key.prefixlen, key.network)
+            if key.network.prefixlen in [32, 128]:
+                return self.encode_host(str(key.ip), str(key.ip))
+            return self.encode_network(
+                str(key.network.network_address), key.network.prefixlen, str(key.network.network_address)
+            )
 
     def encode_integer_from_dict(self, record):
         try:
@@ -401,23 +409,26 @@ class RecordsEncoder(object):
         else:
             # 192.168.0.0/16 := "Network3",
             # 2402:9400:1000:0::/64 := "Network4",
-            try:
-                parts = record.split(self._separator)
-                if len(parts) == 2:
-                    key = netaddr.IPNetwork(parts[0])
-                    if key.prefixlen in [32, 128]:
-                        return self.encode_host(key.ip, parts[1])
-                    else:
-                        return self.encode_network(key.network, key.prefixlen, parts[1])
-                elif len(parts) == 1 and parts[0] != '':
-                    key = netaddr.IPNetwork(parts[0])
-                    if key.prefixlen in [32, 128]:
-                        return self.encode_host(key.ip, key.ip)
-                    else:
-                        return self.encode_network(key.network, key.prefixlen, key.network)
-            except netaddr.core.AddrFormatError:
+            parts = record.split(self._separator)
+            if parts[0] == '':
+                return
+            if not is_valid_ip_interface(parts[0]):
                 raise F5ModuleError(
                     "When specifying an 'address' type, the value to the left of the separator must be an IP."
+                )
+            key = ip_interface(u"{0}".format(str(parts[0])))
+
+            if len(parts) == 2:
+                if key.network.prefixlen in [32, 128]:
+                    return self.encode_host(str(key.ip), parts[1])
+                return self.encode_network(
+                    str(key.network.network_address), key.network.prefixlen, parts[1]
+                )
+            elif len(parts) == 1 and parts[0] != '':
+                if key.network.prefixlen in [32, 128]:
+                    return self.encode_host(str(key.ip), str(key.ip))
+                return self.encode_network(
+                    str(key.network.network_address), key.network.prefixlen, str(key.network.network_address)
                 )
 
     def encode_host(self, key, value):
@@ -466,29 +477,27 @@ class RecordsDecoder(object):
             return self.decode_from_string(record)
 
     def decode_address_from_string(self, record):
-        try:
-            matches = self._network_pattern.match(record)
-            if matches:
-                # network 192.168.0.0 prefixlen 16 := "Network3",
-                # network 2402:9400:1000:0:: prefixlen 64 := "Network4",
-                key = "{0}/{1}".format(matches.group('addr'), matches.group('prefix'))
-                addr = netaddr.IPNetwork(key)
-                value = record.split(self._separator)[1].strip().strip('"')
-                result = dict(name=str(addr), data=value)
-                return result
-            matches = self._host_pattern.match(record)
-            if matches:
-                # host 172.16.1.1/32 := "Host3"
-                # host 2001:0db8:85a3:0000:0000:8a2e:0370:7334 := "Host4"
-                key = matches.group('addr')
-                addr = netaddr.IPNetwork(key)
-                value = record.split(self._separator)[1].strip().strip('"')
-                result = dict(name=str(addr), data=value)
-                return result
-        except netaddr.core.AddrFormatError:
-            raise F5ModuleError(
-                'The value "{0}" is not an address'.format(record)
-            )
+        matches = self._network_pattern.match(record)
+        if matches:
+            # network 192.168.0.0 prefixlen 16 := "Network3",
+            # network 2402:9400:1000:0:: prefixlen 64 := "Network4",
+            key = u"{0}/{1}".format(matches.group('addr'), matches.group('prefix'))
+            addr = ip_network(key)
+            value = record.split(self._separator)[1].strip().strip('"')
+            result = dict(name=str(addr), data=value)
+            return result
+        matches = self._host_pattern.match(record)
+        if matches:
+            # host 172.16.1.1/32 := "Host3"
+            # host 2001:0db8:85a3:0000:0000:8a2e:0370:7334 := "Host4"
+            key = matches.group('addr')
+            addr = ip_interface(u"{0}".format(str(key)))
+            value = record.split(self._separator)[1].strip().strip('"')
+            result = dict(name=str(addr), data=value)
+            return result
+        raise F5ModuleError(
+            'The value "{0}" is not an address'.format(record)
+        )
 
     def decode_from_string(self, record):
         parts = record.split(self._separator)
@@ -589,7 +598,7 @@ class ModuleParameters(Parameters):
             data = records.read(4096)
             if not data:
                 break
-            result.update(data)
+            result.update(data.encode('utf-8'))
         result = result.hexdigest()
         self._values['checksum'] = result
         return result
@@ -600,7 +609,7 @@ class ModuleParameters(Parameters):
             name = self.name
         else:
             name = self._values['external_file_name']
-        if re.search(r'[^a-z0-9-_.]', name):
+        if re.search(r'[^a-zA-Z0-9-_.]', name):
             raise F5ModuleError(
                 "'external_file_name' may only contain letters, numbers, underscores, dashes, or a period."
             )
@@ -678,7 +687,7 @@ class Difference(object):
             return None
         if self.have.records is None:
             return self.want.records
-        result = compare_dictionary(self.want.records, self.have.records)
+        result = compare_complex_list(self.want.records, self.have.records)
         return result
 
     @property
@@ -1051,8 +1060,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

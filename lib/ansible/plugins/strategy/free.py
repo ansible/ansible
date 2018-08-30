@@ -49,6 +49,19 @@ except ImportError:
 
 class StrategyModule(StrategyBase):
 
+    def _filter_notified_hosts(self, notified_hosts):
+        '''
+        Filter notified hosts accordingly to strategy
+        '''
+
+        # We act only on hosts that are ready to flush handlers
+        return [host for host in notified_hosts
+                if host in self._flushed_hosts and self._flushed_hosts[host]]
+
+    def __init__(self, tqm):
+        super(StrategyModule, self).__init__(tqm)
+        self._host_pinned = False
+
     def run(self, iterator, play_context):
         '''
         The "free" strategy is a bit more complex, in that it allows tasks to
@@ -67,6 +80,9 @@ class StrategyModule(StrategyBase):
         last_host = 0
 
         result = self._tqm.RUN_OK
+
+        # start with all workers being counted as being free
+        workers_free = len(self._workers)
 
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
@@ -158,9 +174,17 @@ class StrategyModule(StrategyBase):
                                                     "as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
+                                # each task is counted as a worker being busy
+                                workers_free -= 1
                                 del task_vars
                     else:
                         display.debug("%s is blocked, skipping for now" % host_name)
+
+                # all workers have tasks to do (and the current host isn't done with the play).
+                # loop back to starting host and break out
+                if self._host_pinned and workers_free == 0 and work_to_do:
+                    last_host = starting_host
+                    break
 
                 # move on to the next host and make sure we
                 # haven't gone past the end of our hosts list
@@ -174,6 +198,9 @@ class StrategyModule(StrategyBase):
 
             results = self._process_pending_results(iterator)
             host_results.extend(results)
+
+            # each result is counted as a worker being free again
+            workers_free += len(results)
 
             self.update_active_connections(results)
 

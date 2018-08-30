@@ -151,16 +151,16 @@ class GCPAuthTestCase(unittest.TestCase):
     def test_validate_credentials_file(self):
         # TODO(supertom): Only dealing with p12 here, check the other states
         # of this function
-        module = mock.MagicMock()
+        module = FakeModule()
         with mock.patch("ansible.module_utils.gcp.open",
                         mock.mock_open(read_data='foobar'), create=True) as m:
             # pem condition, warning is suppressed with the return_value
             credentials_file = '/foopath/pem.pem'
-            is_valid = _validate_credentials_file(module,
-                                                  credentials_file=credentials_file,
-                                                  require_valid_json=False,
-                                                  check_libcloud=False)
-            self.assertTrue(is_valid)
+            with self.assertRaises(ValueError):
+                _validate_credentials_file(module,
+                                           credentials_file=credentials_file,
+                                           require_valid_json=False,
+                                           check_libcloud=False)
 
     @mock.patch('ansible.module_utils.gcp._get_gcp_environ_var',
                 side_effect=fake_get_gcp_environ_var)

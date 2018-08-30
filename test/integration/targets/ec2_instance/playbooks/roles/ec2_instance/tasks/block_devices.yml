@@ -12,6 +12,9 @@
     image_id: "{{ ec2_ami_image[aws_region] }}"
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
     - device_name: /dev/sdb
       ebs:
         volume_size: 20

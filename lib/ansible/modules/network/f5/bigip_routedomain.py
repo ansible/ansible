@@ -61,6 +61,7 @@ options:
     description:
       - Dynamic routing protocols for the system to use in the route domain.
     choices:
+      - none
       - BFD
       - BGP
       - IS-IS
@@ -322,7 +323,7 @@ class ModuleParameters(Parameters):
     def routing_protocol(self):
         if self._values['routing_protocol'] is None:
             return None
-        if len(self._values['routing_protocol']) == 1 and self._values['routing_protocol'][0] == '':
+        if len(self._values['routing_protocol']) == 1 and self._values['routing_protocol'][0] in ['', 'none']:
             return ''
         return self._values['routing_protocol']
 
@@ -578,7 +579,7 @@ class ArgumentSpec(object):
             vlans=dict(type='list'),
             routing_protocol=dict(
                 type='list',
-                choices=['BFD', 'BGP', 'IS-IS', 'OSPFv2', 'OSPFv3', 'PIM', 'RIP', 'RIPng']
+                choices=['BFD', 'BGP', 'IS-IS', 'OSPFv2', 'OSPFv3', 'PIM', 'RIP', 'RIPng', 'none']
             ),
             bwc_policy=dict(),
             connection_limit=dict(type='int'),

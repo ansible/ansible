@@ -382,8 +382,10 @@ def create_changeset(module, stack_params, cfn, events_limit):
                 elif newcs['Status'] == 'FAILED' and "The submitted information didn't contain changes" in newcs['StatusReason']:
                     cfn.delete_change_set(ChangeSetName=cs['Id'])
                     result = dict(changed=False,
-                                  output='Stack is already up-to-date, Change Set refused to create due to lack of changes.')
-                    module.exit_json(**result)
+                                  output='The created Change Set did not contain any changes to this stack and was deleted.')
+                    # a failed change set does not trigger any stack events so we just want to
+                    # skip any further processing of result and just return it directly
+                    return result
                 else:
                     break
                 # Lets not hog the cpu/spam the AWS API

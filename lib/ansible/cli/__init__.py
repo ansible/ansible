@@ -344,7 +344,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
 
         def _dep(which):
-            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.6')
+            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.9')
 
         if self.options.become:
             pass

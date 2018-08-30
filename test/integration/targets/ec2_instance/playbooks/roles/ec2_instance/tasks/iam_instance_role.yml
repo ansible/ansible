@@ -32,11 +32,15 @@
 
     - name: Make instance with an instance_role
       ec2_instance:
-        name: "{{ resource_prefix }}-test-default-vpc"
+        name: "{{ resource_prefix }}-test-instance-role"
         image_id: "{{ ec2_ami_image[aws_region] }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
         instance_role: "{{ resource_prefix }}-test-policy"
+        volumes:
+        - device_name: /dev/sda1
+          ebs:
+            delete_on_termination: true
         <<: *aws_connection_info
       register: instance_with_role
 
@@ -46,7 +50,7 @@
 
     - name: Update instance with new instance_role
       ec2_instance:
-        name: "{{ resource_prefix }}-test-default-vpc"
+        name: "{{ resource_prefix }}-test-instance-role"
         image_id: "{{ ec2_ami_image[aws_region] }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro

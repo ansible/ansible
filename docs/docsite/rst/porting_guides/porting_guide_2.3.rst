@@ -118,15 +118,23 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.5. Please update your playbooks accordingly.
 
-* :ref:`ec2_vpc <ec2_vpc_module>`
-* :ref:`cl_bond <cl_bond_module>`
-* :ref:`cl_bridge <cl_bridge_module>`
-* :ref:`cl_img_install <cl_img_install_module>`
-* :ref:`cl_interface <cl_interface_module>`
-* :ref:`cl_interface_policy <cl_interface_policy_module>`
-* :ref:`cl_license <cl_license_module>`
-* :ref:`cl_ports <cl_ports_module>`
-* :ref:`nxos_mtu <nxos_mtu_module>` use :ref:`nxos_system <nxos_system_module>` instead
+* ec2_vpc
+* cl_bond
+* cl_bridge
+* cl_img_install
+* cl_interface
+* cl_interface_policy
+* cl_license
+* cl_ports
+* nxos_mtu use :ref:`nxos_system <nxos_system_module>` instead
+
+.. note::
+
+    These modules may no longer have documentation in the current release.  Please see the
+    `Ansible 2.3 module documentation
+    <https://docs.ansible.com/ansible/2.3/list_of_all_modules.html>`_ if you need
+    to know how they worked for porting your playbooks.
+
 
 Noteworthy module changes
 -------------------------

@@ -1,0 +1,2 @@
+bugfixes:
+- fix mail module for python 3.7.0 (https://github.com/ansible/ansible/pull/44552)

@@ -3,3 +3,5 @@
 - include: test_includes3.yml
 
 - include: test_include_free.yml
+
+- include: test_include_host_pinned.yml

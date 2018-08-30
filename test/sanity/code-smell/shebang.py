@@ -27,6 +27,7 @@ def main():
     skip = set([
         'test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1',
         'test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1',
+        'test/utils/shippable/timing.py',
     ])
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():

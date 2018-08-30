@@ -46,11 +46,10 @@ options:
   email:
     required: False
     description:
-      - "The email address for the registry account. NOTE: private registries may not require this,
-        but Docker Hub requires it."
+      - "The email address for the registry account."
   reauthorize:
     description:
-      - Refresh exiting authentication found in the configuration file.
+      - Refresh existing authentication found in the configuration file.
     type: bool
     default: 'no'
     aliases:
@@ -82,12 +81,14 @@ requirements:
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
        For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
        install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time."
+       be installed at the same time. Also note that when both modules are installed
+       and one of them is uninstalled, the other might no longer function and a
+       reinstall of it is required."
     - "Docker API >= 1.20"
     - 'Only to be able to logout (state=absent): the docker command line utility'
 author:
-    - "Olaf Kilian <olaf.kilian@symanex.com>"
-    - "Chris Houseknecht (@chouseknecht)"
+    - Olaf Kilian (@olsaki) <olaf.kilian@symanex.com>
+    - Chris Houseknecht (@chouseknecht)
 '''
 
 EXAMPLES = '''
@@ -96,7 +97,6 @@ EXAMPLES = '''
   docker_login:
     username: docker
     password: rekcod
-    email: docker@docker.io
 
 - name: Log into private registry and force re-authorization
   docker_login:
@@ -109,13 +109,11 @@ EXAMPLES = '''
   docker_login:
     username: docker
     password: rekcod
-    email: docker@docker.io
     config_path: /tmp/.mydockercfg
 
 - name: Log out of DockerHub
   docker_login:
     state: absent
-    email: docker@docker.com
 '''
 
 RETURN = '''
@@ -321,9 +319,6 @@ def main():
         actions=[],
         login_result={}
     )
-
-    if client.module.params['state'] == 'present' and client.module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not client.module.params['email']:
-        client.module.fail_json(msg="'email' is required when logging into DockerHub")
 
     LoginManager(client, results)
     if 'actions' in results:

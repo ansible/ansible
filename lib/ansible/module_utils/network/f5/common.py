@@ -6,8 +6,10 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import copy
 import os
 import re
+import datetime
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -24,6 +26,10 @@ try:
     HAS_F5SDK = True
 except ImportError:
     HAS_F5SDK = False
+
+
+MANAGED_BY_ANNOTATION_VERSION = 'f5-ansible.version'
+MANAGED_BY_ANNOTATION_MODIFIED = 'f5-ansible.last_modified'
 
 
 f5_provider_spec = {
@@ -54,6 +60,7 @@ f5_provider_spec = {
         default='rest'
     ),
     'timeout': dict(type='int'),
+    'auth_provider': dict()
 }
 
 f5_argument_spec = {
@@ -88,6 +95,9 @@ f5_top_spec = {
     'transport': dict(
         removed_in_version=2.9,
         choices=['cli', 'rest']
+    ),
+    'auth_provider': dict(
+        default=None
     )
 }
 f5_argument_spec.update(f5_top_spec)
@@ -103,6 +113,13 @@ def load_params(params):
         if key in f5_argument_spec:
             if params.get(key) is None and value is not None:
                 params[key] = value
+
+
+def is_empty_list(seq):
+    if len(seq) == 1:
+        if seq[0] == '' or seq[0] == 'none':
+            return True
+    return False
 
 
 # Fully Qualified name (with the partition)
@@ -204,7 +221,9 @@ def flatten_boolean(value):
         return 'no'
 
 
-def cleanup_tokens(client):
+def cleanup_tokens(client=None):
+    if client is None:
+        return
     try:
         # isinstance cannot be used here because to import it creates a
         # circular dependency with teh module_utils.network.f5.bigip file.
@@ -316,28 +335,34 @@ def transform_name(partition='', name='', sub_path=''):
     return result
 
 
-def dict2tuple(items):
-    """Convert a dictionary to a list of tuples
+def compare_complex_list(want, have):
+    """Performs a complex list comparison
 
-    This method is used in cases where dictionaries need to be compared. Due
-    to dictionaries inherently having no order, it is easier to compare list
-    of tuples because these lists can be converted to sets.
-
-    This conversion only supports dicts of simple values. Do not give it dicts
-    that contain sub-dicts. This will not give you the result you want when using
-    the returned tuple for comparison.
+    A complex list is a list of dictionaries
 
     Args:
-        items (dict): The dictionary of items that should be converted
+        want (list): List of dictionaries to compare with second parameter.
+        have (list): List of dictionaries compare with first parameter.
 
     Returns:
-        list: Returns a list of tuples upon success. Otherwise, an empty list.
+        bool:
     """
-    result = []
-    for x in items:
+    if want == [] and have is None:
+        return None
+    if want is None:
+        return None
+    w = []
+    h = []
+    for x in want:
         tmp = [(str(k), str(v)) for k, v in iteritems(x)]
-        result += tmp
-    return result
+        w += tmp
+    for x in have:
+        tmp = [(str(k), str(v)) for k, v in iteritems(x)]
+        h += tmp
+    if set(w) == set(h):
+        return None
+    else:
+        return want
 
 
 def compare_dictionary(want, have):
@@ -350,12 +375,12 @@ def compare_dictionary(want, have):
     Returns:
         bool:
     """
-    if want == [] and have is None:
+    if want == {} and have is None:
         return None
     if want is None:
         return None
-    w = dict2tuple(want)
-    h = dict2tuple(have)
+    w = [(str(k), str(v)) for k, v in iteritems(want)]
+    h = [(str(k), str(v)) for k, v in iteritems(have)]
     if set(w) == set(h):
         return None
     else:
@@ -404,6 +429,56 @@ def on_bigip():
     if os.path.exists('/usr/bin/tmsh'):
         return True
     return False
+
+
+def mark_managed_by(ansible_version, params):
+    metadata = []
+    result = copy.deepcopy(params)
+    found1 = False
+    found2 = False
+    mark1 = dict(
+        name=MANAGED_BY_ANNOTATION_VERSION,
+        value=ansible_version,
+        persist='true'
+    )
+    mark2 = dict(
+        name=MANAGED_BY_ANNOTATION_MODIFIED,
+        value=str(datetime.datetime.utcnow()),
+        persist='true'
+    )
+
+    if 'metadata' not in result:
+        result['metadata'] = [mark1, mark2]
+        return result
+
+    for x in params['metadata']:
+        if x['name'] == MANAGED_BY_ANNOTATION_VERSION:
+            found1 = True
+            metadata.append(mark1)
+        if x['name'] == MANAGED_BY_ANNOTATION_MODIFIED:
+            found2 = True
+            metadata.append(mark1)
+        else:
+            metadata.append(x)
+    if not found1:
+        metadata.append(mark1)
+    if not found2:
+        metadata.append(mark2)
+
+    result['metadata'] = metadata
+    return result
+
+
+def only_has_managed_metadata(metadata):
+    managed = [
+        MANAGED_BY_ANNOTATION_MODIFIED,
+        MANAGED_BY_ANNOTATION_VERSION,
+    ]
+
+    for x in metadata:
+        if x['name'] not in managed:
+            return False
+    return True
 
 
 class Noop(object):

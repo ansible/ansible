@@ -124,7 +124,10 @@ class CliconfBase(AnsiblePlugin):
             else:
                 kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
-            kwargs['answer'] = to_bytes(answer)
+            if isinstance(answer, list):
+                kwargs['answer'] = [to_bytes(p) for p in answer]
+            else:
+                kwargs['answer'] = to_bytes(answer)
 
         resp = self._connection.send(**kwargs)
 
@@ -303,6 +306,15 @@ class CliconfBase(AnsiblePlugin):
         :returns: None
         """
         return self._connection.method_not_found("discard_changes is not supported by network_os %s" % self._play_context.network_os)
+
+    def rollback(self, rollback_id, commit=True):
+        """
+
+        :param rollback_id: The commit id to which configuration should be rollbacked
+        :param commit: Flag to indicate if changes should be committed or not
+        :return: Returns diff between before and after change.
+        """
+        pass
 
     def copy_file(self, source=None, destination=None, proto='scp', timeout=30):
         """Copies file over scp/sftp to remote device

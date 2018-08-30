@@ -45,6 +45,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     action in use.
     '''
 
+    # A set of valid arguments
+    _VALID_ARGS = frozenset([])
+
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
         self._connection = connection
@@ -94,6 +97,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleActionSkip('check mode is not supported for this task.')
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
+
+        # Error if invalid argument is passed
+        if self._VALID_ARGS:
+            task_opts = frozenset(self._task.args.keys())
+            bad_opts = task_opts.difference(self._VALID_ARGS)
+            if bad_opts:
+                raise AnsibleActionFail('Invalid options for %s: %s' % (self._task.action, ','.join(list(bad_opts))))
 
         if self._connection._shell.tmpdir is None and self._early_needs_tmp_path():
             self._make_tmp_path()

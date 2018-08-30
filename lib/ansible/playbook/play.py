@@ -59,7 +59,7 @@ class Play(Base, Taggable, Become):
     # Facts
     _fact_path = FieldAttribute(isa='string', default=None)
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _gather_subset = FieldAttribute(isa='list', default=None, always_post_validate=True)
+    _gather_subset = FieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
 
     # Variable Attributes
@@ -239,6 +239,8 @@ class Play(Base, Taggable, Become):
 
         if len(self.roles) > 0:
             for r in self.roles:
+                if r.from_include:
+                    continue
                 block_list.extend(r.get_handler_blocks(play=self))
 
         return block_list

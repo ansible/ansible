@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    scw_org: "{{ lookup('env', 'SCW_ORG') }}"
+
+  roles:
+    - { role: scaleway_compute, tags: test_scaleway_compute }
+    - { role: scaleway_image_facts, tags: test_scaleway_image_facts }
+    - { role: scaleway_ip_facts, tags: test_scaleway_ip_facts }
+    - { role: scaleway_organization_facts, tags: test_scaleway_organization_facts }
+    - { role: scaleway_security_group_facts, tags: test_scaleway_security_group_facts }
+    - { role: scaleway_server_facts, tags: test_scaleway_server_facts }
+    - { role: scaleway_snapshot_facts, tags: test_scaleway_snapshot_facts }
+    - { role: scaleway_ssh, tags: test_scaleway_ssh }
+    - { role: scaleway_volume, tags: test_scaleway_volume }
+    - { role: scaleway_volume_facts, tags: test_scaleway_volume_facts }

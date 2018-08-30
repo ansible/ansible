@@ -77,6 +77,7 @@ options:
                     - node supported value sample, 6.6, 6.9.
                     - dotnetcore supported value sample, 1.0, 1,1, 1.2.
                     - ruby supported value sample, 2.3.
+                    - java supported value sample, 1.8, 1.9 for windows web app. 8 for linux web app.
             settings:
                 description:
                     - List of settings of the framework.
@@ -156,6 +157,16 @@ options:
         description:
             - Purge any existing application settings. Replace web app application settings with app_settings.
         type: bool
+
+    app_state:
+        description:
+            - Start/Stop/Restart the web app.
+        type: str
+        choices:
+            - started
+            - stopped
+            - restarted
+        default: started
 
     state:
       description:
@@ -254,10 +265,10 @@ EXAMPLES = '''
           testkey: testvalue
         frameworks:
           - name: "java"
-            version: "1.8"
+            version: "8"
             settings:
               java_container: "Tomcat"
-              java_container_version: "8.0"
+              java_container_version: "8.5"
 '''
 
 RETURN = '''
@@ -299,8 +310,8 @@ deployment_source_spec = dict(
 
 
 framework_settings_spec = dict(
-    java_container=dict(type='str'),
-    java_container_version=dict(type='str')
+    java_container=dict(type='str', required=True),
+    java_container_version=dict(type='str', required=True)
 )
 
 
@@ -409,6 +420,11 @@ class AzureRMWebApps(AzureRMModuleBase):
                 type='bool',
                 default=False
             ),
+            app_state=dict(
+                type='str',
+                choices=['started', 'stopped', 'restarted'],
+                default='started'
+            ),
             state=dict(
                 type='str',
                 default='present',
@@ -449,6 +465,7 @@ class AzureRMWebApps(AzureRMModuleBase):
         self.container_settings = None
 
         self.purge_app_settings = False
+        self.app_state = 'started'
 
         self.results = dict(
             changed=False,
@@ -536,6 +553,17 @@ class AzureRMWebApps(AzureRMModuleBase):
                         self.fail('Unsupported framework {0} for Linux web app.'.format(self.frameworks[0]['name']))
 
                     self.site_config['linux_fx_version'] = (self.frameworks[0]['name'] + '|' + self.frameworks[0]['version']).upper()
+
+                    if self.frameworks[0]['name'] == 'java':
+                        if self.frameworks[0]['version'] != '8':
+                            self.fail("Linux web app only supports java 8.")
+                        if self.frameworks[0]['settings'] and self.frameworks[0]['settings']['java_container'].lower() != 'tomcat':
+                            self.fail("Linux web app only supports tomcat container.")
+
+                        if self.frameworks[0]['settings'] and self.frameworks[0]['settings']['java_container'].lower() == 'tomcat':
+                            self.site_config['linux_fx_version'] = 'TOMCAT|' + self.frameworks[0]['settings']['java_container_version'] + '-jre8'
+                        else:
+                            self.site_config['linux_fx_version'] = 'JAVA|8-jre8'
                 else:
                     for fx in self.frameworks:
                         if fx.get('name') not in self.supported_windows_frameworks:
@@ -543,10 +571,9 @@ class AzureRMWebApps(AzureRMModuleBase):
                         else:
                             self.site_config[fx.get('name') + '_version'] = fx.get('version')
 
-                for fx in self.frameworks:
-                    if 'settings' in fx and fx['settings'] is not None:
-                        for key, value in fx['settings'].items():
-                            self.site_config[key] = value
+                        if 'settings' in fx and fx['settings'] is not None:
+                            for key, value in fx['settings'].items():
+                                self.site_config[key] = value
 
             if not self.app_settings:
                 self.app_settings = dict()
@@ -584,6 +611,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 to_be_updated = True
                 self.to_do = Actions.CreateOrUpdate
+                self.site.tags = self.tags
 
                 # service plan is required for creation
                 if not self.plan:
@@ -620,7 +648,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 self.log('Result: {0}'.format(old_response))
 
-                update_tags, old_response['tags'] = self.update_tags(old_response.get('tags', dict()))
+                update_tags, self.site.tags = self.update_tags(old_response.get('tags', None))
 
                 if update_tags:
                     to_be_updated = True
@@ -682,7 +710,25 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             if self.to_do == Actions.CreateOrUpdate:
                 response = self.create_update_webapp()
+
                 self.results['id'] = response['id']
+
+        webapp = None
+        if old_response:
+            webapp = old_response
+        if response:
+            webapp = response
+
+        if webapp:
+            if (webapp['state'] != 'Stopped' and self.app_state == 'stopped') or \
+               (webapp['state'] != 'Running' and self.app_state == 'started') or \
+               self.app_state == 'restarted':
+
+                self.results['changed'] = True
+                if self.check_mode:
+                    return self.results
+
+                self.set_webapp_state(self.app_state)
 
         return self.results
 
@@ -931,6 +977,29 @@ class AzureRMWebApps(AzureRMModuleBase):
                 self.name, self.resource_group, str(ex)))
 
             return False
+
+    def set_webapp_state(self, appstate):
+        '''
+        Start/stop/restart web app
+        :return: deserialized updating response
+        '''
+        try:
+            if appstate == 'started':
+                response = self.web_client.web_apps.start(resource_group_name=self.resource_group, name=self.name)
+            elif appstate == 'stopped':
+                response = self.web_client.web_apps.stop(resource_group_name=self.resource_group, name=self.name)
+            elif appstate == 'restarted':
+                response = self.web_client.web_apps.restart(resource_group_name=self.resource_group, name=self.name)
+            else:
+                self.fail("Invalid web app state {0}".format(appstate))
+
+            self.log("Response : {0}".format(response))
+
+            return response
+        except CloudError as ex:
+            request_id = ex.request_id if ex.request_id else ''
+            self.log("Failed to {0} web app {1} in resource group {2}, request_id {3} - {4}".format(
+                appstate, self.name, self.resource_group, request_id, str(ex)))
 
 
 def main():

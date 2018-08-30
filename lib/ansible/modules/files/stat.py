@@ -121,10 +121,10 @@ EXAMPLES = '''
     msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
-# Don't do md5 checksum
+# Don't do checksum
 - stat:
     path: /path/to/myhugefile
-    get_md5: no
+    get_checksum: no
 
 # Use sha256 to calculate checksum
 - stat:
@@ -322,13 +322,13 @@ stat:
             returned: success, path exists and user can read stats and installed python supports it
             type: string
             sample: www-data
-        mime_type:
+        mimetype:
             description: file magic data or mime-type
             returned: success, path exists and user can read stats and
                 installed python supports it and the `mime` option was true, will
                 return 'unknown' on error.
             type: string
-            sample: PDF document, version 1.2
+            sample: application/pdf; charset=binary
         charset:
             description: file character set or encoding
             returned: success, path exists and user can read stats and

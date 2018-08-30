@@ -73,32 +73,6 @@ EXAMPLES = r'''
       server: lb.mydomain.com
       user: admin
   delegate_to: localhost
-
-- name: Set vectors of DoS profile
-  bigip_firewall_dos_profile_vector:
-    name: "{{ item }}"
-    rate_increase: 100
-    rate_limit: infinite
-    rate_threshold: 120000
-    provider:
-      password: secret
-      server: lb.mydomain.com
-      user: admin
-  loop:
-    - a
-    - aaaa
-    - any
-    - axfr
-    - cname
-    - ixfr
-    - mx
-    - ns
-    - other
-    - ptr
-    - soa
-    - srv
-    - txt
-  delegate_to: localhost
 '''
 
 RETURN = r'''

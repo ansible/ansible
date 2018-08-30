@@ -49,7 +49,7 @@ options:
     aliases: ['source']
   format:
     description:
-    - The format of the configuration provided as value of C(content). Accepted values are I(xml) and I(test) and
+    - The format of the configuration provided as value of C(content). Accepted values are I(xml) and I(text) and
       the given configuration format should be supported by remote Netconf server.
     default: xml
     choices: ['xml', 'text']
@@ -78,7 +78,7 @@ options:
     description:
     - This argument will configure a timeout value for the commit to be confirmed before it is automatically
       rolled back. If the C(confirm_commit) argument is set to False, this argument is silently ignored. If the
-      value of this argument is set to 0, the commit is confirmed immediately. The remote host should
+      value of this argument is set to 0, the commit is confirmed immediately. The remote host MUST
       support :candidate and :confirmed-commit capability for this option to .
     default: 0
     version_added: "2.7"
@@ -92,7 +92,7 @@ options:
     description:
     - This option control the netconf server action after a error is occured while editing the configuration.
       If the value is I(stop-on-error) abort the config edit on first error, if value is I(continue-on-error)
-      it continues to process configuration data on erro, error is recorded and negative response is generated
+      it continues to process configuration data on error, error is recorded and negative response is generated
       if any errors occur. If value is C(rollback-on-error) it rollback to the original configuration in case
       any error occurs, this requires the remote Netconf server to support the :rollback-on-error capability.
     default: stop-on-error
@@ -206,11 +206,13 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 diff:
-  description: If --diff option in enabled while running, the before and after configration change are
+  description: If --diff option in enabled while running, the before and after configuration change are
                returned as part of before and after key.
   returned: when diff is enabled
-  type: string
-  sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
+  type: dict
+  sample:
+    "after": "<rpc-reply>\n<data>\n<configuration>\n<version>17.3R1.10</version>...<--snip-->"
+    "before": "<rpc-reply>\n<data>\n<configuration>\n <version>17.3R1.10</version>...<--snip-->"
 '''
 
 from ansible.module_utils._text import to_text
@@ -263,12 +265,12 @@ def main():
 
     if module.params['src']:
         module.deprecate(msg="argument 'src' has been deprecated. Use file lookup plugin instead to read file contents.",
-                         version="4 releases from v2.7")
+                         version="2.11")
 
     config = module.params['content'] or module.params['src']
     target = module.params['target']
     lock = module.params['lock']
-    source = module.params['source']
+    source = module.params['source_datastore']
     delete = module.params['delete']
     confirm_commit = module.params['confirm_commit']
     confirm = module.params['confirm']
@@ -369,12 +371,14 @@ def main():
 
             after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
 
-            if sanitize_xml(before) != sanitize_xml(after):
+            sanitized_before = sanitize_xml(before)
+            sanitized_after = sanitize_xml(after)
+            if sanitized_before != sanitized_after:
                 result['changed'] = True
 
             if module._diff:
                 if result['changed']:
-                    result['diff'] = {'before': before, 'after': after}
+                    result['diff'] = {'before': sanitized_before, 'after': sanitized_after}
 
     except ConnectionError as e:
         module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())

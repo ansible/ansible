@@ -120,16 +120,3 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False)
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
-
-
-def get_docstub(filename, fragment_loader, verbose=False, ignore_errors=False):
-    """
-    When only short_description is needed, load a stub of the full DOCUMENTATION string to speed up operation.
-    """
-
-    data = read_docstub(filename, verbose=verbose, ignore_errors=ignore_errors)
-
-    if data.get('doc', False):
-        add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
-
-    return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']

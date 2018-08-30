@@ -152,7 +152,7 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import compare_dictionary
+    from library.module_utils.network.f5.common import compare_complex_list
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -165,7 +165,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import compare_dictionary
+    from ansible.module_utils.network.f5.common import compare_complex_list
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -371,7 +371,7 @@ class Difference(object):
         have = [tuple(x.pop('destination_ports')) for x in self.have.rules if 'destination_ports' in x]
         if set(want) != set(have):
             return self.want.rules
-        if compare_dictionary(self.want.rules, self.have.rules):
+        if compare_complex_list(self.want.rules, self.have.rules):
             return self.want.rules
 
 

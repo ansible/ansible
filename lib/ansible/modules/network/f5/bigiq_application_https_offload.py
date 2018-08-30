@@ -49,14 +49,14 @@ options:
       - Traffic destined to the C(redirect_virtual) will be offloaded to this
         parameter to ensure that proper redirection from insecure, to secure, occurs.
     suboptions:
-      destination:
+      address:
         description:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
           - This parameter is required when creating a new application.
       netmask:
         description:
-          - Specifies the netmask to associate with the given C(destination).
+          - Specifies the netmask to associate with the given C(address).
           - This parameter is required when creating a new application.
       port:
         description:
@@ -73,14 +73,14 @@ options:
         C(inbound_virtual) parameter to ensure that proper redirection from insecure,
         to secure, occurs.
     suboptions:
-      destination:
+      address:
         description:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
           - This parameter is required when creating a new application.
       netmask:
         description:
-          - Specifies the netmask to associate with the given C(destination).
+          - Specifies the netmask to associate with the given C(address).
           - This parameter is required when creating a new application.
       port:
         description:
@@ -130,8 +130,8 @@ options:
               - Passphrases are encrypted on the remote BIG-IP device.
   service_environment:
     description:
-      - Specifies the name of service environment that the application will be
-        deployed to.
+      - Specifies the name of service environment or the hostname of the BIG-IP that
+        the application will be deployed to.
       - When creating a new application, this parameter is required.
   add_analytics:
     description:
@@ -171,11 +171,11 @@ EXAMPLES = r'''
       - address: 5.6.7.8
         port: 8080
     inbound_virtual:
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 443
     redirect_virtual:
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 80
     provider:

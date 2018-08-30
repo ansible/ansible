@@ -18,10 +18,10 @@ DOCUMENTATION = '''
 module: acme_certificate
 author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
-short_description: Create SSL certificates with an ACME protocol endpoint
+short_description: Create SSL/TLS certificates with the ACME protocol
 description:
-   - "Create and renew SSL certificates with a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-12),
+   - "Create and renew SSL/TLS certificates with a CA supporting the
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
       such as L(Let's Encrypt,https://letsencrypt.org/). The current
       implementation supports the C(http-01), C(dns-01) and C(tls-alpn-01)
       challenges."
@@ -36,19 +36,21 @@ description:
       the necessary certificate has to be created and served.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      L(the main ACME specification,https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8)
-      and the L(TLS-ALPN-01 specification,U(https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3).
+      L(the main ACME specification,https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-8)
+      and the L(TLS-ALPN-01 specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3).
       Also, consider the examples provided for this module."
-   - "Although the defaults are chosen so that the module can be used with
-      the Let's Encrypt CA, the module can be used with any service using the ACME
-      v1 or v2 protocol."
+notes:
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
-   - "Note that this module includes basic account management functionality.
+   - "This module includes basic account management functionality.
       If you want to have more control over your ACME account, use the M(acme_account)
       module and disable account management for this module using the C(modify_account)
       option."
-   - "Note: this module was called C(letsencrypt) before Ansible 2.6. The usage
+   - "This module was called C(letsencrypt) before Ansible 2.6. The usage
       did not change."
+   - "If you want to use the C(tls-alpn-01) challenge, you can use the
+      M(acme_challenge_cert_helper) module to prepare the challenge certificate."
+   - "You can use the M(certificate_complet_chain) module to find the root certificate
+      for the returned fullchain."
 extends_documentation_fragment:
   - acme
 options:
@@ -96,10 +98,10 @@ options:
       - "The CSR may contain multiple Subject Alternate Names, but each one
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
-      - "I(Note): the private key used to create the CSR I(must not) be the the
+      - "I(Note): the private key used to create the CSR I(must not) be the
          account key. This is a bad idea from a security point of view, and
-         the CA should not accept the CSR. Let's Encrypt will return an error
-         in this case."
+         the CA should not accept the CSR. The ACME server should return an
+         error in this case."
     required: true
     aliases: ['src']
   data:
@@ -284,7 +286,7 @@ challenge_data:
         - "For C(tls-alpn-01) challenges, note that this return value contains a
            Base64 encoded version of the correct binary blob which has to be put
            into the acmeValidation x509 extension; see
-           U(https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3)
+           U(https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3)
            for details. To do this, you might need the C(b64decode) Jinja filter
            to extract the binary blob from this return value."
       returned: changed
@@ -307,7 +309,7 @@ authorizations:
   type: complex
   contains:
       authorization:
-        description: ACME authorization object. See U(https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.1.4)
+        description: ACME authorization object. See U(https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.1.4)
         returned: success
         type: dict
 order_uri:
@@ -492,17 +494,17 @@ class ACMEClient(object):
             keyauthorization = self.account.get_keyauthorization(token)
 
             if type == 'http-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.3
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-8.3
                 resource = '.well-known/acme-challenge/' + token
                 data[type] = {'resource': resource, 'resource_value': keyauthorization}
             elif type == 'dns-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.4
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-8.4
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
                 record = (resource + domain[1:]) if domain.startswith('*.') else (resource + '.' + domain)
                 data[type] = {'resource': resource, 'resource_value': value, 'record': record}
             elif type == 'tls-alpn-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-3
+                # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3
                 resource = domain
                 value = base64.b64encode(hashlib.sha256(to_bytes(keyauthorization)).digest())
                 data[type] = {'resource': resource, 'resource_value': value}
@@ -573,7 +575,7 @@ class ACMEClient(object):
         '''
         Create a new certificate based on the csr.
         Return the certificate object as dict
-        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.4
         '''
         csr = pem_to_der(self.csr)
         new_cert = {
@@ -607,7 +609,7 @@ class ACMEClient(object):
     def _download_cert(self, url):
         '''
         Download and parse the certificate chain.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.4.2
         '''
         resp, info = fetch_url(self.module, url, headers={'Accept': 'application/pem-certificate-chain'})
         try:
@@ -679,7 +681,7 @@ class ACMEClient(object):
     def _new_order_v2(self):
         '''
         Start a new certificate order (ACME v2 protocol).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.4
         '''
         identifiers = []
         for domain in self.domains:
@@ -841,7 +843,7 @@ class ACMEClient(object):
         '''
         Deactivates all valid authz's. Does not raise exceptions.
         https://community.letsencrypt.org/t/authorization-deactivation/19860/2
-        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.5.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.5.2
         '''
         authz_deactivate = {
             'status': 'deactivated'

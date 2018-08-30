@@ -1,0 +1,16 @@
+- name: 'Install pexpect'
+  pip:
+    name: 'pexpect'
+    state: 'present'
+
+- name: 'Validate PKCS#12'
+  command: "openssl pkcs12 -info -in {{ output_dir }}/ansible.p12 -nodes -passin pass:''"
+  register: p12
+
+- name: 'Validate PKCS#12 (assert)'
+  assert:
+    that:
+      - p12.stdout_lines[2].split(':')[-1].strip() == 'abracadabra'
+      - p12_standard.mode == '0400'
+      - p12_force.changed
+      - p12_force_and_mode.mode == '0644' and p12_force_and_mode.changed

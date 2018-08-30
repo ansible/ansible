@@ -19,7 +19,7 @@ short_description: Manage OVH IP LoadBalancing backends
 description:
     - Manage OVH (French European hosting provider) LoadBalancing IP backends
 version_added: "2.2"
-author: Pascal HERAUD @pascalheraud
+author: Pascal Heraud (@pascalheraud)
 notes:
     - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
       You have to create an application (a key and secret) with a consummer

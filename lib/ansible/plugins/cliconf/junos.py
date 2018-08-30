@@ -169,9 +169,20 @@ class Cliconf(CliconfBase):
         resp = self.send_command(command)
 
         r = resp.splitlines()
-        if len(r) == 1 and r[0] == '[edit]':
+        if len(r) == 1 and '[edit]' in r[0]:
             resp = ''
 
+        return resp
+
+    @configure
+    def rollback(self, rollback_id, commit=True):
+        resp = {}
+        self.send_command('rollback %s' % int(rollback_id))
+        resp['diff'] = self.compare_configuration()
+        if commit:
+            self.commit()
+        else:
+            self.discard_changes()
         return resp
 
     def get_diff(self, rollback_id=None):

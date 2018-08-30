@@ -149,10 +149,15 @@ try:
     from azure.mgmt.dns import DnsManagementClient
     from azure.mgmt.web import WebSiteManagementClient
     from azure.mgmt.containerservice import ContainerServiceClient
+    from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
+    from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from adal.authentication_context import AuthenticationContext
+    from azure.mgmt.sql import SqlManagementClient
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from azure.mgmt.containerregistry import ContainerRegistryManagementClient
+    from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -219,6 +224,10 @@ AZURE_PKG_VERSIONS = {
         'package_name': 'web',
         'expected_version': '0.32.0'
     },
+    'TrafficManagerManagementClient': {
+        'package_name': 'trafficmanager',
+        'expected_version': '0.50.0'
+    },
 } if HAS_AZURE else {}
 
 
@@ -273,9 +282,15 @@ class AzureRMModuleBase(object):
         self._compute_client = None
         self._dns_client = None
         self._web_client = None
+        self._marketplace_client = None
         self._containerservice_client = None
+        self._sql_client = None
         self._mysql_client = None
         self._postgresql_client = None
+        self._containerregistry_client = None
+        self._containerinstance_client = None
+        self._traffic_manager_management_client = None
+
         self._adfs_authority_url = None
         self._resource = None
 
@@ -1061,6 +1076,14 @@ class AzureRMModuleBase(object):
         return self._containerservice_client
 
     @property
+    def sql_client(self):
+        self.log('Getting SQL client')
+        if not self._sql_client:
+            self._sql_client = self.get_mgmt_svc_client(SqlManagementClient,
+                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._sql_client
+
+    @property
     def postgresql_client(self):
         self.log('Getting PostgreSQL client')
         if not self._postgresql_client:
@@ -1075,3 +1098,39 @@ class AzureRMModuleBase(object):
             self._mysql_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                           base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mysql_client
+
+    @property
+    def containerregistry_client(self):
+        self.log('Getting container registry mgmt client')
+        if not self._containerregistry_client:
+            self._containerregistry_client = self.get_mgmt_svc_client(ContainerRegistryManagementClient,
+                                                                      base_url=self._cloud_environment.endpoints.resource_manager,
+                                                                      api_version='2017-10-01')
+
+        return self._containerregistry_client
+
+    @property
+    def containerinstance_client(self):
+        self.log('Getting container instance mgmt client')
+        if not self._containerinstance_client:
+            self._containerinstance_client = self.get_mgmt_svc_client(ContainerInstanceManagementClient,
+                                                                      base_url=self._cloud_environment.endpoints.resource_manager,
+                                                                      api_version='2018-06-01')
+
+        return self._containerinstance_client
+
+    @property
+    def marketplace_client(self):
+        self.log('Getting marketplace agreement client')
+        if not self._marketplace_client:
+            self._marketplace_client = self.get_mgmt_svc_client(MarketplaceOrderingAgreements,
+                                                                base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._marketplace_client
+
+    @property
+    def traffic_manager_management_client(self):
+        self.log('Getting traffic manager client')
+        if not self._traffic_manager_management_client:
+            self._traffic_manager_management_client = self.get_mgmt_svc_client(TrafficManagerManagementClient,
+                                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._traffic_manager_management_client

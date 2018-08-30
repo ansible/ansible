@@ -1,0 +1,2 @@
+bugfixes:
+- delegate_to - ensure if we get a non-Task object in _get_delegated_vars, we return early (https://github.com/ansible/ansible/pull/44934)

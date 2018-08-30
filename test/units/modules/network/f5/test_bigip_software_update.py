@@ -91,7 +91,7 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             auto_check='no',
             auto_phone_home='no',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

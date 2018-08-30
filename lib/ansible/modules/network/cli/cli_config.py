@@ -25,9 +25,9 @@ description:
 options:
   config:
     description:
-      - The config to be pushed to the network device. This is a
-        required argument.
-    required: true
+      - The config to be pushed to the network device. This argument
+        is mutually exclusive with C(rollback) and either one of the
+        option should be given as input.
     type: 'str'
   commit:
     description:
@@ -51,6 +51,7 @@ options:
         argument.  If the specified rollback identifier does not
         exist on the remote device, the module will fail. To rollback
         to the most recent commit, set the C(rollback) argument to 0.
+        This option is mutually exclusive with C(config).
   commit_comment:
     description:
       - The C(commit_comment) argument specifies a text string to be used
@@ -157,7 +158,7 @@ def validate_args(module, capabilities):
             not capabilities['device_operations']['supports_replace']):
         module.fail_json(msg='replace is not supported on this platform')
 
-    if (module.params['rollback'] and
+    if (module.params['rollback'] is not None and
             not capabilities['device_operations']['supports_rollback']):
         module.fail_json(msg='rollback is not supported on this platform')
 
@@ -193,7 +194,7 @@ def run(module, capabilities, connection, candidate, running):
     banner_diff = {}
 
     replace = module.params['replace']
-    rollback = module.params['rollback']
+    rollback_id = module.params['rollback']
     commit_comment = module.params['commit_comment']
     multiline_delimiter = module.params['multiline_delimiter']
     diff_replace = module.params['diff_replace']
@@ -207,7 +208,12 @@ def run(module, capabilities, connection, candidate, running):
     elif replace in ('no', 'false', 'False'):
         replace = False
 
-    if capabilities['device_operations']['supports_onbox_diff']:
+    if rollback_id is not None:
+        resp = connection.rollback(rollback_id, commit)
+        if 'diff' in resp:
+            result['changed'] = True
+
+    elif capabilities['device_operations']['supports_onbox_diff']:
         if diff_replace:
             module.warn('diff_replace is ignored as the device supports onbox diff')
         if diff_match:
@@ -280,7 +286,7 @@ def main():
     """main entry point for execution
     """
     argument_spec = dict(
-        config=dict(required=True, type='str'),
+        config=dict(type='str'),
         commit=dict(type='bool'),
         replace=dict(type='str'),
         rollback=dict(type='int'),
@@ -292,7 +298,12 @@ def main():
         diff_ignore_lines=dict(type='list')
     )
 
+    mutually_exclusive = [('config', 'rollback')]
+    required_one_of = [['config', 'rollback']]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           required_one_of=required_one_of,
                            supports_check_mode=True)
 
     result = {'changed': False}

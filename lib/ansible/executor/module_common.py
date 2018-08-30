@@ -607,25 +607,27 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             py_module_name = py_module_name[:-1]
 
         # If not already processed then we've got work to do
-        if py_module_name not in py_module_names:
-            # If not in the cache, then read the file into the cache
-            # We already have a file handle for the module open so it makes
-            # sense to read it now
-            if py_module_name not in py_module_cache:
-                if module_info[2][2] == imp.PKG_DIRECTORY:
-                    # Read the __init__.py instead of the module file as this is
-                    # a python package
-                    normalized_name = py_module_name + ('__init__',)
+        # If not in the cache, then read the file into the cache
+        # We already have a file handle for the module open so it makes
+        # sense to read it now
+        if py_module_name not in py_module_cache:
+            if module_info[2][2] == imp.PKG_DIRECTORY:
+                # Read the __init__.py instead of the module file as this is
+                # a python package
+                normalized_name = py_module_name + ('__init__',)
+                if normalized_name not in py_module_names:
                     normalized_path = os.path.join(os.path.join(module_info[1], '__init__.py'))
                     normalized_data = _slurp(normalized_path)
-                else:
-                    normalized_name = py_module_name
+                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                    normalized_modules.add(normalized_name)
+            else:
+                normalized_name = py_module_name
+                if normalized_name not in py_module_names:
                     normalized_path = module_info[1]
                     normalized_data = module_info[0].read()
                     module_info[0].close()
-
-                py_module_cache[normalized_name] = (normalized_data, normalized_path)
-                normalized_modules.add(normalized_name)
+                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                    normalized_modules.add(normalized_name)
 
             # Make sure that all the packages that this module is a part of
             # are also added
@@ -636,6 +638,22 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                                                    [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
                     normalized_modules.add(py_pkg_name)
                     py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+
+    # FIXME: Currently the AnsiBallZ wrapper monkeypatches module args into a global
+    # variable in basic.py.  If a module doesn't import basic.py, then the AnsiBallZ wrapper will
+    # traceback when it tries to monkypatch.  So, for now, we have to unconditionally include
+    # basic.py.
+    #
+    # In the future we need to change the wrapper to monkeypatch the args into a global variable in
+    # their own, separate python module.  That way we won't require basic.py.  Modules which don't
+    # want basic.py can import that instead.  AnsibleModule will need to change to import the vars
+    # from the separate python module and mirror the args into its global variable for backwards
+    # compatibility.
+    if ('basic',) not in py_module_names:
+        pkg_dir_info = imp.find_module('basic', module_utils_paths)
+        normalized_modules.add(('basic',))
+        py_module_cache[('basic',)] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+    # End of AnsiballZ hack
 
     #
     # iterate through all of the ansible.module_utils* imports that we haven't

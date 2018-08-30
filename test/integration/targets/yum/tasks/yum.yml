@@ -406,7 +406,7 @@
 
 - name: try to install from non existing url
   yum:
-    name: http://non-existing.com/non-existing-1.0.0.fc26.noarch.rpm
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/non-existing-1.0.0.fc26.noarch.rpm
     state: present
   register: yum_result
   ignore_errors: yes
@@ -454,7 +454,7 @@
 
 - name: try to install not compatible arch rpm, should fail
   yum:
-    name: http://download.fedoraproject.org/pub/epel/7/ppc64le/Packages/b/banner-1.3.4-3.el7.ppc64le.rpm
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/banner-1.3.4-3.el7.ppc64le.rpm
     state: present
   register: yum_result
   ignore_errors: True
@@ -477,6 +477,11 @@
 
 - set_fact:
     pkg_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/fpaste-0.3.7.4.1-2.el7.noarch.rpm
+  when: ansible_python.version.major == 2
+
+- set_fact:
+    pkg_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/fpaste-0.3.9.2-1.fc28.noarch.rpm
+  when: ansible_python.version.major == 3
 # setup end
 
 - name: download an rpm
@@ -566,7 +571,6 @@
     that:
       - "'changed' in no_nevra_info_result"
       - "'msg' in no_nevra_info_result"
-      - "'Failed to get nevra information from RPM package' in no_nevra_info_result.msg"
 
 - name: Delete a temp RPM file
   file:
@@ -583,102 +587,131 @@
     yum_version: "{%- if item.yumstate == 'installed' -%}{{ item.version }}{%- else -%}{{ yum_version }}{%- endif -%}"
   with_items: "{{ yum_version.results }}"
 
-- name: check whether yum supports disableexcludes (>= 3.4)
-  set_fact:
-    supports_disable_excludes: "{{ yum_version is version_compare('3.4.0', '>=') }}"
+- block:
+  - name: check whether yum supports disableexcludes (>= 3.4)
+    set_fact:
+      supports_disable_excludes: "{{ yum_version is version_compare('3.4.0', '>=') }}"
+    when: ansible_pkg_mgr == "yum"
 
-- name: uninstall zip
-  yum: name=zip state=removed
+  - name: unset disableexcludes tests for dnf(yum4) backend temporarily
+    set_fact:
+      supports_disable_excludes: True
+    when: ansible_pkg_mgr == "dnf"
 
-- name: check zip with rpm
-  shell: rpm -q zip
-  ignore_errors: True
-  register: rpm_zip_result
+  - name: uninstall bc
+    yum: name=bc state=removed
 
-- name: verify zip is uninstalled
-  assert:
-    that:
-      - "rpm_zip_result is failed"
+  - name: check bc with rpm
+    shell: rpm -q bc
+    ignore_errors: True
+    register: rpm_bc_result
 
-- name: exclude zip
-  lineinfile:
-    dest: /etc/yum.conf
-    regexp: (^exclude=)(.)*
-    line: "exclude=zip*"
-    state: present
+  - name: verify bc is uninstalled
+    assert:
+      that:
+        - "rpm_bc_result is failed"
 
-# begin test case where disable_excludes is supported
-- name: Try install zip without disable_excludes
-  yum: name=zip state=latest
-  register: yum_zip_result
-  ignore_errors: True
-  when: supports_disable_excludes
+  - name: exclude bc (yum backend)
+    lineinfile:
+      dest: /etc/yum.conf
+      regexp: (^exclude=)(.)*
+      line: "exclude=bc*"
+      state: present
+    when: ansible_pkg_mgr == 'yum'
 
-- name: verify zip did not install because it is in exclude list
-  assert:
-    that:
-      - "yum_zip_result is failed"
-  when: supports_disable_excludes
+  - name: exclude bc (dnf backend)
+    lineinfile:
+      dest: /etc/dnf/dnf.conf
+      regexp: (^excludepkgs=)(.)*
+      line: "excludepkgs=bc*"
+      state: present
+    when: ansible_pkg_mgr == 'dnf'
 
-- name: install zip with disable_excludes
-  yum: name=zip state=latest disable_excludes=all
-  register: yum_zip_result_using_excludes
-  when: supports_disable_excludes
+  # begin test case where disable_excludes is supported
+  - name: Try install bc without disable_excludes
+    yum: name=bc state=latest
+    register: yum_bc_result
+    ignore_errors: True
+    when: supports_disable_excludes
 
-- name: verify zip did install using disable_excludes=all
-  assert:
-    that:
-      - "yum_zip_result_using_excludes is success"
-      - "yum_zip_result_using_excludes is changed"
-      - "yum_zip_result_using_excludes is not failed"
-  when: supports_disable_excludes
+  - name: verify bc did not install because it is in exclude list
+    assert:
+      that:
+        - "yum_bc_result is failed"
+    when: supports_disable_excludes
 
-- name: remove exclude zip (cleanup yum.conf)
-  lineinfile:
-    dest: /etc/yum.conf
-    regexp: (^exclude=zip*)
-    line: "exclude="
-    state: present
-  when: supports_disable_excludes
-# end test case where disable_excludes is supported
+  - name: install bc with disable_excludes
+    yum: name=bc state=latest disable_excludes=all
+    register: yum_bc_result_using_excludes
+    when: supports_disable_excludes
 
-# begin test case where disable_excludes is not supported
-- name: Try install zip with disable_excludes
-  yum: name=zip state=latest disable_excludes=all
-  register: yum_fail_zip_result_old_yum
-  ignore_errors: True
-  when: not supports_disable_excludes
+  - name: verify bc did install using disable_excludes=all
+    assert:
+      that:
+        - "yum_bc_result_using_excludes is success"
+        - "yum_bc_result_using_excludes is changed"
+        - "yum_bc_result_using_excludes is not failed"
+    when: supports_disable_excludes
 
-- name: verify packages did not install because yum version is unsupported
-  assert:
-    that:
-      - "yum_fail_zip_result_old_yum is failed"
-  when: not supports_disable_excludes
+  - name: remove exclude bc (cleanup yum.conf)
+    lineinfile:
+      dest: /etc/yum.conf
+      regexp: (^exclude=bc*)
+      line: "exclude="
+      state: present
+    when: supports_disable_excludes and (ansible_pkg_mgr == 'yum')
 
-- name: verify yum module outputs
-  assert:
-    that:
-        - "'is available in yum version 3.4 and onwards.' in yum_fail_zip_result_old_yum.msg"
-  when: not supports_disable_excludes
+  - name: remove exclude bc (cleanup dnf.conf)
+    lineinfile:
+      dest: /etc/dnf/dnf.conf
+      regexp: (^excludepkgs=bc*)
+      line: "excludepkgs="
+      state: present
+    when: ansible_pkg_mgr == 'dnf'
+  # end test case where disable_excludes is supported
 
-- name: remove exclude zip (cleanup yum.conf)
-  lineinfile:
-    dest: /etc/yum.conf
-    regexp: (^exclude=zip*)
-    line: "exclude="
-    state: present
-  when: not supports_disable_excludes
+  # begin test case where disable_excludes is not supported
+  - name: Try install bc with disable_excludes
+    yum: name=bc state=latest disable_excludes=all
+    register: yum_fail_bc_result_old_yum
+    ignore_errors: True
+    when: not supports_disable_excludes
 
-- name: install zip (bring test env in same state as when testing started)
-  yum: name=zip state=latest
-  register: yum_zip_result_old_yum
-  when: not supports_disable_excludes
+  - name: verify packages did not install because yum version is unsupported
+    assert:
+      that:
+        - "yum_fail_bc_result_old_yum is failed"
+    when: not supports_disable_excludes
 
-- name: verify zip installed
-  assert:
-    that:
-      - "yum_zip_result_old_yum is success"
-      - "yum_zip_result_old_yum is changed"
-      - "yum_zip_result_old_yum is not failed"
-  when: not supports_disable_excludes
-# end test case where disable_excludes is not supported
+  - name: verify yum module outputs
+    assert:
+      that:
+          - "'is available in yum version 3.4 and onwards.' in yum_fail_bc_result_old_yum.msg"
+    when: not supports_disable_excludes
+
+  - name: remove exclude bc (cleanup yum.conf)
+    lineinfile:
+      dest: /etc/yum.conf
+      regexp: (^exclude=bc*)
+      line: "exclude="
+      state: present
+    when: not supports_disable_excludes and ansible_pkg_mgr == 'yum'
+
+  - name: install bc (bring test env in same state as when testing started)
+    yum: name=bc state=latest
+    register: yum_bc_result_old_yum
+    when: not supports_disable_excludes
+
+  - name: verify bc installed
+    assert:
+      that:
+        - "yum_bc_result_old_yum is success"
+        - "yum_bc_result_old_yum is changed"
+        - "yum_bc_result_old_yum is not failed"
+    when: not supports_disable_excludes and ansible_pkg_mgr == "yum"
+  # end test case where disable_excludes is not supported
+
+  # Fedora < 26 has a bug in dnf where package excludes in dnf.conf aren't
+  # actually honored and those releases are EOL'd so we have no expectation they
+  # will ever be fixed
+  when: not ((ansible_distribution == "Fedora") and (ansible_distribution_major_version|int < 26))

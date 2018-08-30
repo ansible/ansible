@@ -383,8 +383,9 @@ def main():
         client = MongoClient(**connection_params)
 
         # NOTE: this check must be done ASAP.
-        # We doesn't need to be authenticated.
-        check_compatibility(module, client)
+        # We doesn't need to be authenticated (this ability has lost in PyMongo 3.6)
+        if LooseVersion(PyMongoVersion) <= LooseVersion('3.5'):
+            check_compatibility(module, client)
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()

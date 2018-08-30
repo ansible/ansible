@@ -1,0 +1,18 @@
+---
+bugfixes:
+- vars_prompt with encrypt does not require passlib for the algorithms
+  supported by crypt.
+- Additional checks ensure that there is always a result of hashing passwords
+  in the password_hash filter and vars_prompt, otherwise an error is returned.
+  Some modules (like user module) interprets None as no password at all,
+  which can be dangerous if the password given above is passed directly into
+  those modules.
+- Avoids deprecated functionality of passlib with newer library versions.
+- password_hash does not hard-code the salt-length, which fixes bcrypt
+  in connection with passlib as bcrypt requires a salt with length 22.
+minor_changes:
+- The password_hash filter supports all parameters of passlib.
+  This allows users to provide a rounds parameter.
+  (https://github.com/ansible/ansible/issues/15326)
+- password_hash is not restricted to the subset provided by crypt.crypt
+  (https://github.com/ansible/ansible/issues/17266)
