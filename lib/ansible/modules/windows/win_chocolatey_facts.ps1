@@ -87,9 +87,8 @@ Function Get-ChocolateyPackages {
         $package_info = @{
             package = $packages_split[0]
             version = $packages_split[1]
-         }
-
-        $packages_info += $package_info
+        }
+        $packages_info.add($package_info) > $null 
     }
     $result.ansible_facts.ansible_chocolatey.packages = $packages_info
 }
