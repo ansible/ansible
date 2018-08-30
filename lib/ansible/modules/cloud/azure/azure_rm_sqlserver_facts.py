@@ -139,7 +139,6 @@ class AzureRMServersFacts(AzureRMModuleBase):
             changed=False,
             ansible_facts=dict()
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
         super(AzureRMServersFacts, self).__init__(self.module_arg_spec)
@@ -147,8 +146,6 @@ class AzureRMServersFacts(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
                 self.server_name is not None):
@@ -166,8 +163,8 @@ class AzureRMServersFacts(AzureRMModuleBase):
         response = None
         results = {}
         try:
-            response = self.mgmt_client.servers.get(resource_group_name=self.resource_group,
-                                                    server_name=self.server_name)
+            response = self.sql_client.servers.get(resource_group_name=self.resource_group,
+                                                   server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Servers.')
@@ -186,7 +183,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
         response = None
         results = {}
         try:
-            response = self.mgmt_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
+            response = self.sql_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Servers.')
