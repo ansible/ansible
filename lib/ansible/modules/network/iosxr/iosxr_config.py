@@ -361,7 +361,8 @@ def main():
     if module.params['backup']:
         result['__backup__'] = get_config(module)
 
-    run(module, result)
+    if any((module.params['src'], module.params['lines'])):
+        run(module, result)
 
     module.exit_json(**result)
 
