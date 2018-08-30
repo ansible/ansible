@@ -293,7 +293,7 @@ def parse_privilege(data):
 def map_config_to_obj(module):
     data = get_config(module, flags=['| section username'])
 
-    match = re.findall(r'(?:^\s{0}|^\s{2})username (\S+)', data, re.M)
+    match = re.findall(r'(?:^(?:u|\s{2}u))sername (\S+)', data, re.M)
     if not match:
         return list()
 
@@ -446,7 +446,8 @@ def main():
         want_users = [x['name'] for x in want]
         have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
-            commands.append(user_del_cmd(item))
+            if item != 'admin':
+                commands.append(user_del_cmd(item))
 
     result['commands'] = commands
 
