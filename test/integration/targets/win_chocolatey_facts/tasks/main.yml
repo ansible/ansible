@@ -4,6 +4,12 @@
     name: chocolatey
     state: present
 
-- block:
-  - name: run tests
-    include_tasks: tests.yml
+- name: Gather facts from chocolatey
+  win_chocolatey_facts:
+
+- name: assert facts from chocolatey
+  assert:
+    that:
+    - ansible_facts.chocolatey is not changed
+    - ansible_facts.chocolatey.config['commandExecutionTimeoutSeconds'] == '2700'
+    - ansible_facts.chocolatey.feature['checksumFiles'] == true
