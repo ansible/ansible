@@ -20,6 +20,7 @@ Release Summary
 
 Bugfixes
 --------
+- correct example code for AWS lightsail
 
 - fix for the bundled selectors module (used in the ssh and local connection plugins) when a syscall is restarted after being interrupted by a signal (https://github.com/ansible/ansible/issues/41630)
 
