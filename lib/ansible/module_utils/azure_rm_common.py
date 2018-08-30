@@ -150,6 +150,7 @@ try:
     from azure.mgmt.web import WebSiteManagementClient
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
+    from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
     from adal.authentication_context import AuthenticationContext
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
@@ -222,6 +223,10 @@ AZURE_PKG_VERSIONS = {
         'package_name': 'web',
         'expected_version': '0.32.0'
     },
+    'TrafficManagerManagementClient': {
+        'package_name': 'trafficmanager',
+        'expected_version': '0.50.0'
+    },
 } if HAS_AZURE else {}
 
 
@@ -282,6 +287,8 @@ class AzureRMModuleBase(object):
         self._postgresql_client = None
         self._containerregistry_client = None
         self._containerinstance_client = None
+        self._traffic_manager_management_client = None
+
         self._adfs_authority_url = None
         self._resource = None
 
@@ -1109,3 +1116,11 @@ class AzureRMModuleBase(object):
             self._marketplace_client = self.get_mgmt_svc_client(MarketplaceOrderingAgreements,
                                                                 base_url=self._cloud_environment.endpoints.resource_manager)
         return self._marketplace_client
+
+    @property
+    def traffic_manager_management_client(self):
+        self.log('Getting traffic manager client')
+        if not self._traffic_manager_management_client:
+            self._traffic_manager_management_client = self.get_mgmt_svc_client(TrafficManagerManagementClient,
+                                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._traffic_manager_management_client
