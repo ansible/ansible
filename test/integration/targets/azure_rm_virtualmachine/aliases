@@ -2,4 +2,3 @@ cloud/azure
 shippable/azure/group2
 destructive
 azure_rm_virtualmachine_facts
-
