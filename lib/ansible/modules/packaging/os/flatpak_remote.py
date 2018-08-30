@@ -120,7 +120,6 @@ stdout:
 
 import subprocess
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
 
 
 def add_remote(module, binary, name, flatpakrepo_url, method):
@@ -148,7 +147,7 @@ def remote_exists(module, binary, name, method):
     output = _flatpak_command(module, False, command)
     for line in output.splitlines():
         listed_remote = line.split()
-        if to_text(listed_remote[0]) == to_text(name):
+        if listed_remote[0] == name:
             return True
     return False
 
@@ -206,7 +205,7 @@ def main():
     if not binary:
         module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
 
-    remote_already_exists = remote_exists(module, binary, name, method)
+    remote_already_exists = remote_exists(module, binary, bytes(name, 'utf-8'), method)
 
     if state == 'present' and not remote_already_exists:
         add_remote(module, binary, name, flatpakrepo_url, method)
