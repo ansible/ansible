@@ -14,7 +14,7 @@ Release Summary
 
 Bugfixes
 --------
-
+- correct example code for AWS lightsail
 - Fix lxd module to be idempotent when the given configuration for the lxd container has not changed (https://github.com/ansible/ansible/pull/38166)
 - Fix setting value type to str to avoid conversion during template read. Fix Idempotency in case of 'no key'.
 - Fix the mount module's handling of swap entries in fstab (https://github.com/ansible/ansible/pull/42837)
