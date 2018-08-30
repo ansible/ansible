@@ -1,10 +1,10 @@
 - name: Create random names
   set_fact:
       storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
-      vm_name1: "vm1{{ resource_group | hash('m5') | truncate(5, True, ') }}"
-      vm_name2: "vm2{{ resource_group | hash('m5') | truncate(5, True, ') }}"
-      abs_name1: "avbs1{{ resource_group | hash('m5') | truncate(3, True, ') }}"
-      abs_name2: "avbs2{{ resource_group | hash('m5') | truncate(3, True, ') }}"
+      vm_name1: "vm1{{ resource_group | hash('m5') | truncate(5, True, '') }}"
+      vm_name2: "vm2{{ resource_group | hash('m5') | truncate(5, True, '') }}"
+      abs_name1: "avbs1{{ resource_group | hash('m5') | truncate(3, True, '') }}"
+      abs_name2: "avbs2{{ resource_group | hash('m5') | truncate(3, True, '') }}"
 
 - name: Create storage account
   azure_rm_storageaccount:
