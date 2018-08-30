@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Simon Baerlocher <s.baerlocher@sbaerlocher.ch>
-# Copyright: (c) 2018, ITIGO AG <opensource@itigo.ch>
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -27,19 +26,19 @@ EXAMPLES = r'''
 
 - name: Displays the Configuration
   debug:
-    var: ansible_facts.chocolatey.config
+    var: ansible_chocolatey.config
 
 - name: Displays the Feature
   debug:
-    var: ansible_facts.chocolatey.feature
+    var: ansible_chocolatey.feature
 
 - name: Displays the Sources
   debug:
-    var: ansible_facts.chocolatey.sources
+    var: ansible_chocolatey.sources
 
 - name: Displays the Packages
   debug:
-    var: ansible_facts.chocolatey.packages
+    var: ansible_chocolatey.packages
 '''
 
 RETURN = r'''
@@ -51,18 +50,22 @@ ansible_facts:
         ansible_chocolatey:
             description: Detailed information about the chocolatey installation.
             returned: infos when choco is found.
-            type: list
+            type: dict
             contains:
                 config:
-                    description: List of Configurations.
+                    description: Dict of Configurations.
                     returned: always
+                    type: dict
                 feature:
-                    description: List of Feature.
+                    description: Dict of Feature.
                     returned: always
+                    type: dict
                 sources:
-                    description: List of Sources.
+                    description: Dict of Sources.
                     returned: always
+                    type: dict
                 packages:
-                    description: List of Packages.
-                    returned: always
+                    description: Dict of Packages.
+                    returned: alway
+                    type: dict
 '''

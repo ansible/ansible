@@ -1,7 +1,6 @@
 #!powershell
 
-# Copyright: (c) 2018, Simon Baerlocher <s.baerlocher@sbaerlocher.ch>
-# Copyright: (c) 2018, ITIGO AG <opensource@itigo.ch>
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.CommandUtil
@@ -23,9 +22,8 @@ $result = @{
     }
 }
 
-try {
-    $choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue
-} catch {
+$choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue
+if (-not $choco_app) {
     Fail-Json -obj $result -message "Failed to find Chocolatey installation, make sure choco.exe is in the PATH env value"
 }
 
@@ -35,16 +33,18 @@ Function Get-ChocolateyFeature {
 
     $res = Run-Command -command "`"$($choco_app.Path)`" feature list -r"
     if ($res.rc -ne 0) {
-        Fail-Json -obj $result -message "Failed to list Chocolatey features: $($res.stderr)"
+        $result.stdout = $res.stdout
+        $result.stderr = $res.stderr
+        $result.rc = $res.rc
+        Fail-Json -obj $result -message "Failed to list Chocolatey features, see stderr"
     }
+
     $feature_info = @{}
     $res.stdout -split "`r`n" | Where-Object { $_ -ne "" } | ForEach-Object {
         $feature_split = $_ -split "\|"
         $feature_info."$($feature_split[0])" = $feature_split[1] -eq "Enabled"
     }
-
     $result.ansible_facts.ansible_chocolatey.feature =  $feature_info
-
 }
 
 Function Get-ChocolateyConfig {
@@ -66,7 +66,6 @@ Function Get-ChocolateyConfig {
     foreach ($config in $choco_config.chocolatey.config.GetEnumerator()) {
         $config_info."$($config.key)" = $config.value
     }
-
     $result.ansible_facts.ansible_chocolatey.config =  $config_info
 }
 
@@ -76,15 +75,22 @@ Function Get-ChocolateyPackages {
 
     $res = Run-Command -command "`"$($choco_app.Path)`" list --local-only -r"
     if ($res.rc -ne 0) {
-        Fail-Json -obj $result -message "Failed to list Chocolatey Packages: $($res.stderr)"
+        $result.stdout = $res.stdout
+        $result.stderr = $res.stderr
+        $result.rc = $res.rc
+        Fail-Json -obj $result -message "Failed to list Chocolatey Packages, see stderr"
     }
 
-    $packages_info = @{ }
+    $packages_info = [System.Collections.ArrayList]@()
     $res.stdout -split "`r`n" | Where-Object { $_ -ne "" } | ForEach-Object {
         $packages_split = $_ -split "\|"
-        $packages_info."$($packages_split[0])" = $packages_split[1]
-    }
+        $package_info = @{
+            package = $packages_split[0]
+            version = $packages_split[1]
+         }
 
+        $packages_info += $package_info
+    }
     $result.ansible_facts.ansible_chocolatey.packages = $packages_info
 }
 
