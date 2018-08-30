@@ -310,7 +310,8 @@ options:
           - The ARN of the DB snapshot to restore from when using I(creation_source=snapshot).
     source_db_instance_identifier:
         description:
-          - The identifier of the source DB instance from which to restore when using I(creation_source=instance).
+          - The identifier or ARN of the source DB instance from which to restore when creating a read replica or spinning up a point-in-time
+            DB instance using I(creation_source=instance). If the source DB is not in the same region this should be an ARN.
     source_engine:
         description:
           - The identifier for the database engine that was backed up to create the files stored in the Amazon S3 bucket.
@@ -931,9 +932,6 @@ def validate_options(client, module, instance):
         module.fail_json(msg='Cannot create a read replica from {0}. You must use a source DB instance'.format(creation_source))
     if read_replica is True and not instance and not source_instance:
         module.fail_json(msg='read_replica is true and the instance does not exist yet but all of the following are missing: source_db_instance_identifier')
-    if read_replica is True and not instance and not get_instance(client, module, source_instance):
-        if same_region and not get_instance(client, module, source_instance):
-            module.fail_json(msg='read_replica is true but the source DB instance {0} does not exist'.format(source_instance))
 
 
 def update_instance(client, module, instance, instance_id):
