@@ -729,6 +729,8 @@ def get_instance(client, module, db_instance_id):
         instance['Tags'] = get_tags(client, module, instance['DBInstanceArn'])
         if instance.get('ProcessorFeatures'):
             instance['ProcessorFeatures'] = dict((feature['Name'], feature['Value']) for feature in instance['ProcessorFeatures'])
+        if instance.get('PendingModifiedValues', {}).get('ProcessorFeatures'):
+            instance['PendingModifiedValues']['ProcessorFeatures'] = dict((feature['Name'], feature['Value']) for feature in instance['PendingModifiedValues']['ProcessorFeatures'])
     except is_boto3_error_code('DBInstanceNotFound'):
         instance = {}
     except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
@@ -755,6 +757,9 @@ def get_parameters(client, module, parameters, method_name):
             get_rds_method_attribute(method_name, module).operation_description, required_options))
     options = get_boto3_client_method_parameters(client, method_name)
     parameters = dict((k, v) for k, v in parameters.items() if k in options and v is not None)
+
+    if parameters.get('ProcessorFeatures') is not None:
+        parameters['ProcessorFeatures'] = [{'Name': k, 'Value': to_text(v)} for k, v in parameters['ProcessorFeatures'].items()]
 
     # If this parameter is an empty list it can only be used with modify_db_instance (as the parameter UseDefaultProcessorFeatures)
     if parameters.get('ProcessorFeatures') == [] and not method_name == 'modify_db_instance':
@@ -794,7 +799,7 @@ def get_options_with_changing_values(client, module, parameters):
         if parameters['NewDBInstanceIdentifier'] == instance['PendingModifiedValues']['DBInstanceIdentifier'] and not apply_immediately:
             parameters.pop('NewDBInstanceIdentifier')
 
-    if parameters or (instance.get('PendingModifiedValues') and apply_immediately):
+    if parameters:
         parameters['DBInstanceIdentifier'] = instance_id
         if apply_immediately is not None:
             parameters['ApplyImmediately'] = apply_immediately
@@ -819,7 +824,7 @@ def get_current_attributes_with_inconsistent_keys(instance):
     else:
         options['DBSubnetGroupName'] = instance['DBSubnetGroup']['DBSubnetGroupName']
     if instance.get('PendingModifiedValues', {}).get('ProcessorFeatures'):
-        options['ProcessorFeatures'] = dict((feature['Name'], feature['Value']) for feature in instance['PendingModifiedValues']['ProcessorFeatures'])
+        options['ProcessorFeatures'] = instance['PendingModifiedValues']['ProcessorFeatures']
     else:
         options['ProcessorFeatures'] = instance.get('ProcessorFeatures', {})
     options['OptionGroupName'] = [g['OptionGroupName'] for g in instance['OptionGroupMemberships']]
@@ -1087,9 +1092,9 @@ def main():
     if module.params['new_db_instance_identifier']:
         module.params['new_db_instance_identifier'] = module.params['new_db_instance_identifier'].lower()
 
-    # Format and sanitize processor features
-    if module.params['processor_features']:
-        module.params['processor_features'] = [{'Name': k, 'Value': to_text(v)} for k, v in module.params['processor_features'].items()]
+    # Sanitize processor features
+    if module.params['processor_features'] is not None:
+        module.params['processor_features'] = dict((k, to_text(v)) for k, v in module.params['processor_features'].items())
 
     client = module.client('rds')
     changed = False
@@ -1125,7 +1130,14 @@ def main():
         if state == 'absent' and changed and not module.params['skip_final_snapshot']:
             instance.update(FinalSnapshot=get_final_snapshot(client, module, module.params['final_db_snapshot_identifier']))
 
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(instance, ignore_list=['Tags', 'ProcessorFeatures']))
+    pending_processor_features = None
+    if instance.get('PendingModifiedValues', {}).get('ProcessorFeatures'):
+        pending_processor_features = instance['PendingModifiedValues'].pop('ProcessorFeatures')
+    instance = camel_dict_to_snake_dict(instance, ignore_list=['Tags', 'ProcessorFeatures'])
+    if pending_processor_features is not None:
+        instance['pending_modified_values']['processor_features'] = pending_processor_features
+
+    module.exit_json(changed=changed, **instance)
 
 
 if __name__ == '__main__':

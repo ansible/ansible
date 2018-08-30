@@ -196,6 +196,10 @@ def get_tags(client, module, cluster_arn):
 
 def arg_spec_to_rds_params(options_dict):
     tags = options_dict.pop('tags')
+    has_processor_features = False
+    if 'processor_features' in options_dict:
+        has_processor_features = True
+        processor_features = options_dict.pop('processor_features')
     camel_options = snake_dict_to_camel_dict(options_dict, capitalize_first=True)
     for key, value in camel_options.items():
         for old, new in (('Db', 'DB'), ('Iam', 'IAM'), ('Az', 'AZ')):
@@ -203,6 +207,8 @@ def arg_spec_to_rds_params(options_dict):
             key = key.replace(old, new)
             camel_options[key] = value
     camel_options['Tags'] = tags
+    if has_processor_features:
+        camel_options['ProcessorFeatures'] = processor_features
     return camel_options
 
 

@@ -80,8 +80,8 @@
       - assert:
           that:
             - result.changed
-            - 'result.processor_features.coreCount == "{{ modified_processor_features.coreCount }}"'
-            - 'result.processor_features.threadsPerCore == "{{ modified_processor_features.threadsPerCore }}"'
+            - 'result.pending_modified_values.processor_features.coreCount == "{{ modified_processor_features.coreCount }}"'
+            - 'result.pending_modified_values.processor_features.threadsPerCore == "{{ modified_processor_features.threadsPerCore }}"'
 
       - name: Check mode - use the default processor features
         rds_instance:
@@ -108,7 +108,8 @@
       - assert:
           that:
             - result.changed
-            - not result.processor_features
+            - 'result.pending_modified_values.processor_features.coreCount == "DEFAULT"'
+            - 'result.pending_modified_values.processor_features.threadsPerCore == "DEFAULT"'
 
     always:
 
