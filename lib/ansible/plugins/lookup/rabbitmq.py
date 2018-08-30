@@ -29,10 +29,13 @@ DOCUMENTATION = """
     requirements:
         - The python pika package U(https://pypi.org/project/pika/).
     notes:
-        - This lookup implements BlockingChannel.basic_get to get message from a RabbitMQ server.
+        - This lookup implements BlockingChannel.basic_get to get messages from a RabbitMQ server.
+        - After retrieving a message from the server, receipt of the message is acknowledged and the message on the server is deleted.
         - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library.
         - More information about pika can be found at U(https://pika.readthedocs.io/en/stable/).
-        - This plugin is tested against RabbitMQ.  Other AMQP 0.9.1 protocol based servers may work but not tested/gaurenteed.
+        - This plugin is tested against RabbitMQ.  Other AMQP 0.9.1 protocol based servers may work but not tested/guaranteed.
+        - Assigning the return messages to a variable under C(vars) may result in unexpected results as the lookup is evaluated every time the
+          variable is referenced.
 """
 
 
@@ -42,7 +45,8 @@ EXAMPLES = """
     msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.0.10:5672/%2F', channel='hello') }}"
 
 
-# If you are intending on using the returned messages as a variable in more than one task, it is recommended to set_fact.
+# If you are intending on using the returned messages as a variable in more than
+# one task (eg. debug, template), it is recommended to set_fact.
 
 - name: Get 2 messages off a queue and set a fact for re-use
   set_fact:
@@ -135,6 +139,8 @@ class LookupModule(LookupBase):
             conn_channel = connection.channel()
         except Exception as e:
             raise AnsibleError("Channel issue: %s" % to_native(e))
+        finally:
+            connection.close()
 
         ret = []
         idx = 0
@@ -158,6 +164,8 @@ class LookupModule(LookupBase):
                         msg_details['json'] = json.loads(body)
                     except ValueError as e:
                         raise AnsibleError("Unable to decode JSON for message %s: %s" % (method_frame.delivery_tag, to_native(e)))
+                    finally:
+                        connection.close()
 
                 ret.append(msg_details)
                 conn_channel.basic_ack(method_frame.delivery_tag)

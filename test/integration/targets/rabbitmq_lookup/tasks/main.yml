@@ -1,1 +1,59 @@
-- import_tasks: tests.yml
+# Rabbitmq lookup
+- name: Test failure without pika installed
+  set_fact:
+    rabbit_missing_pika: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F', channel='hello', count=3) }}"
+  ignore_errors: yes
+  register: rabbitmq_missing_pika_error
+
+- assert:
+    that:
+      - "'pika python package is required' in rabbitmq_missing_pika_error.msg"
+
+- name: Install pika
+  pip:
+    name: pika
+    state: latest
+
+- name: Test that giving an incorrect amqp protocol in URL will error
+  set_fact:
+    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='zzzamqp://guest:guest@192.168.250.1:5672/%2F', channel='hello', count=3) }}"
+  ignore_errors: yes
+  register: rabbitmq_protocol_error
+
+- assert:
+    that:
+      - "rabbitmq_protocol_error is failed"
+      - "'URL malformed' in rabbitmq_protocol_error.msg"
+
+- name: Test that giving an incorrect IP address in URL will error
+  set_fact:
+    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@xxxxx192.112312368.250.1:5672/%2F', channel='hello', count=3) }}"
+  ignore_errors: yes
+  register: rabbitmq_ip_error
+ 
+- assert:
+    that:
+      - "rabbitmq_ip_error is failed"
+      - "'Connection issue' in rabbitmq_ip_error.msg"
+ 
+- name: Test missing parameters will error
+  set_fact:
+    rabbitmq_test_protocol: "{{ lookup('rabbitmq') }}"
+  ignore_errors: yes
+  register: rabbitmq_params_error
+ 
+- assert:
+    that:
+      - "rabbitmq_params_error is failed"
+      - "'URL is required for ampq lookup.' in rabbitmq_params_error.msg"
+ 
+- name: Test missing channel will error
+  set_fact:
+    rabbitmq_channel_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F') }}"
+  ignore_errors: yes
+  register: rabbitmq_channel_error
+ 
+- assert:
+    that:
+      - "rabbitmq_channel_error is failed"
+      - "'Channel is required for ampq lookup' in rabbitmq_channel_error.msg"
