@@ -129,6 +129,7 @@ def main():
         prompt=dict(type='list', required=False),
         answer=dict(type='list', required=False),
         sendonly=dict(type='bool', default=False, required=False),
+        check_all=dict(type='bool', default=False, required=False),
     )
     required_together = [['prompt', 'answer']]
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together,
