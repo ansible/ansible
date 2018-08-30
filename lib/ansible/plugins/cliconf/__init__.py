@@ -225,7 +225,7 @@ class CliconfBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None,  check_all=False):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -236,9 +236,11 @@ class CliconfBase(AnsiblePlugin):
         :param sendonly: bool to disable waiting for response, default is false
         :param newline: bool to indicate if newline should be added at end of answer or not
         :param output: For devices that support fetching command output in different
-            format, this keyword argument is used to specify the output in which
-            response is to be retrieved.
-        :return:
+                       format, this keyword argument is used to specify the output in which
+                        response is to be retrieved.
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
+        :return: The output from the device after executing the command
         """
         pass
 
