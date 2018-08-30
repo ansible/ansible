@@ -113,19 +113,19 @@ matched_processes:
   returned: always
   type: complex
   contains:
-    Id:
-      description: The PID of the matched process
-      returned: always
-      type: int
-      sample: 7908
-    ProcessName:
+    name:
       description: The name of the matched process
       returned: always
       type: str
       sample: svchost
-    UserName:
+    owner:
       description: The owner of the matched process
       returned: when supported by PowerShell
       type: str
       sample: NT AUTHORITY\SYSTEM
+    pid:
+      description: The PID of the matched process
+      returned: always
+      type: int
+      sample: 7908
 '''

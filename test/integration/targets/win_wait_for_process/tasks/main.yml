@@ -172,7 +172,7 @@
 - name: Wait for PID to start
   win_wait_for_process:
     pid: '{{ sleep_pid.ansible_async_watchdog_pid }}'
-    timeout: 15
+    timeout: 20
     state: present
   register: present_sleep_pid
 
@@ -187,7 +187,7 @@
 - name: Wait for PID to stop
   win_wait_for_process:
     pid: '{{ sleep_pid.ansible_async_watchdog_pid }}'
-    timeout: 15
+    timeout: 20
     state: absent
   register: absent_sleep_pid
 

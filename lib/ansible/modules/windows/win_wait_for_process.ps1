@@ -9,9 +9,11 @@
 
 $ErrorActionPreference = "Stop"
 
+# NOTE: Ensure we get proper debug information when things fall over
 trap {
+    if ($null -eq $result) { $result = @{} }
     $result.exception = "$($_ | Out-String)`r`n$($_.ScriptStackTrace)"
-    Fail-Json $result "Uncaught exception: $($_.Exception.Message)"
+    Fail-Json -obj $result -message "Uncaught exception: $($_.Exception.Message)"
 }
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
@@ -35,29 +37,29 @@ $result = @{
 
 # Validate the input
 if ($state -eq "absent" -and $sleep -ne 1) {
-    Add-Warning -obj $result -message "sleep parameter has no effect when waiting for a process to stop."
+    Add-Warning -obj $result -message "Parameter 'sleep' has no effect when waiting for a process to stop."
 }
 
 if ($state -eq "absent" -and $process_min_count -ne 1) {
-    Add-Warning -obj $result -message "process_min_count parameter has no effect when waiting for a process to stop."
+    Add-Warning -obj $result -message "Parameter 'process_min_count' has no effect when waiting for a process to stop."
 }
 
 if (($process_name_exact -or $process_name_pattern) -and $process_id) {
-    Fail-json -obj $result -message "process_id may not be used with process_name_exact or process_name_pattern."
+    Fail-Json -obj $result -message "Parameter 'pid' may not be used with process_name_exact or process_name_pattern."
 }
 if ($process_name_exact -and $process_name_pattern) {
-    Fail-json -obj $result -message "process_name_exact and process_name_pattern may not be used at the same time."
+    Fail-Json -obj $result -message "Parameter 'process_name_exact' and 'process_name_pattern' may not be used at the same time."
 }
 
 if (-not ($process_name_exact -or $process_name_pattern -or $process_id -or $owner)) {
-    Fail-json -obj $result -message "at least one of: process_name_exact, process_name_pattern, process_id, or owner must be supplied."
+    Fail-Json -obj $result -message "At least one of 'process_name_exact', 'process_name_pattern', 'pid' or 'owner' must be supplied."
 }
 
 if ($owner -and ("IncludeUserName" -notin (Get-Command -Name Get-Process).Parameters.Keys)) {
-    Fail-json -obj $result -message "This version of Powershell does not support filtering processes by 'owner'."
+    Fail-Json -obj $result -message "This version of Powershell does not support filtering processes by 'owner'."
 }
 
-Function Get-ProcessMatchesFilter {
+Function Get-FilteredProcesses {
     [cmdletbinding()]
     Param(
         [String]
@@ -67,6 +69,8 @@ Function Get-ProcessMatchesFilter {
         [int]
         $ProcessId
     )
+
+    $FilteredProcesses = @()
 
     try {
         $Processes = Get-Process -IncludeUserName
@@ -113,11 +117,13 @@ Function Get-ProcessMatchesFilter {
         }
 
         if ($SupportsUserNames -eq $true) {
-            $Process | Select-Object -Property Id, ProcessName, UserName
+            $FilteredProcesses += @{ name = $Process.ProcessName; pid = $Process.Id; owner = $Process.UserName }
         } else {
-            $Process | Select-Object -Property Id, ProcessName
+            $FilteredProcesses += @{ name = $Process.ProcessName; pid = $Process.Id }
         }
     }
+
+    return ,$FilteredProcesses
 }
 
 $module_start = Get-Date
@@ -126,50 +132,34 @@ Start-Sleep -Seconds $pre_wait_delay
 if ($state -eq "present" ) {
 
     # Wait for a process to start
-    $Processes = @()
-    $attempts = 0
-    Do {
+    do {
+
+        $Processes = Get-FilteredProcesses -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
+        $result.matched_processes = $Processes
+
+        if ($Processes.count -ge $process_min_count) {
+            break
+        }
+
         if (((Get-Date) - $module_start).TotalSeconds -gt $timeout) {
             $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             Fail-Json -obj $result -message "Timed out while waiting for process(es) to start"
         }
 
-        $Processes = Get-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
-        if ($Processes -is [array]) {
-            $result.matched_processes = $Processes
-            $ProcessCount = $Processes.count
-        } elseif ($null -ne $Processes) {
-            $result.matched_processes = ,$Processes
-            $ProcessCount = 1
-        } else {
-            $result.matched_processes = @()
-            $ProcessCount = 0
-        }
-
         Start-Sleep -Seconds $sleep
-        $attempts ++
 
-    } While ($ProcessCount -lt $process_min_count)
+    } while ($true)
 
 } elseif ($state -eq "absent") {
 
     # Wait for a process to stop
-    $Processes = Get-ProcessMatchesFilter -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
+    $Processes = Get-FilteredProcesses -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
+    $result.matched_processes = $Processes
 
-    if ($Processes -is [array]) {
-        $result.matched_processes = $Processes
-        $ProcessCount = $Processes.count
-    } elseif ($null -ne $Processes) {
-        $result.matched_processes = ,$Processes
-        $ProcessCount = 1
-    } else {
-        $result.matched_processes = @()
-        $ProcessCount = 0
-    }
-
-    if ($result.matched_processes.count -gt 0 ) {
+    if ($Processes.count -gt 0 ) {
         try {
-            Wait-Process -Id $($Processes | Select-Object -ExpandProperty Id) -Timeout $timeout
+            # This may randomly fail when used on specially protected processes (think: svchost)
+            Wait-Process -Id $Processes.pid -Timeout $timeout
         } catch [System.TimeoutException] {
             $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             Fail-Json -obj $result -message "Timeout while waiting for process(es) to stop"
@@ -179,7 +169,6 @@ if ($state -eq "present" ) {
 }
 
 Start-Sleep -Seconds $post_wait_delay
-
 $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 Exit-Json -obj $result
