@@ -54,7 +54,21 @@
     plan: "{{ win_plan_name }}"
     dns_registration: true
     https_only: true
+    tags:
+      testwebapptag: test
   register: output
+
+- name: get web app with resource group and tag
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}3"
+    tags:
+      - testwebapptag
+  register: output
+
+- assert:
+    that:
+      - output.webapps | length == 1
 
 - name: Create a win web app with java run time specific
   azure_rm_webapp:
@@ -71,9 +85,21 @@
       testkey: "testvalue"
   register: output
 
-- name: assert the function was created
+- name: assert the web app was created
   assert:
     that: output.changed
+
+- name: get web app with name
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+  register: output
+
+- assert:
+    that:
+      - output.webapps | length == 1
+      - output.webapps[0].app_settings | length == 1
+      - output.webapps[0].frameworks | length > 1 # there's default frameworks eg net_framework
 
 - name: Update app settings
   azure_rm_webapp:
@@ -90,9 +116,22 @@
       testkey2: "testvalue2"
   register: output
 
-- name: Assert the web app was created
+- name: Assert the web app was updated
   assert:
     that: output.changed
+
+- name: get web app with return publishing profile
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+    return_publish_profile: true
+  register: output
+
+- assert:
+    that:
+      - output.webapps | length == 1
+      - output.webapps[0].publishing_username != ""
+      - output.webapps[0].publishing_password != ""
 
 - name: Purge all existing app settings
   azure_rm_webapp:
@@ -102,7 +141,7 @@
     purge_app_settings: true
   register: output
 
-- name: Assert the web app was created
+- name: Assert the web app was updated
   assert:
     that: output.changed
 
