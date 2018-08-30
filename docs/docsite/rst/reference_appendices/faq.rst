@@ -454,7 +454,7 @@ Ansible supports dot notation and array notation for variables. Which notation s
 The dot notation comes from Jinja and works fine for variables without special
 characters. If your variable contains dots (.), colons (:), or dashes (-), if
 a key begins and ends with two underscores, or if a key uses any of the known
-public attributes, it is safer to use the array notation. See :doc:`../user_guide/playbooks_variables`
+public attributes, it is safer to use the array notation. See :ref:`playbooks_variables`
 for a list of the known public attributes.
 
 .. code-block:: jinja
