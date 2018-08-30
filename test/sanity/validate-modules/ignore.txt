@@ -969,7 +969,6 @@ lib/ansible/modules/packaging/os/flatpak_remote.py E210
 lib/ansible/modules/packaging/os/homebrew.py E326
 lib/ansible/modules/packaging/os/homebrew_cask.py E326
 lib/ansible/modules/packaging/os/layman.py E322
-lib/ansible/modules/packaging/os/macports.py E322
 lib/ansible/modules/packaging/os/macports.py E326
 lib/ansible/modules/packaging/os/openbsd_pkg.py E326
 lib/ansible/modules/packaging/os/opkg.py E322
