@@ -1496,16 +1496,16 @@
 - block:
 
   - name: execute - create a user for test
-     user:
-       name: ptux
-       uid: 14131
-       state: present
+    user:
+      name: ptux
+      uid: 14131
+      state: present
 
-   - name: execute - create a group for test
-     group:
-       name: ptux
-       gid: 14131
-       state: present
+  - name: execute - create a group for test
+    group:
+      name: ptux
+      gid: 14131
+      state: present
 
   - name: execute - Create a test src dir
     file:
