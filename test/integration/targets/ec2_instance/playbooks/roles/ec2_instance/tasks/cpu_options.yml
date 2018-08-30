@@ -18,6 +18,10 @@
     cpu_options:
         core_count: 1
         threads_per_core: 1
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
     <<: *aws_connection_info
   register: instance_creation
 
@@ -38,6 +42,10 @@
       TestId: "{{ resource_prefix }}"
     vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
     instance_type: c4.large
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
     cpu_options:
         core_count: 1
         threads_per_core: 2
