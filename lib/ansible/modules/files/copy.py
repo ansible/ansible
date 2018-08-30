@@ -626,7 +626,7 @@ def main():
             if src.endswith(os.path.sep) and not os.path.exists(module.params['dest']):
                 b_basename = to_bytes(os.path.basename(src), errors='surrogate_or_strict')
                 b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
-                b_src = to_bytes(os.path.join(b_src, ""), errors='surrogate_or_strict')
+                b_src = to_bytes(os.path.join(module.params['src'], ""), errors='surrogate_or_strict')
                 if not module.check_mode:
                     shutil.copytree(b_src, b_dest, symlinks=not(local_follow))
                 chown_recursive(dest, module)
