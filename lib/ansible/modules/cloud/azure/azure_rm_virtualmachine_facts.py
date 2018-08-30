@@ -107,7 +107,7 @@ vms:
                 - Resource ID.
             returned: always
             type: str
-            sample: /subscriptions/075da289-5dfd-466b-800e-a8c3a9ed3b05/resourceGroups/myclusterrg/providers/Microsoft.Compute/virtualMachines/mycluster-node-2
+            sample: /subscriptions/xxxx/resourceGroups/myclusterrg/providers/Microsoft.Compute/virtualMachines/mycluster-node-2
         image:
             description:
                 - Image specification
