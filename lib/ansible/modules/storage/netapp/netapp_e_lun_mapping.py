@@ -14,7 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: netapp_e_lun_mapping
-author: Kevin Hulquest (@hulquest)
+author:
+    - Kevin Hulquest (@hulquest)
+    - Nathan Swartz (@ndswartz)
 short_description: NetApp E-Series create, delete, or modify lun mappings
 description:
      - Create, delete, or modify mappings between a volume and a targeted host/host+ group.
@@ -37,6 +39,24 @@ options:
     description:
       - The name of the volume you wish to include in the mapping.
     required: True
+    aliases:
+        - volume
+  lun:
+    description:
+      - The LUN value you wish to give the mapping.
+      - If the supplied I(volume_name) is associated with a different LUN, it will be updated to what is supplied here.
+      - LUN value will be determine by the storage-system when not specified.
+    version_added: 2.7
+    required: no
+  target_type:
+    description:
+      - This option specifies the whether the target should be a host or a group of hosts
+      - Only necessary when the target name is used for both a host and a group of hosts
+    choices:
+      - host
+      - group
+    version_added: 2.7
+    required: no
 '''
 
 EXAMPLES = '''
@@ -50,7 +70,7 @@ EXAMPLES = '''
         validate_certs: no
         state: present
         target: host1
-        volume_name: volume1
+        volume: volume1
     - name: Delete the lun mapping between volume1 and host1
       netapp_e_lun_mapping:
         ssid: 1
@@ -60,7 +80,7 @@ EXAMPLES = '''
         validate_certs: yes
         state: absent
         target: host1
-        volume_name: volume1
+        volume: volume1
 '''
 RETURN = '''
 msg:
@@ -89,13 +109,17 @@ class LunMapping(object):
         argument_spec.update(dict(
             state=dict(required=True, choices=["present", "absent"]),
             target=dict(required=False, default=None),
-            volume_name=dict(required=True)))
+            volume_name=dict(required=True, aliases=["volume"]),
+            lun=dict(type="int", required=False),
+            target_type=dict(required=False, choices=["host", "group"])))
         self.module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
         args = self.module.params
 
         self.state = args["state"] in ["present"]
         self.target = args["target"]
         self.volume = args["volume_name"]
+        self.lun = args["lun"]
+        self.target_type = args["target_type"]
         self.ssid = args["ssid"]
         self.url = args["api_url"]
         self.check_mode = self.module.check_mode
@@ -103,6 +127,9 @@ class LunMapping(object):
                           url_password=args["api_password"],
                           validate_certs=args["validate_certs"])
         self.mapping_info = None
+
+        if not self.url.endswith('/'):
+            self.url += '/'
 
     def update_mapping_info(self):
         """Collect the current state of the storage array."""
@@ -118,12 +145,26 @@ class LunMapping(object):
         # Create dictionary containing host/cluster references mapped to their names
         target_reference = {}
         target_name = {}
-        for host in response["storagePoolBundle"]["host"]:
-            target_reference.update({host["hostRef"]: host["name"]})
-            target_name.update({host["name"]: host["hostRef"]})
-        for cluster in response["storagePoolBundle"]["cluster"]:
-            target_reference.update({cluster["clusterRef"]: cluster["name"]})
-            target_name.update({cluster["name"]: cluster["clusterRef"]})
+        target_type = {}
+
+        if self.target_type is None or self.target_type == "host":
+            for host in response["storagePoolBundle"]["host"]:
+                target_reference.update({host["hostRef"]: host["name"]})
+                target_name.update({host["name"]: host["hostRef"]})
+                target_type.update({host["name"]: "host"})
+
+        if self.target_type is None or self.target_type == "group":
+            for cluster in response["storagePoolBundle"]["cluster"]:
+
+                # Verify there is no ambiguity between target's type (ie host and group has the same name)
+                if self.target and self.target_type is None and cluster["name"] == self.target and \
+                        self.target in target_name.keys():
+                    self.module.fail_json(msg="Ambiguous target type: target name is used for both host and group"
+                                              " targets! Id [%s]" % self.ssid)
+
+                target_reference.update({cluster["clusterRef"]: cluster["name"]})
+                target_name.update({cluster["name"]: cluster["clusterRef"]})
+                target_type.update({cluster["name"]: "group"})
 
         volume_reference = {}
         volume_name = {}
@@ -138,20 +179,38 @@ class LunMapping(object):
         self.mapping_info = dict(lun_mapping=[dict(volume_reference=mapping["volumeRef"],
                                                    map_reference=mapping["mapRef"],
                                                    lun_mapping_reference=mapping["lunMappingRef"],
+                                                   lun=mapping["lun"]
                                                    ) for mapping in response["storagePoolBundle"]["lunMapping"]],
                                  volume_by_reference=volume_reference,
                                  volume_by_name=volume_name,
                                  lun_by_name=lun_name,
                                  target_by_reference=target_reference,
-                                 target_by_name=target_name)
+                                 target_by_name=target_name,
+                                 target_type_by_name=target_type)
 
     def get_lun_mapping(self):
         """Find the matching lun mapping reference.
 
-        Returns: tuple(bool, int): contains volume match and volume mapping reference
+        Returns: tuple(bool, int, int): contains volume match, volume mapping reference and mapping lun
         """
         target_match = False
         reference = None
+        lun = None
+
+        self.update_mapping_info()
+
+        # Verify that when a lun is specified that it does not match an existing lun value unless it is associated with
+        # the specified volume (ie for an update)
+        if self.lun and any((self.lun == lun_mapping["lun"] and
+                             self.volume != self.mapping_info["volume_by_reference"][lun_mapping["volume_reference"]]
+                             ) for lun_mapping in self.mapping_info["lun_mapping"]):
+            self.module.fail_json(msg="Option lun value is already in use! Id [%s]." % self.ssid)
+
+        # Verify that when target_type is specified then it matches the target's actually type
+        if self.target and self.target_type and self.target in self.mapping_info["target_type_by_name"].keys() and \
+                self.mapping_info["target_type_by_name"][self.target] != self.target_type:
+            self.module.fail_json(
+                msg="Option target does not match the specified target_type! Id [%s]." % self.ssid)
 
         # Verify volume and target exist if needed for expected state.
         if self.state:
@@ -165,18 +224,19 @@ class LunMapping(object):
             # Find matching volume reference
             if lun_mapping["volume_reference"] == self.mapping_info["volume_by_name"][self.volume]:
                 reference = lun_mapping["lun_mapping_reference"]
+                lun = lun_mapping["lun"]
 
-                # Determine if lun mapping is attached to target
+                # Determine if lun mapping is attached to target with the
                 if (lun_mapping["map_reference"] in self.mapping_info["target_by_reference"].keys() and
-                        self.mapping_info["target_by_reference"][lun_mapping["map_reference"]] == self.target):
+                        self.mapping_info["target_by_reference"][lun_mapping["map_reference"]] == self.target and
+                        (self.lun is None or lun == self.lun)):
                     target_match = True
 
-        return target_match, reference
+        return target_match, reference, lun
 
     def update(self):
         """Execute the changes the require changes on the storage array."""
-        self.update_mapping_info()
-        target_match, lun_reference = self.get_lun_mapping()
+        target_match, lun_reference, lun = self.get_lun_mapping()
         update = (self.state and not target_match) or (not self.state and target_match)
 
         if update and not self.check_mode:
@@ -186,8 +246,11 @@ class LunMapping(object):
                     target = None if not self.target else self.mapping_info["target_by_name"][self.target]
                     if target:
                         body.update(dict(targetId=target))
+                    if self.lun:
+                        body.update(dict(lun=self.lun))
 
                     if lun_reference:
+
                         rc, response = request(self.url + "storage-systems/%s/volume-mappings/%s/move"
                                                % (self.ssid, lun_reference), method="POST", data=json.dumps(body),
                                                headers=HEADERS, **self.creds)
