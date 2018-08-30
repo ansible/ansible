@@ -154,7 +154,7 @@ def run_module():
             if mm.existed:
                 if mm.remote_mirror_status == 'Secondary Copy':
                     try:
-                        if not module.check_mode
+                        if not module.check_mode:
                             mm.promote_image(**promote_args)
                         result['changed'] = True
                     except VNXMirrorException as e:
