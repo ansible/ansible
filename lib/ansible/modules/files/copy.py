@@ -635,7 +635,7 @@ def main():
             if not src.endswith(os.path.sep) and os.path.isdir(module.params['dest']):
                 b_basename = to_bytes(os.path.basename(src), errors='surrogate_or_strict')
                 b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
-                b_src = to_bytes(os.path.join(b_src, ""), errors='surrogate_or_strict')
+                b_src = to_bytes(os.path.join(module.params['src'], ""), errors='surrogate_or_strict')
                 if not module.check_mode and not os.path.exists(b_dest):
                     shutil.copytree(b_src, b_dest, symlinks=not(local_follow))
                     changed = True
@@ -655,7 +655,7 @@ def main():
                 b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
                 if not module.check_mode and not os.path.exists(b_dest):
                     os.makedirs(b_dest)
-                    b_src = to_bytes(os.path.join(b_src, ""), errors='surrogate_or_strict')
+                    b_src = to_bytes(os.path.join(module.params['src'], ""), errors='surrogate_or_strict')
                     diff_files_changed = copy_diff_files(b_src, b_dest, module)
                     left_only_changed = copy_left_only(b_src, b_dest, module)
                     common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
