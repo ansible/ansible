@@ -494,6 +494,7 @@ class VariableManager:
         templar = Templar(loader=self._loader, variables=vars_copy)
 
         items = []
+        has_loop = True
         if task.loop_with is not None:
             if task.loop_with in lookup_loader:
                 try:
@@ -509,6 +510,7 @@ class VariableManager:
         elif task.loop is not None:
             items = templar.template(task.loop)
         else:
+            has_loop = False
             items = [None]
 
         delegated_host_vars = dict()
@@ -583,7 +585,7 @@ class VariableManager:
                 include_hostvars=False,
             )
 
-        if cache_items:
+        if has_loop and cache_items:
             # delegate_to templating produced a change, update task.loop with templated items,
             # this ensures that delegate_to+loop doesn't produce different results than TaskExecutor
             # which may reprocess the loop
