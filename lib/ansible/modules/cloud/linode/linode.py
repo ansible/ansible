@@ -30,6 +30,7 @@ options:
     description:
      - Name to give the instance (alphanumeric, dashes, underscore).
      - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID_).
+    required: true
   displaygroup:
     description:
      - Add the instance to a Display Group in Linode Manager.
@@ -148,6 +149,7 @@ author:
 - Vincent Viallet (@zbal)
 notes:
   - C(LINODE_API_KEY) env variable can be used instead.
+  - Please review U(https://www.linode.com/api/linode) for determining the required parameters.
 '''
 
 EXAMPLES = '''
@@ -556,7 +558,7 @@ def main():
             state=dict(type='str', default='present',
                        choices=['absent', 'active', 'deleted', 'present', 'restarted', 'started', 'stopped']),
             api_key=dict(type='str', no_log=True),
-            name=dict(type='str'),
+            name=dict(type='str', required=True),
             alert_bwin_enabled=dict(type='bool'),
             alert_bwin_threshold=dict(type='int'),
             alert_bwout_enabled=dict(type='bool'),
