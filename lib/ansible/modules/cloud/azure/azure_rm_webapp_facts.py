@@ -31,6 +31,11 @@ options:
     resource_group:
         description:
             - Limit results by resource group.
+    return_publish_profile:
+        description:
+            - Indicate wheather to return publishing profile of the web app.
+        default: False
+        type: bool
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -100,42 +105,38 @@ webapps:
             description:
                 - Frameworks of the application. Only returned when web app has frameworks.
             type: complex
-        properties:
-            description:
-                - Other useful properties of the web app, which is not curated to module input.
-            return: always
-            type: complex
-            contains:
-                availability_state:
-                    description: Availability of this web app.
-                    type: str
-                default_host_name:
-                    description: Host name of the web app.
-                    type: str
-                enabled:
-                    description: Indicates the web app enabled or not.
-                    type: bool
-                enabled_host_names:
-                    description: Enabled host names of the web app.
-                    type: list
-                host_name_ssl_states:
-                    description: SSL state per host names of the web app.
-                    type: list
-                host_names:
-                    description: Host names of the web app.
-                    type: list
-                outbound_ip_addresses:
-                    description: Outbound ip address of the web app.
-                    type: str
-                state:
-                    description: State of the web app.  eg. running.
-                    type: str
-                publishing_username:
-                    description: Publishing profle user name.
-                    type: str
-                publishing_password:
-                    description: Publishing profile password.
-                    type: str
+        availability_state:
+            description: Availability of this web app.
+            type: str
+        default_host_name:
+            description: Host name of the web app.
+            type: str
+        enabled:
+            description: Indicates the web app enabled or not.
+            type: bool
+        enabled_host_names:
+            description: Enabled host names of the web app.
+            type: list
+        host_name_ssl_states:
+            description: SSL state per host names of the web app.
+            type: list
+        host_names:
+            description: Host names of the web app.
+            type: list
+        outbound_ip_addresses:
+            description: Outbound ip address of the web app.
+            type: str
+        state:
+            description: State of the web app.  eg. running.
+            type: str
+        publishing_username:
+            description: Publishing profle user name.
+            returned: only when I(return_publish_profile) is True.
+            type: str
+        publishing_password:
+            description: Publishing profile password.
+            returned: only when I(return_publish_profile) is True.
+            type: str
 '''
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -157,7 +158,8 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            return_publish_profile=dict(type=bool, default=False)
         )
 
         self.results = dict(
@@ -168,7 +170,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         self.name = None
         self.resource_group = None
         self.tags = None
-        self.info_level = None
+        self.return_publish_profile = False
 
         self.framework_names = ['net_framework', 'java', 'php', 'node', 'python', 'dotnetcore', 'ruby']
 
@@ -298,15 +300,14 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         curated_output['tags'] = webapp.get('tags', None)
 
         # important properties from output. not match input arguments.
-        curated_output['properties'] = dict()
-        curated_output['properties']['state'] = webapp['properties']['state']
-        curated_output['properties']['availability_state'] = webapp['properties']['availabilityState']
-        curated_output['properties']['default_host_name'] = webapp['properties']['defaultHostName']
-        curated_output['properties']['host_names'] = webapp['properties']['hostNames']
-        curated_output['properties']['enabled'] = webapp['properties']['enabled']
-        curated_output['properties']['enabled_host_names'] = webapp['properties']['enabledHostNames']
-        curated_output['properties']['host_name_ssl_states'] = webapp['properties']['hostNameSslStates']
-        curated_output['properties']['outbound_ip_addresses'] = webapp['properties']['outboundIpAddresses']
+        curated_output['app_state'] = webapp['properties']['state']
+        curated_output['availability_state'] = webapp['properties']['availabilityState']
+        curated_output['default_host_name'] = webapp['properties']['defaultHostName']
+        curated_output['host_names'] = webapp['properties']['hostNames']
+        curated_output['enabled'] = webapp['properties']['enabled']
+        curated_output['enabled_host_names'] = webapp['properties']['enabledHostNames']
+        curated_output['host_name_ssl_states'] = webapp['properties']['hostNameSslStates']
+        curated_output['outbound_ip_addresses'] = webapp['properties']['outboundIpAddresses']
 
         # curated site_config
         if configuration:
@@ -346,7 +347,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             curated_output['deployment_slot'] = deployment_slot
 
         # curated publish credentials
-        if publish_credentials:
+        if publish_credentials and self.return_publish_profile:
             curated_output['publishing_username'] = publish_credentials.publishing_user_name
             curated_output['publishing_password'] = publish_credentials.publishing_password
         return curated_output

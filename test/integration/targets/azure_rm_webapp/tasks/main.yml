@@ -91,9 +91,22 @@
       testkey2: "testvalue2"
   register: output
 
-- name: Assert the web app was created
+- name: Assert the web app was updated
   assert:
     that: output.changed
+
+- name: get web app with return publishing profile
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+    return_publish_profile: true
+  register: output
+
+- assert:
+    that:
+      - output.webapps | length == 1
+      - output.webapps[0].publishing_username != ""
+      - output.webapps[0].publishing_password != ""
 
 - name: Purge all existing app settings
   azure_rm_webapp:
@@ -103,7 +116,7 @@
     purge_app_settings: true
   register: output
 
-- name: Assert the web app was created
+- name: Assert the web app was updated
   assert:
     that: output.changed
 
