@@ -72,6 +72,14 @@ groupings:
   - aws
   aws_waf_web_acl:
   - aws
+  aws_waf_regional_condition:
+  - aws
+  aws_waf_regional_facts:
+  - aws
+  aws_waf_regional_rule:
+  - aws
+  aws_waf_regional_web_acl:
+  - aws
   cloudformation:
   - aws
   cloudformation_facts:
