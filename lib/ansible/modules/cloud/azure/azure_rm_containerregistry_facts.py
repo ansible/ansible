@@ -109,7 +109,7 @@ registries:
         credentials:
             description:
                 - Credentials, fields will be empty if admin user is not enabled for ACR
-            return: always
+            return: when C(retrieve_credentials) is set and C(admin_user_enabled) is set on ACR
             type: complex
             contains:
                 username:
