@@ -81,31 +81,35 @@ vars:
     transport: cli
 
 ---
-- asa_command:
+- name: "Show the ASA version"
+  asa_command:
     commands:
       - show version
     provider: "{{ cli }}"
 
-- asa_command:
+- name: "Show ASA drops and memory"
+  asa_command:
     commands:
       - show asp drop
       - show memory
     provider: "{{ cli }}"
 
-- asa_command:
+- name: "Show the ASA version for the system context mode"
+  asa_command:
     commands:
       - show version
     provider: "{{ cli }}"
     context: system
 
-- asa_command:
+- name: "Send repeat pings and wait for the result to pass 100%"
+  asa_command:
     commands:
-      - ping 8.8.8.8 repeat 101 size 350
+      - ping 8.8.8.8 repeat 20 size 350
     authorize: yes
     auth_pass: "{{ ansible_become_pass }}"
     wait_for:
       - result[0] contains 100
-    timeout: 100
+    timeout: 60
     retries: 2
 """
 
