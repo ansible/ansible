@@ -207,7 +207,7 @@ files:
   $modules/network/aireos/: jmighion
   $modules/network/aos/: dgarros jeremyschulman
   $modules/network/aruba/: jmighion
-  $modules/network/asa/: ogenstad
+  $modules/network/asa/: ogenstad gdpak
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/citrix/netscaler.py: $team_ansible
@@ -466,7 +466,7 @@ files:
     maintainers: jmighion
     labels: networking
   $module_utils/network/asa:
-    maintainers: ogenstad
+    maintainers: ogenstad gdpak
     labels: networking
   $module_utils/network/avi:
     maintainers: $team_avi
@@ -607,7 +607,7 @@ files:
     - role dep
     - role dependency
   lib/ansible/plugins/action/asa:
-    maintainers: ogenstad
+    maintainers: ogenstad gdpak
     labels: networking
   lib/ansible/plugins/action/aireos:
     maintainers: jmighion
@@ -758,7 +758,7 @@ files:
     maintainers: jmighion
     labels: networking
   lib/ansible/plugins/terminal/asa.py:
-    maintainers: ogenstad
+    maintainers: ogenstad gdpak
     labels: networking
   lib/ansible/plugins/terminal/dellos10:
     maintainers: skg-net
