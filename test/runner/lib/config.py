@@ -9,6 +9,7 @@ from lib.util import (
     CommonConfig,
     is_shippable,
     docker_qualify_image,
+    get_docker_completion,
 )
 
 from lib.metadata import (
@@ -45,6 +46,10 @@ class EnvironmentConfig(CommonConfig):
         self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
+        self.docker_seccomp = args.docker_seccomp if 'docker_seccomp' in args else None  # type: str
+
+        if self.docker_seccomp is None:
+            self.docker_seccomp = get_docker_completion().get(self.docker_raw, {}).get('seccomp', 'default')
 
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
