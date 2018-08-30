@@ -185,7 +185,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1"
+    rf_uri = "/redfish/v1/"
     rf_utils = RedfishUtils(creds, root_uri)
 
     # Check that Category is valid
