@@ -1,11 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Victor Carceler
-# Written by Victor Carceler <vcarceler@iespuigcastellar.xeill.net>
-
+# Copyright: (c) 2018, Stanislas Lange (angristan) <angristan@pm.me>
+# Copyright: (c) 2018, Victor Carceler <vcarceler@iespuigcastellar.xeill.net>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -19,7 +21,7 @@ module: snap
 
 short_description: Manages snaps
 
-version_added: "2.4"
+version_added: "2.7"
 
 description:
     - "Manages snaps packages."
@@ -27,176 +29,137 @@ description:
 options:
     name:
         description:
-            - Snap's name.
+            - Name of the snap to install or remove.
         required: true
     state:
         description:
-            - Control to demo if the result of this module is changed or not
+            - Desired state of the package.
         required: false
         default: present
         choices: [ absent, present ]
     classic:
         description:
-            - Confinement boolean. Some snaps need --classic option.
+            - Confinement policy. The classic confinment allows a snap to have
+              the same level of access to the system as "classic" packages,
+              like those managed by APT. This option corresponds to the --classic argument.
         type: bool
         required: false
-        default: no
-        choices: [ no, yes ]
+        default: False
 
 author:
     - Victor Carceler (vcarceler@iespuigcastellar.xeill.net)
+    - Stanislas Lange (angristan) <angristan@pm.me>
 '''
 
 EXAMPLES = '''
-# Install VLC
-- name: Install VLC
+# Install "foo" snap
+- name: Install foo
   snap:
-    name: vlc
+    name: foo
 
-# Remove VLC
+# Remove "foo" snap
 - name: Remove VLC
   snap:
-    name: vlc
+    name: foo
     state: absent
 
-# Classic confinement
-- name: Install some snap with option --classic
+# Install a snap with classic confinement
+- name: Install "foo" with option --classic
   snap:
-    name: some-snap
-    classic: yes
+    name: foo
+    classic: True
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
+msg:
+    description: An informative message on the task's output
     type: str
-message:
-    description: The output message that the sample module generates
+    returned: always
+    sample: "The snap 'foo' has been installed"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 
-def info_snap(module, name):
-    # snap info returns 0 if the snap exists, 1 if not
+
+def snap_exists(module, snap_name):
     snap_path = module.get_bin_path("snap", True)
-    cmd = "%s info %s" % (snap_path, name)
-    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    cmd = "%s info %s" % (snap_path, snap_name)
+    rc, out, err = module.run_command(cmd, check_rc=False)
 
-    return rc, stdout, stderr
+    return rc, out, err
 
-def installed_snap(module, name):
+
+def is_snap_installed(module, snap_name):
     snap_path = module.get_bin_path("snap", True)
-    cmd = "%s list %s" % (snap_path, name)
-    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    cmd = "%s list %s" % (snap_path, snap_name)
+    rc, out, err = module.run_command(cmd, check_rc=False)
 
-    return rc, stdout, stderr
+    return rc, out, err
 
-def install_snap(module, name):
-    classic = ''
+
+def install_snap(module, snap_name):
+    rc, out, err = is_snap_installed(module, snap_name)
+    if rc == 0:
+        module.exit_json(msg="The snap '%s' is already installed" % str(snap_name))
+
     if module.params['classic']:
         classic = '--classic'
+    else:
+        classic = ''
 
     snap_path = module.get_bin_path("snap", True)
-    cmd = "%s install %s %s" % (snap_path, name, classic)
-    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    cmd = "%s install %s %s" % (snap_path, snap_name, classic)
 
-    return rc, stdout, stderr
+    # Actually install the snap
+    rc, out, err = module.run_command(cmd, check_rc=False)
 
-def remove_snap(module, name):
+    if rc == 0:
+        # snap has been installed
+        module.exit_json(msg="The snap '%s' has been installed" % str(snap_name), changed=True)
+    else:
+        # Something went wrong
+        module.fail_json(msg=err)
+
+
+def remove_snap(module, snap_name):
+    rc, out, err = is_snap_installed(module, snap_name)
+    if rc != 0:
+        module.exit_json(msg="The snap '%s' is not installed" % str(snap_name))
+
     snap_path = module.get_bin_path("snap", True)
-    cmd = "%s remove %s" % (snap_path, name)
-    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    cmd = "%s remove %s" % (snap_path, snap_name)
 
-    return rc, stdout, stderr
+    # Actually remove the snap
+    rc, out, err = module.run_command(cmd, check_rc=False)
 
-def run_module():
-    # define the available arguments/parameters that a user can pass to
-    # the module
+    if rc == 0:
+        # snap has been removed
+        module.exit_json(msg="The snap '%s' has been removed" % str(snap_name), changed=True)
+    else:
+        # Something went wrong
+        module.fail_json(msg=err)
+
+
+def main():
     module_args = dict(
         name=dict(type='str', required=True),
         state=dict(type='str', required=False, default='present', choices=['absent', 'present']),
         classic=dict(type='bool', required=False, default=False)
     )
-
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # change is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
-    result = dict(
-        changed=False,
-        original_message='',
-        message=''
-    )
-
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
-    module = AnsibleModule(
-        argument_spec=module_args,
-        supports_check_mode=True
-    )
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    if module.check_mode:
-        return result
-
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
+    module = AnsibleModule(argument_spec=module_args)
+    snap_name = module.params['name']
+    state = module.params['state']
 
     # Test if snap exists
-    rc, out, err = info_snap(module, module.params['name'])
-    if module._diff:
-        diff = parse_diff(out)
-    else:
-        diff = {}
+    rc, out, err = snap_exists(module, snap_name)
     if rc:
-        # Unknown snap.
-        result['message'] = err
-        #result['original_message'] = "'snap info %s'" % (module.params['name'])
-        #module.fail_json(msg=err, **result)
-        module.fail_json(msg=err)
+        module.fail_json(msg="No snap matching '%s' available" % str(snap_name))
 
-    # Install or remove snap?
-    if module.params['state'] == 'present':
-        rc, out, err = installed_snap(module, module.params['name'])
-        if rc == 0:
-            result['message'] = "snap %s already installed." % (module.params['name'])
-            module.exit_json(**result)
+    if state == 'present':
+        install_snap(module, snap_name)
+    elif state == 'absent':
+        remove_snap(module, snap_name)
 
-        rc, out, err = install_snap(module, module.params['name'])
-        if rc == 0:
-            # Installed :-)
-            result['message'] = out
-            result['changed'] = True
-            module.exit_json(**result)
-        else:
-            # Something wrong :-(
-            result['message'] = err
-            module.fail_json(**result)
-
-    elif module.params['state'] == 'absent':
-        rc, out, err = installed_snap(module, module.params['name'])
-        if rc != 0:
-            result['message'] = "snap %s not installed." % (module.params['name'])
-            module.exit_json(**result)
-
-        rc, out, err = remove_snap(module, module.params['name'])
-        if rc == 0:
-            # Removed :-)
-            result['message'] = out
-            result['changed'] = True
-            module.exit_json(**result)
-        else:
-            # Something wrong :-(
-            result['message'] = err
-            module.fail_json(**result)
-
-def main():
-    run_module()
 
 if __name__ == '__main__':
     main()
