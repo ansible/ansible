@@ -221,7 +221,7 @@ def assemble_json(cpmmodule):
     if cpmmodule.params["user_pass"] is not None and (len(cpmmodule.params["user_pass"]) > 0):
         json_load = json_load + ',"newpasswd": "' + cpmmodule.params["user_pass"] + '"'
     if cpmmodule.params["user_accesslevel"] is not None:
-        json_load = json_load + ',"accesslevel": ' + str(cpmmodule.params["user_accesslevel"]) + ''
+        json_load = json_load + ',"accesslevel": ' + to_text(cpmmodule.params["user_accesslevel"]) + ''
     if cpmmodule.params["user_portaccess"] is not None:
         json_load = json_load + ',"portaccess": ' + cpmmodule.params["user_portaccess"] + ''
     if cpmmodule.params["user_plugaccess"] is not None:
@@ -229,17 +229,17 @@ def assemble_json(cpmmodule):
     if cpmmodule.params["user_groupaccess"] is not None:
         json_load = json_load + ',"groupaccess": ' + cpmmodule.params["user_groupaccess"] + ''
     if cpmmodule.params["user_accessserial"] is not None:
-        json_load = json_load + ',"accessserial": ' + str(cpmmodule.params["user_accessserial"]) + ''
+        json_load = json_load + ',"accessserial": ' + to_text(cpmmodule.params["user_accessserial"]) + ''
     if cpmmodule.params["user_accessssh"] is not None:
-        json_load = json_load + ',"accessssh": ' + str(cpmmodule.params["user_accessssh"]) + ''
+        json_load = json_load + ',"accessssh": ' + to_text(cpmmodule.params["user_accessssh"]) + ''
     if cpmmodule.params["user_accessweb"] is not None:
-        json_load = json_load + ',"accessweb": ' + str(cpmmodule.params["user_accessweb"]) + ''
+        json_load = json_load + ',"accessweb": ' + to_text(cpmmodule.params["user_accessweb"]) + ''
     if cpmmodule.params["user_accessoutbound"] is not None:
-        json_load = json_load + ',"accessoutbound": ' + str(cpmmodule.params["user_accessoutbound"]) + ''
+        json_load = json_load + ',"accessoutbound": ' + to_text(cpmmodule.params["user_accessoutbound"]) + ''
     if cpmmodule.params["user_accessapi"] is not None:
-        json_load = json_load + ',"accessapi": ' + str(cpmmodule.params["user_accessapi"]) + ''
+        json_load = json_load + ',"accessapi": ' + to_text(cpmmodule.params["user_accessapi"]) + ''
     if cpmmodule.params["user_accessmonitor"] is not None:
-        json_load = json_load + ',"accessmonitor": ' + str(cpmmodule.params["user_accessmonitor"]) + ''
+        json_load = json_load + ',"accessmonitor": ' + to_text(cpmmodule.params["user_accessmonitor"]) + ''
     if cpmmodule.params["user_callbackphone"] is not None:
         json_load = json_load + ',"callbackphone": "' + cpmmodule.params["user_callbackphone"] + '"'
 
