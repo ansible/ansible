@@ -335,7 +335,7 @@
       vm_size: Standard_A0
       storage_account: "{{ storage_account }}"
       storage_container: "{{ vm_name2 }}"
-      storage_blob: "{{ vnet_name2 }}.vhd"
+      storage_blob: "{{ vm_name2 }}.vhd"
       admin_username: adminuser
       admin_password: Password123!
       short_hostname: testvm
