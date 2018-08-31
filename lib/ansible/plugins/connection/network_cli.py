@@ -363,7 +363,7 @@ class Connection(NetworkConnectionBase):
             window_count += 1
 
             if prompts and not handled:
-                handled = self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all)
+                handled = self._handle_prompt(window, prompts, answer, newline, False, check_all)
                 matched_prompt_window = window_count
             elif prompts and handled and prompt_retry_check and matched_prompt_window + 1 == window_count:
                 # check again even when handled, if same prompt repeats in next window
@@ -414,8 +414,10 @@ class Connection(NetworkConnectionBase):
         :returns: True if a prompt was found in ``resp``. If check_all is True
                   will True only after all the prompt in the prompts list are matched. False otherwise.
         '''
+        single_prompt = False
         if not isinstance(prompts, list):
             prompts = [prompts]
+            single_prompt = True
         if not isinstance(answer, list):
             answer = [answer]
         prompts_regex = [re.compile(r, re.I) for r in prompts]
@@ -430,7 +432,7 @@ class Connection(NetworkConnectionBase):
                     if newline:
                         self._ssh_shell.sendall(b'\r')
                 self._matched_cmd_prompt = match.group()
-                if check_all and prompts:
+                if check_all and prompts and not single_prompt:
                     prompts.pop(0)
                     answer.pop(0)
                     return False
