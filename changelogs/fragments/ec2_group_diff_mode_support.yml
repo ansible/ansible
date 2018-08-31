@@ -1,4 +1,0 @@
----
-minor_changes:
-  - ec2_group - Add diff mode support with and without check mode. This feature
-    is preview and may change when a common framework is adopted for AWS modules.

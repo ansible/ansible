@@ -1,4 +1,0 @@
-minor_changes:
-- win_disk_image - return a list of mount paths with the return value ``mount_paths``, this will always be a list and contain all mount points in an image
-deprecated_features:
-- win_disk_image - the return value ``mount_path`` is deprecated and will be removed in 2.11, this can be accessed through ``mount_paths[0]`` instead.

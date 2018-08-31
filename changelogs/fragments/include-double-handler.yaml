@@ -1,2 +1,0 @@
-bugfixes:
-- includes - ensure we do not double register handlers from includes to prevent exception (https://github.com/ansible/ansible/issues/44848)
