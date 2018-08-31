@@ -11,6 +11,7 @@ azure-mgmt-containerservice==3.0.1
 azure-mgmt-dns==1.2.0
 azure-mgmt-keyvault==0.40.0
 azure-mgmt-marketplaceordering==0.1.0
+azure-mgmt-monitor==0.5.2
 azure-mgmt-network==1.7.1
 azure-mgmt-nspkg==2.0.0
 azure-mgmt-rdbms==1.2.0

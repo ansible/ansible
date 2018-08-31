@@ -135,6 +135,7 @@ try:
     from msrestazure.tools import parse_resource_id, resource_id, is_valid_resource_id
     from msrestazure import azure_cloud
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
+    from azure.mgmt.monitor.version import VERSION as monitor_client_version
     from azure.mgmt.network.version import VERSION as network_client_version
     from azure.mgmt.storage.version import VERSION as storage_client_version
     from azure.mgmt.compute.version import VERSION as compute_client_version
@@ -147,6 +148,7 @@ try:
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.mgmt.dns import DnsManagementClient
+    from azure.mgmt.monitor import MonitorManagementClient
     from azure.mgmt.web import WebSiteManagementClient
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
@@ -290,7 +292,7 @@ class AzureRMModuleBase(object):
         self._containerregistry_client = None
         self._containerinstance_client = None
         self._traffic_manager_management_client = None
-
+        self._monitor_client = None
         self._adfs_authority_url = None
         self._resource = None
 
@@ -1134,3 +1136,11 @@ class AzureRMModuleBase(object):
             self._traffic_manager_management_client = self.get_mgmt_svc_client(TrafficManagerManagementClient,
                                                                                base_url=self._cloud_environment.endpoints.resource_manager)
         return self._traffic_manager_management_client
+
+    @property
+    def monitor_client(self):
+        self.log('Getting monitor client')
+        if not self._monitor_client:
+            self._monitor_client = self.get_mgmt_svc_client(MonitorManagementClient,
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._monitor_client
