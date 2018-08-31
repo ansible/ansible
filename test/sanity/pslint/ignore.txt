@@ -107,6 +107,7 @@ lib/ansible/modules/windows/win_stat.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_unzip.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_unzip.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_uri.ps1 PSAvoidUsingConvertToSecureStringWithPlainText
+lib/ansible/modules/windows/win_uri.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_user.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_wait_for.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression

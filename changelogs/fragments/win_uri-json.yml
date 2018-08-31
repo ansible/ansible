@@ -1,0 +1,2 @@
+bugfixes:
+- win_uri -- Fix support for JSON output when charset is set

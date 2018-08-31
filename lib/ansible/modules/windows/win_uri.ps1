@@ -37,6 +37,8 @@ $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bo
 $client_cert = Get-AnsibleParam -obj $params -name "client_cert" -type "path"
 $client_cert_password = Get-AnsibleParam -obj $params -name "client_cert_password" -type "str"
 
+$JSON_CANDIDATES = @('text', 'json', 'javascript')
+
 $result = @{
     changed = $false
     url = $url
@@ -237,8 +239,12 @@ if ($return_content -or $dest) {
             $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin)
             $content_bytes = $memory_st.ToArray()
             $result.content = [System.Text.Encoding]::UTF8.GetString($content_bytes)
-            if ($result.ContainsKey("content_type") -and $result.content_type -in @("application/json", "application/javascript")) {
-                $result.json = ConvertFrom-Json -InputObject $result.content
+            if ($result.ContainsKey("content_type") -and $result.content_type -Match ($JSON_CANDIDATES -join '|')) {
+                try {
+                    $result.json = ConvertFrom-Json -InputObject $result.content
+                } catch [System.ArgumentException] {
+                    # Simply continue, since 'text' might be anything
+                }
             }
         }
 
@@ -251,7 +257,7 @@ if ($return_content -or $dest) {
 
                 $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider
                 $content_checksum = [System.BitConverter]::ToString($sp.ComputeHash($memory_st)).Replace("-", "").ToLower()
-    
+
                 if ($actual_checksum -eq $content_checksum) {
                     $changed = $false
                 }
