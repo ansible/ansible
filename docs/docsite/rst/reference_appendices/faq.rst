@@ -466,6 +466,13 @@ for a list of the known public attributes.
 
 Also array notation allows for dynamic variable composition, see dynamic_variables_.
 
+Another problem with 'dot notation' is that some keys can cause problems because they collide with attributes and methods of python dictionaries.
+
+.. code-block:: jinja
+
+    item.update # this breaks if item is a dictionary, as 'update()' is a python method for dictionaries
+    item['update'] # this works
+
 
 .. _argsplat_unsafe:
 
