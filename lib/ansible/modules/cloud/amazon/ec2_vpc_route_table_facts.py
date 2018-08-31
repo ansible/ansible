@@ -17,7 +17,7 @@ module: ec2_vpc_route_table_facts
 short_description: Gather facts about ec2 VPC route tables in AWS
 description:
     - Gather facts about ec2 VPC route tables in AWS
-version_added: "2.7"
+version_added: "2.0"
 author: "Rob White (@wimnat)"
 options:
   filters:
@@ -28,6 +28,7 @@ options:
     description:
       - Get details of a specific route tables. This value should be provided as a list.
     required: false
+    version_added: "2.7"
 extends_documentation_fragment:
     - aws
     - ec2
