@@ -100,6 +100,14 @@ EXAMPLES = '''
       register: deregister_plugin
 '''
 
+RETURN = """
+result:
+    description: information about performed operation
+    returned: always
+    type: string
+    sample: "'com.acme.plugin' installed successfully."
+"""
+
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
