@@ -19,7 +19,7 @@ module: azure_rm_containerinstance_facts
 version_added: "2.7"
 short_description: Get Container Instance facts.
 description:
-    - Get facts of Container Group.
+    - Get facts of Container Instance.
 
 options:
     resource_group:
@@ -28,7 +28,10 @@ options:
         required: True
     name:
         description:
-            - The name of the container group.
+            - The name of the container instance.
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -62,24 +65,42 @@ container_groups:
             type: str
             sample: "/subscriptions/ae43b1e3-c35d-4c8c-bc0d-f148b4c52b78/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
                     containers"
+        resource_group:
+            description:
+                - Resource group where the container exists.
+            returned: always
+            type: str
+            sample: testrg
         name:
             description:
                 - The resource name.
             returned: always
             type: str
             sample: mycontainers
-        type:
-            description:
-                - The resource type.
-            returned: always
-            type: str
-            sample: Microsoft.ContainerInstance/containerGroups
         location:
             description:
                 - The resource location.
             returned: always
             type: str
             sample: westus
+        os_type:
+            description:
+                - The OS type of containers.
+            returned: always
+            type: str
+            sample: linux
+        ip_address:
+            description:
+                - IP address of the container instance.
+            returned: always
+            type: str
+            sample: 173.15.18.1
+        ports:
+            description:
+                - List of ports exposed by the container instance.
+            returned: always
+            type: list
+            sample: [ 80, 81 ]
         containers:
             description:
                 - The containers within the container group.
@@ -133,7 +154,7 @@ except ImportError:
     pass
 
 
-class AzureRMContainerGroupsFacts(AzureRMModuleBase):
+class AzureRMContainerInstanceFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -143,6 +164,9 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
             ),
             name=dict(
                 type='str'
+            ),
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
@@ -152,17 +176,18 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        super(AzureRMContainerGroupsFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMContainerInstanceFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        if (self.resource_group is not None and
-                self.name is not None):
+        if (self.name is not None):
             self.results['containerinstances'] = self.get()
         elif (self.resource_group is not None):
             self.results['containerinstances'] = self.list_by_resource_group()
+        else:
+            self.results['containerinstances'] = self.list_all()
         return self.results
 
     def get(self):
@@ -173,9 +198,9 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
                                                                           container_group_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for ContainerGroups.')
+            self.log('Could not get facts for Container Instances.')
 
-        if response is not None:
+        if response is not None and self.has_tags(response.tags, self.tags):
             results.append(self.format_item(response))
 
         return results
@@ -187,11 +212,28 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
             response = self.containerinstance_client.container_groups.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for ContainerGroups.')
+            self.fail('Could not list facts for Container Instances.')
 
         if response is not None:
             for item in response:
-                results.append(self.format_item(item))
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_item(item))
+
+        return results
+
+    def list_all(self):
+        response = None
+        results = []
+        try:
+            response = self.containerinstance_client.container_groups.list()
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.fail('Could not list facts for Container Instances.')
+
+        if response is not None:
+            for item in response:
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_item(item))
 
         return results
 
@@ -199,6 +241,7 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
         d = item.as_dict()
         containers = d['containers']
         ports = d['ip_address']['ports']
+        resource_group = d['id'].split('resourceGroups/')[1].split('/')[0]
 
         for port_index in range(len(ports)):
             ports[port_index] = ports[port_index]['port']
@@ -217,20 +260,20 @@ class AzureRMContainerGroupsFacts(AzureRMModuleBase):
             containers[container_index] = new_container
 
         d = {
-            'resource_group': self.resource_group,
+            'id': d['id'],
+            'resource_group': resource_group,
             'name': d['name'],
             'os_type': d['os_type'],
             'ip_address': 'public' if d['ip_address']['type'] == 'Public' else 'none',
             'ports': ports,
             'location': d['location'],
-            'containers': containers,
-            'state': 'present'
+            'containers': containers
         }
         return d
 
 
 def main():
-    AzureRMContainerGroupsFacts()
+    AzureRMContainerInstanceFacts()
 
 
 if __name__ == '__main__':
