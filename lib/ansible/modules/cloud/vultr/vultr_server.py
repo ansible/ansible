@@ -58,6 +58,8 @@ options:
     description:
       - Specifiy a Private Network ID to be used.
       - If specified, private_network_enabled is ignored.
+    version_added: "2.7"
+
   auto_backup_enabled:
     description:
       - Whether to enable automatic backups or not.
