@@ -136,7 +136,7 @@ You can also build an RPM yourself. From the root of a checkout or tarball, use 
 
 .. _from_apt:
 
-Latest Releases Via Apt (Ubuntu)
+Latest Releases via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
 Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_.
@@ -161,7 +161,7 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
 You may also wish to run from source to get the latest, which is covered below.
 
-Latest Releases Via Apt (Debian)
+Latest Releases via Apt (Debian)
 ++++++++++++++++++++++++++++++++
 
 Debian users may leverage the same source as the Ubuntu PPA.
@@ -182,7 +182,7 @@ Then run these commands:
 
 .. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions.
 
-Latest Releases Via Portage (Gentoo)
+Latest Releases via Portage (Gentoo)
 ++++++++++++++++++++++++++++++++++++
 
 .. code-block:: bash
@@ -201,7 +201,7 @@ To install the newest version, you may need to unmask the ansible package prior 
     you will need to `:ref:`bootstrap <managed_node_requirements>` a compatible version onto the
     machines.
 
-Latest Releases Via pkg (FreeBSD)
+Latest Releases via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
 
 .. code-block:: bash
@@ -216,16 +216,16 @@ You may also wish to install from ports, run:
 
 .. _on_macos:
 
-Latest Releases on Mac OSX
+Latest Releases on macOS
 ++++++++++++++++++++++++++
 
 The preferred way to install Ansible on a Mac is via pip.
 
-The instructions can be found in `Latest Releases Via Pip`_ section. If you are running macOS version 10.12 or older, then you ought to upgrade to the latest pip (9.0.3 or newer) to connect to the Python Package Index securely.
+The instructions can be found in `Latest Releases via Pip`_ section. If you are running macOS version 10.12 or older, then you ought to upgrade to the latest pip (9.0.3 or newer) to connect to the Python Package Index securely.
 
 .. _from_pkgutil:
 
-Latest Releases Via OpenCSW (Solaris)
+Latest Releases via OpenCSW (Solaris)
 +++++++++++++++++++++++++++++++++++++
 
 Ansible is available for Solaris as `SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_.
@@ -237,7 +237,7 @@ Ansible is available for Solaris as `SysV package from OpenCSW <https://www.open
 
 .. _from_pacman:
 
-Latest Releases Via Pacman (Arch Linux)
+Latest Releases via Pacman (Arch Linux)
 +++++++++++++++++++++++++++++++++++++++
 
 Ansible is available in the Community repository::
@@ -250,7 +250,7 @@ Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on t
 
 .. _from_pip:
 
-Latest Releases Via Pip
+Latest Releases via Pip
 +++++++++++++++++++++++
 
 Ansible can be installed via "pip", the Python package manager.  If 'pip' isn't already available in
@@ -402,4 +402,4 @@ bugs and feature ideas.
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 
-.. [1] If you have issues with the "pycrypto" package install on Mac OSX, then you may need to try ``CC=clang sudo -E pip install pycrypto``.
+.. [1] If you have issues with the "pycrypto" package install on macOS, then you may need to try ``CC=clang sudo -E pip install pycrypto``.
