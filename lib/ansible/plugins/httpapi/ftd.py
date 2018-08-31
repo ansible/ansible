@@ -66,8 +66,6 @@ BASE_HEADERS = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
 }
-DEFAULT_API_TOKEN_PATH = '/api/fdm/v2/fdm/token'
-API_SPEC_PATH = '/apispec/ngfw.json'
 
 TOKEN_EXPIRATION_STATUS_CODE = 408
 UNAUTHORIZED_STATUS_CODE = 401
