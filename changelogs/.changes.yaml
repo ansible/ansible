@@ -303,3 +303,91 @@ releases:
       - grafana_dashboard
       - nios_next_network
     release_date: '2018-08-27'
+  2.7.0b1:
+    codename: In the Light
+    fragments:
+    - blockdoc.yml
+    - delegate-to-get-vars-no-task.yaml
+    - gcp_service_account_home_path.yaml
+    - include-apply-insert-order.yaml
+    - include-double-handler.yaml
+    - loop-cache-fix.yaml
+    - no-dynamic-import-tasks.yaml
+    - onepassword_unlock_vault.yaml
+    - plugins-accept-only-valid-args.yaml
+    - urls-if-modified-since.yaml
+    - v2.7.0b1_summary.yaml
+    - win_disk_image-mount-paths.yaml
+    - win_psexec_command_arg.yaml
+    - win_psexec_session-selection.yaml
+    - win_uri-json.yml
+    - win_wait_for-timeout.yaml
+    modules:
+    - azure_rm_autoscale
+    - azure_rm_autoscale_facts
+    - azure_rm_containerregistry_facts
+    - azure_rm_sqlfirewallrule
+    - azure_rm_trafficmanagerendpoint
+    - azure_rm_trafficmanagerendpoint_facts
+    - azure_rm_trafficmanagerprofile
+    - azure_rm_trafficmanagerprofile_facts
+    - azure_rm_webapp_facts
+    - cpm_user
+    - elb_target_facts
+    - fmgr_provisioning
+    - ftd_configuration
+    - ftd_file_download
+    - ftd_file_upload
+    - gcp_compute_router
+    - gcp_spanner_database
+    - gcp_spanner_instance
+    - gcp_sql_database
+    - gcp_sql_instance
+    - gcp_sql_user
+    - ibm_sa_host
+    - ibm_sa_pool
+    - na_elementsw_access_group
+    - na_elementsw_account
+    - na_elementsw_admin_users
+    - na_elementsw_check_connections
+    - na_elementsw_cluster
+    - na_elementsw_drive
+    - na_elementsw_ldap
+    - na_elementsw_network_interfaces
+    - na_elementsw_node
+    - na_elementsw_snapshot
+    - na_elementsw_snapshot_restore
+    - na_elementsw_volume_clone
+    - na_ontap_autosupport
+    - na_ontap_cluster_peer
+    - na_ontap_command
+    - na_ontap_disks
+    - na_ontap_firewall_policy
+    - na_ontap_gather_facts
+    - na_ontap_motd
+    - na_ontap_node
+    - netapp_e_alerts
+    - netapp_e_asup
+    - netapp_e_auditlog
+    - netapp_e_global
+    - netapp_e_iscsi_interface
+    - netapp_e_iscsi_target
+    - netapp_e_ldap
+    - netapp_e_mgmt_interface
+    - netapp_e_syslog
+    - onepassword_facts
+    - opx_cps
+    - purefb_facts
+    - rds_instance
+    - redfish_command
+    - redfish_config
+    - tower_credential_type
+    - tower_settings
+    - tower_workflow_template
+    - vmware_host_ntp_facts
+    - win_wait_for_process
+    - win_xml
+    plugins:
+      lookup:
+      - cpm_metering
+    release_date: '2018-08-31'
