@@ -1,2 +1,0 @@
-bugfixes:
-- loop - Ensure we only cache the loop when the task had a loop and delegate_to was templated (https://github.com/ansible/ansible/issues/44874)

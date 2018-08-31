@@ -1,3 +1,0 @@
----
-minor_changes:
-  - sns_topic - Port sns_topic module to boto3 and add an integration test suite.

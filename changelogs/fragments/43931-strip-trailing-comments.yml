@@ -1,2 +1,0 @@
-bugfixes:
-  - user - Strip trailing comments in /etc/default/passwd (https://github.com/ansible/ansible/pull/43931)

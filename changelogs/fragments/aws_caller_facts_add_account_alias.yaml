@@ -1,3 +1,0 @@
----
-minor_changes:
-  - aws_caller_facts - The module now outputs the "account_alias" as well

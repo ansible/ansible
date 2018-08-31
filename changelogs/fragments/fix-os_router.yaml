@@ -1,3 +1,0 @@
-bugfixes:
-    - fix the enable_snat parameter that is only supposed to be used by an user
-      with the right policies. https://github.com/ansible/ansible/pull/44418

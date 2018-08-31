@@ -1,2 +1,0 @@
-bugfixes:
-- win_psexec - changed code to not escape the command option when building the args - https://github.com/ansible/ansible/issues/43839

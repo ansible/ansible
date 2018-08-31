@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - properly list all roles in roles_path (https://github.com/ansible/ansible/issues/43010)
