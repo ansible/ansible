@@ -94,7 +94,7 @@ releases:
     - user-module-backup-shadow.yaml
     - user_freebsd_always_changed_bugfix.yaml
     - v2.7.0-initial-commit.yaml
-    - v2.7.0_summary.yaml
+    - v2.7.0a1_summary.yaml
     - vars_prompt-allow-prompting-for-play-vars.yaml
     - vault-errors.yaml
     - vultr_modules_renamed.yml
