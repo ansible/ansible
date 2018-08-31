@@ -17,7 +17,7 @@ module: ec2_vpc_route_table_facts
 short_description: Gather facts about ec2 VPC route tables in AWS
 description:
     - Gather facts about ec2 VPC route tables in AWS
-version_added: "2.0"
+version_added: "2.7"
 author: "Rob White (@wimnat)"
 options:
   filters:
@@ -146,7 +146,7 @@ route_tables:
             origin:
               description: Describes how the route was created.
               returned: always
-              type: string   
+              type: string
               sample: CreateRoute
             state:
               description: The state of the route.
