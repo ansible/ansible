@@ -2,13 +2,201 @@
 Ansible 2.7 "In the Light" Release Notes
 ========================================
 
+v2.7.0b1
+========
+
+Release Summary
+---------------
+
+| Release Date: 2018-08-31
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- GCP Modules will do home path expansion on service account file paths
+- action plugins strictly accept valid parameters and report invalid parameters
+- import_tasks - Do not allow import_tasks to transition to dynamic if the file is missing (https://github.com/ansible/ansible/issues/44822)
+- onepassword/onepassword_raw - accept subdomain and vault_password to allow Ansible to unlock 1Password vaults
+- win_disk_image - return a list of mount paths with the return value ``mount_paths``, this will always be a list and contain all mount points in an image
+- win_psexec - Added the ``session`` option to specify a session to start the process in
+
+Deprecated Features
+-------------------
+
+- win_disk_image - the return value ``mount_path`` is deprecated and will be removed in 2.11, this can be accessed through ``mount_paths[0]`` instead.
+
+Bugfixes
+--------
+
+- delegate_to - ensure if we get a non-Task object in _get_delegated_vars, we return early (https://github.com/ansible/ansible/pull/44934)
+- get_url / uri - Use custom rfc2822 date format function instead of locale specific strftime (https://github.com/ansible/ansible/issues/44857)
+- improved block docs
+- include - Change order of where the new block is inserted with apply so that apply args are not applied to the include also (https://github.com/ansible/ansible/pull/44912)
+- includes - ensure we do not double register handlers from includes to prevent exception (https://github.com/ansible/ansible/issues/44848)
+- loop - Ensure we only cache the loop when the task had a loop and delegate_to was templated (https://github.com/ansible/ansible/issues/44874)
+- win_psexec - changed code to not escape the command option when building the args - https://github.com/ansible/ansible/issues/43839
+- win_uri: Fix support for JSON output when charset is set
+- win_wait_for - fix issue where timeout doesn't wait unless state=drained - https://github.com/ansible/ansible/issues/43446
+
+New Plugins
+-----------
+
+Lookup
+~~~~~~
+
+- cpm_metering - Get Power and Current data from WTI OOB/Combo and PDU devices
+
+New Modules
+-----------
+
+Cloud
+~~~~~
+
+amazon
+^^^^^^
+
+- elb_target_facts - Gathers which target groups a target is associated with.
+- rds_instance - Manage RDS instances
+
+azure
+^^^^^
+
+- azure_rm_autoscale - Manage Azure autoscale setting.
+- azure_rm_autoscale_facts - Get Azure Auto Scale Setting facts.
+- azure_rm_containerregistry_facts - Get Azure Container Registry facts.
+- azure_rm_sqlfirewallrule - Manage Firewall Rule instance.
+- azure_rm_trafficmanagerendpoint - Manage Azure Traffic Manager endpoint.
+- azure_rm_trafficmanagerendpoint_facts - Get Azure Traffic Manager endpoint facts
+- azure_rm_trafficmanagerprofile - Manage Azure Traffic Manager profile.
+- azure_rm_trafficmanagerprofile_facts - Get Azure Traffic Manager profile facts
+- azure_rm_webapp_facts - Get azure web app facts.
+
+google
+^^^^^^
+
+- gcp_compute_router - Creates a GCP Router
+- gcp_spanner_database - Creates a GCP Database
+- gcp_spanner_instance - Creates a GCP Instance
+- gcp_sql_database - Creates a GCP Database
+- gcp_sql_instance - Creates a GCP Instance
+- gcp_sql_user - Creates a GCP User
+
+vmware
+^^^^^^
+
+- vmware_host_ntp_facts - Gathers facts about NTP configuration on an ESXi host
+
+Identity
+~~~~~~~~
+
+- onepassword_facts - Fetch facts from 1Password items
+
+Network
+~~~~~~~
+
+fortimanager
+^^^^^^^^^^^^
+
+- fmgr_provisioning - Provision devices via FortiMananger
+
+ftd
+^^^
+
+- ftd_configuration - Manages configuration on Cisco FTD devices over REST API
+- ftd_file_download - Downloads files from Cisco FTD devices over HTTP(S)
+- ftd_file_upload - Uploads files to Cisco FTD devices over HTTP(S)
+
+opx
+^^^
+
+- opx_cps - CPS operations on networking device running Openswitch (OPX)
+
+Remote Management
+~~~~~~~~~~~~~~~~~
+
+cpm
+^^^
+
+- cpm_user - Get various status and parameters from WTI OOB and PDU devices
+
+redfish
+^^^^^^^
+
+- redfish_command - Manages Out-Of-Band controllers using Redfish APIs
+- redfish_config - Manages Out-Of-Band controllers using Redfish APIs
+
+Storage
+~~~~~~~
+
+ibm
+^^^
+
+- ibm_sa_host - Adds hosts to or removes them from IBM Spectrum Accelerate storage systems.
+- ibm_sa_pool - Handles pools on an IBM Spectrum Accelerate storage array.
+
+netapp
+^^^^^^
+
+- na_elementsw_access_group - NetApp Element Software Manage Access Groups
+- na_elementsw_account - NetApp Element Software Manage Accounts
+- na_elementsw_admin_users - NetApp Element Software Manage Admin Users
+- na_elementsw_check_connections - NetApp Element Software Check connectivity to MVIP and SVIP.
+- na_elementsw_cluster - NetApp Element Software Create Cluster
+- na_elementsw_drive - NetApp Element Software ManageNetApp Element Software Node Drives
+- na_elementsw_ldap - NetApp Element Software Manage ldap admin users
+- na_elementsw_network_interfaces - NetApp Element Software Configure Node Network Interfaces
+- na_elementsw_node - NetApp Element Software Node Operation
+- na_elementsw_snapshot - NetApp Element Software Manage Snapshots
+- na_elementsw_snapshot_restore - NetApp Element Software Restore Snapshot
+- na_elementsw_volume_clone - NetApp Element Software Create Volume Clone
+- na_ontap_autosupport - Manage NetApp Autosupport
+- na_ontap_cluster_peer - NetApp ONTAP Manage Cluster peering
+- na_ontap_command - NetApp ONTAP Run any cli command
+- na_ontap_disks - NetApp ONTAP Assign disks to nodes
+- na_ontap_firewall_policy - NetApp ONTAP Manage a firewall policy
+- na_ontap_gather_facts - NetApp information gatherer
+- na_ontap_motd - Setup motd on cDOT
+- na_ontap_node - NetApp ONTAP Rename a node.
+- netapp_e_alerts - NetApp E-Series manage email notification settings
+- netapp_e_asup - manage E-Series auto-support settings
+- netapp_e_auditlog - NetApp E-Series manage audit-log configuration
+- netapp_e_global - NetApp E-Series manage global settings configuration
+- netapp_e_iscsi_interface - NetApp E-Series manage iSCSI interface configuration
+- netapp_e_iscsi_target - NetApp E-Series manage iSCSI target configuration
+- netapp_e_ldap - NetApp E-Series manage LDAP integration to use for authentication
+- netapp_e_mgmt_interface - NetApp E-Series management interface configuration
+- netapp_e_syslog - NetApp E-Series manage syslog settings
+
+purestorage
+^^^^^^^^^^^
+
+- purefb_facts - Collect facts from Pure Storage FlashBlade
+
+Web Infrastructure
+~~~~~~~~~~~~~~~~~~
+
+ansible_tower
+^^^^^^^^^^^^^
+
+- tower_credential_type - Create, update, or destroy custom Ansible Tower credential type.
+- tower_settings - Modify Ansible Tower settings.
+- tower_workflow_template - create, update, or destroy Ansible Tower workflow template.
+
+Windows
+~~~~~~~
+
+- win_wait_for_process - Waits for a process to exist or not exist before continuing.
+- win_xml - Add XML fragment to an XML parent
+
 v2.7.0.a1
 =========
 
 Release Summary
 ---------------
 
-| Release Date: 2018-10-04
+| Release Date: 2018-08-31
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -485,7 +673,7 @@ cobbler
 ^^^^^^^
 
 - cobbler_sync - Sync Cobbler
-- cobbler_system - Manage system ojects in Cobbler
+- cobbler_system - Manage system objects in Cobbler
 
 redfish
 ^^^^^^^
