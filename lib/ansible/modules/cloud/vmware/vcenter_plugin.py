@@ -1,13 +1,10 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) 2018, Michael Tipton <mike () ibeta.org>
+opyright: (c) 2018, Michael Tipton <mike () ibeta.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -17,7 +14,7 @@ module: vcenter_plugin
 short_description: Register/deregister vCenter Plugins
 description:
     - This module can be used to register/deregister vCenter plugins.
-version_added: 2.x
+version_added: 2.7
 author:
 - Michael Tipton (@castawayegr)
 notes:
@@ -29,7 +26,7 @@ options:
   extension_key:
     description:
       - The extension key of the plugin to install or uninstall.
-    requred: True
+    required: True
   version:
     description:
       - The version of the plugin you are installing or uninstalling.
@@ -52,6 +49,10 @@ options:
   ssl_thumbprint:
     description:
       - Required for C(state=present). SSL thumbprint of the plugin hosting server.
+  type:
+    description:
+      - Required for C(state=present). Type of plugin being installed (SOAP, REST, HTTP).
+     default: vsphere-client-serenity
   state:
     description:
     - Add or remove vCenter Plugin.
@@ -158,50 +159,50 @@ def main():
         results = dict(changed=False, result=dict())
 
         if state == 'present' and key_check:
-           results['changed'] = False
-           results['result'] = "'%s' is already installed" % (extension_key)
+            results['changed'] = False
+            results['result'] = "'%s' is already installed" % (extension_key)
 
         elif state == 'present' and not key_check:
-           extension = vim.Extension()
-           extension.key = extension_key
-           extension.company = company
-           extension.version = version
-           extension.lastHeartbeatTime = datetime.datetime.now()
-           description = vim.Description()
-           description.label = name
-           description.summary = desc
-           extension.description = description
-           extension.shownInSolutionManager = False
+            extension = vim.Extension()
+            extension.key = extension_key
+            extension.company = company
+            extension.version = version
+            extension.lastHeartbeatTime = datetime.datetime.now()
+            description = vim.Description()
+            description.label = name
+            description.summary = desc
+            extension.description = description
+            extension.shownInSolutionManager = False
 
-           client = vim.Extension.ClientInfo()
-           client.company = company
-           client.version = version
-           client.description = description
-           client.type = type
-           client.url = url
-           extension.client = [client]
+            client = vim.Extension.ClientInfo()
+            client.company = company
+            client.version = version
+            client.description = description
+            client.type = type
+            client.url = url
+            extension.client = [client]
 
-           server = vim.Extension.ServerInfo()
-           server.company = company
-           server.description = description
-           server.type = type
-           server.adminEmail = email
-           server.serverThumbprint = thumbprint
-           server.url = url
-           extension.server = [server]
+            server = vim.Extension.ServerInfo()
+            server.company = company
+            server.description = description
+            server.type = type
+            server.adminEmail = email
+            server.serverThumbprint = thumbprint
+            server.url = url
+            extension.server = [server]
 
-           em.RegisterExtension(extension)
-           results['changed'] = True
-           results['result'] = "'%s' installed" % (extension_key)
+            em.RegisterExtension(extension)
+            results['changed'] = True
+            results['result'] = "'%s' installed" % (extension_key)
 
         elif state == 'absent' and key_check:
-           em.UnregisterExtension(extension_key)
-           results['changed'] = True
-           results['result'] = "'%s' uninstalled" % (extension_key)
+            em.UnregisterExtension(extension_key)
+            results['changed'] = True
+            results['result'] = "'%s' uninstalled" % (extension_key)
 
         elif state == 'absent' and not key_check:
-           results['changed'] = False
-           results['result'] = "'%s' is not installed" % (extension_key)
+            results['changed'] = False
+            results['result'] = "'%s' is not installed" % (extension_key)
 
         module.exit_json(**results)
 
