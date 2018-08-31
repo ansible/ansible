@@ -29,7 +29,7 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ftd.common import HTTPMethod, ResponseParams
 from ansible.module_utils.network.ftd.fdm_swagger_client import SpecProp, FdmSwaggerParser
 from ansible.module_utils.six import BytesIO, PY3, StringIO
-from ansible.plugins.httpapi.ftd import HttpApi, API_TOKEN_PATH_ENV_VAR
+from ansible.plugins.httpapi.ftd import HttpApi
 
 if PY3:
     BUILTINS_NAME = 'builtins'
@@ -37,12 +37,25 @@ else:
     BUILTINS_NAME = '__builtin__'
 
 
+class FakeFtdHttpApiPlugin(HttpApi):
+    def __init__(self, conn):
+        super(FakeFtdHttpApiPlugin, self).__init__(conn)
+        self.hostvars = {
+            'token_path': '/testLoginUrl',
+            'spec_path': '/testSpecUrl'
+        }
+
+    def get_option(self, var):
+        return self.hostvars[var]
+
+
 class TestFtdHttpApi(unittest.TestCase):
 
     def setUp(self):
         self.connection_mock = mock.Mock()
-        self.ftd_plugin = HttpApi(self.connection_mock)
+        self.ftd_plugin = FakeFtdHttpApiPlugin(self.connection_mock)
         self.ftd_plugin.access_token = 'ACCESS_TOKEN'
+        self.ftd_plugin._load_name = 'httpapi'
 
     def test_login_should_request_tokens_when_no_refresh_token(self):
         self.connection_mock.send.return_value = self._connection_response(
@@ -69,15 +82,17 @@ class TestFtdHttpApi(unittest.TestCase):
         expected_body = json.dumps({'grant_type': 'refresh_token', 'refresh_token': 'REFRESH_TOKEN'})
         self.connection_mock.send.assert_called_once_with(mock.ANY, expected_body, headers=mock.ANY, method=mock.ANY)
 
-    @patch.dict(os.environ, {API_TOKEN_PATH_ENV_VAR: '/testLoginUrl'})
-    def test_login_should_use_env_variable_when_set(self):
+    def test_login_should_use_host_variable_when_set(self):
+        temp_token_path = self.ftd_plugin.hostvars['token_path']
+        self.ftd_plugin.hostvars['token_path'] = '/testFakeLoginUrl'
         self.connection_mock.send.return_value = self._connection_response(
             {'access_token': 'ACCESS_TOKEN', 'refresh_token': 'REFRESH_TOKEN'}
         )
 
         self.ftd_plugin.login('foo', 'bar')
 
-        self.connection_mock.send.assert_called_once_with('/testLoginUrl', mock.ANY, headers=mock.ANY, method=mock.ANY)
+        self.connection_mock.send.assert_called_once_with('/testFakeLoginUrl', mock.ANY, headers=mock.ANY, method=mock.ANY)
+        self.ftd_plugin.hostvars['token_path'] = temp_token_path
 
     def test_login_raises_exception_when_no_refresh_token_and_no_credentials(self):
         with self.assertRaises(AnsibleConnectionFailure) as res:
