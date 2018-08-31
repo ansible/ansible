@@ -45,7 +45,8 @@ options:
       - The regular expression to look for in every line of the file. For
         C(state=present), the pattern to replace if found. Only the last line
         found will be replaced. For C(state=absent), the pattern of the line(s)
-        to remove. Uses Python regular expressions.
+        to remove. Uses Python regular expressions.  If the regular expression is not matched,
+        the line will be added to the file in keeping with `insertbefore` or `insertafter` settings.  
         See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
