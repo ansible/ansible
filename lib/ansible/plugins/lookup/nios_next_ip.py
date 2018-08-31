@@ -40,7 +40,7 @@ options:
       required: false
       default: 1
     exclude:
-      description: The number of IP addresses to return
+      description: The IP addresses to exclude when searching for available IPs
       required: false
       default: []
 """
@@ -53,6 +53,10 @@ EXAMPLES = """
 - name: return the next 3 available IP addresses for network 192.168.10.0/24
   set_fact:
     ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', num=3, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+- name: Gather info
+  set_fact:
+    ipv4addr: "{{ lookup('nios_next_ip', '10.0.0.0/23', num=3, exclude=['10.0.0.39'],provider=nios_provider) }}"
+
 """
 
 RETURN = """

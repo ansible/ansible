@@ -24,7 +24,7 @@ DOCUMENTATION = """
 ---
 lookup: nios_next_network
 version_added: ""
-short_description: Return the next available network for a network
+short_description: Return the next available network for a network range
 description:
   - Uses the Infoblox WAPI API to return the next available network addresses
     for a given network CIDR
@@ -33,29 +33,30 @@ requirements:
 extends_documentation_fragment: nios
 options:
     _terms:
-      description: The CIDR network to retrieve the next network from
+      description: This function will retrieve the next available network from within the given network
       required: True
     cidr:
-      description: The CIDR of the network to retrieve the next network from
+      description: The CIDR of the network to retrieve the next network from within the given network
       required: True
+      default: 24
     num:
-      description: The number of IP addresses to return
+      description: The number of networks to return
       required: false
       default: 1
     exclude:
-      description: The number of IP addresses to return
+      description: The network addresses to exclude when searching for available networks
       required: false
       default: ''
 """
 
 EXAMPLES = """
-- name: return next available IP address for network 192.168.10.0/24
+- name: return next available /24 network within the 192.168.0.0/16 network 
   set_fact:
-    ipaddr: "{{ lookup('nios_next_network', '192.168.10.0/24', cidr=24, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+    ipaddr: "{{ lookup('nios_next_network', '192.168.0.0/16', cidr=24, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 
-- name: return the next 3 available IP addresses for network 192.168.10.0/24
+- name: return the next 2 available /24 networks within the 192.168.0.0/16 network 
   set_fact:
-    ipaddr: "{{ lookup('nios_next_network', '192.168.10.0/24', cidr=24, num=3, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+    ipaddr: "{{ lookup('nios_next_network', '192.168.0.0/16', cidr=24, num=2, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 """
 
 RETURN = """
