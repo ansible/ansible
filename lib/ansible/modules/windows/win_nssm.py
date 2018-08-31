@@ -56,6 +56,10 @@ options:
     description:
       - Single string of parameters to be passed to the service.
       - Use either this or C(app_parameters), not both.
+  app_directory:
+    version_added: "2.7.0"
+    description:
+      -  The startup directory (defaults to the directory containing the program)
   dependencies:
     description:
       - Service dependencies that has to be started to trigger startup, separated by comma.
@@ -78,6 +82,7 @@ author:
   - George Frank (@georgefrank)
   - Hans-Joachim Kliemeck (@h0nIg)
   - Michael Wild (@themiwi)
+  - Simon Legner (@simon04)
 '''
 
 EXAMPLES = r'''
