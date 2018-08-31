@@ -216,7 +216,7 @@ You may also wish to install from ports, run:
 
 .. _on_macos:
 
-Latest Releases on Mac OSX
+Latest Releases on macOS
 ++++++++++++++++++++++++++
 
 The preferred way to install Ansible on a Mac is via pip.
@@ -402,4 +402,4 @@ bugs and feature ideas.
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 
-.. [1] If you have issues with the "pycrypto" package install on Mac OSX, then you may need to try ``CC=clang sudo -E pip install pycrypto``.
+.. [1] If you have issues with the "pycrypto" package install on macOS, then you may need to try ``CC=clang sudo -E pip install pycrypto``.
