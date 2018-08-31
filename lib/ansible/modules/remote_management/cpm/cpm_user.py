@@ -212,39 +212,36 @@ from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationEr
 
 
 def assemble_json(cpmmodule):
-    json_load = ""
-
-    json_load = '{"users":'
-    json_load = json_load + '{"username": "' + cpmmodule.params["user_name"] + '"'
+    json_load = '{"users":{"username": "%s"' % (cpmmodule.params["user_name"])
 
     # for Adding there must be a password present
     if cpmmodule.params["user_pass"] is not None and (len(cpmmodule.params["user_pass"]) > 0):
-        json_load = json_load + ',"newpasswd": "' + cpmmodule.params["user_pass"] + '"'
+        json_load = '%s,"newpasswd": "%s"' % (json_load, cpmmodule.params["user_pass"])
     if cpmmodule.params["user_accesslevel"] is not None:
-        json_load = json_load + ',"accesslevel": ' + str(cpmmodule.params["user_accesslevel"]) + ''
+        json_load = '%s,"accesslevel": %s' % (json_load, to_native(cpmmodule.params["user_accesslevel"]))
     if cpmmodule.params["user_portaccess"] is not None:
-        json_load = json_load + ',"portaccess": ' + cpmmodule.params["user_portaccess"] + ''
+        json_load = '%s,"portaccess": %s' % (json_load, cpmmodule.params["user_portaccess"])
     if cpmmodule.params["user_plugaccess"] is not None:
-        json_load = json_load + ',"plugaccess": ' + cpmmodule.params["user_plugaccess"] + ''
+        json_load = '%s,"plugaccess": %s' % (json_load, cpmmodule.params["user_plugaccess"])
     if cpmmodule.params["user_groupaccess"] is not None:
-        json_load = json_load + ',"groupaccess": ' + cpmmodule.params["user_groupaccess"] + ''
+        json_load = '%s,"groupaccess": %s' % (json_load, cpmmodule.params["user_groupaccess"])
     if cpmmodule.params["user_accessserial"] is not None:
-        json_load = json_load + ',"accessserial": ' + str(cpmmodule.params["user_accessserial"]) + ''
+        json_load = '%s,"accessserial": %s' % (json_load, to_native(cpmmodule.params["user_accessserial"]))
     if cpmmodule.params["user_accessssh"] is not None:
-        json_load = json_load + ',"accessssh": ' + str(cpmmodule.params["user_accessssh"]) + ''
+        json_load = '%s,"accessssh": %s' % (json_load, to_native(cpmmodule.params["user_accessssh"]))
     if cpmmodule.params["user_accessweb"] is not None:
-        json_load = json_load + ',"accessweb": ' + str(cpmmodule.params["user_accessweb"]) + ''
+        json_load = '%s,"accessweb": %s' % (json_load, to_native(cpmmodule.params["user_accessweb"]))
     if cpmmodule.params["user_accessoutbound"] is not None:
-        json_load = json_load + ',"accessoutbound": ' + str(cpmmodule.params["user_accessoutbound"]) + ''
+        json_load = '%s,"accessoutbound": %s' % (json_load, to_native(cpmmodule.params["user_accessoutbound"]))
     if cpmmodule.params["user_accessapi"] is not None:
-        json_load = json_load + ',"accessapi": ' + str(cpmmodule.params["user_accessapi"]) + ''
+        json_load = '%s,"accessapi": %s' % (json_load, to_native(cpmmodule.params["user_accessapi"]))
     if cpmmodule.params["user_accessmonitor"] is not None:
-        json_load = json_load + ',"accessmonitor": ' + str(cpmmodule.params["user_accessmonitor"]) + ''
+        json_load = '%s,"accessmonitor": %s' % (json_load, to_native(cpmmodule.params["user_accessmonitor"]))
     if cpmmodule.params["user_callbackphone"] is not None:
-        json_load = json_load + ',"callbackphone": "' + cpmmodule.params["user_callbackphone"] + '"'
+        json_load = '%s,"callbackphone": "%s"' % (json_load, cpmmodule.params["user_callbackphone"])
 
-    json_load = json_load + '}'
-    json_load = json_load + '}'
+    json_load = '%s}}' % (json_load)
+
     return json_load
 
 
@@ -330,7 +327,6 @@ def run_module():
         module.fail_json(**fail_json)
 
     result['data'] = to_text(response.read())
-
     module.exit_json(**result)
 
 
