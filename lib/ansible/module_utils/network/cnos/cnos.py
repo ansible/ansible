@@ -74,7 +74,8 @@ cnos_argument_spec = {
 command_spec = {
     'command': dict(key=True),
     'prompt': dict(),
-    'answer': dict()
+    'answer': dict(),
+    'check_all': dict()
 }
 
 
@@ -1326,137 +1327,6 @@ def interfaceLevel2Config(module, cmd, prompt, answer):
     return retVal
 # EOM
 
-
-# Utility Method to download an image from FTP/TFTP server to device.
-# This method supports only FTP or TFTP
-# Tuning of timeout parameter is pending
-
-
-def doImageTransfer(
-    protocol, timeout, imgServerIp, imgPath, imgType, imgServerUser,
-        imgServerPwd, obj):
-    # server = "10.241.106.118"
-    server = imgServerIp
-    # username = "root"
-    username = imgServerUser
-    # password = "root123"
-    password = imgServerPwd
-
-    type = "os"
-    if(imgType is not None):
-        type = imgType.lower()
-
-    if((imgPath is None) or (imgPath is "")):
-        imgPath = "cnos_images"
-
-    retVal = ""
-
-    # Image transfer command happens here
-    if(protocol == "ftp"):
-        command = "cp " + protocol + " " + protocol + "://" + username + \
-            "@" + server + "/" + imgPath + " system-image " + type + \
-            " vrf management\n"
-    elif(protocol == "tftp"):
-        command = "cp " + protocol + " " + protocol + "://" + server + \
-            "/" + imgPath + " system-image " + type + " vrf management\n"
-    else:
-        return "Error-110"
-    # debugOutput(command)
-    response = waitForDeviceResponse(command, "[n]", 3, obj)
-    if(response.lower().find('error-101')):
-        retVal = retVal
-    else:
-        retVal = retVal + response
-
-    # Confirmation command happens here
-    command = "y\n"
-    # debugOutput(command)
-    if(protocol == "ftp"):
-        retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
-        # Password entry happens here Only for FTP
-        command = password + " \n"
-        # debugOutput(command)
-    # Change to standby image y
-    retVal = retVal + waitForDeviceResponse(command, "[n]", timeout, obj)
-    command = "y\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
-    return retVal
-# EOM
-
-# Utility Method to download an image from SFTP/SCP server to device.
-# This method supports only SCP or SFTP
-# Tuning of timeout parameter is pending
-
-
-def doSecureImageTransfer(
-    protocol, timeout, imgServerIp, imgPath, imgType, imgServerUser,
-        imgServerPwd, obj):
-    # server = "10.241.105.214"
-    server = imgServerIp
-    # username = "pbhosale"
-    username = imgServerUser
-    # password = "Lab4man1"
-    password = imgServerPwd
-
-    type = "scp"
-    if(imgType is not None):
-        type = imgType.lower()
-
-    if((imgPath is None) or (imgPath is "")):
-        imgPath = "cnos_images"
-
-    retVal = ""
-
-    # Image transfer command happens here
-    command = "cp " + protocol + " " + protocol + "://" + username + "@" + \
-        server + "/" + imgPath + " system-image " + type + " vrf management \n"
-    # debugOutput(command)
-    response = waitForDeviceResponse(command, "[n]", 3, obj)
-    if(response.lower().find('error-101')):
-        retVal = retVal
-    else:
-        retVal = retVal + response
-    # Confirmation command happens here
-    if(protocol == "scp"):
-        command = "y\n"
-        # debugOutput(command)
-        response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-        if(response.lower().find('error-101')):
-            retVal = retVal
-        else:
-            retVal = retVal + response
-        command = "Yes\n"
-        # debugOutput(command)
-        retVal = retVal + waitForDeviceResponse(command, "timeout:", 3, obj)
-        command = "0\n"
-        # debugOutput(command)
-        retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
-    elif(protocol == "sftp"):
-        command = "y\n"
-        # debugOutput(command)
-        response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-        if(response.lower().find('error-101')):
-            retVal = retVal
-        else:
-            retVal = retVal + response
-
-        command = "Yes\n"
-        # debugOutput(command)
-        retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
-    else:
-        return "Error-110"
-
-    # Password entry happens here
-    command = password + "\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "[n]", timeout, obj)
-    # Change to standby image y
-    command = "y\n"
-    # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "#", timeout, obj)
-    return retVal
-# EOM
 
 # Method Method for enter enable mode
 #
