@@ -1,0 +1,16 @@
+---
+- block:
+
+    - include: ./credential_tests.yml
+    - include: ./test_states.yml
+    - include: ./test_tags.yml
+    - include: ./test_modification.yml  # TODO: test availability_zone and multi_az
+    - include: ./test_bad_options.yml
+    - include: ./test_processor_features.yml
+    - include: ./test_encryption.yml
+    - include: ./test_final_snapshot.yml
+    - include: ./test_read_replica.yml
+    - include: ./test_vpc_security_groups.yml
+    #- include: ./test_restore_instance.yml  # TODO: point-in-time, snapshot, s3
+    # TODO: uncomment after adding rds_cluster module
+    #- include: ./test_aurora.yml
