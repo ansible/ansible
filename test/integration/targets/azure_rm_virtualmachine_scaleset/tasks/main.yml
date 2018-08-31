@@ -117,7 +117,7 @@
 - name: Create VMSS -- test upgrade_policy idempotence
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name:  testVMSS{{ rpfx }}
+    name: testVMSS{{ rpfx }}
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
