@@ -70,6 +70,10 @@ options:
     namespace:
         description:
             - Namespace of the authorization provider, where user/group resides.
+    quota_name:
+        description:
+            - Name of the quota to assign permission. Works only with C(object_type) I(data_center).
+        version_added: "2.7"
 extends_documentation_fragment: ovirt
 '''
 
@@ -93,6 +97,16 @@ EXAMPLES = '''
     object_type: cluster
     object_name: mycluster
     role: ClusterAdmin
+
+- name: Assign QuotaConsumer role to user
+  ovirt_permissions:
+    state: present
+    user_name: user1
+    authz_name: example.com-authz
+    object_type: data_center
+    object_name: mydatacenter
+    quota_name: myquota
+    role: QuotaConsumer
 '''
 
 RETURN = '''
@@ -126,6 +140,7 @@ from ansible.module_utils.ovirt import (
     ovirt_full_argument_spec,
     search_by_attributes,
     search_by_name,
+    get_id_by_name
 )
 
 
@@ -158,7 +173,11 @@ def _object_service(connection, module):
             )
         object_id = sdk_object.id
 
-    return objects_service.service(object_id)
+    object_service = objects_service.service(object_id)
+    if module.params['quota_name'] and object_type == 'data_center':
+        quotas_service = object_service.quotas_service()
+        return quotas_service.quota_service(get_id_by_name(quotas_service, module.params['quota_name']))
+    return object_service
 
 
 def _permission(module, permissions_service, connection):
@@ -248,6 +267,7 @@ def main():
         user_name=dict(type='str'),
         group_name=dict(type='str'),
         namespace=dict(type='str'),
+        quota_name=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
