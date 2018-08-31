@@ -95,6 +95,15 @@ EXAMPLES = r'''
     name: foo
     application: C:\windows\foo.exe
 
+# Install and start the foo service with an application directory and environment specified:
+# This will set CLASSPATH=baz.jar and start java.exe in C:\bar\
+- win_nssm:
+    name: foo
+    application: java.exe
+    app_directory: C:\bar\
+    app_environment_extra:
+      CLASSPATH: baz.jar
+
 # Install and start the foo service with a key-value pair argument
 # This will yield the following command: C:\windows\foo.exe bar "true"
 - win_nssm:
