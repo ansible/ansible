@@ -19,7 +19,7 @@ description:
     - This module can be used to register/deregister vCenter plugins.
 version_added: 2.7
 author:
-- Michael Tipton (@castawayegr)
+    - Michael Tipton (@castawayegr)
 notes:
     - Tested on vSphere 6.5
 requirements:
@@ -28,40 +28,39 @@ requirements:
 options:
   extension_key:
     description:
-      - The extension key of the plugin to install or uninstall.
+    - The extension key of the plugin to install or uninstall.
     required: True
   version:
     description:
-      - The version of the plugin you are installing or uninstalling.
+    - The version of the plugin you are installing or uninstalling.
     required: True
   name:
     description:
-      - Required for C(state=present). The name of the plugin you are installing.
+    - Required for C(state=present). The name of the plugin you are installing.
   company:
     description:
-      - Required for C(state=present). The name of the company that makes the plugin.
+    - Required for C(state=present). The name of the company that makes the plugin.
   description:
     description:
-      - Required for C(state=present). A short description of the plugin.
+    - Required for C(state=present). A short description of the plugin.
   email:
     description:
-      - Required for C(state=present). Administrator Email to use for Plugin.
+    - Required for C(state=present). Administrator Email to use for Plugin.
   url:
     description:
-      - Required for C(state=present). Link to server hosting plugin zip file to install.
+    - Required for C(state=present). Link to server hosting plugin zip file to install.
   ssl_thumbprint:
     description:
-      - Required for C(state=present). SSL thumbprint of the plugin hosting server.
+    - Required for C(state=present). SSL thumbprint of the plugin hosting server.
   type:
     description:
-      - Required for C(state=present). Type of plugin being installed (SOAP, REST, HTTP).
+    - Required for C(state=present). Type of plugin being installed (SOAP, REST, HTTP).
     default: vsphere-client-serenity
   state:
     description:
-      - Add or remove vCenter Plugin.
+    - Add or remove vCenter Plugin.
+    choices: [absent, present]
     default: present
-    choices=['absent', 'present']
-
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -212,6 +211,7 @@ def main():
         module.fail_json(msg=method_fault.msg)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()
