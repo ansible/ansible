@@ -139,8 +139,6 @@ lib/ansible/modules/cloud/amazon/s3_website.py E324
 lib/ansible/modules/cloud/amazon/sns_topic.py E325
 lib/ansible/modules/cloud/amazon/sts_assume_role.py E317
 lib/ansible/modules/cloud/atomic/atomic_container.py E317
-lib/ansible/modules/cloud/azure/_azure.py E324
-lib/ansible/modules/cloud/azure/_azure.py E326
 lib/ansible/modules/cloud/centurylink/clc_alert_policy.py E317
 lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py E317
 lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py E324
@@ -647,7 +645,6 @@ lib/ansible/modules/network/aos/_aos_blueprint_param.py E325
 lib/ansible/modules/network/asa/asa_config.py E324
 lib/ansible/modules/network/bigswitch/bigmon_policy.py E324
 lib/ansible/modules/network/bigswitch/bigmon_policy.py E326
-lib/ansible/modules/network/citrix/_netscaler.py E324
 lib/ansible/modules/network/cloudengine/ce_aaa_server.py E322
 lib/ansible/modules/network/cloudengine/ce_aaa_server_host.py E322
 lib/ansible/modules/network/cloudengine/ce_acl.py E322

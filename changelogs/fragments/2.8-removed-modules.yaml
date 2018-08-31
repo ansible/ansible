@@ -1,0 +1,6 @@
+removed_features:
+- ec2_remote_facts - deprecated module removed (https://github.com/ansible/ansible/pull/44985)
+- azure - deprecated module removed (https://github.com/ansible/ansible/pull/44985)
+- cs_nic - deprecated module removed (https://github.com/ansible/ansible/pull/44985)
+- netscaler - deprecated module removed (https://github.com/ansible/ansible/pull/44985)
+- win_msi - deprecated module removed (https://github.com/ansible/ansible/pull/44985)
