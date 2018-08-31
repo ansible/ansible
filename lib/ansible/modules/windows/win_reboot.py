@@ -89,6 +89,6 @@ rebooted:
 elapsed:
   description: The number of seconds that elapsed waiting for the system to be rebooted.
   returned: always
-  type: int
-  sample: 23
+  type: float
+  sample: 23.2
 '''
