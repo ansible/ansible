@@ -95,7 +95,7 @@ class CliconfBase(AnsiblePlugin):
         display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
         self.close()
 
-    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
+    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False, check_all=False):
         """Executes a command over the device connection
 
         This method will execute a command over the device connection and
@@ -108,14 +108,16 @@ class CliconfBase(AnsiblePlugin):
         :param sendonly: Bool value that will send the command but not wait for a result.
         :param newline: Bool value that will append the newline character to the command
         :param prompt_retry_check: Bool value for trying to detect more prompts
-
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
         :returns: The output from the device after executing the command
         """
         kwargs = {
             'command': to_bytes(command),
             'sendonly': sendonly,
             'newline': newline,
-            'prompt_retry_check': prompt_retry_check
+            'prompt_retry_check': prompt_retry_check,
+            'check_all': check_all
         }
 
         if prompt is not None:
@@ -223,7 +225,7 @@ class CliconfBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None, check_all=False):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -234,9 +236,11 @@ class CliconfBase(AnsiblePlugin):
         :param sendonly: bool to disable waiting for response, default is false
         :param newline: bool to indicate if newline should be added at end of answer or not
         :param output: For devices that support fetching command output in different
-            format, this keyword argument is used to specify the output in which
-            response is to be retrieved.
-        :return:
+                       format, this keyword argument is used to specify the output in which
+                        response is to be retrieved.
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
+        :return: The output from the device after executing the command
         """
         pass
 
