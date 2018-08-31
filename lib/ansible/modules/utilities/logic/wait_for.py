@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
+# Copyright: (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -168,6 +168,14 @@ EXAMPLES = r'''
     delay: 10
   vars:
     ansible_connection: local
+'''
+
+RETURN = r'''
+elapsed:
+  description: The number of seconds that elapsed while waiting
+  returned: always
+  type: int
+  sample: 23
 '''
 
 import binascii
@@ -459,18 +467,18 @@ def main():
         compiled_search_re = None
 
     if port and path:
-        module.fail_json(msg="port and path parameter can not both be passed to wait_for")
+        module.fail_json(msg="port and path parameter can not both be passed to wait_for", elapsed=0)
     if path and state == 'stopped':
-        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
+        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module", elapsed=0)
     if path and state == 'drained':
-        module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module")
+        module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module", elapsed=0)
     if module.params['exclude_hosts'] is not None and state != 'drained':
-        module.fail_json(msg="exclude_hosts should only be with state=drained")
+        module.fail_json(msg="exclude_hosts should only be with state=drained", elapsed=0)
     for _connection_state in module.params['active_connection_states']:
         try:
             get_connection_state_id(_connection_state)
         except:
-            module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state)
+            module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state, elapsed=0)
 
     start = datetime.datetime.utcnow()
 
