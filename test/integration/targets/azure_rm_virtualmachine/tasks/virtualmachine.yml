@@ -229,7 +229,7 @@
       short_hostname: testvm
       os_type: Linux
       public_ip_allocation_method: Disabled
-      availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      availability_set: "{{ abs_name1 }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
