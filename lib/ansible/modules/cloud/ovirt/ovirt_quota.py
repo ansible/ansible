@@ -114,7 +114,7 @@ EXAMPLES = '''
 # Change Quota Name
 - ovirt_quota:
     id: 00000000-0000-0000-0000-000000000000
-    name: "new quota name"
+    name: "new_quota_name"
     data_center: dcX
 '''
 

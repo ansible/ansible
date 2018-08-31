@@ -678,9 +678,9 @@ EXAMPLES = '''
       - name: nic1
 
 # Change VM Name
-- ovirt_vmpool:
+- ovirt_vm:
     id: 00000000-0000-0000-0000-000000000000
-    name: "new vm name"
+    name: "new_vm_name"
 
 - name: Run VM with cloud init
   ovirt_vm:

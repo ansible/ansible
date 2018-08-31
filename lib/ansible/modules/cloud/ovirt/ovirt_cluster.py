@@ -274,7 +274,7 @@ EXAMPLES = '''
 # Change cluster Name
 - ovirt_cluster:
     id: 00000000-0000-0000-0000-000000000000
-    name: "new cluster name"
+    name: "new_cluster_name"
 '''
 
 RETURN = '''

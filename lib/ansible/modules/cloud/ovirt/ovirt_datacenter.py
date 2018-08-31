@@ -85,7 +85,7 @@ EXAMPLES = '''
 # Change Datacenter Name
 - ovirt_datacenter:
     id: 00000000-0000-0000-0000-000000000000
-    name: "new datacenter name"
+    name: "new_datacenter_name"
 '''
 
 RETURN = '''

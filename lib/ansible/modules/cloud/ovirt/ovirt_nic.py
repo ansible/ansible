@@ -102,7 +102,7 @@ EXAMPLES = '''
 # Change NIC Name
 - ovirt_nic:
     id: 00000000-0000-0000-0000-000000000000
-    name: "new nic name"
+    name: "new_nic_name"
     vm: myvm
 '''
 

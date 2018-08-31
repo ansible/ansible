@@ -66,7 +66,7 @@ EXAMPLES = '''
 # Change MAC pool Name
 - ovirt_nic:
     id: 00000000-0000-0000-0000-000000000000
-    name: "new mac pool name"
+    name: "new_mac_pool_name"
 '''
 
 RETURN = '''

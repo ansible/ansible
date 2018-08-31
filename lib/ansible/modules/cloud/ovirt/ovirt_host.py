@@ -20,7 +20,7 @@ description:
 options:
     id:
         description:
-            - "ID of the nic to manage."
+            - "ID of the host to manage."
         version_added: "2.7"
     name:
         description:

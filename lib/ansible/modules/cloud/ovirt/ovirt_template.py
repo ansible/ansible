@@ -188,7 +188,7 @@ EXAMPLES = '''
 # Change Template Name
 - ovirt_template:
     id: 00000000-0000-0000-0000-000000000000
-    name: "new template name"
+    name: "new_template_name"
 
 # Register template
 - ovirt_template:

@@ -101,7 +101,7 @@ EXAMPLES = '''
 # Change Network Name
 - ovirt_network:
     id: 00000000-0000-0000-0000-000000000000
-    name: "new network name"
+    name: "new_network_name"
     data_center: mydatacenter
 '''
 
