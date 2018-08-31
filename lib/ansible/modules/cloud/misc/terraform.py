@@ -44,6 +44,13 @@ options:
     required: false
     default: default
     version_added: 2.7
+  workspace_enabled:
+    description:
+      - Enables/disables the usage of terraform workspaces.
+    required: false
+    default: true
+    type: bool
+    version_added: 2.7
   purge_workspace:
     description:
       - Only works with state = absent
@@ -273,6 +280,7 @@ def main():
             project_path=dict(required=True, type='path'),
             binary_path=dict(type='path'),
             workspace=dict(required=False, type='str', default='default'),
+            workspace_enabled=dict(type='bool', default=True),
             purge_workspace=dict(type='bool', default=False),
             state=dict(default='present', choices=['present', 'absent', 'planned']),
             variables=dict(type='dict'),
@@ -300,6 +308,7 @@ def main():
     state_file = module.params.get('state_file')
     force_init = module.params.get('force_init')
     backend_config = module.params.get('backend_config')
+    workspace_enabled = module.params.get('workspace_enabled')
 
     if bin_path is not None:
         command = [bin_path]
@@ -309,12 +318,13 @@ def main():
     if force_init:
         init_plugins(command[0], project_path, backend_config)
 
-    workspace_ctx = get_workspace_context(command[0], project_path)
-    if workspace_ctx["current"] != workspace:
-        if workspace not in workspace_ctx["all"]:
-            create_workspace(command[0], project_path, workspace)
-        else:
-            select_workspace(command[0], project_path, workspace)
+    if workspace_enabled:
+        workspace_ctx = get_workspace_context(command[0], project_path)
+        if workspace_ctx["current"] != workspace:
+            if workspace not in workspace_ctx["all"]:
+                create_workspace(command[0], project_path, workspace)
+            else:
+                select_workspace(command[0], project_path, workspace)
 
     variables_args = []
     for k, v in variables.items():
@@ -388,10 +398,11 @@ def main():
         outputs = json.loads(outputs_text)
 
     # Restore the Terraform workspace found when running the module
-    if workspace_ctx["current"] != workspace:
-        select_workspace(command[0], project_path, workspace_ctx["current"])
-    if state == 'absent' and workspace != 'default' and purge_workspace is True:
-        remove_workspace(command[0], project_path, workspace)
+    if workspace_enabled:
+        if workspace_ctx["current"] != workspace:
+            select_workspace(command[0], project_path, workspace_ctx["current"])
+        if state == 'absent' and workspace != 'default' and purge_workspace is True:
+            remove_workspace(command[0], project_path, workspace)
 
     module.exit_json(changed=changed, state=state, workspace=workspace, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
 
