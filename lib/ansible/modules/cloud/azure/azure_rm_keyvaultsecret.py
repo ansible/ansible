@@ -32,8 +32,6 @@ options:
         description:
             - Secret to be secured by keyvault.
         required: false
-        aliases:
-            - secret
     state:
         description:
             - Assert the state of the subnet. Use 'present' to create or update a secret and
@@ -100,7 +98,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             secret_name=dict(type='str', required=True),
-            secret_value=dict(type='str', aliases=['secret'], no_log=True),
+            secret_value=dict(type='str', no_log=True),
             keyvault_uri=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent'])
         )
