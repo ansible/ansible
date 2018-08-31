@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-version_added: "1.0"
+version_added: "1.1"
 author: Prashant Bhosale, Naval Patel
 module: pylxca_module
 short_description: custom module for pylxca utility
@@ -460,6 +460,7 @@ options:
       - Used with unittest. set to "True" when invokved from unittest
 
 requirements:
+  - python >=2.7
   - pylxca
 '''
 
