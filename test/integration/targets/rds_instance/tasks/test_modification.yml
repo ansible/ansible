@@ -110,7 +110,7 @@
           that:
             - result.changed
 
-      # TODO: test modifying db_subnet_group_name, db_security_groups, db_parameter_group_name,
+      # TODO: test modifying db_subnet_group_name, db_security_groups, db_parameter_group_name, option_group_name,
       # monitoring_role_arn, monitoring_interval, domain, domain_iam_role_name, cloudwatch_logs_export_configuration
 
       - name: Modify several attributes
@@ -125,7 +125,6 @@
           engine_version: "10.1.26"
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
-          option_group_name: default:mariadb-10-0
           port: 1150
           apply_immediately: True
           <<: *aws_connection_info
@@ -151,7 +150,6 @@
           engine_version: "10.1.26"
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
-          option_group_name: default:mariadb-10-0
           port: 1150
           <<: *aws_connection_info
         register: result
