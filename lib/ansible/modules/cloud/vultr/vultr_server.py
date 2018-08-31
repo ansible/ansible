@@ -494,7 +494,6 @@ class AnsibleVultrServer(Vultr):
                 'hostname': self.module.params.get('hostname'),
                 'SSHKEYID': self.get_ssh_key().get('SSHKEYID'),
                 'enable_ipv6': self.get_yes_or_no('ipv6_enabled'),
-                'enable_private_network': self.get_yes_or_no('private_network_enabled'),
                 'auto_backups': self.get_yes_or_no('auto_backup_enabled'),
                 'notify_activate': self.get_yes_or_no('notify_activate'),
                 'tag': self.module.params.get('tag'),
