@@ -130,7 +130,7 @@ class MACPoolModule(BaseModule):
         return (
             self._compare_ranges(entity) and
             equal(self._module.params['allow_duplicates'], entity.allow_duplicates) and
-            equal(self._module.params['description'], entity.description) and 
+            equal(self._module.params['description'], entity.description) and
             equal(self._module.params['name'], entity.name)
         )
 
