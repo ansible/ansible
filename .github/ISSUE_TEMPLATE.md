@@ -27,7 +27,7 @@
 ```
 
 ##### OS / ENVIRONMENT
-<!--- Provide all relevant information below, eg. target OS versions, network device firmware, etc. -->
+<!--- Provide all relevant information below, e.g. target OS versions, network device firmware, etc. -->
 
 ##### STEPS TO REPRODUCE
 <!--- Describe exactly how to reproduce the problem, using a minimal test-case -->

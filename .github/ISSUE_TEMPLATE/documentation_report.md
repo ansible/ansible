@@ -7,13 +7,15 @@ about: Ask us about docs
 <!--- This form is processed by Ansibot (machine), complete *all* sections as described -->
 
 ##### SUMMARY
-<!--- Explain the problem briefly below -->
+<!--- Explain the problem briefly below, add suggestions to wording or structure -->
+
+<!--- HINT: Did you know the documentation has an "Edit on GitHub" link on every page ? -->
 
 ##### ISSUE TYPE
 - Documentation Report
 
 ##### COMPONENT NAME
-<!--- Write the short name of the module, plugin, task or feature below -->
+<!--- Write the name of the rst file, module, plugin, task or feature below -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from "ansible --version" between quotes -->
@@ -28,9 +30,9 @@ about: Ask us about docs
 ```
 
 ##### OS / ENVIRONMENT
-<!--- Provide all relevant information below, eg. target OS versions, network device firmware, etc. -->
+<!--- Provide all relevant information below, e.g. target OS versions, network device firmware, etc. -->
 
 ##### ADDITIONAL INFORMATION
-<!--- Describe how this improves the documentation, eg. before/after situation or screenshots -->
+<!--- Describe how this improves the documentation, e.g. before/after situation or screenshots -->
 
 <!--- HINT: You can paste gist.github.com links for larger files -->

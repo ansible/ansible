@@ -14,21 +14,6 @@ about: Suggest an idea for this project
 ##### COMPONENT NAME
 <!--- Write the short name of the new feature, module, plugin or task below -->
 
-##### ANSIBLE VERSION
-<!--- Paste verbatim output from "ansible --version" between quotes -->
-```paste below
-
-```
-
-##### CONFIGURATION
-<!--- Paste verbatim output from "ansible-config dump --only-changed" between quotes -->
-```paste below
-
-```
-
-##### OS / ENVIRONMENT
-<!--- Provide all relevant information below, eg. target OS versions, network device firmware, etc. -->
-
 ##### ADDITIONAL INFORMATION
 <!--- Describe how the feature would be used, why it is needed and what it would solve -->
 
