@@ -158,7 +158,6 @@ def doImageDownload(module, prompt, answer):
     command = "copy " + protocol + " " + protocol + "://" + username + "@"
     command = command + server + "/" + imgPath + " system-image "
     command = command + imgType + " vrf management"
-    # cnos.debugOutput(command + "\n")
     cmd = []
     if(protocol == "scp"):
         prompt = ['timeout', 'Confirm download operation', 'Password',
@@ -167,7 +166,6 @@ def doImageDownload(module, prompt, answer):
         scp_cmd = [{'command': command, 'prompt': prompt, 'answer': answer,
                     'check_all': True}]
         cmd.extend(scp_cmd)
-        # cnos.debugOutput(cmd)
         retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
     elif(protocol == "sftp"):
         prompt = ['Confirm download operation', 'Password',
@@ -176,7 +174,6 @@ def doImageDownload(module, prompt, answer):
         sftp_cmd = [{'command': command, 'prompt': prompt, 'answer': answer,
                      'check_all': True}]
         cmd.extend(sftp_cmd)
-        # cnos.debugOutput(cmd)
         retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
     elif(protocol == "ftp"):
         prompt = ['Confirm download operation', 'Password',
@@ -185,7 +182,6 @@ def doImageDownload(module, prompt, answer):
         ftp_cmd = [{'command': command, 'prompt': prompt, 'answer': answer,
                     'check_all': True}]
         cmd.extend(ftp_cmd)
-        # cnos.debugOutput(cmd)
         retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
     elif(protocol == "tftp"):
         command = "copy " + protocol + " " + protocol + "://" + server
@@ -197,7 +193,6 @@ def doImageDownload(module, prompt, answer):
         tftp_cmd = [{'command': command, 'prompt': prompt, 'answer': answer,
                      'check_all': True}]
         cmd.extend(tftp_cmd)
-        # cnos.debugOutput(cmd)
         retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
     else:
         return "Error-110"
@@ -238,7 +233,6 @@ def main():
 
     # Save it into the file
     path = outputfile.rsplit('/', 1)
-    # cnos.debugOutput(path[0])
     if not os.path.exists(path[0]):
         os.makedirs(path[0])
     file = open(outputfile, "a")
