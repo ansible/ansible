@@ -20,6 +20,33 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+httpapi : ftd
+short_description: HttpApi Plugin for Cisco ASA Firepower device
+description:
+  - This HttpApi plugin provides methods to connect to Cisco ASA firepower
+    devices over a HTTP(S)-based api.
+version_added: "2.7"
+options:
+  token_path:
+    type: str
+    description:
+      - Specifies the api token path of the FTD device
+    default: '/api/fdm/v2/fdm/token'
+    vars:
+      - name: ansible_httpapi_ftd_token_path
+
+  spec_path:
+    type: str
+    description:
+      - Specifies the api spec path of the FTD device
+    default: '/apispec/ngfw.json'
+    vars:
+      - name: ansible_httpapi_ftd_spec_path
+"""
+
 import json
 import os
 import re
@@ -39,9 +66,6 @@ BASE_HEADERS = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
 }
-API_TOKEN_PATH_ENV_VAR = 'FTD_API_TOKEN_PATH'
-DEFAULT_API_TOKEN_PATH = '/api/fdm/v2/fdm/token'
-API_SPEC_PATH = '/apispec/ngfw.json'
 
 TOKEN_EXPIRATION_STATUS_CODE = 408
 UNAUTHORIZED_STATUS_CODE = 401
@@ -49,6 +73,7 @@ UNAUTHORIZED_STATUS_CODE = 401
 
 class HttpApi(HttpApiBase):
     def __init__(self, connection):
+        super(HttpApi, self).__init__(connection)
         self.connection = connection
         self.access_token = None
         self.refresh_token = None
@@ -168,9 +193,11 @@ class HttpApi(HttpApiBase):
         headers['Authorization'] = 'Bearer %s' % self.access_token
         return headers
 
-    @staticmethod
-    def _get_api_token_path():
-        return os.environ.get(API_TOKEN_PATH_ENV_VAR, DEFAULT_API_TOKEN_PATH)
+    def _get_api_spec_path(self):
+        return self.get_option('spec_path')
+
+    def _get_api_token_path(self):
+        return self.get_option('token_path')
 
     @staticmethod
     def _response_to_json(response_data):
@@ -199,7 +226,8 @@ class HttpApi(HttpApiBase):
     @property
     def api_spec(self):
         if self._api_spec is None:
-            response = self.send_request(url_path=API_SPEC_PATH, http_method=HTTPMethod.GET)
+            spec_path_url = self._get_api_spec_path()
+            response = self.send_request(url_path=spec_path_url, http_method=HTTPMethod.GET)
             if response[ResponseParams.SUCCESS]:
                 self._api_spec = FdmSwaggerParser().parse_spec(response[ResponseParams.RESPONSE])
             else:

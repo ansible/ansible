@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+
+  roles:
+    - { role: online_user_facts, tags: test_online_user_facts }

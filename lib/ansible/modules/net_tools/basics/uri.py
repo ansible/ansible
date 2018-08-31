@@ -54,8 +54,8 @@ options:
   method:
     description:
       - The HTTP method of the request or response. It MUST be uppercase.
-    choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE", "CONNECT", "REFRESH" ]
-    default: "GET"
+    choices: [ CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, REFRESH, TRACE ]
+    default: GET
   return_content:
     description:
       - Whether or not to return the body of the response as a "content" key in
@@ -234,6 +234,11 @@ EXAMPLES = r'''
 
 RETURN = r'''
 # The return information includes all the HTTP headers in lower-case.
+elapsed:
+  description: The number of seconds that elapsed while performing the download
+  returned: always
+  type: int
+  sample: 23
 msg:
   description: The HTTP message from the request
   returned: always
@@ -275,7 +280,7 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 JSON_CANDIDATES = ('text', 'json', 'javascript')
 
 
-def write_file(module, url, dest, content):
+def write_file(module, url, dest, content, resp):
     # create a tempfile with some test content
     fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
     f = open(tmpsrc, 'wb')
@@ -284,7 +289,7 @@ def write_file(module, url, dest, content):
     except Exception as e:
         os.remove(tmpsrc)
         module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
-                         exception=traceback.format_exc())
+                         exception=traceback.format_exc(), **resp)
     f.close()
 
     checksum_src = None
@@ -293,10 +298,10 @@ def write_file(module, url, dest, content):
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source '%s' does not exist" % tmpsrc)
+        module.fail_json(msg="Source '%s' does not exist" % tmpsrc, **resp)
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source '%s' not readable" % tmpsrc)
+        module.fail_json(msg="Source '%s' not readable" % tmpsrc, **resp)
     checksum_src = module.sha1(tmpsrc)
 
     # check if there is no dest file
@@ -304,15 +309,15 @@ def write_file(module, url, dest, content):
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination '%s' not writable" % dest)
+            module.fail_json(msg="Destination '%s' not writable" % dest, **resp)
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination '%s' not readable" % dest)
+            module.fail_json(msg="Destination '%s' not readable" % dest, **resp)
         checksum_dest = module.sha1(dest)
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination dir '%s' not writable" % os.path.dirname(dest))
+            module.fail_json(msg="Destination dir '%s' not writable" % os.path.dirname(dest), **resp)
 
     if checksum_src != checksum_dest:
         try:
@@ -320,7 +325,7 @@ def write_file(module, url, dest, content):
         except Exception as e:
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
-                             exception=traceback.format_exc())
+                             exception=traceback.format_exc(), **resp)
 
     os.remove(tmpsrc)
 
@@ -401,7 +406,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
             })
             data = open(src, 'rb')
         except OSError:
-            module.fail_json(msg='Unable to open source file %s' % src, exception=traceback.format_exc())
+            module.fail_json(msg='Unable to open source file %s' % src, exception=traceback.format_exc(), elapsed=0)
     else:
         data = body
 
@@ -463,7 +468,7 @@ def main():
         body=dict(type='raw'),
         body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw']),
         src=dict(type='path'),
-        method=dict(type='str', default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
+        method=dict(type='str', default='GET', choices=['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'REFRESH', 'TRACE']),
         return_content=dict(type='bool', default=False),
         follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
@@ -505,7 +510,7 @@ def main():
             try:
                 body = form_urlencoded(body)
             except ValueError as e:
-                module.fail_json(msg='failed to parse body as form_urlencoded: %s' % to_native(e))
+                module.fail_json(msg='failed to parse body as form_urlencoded: %s' % to_native(e), elapsed=0)
         if 'content-type' not in [header.lower() for header in dict_headers]:
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
@@ -525,35 +530,37 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of uri executions.
         if os.path.exists(creates):
-            module.exit_json(stdout="skipped, since '%s' exists" % creates, changed=False, rc=0)
+            module.exit_json(stdout="skipped, since '%s' exists" % creates, changed=False)
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
         # and the filename does not exist.  This allows idempotence
         # of uri executions.
         if not os.path.exists(removes):
-            module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False, rc=0)
+            module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
+    start = datetime.datetime.utcnow()
     resp, content, dest = uri(module, url, dest, body, body_format, method,
                               dict_headers, socket_timeout)
+    resp['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     resp['status'] = int(resp['status'])
 
     # Write the file out if requested
     if dest is not None:
         if resp['status'] == 304:
-            changed = False
+            resp['changed'] = False
         else:
-            write_file(module, url, dest, content)
+            write_file(module, url, dest, content, resp)
             # allow file attribute changes
-            changed = True
+            resp['changed'] = True
             module.params['path'] = dest
             file_args = module.load_file_common_arguments(module.params)
             file_args['path'] = dest
-            changed = module.set_fs_attributes_if_different(file_args, changed)
+            resp['changed'] = module.set_fs_attributes_if_different(file_args, resp['changed'])
         resp['path'] = dest
     else:
-        changed = False
+        resp['changed'] = False
 
     # Transmogrify the headers, replacing '-' with '_', since variables don't
     # work with dashes.
@@ -588,9 +595,9 @@ def main():
         uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))
         module.fail_json(content=u_content, **uresp)
     elif return_content:
-        module.exit_json(changed=changed, content=u_content, **uresp)
+        module.exit_json(content=u_content, **uresp)
     else:
-        module.exit_json(changed=changed, **uresp)
+        module.exit_json(**uresp)
 
 
 if __name__ == '__main__':

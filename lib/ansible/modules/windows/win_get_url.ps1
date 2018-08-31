@@ -41,7 +41,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     $webLastMod = $null
 
     $webRequest = [System.Net.WebRequest]::Create($url)
-    
+
     foreach ($header in $headers.GetEnumerator()) {
         $webRequest.Headers.Add($header.Name, $header.Value)
     }
@@ -70,7 +70,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
     } else {
         $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
     }
-    
+
     Try {
         $webResponse = $webRequest.GetResponse()
 
@@ -94,6 +94,8 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
 
 
 Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy, $whatif) {
+
+    $module_start = Get-Date
 
     # Check $dest parent folder exists before attempting download, which avoids unhelpful generic error message.
     $dest_parent = Split-Path -LiteralPath $dest
@@ -132,8 +134,10 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
             $extWebClient.DownloadFile($url, $dest)
         } Catch [System.Net.WebException] {
             $result.status_code = [int] $_.Exception.Response.StatusCode
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             Fail-Json -obj $result -message "Error downloading '$url' to '$dest': $($_.Exception.Message)"
         } Catch {
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             Fail-Json -obj $result -message "Unknown error downloading '$url' to '$dest': $($_.Exception.Message)"
         }
     }
@@ -142,6 +146,8 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     $result.changed = $true
     $result.msg = 'OK'
     $result.dest = $dest
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+
 }
 
 $url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
@@ -162,6 +168,7 @@ $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
 $result = @{
     changed = $false
     dest = $dest
+    elapsed = 0
     url = $url
     # This is deprecated as of v2.4, remove in v2.8
     win_get_url = @{
@@ -190,7 +197,7 @@ if ($url_username) {
     } else {
         $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password) 
     }
-    
+
 }
 
 # If skip_certificate_validation was specified, use validate_certs
@@ -221,14 +228,14 @@ $result.dest = $dest
 $result.win_get_url.dest = $dest
 
 # Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
-$security_protcols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
+$security_protocols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
 if ([Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
-    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls11
+    $security_protocols = $security_protocols -bor [Net.SecurityProtocolType]::Tls11
 }
 if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
-    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
+    $security_protocols = $security_protocols -bor [Net.SecurityProtocolType]::Tls12
 }
-[Net.ServicePointManager]::SecurityProtocol = $security_protcols
+[Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
 if ($force -or -not (Test-Path -LiteralPath $dest)) {
 

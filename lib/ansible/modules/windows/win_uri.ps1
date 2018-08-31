@@ -40,6 +40,7 @@ $JSON_CANDIDATES = @('text', 'json', 'javascript')
 
 $result = @{
     changed = $false
+    elapsed = 0
     url = $url
 }
 
@@ -181,9 +182,12 @@ if ($null -ne $body) {
     }
 }
 
+$module_start = Get-Date
+
 try {
     $response = $client.GetResponse()
 } catch [System.Net.WebException] {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     $response = $null
     if ($_.Exception.PSObject.Properties.Name -match "Response") {
         # was a non-successful response but we at least have a response and
@@ -194,13 +198,17 @@ try {
     # in the case a response (or empty response) was on the exception like in
     # a timeout scenario, we should still fail
     if ($null -eq $response) {
+        $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
         Fail-Json -obj $result -message "WebException occurred when sending web request: $($_.Exception.Message)"
     }
 } catch [System.Net.ProtocolViolationException] {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     Fail-Json -obj $result -message "ProtocolViolationException when sending web request: $($_.Exception.Message)"
 } catch {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     Fail-Json -obj $result -message "Unhandled exception occured when sending web request. Exception: $($_.Exception.Message)"
 }
+$result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 ForEach ($prop in $response.psobject.properties) {
     $result_key = Convert-StringToSnakeCase -string $prop.Name

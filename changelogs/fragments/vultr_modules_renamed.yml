@@ -1,4 +1,0 @@
----
-minor_changes:
-  - "Changed the prefix of all Vultr modules from vr to vultr
-    (https://github.com/ansible/ansible/issues/42942)."

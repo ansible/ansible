@@ -1,2 +1,0 @@
-bugfixes:
-- get_url / uri - Use custom rfc2822 date format function instead of locale specific strftime (https://github.com/ansible/ansible/issues/44857)

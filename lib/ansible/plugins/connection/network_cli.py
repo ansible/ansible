@@ -170,6 +170,7 @@ import traceback
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import BytesIO, PY3
 from ansible.module_utils.six.moves import cPickle
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import NetworkConnectionBase
@@ -337,7 +338,7 @@ class Connection(NetworkConnectionBase):
                 display.debug("ssh connection has been closed successfully")
         super(Connection, self).close()
 
-    def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
+    def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
         '''
         Handles receiving of output from command
         '''
@@ -363,13 +364,13 @@ class Connection(NetworkConnectionBase):
             window_count += 1
 
             if prompts and not handled:
-                handled = self._handle_prompt(window, prompts, answer, newline)
+                handled = self._handle_prompt(window, prompts, answer, newline, False, check_all)
                 matched_prompt_window = window_count
             elif prompts and handled and prompt_retry_check and matched_prompt_window + 1 == window_count:
                 # check again even when handled, if same prompt repeats in next window
                 # (like in the case of a wrong enable password, etc) indicates
                 # value of answer is wrong, report this as error.
-                if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check):
+                if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all):
                     raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
             if self._find_prompt(window):
@@ -377,16 +378,21 @@ class Connection(NetworkConnectionBase):
                 resp = self._strip(self._last_response)
                 return self._sanitize(resp, command)
 
-    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False):
+    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False, check_all=False):
         '''
         Sends the command to the device in the opened shell
         '''
+        if check_all:
+            prompt_len = len(to_list(prompt))
+            answer_len = len(to_list(answer))
+            if prompt_len != answer_len:
+                raise AnsibleConnectionFailure("Number of prompts (%s) is not same as that of answers (%s)" % (prompt_len, answer_len))
         try:
             self._history.append(command)
             self._ssh_shell.sendall(b'%s\r' % command)
             if sendonly:
                 return
-            response = self.receive(command, prompt, answer, newline, prompt_retry_check)
+            response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
@@ -400,7 +406,7 @@ class Connection(NetworkConnectionBase):
             data = regex.sub(b'', data)
         return data
 
-    def _handle_prompt(self, resp, prompts, answer, newline, prompt_retry_check=False):
+    def _handle_prompt(self, resp, prompts, answer, newline, prompt_retry_check=False, check_all=False):
         '''
         Matches the command prompt and responds
 
@@ -408,24 +414,34 @@ class Connection(NetworkConnectionBase):
         :arg prompts: Sequence of byte strings that we consider prompts for input
         :arg answer: Sequence of Byte string to send back to the remote if we find a prompt.
                 A carriage return is automatically appended to this string.
-        :returns: True if a prompt was found in ``resp``.  False otherwise
+        :param prompt_retry_check: Bool value for trying to detect more prompts
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
+        :returns: True if a prompt was found in ``resp``. If check_all is True
+                  will True only after all the prompt in the prompts list are matched. False otherwise.
         '''
+        single_prompt = False
         if not isinstance(prompts, list):
             prompts = [prompts]
+            single_prompt = True
         if not isinstance(answer, list):
             answer = [answer]
-        prompts = [re.compile(r, re.I) for r in prompts]
-        for index, regex in enumerate(prompts):
+        prompts_regex = [re.compile(r, re.I) for r in prompts]
+        for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
                 # if prompt_retry_check is enabled to check if same prompt is
                 # repeated don't send answer again.
                 if not prompt_retry_check:
-                    answer = answer[index] if len(answer) > index else answer[0]
-                    self._ssh_shell.sendall(b'%s' % answer)
+                    prompt_answer = answer[index] if len(answer) > index else answer[0]
+                    self._ssh_shell.sendall(b'%s' % prompt_answer)
                     if newline:
                         self._ssh_shell.sendall(b'\r')
                 self._matched_cmd_prompt = match.group()
+                if check_all and prompts and not single_prompt:
+                    prompts.pop(0)
+                    answer.pop(0)
+                    return False
                 return True
         return False
 
