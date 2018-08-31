@@ -390,8 +390,11 @@ def main():
 
                 return True
 
-            def _task_definition_matches(requested_volumes, requested_containers, existing_task_definition):
+            def _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, existing_task_definition):
                 if td['status'] != "ACTIVE":
+                    return None
+
+                if requested_task_role_arn != td.get('taskRoleArn', ""):
                     return None
 
                 existing_volumes = td.get('volumes', []) or []
@@ -435,7 +438,8 @@ def main():
             for td in existing_definitions_in_family:
                 requested_volumes = module.params.get('volumes', []) or []
                 requested_containers = module.params.get('containers', []) or []
-                existing = _task_definition_matches(requested_volumes, requested_containers, td)
+                requested_task_role_arn = module.params.get('task_role_arn', "") or ""
+                existing = _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, td)
 
                 if existing:
                     break
