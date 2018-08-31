@@ -75,7 +75,7 @@ command_spec = {
     'command': dict(key=True),
     'prompt': dict(),
     'answer': dict(),
-    'check_all':dict()
+    'check_all': dict()
 }
 
 
