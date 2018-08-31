@@ -18,7 +18,7 @@ short_description: Gather information about ec2 VPC route tables in AWS
 description:
     - Gather information about ec2 VPC route tables in AWS
     - This module was called C(ec2_vpc_route_table_facts) before Ansible 2.9. The usage did not change.
-version_added: "2.0"
+version_added: "2.7"
 author: "Rob White (@wimnat)"
 options:
   filters:
