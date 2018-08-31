@@ -31,6 +31,7 @@ options:
       - Get details of a specific route tables. This value should be provided as a list.
     required: false
     type: list
+    version_added: "2.7"
 extends_documentation_fragment:
     - aws
     - ec2
