@@ -5,7 +5,6 @@ examples/scripts/upgrade_to_ps3.ps1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSProvideCommentHelp
-lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSUseOutputTypeCorrectly
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSAvoidUsingWMICmdlet
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 PSUseApprovedVerbs
@@ -69,7 +68,6 @@ lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingPlainTextForPassword
 lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingUserNameAndPassWordParams
 lib/ansible/modules/windows/win_nssm.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_nssm.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_nssm.ps1 PSUseOutputTypeCorrectly
 lib/ansible/modules/windows/win_package.ps1 PSAvoidUsingConvertToSecureStringWithPlainText
 lib/ansible/modules/windows/win_package.ps1 PSAvoidUsingPlainTextForPassword
 lib/ansible/modules/windows/win_package.ps1 PSUseApprovedVerbs
@@ -103,7 +101,6 @@ lib/ansible/modules/windows/win_uri.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_user.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_wait_for.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression
-lib/ansible/modules/windows/win_webpicmd.ps1 PSUseOutputTypeCorrectly
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 PSAvoidUsingCmdletAliases
 test/integration/targets/win_dsc/templates/ANSIBLE_xTestResource.psm1 PSAvoidDefaultValueForMandatoryParameter
 test/integration/targets/win_iis_webbinding/library/test_get_webbindings.ps1 PSUseApprovedVerbs
