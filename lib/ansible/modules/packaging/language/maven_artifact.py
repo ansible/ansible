@@ -444,8 +444,8 @@ class MavenDownloader:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            group_id=dict(default=None),
-            artifact_id=dict(default=None),
+            group_id=dict(required=True),
+            artifact_id=dict(required=True),
             version=dict(default="latest"),
             classifier=dict(default=''),
             extension=dict(default='jar'),
@@ -454,7 +454,7 @@ def main():
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
-            dest=dict(type="path", default=None),
+            dest=dict(type="path", required=True),
             validate_certs=dict(required=False, default=True, type='bool'),
             keep_name=dict(required=False, default=False, type='bool'),
             verify_checksum=dict(required=False, default='download', choices=['never', 'download', 'change', 'always'])
