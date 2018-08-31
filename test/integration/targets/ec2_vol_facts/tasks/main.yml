@@ -43,6 +43,8 @@
         name: "{{ resource_prefix }}_ansible_ec2_vol_facts_test.db"
         device_name: /dev/xvdf
         iops: 100
+        tags:
+            Tag Name with Space-and-dash: Tag Value with Space-and-dash
         <<: *aws_connection_info
         delete_on_termination: yes
       register: volume
