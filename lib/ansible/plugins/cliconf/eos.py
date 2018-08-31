@@ -153,10 +153,10 @@ class Cliconf(CliconfBase):
             self.send_command('end')
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def commit(self):
         self.send_command('commit')

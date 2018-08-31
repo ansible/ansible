@@ -149,10 +149,10 @@ class Cliconf(CliconfBase):
         diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         return diff
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None, check_all=False):
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def commit(self, comment=None, label=None, replace=None):
         cmd_obj = {}
