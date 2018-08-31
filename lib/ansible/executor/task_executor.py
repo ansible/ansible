@@ -483,6 +483,9 @@ class TaskExecutor:
             # skipping this task during the conditional evaluation step
             context_validation_error = e
 
+        # Now we do final validation on the task, which sets all fields to their final values.
+        self._task.post_validate(templar=templar)
+
         # Evaluate the conditional (if any) for this task, which we do before running
         # the final task post-validation. We do this before the post validation due to
         # the fact that the conditional may specify that the task be skipped due to a
@@ -521,8 +524,6 @@ class TaskExecutor:
             include_variables = self._task.args.copy()
             return dict(include_variables=include_variables)
 
-        # Now we do final validation on the task, which sets all fields to their final values.
-        self._task.post_validate(templar=templar)
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):

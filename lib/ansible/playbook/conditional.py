@@ -66,6 +66,13 @@ class Conditional:
         if not isinstance(value, list):
             setattr(self, name, [value])
 
+    def _post_validate_when(self, attr, value, templar):
+        '''
+        when is evaluated at the execution of the task,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
     def extract_defined_undefined(self, conditional):
         results = []
 
