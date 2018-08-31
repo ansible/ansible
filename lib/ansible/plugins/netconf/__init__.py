@@ -153,7 +153,7 @@ class NetconfBase(AnsiblePlugin):
         return response
 
     @ensure_connected
-    def edit_config(self, config, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
+    def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
         """
         Loads all or part of the specified *config* to the *target* configuration datastore.
         :param config: Is the configuration, which must be rooted in the `config` element.
@@ -166,6 +166,8 @@ class NetconfBase(AnsiblePlugin):
                              The `"rollback-on-error"` *error_option* depends on the `:rollback-on-error` capability.
         :return: Returns xml string containing the RPC response received from remote host
         """
+        if config is None:
+            raise ValueError('config value must be provided')
         resp = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
                                   error_option=error_option)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
@@ -194,7 +196,7 @@ class NetconfBase(AnsiblePlugin):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def dispatch(self, rpc_command, source=None, filter=None):
+    def dispatch(self, rpc_command=None, source=None, filter=None):
         """
         Execute rpc on the remote device eg. dispatch('clear-arp-table')
         :param rpc_command: specifies rpc command to be dispatched either in plain text or in xml element format (depending on command)
@@ -202,9 +204,8 @@ class NetconfBase(AnsiblePlugin):
         :param filter: specifies the portion of the configuration to retrieve (by default entire configuration is retrieved)
         :return: Returns xml string containing the RPC response received from remote host
         """
-        """Execute operation on the remote device
-        :request: is the rpc request including attributes as XML string
-        """
+        if rpc_command:
+            raise ValueError('rpc_command value must be provided')
         req = fromstring(rpc_command)
         resp = self.m.dispatch(req, source=source, filter=filter)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
@@ -261,7 +262,7 @@ class NetconfBase(AnsiblePlugin):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def get_schema(self, identifier, version=None, format=None):
+    def get_schema(self, identifier=None, version=None, format=None):
         """
         Retrieve a named schema, with optional revision and type.
         :param identifier: name of the schema to be retrieved
@@ -269,6 +270,8 @@ class NetconfBase(AnsiblePlugin):
         :param format: format of the schema to be retrieved, yang is the default
         :return: Returns xml string containing the RPC response received from remote host
         """
+        if identifier:
+            raise ValueError('identifier value must be provided')
         resp = self.m.get_schema(identifier, version=version, format=format)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
@@ -283,9 +286,8 @@ class NetconfBase(AnsiblePlugin):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def locked(self, *args, **kwargs):
-        resp = self.m.locked(*args, **kwargs)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+    def locked(self, target):
+        return self.m.locked(target)
 
     @abstractmethod
     def get_capabilities(self):
