@@ -357,34 +357,28 @@ def transfer(connection, module, direction, transfer_func):
 
 def download_disk_image(connection, module):
     def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
-        disks_service = connection.system_service().disks_service()
-        disk = disks_service.disk_service(module.params['id']).get()
-        size = disk.actual_size
+        BUF_SIZE = 128 * 1024
         transfer_headers = {
             'Authorization': transfer_ticket,
         }
-        with open(module.params['download_image_path'], "wb") as mydisk:
+        proxy_connection.request(
+            'GET',
+            proxy_url.path,
+            headers=transfer_headers,
+        )
+        r = proxy_connection.getresponse()
+        path = module.params["download_image_path"]
+        image_size = int(r.getheader('Content-Length'))
+        with open(path, "wb") as mydisk:
             pos = 0
-            MiB_per_request = 8
-            chunk_size = 1024 * 1024 * MiB_per_request
-            while pos < size:
-                transfer_service.extend()
-                transfer_headers['Range'] = 'bytes=%d-%d' % (pos, min(size, pos + chunk_size) - 1)
-                proxy_connection.request(
-                    'GET',
-                    proxy_url.path,
-                    headers=transfer_headers,
-                )
-                r = proxy_connection.getresponse()
-                if r.status >= 300:
-                    raise Exception("Error: %s" % r.read())
+            while pos < image_size:
+                to_read = min(image_size - pos, BUF_SIZE)
+                chunk = r.read(to_read)
+                if not chunk:
+                    raise RuntimeError("Socket disconnected")
+                mydisk.write(chunk)
+                pos += len(chunk)
 
-                try:
-                    mydisk.write(r.read())
-                except IncompleteRead as e:
-                    mydisk.write(e.partial)
-                    break
-                pos += chunk_size
     return transfer(
         connection,
         module,
@@ -395,28 +389,24 @@ def download_disk_image(connection, module):
 
 def upload_disk_image(connection, module):
     def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+        BUF_SIZE = 128 * 1024
         path = module.params['upload_image_path']
-        transfer_headers = {
-            'Authorization': transfer_ticket,
-        }
+
+        image_size = os.path.getsize(path)
+        proxy_connection.putrequest("PUT", proxy_url.path)
+        proxy_connection.putheader('Content-Length', "%d" % (image_size,))
+        proxy_connection.endheaders()
         with open(path, "rb") as disk:
             pos = 0
-            MiB_per_request = 8
-            size = os.path.getsize(path)
-            chunk_size = 1024 * 1024 * MiB_per_request
-            while pos < size:
-                transfer_service.extend()
-                transfer_headers['Content-Range'] = "bytes %d-%d/%d" % (pos, min(pos + chunk_size, size) - 1, size)
-                proxy_connection.request(
-                    'PUT',
-                    proxy_url.path,
-                    disk.read(chunk_size),
-                    headers=transfer_headers,
-                )
-                r = proxy_connection.getresponse()
-                if r.status >= 400:
-                    raise Exception("Failed to upload disk image.")
-                pos += chunk_size
+            while pos < image_size:
+                to_read = min(image_size - pos, BUF_SIZE)
+                chunk = disk.read(to_read)
+                if not chunk:
+                    transfer_service.pause()
+                    raise RuntimeError("Unexpected end of file at pos=%d" % pos)
+                proxy_connection.send(chunk)
+                pos += len(chunk)
+
     return transfer(
         connection,
         module,
