@@ -367,7 +367,7 @@ You can convert IP addresses to PTR records::
 
 
 Converting IPv4 address to a 6to4 address
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A `6to4`_ tunnel is a way to access the IPv6 Internet from an IPv4-only network. If you
 have a public IPv4 address, you can automatically configure its IPv6
@@ -481,7 +481,7 @@ smaller subnets::
 By specifying another subnet as a second argument, if the second subnet includes
 the first, you can determine the rank of the first subnet in the second ::
 
-    # The rank of the IP in the subnet (the important is the 36870nth /32 of the subnet)
+    # The rank of the IP in the subnet (the IP is the 36870nth /32 of the subnet)
     # {{ address | ipsubnet(subnet) }}
     36870
 
