@@ -178,7 +178,6 @@ commands:
 from copy import deepcopy
 
 import re
-import json
 import base64
 import hashlib
 
@@ -234,20 +233,22 @@ def map_obj_to_commands(updates, module):
 
     def add_ssh(command, want, x=None):
         command.append('ip ssh pubkey-chain')
-        command.append(' no username %s' % want['name'])
         if x:
-            command.append(' username %s' % want['name'])
-            command.append('  key-hash %s' % x)
-            command.append('  exit')
-        command.append(' exit')
+            command.append('username %s' % want['name'])
+            command.append('key-hash %s' % x)
+            command.append('exit')
+        else:
+            command.append('no username %s' % want['name'])
+        command.append('exit')
 
     for update in updates:
         want, have = update
 
         if want['state'] == 'absent':
-            commands.append(user_del_cmd(want['name']))
-            add_ssh(commands, want)
-            continue
+            if have['sshkey']:
+                add_ssh(commands, want)
+            else:
+                commands.append(user_del_cmd(want['name']))
 
         if needs_update(want, have, 'view'):
             add(commands, want, 'view %s' % want['view'])
@@ -292,7 +293,7 @@ def parse_privilege(data):
 def map_config_to_obj(module):
     data = get_config(module, flags=['| section username'])
 
-    match = re.findall(r'^username (\S+)', data, re.M)
+    match = re.findall(r'(?:^(?:u|\s{2}u))sername (\S+)', data, re.M)
     if not match:
         return list()
 
@@ -449,12 +450,6 @@ def main():
                 commands.append(user_del_cmd(item))
 
     result['commands'] = commands
-
-    # the ios cli prevents this by rule so capture it and display
-    # a nice failure message
-    for cmd in commands:
-        if 'no username admin' in cmd:
-            module.fail_json(msg='cannot delete the `admin` account')
 
     if commands:
         if not module.check_mode:
