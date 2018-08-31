@@ -5,16 +5,16 @@ ipaddr filter
 
 .. versionadded:: 1.9
 
-``ipaddr()`` is a Jinja2 filter designed to provide an interface to `netaddr`_
+``ipaddr()`` is a Jinja2 filter designed to provide an interface to the `netaddr`_
 Python package from within Ansible. It can operate on strings or lists of
-items, test various data to check if they are valid IP addresses and manipulate
-the input data to extract requested information. ``ipaddr()`` works both with
-IPv4 and IPv6 addresses in various forms, there are also additional functions
+items, test various data to check if they are valid IP addresses, and manipulate
+the input data to extract requested information. ``ipaddr()`` works with both
+IPv4 and IPv6 addresses in various forms. There are also additional functions
 available to manipulate IP subnets and MAC addresses.
 
-To use this filter in Ansible, you need to install `netaddr`_ Python library on
+To use this filter in Ansible, you need to install the `netaddr`_ Python library on
 a computer on which you use Ansible (it is not required on remote hosts).
-It can usually be installed either via your system package manager, or using
+It can usually be installed with either your system package manager or using
 ``pip``::
 
     pip install netaddr
@@ -30,8 +30,8 @@ Basic tests
 ^^^^^^^^^^^
 
 ``ipaddr()`` is designed to return the input value if a query is True, and
-``False`` if query is False. This way it can be very easily used in chained
-filters. To use the filter, pass a string to it
+``False`` if a query is False. This way it can be easily used in chained
+filters. To use the filter, pass a string to it:
 
 .. code-block:: none
 
@@ -41,7 +41,7 @@ You can also pass the values as variables::
 
     {{ myvar | ipaddr }}
 
-Here are some example tests of various input strings::
+Here are some example test results of various input strings::
 
     # These values are valid IP addresses or network ranges
     '192.168.0.1'       -> 192.168.0.1
@@ -50,7 +50,7 @@ Here are some example tests of various input strings::
     45443646733         -> ::a:94a7:50d
     '523454/24'         -> 0.7.252.190/24
 
-    # Values that are not valid IP addresses or network ranges:
+    # Values that are not valid IP addresses or network ranges
     'localhost'         -> False
     True                -> False
     'space bar'         -> False
@@ -59,18 +59,18 @@ Here are some example tests of various input strings::
     ':'                 -> False
     'fe80:/10'          -> False
 
-Sometimes you need either IPv4 or IPv6 addresses. To filter only for particular
+Sometimes you need either IPv4 or IPv6 addresses. To filter only for a particular
 type, ``ipaddr()`` filter has two "aliases", ``ipv4()`` and ``ipv6()``.
 
-Example us of an IPv4 filter::
+Example use of an IPv4 filter::
 
     {{ myvar | ipv4 }}
 
-And similar example of an IPv6 filter::
+A similar example of an IPv6 filter::
 
     {{ myvar | ipv6 }}
 
-Here's an example test to look for IPv4 addresses::
+Here's some example test results to look for IPv4 addresses::
 
     '192.168.0.1'       -> 192.168.0.1
     '192.168.32.0/24'   -> 192.168.32.0/24
@@ -110,7 +110,7 @@ Wrapping IPv6 addresses in [ ] brackets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Some configuration files require IPv6 addresses to be "wrapped" in square
-brackets (``[ ]``). To accomplish that, you can use ``ipwrap()`` filter. It
+brackets (``[ ]``). To accomplish that, you can use the ``ipwrap()`` filter. It
 will wrap all IPv6 addresses and leave any other strings intact::
 
     # {{ test_list | ipwrap }}
@@ -128,7 +128,7 @@ chain both filters together::
 Basic queries
 ^^^^^^^^^^^^^
 
-You can provide single argument to each ``ipaddr()`` filter. Filter will then
+You can provide a single argument to each ``ipaddr()`` filter. The filter will then
 treat it as a query and return values modified by that query. Lists will
 contain only values that you are querying for.
 
@@ -149,21 +149,21 @@ Here's our test list again::
     # Example list of values
     test_list = ['192.24.2.1', 'host.fqdn', '::1', '192.168.32.0/24', 'fe80::100/10', True, '', '42540766412265424405338506004571095040/64']
 
-Lets take above list and get only those elements that are host IP addresses,
+Let's take the list above and get only those elements that are host IP addresses
 and not network ranges::
 
     # {{ test_list | ipaddr('address') }}
     ['192.24.2.1', '::1', 'fe80::100']
 
 As you can see, even though some values had a host address with a CIDR prefix,
-it was dropped by the filter. If you want host IP addresses with their correct
-CIDR prefixes (as is common with IPv6 addressing), you can use
+they were dropped by the filter. If you want host IP addresses with their correct
+CIDR prefixes (as is common with IPv6 addressing), you can use the
 ``ipaddr('host')`` filter::
 
     # {{ test_list | ipaddr('host') }}
     ['192.24.2.1/32', '::1/128', 'fe80::100/10']
 
-Filtering by IP address types also works::
+Filtering by IP address type also works::
 
     # {{ test_list | ipv4('address') }}
     ['192.24.2.1']
@@ -190,34 +190,36 @@ You can also check how many IP addresses can be in a certain range::
     # {{ test_list | ipaddr('net') | ipaddr('size') }}
     [256, 18446744073709551616L]
 
-By specifying a network range as a query, you can check if given value is in
+By specifying a network range as a query, you can check if a given value is in
 that range::
 
     # {{ test_list | ipaddr('192.0.0.0/8') }}
     ['192.24.2.1', '192.168.32.0/24']
 
 If you specify a positive or negative integer as a query, ``ipaddr()`` will
-treat this as an index and will return specific IP address from a network
+treat this as an index and will return the specific IP address from a network
 range, in the 'host/prefix' format::
 
     # First IP address (network address)
     # {{ test_list | ipaddr('net') | ipaddr('0') }}
     ['192.168.32.0/24', '2001:db8:32c:faad::/64']
 
-    # Second IP address (usually gateway host)
+    # Second IP address (usually the gateway host)
     # {{ test_list | ipaddr('net') | ipaddr('1') }}
     ['192.168.32.1/24', '2001:db8:32c:faad::1/64']
 
-    # Last IP address (broadcast in IPv4 networks)
+    # Last IP address (the broadcast address in IPv4 networks)
     # {{ test_list | ipaddr('net') | ipaddr('-1') }}
     ['192.168.32.255/24', '2001:db8:32c:faad:ffff:ffff:ffff:ffff/64']
 
 You can also select IP addresses from a range by their index, from the start or
 end of the range::
 
+    # Returns from the start of the range
     # {{ test_list | ipaddr('net') | ipaddr('200') }}
     ['192.168.32.200/24', '2001:db8:32c:faad::c8/64']
 
+    # Returns from the end of the range
     # {{ test_list | ipaddr('net') | ipaddr('-200') }}
     ['192.168.32.56/24', '2001:db8:32c:faad:ffff:ffff:ffff:ff38/64']
 
@@ -228,8 +230,8 @@ end of the range::
 Getting information from host/prefix values
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Very frequently you use combination of IP addresses and subnet prefixes
-("CIDR"), this is even more common with IPv6. ``ipaddr()`` filter can extract
+You frequently use a combination of IP addresses and subnet prefixes
+("CIDR"), this is even more common with IPv6. The ``ipaddr()`` filter can extract
 useful data from these prefixes.
 
 Here's an example set of two host prefixes (with some "control" values)::
@@ -242,7 +244,7 @@ just subnets or single IP addresses::
     # {{ host_prefix | ipaddr('host/prefix') }}
     ['2001:db8:deaf:be11::ef3/64', '192.0.2.48/24']
 
-In Debian-based systems, network configuration stored in ``/etc/network/interfaces`` file uses combination of IP address, network address, netmask and broadcast address to configure IPv4 network interface. We can get these values from a single 'host/prefix' combination:
+In Debian-based systems, the network configuration stored in the ``/etc/network/interfaces`` file uses a combination of IP address, network address, netmask and broadcast address to configure an IPv4 network interface. We can get these values from a single 'host/prefix' combination:
 
 .. code-block:: jinja
 
@@ -261,10 +263,12 @@ In Debian-based systems, network configuration stored in ``/etc/network/interfac
         netmask   255.255.255.0
         broadcast 192.0.2.255
 
-In above example, we needed to handle the fact that values were stored in
-a list, which is unusual in IPv4 networks, where only single IP address can be
+In the above example, we needed to handle the fact that values were stored in
+a list, which is unusual in IPv4 networks, where only a single IP address can be
 set on an interface. However, IPv6 networks can have multiple IP addresses set
 on an interface::
+
+  .. code-block:: jinja
 
     # Jinja2 template
     iface eth0 inet6 static
@@ -281,7 +285,7 @@ on an interface::
     iface eth0 inet6 static
       address 2001:db8:deaf:be11::ef3/64
 
-If needed, you can extract subnet and prefix information from 'host/prefix' value::
+If needed, you can extract subnet and prefix information from the 'host/prefix' value::
 
     # {{ host_prefix | ipaddr('host/prefix') | ipaddr('subnet') }}
     ['2001:db8:deaf:be11::/64', '192.0.2.0/24']
@@ -292,27 +296,27 @@ If needed, you can extract subnet and prefix information from 'host/prefix' valu
 Converting subnet masks to CIDR notation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Given a subnet in the form of network address and subnet mask, it can be converted into CIDR notation using ``ipaddr()``.  This can be useful for converting Ansible facts gathered about network configuration from subnet masks into CIDR format::
+Given a subnet in the form of network address and subnet mask, the ``ipaddr()`` filter can convert it into CIDR notation.  This can be useful for converting Ansible facts gathered about network configuration from subnet masks into CIDR format::
 
     ansible_default_ipv4: {
-        address: "192.168.0.11", 
-        alias: "eth0", 
-        broadcast: "192.168.0.255", 
-        gateway: "192.168.0.1", 
-        interface: "eth0", 
-        macaddress: "fa:16:3e:c4:bd:89", 
-        mtu: 1500, 
-        netmask: "255.255.255.0", 
-        network: "192.168.0.0", 
+        address: "192.168.0.11",
+        alias: "eth0",
+        broadcast: "192.168.0.255",
+        gateway: "192.168.0.1",
+        interface: "eth0",
+        macaddress: "fa:16:3e:c4:bd:89",
+        mtu: 1500,
+        netmask: "255.255.255.0",
+        network: "192.168.0.0",
         type: "ether"
     }
 
-First concatenate network and netmask::
+First concatenate the network and netmask::
 
     net_mask = "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}"
     '192.168.0.0/255.255.255.0'
 
-This result can be canonicalised with ``ipaddr()`` to produce a subnet in CIDR format::
+This result can be converted to canonical form with ``ipaddr()`` to produce a subnet in CIDR format::
 
     # {{ net_mask | ipaddr('prefix') }}
     '24'
@@ -339,7 +343,7 @@ Converting from IPv6 to IPv4 works very rarely::
     # {{ test_list | ipv6('ipv4') }}
     ['0.0.0.1/32']
 
-But we can make double conversion if needed::
+But we can make a double conversion if needed::
 
     # {{ test_list | ipaddr('ipv6') | ipaddr('ipv4') }}
     ['192.24.2.1/32', '0.0.0.1/32', '192.168.32.0/24']
@@ -362,17 +366,17 @@ You can convert IP addresses to PTR records::
     0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.d.a.a.f.c.2.3.0.8.b.d.0.1.0.0.2.ip6.arpa.
 
 
-Converting IPv4 address to 6to4 address
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Converting IPv4 address to a 6to4 address
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`6to4`_ tunnel is a way to access IPv6 Internet from IPv4-only network. If you
-have a public IPv4 address, you automatically can configure it's IPv6
-equivalent in ``2002::/16`` network range - after conversion you will gain
+A `6to4`_ tunnel is a way to access the IPv6 Internet from an IPv4-only network. If you
+have a public IPv4 address, you can automatically configure its IPv6
+equivalent in the ``2002::/16`` network range. After conversion you will gain
 access to a ``2002:xxxx:xxxx::/48`` subnet which could be split into 65535
 ``/64`` subnets if needed.
 
-To convert your IPv4 address, just send it through ``'6to4'`` filter. It will
-be automatically converted to a router address (with ``::1/48`` host address)::
+To convert your IPv4 address, just send it through the ``'6to4'`` filter. It will
+be automatically converted to a router address (with a ``::1/48`` host address)::
 
     # {{ '193.0.2.0' | ipaddr('6to4') }}
     2002:c100:0200::1/48
@@ -383,15 +387,15 @@ be automatically converted to a router address (with ``::1/48`` host address)::
 Subnet manipulation
 ^^^^^^^^^^^^^^^^^^^
 
-``ipsubnet()`` filter can be used to manipulate network subnets in several ways.
+The ``ipsubnet()`` filter can be used to manipulate network subnets in several ways.
 
-Here is some example IP address and subnet::
+Here is an example IP address and subnet::
 
     address = '192.168.144.5'
     subnet  = '192.168.0.0/16'
 
 To check if a given string is a subnet, pass it through the filter without any
-arguments. If given string is an IP address, it will be converted into
+arguments. If the given string is an IP address, it will be converted into
 a subnet::
 
     # {{ address | ipsubnet }}
@@ -400,15 +404,15 @@ a subnet::
     # {{ subnet | ipsubnet }}
     192.168.0.0/16
 
-If you specify a subnet size as first parameter of ``ipsubnet()`` filter, and
-subnet size is **smaller than current one**, you will get number of subnets
+If you specify a subnet size as the first parameter of the  ``ipsubnet()`` filter, and
+the subnet size is **smaller than the current one**, you will get the number of subnets
 a given subnet can be split into::
 
     # {{ subnet | ipsubnet(20) }}
     16
 
-Second argument of ``ipsubnet()`` filter is an index number; by specifying it
-you can get new subnet with specified size::
+The second argument of the ``ipsubnet()`` filter is an index number; by specifying it
+you can get a new subnet with the specified size::
 
     # First subnet
     # {{ subnet | ipsubnet(20, 0) }}
@@ -427,8 +431,8 @@ you can get new subnet with specified size::
     192.168.176.0/20
 
 If you specify an IP address instead of a subnet, and give a subnet size as
-a first argument, ``ipsubnet()`` filter will instead return biggest subnet that
-contains a given IP address::
+the first argument, the ``ipsubnet()`` filter will instead return the biggest subnet that
+contains that given IP address::
 
     # {{ address | ipsubnet(20) }}
     192.168.128.0/20
@@ -452,22 +456,44 @@ smaller subnets::
     # {{ address | ipsubnet(18, -5) }}
     192.168.144.0/27
 
-You can use ``ipsubnet()`` filter with ``ipaddr()`` filter to for example split
-given ``/48`` prefix into smaller, ``/64`` subnets::
+By specifying another subnet as a second argument, if the second subnet includes
+the first, you can determine the rank of the first subnet in the second ::
+
+    # The rank of the IP in the subnet (the IP is the 36870nth /32 of the subnet)
+    # {{ address | ipsubnet(subnet) }}
+    36870
+
+    # The rank in the /24 that contain the address
+    # {{ address | ipsubnet('192.168.144.0/24') }}
+    6
+
+    # An IP with the subnet in the first /30 in a /24
+    # {{ '192.168.144.1/30' | ipsubnet('192.168.144.0/24') }}
+    1
+
+    # The fifth subnet /30 in a /24
+    # {{ '192.168.144.16/30' | ipsubnet('192.168.144.0/24') }}
+    5
+
+If the second subnet doesn't include the first subnet, the ``ipsubnet()`` filter raises an error.
+
+
+You can use the ``ipsubnet()`` filter with the ``ipaddr()`` filter to, for example, split
+a given ``/48`` prefix into smaller ``/64`` subnets::
 
     # {{ '193.0.2.0' | ipaddr('6to4') | ipsubnet(64, 58820) | ipaddr('1') }}
     2002:c100:200:e5c4::1/64
 
 Because of the size of IPv6 subnets, iteration over all of them to find the
 correct one may take some time on slower computers, depending on the size
-difference between subnets.
+difference between the subnets.
 
 Subnet Merging
 ^^^^^^^^^^^^^^
 
 .. versionadded:: 2.6
 
-The `cidr_merge` filter can be used to merge subnets or individual addresses
+The ``cidr_merge()`` filter can be used to merge subnets or individual addresses
 into their minimal representation, collapsing overlapping subnets and merging
 adjacent ones wherever possible::
 
@@ -489,7 +515,7 @@ subnet which contains all of the inputs::
 MAC address filter
 ^^^^^^^^^^^^^^^^^^
 
-You can use ``hwaddr()`` filter to check if a given string is a MAC address or
+You can use the ``hwaddr()`` filter to check if a given string is a MAC address or
 convert it between various formats. Examples::
 
     # Example MAC address
@@ -527,5 +553,3 @@ convert it between various formats. Examples::
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
