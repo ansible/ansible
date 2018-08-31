@@ -36,6 +36,7 @@ if PY3:
 else:
     BUILTINS_NAME = '__builtin__'
 
+
 class FakeFtdHttpApiPlugin(HttpApi):
     def __init__(self, conn):
         super(FakeFtdHttpApiPlugin, self).__init__(conn)
@@ -46,6 +47,7 @@ class FakeFtdHttpApiPlugin(HttpApi):
 
     def get_option(self, var):
         return self.hostvars[var]
+
 
 class TestFtdHttpApi(unittest.TestCase):
 
