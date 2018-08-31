@@ -55,13 +55,12 @@ options:
   type:
     description:
       - Required for C(state=present). Type of plugin being installed (SOAP, REST, HTTP).
-     default: vsphere-client-serenity
+    default: vsphere-client-serenity
   state:
     description:
-    - Add or remove vCenter Plugin.
+      - Add or remove vCenter Plugin.
     default: present
-    choices: [ absent, present ]
-
+    choices=['absent', 'present']
 
 extends_documentation_fragment: vmware.documentation
 '''
@@ -76,7 +75,7 @@ EXAMPLES = '''
     - name: Register vCenter Plugin
       vcenter_plugin:
          hostname: "{{ groups['vcsa'][0] }}"
-         username: "{{ esxi_username }}"
+         username: "{{ vcenter_username }}"
          password: "{{ site_password }}"
          extension_key: "{{ extension_key }}"
          version: "1.0"
@@ -93,7 +92,7 @@ EXAMPLES = '''
     - name: Deregister vCenter Plugin
       vcenter_plugin:
          hostname: "{{ groups['vcsa'][0] }}"
-         username: "{{ esxi_username }}"
+         username: "{{ vcenter_username }}"
          password: "{{ site_password }}"
          extension_key: "{{ extension_key }}"
          version: "1.0"
@@ -134,7 +133,6 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present']),
     ))
 
-
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
@@ -153,7 +151,6 @@ def main():
     type = module.params['type']
     url = module.params['url']
     thumbprint = module.params['ssl_thumbprint']
-
 
     try:
         content = connect_to_api(module, False)
@@ -215,7 +212,6 @@ def main():
         module.fail_json(msg=method_fault.msg)
     except Exception as e:
         module.fail_json(msg=str(e))
-
 
 if __name__ == '__main__':
     main()
