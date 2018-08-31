@@ -356,12 +356,13 @@ def main():
                 before = to_text(conn.get_config(source=target), errors='surrogate_then_replace').strip()
 
             kwargs = {
+                'config': config,
                 'target': target,
                 'default_operation': module.params['default_operation'],
                 'error_option': module.params['error_option'],
                 'format': module.params['format'],
             }
-            conn.edit_config(config, **kwargs)
+            conn.edit_config(**kwargs)
             if supports_commit and module.params['commit']:
                 if not module.check_mode:
                     timeout = confirm if confirm > 0 else None
