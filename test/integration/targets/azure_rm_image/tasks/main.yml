@@ -124,7 +124,7 @@
 
 - assert:
       that:
-          - output.ansible_facts.azure_images != []
+          - output.images != []
 
 - name: Delete image (check mode)
   azure_rm_image:
