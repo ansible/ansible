@@ -17,3 +17,4 @@ ntlm-auth >= 1.0.6 # message encryption support
 requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
 voluptuous >= 0.11.0 # Schema recursion via Self
+openshift >= 0.6.2 # merge_type support
