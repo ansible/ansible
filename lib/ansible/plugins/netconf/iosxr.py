@@ -144,7 +144,9 @@ class Netconf(NetconfBase):
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def edit_config(self, config, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
+    def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
+        if config is None:
+            raise ValueError('config value must be provided')
         try:
             response = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
                                           error_option=error_option)
