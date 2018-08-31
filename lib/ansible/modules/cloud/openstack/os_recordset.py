@@ -170,7 +170,7 @@ def main():
         recordset_filter = {'type': recordset_type}
 
         recordsets = cloud.search_recordsets(zone, name_or_id=name, filters=recordset_filter)
- 
+
         if len(recordsets) == 1:
             recordset = recordsets[0]
             try:
