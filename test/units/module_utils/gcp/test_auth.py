@@ -22,7 +22,7 @@ import pytest
 
 from ansible.compat.tests import mock, unittest
 from ansible.module_utils.gcp import (_get_gcp_ansible_credentials, _get_gcp_credentials, _get_gcp_environ_var,
-                                      _get_gcp_libcloud_credentials, _get_gcp_environment_credentials,
+                                      _get_gcp_environment_credentials,
                                       _validate_credentials_file)
 
 # Fake data/function used for testing
@@ -89,64 +89,6 @@ class GCPAuthTestCase(unittest.TestCase):
         del os.environ[existing_var_name]
         self.assertEqual('default_value', _get_gcp_environ_var(
             non_existing_var_name, 'default_value'))
-
-    def test_get_gcp_libcloud_credentials_no_import(self):
-        """No secrets imported.  Whatever is sent in should come out."""
-        module = FakeModule()
-        actual = _get_gcp_libcloud_credentials(module,
-                                               service_account_email=None,
-                                               credentials_file=None,
-                                               project_id=None)
-        expected = (None, None, None)
-        self.assertEqual(expected, actual)
-        # no libcloud, with values
-        actual = _get_gcp_libcloud_credentials(module,
-                                               service_account_email='sa-email',
-                                               credentials_file='creds-file',
-                                               project_id='proj-id')
-        expected = ('sa-email', 'creds-file', 'proj-id')
-        self.assertEqual(expected, actual)
-
-    def test_get_gcp_libcloud_credentials_import(self):
-        """secrets is imported and those values should be used."""
-        # Note: Opted for a real class here rather than MagicMock as
-        # __getitem__ comes for free.
-        class FakeSecrets:
-            def __init__(self):
-                # 2 element list, service account email and creds file
-                self.GCE_PARAMS = ['secrets-sa', 'secrets-file.json']
-                # dictionary with project_id, optionally auth_type
-                self.GCE_KEYWORD_PARAMS = {}
-                self.__file__ = 'THIS_IS_A_FAKEFILE_FOR_TESTING'
-
-        # patch in module
-        fake_secrets = FakeSecrets()
-        patcher = mock.patch.dict(sys.modules, {'secrets': fake_secrets})
-        patcher.start()
-
-        # obtain sa and creds from secrets
-        module = FakeModule()
-        actual = _get_gcp_libcloud_credentials(module,
-                                               service_account_email=None,
-                                               credentials_file=None,
-                                               project_id='proj-id')
-        expected = ('secrets-sa', 'secrets-file.json', 'proj-id')
-        self.assertEqual(expected, actual)
-
-        # fetch project id.  Current logic requires sa-email or creds to be
-        # set.
-        fake_secrets.GCE_KEYWORD_PARAMS['project'] = 'new-proj-id'
-        fake_secrets.GCE_PARAMS[1] = 'my-creds.json'
-        module = FakeModule()
-        actual = _get_gcp_libcloud_credentials(module,
-                                               service_account_email='my-sa',
-                                               credentials_file=None,
-                                               project_id=None)
-        expected = ('my-sa', 'my-creds.json', 'new-proj-id')
-        self.assertEqual(expected, actual)
-
-        # stop patching
-        patcher.stop()
 
     def test_validate_credentials_file(self):
         # TODO(supertom): Only dealing with p12 here, check the other states
