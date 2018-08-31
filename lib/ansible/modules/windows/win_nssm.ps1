@@ -21,6 +21,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $application = Get-AnsibleParam -obj $params -name "application" -type "str"
 $appParameters = Get-AnsibleParam -obj $params -name "app_parameters" -type "str"
 $appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
+$appEnvironmentExtra = Get-AnsibleParam -obj $params -name "app_environment_extra"
 $appDirectory  = Get-AnsibleParam -obj $params -name "app_directory" -type "path"
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","delayed","manual","disabled" -resultobj $result
 
@@ -242,6 +243,26 @@ Function Nssm-Update-AppParameters
     $result.nssm_single_line_app_parameters = $singleLineParams
 
     Nssm-Update -name $name -parameter "AppParameters" -value $singleLineParams
+}
+
+Function Nssm-Update-AppEnvironmentExtra
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$name,
+        $appEnvironmentExtra
+    )
+
+    $singleLine = ""
+    if ($appEnvironmentExtra) {
+        $appEnvironmentExtra.GetEnumerator() | ForEach-Object {
+            $singleLine = $singleLine + $_.Name + "=""" + $_.Value + """ "
+        }
+    }
+    $result.nssm_app_environment_extra = $appEnvironmentExtra
+    $result.nssm_single_line_app_environment_extra = $singleLine
+    Nssm-Update -name $name -parameter "AppEnvironmentExtra" $singleLine
 }
 
 Function Nssm-Update
@@ -589,6 +610,7 @@ Function NssmProcedure
 {
     Nssm-Install -name $name -application $application
     Nssm-Update-AppParameters -name $name -appParameters $appParameters -appParametersFree $appParametersFree
+    Nssm-Update-AppEnvironmentExtra -name $name -appEnvironmentExtra $appEnvironmentExtra
     Nssm-Update -name $name -parameter "AppDirectory" -value $appDirectory
     Nssm-Update -name $name -parameter "AppStdout" -value $stdoutFile
     Nssm-Update -name $name -parameter "AppStderr" -value $stderrFile

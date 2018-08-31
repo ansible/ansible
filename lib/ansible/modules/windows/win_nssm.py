@@ -60,6 +60,10 @@ options:
     version_added: "2.7.0"
     description:
       -  The startup directory (defaults to the directory containing the program)
+  app_environment_extra:
+    version_added: "2.7.0"
+    description:
+      - Environment variables to set in addition to the system environment.
   dependencies:
     description:
       - Service dependencies that has to be started to trigger startup, separated by comma.
