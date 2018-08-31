@@ -54,6 +54,10 @@ options:
     description:
       - Whether to enable private networking or not.
     type: bool
+  network_id:
+    description:
+      - Specifiy a Private Network ID to be used.
+      - If specified, private_network_enabled is ignored.
   auto_backup_enabled:
     description:
       - Whether to enable automatic backups or not.
@@ -498,6 +502,10 @@ class AnsibleVultrServer(Vultr):
                 'user_data': self.get_user_data(),
                 'SCRIPTID': self.get_startup_script().get('SCRIPTID'),
             }
+            if self.module.params.get('network_id'):
+                data['NETWORKID'] = self.module.params.get('network_id')
+            else:
+                data['enable_private_network'] = self.get_yes_or_no('private_network_enabled')
             self.api_query(
                 path="/v1/server/create",
                 method="POST",
@@ -835,6 +843,7 @@ def main():
         force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
         private_network_enabled=dict(type='bool'),
+        network_id=dict(),
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
         tag=dict(),
