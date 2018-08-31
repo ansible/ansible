@@ -279,7 +279,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}3
+    name: testVMSS{{ rpfx }}2
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
