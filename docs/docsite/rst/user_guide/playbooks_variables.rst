@@ -828,6 +828,7 @@ If multiple variables of the same name are defined in different places, they get
 
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
+  * command line values (eg "-u user")
   * role defaults [1]_
   * inventory file or script group vars [2]_
   * inventory group_vars/all [3]_
@@ -868,22 +869,29 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
 
 
-Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example, if your inventory specifies ``ansible_ssh_user: ramon`` and you run::
 
     ansible -u lola myhost
 
-This will still connect as ``ramon`` because ``ansible_ssh_user`` is set to ``ramon`` in inventory for myhost.
-For plays/tasks this is also true for ``remote_user``::
+This will still connect as ``ramon`` because the value from the variable takes priority (in this case, the variable came from the inventory, but the same would be true no matter where the variable was defined).
+
+For plays/tasks this is also true for ``remote_user``. Assuming the same inventory config, the following play::
 
  - hosts: myhost
    tasks:
-    - command: i'll connect as ramon still
+    - command: I'll connect as ramon still
       remote_user: lola
 
-This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
-but they behave like other variables. If you want to override the remote user globally (even over inventory) you can use extra vars::
+will have the value of ``remote_user`` overwritten by ``ansible_ssh_user`` in the inventory.
 
-    ansible... -e "ansible_user=<user>"
+This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables.
+
+If you want to override the remote user globally (even over inventory) you can use extra vars. For instance, if you run::
+
+    ansible... -e "ansible_user=maria" -u lola
+
+the ``lola`` value is still ignored, but ``ansible_user=maria`` takes precedence over all other places where ``ansible_user`` (or ``ansible_ssh_user``, or ``remote_user``) might be set.
 
 You can also override as a normal variable in a play::
 
@@ -891,7 +899,7 @@ You can also override as a normal variable in a play::
       vars:
         ansible_user: lola
       tasks:
-        - command: i'll connect as lola!
+        - command: I'll connect as lola!
 
 .. _variable_scopes:
 
@@ -1045,5 +1053,3 @@ For information about advanced YAML syntax used to declare variables and have mo
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
