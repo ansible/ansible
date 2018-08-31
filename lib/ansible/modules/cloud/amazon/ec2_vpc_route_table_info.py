@@ -26,6 +26,11 @@ options:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
     type: dict
+  route_table_ids:
+    description:
+      - Get details of a specific route tables. This value should be provided as a list.
+    required: false
+    type: list
 extends_documentation_fragment:
     - aws
     - ec2
@@ -144,12 +149,12 @@ route_tables:
             origin:
               description: Describes how the route was created.
               returned: always
-              type: string    
+              type: string
               sample: CreateRoute
-            state:       
+            state:
               description: The state of the route.
               returned: always
-              type: string    
+              type: string
               sample: active
             vpc_peering_connection_id:
               description: The ID of the VPC peering connection.
