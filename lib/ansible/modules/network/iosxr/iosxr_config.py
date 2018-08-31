@@ -284,7 +284,7 @@ def run(module, result):
             commands = ['load harddisk:/ansible_config.txt']
             replace_file_path = 'harddisk:/ansible_config.txt'
 
-    if config_diff:
+    if config_diff or commands:
         if not replace_config:
             commands = config_diff.split('\n')
 
