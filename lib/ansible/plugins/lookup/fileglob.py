@@ -19,6 +19,7 @@ DOCUMENTATION = """
     notes:
       - Patterns are only supported on files, not directory/paths.
       - Matching is against local system files.
+      - returns a string list of paths joined by commas, or an empty list if no files match. For a 'true list' pass wantlist=True to the lookup.
 """
 
 EXAMPLES = """
