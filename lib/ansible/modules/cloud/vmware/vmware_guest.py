@@ -804,6 +804,9 @@ class PyVmomiHelper(PyVmomi):
         self.configspec = None
         self.change_detected = False
         self.customspec = None
+        if self.params['networks'] is not None:
+                if self.params['datacenter'] is None:
+                        self.module.fail_json(msg="Please input a datacenter in order to modify network")
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
 
     def gather_facts(self, vm):
@@ -2319,7 +2322,7 @@ def main():
         cdrom=dict(type='dict', default={}),
         hardware=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
-        datacenter=dict(type='str', default='ha-datacenter'),
+        datacenter=dict(type='str'),
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
         wait_for_ip_address=dict(type='bool', default=False),
