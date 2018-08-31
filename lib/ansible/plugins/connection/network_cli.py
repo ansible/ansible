@@ -170,6 +170,7 @@ import traceback
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import BytesIO, PY3
 from ansible.module_utils.six.moves import cPickle
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import NetworkConnectionBase
@@ -381,6 +382,11 @@ class Connection(NetworkConnectionBase):
         '''
         Sends the command to the device in the opened shell
         '''
+        if check_all:
+            prompt_len = len(to_list(prompt))
+            answer_len = len(to_list(answer))
+            if prompt_len != answer_len:
+                raise AnsibleConnectionFailure("Number of prompts (%s) is not same as that of answers (%s)" % (prompt_len, answer_len))
         try:
             self._history.append(command)
             self._ssh_shell.sendall(b'%s\r' % command)
