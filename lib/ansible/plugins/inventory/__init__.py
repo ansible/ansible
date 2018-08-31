@@ -286,7 +286,7 @@ class Constructable(object):
                     composite = self._compose(compose[varname], variables)
                 except Exception as e:
                     if strict:
-                        raise AnsibleError("Could not set %s: %s" % (varname, to_native(e)))
+                        raise AnsibleError("Could not set %s for host %s: %s" % (varname, host, to_native(e)))
                     continue
                 self.inventory.set_variable(host, varname, composite)
 
