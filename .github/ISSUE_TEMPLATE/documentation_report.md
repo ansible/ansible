@@ -30,7 +30,7 @@ about: Ask us about docs
 ```
 
 ##### OS / ENVIRONMENT
-<!--- Provide all relevant information below, e.g. target OS versions, network device firmware, etc. -->
+<!--- Provide all relevant information below, e.g. OS version, browser, etc. -->
 
 ##### ADDITIONAL INFORMATION
 <!--- Describe how this improves the documentation, e.g. before/after situation or screenshots -->
