@@ -3,7 +3,7 @@ name: ✨ Feature request
 about: Suggest an idea for this project
 ---
 <!--- Verify first that your feature was not already discussed on GitHub -->
-<!--- This form is processed by Ansibot (machine), complete *all* sections as described -->
+<!--- Complete *all* sections as described, this form is processed automatically -->
 
 ##### SUMMARY
 <!--- Describe the new feature/improvement briefly below -->

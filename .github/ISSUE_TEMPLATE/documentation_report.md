@@ -4,7 +4,7 @@ about: Ask us about docs
 ---
 <!--- Verify first that your improvement is not already reported on GitHub -->
 <!--- Also test if the latest release and devel branch are affected too -->
-<!--- This form is processed by Ansibot (machine), complete *all* sections as described -->
+<!--- Complete *all* sections as described, this form is processed automatically -->
 
 ##### SUMMARY
 <!--- Explain the problem briefly below, add suggestions to wording or structure -->
