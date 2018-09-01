@@ -41,6 +41,13 @@ options:
             - Indicates the desired state of the port.
         choices: [ 'present', 'absent', 'active', 'inactive' ]
         default: present
+    upgrade:
+        description:
+            - Upgrade all outdated ports, either prior to installing ports or as a separate step.
+            - Equivalent to running C(port upgrade outdated).
+        default: "no"
+        type: bool
+        version_added: "2.8"
     variant:
         description:
             - A port variant specification.
@@ -66,9 +73,10 @@ EXAMPLES = '''
     - foo
     - foo-tools
 
-- name: Update Macports and the ports tree
+- name: Update Macports and the ports tree, then upgrade all outdated ports
   macports:
     selfupdate: yes
+    upgrade: yes
 
 - name: Update Macports and the ports tree, then install the foo port
   macports:
@@ -119,6 +127,24 @@ def selfupdate(module, port_path):
         return (changed, msg)
     else:
         module.fail_json(msg="Failed to update Macports", stdout=out, stderr=err)
+
+
+def upgrade(module, port_path):
+    """ Upgrade outdated ports. """
+
+    rc, out, err = module.run_command("%s upgrade outdated" % port_path)
+
+    # rc is 1 when nothing to upgrade so check stdout first.
+    if out.strip() == "Nothing to upgrade.":
+        changed = False
+        msg = "Ports already upgraded"
+        return (changed, msg)
+    elif rc == 0:
+        changed = True
+        msg = "Outdated ports upgraded successfully"
+        return (changed, msg)
+    else:
+        module.fail_json(msg="Failed to upgrade outdated ports", stdout=out, stderr=err)
 
 
 def query_port(module, port_path, name, state="present"):
@@ -244,6 +270,7 @@ def main():
             name=dict(aliases=["port"], type='list'),
             selfupdate=dict(aliases=["update_cache", "update_ports"], default=False, type='bool'),
             state=dict(default="present", choices=["present", "installed", "absent", "removed", "active", "inactive"]),
+            upgrade=dict(default=False, type='bool'),
             variant=dict(aliases=["variants"], default=None, type='str')
         )
     )
@@ -254,6 +281,11 @@ def main():
 
     if p["selfupdate"]:
         (changed, msg) = selfupdate(module, port_path)
+        if not (p["name"] or p["upgrade"]):
+            module.exit_json(changed=changed, msg=msg)
+
+    if p["upgrade"]:
+        (changed, msg) = upgrade(module, port_path)
         if not p["name"]:
             module.exit_json(changed=changed, msg=msg)
 
