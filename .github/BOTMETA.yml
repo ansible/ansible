@@ -450,6 +450,8 @@ files:
     support: community
   $module_utils/acme.py:
     maintainers: resmo felixfontein
+  $module_utils/docker_common.py:
+    maintainers: $team_ansible dariko felixfontein jwitko kassiansun tbouvet
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/network/aireos:
