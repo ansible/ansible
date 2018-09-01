@@ -232,7 +232,6 @@ options:
     description:
     - Destination datacenter for the deploy operation.
     - This parameter is case sensitive.
-    default: ha-datacenter
   cluster:
     description:
     - The cluster name where the virtual machine will run.
