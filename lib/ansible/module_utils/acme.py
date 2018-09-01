@@ -437,7 +437,7 @@ class ACMEDirectory(object):
         self.directory_root = module.params['acme_directory']
         self.version = module.params['acme_version']
 
-        self.directory, dummy = account.get_request(self.directory_root)
+        self.directory, dummy = account.get_request(self.directory_root, get_only=True)
 
         # Check whether self.version matches what we expect
         if self.version == 1:
@@ -520,7 +520,10 @@ class ACMEAccount(object):
 
     def sign_request(self, protected, payload, key_data):
         try:
-            payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
+            if payload is None:
+                payload64 = ''
+            else:
+                payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
             protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
         except Exception as e:
             raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
@@ -535,6 +538,8 @@ class ACMEAccount(object):
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
         https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-6.2
+
+        If payload is None, a POST-as-GET is performed.
         '''
         key_data = key_data or self.key_data
         jws_header = jws_header or self.jws_header
@@ -580,13 +585,16 @@ class ACMEAccount(object):
 
             return result, info
 
-    def get_request(self, uri, parse_json_result=True, headers=None):
+    def get_request(self, uri, parse_json_result=True, headers=None, get_only=False):
         resp, info = fetch_url(self.module, uri, method='GET', headers=headers)
 
         try:
             content = resp.read()
         except AttributeError:
             content = info.get('body')
+
+        if info['status'] == 405 and not get_only:
+            content, info = self.send_signed_request(uri, None, parse_json_result=False)
 
         if parse_json_result:
             result = {}
