@@ -1,0 +1,111 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: sqlsrv{{ rpfx }}
+    location: eastus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+- name: Create Firewall Rule
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+- name: Create Firewall Rule
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}second
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    firewall_rule_name: firewallrule{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.firewall_rules.firewallrule{{ rpfx }}.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.type != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.kind != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.location != None
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.firewall_rules.firewallrule{{ rpfx }}.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.type != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.kind != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.location != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.type != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.kind != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.location != None
+
+- name: Delete instance of Firewall Rule
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    state: absent
+- name: Delete instance of Firewall Rule
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}second
+    state: absent
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    firewall_rule_name: firewallrule{{ rpfx }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - "'firewallrule{{ rpfx }}' not in output.firewall_rules"
+      - "'firewallrule{{ rpfx }}second' not in output.firewall_rules"
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - "'firewallrule{{ rpfx }}' not in output.firewall_rules"
+      - "'firewallrule{{ rpfx }}second' not in output.firewall_rules"
+
+- name: Delete instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: sqlsrv{{ rpfx }}
+    state: absent
+- name: Delete instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: sqlsrv{{ rpfx }}
+    state: absent
