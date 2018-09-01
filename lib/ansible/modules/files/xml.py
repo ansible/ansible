@@ -124,24 +124,24 @@ options:
     version_added: '2.7'
   insertbefore:
     description:
-      - Add additional child-element(s) before the first selected element for a given C(xpath)
+      - Add additional child-element(s) before the first selected element for a given C(xpath).
       - Child elements must be given in a list and each item may be either a string
         (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
         or a hash where the key is an element name and the value is the element value.
       - This parameter requires C(xpath) to be set.
     type: bool
-    default: 'no'
-    version_added: '2.7'
+    default: no
+    version_added: '2.8'
   insertafter:
     description:
-      - Add additional child-element(s) after the last selected element for a given C(xpath)
+      - Add additional child-element(s) after the last selected element for a given C(xpath).
       - Child elements must be given in a list and each item may be either a string
         (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
         or a hash where the key is an element name and the value is the element value.
       - This parameter requires C(xpath) to be set.
     type: bool
-    default: 'no'
-    version_added: '2.7'
+    default: no
+    version_added: '2.8'
 requirements:
 - lxml >= 2.3.0
 notes:
@@ -826,7 +826,7 @@ def main():
             backup=dict(type='bool', default=False),
             strip_cdata_tags=dict(type='bool', default=False),
             insertbefore=dict(type='bool', default=False),
-            insertafter=dict(type='bool', default=False)
+            insertafter=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         # TODO: Implement this as soon as #28662 (required_by functionality) is merged
@@ -842,7 +842,7 @@ def main():
             ['count', True, ['xpath']],
             ['print_match', True, ['xpath']],
             ['insertbefore', True, ['xpath']],
-            ['insertafter', True, ['xpath']]
+            ['insertafter', True, ['xpath']],
         ],
         required_one_of=[
             ['path', 'xmlstring'],
@@ -851,7 +851,7 @@ def main():
         mutually_exclusive=[
             ['add_children', 'content', 'count', 'print_match', 'set_children', 'value'],
             ['path', 'xmlstring'],
-            ['insertbefore', 'insertafter']
+            ['insertbefore', 'insertafter'],
         ],
     )
 
