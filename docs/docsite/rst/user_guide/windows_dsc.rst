@@ -61,7 +61,9 @@ according to the resource it is managing. A list of built in resources can be
 found at `resources <https://docs.microsoft.com/en-us/powershell/dsc/resources>`_.
 
 Using the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
-resource as an example, this is the DSC definition as documented by Microsoft::
+resource as an example, this is the DSC definition as documented by Microsoft:
+
+.. code-block:: powershell
 
     Registry [string] #ResourceName
     {
@@ -84,9 +86,11 @@ options are parameters that are used to define the resource, such as ``Key`` and
 keeping the case as-is is recommended becuase it makes it easier to distinguish DSC
 resource options from Ansible's ``win_dsc`` options.
 
-This is what the Ansible task version of the above DSC Registry resource would look like::
+This is what the Ansible task version of the above DSC Registry resource would look like:
 
-    - name: use win_dsc module with the Registry DSC resource
+.. code-block:: yaml+jinja
+
+    - name: Use win_dsc module with the Registry DSC resource
       win_dsc:
         resource_name: Registry
         Ensure: Present
@@ -108,15 +112,17 @@ A ``[PSCredential]`` object is used to store credentials in a secure way, but
 Ansible has no way to serialize this over JSON. To set a DSC PSCredential property, 
 the definition of that parameter should have two entries that are suffixed with 
 ``_username`` and ``_password`` for the username and password respectively. 
-For example::
+For example:
 
-    PsDscRunAsCredential_username: '{{ansible_user}}'
-    PsDscRunAsCredential_password: '{{ansible_password}}'
+.. code-block:: yaml+jinja
+
+    PsDscRunAsCredential_username: '{{ ansible_user }}'
+    PsDscRunAsCredential_password: '{{ ansible_password }}'
 
     SourceCredential_username: AdminUser
     SourceCredential_password: PasswordForAdminUser
 
-.. Note:: You should set ``no_log: true`` on the task definition in
+.. Note:: You should set ``no_log: yes`` on the task definition in
     Ansible to ensure any credentials used are not stored in any log file or
     console output.
 
@@ -125,7 +131,9 @@ CimInstance Type
 A ``[CimInstance]`` object is used by DSC to store a dictionary object based on
 a custom class defined by that resource. Defining a value that takes in a
 ``[CimInstance]`` in YAML is the same as defining a dictionary in YAML.
-For example, to define a ``[CimInstance]`` value in Ansible::
+For example, to define a ``[CimInstance]`` value in Ansible:
+
+.. code-block:: yaml+jinja
 
     # [CimInstance]AuthenticationInfo == MSFT_xWebAuthenticationInformation
     AuthenticationInfo:
@@ -148,7 +156,9 @@ Simple type arrays like ``[string[]]`` or ``[UInt32[]]`` are defined as a list
 or as a comma separated string which are then cast to their type. Using a list
 is recommended because the values are not manually parsed by the ``win_dsc``
 module before being passed to the DSC engine. For example, to define a simple
-type array in Ansible::
+type array in Ansible:
+
+.. code-block:: yaml+jinja
 
     # [string[]]
     ValueData: entry1, entry2, entry3
@@ -164,7 +174,9 @@ type array in Ansible::
     - 3010
 
 Complex type arrays like ``[CimInstance[]]`` (array of dicts), can be defined
-like this example::
+like this example:
+
+.. code-block:: yaml+jinja
 
     # [CimInstance[]]BindingInfo == MSFT_xWebBindingInformation
     BindingInfo:
@@ -195,18 +207,20 @@ force the DSC engine to run under a different account. As
 ``_username`` and ``_password`` suffix.
 
 Using the Registry resource type as an example, this is how to define a task
-to access the ``HKEY_CURRENT_USER`` hive of the Ansible user::
+to access the ``HKEY_CURRENT_USER`` hive of the Ansible user:
 
-    - name: use win_dsc with PsDscRunAsCredential to run as a different user
+.. code-block:: yaml+jinja
+
+    - name: Use win_dsc with PsDscRunAsCredential to run as a different user
       win_dsc:
         resource_name: Registry
         Ensure: Present
         Key: HKEY_CURRENT_USER\ExampleKey
         ValueName: TestValue
         ValueData: TestData
-        PsDscRunAsCredential_username: '{{ansible_user}}'
-        PsDscRunAsCredential_password: '{{ansible_password}}'
-      no_log: true
+        PsDscRunAsCredential_username: '{{ ansible_user }}'
+        PsDscRunAsCredential_password: '{{ ansible_password }}'
+      no_log: yes
 
 Custom DSC Resources
 ````````````````````
@@ -222,10 +236,10 @@ The ``Find-DscResource`` cmdlet can also be used to find custom resources. For e
 
 .. code-block:: powershell
 
-    # find all DSC resources in the configured repositories
+    # Find all DSC resources in the configured repositories
     Find-DscResource
 
-    # find all DSC resources that relate to SQL
+    # Find all DSC resources that relate to SQL
     Find-DscResource -ModuleName "*sql*"
 
 .. Note:: DSC resources developed by Microsoft that start with ``x``, means the
@@ -240,9 +254,11 @@ There are three ways that a DSC resource can be installed on a host:
 * Saving the module manually and copying it another host
 
 This is an example of installing the ``xWebAdministration`` resources using
-``win_psmodule``::
+``win_psmodule``:
 
-    - name: install xWebAdministration DSC resource
+.. code-block:: yaml+jinja
+
+    - name: Install xWebAdministration DSC resource
       win_psmodule:
         name: xWebAdministration
         state: present
@@ -254,7 +270,10 @@ The first two methods above only work when the host has access to the internet.
 When a host does not have internet access, the module must first be installed
 using the methods above on another host with internet access and then copied
 across. To save a module to a local filepath, the following PowerShell cmdlet
-can be run::
+can be run:
+
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
+.. code-block:: guess
 
     Save-Module -Name xWebAdministration -Path C:\temp
 
@@ -270,21 +289,21 @@ Examples
 Extract a zip file
 ------------------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
-  - name: extract a zip file
+  - name: Extract a zip file
     win_dsc:
       resource_name: Archive
-      Destination: c:\temp\output
+      Destination: C:\temp\output
       Path: C:\temp\zip.zip
       Ensure: Present
 
 Create a directory
 ------------------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
-    - name: create file with some text
+    - name: Create file with some text
       win_dsc:
         resource_name: File
         DestinationPath: C:\temp\file
@@ -294,7 +313,7 @@ Create a directory
         Ensure: Present
         Type: File
 
-    - name: create directory that is hidden is set with the System attribute
+    - name: Create directory that is hidden is set with the System attribute
       win_dsc:
         resource_name: File
         DestinationPath: C:\temp\hidden-directory
@@ -305,14 +324,14 @@ Create a directory
 Interact with Azure
 -------------------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
-    - name: install xAzure DSC resources
+    - name: Install xAzure DSC resources
       win_psmodule:
         name: xAzure
         state: present
     
-    - name: create virtual machine in Azure
+    - name: Create virtual machine in Azure
       win_dsc:
         resource_name: xAzureVM
         ImageName: a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201409.01-en.us-127GB.vhd
@@ -320,31 +339,31 @@ Interact with Azure
         ServiceName: ServiceName
         StorageAccountName: StorageAccountName
         InstanceSize: Medium
-        Windows: True
+        Windows: yes
         Ensure: Present
-        Credential_username: '{{ansible_user}}'
-        Credential_password: '{{ansible_password}}'
+        Credential_username: '{{ ansible_user }}'
+        Credential_password: '{{ ansible_password }}'
 
 Setup IIS Website
 -----------------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
-    - name: install xWebAdministration module
+    - name: Install xWebAdministration module
       win_psmodule:
         name: xWebAdministration
         state: present
 
-    - name: install IIS features that are required
+    - name: Install IIS features that are required
       win_dsc:
         resource_name: WindowsFeature
-        Name: '{{item}}'
+        Name: '{{ item }}'
         Ensure: Present
       with_items:
       - Web-Server
       - Web-Asp-Net45
 
-    - name: setup web content
+    - name: Setup web content
       win_dsc:
         resource_name: File
         DestinationPath: C:\inetpub\IISSite\index.html
@@ -356,7 +375,7 @@ Setup IIS Website
           </html>
         Ensure: present
 
-    - name: create new website
+    - name: Create new website
       win_dsc:
         resource_name: xWebsite
         Name: NewIISSite

@@ -27,53 +27,55 @@ There are three main ways that Ansible can be used to install software:
 
 The ``win_chocolatey`` module is recommended since it has the most complete logic for checking to see if a package has already been installed and is up-to-date.
 
-Below are some examples of using all three options to install 7-Zip::
+Below are some examples of using all three options to install 7-Zip:
 
-    # install/uninstall with chocolatey
-    - name: ensure 7-Zip is installed via Chocolatey
+.. code-block:: yaml+jinja
+
+    # Install/uninstall with chocolatey
+    - name: Ensure 7-Zip is installed via Chocolatey
       win_chocolatey:
         name: 7zip
         state: present
     
-    - name: ensure 7-Zip is not installed via Chocolatey
+    - name: Ensure 7-Zip is not installed via Chocolatey
       win_chocolatey:
         name: 7zip
         state: absent
     
-    # install/uninstall with win_package
-    - name: download the 7-Zip package
+    # Install/uninstall with win_package
+    - name: Download the 7-Zip package
       win_get_url:
         url: https://www.7-zip.org/a/7z1701-x64.msi
         dest: C:\temp\7z.msi
 
-    - name: ensure 7-Zip is installed via win_package
+    - name: Ensure 7-Zip is installed via win_package
       win_package:
         path: C:\temp\7z.msi
         state: present
     
-    - name: ensure 7-Zip is not installed via win_package
+    - name: Ensure 7-Zip is not installed via win_package
       win_package:
         path: C:\temp\7z.msi
         state: absent
 
-    # install/uninstall with win_command
-    - name: download the 7-Zip package
+    # Install/uninstall with win_command
+    - name: Download the 7-Zip package
       win_get_url:
         url: https://www.7-zip.org/a/7z1701-x64.msi
         dest: C:\temp\7z.msi
     
-    - name: check if 7-Zip is already installed
+    - name: Check if 7-Zip is already installed
       win_reg_stat:
         name: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-1701-000001000000}
       register: 7zip_installed
     
-    - name: ensure 7-Zip is installed via win_command
+    - name: Ensure 7-Zip is installed via win_command
       win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
-      when: 7zip_installed.exists == False
+      when: 7zip_installed.exists == false
     
-    - name: ensure 7-Zip is uninstalled via win_command
+    - name: Ensure 7-Zip is uninstalled via win_command
       win_command: C:\Windows\System32\msiexec.exe /x {23170F69-40C1-2702-1701-000001000000} /qn /norestart
-      when: 7zip_installed.exists == True
+      when: 7zip_installed.exists == true
 
 Some installers like Microsoft Office or SQL Server require credential delegation or
 access to components restricted by WinRM. The best method to bypass these
@@ -95,9 +97,11 @@ update or hotfix file that has been downloaded locally.
     present. These cmdlets were only added by default on Windows Server 2012
     and newer and must be installed on older Windows hosts.
 
-The following example shows how ``win_updates`` can be used::
+The following example shows how ``win_updates`` can be used:
 
-    - name: install all critical and security updates
+.. code-block:: yaml+jinja
+
+    - name: Install all critical and security updates
       win_updates:
         category_names:
         - CriticalUpdates
@@ -105,26 +109,28 @@ The following example shows how ``win_updates`` can be used::
         state: installed
       register: update_result
     
-    - name: reboot host if required
+    - name: Reboot host if required
       win_reboot:
       when: update_result.reboot_required
 
 The following example show how ``win_hotfix`` can be used to install a single
-update or hotfix::
+update or hotfix:
 
-    - name: download KB3172729 for Server 2012 R2
+.. code-block:: yaml+jinja
+
+    - name: Download KB3172729 for Server 2012 R2
       win_get_url:
         url: http://download.windowsupdate.com/d/msdownload/update/software/secu/2016/07/windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
         dest: C:\temp\KB3172729.msu
     
-    - name: install hotfix
+    - name: Install hotfix
       win_hotfix:
         hotfix_kb: KB3172729
         source: C:\temp\KB3172729.msu
         state: present
       register: hotfix_result
     
-    - name: reboot host if required
+    - name: Reboot host if required
       win_reboot:
       when: hotfix_result.reboot_required
 
@@ -138,17 +144,19 @@ The modules ``win_user``, ``win_group`` and ``win_group_membership`` manage
 Windows users, groups and group memberships locally.
 
 The following is an example of creating local accounts and groups that can
-access a folder on the same host::
+access a folder on the same host:
 
-    - name: create local group to contain new users
+.. code-block:: yaml+jinja
+
+    - name: Create local group to contain new users
       win_group:
         name: LocalGroup
         description: Allow access to C:\Development folder
 
-    - name: create local user
+    - name: Create local user
       win_user:
-        name: '{{item.name}}'
-        password: '{{item.password}}'
+        name: '{{ item.name }}'
+        password: '{{ item.password }}'
         groups: LocalGroup
         update_password: no
         password_never_expired: yes
@@ -158,12 +166,12 @@ access a folder on the same host::
       - name: User2
         password: Password2
     
-    - name: create Development folder
+    - name: Create Development folder
       win_file:
         path: C:\Development
         state: directory
     
-    - name: set ACL of Development folder
+    - name: Set ACL of Development folder
       win_acl:
         path: C:\Development
         rights: FullControl
@@ -171,7 +179,7 @@ access a folder on the same host::
         type: allow
         user: LocalGroup
     
-    - name: remove parent inheritance of Development folder
+    - name: Remove parent inheritance of Development folder
       win_acl_inheritance:
         path: C:\Development
         reorganize: yes
@@ -181,13 +189,15 @@ Domain
 ++++++
 The modules ``win_domain_user`` and ``win_domain_group`` manages users and
 groups in a domain. The below is an example of ensuring a batch of domain users
-are created::
+are created:
 
-    - name: ensure each account is created
+.. code-block:: yaml+jinja
+
+    - name: Ensure each account is created
       win_domain_user:
-        name: '{{item.name}}'
-        upn: '{{item.name}}@MY.DOMAIN.COM'
-        password: '{{item.password}}'
+        name: '{{ item.name }}'
+        upn: '{{ item.name }}@MY.DOMAIN.COM'
+        password: '{{ item.password }}'
         password_never_expires: no
         groups:
         - Test User
@@ -228,30 +238,32 @@ The ``win_command`` module simply runs a process outside of a shell. It can stil
 run a shell command like ``mkdir`` or ``New-Item`` by passing the shell commands 
 to a shell executable like ``cmd.exe`` or ``PowerShell.exe``.
 
-Here are some examples of using ``win_command`` and ``win_shell``::
+Here are some examples of using ``win_command`` and ``win_shell``:
 
-    - name: run a command under PowerShell
+.. code-block:: yaml+jinja
+
+    - name: Run a command under PowerShell
       win_shell: Get-Service -Name service | Stop-Service
     
-    - name: run a command under cmd
+    - name: Run a command under cmd
       win_shell: mkdir C:\temp
       args:
         executable: cmd.exe
     
-    - name: run a multiple shell commands
+    - name: Run a multiple shell commands
       win_shell: |
         New-Item -Path C:\temp -ItemType Directory
         Remove-Item -Path C:\temp -Force -Recurse
         $path_info = Get-Item -Path C:\temp
         $path_info.FullName
     
-    - name: run an executable using win_command
+    - name: Run an executable using win_command
       win_command: whoami.exe
     
-    - name: run a cmd command
+    - name: Run a cmd command
       win_command: cmd.exe /c mkdir C:\temp
 
-    - name: run a vbs script
+    - name: Run a vbs script
       win_command: cscript.exe script.vbs
 
 .. Note:: Some commands like ``mkdir``, ``del``, and ``copy`` only exist in
@@ -283,7 +295,9 @@ rules apply:
   is used in the argument for every pair, and the double quote is escaped and
   made a literal double quote in the argument.
 
-With those rules in mind, here are some examples of quoting::
+With those rules in mind, here are some examples of quoting:
+
+.. code-block:: yaml+jinja
 
     - win_command: C:\temp\executable.exe argument1 "argument 2" "C:\path\with space" "double \"quoted\""
 
@@ -299,7 +313,7 @@ With those rules in mind, here are some examples of quoting::
     argv[1] = escaped \" backslash
     argv[2] = unquoted-end-backslash\
 
-    # due to YAML and Ansible parsing '\"' must be written as '{% raw %}\\{% endraw %}"'
+    # Due to YAML and Ansible parsing '\"' must be written as '{% raw %}\\{% endraw %}"'
     - win_command: C:\temp\executable.exe C:\no\space\path "arg with end \ before end quote{% raw %}\\{% endraw %}"
 
     argv[0] = C:\temp\executable.exe
@@ -317,24 +331,26 @@ ability to run an executable on a schedule and under a different account.
 
 Ansible version 2.5 added modules that make it easier to work with scheduled tasks in Windows. 
 The following is an example of running a script as a scheduled task that deletes itself after
-running::
+running:
 
-    - name: create scheduled task to run a process
+.. code-block:: yaml+jinja
+
+    - name: Create scheduled task to run a process
       win_scheduled_task:
         name: adhoc-task
         username: SYSTEM
         actions:
         - path: PowerShell.exe
           arguments: |
-            Start-Sleep -Seconds 30 # this isn't required, just here as a demonstration
+            Start-Sleep -Seconds 30  # This isn't required, just here as a demonstration
             New-Item -Path C:\temp\test -ItemType Directory
-        # remove this action if the task shouldn't be deleted on completion
+        # Remove this action if the task shouldn't be deleted on completion
         - path: cmd.exe
           arguments: /c schtasks.exe /Delete /TN "adhoc-task" /F
         triggers:
         - type: registration
 
-    - name: wait for the scheduled task to complete
+    - name: Wait for the scheduled task to complete
       win_scheduled_task_stat:
         name: adhoc-task
       register: task_stat
@@ -385,26 +401,28 @@ The YAML specification considers the following `escape sequences <http://yaml.or
 
 * ``\U........`` -- 8-digit hex escape
 
-Here are some examples on how to write Windows paths::
+Here are some examples on how to write Windows paths:
 
-    GOOD
+.. code-block:: yaml+jinja
+
+    # GOOD
     tempdir: C:\Windows\Temp
 
-    WORKS
+    # WORKS
     tempdir: 'C:\Windows\Temp'
     tempdir: "C:\\Windows\\Temp"
 
-    BAD, BUT SOMETIMES WORKS
+    # BAD, BUT SOMETIMES WORKS
     tempdir: C:\\Windows\\Temp
     tempdir: 'C:\\Windows\\Temp'
     tempdir: C:/Windows/Temp
 
-    FAILS
+    # FAILS
     tempdir: "C:\Windows\Temp"
 
     ---
-    # example of single quotes when they are required
-    - name: copy tomcat config
+    # Example of single quotes when they are required
+    - name: Copy tomcat config
       win_copy:
         src: log4j.xml
         dest: '{{tc_home}}\lib\log4j.xml'
@@ -435,22 +453,24 @@ sequences:
 This means that the backslash is an escape character for some sequences, and it
 is usually safer to escape a backslash when in this form.
 
-Here are some examples of using Windows paths with the key=value style::
+Here are some examples of using Windows paths with the key=value style:
 
-    GOOD
+.. code-block:: ini
+
+    # GOOD
     tempdir=C:\\Windows\\Temp
 
-    WORKS
+    # WORKS
     tempdir='C:\\Windows\\Temp'
     tempdir="C:\\Windows\\Temp"
 
-    BAD, BUT SOMETIMES WORKS
+    # BAD, BUT SOMETIMES WORKS
     tempdir=C:\Windows\Temp
     tempdir='C:\Windows\Temp'
     tempdir="C:\Windows\Temp"
     tempdir=C:/Windows/Temp
 
-    FAILS
+    # FAILS
     tempdir=C:\Windows\temp
     tempdir='C:\Windows\temp'
     tempdir="C:\Windows\temp"

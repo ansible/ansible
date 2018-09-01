@@ -32,7 +32,7 @@ requirement. You can use the `Upgrade-PowerShell.ps1 <https://github.com/jborean
 
 This is an example of how to run this script from PowerShell:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Upgrade-PowerShell.ps1"
     $file = "$env:temp\Upgrade-PowerShell.ps1"
@@ -42,16 +42,16 @@ This is an example of how to run this script from PowerShell:
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
 
-    # version can be 3.0, 4.0 or 5.1
+    # Version can be 3.0, 4.0 or 5.1
     &$file -Version 5.1 -Username $username -Password $password -Verbose
 
 Once completed, you will need to remove auto logon
 and set the execution policy back to the default of ``Restricted``. You can
 do this with the following PowerShell commands:
 
-.. code-block:: guess
+.. code-block:: powershell
 
-    # this isn't needed but is a good security practice to complete
+    # This isn't needed but is a good security practice to complete
     Set-ExecutionPolicy -ExecutionPolicy Restricted -Force
 
     $reg_winlogon_path = "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
@@ -90,7 +90,7 @@ imaging process. The script `Install-WMF3Hotfix.ps1 <https://github.com/jborean9
 
 The following PowerShell command will install the hotfix:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Install-WMF3Hotfix.ps1"
     $file = "$env:temp\Install-WMF3Hotfix.ps1"
@@ -113,7 +113,7 @@ authentication option on the service.
 
 To use this script, run the following in PowerShell:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
     $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
@@ -137,11 +137,15 @@ The WinRM services listens for requests on one or more ports. Each of these port
 listener created and configured.
 
 To view the current listeners that are running on the WinRM service, run the
-following command::
+following command:
+
+.. code-block:: powershell
 
     winrm enumerate winrm/config/Listener
 
-This will output something like the following::
+This will output something like the following:
+
+.. code-block:: guess
 
     Listener
         Address = *
@@ -186,6 +190,7 @@ the key options that are useful to understand are:
   in the connection. To get the details of the certificate itself, run this
   command with the relevant certificate thumbprint in PowerShell:
 
+  .. comment: Pygments powershell lexer does not support colons (i.e. URLs)
   .. code-block:: guess
     
     $thumbprint = "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE"
@@ -209,7 +214,7 @@ There are three ways to set up a WinRM listener:
 * Using PowerShell to create the listener with a specific configuration. This
   can be done by running the following PowerShell commands:
 
-  .. code-block:: guess
+  .. code-block:: powershell
 
       $selector_set = @{
           Address = "*"
@@ -232,12 +237,13 @@ Delete WinRM Listener
 +++++++++++++++++++++
 To remove a WinRM listener:
 
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
 .. code-block:: guess
 
-    # remove all listeners
+    # Remove all listeners
     Remove-Item -Path WSMan:\localhost\Listener\* -Recurse -Force
 
-    # only remove listeners that are run over HTTPS
+    # Only remove listeners that are run over HTTPS
     Get-ChildItem -Path WSMan:\localhost\Listener | Where-Object { $_.Keys -contains "Transport=HTTPS" } | Remove-Item -Recurse -Force
 
 .. Note:: The ``Keys`` object is an array of strings, so it can contain different
@@ -250,12 +256,16 @@ There are a number of options that can be set to control the behavior of the Win
 including authentication options and memory settings.
 
 To get an output of the current service configuration options, run the
-following command::
+following command:
+
+.. code-block:: powershell
 
     winrm get winrm/config/Service
     winrm get winrm/config/Winrs
 
-This will output something like the following::
+This will output something like the following:
+
+.. code-block:: guess
 
     Service
         RootSDDL = O:NSG:BAD:P(A;;GA;;;BA)(A;;GR;;;IU)S:P(AU;FA;GA;;;WD)(AU;SA;GXGW;;;WD)
@@ -326,6 +336,7 @@ options are:
 To modify a setting under the ``Service`` key in PowerShell, the following
 command can be used:
 
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
 .. code-block:: guess
 
     # substitute {path} with the path to the option after winrm/config/Service
@@ -337,12 +348,13 @@ command can be used:
 To modify a setting under the ``Winrs`` key in PowerShell, the following
 command can be used:
 
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
 .. code-block:: guess
 
-    # substitute {path} with the path to the option after winrm/config/Winrs
+    # Substitute {path} with the path to the option after winrm/config/Winrs
     Set-Item -Path WSMan:\localhost\Shell\{path} -Value "value here"
 
-    # for example, to change Winrs\MaxShellRunTime run
+    # For example, to change Winrs\MaxShellRunTime run
     Set-Item -Path WSMan:\localhost\Shell\MaxShellRunTime -Value 2147483647
 
 .. Note:: If running in a domain environment, some of these options are set by
@@ -357,15 +369,18 @@ could in fact be issues with the host setup instead.
 
 One easy way to determine whether a problem is a host issue is to 
 run the following command from another Windows host to connect to the
-target Windows host::
+target Windows host:
 
-    # test out HTTP
+.. comment: Pygments powershell lexer does not support -u:Username
+.. code-block:: guess
+
+    # Test out HTTP
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig
 
-    # test out HTTPS (will fail if the cert is not verifiable)
+    # Test out HTTPS (will fail if the cert is not verifiable)
     winrs -r:http://server:5985/wsman -u:Username -p:Password -ssl ipconfig
 
-    # test out HTTPS, ignoring certificate verification
+    # Test out HTTPS, ignoring certificate verification
     $username = "Username"
     $password = ConvertTo-SecureString -String "Password" -AsPlainText -Force
     $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
