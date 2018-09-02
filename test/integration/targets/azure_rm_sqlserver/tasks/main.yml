@@ -1,12 +1,12 @@
 - name: Prepare random number
   set_fact:
-    random_postfix: "{{ 1000 | random }}"
+    random_postfix: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
   run_once: yes
 
 - name: Create instance of SQL Server -- check mode
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "sqlsrv{{ random_postfix }}"
     location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
@@ -20,7 +20,7 @@
 - name: Create instance of SQL Server
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "sqlsrv{{ random_postfix }}"
     location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
@@ -34,7 +34,7 @@
 - name: Create again instance of SQL Server
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "sqlsrv{{ random_postfix }}"
     location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
@@ -295,7 +295,7 @@
 - name: Delete instance of SQL Server -- check mode
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "sqlsrv{{ random_postfix }}"
     state: absent
   check_mode: yes
   register: output
@@ -307,7 +307,7 @@
 - name: Delete instance of SQL Server
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "sqlsrv{{ random_postfix }}"
     state: absent
   register: output
 - name: Assert the state has changed
@@ -318,7 +318,7 @@
 - name: Delete unexisting instance of SQL Server
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "sqlsrv{{ random_postfix }}"
     state: absent
   register: output
 - name: Assert the state has changed
