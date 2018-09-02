@@ -150,9 +150,9 @@ def docker_stack_services(module, stack_name):
                                        stack_name,
                                        "--format",
                                        "{{.Name}}"])
-    if out != ("Nothing found in stack %s\n" % stack_name):
-        return out.strip().split('\n')
-    return []
+    if err == "Nothing found in stack: %s\n" % stack_name:
+        return []
+    return out.strip().split('\n')
 
 
 def docker_service_inspect(module, service_name):
@@ -198,13 +198,10 @@ def docker_stack_rm(module, stack_name, retries, interval):
 
     rc, out, err = module.run_command(command)
 
-    while err != "Nothing found in stack: stack\n" and retries > 0:
+    while err != "Nothing found in stack: %s\n" % stack_name and retries > 0:
         sleep(interval)
         retries = retries - 1
         rc, out, err = module.run_command(command)
-
-    if rc == 0 or err == "Nothing found in stack: stack\n":
-        return rc, out, err
     return rc, out, err
 
 
@@ -293,7 +290,7 @@ def main():
                                  err=err)
             else:
                 module.exit_json(changed=True, msg=out, err=err, rc=rc)
-        module.exit_json(changed=False, msg=out, err=err)
+        module.exit_json(changed=False)
 
 if __name__ == "__main__":
     main()
