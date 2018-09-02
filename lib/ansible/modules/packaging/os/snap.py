@@ -74,8 +74,7 @@ RETURN = '''
 msg:
     description: An informative message on the task's output
     type: str
-    returned: always
-    sample: "The snap 'foo' has been installed"
+    returned: on error
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -108,7 +107,8 @@ def refresh_snap(module):
 def install_snap(module, snap_name):
     rc, out, err = is_snap_installed(module, snap_name)
     if rc == 0:
-        module.exit_json(msg="The snap '%s' is already installed" % str(snap_name))
+        # Snap is already installed
+        return False
 
     if module.params['classic']:
         classic = '--classic'
@@ -122,8 +122,8 @@ def install_snap(module, snap_name):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        # snap has been installed
-        module.exit_json(msg="The snap '%s' has been installed" % str(snap_name), changed=True)
+        # Snap has been installed
+        return True
     else:
         # Something went wrong
         module.fail_json(msg=err)
@@ -132,7 +132,8 @@ def install_snap(module, snap_name):
 def remove_snap(module, snap_name):
     rc, out, err = is_snap_installed(module, snap_name)
     if rc != 0:
-        module.exit_json(msg="The snap '%s' is not installed" % str(snap_name))
+        # Snap is not installed
+        return False
 
     snap_path = module.get_bin_path("snap", True)
     cmd = "%s remove %s" % (snap_path, snap_name)
@@ -141,8 +142,8 @@ def remove_snap(module, snap_name):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        # snap has been removed
-        module.exit_json(msg="The snap '%s' has been removed" % str(snap_name), changed=True)
+        # Snap has been removed
+        return True
     else:
         # Something went wrong
         module.fail_json(msg=err)
@@ -150,24 +151,33 @@ def remove_snap(module, snap_name):
 
 def main():
     module_args = dict(
-        name=dict(type='str', required=True),
+        name=dict(type='list', required=True),
         state=dict(type='str', required=False, default='present', choices=['absent', 'present']),
         classic=dict(type='bool', required=False, default=False)
     )
     module = AnsibleModule(argument_spec=module_args)
-    snap_name = module.params['name']
+    snap_names = module.params['name']
     state = module.params['state']
 
-    # Test if snap exists
+    # Check if snaps are valid
+    for snap_name in snap_names:
     rc, out, err = snap_exists(module, snap_name)
-    if rc:
+        if rc != 0:
         module.fail_json(msg="No snap matching '%s' available" % str(snap_name))
 
+    # Apply changes to the snaps
+    exit_changed = False
+    for snap_name in snap_names:
     if state == 'present':
-        install_snap(module, snap_name)
+            r_changed = install_snap(module, snap_name)
     elif state == 'absent':
-        remove_snap(module, snap_name)
+            r_changed = remove_snap(module, snap_name)
 
+        # If we modified one of the snaps, change the task `changed` return code to true
+        if r_changed == True and exit_changed == False:
+            exit_changed = True
+
+    module.exit_json(changed=exit_changed)
 
 if __name__ == '__main__':
     main()
