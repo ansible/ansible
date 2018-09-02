@@ -5,6 +5,7 @@ import os
 import pprint
 import sys
 
+from hashlib import sha1
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.module_utils._text import to_bytes
@@ -275,6 +276,15 @@ if __name__ == '__main__':
         manpage = template.render(tvars)
         filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
 
-        with open(filename, 'wb') as f:
-            f.write(to_bytes(manpage))
-            print("Wrote doc to %s" % filename)
+        # Check if the destionation file is different, if not, return
+        write_out = True
+        if os.path.exists(filename):
+            sha1_new = sha1(manpage.encode('utf-8')).hexdigest()
+            sha1_old = sha1(open(filename).read()).hexdigest()
+            if sha1_new == sha1_old:
+                write_out = False
+
+        if write_out:
+            with open(filename, 'wb') as f:
+                f.write(to_bytes(manpage))
+                print("Wrote doc to %s" % filename)
