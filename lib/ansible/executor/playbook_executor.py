@@ -112,6 +112,7 @@ class PlaybookExecutor:
                             vname = var['name']
                             prompt = var.get("prompt", vname)
                             default = var.get("default", None)
+                            allow_empty = boolean(var.get("allow_empty", True))
                             private = boolean(var.get("private", True))
                             confirm = boolean(var.get("confirm", False))
                             encrypt = var.get("encrypt", None)
@@ -120,8 +121,10 @@ class PlaybookExecutor:
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm,
+                                                            salt_size, salt, default, allow_empty)
+                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm,
+                                                                             salt_size, salt, default, allow_empty)
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 

@@ -1,0 +1,17 @@
+- name: Test vars_prompt repeats asking given empty responsee
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  vars_prompt:
+    - name: input
+      allow_empty: no
+
+  tasks:
+    - name:
+      assert:
+        that:
+          - input == 'empty not allowed'
+
+    - debug:
+        var: input

@@ -1,0 +1,17 @@
+- name: Test vars_prompt allows empty value
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  vars_prompt:
+    - name: input
+      allow_empty: yes
+
+  tasks:
+    - name:
+      assert:
+        that:
+          - input == 'empty allowed'
+
+    - debug:
+        var: input

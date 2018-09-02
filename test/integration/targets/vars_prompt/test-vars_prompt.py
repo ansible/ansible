@@ -109,6 +109,33 @@ tests = [
      'test_spec': [
          [('prompting for host:', 'testhost\r')],
          r'testhost.*ok=1']},
+
+    # Test empty_allowed, both empty and not empty
+    # https://github.com/ansible/ansible/issues/45085
+    {'playbook': 'vars_prompt-8.yml',
+     'test_spec': [
+         [('input:', 'empty allowed\r')],
+         '"input": "empty allowed"']},
+
+    {'playbook': 'vars_prompt-9.yml',
+     'test_spec': [
+         [('input:', '\r'),
+          (r'\*\*\*\*\* RESPONSE CANNOT BE EMPTY \*\*\*\*', ''),
+          ('input:', 'empty not allowed\r')],
+         '"input": "empty not allowed"']},
+
+    {'playbook': 'vars_prompt-10.yml',
+     'test_spec': [
+         [('input:', 'confirm me\r'),
+          ('confirm input:', 'incorrect\r'),
+          (r'\*\*\*\*\* VALUES ENTERED DO NOT MATCH \*\*\*\*', ''),
+          ('input:', '\r'),
+          ('confirm input:', 'confirm me\r'),
+          (r'\*\*\*\*\* RESPONSES CANNOT BE EMPTY \*\*\*\*', ''),
+          ('input:', 'confirm me\r'),
+          ('confirm input:', 'confirm me\r')],
+         '"input": "confirm me"']},
+
 ]
 
 for t in tests:

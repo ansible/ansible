@@ -296,7 +296,8 @@ class CallbackBase(AnsiblePlugin):
     def playbook_on_task_start(self, name, is_conditional):
         pass
 
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False,
+                                salt_size=None, salt=None, default=None, empty_not_allowed=None):
         pass
 
     def playbook_on_setup(self):
@@ -380,8 +381,9 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_handler_task_start(self, task):
         pass  # no v1 correspondence
 
-    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
+    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False,
+                                   salt_size=None, salt=None, default=None, allow_empty=None):
+        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, allow_empty)
 
     # FIXME: not called
     def v2_playbook_on_import_for_host(self, result, imported_file):

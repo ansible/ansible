@@ -303,7 +303,8 @@ class Display:
         else:
             return input(prompt_string)
 
-    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False,
+                      salt_size=None, salt=None, default=None, allow_empty=None):
 
         result = None
         if sys.__stdin__.isatty():
@@ -321,11 +322,22 @@ class Display:
                 while True:
                     result = do_prompt(msg, private)
                     second = do_prompt("confirm " + msg, private)
-                    if result == second:
+
+                    if allow_empty and result == second:
                         break
-                    self.display("***** VALUES ENTERED DO NOT MATCH ****")
+                    elif not allow_empty and not all((result, second)):
+                        self.display("***** RESPONSES CANNOT BE EMPTY ****")
+                    elif result != second:
+                        self.display("***** VALUES ENTERED DO NOT MATCH ****")
+                    else:
+                        break
             else:
-                result = do_prompt(msg, private)
+                while True:
+                    result = do_prompt(msg, private)
+                    if allow_empty or not allow_empty and result != "":
+                        break
+                    else:
+                        self.display("***** RESPONSE CANNOT BE EMPTY ****")
         else:
             result = None
             self.warning("Not prompting as we are not in interactive mode")
