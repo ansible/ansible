@@ -48,7 +48,6 @@ import jinja2
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from six import iteritems, string_types
-from hashlib import sha1
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
@@ -57,6 +56,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
+from ansible.utils.plugin_docs import update_file_if_different
 
 
 #####################################################################################
@@ -185,15 +185,7 @@ def write_data(text, output_dir, outputname, module=None):
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
 
-        # Check if the destionation file is different, if not, return
-        if os.path.exists(fname):
-            with open(fname, 'r') as f:
-                text_old = f.read()
-            if text_old == text:
-                return
-
-        with open(fname, 'wb') as f:
-            f.write(to_bytes(text))
+        update_file_if_different(fname, to_bytes(text))
     else:
         print(text)
 

@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 
 import optparse
-import os
 import re
 from distutils.version import LooseVersion
 
 import jinja2
 import yaml
-from hashlib import sha1
 from jinja2 import Environment, FileSystemLoader
 
+from ansible.module_utils._text import to_bytes
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible.utils.plugin_docs import update_file_if_different
 
 template_file = 'playbooks_keywords.rst.j2'
 oblist = {}
@@ -81,14 +81,4 @@ if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
     # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
     keyword_page = re.sub(' +\n', '\n', keyword_page)
 
-# Check if the destionation file is different, if not, return
-write_out = True
-if os.path.exists(outputname):
-    with open(outputname) as f:
-        keyword_page_old = f.read()
-    if keyword_page_old == keyword_page:
-        write_out = False
-
-if write_out:
-    with open(outputname, 'w') as f:
-        f.write(keyword_page)
+update_file_if_different(outputname, to_bytes(keyword_page))

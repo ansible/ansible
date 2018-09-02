@@ -1,24 +1,10 @@
-# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+import os
 
 from collections import MutableMapping, MutableSet, MutableSequence
 
@@ -120,3 +106,19 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False)
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
+
+
+def update_file_if_different(filename, data):
+    '''
+    Replace file content only if content is different
+    '''
+
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            data_old = f.read()
+        if data_old != data:
+            with open(filename, 'wb') as f:
+                f.write(data)
+    else:
+        with open(filename, 'wb') as f:
+            f.write(data)

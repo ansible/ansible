@@ -5,8 +5,8 @@ import os
 import sys
 import yaml
 
-from hashlib import sha1
 from jinja2 import Environment, FileSystemLoader
+from ansible.utils.plugin_docs import update_file_if_different
 
 DEFAULT_TEMPLATE_FILE = 'config.rst.j2'
 
@@ -64,18 +64,7 @@ def main(args):
     temp_vars = {'config_options': config_options}
 
     data = template.render(temp_vars).encode('utf-8')
-
-    # Check if the destionation file is different, if not, return
-    write_out = True
-    if os.path.exists(output_name):
-        with open(output_name) as f:
-            data_old = f.read()
-        if data_old == data:
-            write_out = False
-
-    if write_out:
-        with open(output_name, 'wb') as f:
-            f.write(data)
+    update_file_if_different(output_name, data)
 
     return 0
 
