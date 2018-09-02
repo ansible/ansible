@@ -48,6 +48,7 @@ import jinja2
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from six import iteritems, string_types
+from hashlib import sha1
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
@@ -183,6 +184,14 @@ def write_data(text, output_dir, outputname, module=None):
             os.makedirs(output_dir)
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
+
+        # Check if the destionation file is different, if not, return
+        if os.path.exists(fname):
+            sha1_new = sha1(text.encode('utf-8')).hexdigest()
+            sha1_old = sha1(open(fname).read()).hexdigest()
+            if sha1_new == sha1_old:
+                return
+
         with open(fname, 'wb') as f:
             f.write(to_bytes(text))
     else:
