@@ -115,10 +115,7 @@ def install_snap(module, snap_name):
         # Snap is already installed
         return False
 
-    if module.params['classic']:
-        classic = '--classic'
-    else:
-        classic = ''
+    classic = '--classic' if module.params['classic'] else ''
 
     snap_path = module.get_bin_path("snap", True)
     cmd = "%s install %s %s" % (snap_path, snap_name, classic)
