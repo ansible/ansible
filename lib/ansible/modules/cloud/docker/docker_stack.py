@@ -34,17 +34,12 @@ options:
         choices:
         -   present
         -   absent
-    compose_yaml:
-        required: false
-        default: ""
+    compose:
+        required: true
         description:
-        -   String containing the yaml definition of the stack.
-        -   Must be in compose format.
-    compose_file:
-        required: false
-        default: ""
-        description:
-        -   Path of the stack file on the remote/target machine.
+        -   List of compose definitions. Any element may be a string
+            referring to the path of the compose file on the target host
+            or the YAML contents of a compose file nested as dictionary.
     prune:
         required: false
         default: false
@@ -69,7 +64,8 @@ options:
             supported platforms. If not set, docker use "always" by default.
 
 requirements:
--   "jsondiff"
+-   jsondiff
+-   pyyaml
 '''
 
 RETURN = '''
@@ -90,19 +86,21 @@ EXAMPLES = '''
     docker_stack:
         state: present
         name: stack1
-        compose_file: /opt/stack.compose
+        compose:
+        -   /opt/stack.compose
 
--   name: deploy 'stack2' from yaml
+-   name: deploy 'stack2' from base file and yaml overrides
     docker_stack:
         state: present
         name: stack2
-        compose_yaml: |
-            version: '3'
+        compose:
+        -   /opt/stack.compose
+        -   version: '3'
             services:
                 web:
-                    image: nginx
-                    ports:
-                    -   "80:80"
+                    image: nginx:latest
+                    environment:
+                        ENVVAR: envvar
 
 -   name: deprovision 'stack1'
     docker_stack:
@@ -112,12 +110,18 @@ EXAMPLES = '''
 
 import json
 import tempfile
-
+from ansible.module_utils.six import string_types
 try:
     from jsondiff import diff as json_diff
     HAS_JSONDIFF = True
 except ImportError:
     HAS_JSONDIFF = False
+
+try:
+    from yaml import dump as yaml_dump
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 from ansible.module_utils.basic import AnsibleModule, os
 
@@ -148,7 +152,7 @@ def docker_service_inspect(module, service_name):
         return ret
 
 
-def docker_stack_deploy(module, stack_name, compose_file):
+def docker_stack_deploy(module, stack_name, compose_files):
     docker_bin = module.get_bin_path('docker', required=True)
     command = [docker_bin, "stack", "deploy"]
     if module.params["prune"]:
@@ -158,9 +162,10 @@ def docker_stack_deploy(module, stack_name, compose_file):
     if module.params["resolve_image"]:
         command += ["--resolve-image",
                     module.params["resolve_image"]]
-    command += ["--compose-file",
-                compose_file,
-                stack_name]
+    for compose_file in compose_files:
+        command += ["--compose-file",
+                    compose_file]
+    command += [stack_name]
     return module.run_command(command)
 
 
@@ -175,44 +180,52 @@ def main():
     module = AnsibleModule(
         argument_spec={
             'name': dict(required=True, type='str'),
-            'compose_yaml': dict(),
-            'compose_file': dict(),
+            'compose': dict(required=False, type='list'),
             'prune': dict(default=False, type='bool'),
             'with_registry_auth': dict(default=False, type='bool'),
             'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),
             'state': dict(default='present', choices=['present', 'absent'])
         },
-        supports_check_mode=False,
-        mutually_exclusive=[['compose_yaml', 'compose_file']]
+        supports_check_mode=False
     )
 
     if not HAS_JSONDIFF:
         return module.fail_json(msg="jsondiff is not installed, try `pip install jsondiff`")
 
+    if not HAS_YAML:
+        return module.fail_json(msg="yaml is not installed, try `pip install pyyaml`")
+
     state = module.params['state']
-    compose_yaml = module.params['compose_yaml']
-    compose_file = module.params['compose_file']
+    compose = module.params['compose']
     name = module.params['name']
 
     if state == 'present':
         try:
-            if compose_yaml:
-                compose_file_fd, compose_file = tempfile.mkstemp()
-                with os.fdopen(compose_file_fd, 'w') as stack_file:
-                    stack_file.write(compose_yaml)
-            elif not compose_file:
-                module.fail_json(msg="compose_yaml or compose_file " +
-                                     "parameters required if state=='present'")
+            compose_files = []
+            temp_files = []
+            for i, compose_def in enumerate(compose):
+                if isinstance(compose_def, dict):
+                    compose_file_fd, compose_file = tempfile.mkstemp()
+                    with os.fdopen(compose_file_fd, 'w') as stack_file:
+                        temp_files.append(compose_file)
+                        compose_files.append(compose_file)
+                        stack_file.write(yaml_dump(compose_def))
+                elif isinstance(compose_def, string_types):
+                    compose_files.append(compose_def)
+                else:
+                    module.fail_json(msg="compose %s is not a string " +
+                                     "or a dictionary" % compose_def)
 
             before_stack_services = docker_stack_inspect(module, name)
 
-            rc, out, err = docker_stack_deploy(module, name, compose_file)
+            rc, out, err = docker_stack_deploy(module, name, compose_files)
 
             after_stack_services = docker_stack_inspect(module, name)
 
         finally:
-            if compose_yaml and compose_file:
-                os.remove(compose_file)
+            for temp_file in temp_files:
+                os.remove(temp_file)
+
         if rc != 0:
             module.fail_json(msg="docker stack up deploy command failed",
                              out=out,
@@ -248,6 +261,7 @@ def main():
                              err=err)
 
         module.exit_json(changed=True, msg=out, err=err)
+
 
 if __name__ == "__main__":
     main()
