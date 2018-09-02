@@ -68,9 +68,9 @@ def main(args):
     # Check if the destionation file is different, if not, return
     write_out = True
     if os.path.exists(output_name):
-        sha1_new = sha1(data).hexdigest()
-        sha1_old = sha1(open(output_name).read()).hexdigest()
-        if sha1_new == sha1_old:
+        with open(output_name) as f:
+            data_old = f.read()
+        if data_old == data:
             write_out = False
 
     if write_out:

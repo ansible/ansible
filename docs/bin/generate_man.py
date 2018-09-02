@@ -273,15 +273,15 @@ if __name__ == '__main__':
         if '-i' in tvars['options']:
             print('uses inventory')
 
-        manpage = template.render(tvars)
+        manpage = to_bytes(template.render(tvars))
         filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
 
         # Check if the destionation file is different, if not, return
         write_out = True
         if os.path.exists(filename):
-            sha1_new = sha1(manpage.encode('utf-8')).hexdigest()
-            sha1_old = sha1(open(filename).read()).hexdigest()
-            if sha1_new == sha1_old:
+            with open(filename) as f:
+                manpage_old = f.read()
+            if manpage_old == manpage:
                 write_out = False
 
         if write_out:

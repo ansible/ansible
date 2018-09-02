@@ -187,9 +187,9 @@ def write_data(text, output_dir, outputname, module=None):
 
         # Check if the destionation file is different, if not, return
         if os.path.exists(fname):
-            sha1_new = sha1(text.encode('utf-8')).hexdigest()
-            sha1_old = sha1(open(fname).read()).hexdigest()
-            if sha1_new == sha1_old:
+            with open(fname, 'r') as f:
+                text_old = f.read()
+            if text_old == text:
                 return
 
         with open(fname, 'wb') as f:

@@ -84,9 +84,9 @@ if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
 # Check if the destionation file is different, if not, return
 write_out = True
 if os.path.exists(outputname):
-    sha1_new = sha1(keyword_page.encode('utf-8')).hexdigest()
-    sha1_old = sha1(open(outputname).read()).hexdigest()
-    if sha1_new == sha1_old:
+    with open(outputname) as f:
+        keyword_page_old = f.read()
+    if keyword_page_old == keyword_page:
         write_out = False
 
 if write_out:
