@@ -1,0 +1,110 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+    sku:
+      name: GP_Gen4_2
+      tier: GeneralPurpose
+    location: westus
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    storage_mb: 51200
+- name: Create Firewall Rule
+  azure_rm_postgresqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+- name: Create Firewall Rule
+  azure_rm_postgresqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}second
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+
+- name: Gather facts PostgreSQL Firewall Rule
+  azure_rm_postgresqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    firewall_rule_name: firewallrule{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.firewall_rules.firewallrule{{ rpfx }}.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.type != None
+
+- name: Gather facts PostgreSQL Firewall Rule
+  azure_rm_postgresqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.firewall_rules.firewallrule{{ rpfx }}.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.type != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.type != None
+
+- name: Delete instance of Firewall Rule
+  azure_rm_postgresqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    state: absent
+- name: Delete instance of Firewall Rule
+  azure_rm_postgresqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}second
+    state: absent
+
+- name: Gather facts PostgreSQL Firewall Rule
+  azure_rm_postgresqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    firewall_rule_name: firewallrule{{ rpfx }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - "'firewallrule{{ rpfx }}' not in output.firewall_rules"
+      - "'firewallrule{{ rpfx }}second' not in output.firewall_rules"
+
+- name: Gather facts PostgreSQL Firewall Rule
+  azure_rm_postgresqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - "'firewallrule{{ rpfx }}' not in output.firewall_rules"
+      - "'firewallrule{{ rpfx }}second' not in output.firewall_rules"
+
+- name: Delete instance of PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+    state: absent
+- name: Delete instance of PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+    state: absent
