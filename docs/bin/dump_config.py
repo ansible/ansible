@@ -5,6 +5,7 @@ import os
 import sys
 import yaml
 
+from hashlib import sha1
 from jinja2 import Environment, FileSystemLoader
 
 DEFAULT_TEMPLATE_FILE = 'config.rst.j2'
@@ -62,8 +63,19 @@ def main(args):
     output_name = os.path.join(output_dir, template_file.replace('.j2', ''))
     temp_vars = {'config_options': config_options}
 
-    with open(output_name, 'wb') as f:
-        f.write(template.render(temp_vars).encode('utf-8'))
+    data = template.render(temp_vars).encode('utf-8')
+
+    # Check if the destionation file is different, if not, return
+    write_out = True
+    if os.path.exists(output_name):
+        sha1_new = sha1(data).hexdigest()
+        sha1_old = sha1(open(output_name).read()).hexdigest()
+        if sha1_new == sha1_old:
+            write_out = False
+
+    if write_out:
+        with open(output_name, 'wb') as f:
+            f.write(data)
 
     return 0
 
