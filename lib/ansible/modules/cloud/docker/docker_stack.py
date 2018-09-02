@@ -62,6 +62,20 @@ options:
         -   If set will add the `--resolve-image` option to the `docker stack deploy` command.
             This will have docker query the registry to resolve image digest and
             supported platforms. If not set, docker use "always" by default.
+    absent_retries:
+        required: false
+        default: 0
+        description:
+        -   If `>0` and `state==absent` the module will retry up to
+            `absent_retries` times to delete the stack until all the
+            resources have been effectively deleted.
+            If the last try still reports the stack as not completely
+            removed the module will fail.
+    absent_retries_timeout:
+        required: false
+        default: 1
+        description:
+        -   Interval in seconds between `absent_retries`
 
 requirements:
 -   jsondiff
@@ -111,6 +125,8 @@ EXAMPLES = '''
 import json
 import tempfile
 from ansible.module_utils.six import string_types
+from time import sleep
+
 try:
     from jsondiff import diff as json_diff
     HAS_JSONDIFF = True
@@ -176,6 +192,22 @@ def docker_stack_inspect(module, stack_name):
     return ret
 
 
+def docker_stack_rm(module, stack_name, retries, interval):
+    docker_bin = module.get_bin_path('docker', required=True)
+    command = [docker_bin, "stack", "rm", stack_name]
+
+    rc, out, err = module.run_command(command)
+
+    while err != "Nothing found in stack: stack\n" and retries > 0:
+        sleep(interval)
+        retries = retries - 1
+        rc, out, err = module.run_command(command)
+
+    if rc == 0 or err == "Nothing found in stack: stack\n":
+        return rc, out, err
+    return rc, out, err
+
+
 def main():
     module = AnsibleModule(
         argument_spec={
@@ -184,7 +216,9 @@ def main():
             'prune': dict(default=False, type='bool'),
             'with_registry_auth': dict(default=False, type='bool'),
             'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),
-            'state': dict(default='present', choices=['present', 'absent'])
+            'state': dict(default='present', choices=['present', 'absent']),
+            'absent_retries': dict(type='int', default = 0),
+            'absent_retries_interval': dict(type='int', default = 1)
         },
         supports_check_mode=False
     )
@@ -198,6 +232,8 @@ def main():
     state = module.params['state']
     compose = module.params['compose']
     name = module.params['name']
+    absent_retries = module.params['absent_retries']
+    absent_retries_interval = module.params['absent_retries_interval']
 
     if state == 'present':
         try:
@@ -248,25 +284,16 @@ def main():
                 docker_stack_spec_diff=str(before_after_differences))
 
     else:
-        docker_bin = module.get_bin_path('docker', required=True)
-        rc, out, err = module.run_command([docker_bin,
-                                           "stack",
-                                           "down",
-                                           name])
-
-        if rc != 0:
-            module.fail_json(msg="'docker stack down' command failed",
-                             out=out,
-                             rc=rc,
-                             err=err)
-        elif err == "Nothing found in stack: %s\n" % name:
-            module.exit_json(changed=False, msg=out, err=err)
-        else:
-            module.exit_json(changed=True, msg=out, err=err)
-
-
-        module.exit_json(changed=True, msg=out, err=err)
-
+        if docker_stack_services(module, name):
+            rc, out, err = docker_stack_rm(module, name, absent_retries, absent_retries_interval)
+            if rc != 0 :
+                module.fail_json(msg="'docker stack down' command failed",
+                                 out=out,
+                                 rc=rc,
+                                 err=err)
+            else:
+                module.exit_json(changed=True, msg=out, err=err, rc=rc)
+        module.exit_json(changed=False, msg=out, err=err)
 
 if __name__ == "__main__":
     main()
