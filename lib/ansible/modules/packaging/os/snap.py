@@ -80,6 +80,11 @@ msg:
 from ansible.module_utils.basic import AnsibleModule
 
 
+def clean_err(err):
+    # Remove whitespaces and newlines that the snap CLI outputs.
+    return err.replace('\n', '').replace('      ', '').replace('"', '\'')
+
+
 def snap_exists(module, snap_name):
     snap_path = module.get_bin_path("snap", True)
     cmd = "%s info %s" % (snap_path, snap_name)
@@ -126,6 +131,7 @@ def install_snap(module, snap_name):
         return True
     else:
         # Something went wrong
+        err = clean_err(err)
         module.fail_json(msg=err)
 
 
@@ -146,6 +152,7 @@ def remove_snap(module, snap_name):
         return True
     else:
         # Something went wrong
+        err = clean_err(err)
         module.fail_json(msg=err)
 
 
