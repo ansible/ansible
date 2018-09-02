@@ -1,0 +1,2 @@
+bugfixes:
+- cloudfront - fix bug when CloudFrontOriginAccessIdentityList is missing (https://github.com/ansible/ansible/pull/44984)
