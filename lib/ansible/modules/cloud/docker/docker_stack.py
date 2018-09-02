@@ -36,6 +36,7 @@ options:
         -   absent
     compose:
         required: true
+        default: []
         description:
         -   List of compose definitions. Any element may be a string
             referring to the path of the compose file on the target host
@@ -71,7 +72,7 @@ options:
             resources have been effectively deleted.
             If the last try still reports the stack as not completely
             removed the module will fail.
-    absent_retries_timeout:
+    absent_retries_interval:
         required: false
         default: 1
         description:
@@ -209,13 +210,13 @@ def main():
     module = AnsibleModule(
         argument_spec={
             'name': dict(required=True, type='str'),
-            'compose': dict(required=False, type='list'),
+            'compose': dict(required=False, type='list', default=[]),
             'prune': dict(default=False, type='bool'),
             'with_registry_auth': dict(default=False, type='bool'),
             'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),
             'state': dict(default='present', choices=['present', 'absent']),
-            'absent_retries': dict(type='int', default = 0),
-            'absent_retries_interval': dict(type='int', default = 1)
+            'absent_retries': dict(type='int', default=0),
+            'absent_retries_interval': dict(type='int', default=1)
         },
         supports_check_mode=False
     )
@@ -285,7 +286,7 @@ def main():
     else:
         if docker_stack_services(module, name):
             rc, out, err = docker_stack_rm(module, name, absent_retries, absent_retries_interval)
-            if rc != 0 :
+            if rc != 0:
                 module.fail_json(msg="'docker stack down' command failed",
                                  out=out,
                                  rc=rc,
@@ -293,6 +294,7 @@ def main():
             else:
                 module.exit_json(changed=True, msg=out, err=err, rc=rc)
         module.exit_json(changed=False)
+
 
 if __name__ == "__main__":
     main()
