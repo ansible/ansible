@@ -1,3 +1,5 @@
+:orphan:
+
 Sanity Tests » configure-remoting-ps1
 =====================================
 

@@ -1,3 +1,5 @@
+:orphan:
+
 .. _special_variables:
 
 Special Variables

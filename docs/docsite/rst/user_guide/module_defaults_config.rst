@@ -1,3 +1,5 @@
+:orphan:
+
 .. _module_defaults_config:
 
 Module Defaults Configuration

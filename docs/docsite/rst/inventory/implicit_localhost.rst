@@ -1,3 +1,5 @@
+:orphan:
+
 .. _implicit_localhost:
 
 Implicit 'localhost'

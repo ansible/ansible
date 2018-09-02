@@ -1,3 +1,5 @@
+:orphan:
+
 .. _module_documenting:
 
 Documenting Your Module

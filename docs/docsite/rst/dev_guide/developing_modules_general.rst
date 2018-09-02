@@ -1,3 +1,5 @@
+:orphan:
+
 .. _module_dev_tutorial_sample:
 
 Ansible Module Development Walkthrough

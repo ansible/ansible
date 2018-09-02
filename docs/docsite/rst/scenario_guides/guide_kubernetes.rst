@@ -1,3 +1,5 @@
+:orphan:
+
 Getting Started with Kubernetes and OpenShift
 =============================================
 
