@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 import optparse
+import os
 import re
 from distutils.version import LooseVersion
 
 import jinja2
 import yaml
+from hashlib import sha1
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.playbook import Play
@@ -79,5 +81,14 @@ if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
     # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
     keyword_page = re.sub(' +\n', '\n', keyword_page)
 
-with open(outputname, 'w') as f:
-    f.write(keyword_page)
+# Check if the destionation file is different, if not, return
+write_out = True
+if os.path.exists(outputname):
+    sha1_new = sha1(keyword_page.encode('utf-8')).hexdigest()
+    sha1_old = sha1(open(outputname).read()).hexdigest()
+    if sha1_new == sha1_old:
+        write_out = False
+
+if write_out:
+    with open(outputname, 'w') as f:
+        f.write(keyword_page)
