@@ -17,11 +17,11 @@ DOCUMENTATION = '''
 module: docker_stack
 author: "Dario Zanzico (@dariko)"
 short_description: docker stack module
-description: |
-    Manage docker stacks using the 'docker stack' command
+description:
+-   Manage docker stacks using the 'docker stack' command
     on the target node
     (see examples)
-version_added: "2.5"
+version_added: "2.8"
 options:
     name:
         required: true
@@ -49,23 +49,22 @@ options:
         required: false
         default: false
         description:
-        -   >
-            If true will add the `--prune` option to the `docker stack deploy` command.
+        -   If true will add the `--prune` option to the `docker stack deploy` command.
             This will have docker remove the services not present in the
             current stack definition.
+        type: bool
     with_registry_auth:
         required: false
         default: false
         description:
-        -   >
-            If true will add the `--with-registry-auth` option to the `docker stack deploy` command.
+        -   If true will add the `--with-registry-auth` option to the `docker stack deploy` command.
             This will have docker send registry authentication details to Swarm agents.
+        type: bool
     resolve_image:
         required: false
         choices: ["always", "changed", "never"]
         description:
-        -   >
-            If set will add the `--resolve-image` option to the `docker stack deploy` command.
+        -   If set will add the `--resolve-image` option to the `docker stack deploy` command.
             This will have docker query the registry to resolve image digest and
             supported platforms. If not set, docker use "always" by default.
 
