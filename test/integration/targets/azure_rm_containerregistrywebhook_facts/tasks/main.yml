@@ -1,0 +1,88 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create an container registry
+  azure_rm_containerregistry:
+    name: acr{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    location: eastus2
+    state: present
+    admin_user_enabled: true
+    sku: Premium
+    tags:
+        Release: beta1
+        Environment: Production
+- name: Create Webhook
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    location: eastus2
+    service_uri: http://serviceuri.com
+    actions:
+      - push
+- name: Create Webhook
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    location: eastus2
+    service_uri: http://serviceuri.com
+    actions:
+      - push
+
+- name: Gather facts Webhook
+  azure_rm_containerregistrywebhook_facts:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.webhooks.webhook{{ rpfx }}.id != None
+      - output.webhooks.webhook{{ rpfx }}.name != None
+      - output.webhooks.webhook{{ rpfx }}.type != None
+      - output.webhooks.webhook{{ rpfx }}.location != None
+      - output.webhooks.webhook{{ rpfx }}.status != None
+      - output.webhooks.webhook{{ rpfx }}.actions != None
+
+- name: Delete instance of Webhook
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    state: absent
+- name: Delete instance of Webhook
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    state: absent
+
+- name: Gather facts Webhook
+  azure_rm_containerregistrywebhook_facts:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - "'webhook{{ rpfx }}' not in output.webhooks"
+      - "'webhook{{ rpfx }}second' not in output.webhooks"
+
+- name: Delete container registry
+  azure_rm_containerregistry:
+    name: acr{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    state: absent
+- name: Delete container registry
+  azure_rm_containerregistry:
+    name: acr{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    state: absent
