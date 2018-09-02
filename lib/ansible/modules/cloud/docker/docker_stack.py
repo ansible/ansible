@@ -259,6 +259,11 @@ def main():
                              out=out,
                              rc=rc,
                              err=err)
+        elif err == "Nothing found in stack: %s\n" % name:
+            module.exit_json(changed=False, msg=out, err=err)
+        else:
+            module.exit_json(changed=True, msg=out, err=err)
+
 
         module.exit_json(changed=True, msg=out, err=err)
 
