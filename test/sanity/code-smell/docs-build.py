@@ -28,7 +28,7 @@ def main():
         'unknown-document': r'unknown document: ',
         'toc-tree-missing-document': r'toctree contains reference to nonexisting document ',
         'reference-target-not-found': r'[^ ]* reference target not found: ',
-#        'not-in-toc-tree': r"document isn't included in any toctree$",
+        'not-in-toc-tree': r"document isn't included in any toctree$",
         'unexpected-indentation': r'^Unexpected indentation.$',
         'definition-list-missing-blank-line': r'^Definition list ends without a blank line; unexpected unindent.$',
         'explicit-markup-missing-blank-line': r'Explicit markup ends without a blank line; unexpected unindent.$',
@@ -38,7 +38,7 @@ def main():
 
     ignore_codes = [
         'reference-target-not-found',
-        'not-in-toc-tree',
+        # 'not-in-toc-tree',
     ]
 
     used_ignore_codes = set()
