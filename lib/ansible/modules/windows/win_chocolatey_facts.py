@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Ansible Project
+# Copyright: (c) 2018, Simon Baerlocher <s.baerlocher@sbaerlocher.ch> 
+# Copyright: (c) 2018, ITIGO AG <opensource@itigo.ch> 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -48,24 +50,59 @@ ansible_facts:
     type: complex
     contains:
         ansible_chocolatey:
-            description: Detailed information about the chocolatey installation.
+            description: Detailed information about the Chocolatey installation.
             returned: infos when choco is found.
             type: dict
             contains:
                 config:
-                    description: Dict of Configurations.
+                    description: Detailed information about stored the Configurations.
                     returned: always
                     type: dict
                 feature:
-                    description: Dict of Feature.
+                    description: Detailed information about enabled and disabled functions.
                     returned: always
                     type: dict
                 sources:
-                    description: Dict of Sources.
+                    description: Detailed information about the deposited Chocolatey sources.
                     returned: always
-                    type: dict
+                    type: complex
+                    admin_only:
+                        returned: always
+                        type: string
+                    allow_self_service:
+                        returned: always
+                        type: string
+                    bypass_proxy:
+                        returned: always
+                        type: string
+                    certificate:
+                        returned: always
+                        type: string
+                    disabled:
+                        returned: always
+                        type: string
+                    name:
+                        returned: always
+                        type: string
+                    priority:
+                        returned: always
+                        type: string
+                    source:
+                        returned: always
+                        type: string
+                    source_username:
+                        returned: always
+                        type: string
                 packages:
-                    description: Dict of Packages.
+                    description: Detailed information about the installed Packages.
                     returned: alway
-                    type: dict
+                    type: complex
+                    package:
+                        description: Returns name of Package.
+                        returned: alway
+                        type: string
+                    version:
+                        description: Returns version of Package.
+                        returned: alway
+                        type: dict
 '''
