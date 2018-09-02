@@ -278,7 +278,9 @@ def main():
         else:
             module.exit_json(
                 changed=True,
-                docker_stack_spec_diff=str(before_after_differences))
+                docker_stack_spec_diff=json_diff(before_stack_services,
+                                                 after_stack_services,
+                                                 dump=True))
 
     else:
         if docker_stack_services(module, name):
