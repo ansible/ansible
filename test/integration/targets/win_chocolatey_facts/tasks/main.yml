@@ -10,6 +10,8 @@
 - name: assert facts from chocolatey
   assert:
     that:
-    - ansible_facts.chocolatey is not changed
-    - ansible_facts.chocolatey.config['commandExecutionTimeoutSeconds'] == '2700'
-    - ansible_facts.chocolatey.feature['checksumFiles'] == true
+    - ansible_chocolatey is not changed
+    - ansible_chocolatey.config['commandExecutionTimeoutSeconds'] == '2700'
+    - ansible_chocolatey.feature['checksumFiles'] == true
+    - ansible_chocolatey.packages.0.package == 'chocolatey'
+    - ansible_chocolatey.sources.0.name == 'chocolatey'
