@@ -1,0 +1,51 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create Route Table
+  azure_rm_appgwroutetable:
+    resource_group: "{{ resource_group }}"
+    route_table_name: routetablename{{ rpfx }}
+- name: Create Route Table
+  azure_rm_appgwroutetable:
+    resource_group: "{{ resource_group }}"
+    route_table_name: routetablename{{ rpfx }}
+
+- name: Gather facts Route Table
+  azure_rm_appgwroutetable_facts:
+    resource_group: "{{ resource_group }}"
+    route_table_name: routetablename{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.route_tables.routetablename{{ rpfx }}.id != None
+      - output.route_tables.routetablename{{ rpfx }}.name != None
+      - output.route_tables.routetablename{{ rpfx }}.type != None
+      - output.route_tables.routetablename{{ rpfx }}.location != None
+
+- name: Delete instance of Route Table
+  azure_rm_appgwroutetable:
+    resource_group: "{{ resource_group }}"
+    route_table_name: routetablename{{ rpfx }}
+    state: absent
+- name: Delete instance of Route Table
+  azure_rm_appgwroutetable:
+    resource_group: "{{ resource_group }}"
+    route_table_name: routetablename{{ rpfx }}
+    state: absent
+
+- name: Gather facts Route Table
+  azure_rm_appgwroutetable_facts:
+    resource_group: "{{ resource_group }}"
+    route_table_name: routetablename{{ rpfx }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - "'routetablename{{ rpfx }}' not in output.route_tables"
+      - "'routetablename{{ rpfx }}second' not in output.route_tables"
+
