@@ -234,6 +234,10 @@ def main():
     absent_retries_interval = module.params['absent_retries_interval']
 
     if state == 'present':
+        if not compose:
+            module.fail_json(msg=("compose parameter must be a list "
+                                  "containing at least an element"))
+
         try:
             compose_files = []
             temp_files = []
