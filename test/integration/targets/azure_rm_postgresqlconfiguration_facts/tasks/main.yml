@@ -1,0 +1,57 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+    sku:
+      name: GP_Gen4_2
+      tier: GeneralPurpose
+    location: westus
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    storage_mb: 51200
+- name: Create Configuration
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    value: 2000
+    source: user-override
+
+- name: Gather facts PostgreSQL Configuration
+  azure_rm_postgresqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    configuration_name: deadlock_timeout
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.configurations.deadlock_timeout.id != None
+      - output.configurations.deadlock_timeout.name != None
+      - output.configurations.deadlock_timeout.type != None
+      - output.configurations.deadlock_timeout.value != None
+      - output.configurations.deadlock_timeout.description != None
+      - output.configurations.deadlock_timeout.source != None
+
+- name: Gather facts PostgreSQL Configuration
+  azure_rm_postgresqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.configurations.deadlock_timeout.id != None
+      - output.configurations.deadlock_timeout.name != None
+      - output.configurations.deadlock_timeout.type != None
+      - output.configurations.deadlock_timeout.value != None
+      - output.configurations.deadlock_timeout.description != None
+      - output.configurations.deadlock_timeout.source != None
