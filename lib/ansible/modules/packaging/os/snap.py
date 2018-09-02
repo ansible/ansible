@@ -115,6 +115,9 @@ def install_snap(module, snap_name):
         # Snap is already installed
         return False
 
+    if module.check_mode:
+        module.exit_json(changed=True)
+
     classic = '--classic' if module.params['classic'] else ''
 
     snap_path = module.get_bin_path("snap", True)
@@ -138,6 +141,9 @@ def remove_snap(module, snap_name):
         # Snap is not installed
         return False
 
+    if module.check_mode:
+        module.exit_json(changed=True)
+
     snap_path = module.get_bin_path("snap", True)
     cmd = "%s remove %s" % (snap_path, snap_name)
 
@@ -159,7 +165,10 @@ def main():
         state=dict(type='str', required=False, default='present', choices=['absent', 'present']),
         classic=dict(type='bool', required=False, default=False)
     )
-    module = AnsibleModule(argument_spec=module_args)
+    module = AnsibleModule(
+        argument_spec=module_args,
+        supports_check_mode=True,
+    )
     snap_names = module.params['name']
     state = module.params['state']
 
