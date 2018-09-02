@@ -3,6 +3,10 @@
     state: present
     advertise_addr: "{{ansible_default_ipv4.address}}"
 
+- name: install docker_swarm python requirements
+  pip:
+    name: jsondiff,pyyaml
+
 - name: Create a stack without name
   register: output
   docker_stack:
