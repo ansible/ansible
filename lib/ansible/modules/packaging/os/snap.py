@@ -161,23 +161,24 @@ def main():
 
     # Check if snaps are valid
     for snap_name in snap_names:
-    rc, out, err = snap_exists(module, snap_name)
+        rc, out, err = snap_exists(module, snap_name)
         if rc != 0:
-        module.fail_json(msg="No snap matching '%s' available" % str(snap_name))
+            module.fail_json(msg="No snap matching '%s' available" % str(snap_name))
 
     # Apply changes to the snaps
     exit_changed = False
     for snap_name in snap_names:
-    if state == 'present':
+        if state == 'present':
             r_changed = install_snap(module, snap_name)
-    elif state == 'absent':
+        elif state == 'absent':
             r_changed = remove_snap(module, snap_name)
 
         # If we modified one of the snaps, change the task `changed` return code to true
-        if r_changed == True and exit_changed == False:
+        if r_changed is True and exit_changed is False:
             exit_changed = True
 
     module.exit_json(changed=exit_changed)
+
 
 if __name__ == '__main__':
     main()
