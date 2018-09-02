@@ -1,0 +1,58 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    sku:
+      name: GP_Gen4_2
+      tier: GeneralPurpose
+    location: westus
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    storage_mb: 51200
+- name: Create Configuration
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+    source: user-override
+
+- name: Gather facts MySQL Configuration
+  azure_rm_mysqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    configuration_name: event_scheduler
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.configurations.event_scheduler.id != None
+      - output.configurations.event_scheduler.name != None
+      - output.configurations.event_scheduler.type != None
+      - output.configurations.event_scheduler.value != None
+      - output.configurations.event_scheduler.description != None
+      - output.configurations.event_scheduler.source != None
+
+- name: Gather facts MySQL Configuration
+  azure_rm_mysqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.configurations.event_scheduler.id != None
+      - output.configurations.event_scheduler.name != None
+      - output.configurations.event_scheduler.type != None
+      - output.configurations.event_scheduler.value != None
+      - output.configurations.event_scheduler.description != None
+      - output.configurations.event_scheduler.source != None
