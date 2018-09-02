@@ -35,46 +35,23 @@ from ansible.module_utils._text import to_native
 
 
 def unique(a):
-    if isinstance(a, collections.Hashable):
-        c = set(a)
-    else:
-        c = []
-        for x in a:
-            if x not in c:
-                c.append(x)
-    return c
+    return list(set(a))
 
 
 def intersect(a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
-        c = set(a) & set(b)
-    else:
-        c = unique([x for x in a if x in b])
-    return c
+    return list(set(a) & set(b))
 
 
 def difference(a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
-        c = set(a) - set(b)
-    else:
-        c = unique([x for x in a if x not in b])
-    return c
+    return list(set(a) - set(b))
 
 
 def symmetric_difference(a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
-        c = set(a) ^ set(b)
-    else:
-        c = unique([x for x in union(a, b) if x not in intersect(a, b)])
-    return c
+    return list(set(a) ^ set(b))
 
 
 def union(a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
-        c = set(a) | set(b)
-    else:
-        c = unique(a + b)
-    return c
+    return list(set(a) | set(b))
 
 
 def min(a):
