@@ -1,0 +1,81 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create an container registry
+  azure_rm_containerregistry:
+    name: acr{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    location: eastus2
+    state: present
+    admin_user_enabled: true
+    sku: Premium
+    tags:
+        Release: beta1
+        Environment: Production
+- name: Create Replication
+  azure_rm_containerregistryreplication:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    replication_name: replication{{ rpfx }}
+    location: westus
+- name: Create Replication
+  azure_rm_containerregistryreplication:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    replication_name: replication{{ rpfx }}
+    location: westus
+
+- name: Gather facts Replication
+  azure_rm_containerregistryreplication_facts:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    replication_name: replication{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.replications.replication{{ rpfx }}.id != None
+      - output.replications.replication{{ rpfx }}.name != None
+      - output.replications.replication{{ rpfx }}.type != None
+      - output.replications.replication{{ rpfx }}.location != None
+      - output.replications.replication{{ rpfx }}.status.timestamp != None
+
+- name: Delete instance of Replication
+  azure_rm_containerregistryreplication:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    replication_name: replication{{ rpfx }}
+    state: absent
+- name: Delete instance of Replication
+  azure_rm_containerregistryreplication:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    replication_name: replication{{ rpfx }}
+    state: absent
+
+- name: Gather facts Replication
+  azure_rm_containerregistryreplication_facts:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    replication_name: replication{{ rpfx }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - "'replication{{ rpfx }}' not in output.replications"
+      - "'replication{{ rpfx }}second' not in output.replications"
+
+- name: Delete container registry
+  azure_rm_containerregistry:
+    name: acr{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    state: absent
+- name: Delete container registry
+  azure_rm_containerregistry:
+    name: acr{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    state: absent
