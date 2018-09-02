@@ -22,14 +22,18 @@
 
 - set_fact:
     "until_tempfile_path_{{ idx }}": "{{ tmp_file.stdout }}"
+    until_tempfile_path_var_names: >
+        {{ [ 'until_tempfile_path_' + idx | string ] + until_tempfile_path_var_names | default([]) }}
   loop: "{{ tempfilepaths.results }}"
   loop_control:
     index_var: idx
     loop_var: tmp_file
 
-- set_fact:
-    until_tempfile_path_var_names: >
-      {{ vars | select('match', '^until_tempfile_path_') | list }}
+# `select` filter is only available since Jinja 2.7,
+# thus tests are failing under CentOS in CI
+#- set_fact:
+#    until_tempfile_path_var_names: >
+#      {{ vars | select('match', '^until_tempfile_path_') | list }}
 
 - name: loop and until with 6 retries
   shell: echo "run" >> {{ lookup('vars', tmp_file_var) }} && wc -w < {{ lookup('vars', tmp_file_var) }} | tr -d ' '
