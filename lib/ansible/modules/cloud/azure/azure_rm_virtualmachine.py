@@ -902,7 +902,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB'] = self.os_disk_size_gb
 
                 if self.vm_size and \
-                   self.vm_size != vm_dict['properties']['hardwareProfile']['vmSize'] :
+                   self.vm_size != vm_dict['properties']['hardwareProfile']['vmSize']:
                     self.log('CHANGED: virtual machine {0} - size '.format(self.name))
                     differences.append('VM size')
                     changed = True

@@ -192,6 +192,32 @@
 - assert:
       that: not output.changed
 
+- name: Resize VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      vm_size: Standard_A1_v2
+      storage_account: "{{ storage_account }}"
+      storage_container: "{{ vm_name1 }}"
+      storage_blob: "{{ vm_name1 }}.vhd"
+      admin_username: adminuser
+      admin_password: Password123!
+      short_hostname: testvm
+      os_type: Linux
+      network_interfaces: "{{ vm_name1 }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: output
+
+- assert:
+      that: output.changed
+
+- debug:
+    var: output
+
 - name: Delete VM
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
