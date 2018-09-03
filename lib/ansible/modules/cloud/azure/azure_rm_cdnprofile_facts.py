@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cdnprofile_facts
 
-version_added: "2.7"
+version_added: "2.8"
 
 short_description: Get Azure  CDN profile facts
 

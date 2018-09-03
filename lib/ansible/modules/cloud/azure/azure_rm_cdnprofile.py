@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_cdnprofile
-version_added: "2.7"
+version_added: "2.8"
 short_description: Manage a Azure CDN profile.
 description:
     - Create, update and delete a Azure CDN profile.
