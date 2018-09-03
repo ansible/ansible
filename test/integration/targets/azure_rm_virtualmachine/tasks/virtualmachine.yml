@@ -212,8 +212,9 @@
         version: latest
   register: output
 
-- debug:
-    var: output
+- assert:
+      that: output.changed
+      that: output.ansible_facts.azure_vm.properties.hardwareProfile.vmSize == "Standard_A1"
 
 - name: Delete VM
   azure_rm_virtualmachine:
