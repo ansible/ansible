@@ -255,14 +255,12 @@ def main():
             class_config=dict(
                 name=protection_group,
                 id=protection_group_id,
-                rn='expgep-{0}'.format(protection_group),
             ),
             child_configs=[
                 dict(
                     fabricNodePEp=dict(
                         attributes=dict(
                             id='{0}'.format(switch_1_id),
-                            rn='nodepep-{0}'.format(switch_1_id),
                         ),
                     ),
                 ),
@@ -270,7 +268,6 @@ def main():
                     fabricNodePEp=dict(
                         attributes=dict(
                             id='{0}'.format(switch_2_id),
-                            rn='nodepep-{0}'.format(switch_2_id),
                         ),
                     ),
                 ),
