@@ -901,6 +901,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB'] = self.os_disk_size_gb
 
+                if self.vm_size and \
+                   self.vm_size != vm_dict['properties']['hardwareProfile']['vmSize'] :
+                    self.log('CHANGED: virtual machine {0} - size '.format(self.name))
+                    differences.append('VM size')
+                    changed = True
+                    vm_dict['properties']['hardwareProfile']['vmSize'] = self.vm_size
+
                 update_tags, vm_dict['tags'] = self.update_tags(vm_dict.get('tags', dict()))
                 if update_tags:
                     differences.append('Tags')
@@ -1175,7 +1182,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             computer_name=vm_dict['properties']['osProfile']['computerName']
                         ),
                         hardware_profile=self.compute_models.HardwareProfile(
-                            vm_size=self.vm_size
+                            vm_size=self.['properties']['hardwareProfile']['vmSize'] 
                         ),
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
