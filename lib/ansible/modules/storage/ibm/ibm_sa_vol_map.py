@@ -21,7 +21,7 @@ version_added: "2.8"
 
 description:
     - "This module maps volumes to or unmaps them from the hosts on
-    IBM Spectrum Accelerate storage systems."
+        IBM Spectrum Accelerate storage systems."
 
 options:
     vol:
@@ -33,7 +33,7 @@ options:
         choices: [ "present", "absent" ]
         description:
             - When the state is present the volume is mapped.
-            When the state is absent, the volume is meant to be unmapped.
+                When the state is absent, the volume is meant to be unmapped.
         required: true
     cluster:
         description:
