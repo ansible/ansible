@@ -137,22 +137,7 @@ EXAMPLES = r'''
     login_user: USERID
     login_password: Password
     auth_url: "https://10.243.15.168"
-    pattern_update_dict: "{
-        'template_type': 'SystemInfo',
-        'template': {
-            'contact': 'contact',
-            'description': 'Pattern created by test API ',
-            'location': 'location',
-            'name': 'Learned-System_Info-99',
-            'systemName': {
-                'autogen': 'Disable',
-                'hyphenChecked': False
-            },
-            'type': 'SystemInfo',
-            'uri': '\/config\/template\/61',
-            'userDefined': True
-        }
-    }"
+    pattern_update_dict: "{{ pattern_dict}}"
     command_options: import_configpatterns
 
 '''
