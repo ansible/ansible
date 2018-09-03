@@ -950,6 +950,7 @@ class AzureRMModuleBase(object):
                                                         api_version='2017-04-02')
         return self._cdn_client
 
+
 class AzureRMAuthException(Exception):
     pass
 
