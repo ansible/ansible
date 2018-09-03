@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_containerinstance_facts
-version_added: "2.7"
-short_description: Get Container Instance facts.
+version_added: "2.8"
+short_description: Get Azure Container Instance facts.
 description:
     - Get facts of Container Instance.
 
@@ -63,7 +63,7 @@ container_groups:
                 - The resource id.
             returned: always
             type: str
-            sample: "/subscriptions/ae43b1e3-c35d-4c8c-bc0d-f148b4c52b78/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
                     containers"
         resource_group:
             description:
@@ -113,14 +113,14 @@ container_groups:
                         - The name of the container instance.
                     returned: always
                     type: str
-                    sample: "/subscriptions/ae43b1e3-c35d-4c8c-bc0d-f148b4c52b78/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
                             containers"
                 image:
                     description:
                         - The container image name.
                     returned: always
                     type: str
-                    sample: "/subscriptions/ae43b1e3-c35d-4c8c-bc0d-f148b4c52b78/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
                             containers"
                 memory:
                     description:
