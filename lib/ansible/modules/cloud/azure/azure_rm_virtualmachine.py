@@ -317,7 +317,7 @@ options:
             - Specifies that the image or disk that is being used was licensed on-premises. This element is only
               used for images that contain the Windows Server operating system.
             - "Note: To unset this value, it has to be set to the string 'None'."
-        version_added: 2.7
+        version_added: 2.8
         choices:
             - Windows_Server
             - Windows_Client
@@ -325,13 +325,13 @@ options:
     vm_identity:
         description:
             - Identity for the virtual machine.
-        version_added: 2.7
+        version_added: 2.8
         choices:
             - SystemAssigned
     win_rm:
         description:
             - List of Windows Remote Management configurations of the VM.
-        version_added: 2.7
+        version_added: 2.8
         suboptions:
             protocol:
                 description:
