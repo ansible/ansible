@@ -298,6 +298,7 @@
       short_hostname: testvm
       os_type: Linux
       os_disk_size_gb: 64
+      os_disk_name: testosdiskxx
       network_interfaces: "{{ niclist }}"
       availability_set: "{{ abs_name2 }}"
       image:
@@ -309,6 +310,7 @@
 - assert:
       that:
         - azure_vm.properties.availabilitySet.id
+        - azure_vm.properties.storageProfile.osDisk.caching == 'testosdiskxx'
 
 - name: Retrieve vms facts (filtering by name)
   azure_rm_virtualmachine_facts:

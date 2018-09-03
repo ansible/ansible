@@ -144,6 +144,10 @@ options:
             - Standard_LRS
             - Premium_LRS
         version_added: "2.4"
+    os_disk_name:
+        description:
+            - OS disk name
+        version_added: "2.8"
     os_disk_caching:
         description:
             - Type of OS disk caching.
@@ -706,6 +710,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                  default='ReadOnly'),
             os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
+            os_disk_name=dict(type='str'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
@@ -743,6 +748,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.os_disk_caching = None
         self.os_disk_size_gb = None
         self.managed_disk_type = None
+        self.os_disk_name = None
         self.network_interface_names = None
         self.remove_on_absent = set()
         self.tags = None
@@ -894,6 +900,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['caching'] = self.os_disk_caching
 
+                if self.os_disk_name and \
+                   self.os_disk_name != vm_dict['properties']['storageProfile']['osDisk']['name']:
+                    self.log('CHANGED: virtual machine {0} - OS disk name'.format(self.name))
+                    differences.append('OS Disk name')
+                    changed = True
+                    vm_dict['properties']['storageProfile']['osDisk']['name'] = self.os_disk_name
+
                 if self.os_disk_size_gb and \
                    self.os_disk_size_gb != vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']:
                     self.log('CHANGED: virtual machine {0} - OS disk size '.format(self.name))
@@ -1031,7 +1044,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         ),
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
-                                name=self.storage_blob_name,
+                                name=self.os_disk_name if self.os_disk_name else self.storage_blob_name,
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
