@@ -29,6 +29,42 @@
       - server_creation_check_task is success
       - server_creation_check_task is changed
 
+- name: Assign the volume to a server
+  scaleway_volume:
+    name: ansible-test-volume
+    server: 42
+  register: volume_assignation_task
+
+- debug: var=volume_assignation_task
+
+- assert:
+    that:
+      - volume_assignation_task is success
+      - volume_assignation_task is changed
+
+- name: Unassign the volume to a server
+  scaleway_volume:
+    name: ansible-test-volume
+    server: 42
+  register: volume_unassignation_task
+
+- debug: var=volume_unassignation_task
+
+- assert:
+    that:
+      - volume_unassignation_task is success
+      - volume_unassignation_task is changed
+
+- name: Delete server
+  register: delete_server_task
+
+- debug: var=server_deletion_task
+
+- assert:
+    that:
+      - server_deletion_task is success
+      - server_deletion_task is changed
+
 - name: Make sure volume is deleted
   scaleway_volume:
     name: ansible-test-volume
