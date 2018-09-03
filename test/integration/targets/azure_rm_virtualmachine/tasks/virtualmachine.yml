@@ -310,7 +310,7 @@
 - assert:
       that:
         - azure_vm.properties.availabilitySet.id
-        - azure_vm.properties.storageProfile.osDisk.caching == 'testosdiskxx'
+        - azure_vm.properties.storageProfile.osDisk.name == 'testosdiskxx'
 
 - name: Retrieve vms facts (filtering by name)
   azure_rm_virtualmachine_facts:
