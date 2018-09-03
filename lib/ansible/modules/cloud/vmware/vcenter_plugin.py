@@ -64,6 +64,7 @@ options:
     description:
     - Show the plugin in solution manager inside vCenter.
     default: True
+    type: bool
   state:
     description:
     - Add or remove vCenter Plugin.
