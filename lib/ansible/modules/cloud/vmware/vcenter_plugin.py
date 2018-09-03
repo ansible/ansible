@@ -52,9 +52,13 @@ options:
   ssl_thumbprint:
     description:
     - Required for C(state=present). SSL thumbprint of the plugin hosting server.
-  type:
+  server_type:
     description:
-    - Required for C(state=present). Type of plugin being installed (SOAP, REST, HTTP).
+    - Required for C(state=present). Type of server being used to install the plugin (SOAP, REST, HTTP, etc.).
+    default: vsphere-client-serenity
+  client_type:
+    description:
+    - Required for C(state=present). Type of client the plugin is (win32, .net, linux, etc.).
     default: vsphere-client-serenity
   state:
     description:
@@ -65,12 +69,6 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: vCenter Plugin Examples
-  hosts: deploy_node
-  tags:
-    - plugins
-  tasks:
-
     - name: Register vCenter Plugin
       vcenter_plugin:
          hostname: "{{ groups['vcsa'][0] }}"
@@ -105,14 +103,13 @@ result:
     description: information about performed operation
     returned: always
     type: string
-    sample: "'com.acme.plugin' installed successfully."
+    sample: "'com.acme.plugin' installed."
 """
 
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 try:
     import datetime
@@ -120,9 +117,8 @@ try:
 except ImportError:
     HAS_DT = False
 
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, vmware_argument_spec)
+from ansible.module_utils.vmware import (PyVmomi, connect_to_api, vmware_argument_spec)
 
 
 def main():
@@ -136,14 +132,18 @@ def main():
         name=dict(type='str', required=False),
         url=dict(type='str', required=False),
         ssl_thumbprint=dict(type='str', required=False),
-        type=dict(type='str', default='vsphere-client-serenity', required=False),
+        client_type=dict(type='str', default='vsphere-client-serenity', required=False),
+        server_type=dict(type='str', default='vsphere-client-serenity', required=False),
         state=dict(type='str', default='present', choices=['absent', 'present']),
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
-
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=False,
+        required_if=[
+            ['state', 'present', ['email', 'description', 'company', 'name', 'url', 'ssl_thumbprint', 'server_type', 'client_type']]
+        ]
+    )
 
     if not HAS_DT:
         module.fail_json(msg='datetime is required for this module')
@@ -155,70 +155,64 @@ def main():
     desc = module.params['description']
     name = module.params['name']
     company = module.params['company']
-    type = module.params['type']
+    client_type = module.params['client_type']
+    server_type = module.params['server_type']
     url = module.params['url']
     thumbprint = module.params['ssl_thumbprint']
 
-    try:
-        content = connect_to_api(module, False)
-        em = content.extensionManager
-        key_check = em.FindExtension(extension_key)
-        results = dict(changed=False, result=dict())
 
-        if state == 'present' and key_check:
-            results['changed'] = False
-            results['result'] = "'%s' is already installed" % (extension_key)
+    content = connect_to_api(module, False)
+    em = content.extensionManager
+    key_check = em.FindExtension(extension_key)
+    results = dict(changed=False, installed=dict())
 
-        elif state == 'present' and not key_check:
-            extension = vim.Extension()
-            extension.key = extension_key
-            extension.company = company
-            extension.version = version
-            extension.lastHeartbeatTime = datetime.datetime.now()
-            description = vim.Description()
-            description.label = name
-            description.summary = desc
-            extension.description = description
-            extension.shownInSolutionManager = False
+    if state == 'present' and key_check:
+        results['changed'] = False
+        results['installed'] = "'%s' is already installed" % (extension_key)
 
-            client = vim.Extension.ClientInfo()
-            client.company = company
-            client.version = version
-            client.description = description
-            client.type = type
-            client.url = url
-            extension.client = [client]
+    elif state == 'present' and not key_check:
+        extension = vim.Extension()
+        extension.key = extension_key
+        extension.company = company
+        extension.version = version
+        extension.lastHeartbeatTime = datetime.datetime.now()
+        description = vim.Description()
+        description.label = name
+        description.summary = desc
+        extension.description = description
+        extension.shownInSolutionManager = False
 
-            server = vim.Extension.ServerInfo()
-            server.company = company
-            server.description = description
-            server.type = type
-            server.adminEmail = email
-            server.serverThumbprint = thumbprint
-            server.url = url
-            extension.server = [server]
+        client = vim.Extension.ClientInfo()
+        client.company = company
+        client.version = version
+        client.description = description
+        client.type = client_type
+        client.url = url
+        extension.client = [client]
 
-            em.RegisterExtension(extension)
-            results['changed'] = True
-            results['result'] = "'%s' installed" % (extension_key)
+        server = vim.Extension.ServerInfo()
+        server.company = company
+        server.description = description
+        server.type = server_type
+        server.adminEmail = email
+        server.serverThumbprint = thumbprint
+        server.url = url
+        extension.server = [server]
 
-        elif state == 'absent' and key_check:
-            em.UnregisterExtension(extension_key)
-            results['changed'] = True
-            results['result'] = "'%s' uninstalled" % (extension_key)
+        em.RegisterExtension(extension)
+        results['changed'] = True
+        results['installed'] = "'%s' installed." % (extension_key)
 
-        elif state == 'absent' and not key_check:
-            results['changed'] = False
-            results['result'] = "'%s' is not installed" % (extension_key)
+    elif state == 'absent' and key_check:
+        em.UnregisterExtension(extension_key)
+        results['changed'] = True
+        results['installed'] = "'%s' uninstalled." % (extension_key)
 
-        module.exit_json(**results)
+    elif state == 'absent' and not key_check:
+        results['changed'] = False
+        results['installed'] = "'%s' is not installed." % (extension_key)
 
-    except vmodl.RuntimeFault as runtime_fault:
-        module.fail_json(msg=runtime_fault.msg)
-    except vmodl.MethodFault as method_fault:
-        module.fail_json(msg=method_fault.msg)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':
