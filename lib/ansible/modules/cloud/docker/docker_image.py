@@ -87,6 +87,11 @@ options:
     required: false
     version_added: "2.1"
     type: bool
+  network:
+    description:
+      - The network to use for RUN build instructions.
+    required: false
+    version_added: "2.8"
   nocache:
     description:
       - Do not use cache when building an image.
@@ -280,6 +285,7 @@ class ImageManager(DockerBaseClass):
         self.force = parameters.get('force')
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
+        self.network = parameters.get('network')
         self.nocache = parameters.get('nocache')
         self.path = parameters.get('path')
         self.pull = parameters.get('pull')
@@ -510,6 +516,7 @@ class ImageManager(DockerBaseClass):
             tag=self.name,
             rm=self.rm,
             nocache=self.nocache,
+            network_mode=self.network,
             timeout=self.http_timeout,
             pull=self.pull,
             forcerm=self.rm,
@@ -582,6 +589,7 @@ def main():
         http_timeout=dict(type='int'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
+        network=dict(type='str'),
         nocache=dict(type='bool', default=False),
         path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
