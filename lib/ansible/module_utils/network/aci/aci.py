@@ -808,11 +808,15 @@ class ACIModule(object):
             proposed_config = proposed_child[key]['attributes']
             existing_config = None
 
+            # FIXME: Design causes issues for repeated child_classes
             # get existing dictionary from the list of existing to use for comparison
             for child in existing_children:
                 if child.get(child_class):
                     existing_config = child[key]['attributes']
-                    break
+                    # NOTE: This is an ugly fix
+                    # Return the one that is a subset match
+                    if set(proposed_config.items()).issubset(set(existing_config.items())):
+                        break
 
         return child_class, proposed_config, existing_config
 
