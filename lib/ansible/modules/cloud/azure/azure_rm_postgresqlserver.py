@@ -196,9 +196,6 @@ class AzureRMServers(AzureRMModuleBase):
             backup_retention_days=dict(
                 type='int'
             ),
-            storage_mb=dict(
-                type='int'
-            ),
             version=dict(
                 type='str',
                 choices=['9.5', '9.6', '10']
