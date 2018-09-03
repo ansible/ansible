@@ -71,7 +71,7 @@ options:
     create_mode:
         description:
             - Create mode of SQL Server
-        default: Default
+        default: default
         choices:
             - default
             - geo_restore
@@ -252,7 +252,12 @@ class AzureRMServers(AzureRMModuleBase):
                 elif key == "enforce_ssl":
                     self.parameters["properties"]["ssl_enforcement"] = 'Enabled' if kwargs[key] else 'Disabled'
                 elif key == "create_mode":
-                    self.parameters["properties"]["create_mode"] = kwargs[key]
+                    if (kwargs[key] == 'default'):    
+                        self.parameters["properties"]["create_mode"] = 'Default'
+                    elif (kwargs[key] == 'point_in_time_restore'):
+                        self.parameters["properties"]["create_mode"] = 'PointInTimeRestore'
+                    elif (kwargs[key] == 'geo_restore'):
+                        self.parameters["properties"]["create_mode"] = 'GeoRestore'
                 elif key == "admin_username":
                     self.parameters["properties"]["administrator_login"] = kwargs[key]
                 elif key == "admin_password":
