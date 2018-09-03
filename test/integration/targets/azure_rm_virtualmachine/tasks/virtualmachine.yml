@@ -212,9 +212,6 @@
         version: latest
   register: output
 
-- assert:
-      that: output.changed
-
 - debug:
     var: output
 
