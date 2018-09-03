@@ -17,7 +17,7 @@ module: vcenter_plugin
 short_description: Register/deregister vCenter Plugins
 description:
     - This module can be used to register/deregister vCenter plugins.
-version_added: 2.7
+version_added: 2.8
 author:
     - Michael Tipton (@castawayegr)
 notes:
@@ -159,7 +159,6 @@ def main():
     server_type = module.params['server_type']
     url = module.params['url']
     thumbprint = module.params['ssl_thumbprint']
-
 
     content = connect_to_api(module, False)
     em = content.extensionManager
