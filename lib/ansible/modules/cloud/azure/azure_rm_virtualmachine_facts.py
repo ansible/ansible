@@ -272,7 +272,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         :return: VirtualMachine object
         '''
         try:
-            vm = self.compute_client.virtual_machines.get(self.resource_group, name, expand='instanceView')
+            vm = self.compute_client.virtual_machines.get(self.resource_group, name, expand='instanceview')
             return vm
         except Exception as exc:
             self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
@@ -287,16 +287,16 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
         resource_group =  re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
-        #instance = None
+        instance = None
 
-        #try:
-        #    instance = self.compute_client.virtual_machines.instance_view(resource_group, vm.name)
-        #    instance = self.serialize_obj(instance, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
-        #except Exception as exc:
-        #    self.fail("Error getting virtual machine {0} instance view - {1}".format(self.compute_client.virtual_machines.api_version, str(exc)))
+        try:
+            instance = self.compute_client.virtual_machines.instance_view(resource_group, vm.name)
+            instance = self.serialize_obj(instance, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
+        except Exception as exc:
+            self.fail("Error getting virtual machine {0} instance view - {1}".format(self.compute_client.virtual_machines.api_version, str(vars(self.compute_client.virtual_machines))))
 
         new_result = {}
-        new_result['instance'] = result
+        new_result['instance'] = instance
         new_result['id'] = vm.id
         new_result['resource_group'] = resource_group
         new_result['name'] = vm.name
