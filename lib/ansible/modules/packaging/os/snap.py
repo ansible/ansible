@@ -103,24 +103,27 @@ def is_snap_installed(module, snap_name):
     return rc, out, err
 
 
-def install_snaps(module, snap_names):
+def install_snaps(module, snap_names, classic):
     snaps_to_install = list()
     for snap_name in snap_names:
         rc, out, err = is_snap_installed(module, snap_name)
         if rc != 0:
             # Snap is not installed
             snaps_to_install.append(snap_name)
+
     if not snaps_to_install:
-        # If there is no snap to install return that nothing was changed
-        return False
+        snaps_already_installed = ', '.join(snap_names)
+        module.exit_json(msg="Snap(s) already installed: %s" % str(snaps_already_installed), classic=classic, changed=False)
     else:
         # Transform the list into a string with whitespace-separated snaps
         snaps_to_install = ' '.join(snaps_to_install)
+        # Create a string with commas for the output
+        snaps_installed = snaps_to_install.replace(' ', ', ')
 
     if module.check_mode:
-        module.exit_json(changed=True)
+        module.exit_json(msg="Snap(s) that would have been installed: %s" % str(snaps_installed), classic=classic, changed=True)
 
-    classic = '--classic' if module.params['classic'] else ''
+    classic = '--classic' if classic else ''
 
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'install', snaps_to_install, classic]
@@ -130,12 +133,10 @@ def install_snaps(module, snap_names):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        # Snaps have been installed
-        return True
+        module.exit_json(msg="Snap(s) installed: %s" % str(snaps_installed), classic=classic, changed=True)
     else:
-        # Something went wrong
         err = clean_err(err)
-        module.fail_json(msg=err)
+        module.fail_json(msg="Something went wrong.", classic=classic, err=err)
 
 
 def remove_snaps(module, snap_names):
@@ -146,14 +147,16 @@ def remove_snaps(module, snap_names):
             # Snap is installed
             snaps_to_remove.append(snap_name)
     if not snaps_to_remove:
-        # If there is no snap to remove return that nothing was changed
-        return False
+        snaps_not_installed = ', '.join(snap_names)
+        module.exit_json(msg="Snap(s) not installed: %s" % str(snaps_not_installed), changed=False)
     else:
         # Transform the list into a string with whitespace-separated snaps
         snaps_to_remove = ' '.join(snaps_to_remove)
+        # Create a string with commas for the output
+        snaps_removed = snaps_to_remove.replace(' ', ', ')
 
     if module.check_mode:
-        module.exit_json(changed=True)
+        module.exit_json(msg="Snap(s) that would have been removed: %s" % str(snaps_removed), changed=True)
 
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'remove', snaps_to_remove]
@@ -163,12 +166,10 @@ def remove_snaps(module, snap_names):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        # Snaps have been removed
-        return True
+        module.exit_json(msg="Snap(s) removed: %s" % str(snaps_removed), changed=True)
     else:
-        # Something went wrong
         err = clean_err(err)
-        module.fail_json(msg=err)
+        module.fail_json(msg="Something went wrong.", err=err)
 
 
 def main():
@@ -184,20 +185,19 @@ def main():
     # This argument is a list and will be treated as such, even if there is only one snap
     snap_names = module.params['name']
     state = module.params['state']
+    classic = module.params['classic']
 
     # Check if snaps are valid
     for snap_name in snap_names:
         rc, out, err = snap_exists(module, snap_name)
         if rc != 0:
-            module.fail_json(msg="No snap matching '%s' available" % str(snap_name))
+            module.fail_json(msg="No snap matching '%s' available." % str(snap_name))
 
     # Apply changes to the snaps
     if state == 'present':
-        exit_changed = install_snaps(module, snap_names)
+        install_snaps(module, snap_names, classic)
     elif state == 'absent':
-        exit_changed = remove_snaps(module, snap_names)
-
-    module.exit_json(changed=exit_changed)
+        remove_snaps(module, snap_names)
 
 
 if __name__ == '__main__':
