@@ -196,7 +196,7 @@
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name1 }}"
-      vm_size: Standard_A1_v2
+      vm_size: Standard_A1
       storage_account: "{{ storage_account }}"
       storage_container: "{{ vm_name1 }}"
       storage_blob: "{{ vm_name1 }}.vhd"
