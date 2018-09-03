@@ -53,14 +53,6 @@ options:
     storage_mb:
         description:
             - The maximum storage allowed for a server.
-    backup_retention_days:
-        description:
-            - Backup retention days for the server.
-        type: int
-    geo_redundant_backup:
-        description:
-            - Enable Geo-redundant or not for server backup.
-        type: bool
     version:
         description:
             - Server version.
@@ -86,11 +78,22 @@ options:
             - point_in_time_restore
     source_server_id:
         description:
-            - Id if the source server if C(create_mode) is not default.
+            - Id if the source server if C(create_mode) is not I(default).
         version_added: 2.8
     restore_point_in_time:
         description:
-            - Restore point in time if C(create_mode) is not set to I(point_in_time_restore).
+            - Restore point creation time (ISO8601 format), specifying the time to restore from.
+            - Required if C(create_mode) is set to I(point_in_time_restore).
+        version_added: 2.8
+    backup_retention_days:
+        description:
+            - Backup retention days for the server.
+        type: int
+        version_added: 2.8
+    geo_redundant_backup:
+        description:
+            - Enable Geo-redundant or not for server backup.
+        type: bool
         version_added: 2.8
     state:
         description:
