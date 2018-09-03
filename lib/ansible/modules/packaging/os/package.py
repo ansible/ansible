@@ -47,6 +47,14 @@ notes:
     - For Windows targets, use the M(win_package) module instead.
 '''
 EXAMPLES = '''
+- name: ensure a list of packages installed
+  package:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - httpd
+    - httpd-tools
+
 - name: install ntpdate
   package:
     name: ntpdate
