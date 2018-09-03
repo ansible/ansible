@@ -288,6 +288,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
 
         new_result = {}
+        new_result['all'] = result
         new_result['id'] = vm.id
         new_result['resource_group'] = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
         new_result['name'] = vm.name
