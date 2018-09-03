@@ -286,11 +286,19 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         '''
 
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
+        resource_group =  re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+        instance = None
+
+        try:
+            instance = self.compute_client.virtual_machines.instance_view(resource_group, vm.name)
+            instance = self.serialize_obj(instance, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
+        except Exception as exc:
+            self.fail("Error getting virtual machine {0} instance view - {1}".format(vm.name, str(exc)))
 
         new_result = {}
-        new_result['all'] = result
+        new_result['instance'] = instance
         new_result['id'] = vm.id
-        new_result['resource_group'] = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+        new_result['resource_group'] =
         new_result['name'] = vm.name
         new_result['state'] = 'present'
         new_result['location'] = vm.location
