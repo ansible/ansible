@@ -72,6 +72,16 @@ options:
         description:
             - Create mode of SQL Server
         default: Default
+        choices:
+            - default
+            - geo_restore
+            - point_in_time_restore
+    source_server_id:
+        description:
+            - Id if the source server if C(create_mode) is not default.
+    restore_point_in_time:
+        description:
+            - Restore point in time if C(create_mode) is not set to I(point_in_time_restore).
     state:
         description:
             - Assert the state of the PostgreSQL server. Use C(present) to create or update a server and C(absent) to delete it.
@@ -180,7 +190,8 @@ class AzureRMServers(AzureRMModuleBase):
             ),
             create_mode=dict(
                 type='str',
-                default='Default'
+                default='default',
+                choices=['default', 'geo_restore', 'point_in_time_restore']
             ),
             admin_username=dict(
                 type='str'
@@ -188,6 +199,12 @@ class AzureRMServers(AzureRMModuleBase):
             admin_password=dict(
                 type='str',
                 no_log=True
+            ),
+            source_server_id=dict(
+                type='str'
+            ),
+            restore_point_in_time=dict(
+                type='str'
             ),
             state=dict(
                 type='str',
@@ -238,6 +255,12 @@ class AzureRMServers(AzureRMModuleBase):
                     self.parameters.setdefault("properties", {})["administrator_login"] = kwargs[key]
                 elif key == "admin_password":
                     self.parameters.setdefault("properties", {})["administrator_login_password"] = kwargs[key]
+                elif key == "source_server_id":
+                    self.parameters.setdefault("properties", {})["source_server_id"] = kwargs[key]
+                elif key == "restore_point_in_time":
+                    self.parameters.setdefault("properties", {})["restore_point_in_time"] = kwargs[key]
+                elif key == "creation_mode":
+                    self.parameters.setdefault("properties", {})["creation_mode"] = kwargs[key]
 
         old_response = None
         response = None

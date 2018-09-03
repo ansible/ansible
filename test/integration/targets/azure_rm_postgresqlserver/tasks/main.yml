@@ -103,6 +103,7 @@
     enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
+<<<<<<< HEAD
     tags:
       aaa: bbb
 
@@ -120,6 +121,10 @@
     admin_password: Testpasswordxyz12!
     tags:
       ccc: ddd
+=======
+    creation_mode: geo_restore
+    source_server_id: whatshoulditbe
+>>>>>>> additional changes for restore
 
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
