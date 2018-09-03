@@ -271,7 +271,7 @@ class ZipArchive(object):
                                 exclude_flag = True
                                 break
                     if not exclude_flag:
-                        self._files_in_archive.append(to_native(member)) 
+                        self._files_in_archive.append(to_native(member))
             except:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
