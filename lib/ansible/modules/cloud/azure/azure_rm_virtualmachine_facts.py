@@ -9,7 +9,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import inspect
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -290,13 +289,11 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         resource_group =  re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
         instance = None
 
-        mthds=inspect.getmembers(self.compute_client.virtual_machines, predicate=inspect.ismethod)
-
         try:
             instance = self.compute_client.virtual_machines.instance_view(resource_group, vm.name)
             instance = self.serialize_obj(instance, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
         except Exception as exc:
-            self.fail("Error getting virtual machine {0} instance view - {1}".format(self.compute_client.virtual_machines.api_version, str(mthds)))
+            self.fail("Error getting virtual machine {0} instance view - {1}".format(vm.name, str(exc)))
 
         new_result = {}
         new_result['instance'] = instance
