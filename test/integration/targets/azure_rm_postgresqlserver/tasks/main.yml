@@ -103,8 +103,6 @@
     enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
-<<<<<<< HEAD
-<<<<<<< HEAD
     tags:
       aaa: bbb
 
