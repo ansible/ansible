@@ -252,7 +252,7 @@ class AzureRMServers(AzureRMModuleBase):
                 elif key == "enforce_ssl":
                     self.parameters["properties"]["ssl_enforcement"] = 'Enabled' if kwargs[key] else 'Disabled'
                 elif key == "create_mode":
-                    if (kwargs[key] == 'default'):    
+                    if (kwargs[key] == 'default'):
                         self.parameters["properties"]["create_mode"] = 'Default'
                     elif (kwargs[key] == 'point_in_time_restore'):
                         self.parameters["properties"]["create_mode"] = 'PointInTimeRestore'
