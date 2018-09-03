@@ -79,9 +79,11 @@ options:
     source_server_id:
         description:
             - Id if the source server if C(create_mode) is not default.
+        version_added: 2.8
     restore_point_in_time:
         description:
             - Restore point in time if C(create_mode) is not set to I(point_in_time_restore).
+        version_added: 2.8
     state:
         description:
             - Assert the state of the PostgreSQL server. Use C(present) to create or update a server and C(absent) to delete it.
@@ -215,7 +217,7 @@ class AzureRMServers(AzureRMModuleBase):
 
         self.resource_group = None
         self.name = None
-        self.parameters = dict()
+        self.parameters = {'properties': { 'create_mode': 'default' }}
         self.tags = None
 
         self.results = dict(changed=False)
@@ -246,21 +248,21 @@ class AzureRMServers(AzureRMModuleBase):
                 elif key == "storage_mb":
                     self.parameters.setdefault("properties", {}).setdefault("storage_profile", {})["storage_mb"] = kwargs[key]
                 elif key == "version":
-                    self.parameters.setdefault("properties", {})["version"] = kwargs[key]
+                    self.parameters["properties"]["version"] = kwargs[key]
                 elif key == "enforce_ssl":
-                    self.parameters.setdefault("properties", {})["ssl_enforcement"] = 'Enabled' if kwargs[key] else 'Disabled'
+                    self.parameters["properties"]["ssl_enforcement"] = 'Enabled' if kwargs[key] else 'Disabled'
                 elif key == "create_mode":
-                    self.parameters.setdefault("properties", {})["create_mode"] = kwargs[key]
+                    self.parameters["properties"]["create_mode"] = kwargs[key]
                 elif key == "admin_username":
-                    self.parameters.setdefault("properties", {})["administrator_login"] = kwargs[key]
+                    self.parameters["properties"]["administrator_login"] = kwargs[key]
                 elif key == "admin_password":
-                    self.parameters.setdefault("properties", {})["administrator_login_password"] = kwargs[key]
+                    self.parameters["properties"]["administrator_login_password"] = kwargs[key]
                 elif key == "source_server_id":
-                    self.parameters.setdefault("properties", {})["source_server_id"] = kwargs[key]
+                    self.parameters["properties"]["source_server_id"] = kwargs[key]
                 elif key == "restore_point_in_time":
-                    self.parameters.setdefault("properties", {})["restore_point_in_time"] = kwargs[key]
+                    self.parameters["properties"]["restore_point_in_time"] = kwargs[key]
                 elif key == "creation_mode":
-                    self.parameters.setdefault("properties", {})["creation_mode"] = kwargs[key]
+                    self.parameters["properties"]["creation_mode"] = kwargs[key]
 
         old_response = None
         response = None
