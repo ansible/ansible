@@ -157,7 +157,7 @@ class NetworksModule(BaseModule):
         ons_service = self._connection.system_service().openstack_network_providers_service()
         on_service = ons_service.provider_service(self._get_external_provider_id())
         network = on_service.networks_service().network_service(self.build_entity().id)
-        network.import_(data_center=otypes.DataCenter(self._module.params['data_center']))
+        network.import_(data_center=otypes.DataCenter(name=self._module.params['data_center']))
 
     def build_entity(self):
         return otypes.Network(
