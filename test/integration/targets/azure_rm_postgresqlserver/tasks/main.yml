@@ -120,6 +120,8 @@
     admin_password: Testpasswordxyz12!
     tags:
       ccc: ddd
+    create_mode: geo_restore
+    source_server_id: "{{ output.id }}"
 
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
