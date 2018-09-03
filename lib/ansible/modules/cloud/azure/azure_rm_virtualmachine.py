@@ -1175,7 +1175,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             computer_name=vm_dict['properties']['osProfile']['computerName']
                         ),
                         hardware_profile=self.compute_models.HardwareProfile(
-                            vm_size=vm_dict['properties']['hardwareProfile']['vmSize']
+                            vm_size=self.vm_size
                         ),
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
