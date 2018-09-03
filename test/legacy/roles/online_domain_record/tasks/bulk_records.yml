@@ -1,0 +1,69 @@
+
+- hosts: localhost
+  gather_facts: False
+  vars:
+    records :
+    - name: "mail"
+      zone: "{{ zone }}"
+      type: A
+      ttl: 1440
+      content : "1.1.1.1"
+      state: present
+    - name: "@"
+      zone: "{{ zone }}"
+      type: MX
+      ttl: 1440
+      priority: 1
+      content : "mail.{{ zone }}"
+      state: present
+    - name: "alias"
+      zone: "{{ zone }}"
+      type: CNAME
+      ttl: 1440
+      content : "www.online.net"
+      state: present
+  tasks:
+    - name: reset zone
+      domain_online_zone:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        zone: "{{ zone }}"
+        action: "reset"
+      register: result
+      failed_when: result.contents | length != 0
+
+    - debug: var=result
+
+    - assert:
+        that:
+          - result is success
+
+    - name: add records
+      domain_online_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ item['name'] }}"
+        zone: "{{ zone }}"
+        type: "{{ item['type'] }}"
+        content : "{{ item['content'] }}"
+        priority: "{{ item['priority'] | default('0') }}"
+        ttl: "{{ item['ttl'] }}"
+        state: "{{ item['state'] }}"
+      with_items: '{{ records }}'
+      register: result
+      failed_when: result.changed == false
+
+    - name: list zone
+      domain_online_zone:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        zone: "{{ zone }}"
+        action: "list"
+      register: result
+      failed_when: result.contents | length != 3
+
+    - debug: var=result
+
+    - assert:
+        that:
+          - result is success

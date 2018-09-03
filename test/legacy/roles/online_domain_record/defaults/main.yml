@@ -1,0 +1,7 @@
+---
+dns_server: 'ns0.online.net'
+ttl: 1440
+online_domain: "{{ lookup('env', 'ONLINE_DOMAIN') }}"
+name: foobar
+a_content: 8.8.8.8
+second_a_content: 1.1.1.1

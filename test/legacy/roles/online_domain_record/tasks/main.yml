@@ -1,0 +1,426 @@
+- name: Add a record (Check)
+  check_mode: yes
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ a_content }}"
+    ttl: "{{ ttl }}"
+    state: present
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+- name: Add a record
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ a_content }}"
+    ttl: "{{ ttl }}"
+    state: present
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+- name: Add a record (Confirmation)
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ a_content }}"
+    ttl: "{{ ttl }}"
+    state: present
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+- name: Change a record (Check)
+  check_mode: yes
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ second_a_content }}"
+    ttl: "{{ ttl }}"
+    state: present
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+- name: Change a record
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ second_a_content }}"
+    ttl: "{{ ttl }}"
+    state: present
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+- name: Change a record (Confirmation)
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ second_a_content }}"
+    ttl: "{{ ttl }}"
+    state: present
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+- name: Delete a record (Check)
+  check_mode: yes
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ a_content }}"
+    ttl: "{{ ttl }}"
+    state: absent
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+- name: Delete a record
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ a_content }}"
+    ttl: "{{ ttl }}"
+    state: absent
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+- name: Delete a record (Confirmation)
+  online_domain_record:
+    name: "{{ name }}"
+    zone: "{{ online_domain }}"
+    type: A
+    content: "{{ a_content }}"
+    ttl: "{{ ttl }}"
+    state: absent
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - result is success
+
+#    - shell: sleep 20
+#
+#    - name: test A record
+#      shell: dig "{{ name }}"."{{ zone }}" @"{{ dns_server }}" A | grep '8.8.8.8'
+#      register: record_test
+#      failed_when: record_test.rc == 1
+#
+#    - name: delete A record
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ name }}"
+#        zone: "{{ zone }}"
+#        type: A
+#        ttl: 1440
+#        state: absent
+#      register: result
+#      failed_when: result.changed == false
+#
+#    - debug: var=result
+#
+#    - name: delete same A record
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ name }}"
+#        zone: "{{ zone }}"
+#        type: A
+#        ttl: 1440
+#        state: absent
+#      register: result
+#      failed_when: result.changed == true
+#
+#    - assert:
+#        that:
+#          - result is success
+#
+#    - shell: sleep 30
+#
+#    - name: test A record deleted
+#      shell: dig +short "{{ name }}"."{{ zone }}" @"{{ dns_server }}" A | grep '8.8.8.8'
+#      register: record_test
+#      failed_when: record_test.rc == 0
+#
+#- hosts: localhost
+#  gather_facts: False
+#  vars:
+#    records :
+#    - name: "{{ name }}"
+#      zone: "{{ zone }}"
+#      type: A
+#      ttl: 1440
+#      content : "1.1.1.1"
+#      state: present
+#    - name: "{{ name }}"
+#      zone: "{{ zone }}"
+#      type: A
+#      ttl: 1440
+#      content : "4.4.4.4"
+#      state: present
+#    - name: "{{ name }}"
+#      zone: "{{ zone }}"
+#      type: A
+#      ttl: 1440
+#      content : "8.8.8.8"
+#      state: present
+#  tasks:
+#    - name: reset zone
+#      domain_online_zone:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        zone: "{{ zone }}"
+#        action: "reset"
+#      register: result
+#
+#    - debug: var=result
+#
+#    - name: add A records
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ item['name'] }}"
+#        zone: "{{ zone }}"
+#        type: "{{ item['type'] }}"
+#        content : "{{ item['content'] }}"
+#        ttl: "{{ item['ttl'] }}"
+#        state: "{{ item['state'] }}"
+#      with_items: '{{ records }}'
+#      register: result
+#      failed_when: result.changed == false
+#
+#    - name: list zone
+#      domain_online_zone:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        zone: "{{ zone }}"
+#        action: "list"
+#      register: result
+#
+#    - debug: var=result
+#    - name: delete all A records
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ name }}"
+#        zone: "{{ zone }}"
+#        type: A
+#        ttl: 1440
+#        state: absent
+#      register: result
+#      failed_when: result.changed == false
+#
+#    - debug: var=result
+#
+#    - name: list zone
+#      domain_online_zone:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        zone: "{{ zone }}"
+#        action: "list"
+#      register: result
+#      failed_when: result.contents | length != 0
+#
+#    - debug: var=result
+#
+#    - name: add A records
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ item['name'] }}"
+#        zone: "{{ zone }}"
+#        type: "{{ item['type'] }}"
+#        content : "{{ item['content'] }}"
+#        ttl: "{{ item['ttl'] }}"
+#        state: "{{ item['state'] }}"
+#      with_items: '{{ records }}'
+#      register: result
+#      failed_when: result.changed == false
+#
+#    - debug: var=result
+#
+#    - name: list zone
+#      domain_online_zone:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        zone: "{{ zone }}"
+#        action: "list"
+#      register: result
+#      failed_when: result.contents | length != 3
+#
+#    - debug: var=result
+#
+#    - assert:
+#        that:
+#          - result is success
+#
+#    - name: delete A record with content
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ name }}"
+#        zone: "{{ zone }}"
+#        content: "8.8.8.8"
+#        type: A
+#        ttl: 1440
+#        state: absent
+#      register: result
+#      failed_when: result.changed == false
+#
+#    - debug: var=result
+#
+#    - name: list zone
+#      domain_online_zone:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        zone: "{{ zone }}"
+#        action: "list"
+#      register: result
+#      failed_when: result.contents | length != 2
+#
+#    - debug: var=result
+#
+#    - assert:
+#        that:
+#          - result is success
+#
+#
+#-  vars:
+#    records :
+#    - name: "{{ name }}"
+#      zone: "{{ zone }}"
+#      type: A
+#      ttl: 1440
+#      content : "1.1.1.1"
+#      state: present
+#    - name: "{{ name }}"
+#      zone: "{{ zone }}"
+#      type: A
+#      ttl: 1440
+#      content : "4.4.4.4"
+#      state: present
+#    - name: "{{ name }}"
+#      zone: "{{ zone }}"
+#      type: A
+#      ttl: 1440
+#      content : "8.8.8.8"
+#      state: present
+#  tasks:
+#    - name: delete all A records
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ name }}"
+#        zone: "{{ zone }}"
+#        type: A
+#        ttl: 1440
+#        state: absent
+#      register: result
+#
+#    - debug: var=result
+#
+#    - assert:
+#        that:
+#          - result is success
+#
+#    - shell: sleep 30
+#
+#    - name: add A records
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ item['name'] }}"
+#        zone: "{{ zone }}"
+#        type: "{{ item['type'] }}"
+#        content : "{{ item['content'] }}"
+#        ttl: "{{ item['ttl'] }}"
+#        state: "{{ item['state'] }}"
+#      with_items: '{{ records }}'
+#      register: result
+#      failed_when: result.changed == false
+#
+#    - debug: var=result
+#
+#    - assert:
+#        that:
+#          - result is success
+#
+#    - shell: sleep 30
+#
+#    - name: count A record
+#      shell: dig +short "{{ name }}"."{{ zone }}" @"{{ dns_server }}" A | wc -l
+#      register: record_test
+#      failed_when: record_test.stdout.find('3') == -1
+#
+#    - name: delete A record with content
+#      domain_online_record:
+#        token: "{{ token }}"
+#        endpoint: "{{ endpoint | default('') }}"
+#        name: "{{ name }}"
+#        zone: "{{ zone }}"
+#        content: "8.8.8.8"
+#        type: A
+#        ttl: 1440
+#        state: absent
+#      register: result
+#      failed_when: result.changed == false
+#
+#    - debug: var=result
+#
+#    - assert:
+#        that:
+#          - result is success
+#
+#    - shell: sleep 30
+#
+#    - name: test A record absent
+#      shell: dig "{{ name }}"."{{ zone }}" @"{{ dns_server }}" A | grep '8.8.8.8'
+#      register: record_test
+#      failed_when: record_test.rc == 0
