@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import base64
 import json
 
 from collections import Mapping
@@ -67,6 +68,8 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         elif isinstance(o, (date, datetime)):
             # date object
             value = o.isoformat()
+        elif isinstance(o, bytes):
+            value = base64.b64encode(o).decode('ascii')
         else:
             # use default encoder
             value = super(AnsibleJSONEncoder, self).default(o)
