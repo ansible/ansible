@@ -298,7 +298,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         new_result = {}
         new_result['instance'] = instance
         new_result['id'] = vm.id
-        new_result['resource_group'] =
+        new_result['resource_group'] = resource_group
         new_result['name'] = vm.name
         new_result['state'] = 'present'
         new_result['location'] = vm.location
