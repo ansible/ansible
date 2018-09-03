@@ -149,6 +149,7 @@ try:
     from azure.mgmt.web import WebSiteManagementClient
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
+    from azure.storage.blob import PageBlobService, BlockBlobService
     from adal.authentication_context import AuthenticationContext
 except ImportError as exc:
     HAS_AZURE_EXC = exc
@@ -750,9 +751,13 @@ class AzureRMModuleBase(object):
         try:
             self.log('Create blob service')
             if storage_blob_type == 'page':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_page_blob_service()
+                return PageBlobService(endpoint_suffix=self._cloud_environment.suffixes.storage_endpoint,
+                                       account_name=storage_account_name,
+                                       account_key=account_keys.keys[0].value)
             elif storage_blob_type == 'block':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
+                return BlockBlobService(endpoint_suffix=self._cloud_environment.suffixes.storage_endpoint,
+                                        account_name=storage_account_name,
+                                        account_key=account_keys.keys[0].value)
             else:
                 raise Exception("Invalid storage blob type defined.")
         except Exception as exc:
