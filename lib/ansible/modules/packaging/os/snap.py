@@ -87,7 +87,8 @@ def clean_err(err):
 
 def snap_exists(module, snap_name):
     snap_path = module.get_bin_path("snap", True)
-    cmd = "%s info %s" % (snap_path, snap_name)
+    cmd_parts = [snap_path, 'info', snap_name]
+    cmd = ' '.join(cmd_parts)
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     return rc, out, err
@@ -95,7 +96,8 @@ def snap_exists(module, snap_name):
 
 def is_snap_installed(module, snap_name):
     snap_path = module.get_bin_path("snap", True)
-    cmd = "%s list %s" % (snap_path, snap_name)
+    cmd_parts = [snap_path, 'list', snap_name]
+    cmd = ' '.join(cmd_parts)
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     return rc, out, err
@@ -121,7 +123,8 @@ def install_snaps(module, snap_names):
     classic = '--classic' if module.params['classic'] else ''
 
     snap_path = module.get_bin_path("snap", True)
-    cmd = "%s install %s %s" % (snap_path, snaps_to_install, classic)
+    cmd_parts = [snap_path, 'install', snaps_to_install, classic]
+    cmd = ' '.join(cmd_parts)
 
     # Actually install the snaps
     rc, out, err = module.run_command(cmd, check_rc=False)
@@ -153,7 +156,8 @@ def remove_snaps(module, snap_names):
         module.exit_json(changed=True)
 
     snap_path = module.get_bin_path("snap", True)
-    cmd = "%s remove %s" % (snap_path, snaps_to_remove)
+    cmd_parts = [snap_path, 'remove', snaps_to_remove]
+    cmd = ' '.join(cmd_parts)
 
     # Actually remove the snaps
     rc, out, err = module.run_command(cmd, check_rc=False)
