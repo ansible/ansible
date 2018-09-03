@@ -60,6 +60,10 @@ options:
     description:
     - Required for C(state=present). Type of client the plugin is (win32, .net, linux, etc.).
     default: vsphere-client-serenity
+  visible:
+    description:
+    - Show the plugin in solution manager inside vCenter.
+    default: True
   state:
     description:
     - Add or remove vCenter Plugin.
@@ -134,6 +138,7 @@ def main():
         ssl_thumbprint=dict(type='str', required=False),
         client_type=dict(type='str', default='vsphere-client-serenity', required=False),
         server_type=dict(type='str', default='vsphere-client-serenity', required=False),
+        visible=dict(type='bool', default='True', required=False),
         state=dict(type='str', default='present', choices=['absent', 'present']),
     ))
 
@@ -158,6 +163,7 @@ def main():
     client_type = module.params['client_type']
     server_type = module.params['server_type']
     url = module.params['url']
+    visible = module.params['visible']
     thumbprint = module.params['ssl_thumbprint']
 
     content = connect_to_api(module, False)
@@ -179,7 +185,7 @@ def main():
         description.label = name
         description.summary = desc
         extension.description = description
-        extension.shownInSolutionManager = False
+        extension.shownInSolutionManager = visible
 
         client = vim.Extension.ClientInfo()
         client.company = company
