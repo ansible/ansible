@@ -179,7 +179,7 @@ def main():
             r_changed = remove_snap(module, snap_name)
 
         # If we modified one of the snaps, change the task `changed` return code to true
-        if r_changed is True and exit_changed is False:
+        if r_changed and not exit_changed:
             exit_changed = True
 
     module.exit_json(changed=exit_changed)
