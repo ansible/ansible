@@ -50,7 +50,7 @@ options:
     default: osimages
     choices:
         - osimages
-        - get_osimages_pkg
+        - get_osimages
 
 
 extends_documentation_fragment:
@@ -58,55 +58,102 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-# Query osimages
-- name: get osimages details from LXCA
+# get all osimage
+- name: get all osimages details from LXCA
   lxca_osimages:
     login_user: USERID
     login_password: Password
     auth_url: "https://10.243.15.168"
-    update_key: filetypes
-    type: changeHistory
-    fixids: lnvgy_sw_lxca-fw-repository-pack_1-1.0.1_anyos_noarch
-    command_options: get_osimages_pkg
 
-# update osimages
+# get globalSetting for osimages
+- name: get globalSetting details from LXCA
+  lxca_osimages:
+    login_user: USERID
+    login_password: Password
+    auth_url: "https://10.243.15.168"
+    osimages_info: globalSettings
+    command_options: get_osimages
+
+# import osimage file from remote server
+# osimage_dict =  {'imageType':'OS','os':'rhels','imageName':'fixed',
+#                  'path':'iso/rhel73.iso','serverId':'1'}
+- name: import osimage file from remote server
+  lxca_osimages:
+    login_user: USERID
+    login_password: Password
+    auth_url: "https://10.243.15.168"
+    osimages_dict: "{{ osiamges_dict }}"
+
+# get hostplatforms detail for osimages
+- name: get hostplatforms detail for osimages
+  lxca_osimages:
+    login_user: USERID
+    login_password: Password
+    auth_url: "https://10.243.15.168"
+    osimages_info: hostPlatforms
+    command_options: osimages
+
+# deploy osimage to node
+# osimages_dict =  {'networkSettings':{'dns1': '10.240.0.10','dns2':'10.240.0.11','gateway':'10.240.28.1',
+#                     'ipAddress':'10.240.29.226','mtu':1500,'prefixLength':64,'selectedMac':'AUTO',
+#                     'subnetMask':'255.255.252.0','vlanId':521},
+#                     'selectedImage':'rhels7.3|rhels7.3-x86_64-install-Minimal',
+#                     'storageSettings':{'targetDevice':'localdisk'},
+#               'uuid':'B918EDCA1B5F11E2803EBECB82710ADE'}
+#
+- name: deploy osimage to node
+  lxca_osimages:
+    login_user: USERID
+    login_password: Password
+    auth_url: "https://10.243.15.168"
+    osiamges_info: hostPlatforms
+    osimages_dict: "{{ osimages_dict}}"
+    command_options: osimages
+
+# get all remoteFileServers
 - name: update management server
   lxca_osimages:
     login_user: USERID
     login_password: Password
     auth_url: "https://10.243.15.168"
-    lxca_action: refresh
-    command_options: update_osimages_pkg
+    osimages_info: remoteFileServers
+    command_options: osimages
 
-# update osimages download fixids
-- name: update management server
+# Get Specific remoteFileServers
+- name: Get Specific remoteFileServers
   lxca_osimages:
     login_user: USERID
     login_password: Password
     auth_url: "https://10.243.15.168"
-    lxca_action: acquire
-    fixids: ibm_fw_imm2_1aoo78j-6.20_anyos_noarch
-    command_options: update_osimages_pkg
+    osimages_info: remoteFileServers
+    osimages_dict:
+      id: 1
+    command_options: osimages
 
-# update osimages delete fixids
-- name: update management server
+
+# Delete Specific Remote File Server
+- name: Delete Specific Remote File Server
   lxca_osimages:
     login_user: USERID
     login_password: Password
     auth_url: "https://10.243.15.168"
-    lxca_action: delete
-    fixids: ibm_fw_imm2_1aoo78j-6.20_anyos_noarch
-    command_options: update_osimages_pkg
+    osimages_info: remoteFileServers
+    osimages_dict:
+      deleteid: 1
+    command_options: osimages
 
-# import files to osimages
-- name: import management server
+
+# Add Remote File Server
+# osimages_dict : {'displayName':'TEST99','address': '192.168.1.10','keyPassphrase': 'Passw0rd',
+#                'keyType': 'RSA-2048','port': 8080,'protocol': 'HTTPS'}
+- name: Add Remote File Server
   lxca_osimages:
     login_user: USERID
     login_password: Password
     auth_url: "https://10.243.15.168"
-    lxca_action: import
-    files: /home/naval/updates/updates/lnvgy_sw_lxca_thinksystemrepo1-1.3.2_anyos_noarch.xml
-    command_options: import_osimages_pkg
+    osimages_info: remoteFileServers
+    osimages_dict: "{{ osimages_dict }}"
+    command_options: osimages
 
 '''
 
@@ -165,7 +212,6 @@ class OsimagesModule(LXCAModuleBase):
         else:
             result = osimages(self.lxca_con)
         return result
-
 
 
 def main():
