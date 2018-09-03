@@ -154,16 +154,11 @@ images:
                         - Specifies the storage account type for the managed disk data disk.
                     type: str
                     sample: Standard_LRS
-                managed_disk:
+                managed_disk_id:
                     description:
                         - Id of managed disk.
-                    type: complex
-                    contains:
-                        id:
-                            description:
-                                - Specified Id of managed disk.
-                            type: str
-                            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Compute/disks/xx
+                    type: str
+                    sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Compute/disks/xx
                 blob_uri:
                     description:
                         - The virtual hard disk.
@@ -273,6 +268,12 @@ class AzureRMImageFacts(AzureRMModuleBase):
 
     def format_item(self, item):
         d = item.as_dict()
+
+        for data_disk in d['storage_profile']['data_disks']:
+            if 'managed_disk' in data_disk.keys():
+                data_disk['managed_disk_id'] = data_disk['managed_disk']['id']
+                data_disk.pop('managed_disk', None)
+
         d = {
             'id': d['id'],
             'resource_group': d['id'].split('/')[4],
