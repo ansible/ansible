@@ -53,6 +53,14 @@ options:
     storage_mb:
         description:
             - The maximum storage allowed for a server.
+    backup_retention_days:
+        description:
+            - Backup retention days for the server.
+        type: int
+    geo_redundant_backup:
+        description:
+            - Enable Geo-redundant or not for server backup.
+        type: bool
     version:
         description:
             - Server version.
@@ -182,6 +190,15 @@ class AzureRMServers(AzureRMModuleBase):
             storage_mb=dict(
                 type='int'
             ),
+            geo_redundant_backup=dict(
+                type='bool'
+            ),
+            backup_retention_days=dict(
+                type='int'
+            ),
+            storage_mb=dict(
+                type='int'
+            ),
             version=dict(
                 type='str',
                 choices=['9.5', '9.6', '10']
@@ -247,6 +264,10 @@ class AzureRMServers(AzureRMModuleBase):
                     self.parameters["location"] = kwargs[key]
                 elif key == "storage_mb":
                     self.parameters.setdefault("properties", {}).setdefault("storage_profile", {})["storage_mb"] = kwargs[key]
+                elif key == "geo_redundant_backup":
+                    self.parameters["properties"]["geo_redundant_backup"] = 'Enabled' if kwargs[key] else 'Disabled'
+                elif key == "backup_retention_days":
+                    self.parameters["properties"]["backup_retention_days"] = kwargs[key]
                 elif key == "version":
                     self.parameters["properties"]["version"] = kwargs[key]
                 elif key == "enforce_ssl":
