@@ -302,7 +302,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             self.fail("Error getting virtual machine {0} instance view - {1}".format(vm.name, str(exc)))
 
         for index in range(len(instance['statuses'])):
-            code = instance['statuses'][index].split('/')
+            code = instance['statuses'][index]['code'].split('/')
             if code[0] == 'PowerState':
                 power_state = code[1]
 
