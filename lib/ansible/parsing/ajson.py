@@ -12,7 +12,7 @@ from datetime import date, datetime
 
 from ansible.module_utils._text import to_text
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
+from ansible.utils.unsafe_proxy import AnsibleUnsafe, AnsibleUnsafeDict, wrap_var
 from ansible.parsing.vault import VaultLib
 
 
@@ -20,14 +20,21 @@ class AnsibleJSONDecoder(json.JSONDecoder):
 
     _vaults = {}
 
+    unsafe_cls_map = {
+        'AnsibleUnsafeDict': AnsibleUnsafeDict
+    }
+
     @classmethod
     def set_secrets(cls, secrets):
         cls._vaults['default'] = VaultLib(secrets=secrets)
 
     def _decode_map(self, value):
-
         if value.get('__ansible_unsafe', False):
             value = wrap_var(value.get('__ansible_unsafe'))
+        elif value.get('__ansible_unsafe_obj', False):
+            cls_string, args, state = value.get('__ansible_unsafe_obj')
+            value = self.unsafe_cls_map[cls_string](*args)
+            value.__setstate__(state)
         elif value.get('__ansible_vault', False):
             value = AnsibleVaultEncryptedUnicode(value.get('__ansible_vault'))
             if self._vaults:
@@ -59,8 +66,13 @@ class AnsibleJSONEncoder(json.JSONEncoder):
             # vault object
             value = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
         elif isinstance(o, AnsibleUnsafe):
-            # unsafe object
-            value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
+            if isinstance(o, AnsibleUnsafeDict):
+                # unsafe dict (or other obj)
+                cls, args, state = o.__reduce_ex__(protocol=2)
+                value = {'__ansible_unsafe_obj': (cls.__name__, args, state)}
+            else:
+                # unsafe string
+                value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
         elif isinstance(o, Mapping):
             # hostvars and other objects
             value = dict(o)
