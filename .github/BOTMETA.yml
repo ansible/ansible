@@ -355,7 +355,7 @@ files:
   $modules/windows/:
     maintainers: $team_windows
     ignored: angstwad georgefrank h0nIg
-  $modules/windows/win_security_policy.py: rndmh3ro defionscode
+  $modules/windows/win_security_policy.py: defionscode
   bin/ansible-connection:
     keywords:
     - persistent connection
