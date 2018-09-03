@@ -213,8 +213,9 @@
   register: output
 
 - assert:
-      that: output.changed
-      that: output.ansible_facts.azure_vm.properties.hardwareProfile.vmSize == "Standard_A1"
+      that:
+        - output.changed
+        - output.ansible_facts.azure_vm.properties.hardwareProfile.vmSize == "Standard_A1"
 
 - name: Delete VM
   azure_rm_virtualmachine:
