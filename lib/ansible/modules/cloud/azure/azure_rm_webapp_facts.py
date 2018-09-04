@@ -126,6 +126,10 @@ webapps:
         outbound_ip_addresses:
             description: Outbound ip address of the web app.
             type: str
+        publish_url:
+            description: Publishing url of the web app when depeloyment type is FTP.
+            type: str
+            sample: ftp://xxxx.ftp.azurewebsites.windows.net
         state:
             description: State of the web app.  eg. running.
             type: str
@@ -275,6 +279,34 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             self.fail('Error getting web app {0} publishing credentials - {1}'.format(request_id, str(ex)))
         return response
 
+    def get_webapp_publish_url(self, resource_group, name):
+        import xmltodict
+
+        self.log('Get web app {0} app publish profile'.format(name))
+
+        url = None
+        try:
+            content = self.web_client.web_apps.list_publishing_profile_xml_with_secrets(resource_group_name=resource_group, name=name)
+            if not content:
+                return url
+
+            full_xml = ''
+            for f in content:
+                full_xml += f.decode()
+            profiles = xmltodict.parse(full_xml, xml_attribs=True)['publishData']['publishProfile']
+
+            if not profiles:
+                return url
+
+            for profile in profiles:
+                if profile['@publishMethod'] == 'FTP':
+                    url = profile['@publishUrl']
+
+        except CloudError as ex:
+            self.fail('Error getting web app {0} app settings'.format(name))
+
+        return url
+
     def get_curated_webapp(self, resource_group, name, webapp):
         pip = self.serialize_obj(webapp, AZURE_OBJECT_CLASS)
 
@@ -282,15 +314,17 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             site_config = self.list_webapp_configuration(resource_group, name)
             app_settings = self.list_webapp_appsettings(resource_group, name)
             publish_cred = self.get_publish_credentials(resource_group, name)
+            publish_url = self.get_webapp_publish_url(resource_group, name)
         except CloudError as ex:
             pass
         return self.construct_curated_webapp(webapp=pip,
                                              configuration=site_config,
                                              app_settings=app_settings,
                                              deployment_slot=None,
+                                             publish_url=publish_url,
                                              publish_credentials=publish_cred)
 
-    def construct_curated_webapp(self, webapp, configuration=None, app_settings=None, deployment_slot=None, publish_credentials=None):
+    def construct_curated_webapp(self, webapp, configuration=None, app_settings=None, deployment_slot=None, publish_url=None, publish_credentials=None):
         curated_output = dict()
         curated_output['id'] = webapp['id']
         curated_output['name'] = webapp['name']
@@ -345,6 +379,10 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         # curated deploymenet_slot
         if deployment_slot:
             curated_output['deployment_slot'] = deployment_slot
+
+        # publish_url
+        if publish_url:
+            curated_output['publish_url'] = publish_url
 
         # curated publish credentials
         if publish_credentials and self.return_publish_profile:
