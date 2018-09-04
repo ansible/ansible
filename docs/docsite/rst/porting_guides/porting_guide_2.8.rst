@@ -51,6 +51,9 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 Noteworthy module changes
 -------------------------
 
+* The ``tower_credential`` module originally required the ``ssh_key_data`` to be the path to a ssh_key_file.
+  In order to work like Tower/AWX, ``ssh_key_data`` now contains the content of the file.
+  The previous behavior can be achieved with ``lookup('file', '/path/to/file')``.
 
 Plugins
 =======
