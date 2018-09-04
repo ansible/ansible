@@ -1,0 +1,2 @@
+bugfixes:
+  - one_host - fixes settings via environment variables (https://github.com/ansible/ansible/pull/44568)
