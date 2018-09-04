@@ -181,6 +181,11 @@ vms:
                 - Virtual machine size.
             type: str
             sample: Standard_D4
+        power_state:
+            description:
+                - Power state of the virtual machine.
+            type: str
+            sample: running
 '''
 
 try:
@@ -286,10 +291,25 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         '''
 
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
+        resource_group = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+        instance = None
+        power_state = None
+
+        try:
+            instance = self.compute_client.virtual_machines.instance_view(resource_group, vm.name)
+            instance = self.serialize_obj(instance, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
+        except Exception as exc:
+            self.fail("Error getting virtual machine {0} instance view - {1}".format(vm.name, str(exc)))
+
+        for index in range(len(instance['statuses'])):
+            code = instance['statuses'][index]['code'].split('/')
+            if code[0] == 'PowerState':
+                power_state = code[1]
 
         new_result = {}
+        new_result['power_state'] = power_state
         new_result['id'] = vm.id
-        new_result['resource_group'] = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+        new_result['resource_group'] = resource_group
         new_result['name'] = vm.name
         new_result['state'] = 'present'
         new_result['location'] = vm.location
