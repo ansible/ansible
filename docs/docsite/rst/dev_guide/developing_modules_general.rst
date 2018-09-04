@@ -59,7 +59,7 @@ To create a new module:
 .. code:: python
 
     #!/usr/bin/python
-    
+
     # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -246,7 +246,7 @@ Testing basics
 ====================
 
 These two examples will get you started with testing your module code. Please review our :ref:`testing <developing_testing>` section for more detailed
-information, including instructions for :ref:`testing documentation <testing_documentation>`, adding :ref:`integration tests <testing_integration>`, and more. 
+information, including instructions for :ref:`testing documentation <testing_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
 
 Sanity tests
 ------------
@@ -255,7 +255,7 @@ You can run through Ansible's sanity checks in a container:
 
 ``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
-Note that this example requires docker to be installed and running. If you'd rather not use a
+Note that this example requires Docker to be installed and running. If you'd rather not use a
 container for this, you can choose to use ``--tox`` instead of ``--docker``.
 
 Unit tests

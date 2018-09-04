@@ -19,11 +19,11 @@ An existing Pull Request may cover the functionality you want. If someone else h
 * `All updates to modules <https://github.com/ansible/ansible/labels/module>`_
 * `New module PRs listed by directory <https://ansible.sivel.net/pr/byfile.html>`_ search for `lib/ansible/modules/`
 
-If you find an existing PR that looks like it addresses your needs, please provide feedback on the PR -  this will speed up the review and merge process.
+If you find an existing PR that looks like it addresses your needs, please provide feedback on the PR. Community feedback speeds up the review and merge process.
 
 3. Should you use or develop an action plugin instead?
 
-An action plugin may be the best way to get the functionality you want. Action plugins run on the master instead of on the target, and their functionality is available to all modules. For more information about developing plugins, read the :ref:`developing plugins page <developing_plugins>`.
+An action plugin may be the best way to get the functionality you want. Action plugins run on the control node instead of on the managed node, and their functionality is available to all modules. For more information about developing plugins, read the :ref:`developing plugins page <developing_plugins>`.
 
 4. Should you use a role instead?
 
