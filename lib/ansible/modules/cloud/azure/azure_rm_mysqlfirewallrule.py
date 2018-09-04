@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlfirewallrule
-version_added: "2.5"
+version_added: "2.8"
 short_description: Manage Firewall Rule instance.
 description:
     - Create, update and delete instance of Firewall Rule.
@@ -34,15 +34,19 @@ options:
         description:
             - The name of the server firewall rule.
         required: True
-    parameters:
-        description:
-            - The required parameters for creating or updating a firewall rule.
     start_ip_address:
         description:
             - The start IP address of the server firewall rule. Must be IPv4 format.
     end_ip_address:
         description:
             - The end IP address of the server firewall rule. Must be IPv4 format.
+    state:
+        description:
+            - Assert the state of the MySQL Database. Use 'present' to create or update a database and 'absent' to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
@@ -58,7 +62,6 @@ EXAMPLES = '''
       resource_group: TestGroup
       server_name: testserver
       name: rule1
-      parameters: parameters
 '''
 
 RETURN = '''
@@ -67,7 +70,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver/firewallRules/rule1
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver/firewallRules/rule1
 '''
 
 import time
@@ -103,9 +106,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
             name=dict(
                 type='str',
                 required=True
-            ),
-            parameters=dict(
-                type='dict'
             ),
             start_ip_address=dict(
                 type='str'
