@@ -77,7 +77,7 @@ def _maintain_symlinks(symlink_type, base_path):
         # checkout or from an sdist created earlier.
         symlink_data = {'script': _find_symlinks('bin'),
                         'library': _find_symlinks('lib', '.py')}
-    
+
         # Sanity check that something we know should be a symlink was
         # found.  We'll take that to mean that the current directory
         # structure properly reflects symlinks in the git repo
@@ -86,7 +86,7 @@ def _maintain_symlinks(symlink_type, base_path):
         else:
             raise RuntimeError("Symlinks in ./bin appear "
                                "to be missing or broken")
-    
+
     symlinks = symlink_data[symlink_type]
 
     for source in symlinks:
