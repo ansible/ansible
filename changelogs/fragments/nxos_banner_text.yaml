@@ -1,0 +1,2 @@
+bugfixes:
+- use retry_json nxos_banner (https://github.com/ansible/ansible/pull/44376).

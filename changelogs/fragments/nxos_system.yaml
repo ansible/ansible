@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_system idempotence fix (https://github.com/ansible/ansible/pull/44752).
