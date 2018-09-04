@@ -55,6 +55,12 @@ options:
     version_added: "2.4"
     description:
       - Set the stdin of the command directly to the specified value.
+  binary_stdin:
+    version_added: "2.7"
+    type: bool
+    default: 'no'
+    description:
+      - If set to C(no), append a newline to stdin data.
 notes:
   -  If you want to execute a command securely and predictably, it may be
      better to use the M(command) module instead. Best practices when writing

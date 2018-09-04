@@ -58,6 +58,12 @@ options:
     version_added: "2.4"
     description:
       - Set the stdin of the command directly to the specified value.
+  binary_stdin:
+    version_added: "2.7"
+    type: bool
+    default: 'no'
+    description:
+      - If set to C(no), append a newline to stdin data.
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
@@ -189,6 +195,7 @@ def main():
             # The default for this really comes from the action plugin
             warn=dict(type='bool', default=True),
             stdin=dict(required=False),
+            binary_stdin=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -201,6 +208,7 @@ def main():
     removes = module.params['removes']
     warn = module.params['warn']
     stdin = module.params['stdin']
+    binary_stdin = module.params['binary_stdin']
 
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
@@ -255,7 +263,7 @@ def main():
     startd = datetime.datetime.now()
 
     if not module.check_mode:
-        rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin)
+        rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin, binary_data=binary_stdin)
     elif creates or removes:
         rc = 0
         out = err = b'Command would have run if not in check mode'
