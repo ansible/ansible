@@ -256,7 +256,7 @@ class Connection(NetworkConnectionBase):
 
         self.key_filename = self._play_context.private_key_file or self.get_option('private_key_file')
         if self.key_filename:
-            self.key_filename = os.path.expanduser(self.key_filename)
+            self.key_filename = str(os.path.expanduser(self.key_filename))
 
         if self._network_os == 'default':
             for cls in netconf_loader.all(class_only=True):
@@ -279,7 +279,7 @@ class Connection(NetworkConnectionBase):
                 port=self._play_context.port or 830,
                 username=self._play_context.remote_user,
                 password=self._play_context.password,
-                key_filename=str(self.key_filename),
+                key_filename=self.key_filename,
                 hostkey_verify=self.get_option('host_key_checking'),
                 look_for_keys=self.get_option('look_for_keys'),
                 device_params=device_params,
