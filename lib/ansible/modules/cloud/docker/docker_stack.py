@@ -238,31 +238,25 @@ def main():
             module.fail_json(msg=("compose parameter must be a list "
                                   "containing at least one element"))
 
-        try:
-            compose_files = []
-            temp_files = []
-            for i, compose_def in enumerate(compose):
-                if isinstance(compose_def, dict):
-                    compose_file_fd, compose_file = tempfile.mkstemp()
-                    with os.fdopen(compose_file_fd, 'w') as stack_file:
-                        temp_files.append(compose_file)
-                        compose_files.append(compose_file)
-                        stack_file.write(yaml_dump(compose_def))
-                elif isinstance(compose_def, string_types):
-                    compose_files.append(compose_def)
-                else:
-                    module.fail_json(msg="compose element '%s' must be a " +
-                                     "string or a dictionary" % compose_def)
+        compose_files = []
+        for i, compose_def in enumerate(compose):
+            if isinstance(compose_def, dict):
+                compose_file_fd, compose_file = tempfile.mkstemp()
+                module.add_cleanup_file(compose_file)
+                with os.fdopen(compose_file_fd, 'w') as stack_file:
+                    compose_files.append(compose_file)
+                    stack_file.write(yaml_dump(compose_def))
+            elif isinstance(compose_def, string_types):
+                compose_files.append(compose_def)
+            else:
+                module.fail_json(msg="compose element '%s' must be a " +
+                                 "string or a dictionary" % compose_def)
 
-            before_stack_services = docker_stack_inspect(module, name)
+        before_stack_services = docker_stack_inspect(module, name)
 
-            rc, out, err = docker_stack_deploy(module, name, compose_files)
+        rc, out, err = docker_stack_deploy(module, name, compose_files)
 
-            after_stack_services = docker_stack_inspect(module, name)
-
-        finally:
-            for temp_file in temp_files:
-                os.remove(temp_file)
+        after_stack_services = docker_stack_inspect(module, name)
 
         if rc != 0:
             module.fail_json(msg="docker stack up deploy command failed",
