@@ -327,6 +327,8 @@
       - results.vms[0].name == "{{ vm_name2 }}"
       - results.vms[0].location == 'eastus'
       - results.vms[0].admin_username == 'adminuser'
+      - results.vms[0].resource_group == "{{ resource_group }}"
+      - results.vms[0].power_state is not None
 
 - name: Should be idempotent with a dual NICs
   azure_rm_virtualmachine:
