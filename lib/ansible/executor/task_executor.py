@@ -171,9 +171,10 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')))
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._play_context.no_log)
         except Exception as e:
-            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()), stdout='')
+            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
+                        stdout='', _ansible_no_log=self._play_context.no_log)
         finally:
             try:
                 self._connection.close()
@@ -303,6 +304,7 @@ class TaskExecutor:
             # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
             items = self._squash_items(items, loop_var, task_vars)
 
+        no_log = False
         for item_index, item in enumerate(items):
             task_vars[loop_var] = item
             if index_var:
@@ -337,6 +339,9 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
+            # update 'general no_log' based on specific no_log
+            no_log = no_log or tmp_task.no_log
+
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
@@ -359,6 +364,8 @@ class TaskExecutor:
             )
             results.append(res)
             del task_vars[loop_var]
+
+        self._task.no_log = no_log
 
         return results
 
