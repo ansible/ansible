@@ -26,23 +26,23 @@ Return values should be a composite of:
 - additional read only fields assigned by the service, for instance:
     - resource **id** field
     - assigned **ip_address**
-    - any other fields that may be important to he user, like URLs etc.
+    - any other fields that may be important to the user, like URLs etc.
 
 Following rules should be followed:
 - return structure should have as short name as possible, for instance **servers**
 - return structure should always be a **list of dictionaries**, even when single resource is queried
 - every dictionary should be as flat as possible, no deep structures
-- field names should be in **python_case**
+- field names should be in **python_case** rather than camelCase
 - field values should be exactly the same as equivalent input values of the main module (preferably both **python_case**)
-- return structure should always containe resource **name**
-- return structure should always containe **resource_group** name
+- return structure should always contain resource **name**
+- return structure should always contain **resource_group** name
 
 Return values should be structured as in following example:
 
 ```
 servers:
-  - id: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/postgreabdud1223
-    resource_group: myresourcegroup
+  - id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/postgreabdud1223
+    resource_group: TestGroup
     name: postgreabdud1223
     location: eastus
     sku:
@@ -70,7 +70,13 @@ servers:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/postgreabdud1223
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/postgreabdud1223
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: TestGroup
         name:
             description:
                 - Resource name.
@@ -135,3 +141,14 @@ Samples should include all possible combinations of input parameters showing how
 - query all the resources of given type in the resource group
 - query specific resource
 - filter resources by tags
+
+## Testing
+
+Following rules shoudl apply to tests:
+- Do not create a separate test, add **azure_xx_facts** tests to **azure_xx** module tests
+- Do not create any additional instances of costly resources just to tests facts - one is sufficient
+- Test all possible parameter combination
+- Check if all return values are present in the structure
+- Test if querying unexisting single instance fails correctly
+ 
+
