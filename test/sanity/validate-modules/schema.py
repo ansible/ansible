@@ -7,7 +7,7 @@
 import re
 import types
 
-from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Length, Invalid, Required, Schema, Self, ValueInvalid
+from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
 
@@ -79,6 +79,18 @@ argument_spec_modifiers = {
 }
 
 
+def no_required_with_default(v):
+    if v.get('default') and v.get('required'):
+        raise Invalid('required=True cannot be supplied with a default')
+    return v
+
+
+def elements_with_list(v):
+    if v.get('elements') and v.get('type') != 'list':
+        raise Invalid('type must be list to use elements')
+    return v
+
+
 def argument_spec_schema():
     any_string_types = Any(*string_types)
     schema = {
@@ -100,7 +112,12 @@ def argument_spec_schema():
         }
     }
     schema[any_string_types].update(argument_spec_modifiers)
-    return Schema(schema)
+    schemas = All(
+        schema,
+        Schema({any_string_types: no_required_with_default}),
+        Schema({any_string_types: elements_with_list}),
+    )
+    return Schema(schemas)
 
 
 def ansible_module_kwargs_schema():
