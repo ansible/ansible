@@ -40,13 +40,26 @@ from ansible.utils.jsonrpc import JsonRpcServer
 def read_stream(byte_stream):
     size = int(byte_stream.readline().strip())
 
-    data = byte_stream.read(size)
-    if len(data) < size:
-        raise Exception("EOF found before data was complete")
+    data = b''
+    remaining = size
+    while True:
+        new_data = byte_stream.read(remaining)
+
+        if not new_data:
+            raise Exception(
+                "Failed to read startup data for ansible-connection. "
+                "{0} out of {1} bytes read.".format(len(data), size)
+            )
+
+        data += new_data
+        remaining = size - len(data)
+
+        if remaining == 0:
+            break
 
     data_hash = to_text(byte_stream.readline().strip())
     if data_hash != hashlib.sha1(data).hexdigest():
-        raise Exception("Read {0} bytes, but data did not match checksum".format(size))
+        raise Exception("Data sent to ansible-connection did not match checksum")
 
     # restore escaped loose \r characters
     data = data.replace(br'\r', b'\r')
@@ -211,6 +224,10 @@ def main():
         stdin = sys.stdin.buffer
     else:
         stdin = sys.stdin
+
+    # Set stdin stream to nonblocking
+    stdin_fd = stdin.fileno()
+    fcntl.fcntl(stdin_fd, fcntl.F_SETFL, fcntl.fcntl(stdin_fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
     # Note: update the below log capture code after Display.display() is refactored.
     saved_stdout = sys.stdout
