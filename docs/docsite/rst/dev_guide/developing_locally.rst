@@ -18,7 +18,7 @@ Extending Ansible with local modules and plugins offers lots of shortcuts:
 * you don't have to open a pull request
 * you don't have to add tests (though we recommend that you do!)
 
-To save a local module or plugin so Ansible can find and use it, drop the module or plugin in the correct "magic" directory. For local modules, use the name of the file as the module name: for example, if the module file is `~/.ansible/plugins/modules/local_users.py`, use `local_users` as the module name.
+To save a local module or plugin so Ansible can find and use it, drop the module or plugin in the correct "magic" directory. For local modules, use the name of the file as the module name: for example, if the module file is ``~/.ansible/plugins/modules/local_users.py``, use ``local_users`` as the module name.
 
 .. _modules_vs_plugins:
 
@@ -82,7 +82,7 @@ Once your plugin file is in one of these locations, Ansible will load it and you
 
 To confirm that ``plugins/plugin_type/my_custom_plugin`` is available:
 
-* type ``ansible-doc -t <plugin_type> my_custom_lookup_plugin`` - for example, ``ansible-doc -t lookup my_custom_lookup_plugin``. You should see the documentation for that plugin. This works for all plugin types except the ones marked with ``*`` in the list above  - see :ref:`ansible-doc` for more details.
+* type ``ansible-doc -t <plugin_type> my_custom_lookup_plugin``. For example, ``ansible-doc -t lookup my_custom_lookup_plugin``. You should see the documentation for that plugin. This works for all plugin types except the ones marked with ``*`` in the list above  - see :ref:`ansible-doc` for more details.
 
 To use your local plugin only in certain playbooks:
 
