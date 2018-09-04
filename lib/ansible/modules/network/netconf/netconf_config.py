@@ -301,7 +301,7 @@ def main():
 
     # Netconf server capability validation against input options
     if save and not supports_startup:
-        module.fail_json(msg='cannot copy <running/> to <startup/>, while :startup is not supported')
+        module.fail_json(msg='cannot copy <%s/> to <startup/>, while :startup is not supported' % target)
 
     if confirm_commit and not operations.get('supports_confirm_commit', False):
         module.fail_json(msg='confirm commit is not supported by Netconf server')
@@ -331,7 +331,7 @@ def main():
             before = to_text(response, errors='surrogate_then_replace').strip()
             result['__backup__'] = before.strip()
         if validate:
-                conn.validate(target)
+            conn.validate(target)
         if source:
             if not module.check_mode:
                 conn.copy(source, target)
@@ -379,7 +379,7 @@ def main():
                 result['changed'] = True
 
             if result['changed']:
-                if save:
+                if save and not module.check_mode:
                     conn.copy_config(target, 'startup')
                 if module._diff:
                     result['diff'] = {'before': sanitized_before, 'after': sanitized_after}
