@@ -212,19 +212,19 @@ from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationEr
 
 
 def assemble_json(cpmmodule):
-    json_load = '{"users":{"username": "%s"' % (cpmmodule.params["user_name"])
+    json_load = '{"users":{"username": "%s"' % to_native((cpmmodule.params["user_name"]))
 
     # for Adding there must be a password present
     if cpmmodule.params["user_pass"] is not None and (len(cpmmodule.params["user_pass"]) > 0):
-        json_load = '%s,"newpasswd": "%s"' % (json_load, cpmmodule.params["user_pass"])
+        json_load = '%s,"newpasswd": "%s"' % (json_load, to_native(cpmmodule.params["user_pass"]))
     if cpmmodule.params["user_accesslevel"] is not None:
         json_load = '%s,"accesslevel": %s' % (json_load, to_native(cpmmodule.params["user_accesslevel"]))
     if cpmmodule.params["user_portaccess"] is not None:
-        json_load = '%s,"portaccess": %s' % (json_load, cpmmodule.params["user_portaccess"])
+        json_load = '%s,"portaccess": %s' % (json_load, to_native(cpmmodule.params["user_portaccess"]))
     if cpmmodule.params["user_plugaccess"] is not None:
-        json_load = '%s,"plugaccess": %s' % (json_load, cpmmodule.params["user_plugaccess"])
+        json_load = '%s,"plugaccess": %s' % (json_load, to_native(cpmmodule.params["user_plugaccess"]))
     if cpmmodule.params["user_groupaccess"] is not None:
-        json_load = '%s,"groupaccess": %s' % (json_load, cpmmodule.params["user_groupaccess"])
+        json_load = '%s,"groupaccess": %s' % (json_load, to_native(cpmmodule.params["user_groupaccess"]))
     if cpmmodule.params["user_accessserial"] is not None:
         json_load = '%s,"accessserial": %s' % (json_load, to_native(cpmmodule.params["user_accessserial"]))
     if cpmmodule.params["user_accessssh"] is not None:
@@ -238,7 +238,7 @@ def assemble_json(cpmmodule):
     if cpmmodule.params["user_accessmonitor"] is not None:
         json_load = '%s,"accessmonitor": %s' % (json_load, to_native(cpmmodule.params["user_accessmonitor"]))
     if cpmmodule.params["user_callbackphone"] is not None:
-        json_load = '%s,"callbackphone": "%s"' % (json_load, cpmmodule.params["user_callbackphone"])
+        json_load = '%s,"callbackphone": "%s"' % (json_load, to_native(cpmmodule.params["user_callbackphone"]))
 
     json_load = '%s}}' % (json_load)
 
@@ -280,7 +280,7 @@ def run_module():
     if module.check_mode:
         return result
 
-    auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(module.params['cpm_username'], module.params['cpm_password']),
+    auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(to_native(module.params['cpm_username']), to_native(module.params['cpm_password'])),
                    errors='surrogate_or_strict')))
 
     if module.params['use_https'] is True:
@@ -290,21 +290,21 @@ def run_module():
 
     payload = None
     if (module.params['cpm_action'] == 'getuser'):
-        fullurl = ("%s%s/api/v2/config/users?username=%s" % (protocol, module.params['cpm_url'], module.params['user_name']))
+        fullurl = ("%s%s/api/v2/config/users?username=%s" % (protocol, to_native(module.params['cpm_url']), to_native(module.params['user_name'])))
         method = 'GET'
     elif (module.params['cpm_action'] == 'adduser'):
         if module.params["user_pass"] is None or (len(module.params["user_pass"]) == 0):
             module.fail_json(msg='user_pass not defined.', **result)
 
         payload = assemble_json(module)
-        fullurl = ("%s%s/api/v2/config/users" % (protocol, module.params['cpm_url']))
+        fullurl = ("%s%s/api/v2/config/users" % (protocol, to_native(module.params['cpm_url'])))
         method = 'POST'
     elif (module.params['cpm_action'] == 'edituser'):
         payload = assemble_json(module)
-        fullurl = ("%s%s/api/v2/config/users" % (protocol, module.params['cpm_url']))
+        fullurl = ("%s%s/api/v2/config/users" % (protocol, to_native(module.params['cpm_url'])))
         method = 'PUT'
     elif (module.params['cpm_action'] == 'deleteuser'):
-        fullurl = ("%s%s/api/v2/config/users?username=%s" % (protocol, module.params['cpm_url'], module.params['user_name']))
+        fullurl = ("%s%s/api/v2/config/users?username=%s" % (protocol, to_native(module.params['cpm_url']), to_native(module.params['user_name'])))
         method = 'DELETE'
 
     try:
