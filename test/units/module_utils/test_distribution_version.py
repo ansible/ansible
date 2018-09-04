@@ -428,6 +428,28 @@ DISTRIB_DESCRIPTION="SteamOS 2.0"
         }
     },
     {
+        'name': "Devuan",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux 1 (jessie)"
+NAME="Devuan GNU/Linux"
+VERSION_ID="1"
+VERSION="1 (jessie)"
+ID=devuan
+HOME_URL="http://www.devuan.org/"
+SUPPORT_URL="http://www.devuan.org/support/"
+BUG_REPORT_URL="https://bugs.devuan.org/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': u'Devuan',
+            'distribution_major_version': u'1',
+            'distribution_release': u'jessie',
+            'os_family': 'Debian',
+            'distribution_version': u'1'
+        }
+    },
+    {
         "platform.dist": [
             "Ubuntu",
             "16.04",
