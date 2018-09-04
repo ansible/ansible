@@ -146,9 +146,9 @@ Samples should include all possible combinations of input parameters showing how
 
 Following rules shoudl apply to tests:
 - Do not create a separate test, add **azure_xx_facts** tests to **azure_xx** module tests
-- Do not create any additional instances of costly resources just to tests facts - one is sufficient
-- Test all possible parameter combination
-- Check if all return values are present in the structure
+- Do not create any additional instances of costly resources just to test facts - one is sufficient
+- Test all possible parameter combinations
+- Check if all expected return values are present in the structure
 - Test if querying unexisting single instance fails correctly
  
 
