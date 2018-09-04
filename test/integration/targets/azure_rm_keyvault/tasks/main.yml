@@ -64,7 +64,7 @@
     that:
       - output.changed == false
 
-- name: Update existing Key Vault (add a rule)
+- name: Update existing Key Vault (add a rule and tags)
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
     vault_name: "vault{{ rpfx }}"
@@ -82,6 +82,8 @@
         keys:
           - get
           - list
+    tags:
+      aaa: bbb
   register: output
 - name: Assert the state has changed
   assert:
