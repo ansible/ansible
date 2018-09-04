@@ -1,0 +1,2 @@
+bugfixes:
+- Fix Python2.6 regex bug terminal plugin nxos, iosxr (https://github.com/ansible/ansible/pull/45135).
