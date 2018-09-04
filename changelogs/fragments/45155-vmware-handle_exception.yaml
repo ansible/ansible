@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_host_service_facts - handle exception when service package does not have package name.
