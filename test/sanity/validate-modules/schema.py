@@ -91,6 +91,12 @@ def elements_with_list(v):
     return v
 
 
+def options_with_apply_defaults(v):
+    if v.get('apply_defaults') and not v.get('options'):
+        raise Invalid('apply_defaults=True requires options to be set')
+    return v
+
+
 def argument_spec_schema():
     any_string_types = Any(*string_types)
     schema = {
@@ -116,6 +122,7 @@ def argument_spec_schema():
         schema,
         Schema({any_string_types: no_required_with_default}),
         Schema({any_string_types: elements_with_list}),
+        Schema({any_string_types: options_with_apply_defaults}),
     )
     return Schema(schemas)
 
