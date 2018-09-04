@@ -1,0 +1,52 @@
+---
+
+- name: Create virtual machine with image and plan which requires acceptance of terms
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.accept_terms }}"
+    short_hostname: "{{ hostvars['localhost'].vm_names.accept_terms }}"
+    admin_username: "{{ hostvars['localhost'].admin_user }}"
+    admin_password: "{{ hostvars['localhost'].password }}"
+    availability_set: "{{ hostvars['localhost'].availability_set }}"
+    public_ip_allocation_method: Disabled
+    managed_disk_type: "{{ hostvars['localhost'].storage_type }}"
+    os_type: "{{ hostvars['localhost'].os_type }}"
+    image: "{{ hostvars['localhost'].image_paid }}"
+    plan: "{{ hostvars['localhost'].plan_paid }}"
+    accept_terms: true
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.ansible_facts.azure_vm.properties.storageProfile.imageReference.publisher == hostvars['localhost'].image_paid.publisher
+
+- name: Should be idempotent with image and plan which requires acceptance of terms
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.accept_terms }}"
+    short_hostname: "{{ hostvars['localhost'].vm_names.accept_terms }}"
+    admin_username: "{{ hostvars['localhost'].admin_user }}"
+    admin_password: "{{ hostvars['localhost'].password }}"
+    availability_set: "{{ hostvars['localhost'].availability_set }}"
+    public_ip_allocation_method: Disabled
+    managed_disk_type: "{{ hostvars['localhost'].storage_type }}"
+    os_type: "{{ hostvars['localhost'].os_type }}"
+    image: "{{ hostvars['localhost'].image_paid }}"
+    plan: "{{ hostvars['localhost'].plan_paid }}"
+    accept_terms: true
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Delete VM for accept terms VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.accept_terms }}"
+    state: absent
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  async: 1000
+  poll: 0

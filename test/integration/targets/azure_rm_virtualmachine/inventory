@@ -1,0 +1,7 @@
+basic
+managed_disk
+os_disk_size
+;accept_terms
+
+[all:vars]
+ansible_connection=local

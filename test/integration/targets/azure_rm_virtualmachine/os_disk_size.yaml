@@ -1,0 +1,48 @@
+---
+
+- name: Create virtual machine with specific OS disk size
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.os_disk_size_gb }}"
+    short_hostname: "{{ hostvars['localhost'].vm_names.os_disk_size_gb }}"
+    admin_username: "{{ hostvars['localhost'].admin_user }}"
+    admin_password: "{{ hostvars['localhost'].password }}"
+    availability_set: "{{ hostvars['localhost'].availability_set }}"
+    public_ip_allocation_method: Disabled
+    managed_disk_type: "{{ hostvars['localhost'].storage_type }}"
+    os_type: "{{ hostvars['localhost'].os_type }}"
+    os_disk_size_gb: "{{ hostvars['localhost'].target_os_disk_size_gb }}"
+    image: "{{ hostvars['localhost'].image }}"
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  register: output
+
+- assert:
+    that: "azure_vm.properties.storageProfile.osDisk.diskSizeGB == hostvars['localhost'].target_os_disk_size_gb"
+
+- name: Should be idempotent with specified OS disk size
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.os_disk_size_gb }}"
+    short_hostname: "{{ hostvars['localhost'].vm_names.os_disk_size_gb }}"
+    admin_username: "{{ hostvars['localhost'].admin_user }}"
+    admin_password: "{{ hostvars['localhost'].password }}"
+    availability_set: "{{ hostvars['localhost'].availability_set }}"
+    public_ip_allocation_method: Disabled
+    managed_disk_type: "{{ hostvars['localhost'].storage_type }}"
+    os_type: "{{ hostvars['localhost'].os_type }}"
+    os_disk_size_gb: "{{ hostvars['localhost'].target_os_disk_size_gb }}"
+    image: "{{ hostvars['localhost'].image }}"
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Delete OS disk size VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.os_disk_size_gb }}"
+    state: absent
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  async: 1000
+  poll: 0

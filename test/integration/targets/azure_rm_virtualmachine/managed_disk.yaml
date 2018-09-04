@@ -1,0 +1,47 @@
+---
+
+- name: Create virtual machine with managed disk and no public IP
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.managed_disk }}"
+    short_hostname: "{{ hostvars['localhost'].vm_names.managed_disk }}"
+    admin_username: "{{ hostvars['localhost'].admin_user }}"
+    admin_password: "{{ hostvars['localhost'].password }}"
+    availability_set: "{{ hostvars['localhost'].availability_set }}"
+    public_ip_allocation_method: Disabled
+    managed_disk_type: "{{ hostvars['localhost'].storage_type }}"
+    image: "{{ hostvars['localhost'].image }}"
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.ansible_facts.azure_vm.properties.storageProfile.osDisk.managedDisk.id
+      - not 'publicIPAddress' in output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties
+
+- name: Create virtual machine with managed disk should be idempotent
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.managed_disk }}"
+    short_hostname: "{{ hostvars['localhost'].vm_names.managed_disk }}"
+    admin_username: "{{ hostvars['localhost'].admin_user }}"
+    admin_password: "{{ hostvars['localhost'].password }}"
+    availability_set: "{{ hostvars['localhost'].availability_set }}"
+    public_ip_allocation_method: Disabled
+    managed_disk_type: "{{ hostvars['localhost'].storage_type }}"
+    image: "{{ hostvars['localhost'].image }}"
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Delete virtual machine with managed disk
+  azure_rm_virtualmachine:
+    resource_group: "{{ hostvars['localhost'].resource_group }}"
+    name: "{{ hostvars['localhost'].vm_names.managed_disk }}"
+    state: absent
+    vm_size: "{{ hostvars['localhost'].vm_size }}"
+  async: 1000
+  poll: 0

@@ -1,0 +1,69 @@
+---
+
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Set test facts
+  set_fact:
+    availability_set_blob: "{{ rpfx }}-avbs"
+    availability_set: "{{ rpfx }}-avs"
+    storage_account: "{{ rpfx }}sac"
+    vnet: "{{ rpfx }}-vnet"
+    subnet: "{{ rpfx }}-snet"
+    nsg: "{{ rpfx }}-nsg"
+    pip: "{{ rpfx }}-pip"
+    vm_nics:
+      - "{{ rpfx }}-nic-0"
+      - "{{ rpfx }}-nic-1"
+    vm_size: Standard_A0
+    admin_user: adminuser
+    password: Password123!
+    storage_type: Standard_LRS
+    started: no
+    os_type: Linux
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+    image_paid:
+      publisher: cognosys
+      offer: ubuntu-14-04-lts
+      sku: hardened-ubuntu-14-04
+      version: latest
+    plan_paid:
+      name: hardened-ubuntu-14-04
+      product: ubuntu-14-04-lts
+      publisher: cognosys
+    target_os_disk_size_gb: 123
+    target_os_disk_size_gb_increased: 321
+    target_custom_data: "custom_data was executed"
+    target_custom_data_file: "/tmp/custom_data.txt"
+    vm_names:
+      basic: "{{ rpfx }}-vm-basic"
+      managed_disk: "{{ rpfx }}-vm-managed-disk"
+      os_disk_size_gb: "{{ rpfx }}-vm-os-disk-size"
+      accept_terms: "{{ rpfx }}-vm-accept-terms"
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vnet }}"
+    address_prefixes: "10.10.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: "{{ subnet }}"
+    address_prefix: "10.10.0.0/24"
+    virtual_network: "{{ vnet }}"
+
+- name: Create an availability set for managed storage
+  azure_rm_availabilityset:
+    name: "{{ availability_set }}"
+    resource_group: "{{ resource_group }}"
+    platform_update_domain_count: 5
+    platform_fault_domain_count: 2
+    sku: Aligned
