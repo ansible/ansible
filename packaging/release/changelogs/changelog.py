@@ -443,6 +443,7 @@ class ChangelogGenerator(object):
 
         builder = RstBuilder()
         builder.set_title('Ansible %s "%s" Release Notes' % (major_minor_version, codename))
+        builder.add_raw_rst('.. contents:: Topics\n\n')
 
         for version, release in release_entries.items():
             builder.add_section('v%s' % version)
