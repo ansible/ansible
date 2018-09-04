@@ -61,7 +61,32 @@ EXAMPLES = r'''
   register: host_services
 '''
 
-RETURN = r'''#
+RETURN = r'''
+host_service_facts:
+    description:
+    - dict with hostname as key and dict with host service config facts
+    returned: always
+    type: dict
+    sample: {
+        "10.76.33.226": [
+            {
+                "key": "DCUI",
+                "label": "Direct Console UI",
+                "policy": "on",
+                "required": false,
+                "running": true,
+                "uninstallable": false
+            },
+            {
+                "key": "TSM",
+                "label": "ESXi Shell",
+                "policy": "off",
+                "required": false,
+                "running": false,
+                "uninstallable": false
+            },
+        ]
+    }
 '''
 
 from ansible.module_utils.basic import AnsibleModule
