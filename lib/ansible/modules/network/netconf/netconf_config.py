@@ -100,7 +100,8 @@ options:
     version_added: "2.7"
   save:
     description:
-      - The C(save) argument instructs the module to save the running-config to the startup-config if changed.
+      - The C(save) argument instructs the module to save the configuration in C(target) datastore to the
+        startup-config if changed and if :startup capability is supported by Netconf server.
     default: false
     version_added: "2.4"
   backup:
@@ -275,6 +276,7 @@ def main():
     confirm_commit = module.params['confirm_commit']
     confirm = module.params['confirm']
     validate = module.params['validate']
+    save = module.params['save']
 
     conn = Connection(module._socket_path)
     capabilities = get_capabilities(module)
@@ -298,10 +300,10 @@ def main():
             module.fail_json(msg='neither :candidate nor :writable-running are supported by this netconf server')
 
     # Netconf server capability validation against input options
-    if module.params['save'] and not supports_startup:
+    if save and not supports_startup:
         module.fail_json(msg='cannot copy <running/> to <startup/>, while :startup is not supported')
 
-    if module.params['confirm_commit'] and not operations.get('supports_confirm_commit', False):
+    if confirm_commit and not operations.get('supports_confirm_commit', False):
         module.fail_json(msg='confirm commit is not supported by Netconf server')
 
     if confirm_commit or (confirm > 0) and not operations.get('supports_confirm_commit', False):
@@ -329,7 +331,6 @@ def main():
             before = to_text(response, errors='surrogate_then_replace').strip()
             result['__backup__'] = before.strip()
         if validate:
-            if not module.check_mode:
                 conn.validate(target)
         if source:
             if not module.check_mode:
@@ -377,8 +378,10 @@ def main():
             if sanitized_before != sanitized_after:
                 result['changed'] = True
 
-            if module._diff:
-                if result['changed']:
+            if result['changed']:
+                if save:
+                    conn.copy_config(target, 'startup')
+                if module._diff:
                     result['diff'] = {'before': sanitized_before, 'after': sanitized_after}
 
     except ConnectionError as e:
