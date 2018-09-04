@@ -1139,7 +1139,7 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 332)
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(), 'AnsibleModule', 332)
 
         self._validate_argument_spec(docs, spec, kwargs)
 
