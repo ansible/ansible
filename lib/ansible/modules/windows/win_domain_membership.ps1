@@ -46,11 +46,11 @@ Function Get-DomainMembershipMatch {
         return $domain_match
     }
     catch [System.Security.Authentication.AuthenticationException] {
-        Write-DebugLog "Checking to see if ansible_user account is local and attempt a different method."
+        Write-DebugLog "Failed to get computer domain.  Attempting a different method."
         Add-Type -AssemblyName System.DirectoryServices.AccountManagement            
-        $UserPrincipal = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
-        If ($UserPrincipal.ContextType -eq "Machine") {
-            $current_dns_domain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
+        $user_principal = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
+        If ($user_principal.ContextType -eq "Machine") {
+            $current_dns_domain = (Get-CimInstance -ClassName Win32_ComputerSystem -Property Domain).Domain
             
             $domain_match = $current_dns_domain -eq $dns_domain_name
 
@@ -59,7 +59,7 @@ Function Get-DomainMembershipMatch {
             return $domain_match
         }
         Else {
-            Fail-Json -obj $result -message "The ansible_user or ansible_password is incorrect and cannot acccess the domain."
+            Fail-Json -obj $result -message "Failed to authenticate with domain controller and cannot retrieve the existing domain name: $($_.Exception.Message)"
         }
     }
     Catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
