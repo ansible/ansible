@@ -207,7 +207,7 @@ AZURE_PKG_VERSIONS = {
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
-        'expected_version': '2.1.0'
+        'expected_version': '3.0.0'
     },
     'ContainerInstanceManagementClient': {
         'package_name': 'containerinstance',
