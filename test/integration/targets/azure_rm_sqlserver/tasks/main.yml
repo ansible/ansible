@@ -47,14 +47,6 @@
 
 # azure_rm_sqlserver_facts tests
 
-- name: Create SQL Server - 2
-  azure_rm_sqlserver:
-    resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}x"
-    location: eastus
-    admin_username: mylogin
-    admin_password: Testpasswordxyz12!
-
 - name: Gather facts SQL Server
   azure_rm_sqlserver_facts:
     resource_group: "{{ resource_group }}"
@@ -72,24 +64,6 @@
       - output.servers.sqlsrv{{ random_postfix }}.version != None
       - output.servers.sqlsrv{{ random_postfix }}.state != None
       - output.servers.sqlsrv{{ random_postfix }}.fully_qualified_domain_name != None
-
-- name: Gather facts SQL Server - second
-  azure_rm_sqlserver_facts:
-    resource_group: "{{ resource_group }}"
-    server_name: "sqlsrv{{ random_postfix }}x"
-  register: output
-- name: Assert that facts are returned
-  assert:
-    that:
-      - output.changed == False
-      - output.servers.sqlsrv{{ random_postfix }}x.id != None
-      - output.servers.sqlsrv{{ random_postfix }}x.name == "sqlsrv{{ random_postfix }}x"
-      - output.servers.sqlsrv{{ random_postfix }}x.type != None
-      - output.servers.sqlsrv{{ random_postfix }}x.location != None
-      - output.servers.sqlsrv{{ random_postfix }}x.kind != None
-      - output.servers.sqlsrv{{ random_postfix }}x.version != None
-      - output.servers.sqlsrv{{ random_postfix }}x.state != None
-      - output.servers.sqlsrv{{ random_postfix }}x.fully_qualified_domain_name != None
 
 - name: Gather facts SQL Server - unexisting
   azure_rm_sqlserver_facts:
@@ -118,20 +92,6 @@
       - output.servers.sqlsrv{{ random_postfix }}.version != None
       - output.servers.sqlsrv{{ random_postfix }}.state != None
       - output.servers.sqlsrv{{ random_postfix }}.fully_qualified_domain_name != None
-      - output.servers.sqlsrv{{ random_postfix }}x.id != None
-      - output.servers.sqlsrv{{ random_postfix }}x.name == "sqlsrv{{ random_postfix }}x"
-      - output.servers.sqlsrv{{ random_postfix }}x.type != None
-      - output.servers.sqlsrv{{ random_postfix }}x.location != None
-      - output.servers.sqlsrv{{ random_postfix }}x.kind != None
-      - output.servers.sqlsrv{{ random_postfix }}x.version != None
-      - output.servers.sqlsrv{{ random_postfix }}x.state != None
-      - output.servers.sqlsrv{{ random_postfix }}x.fully_qualified_domain_name != None
-
-- name: Delete instance of SQL Server 2
-  azure_rm_sqlserver:
-    resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}x"
-    state: absent
 
 # azure_rm_sqldatabase tests
 
