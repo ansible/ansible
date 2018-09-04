@@ -159,6 +159,7 @@ import os
 import argparse
 import re
 from time import time
+from copy import deepcopy
 import boto
 from boto import ec2
 from boto import rds
@@ -569,7 +570,7 @@ class Ec2Inventory(object):
         return connect_args
 
     def connect_to_aws(self, module, region):
-        connect_args = self.credentials
+        connect_args = deepcopy(self.credentials)
 
         # only pass the profile name if it's set (as it is not supported by older boto versions)
         if self.boto_profile:
