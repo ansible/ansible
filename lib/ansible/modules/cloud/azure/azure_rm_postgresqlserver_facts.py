@@ -64,6 +64,12 @@ servers:
             returned: always
             type: str
             sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/postgreabdud1223
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: testresourcegroup
         name:
             description:
                 - Resource name.
