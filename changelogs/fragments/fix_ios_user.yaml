@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ios_user - fix unable to delete user admin issue (https://github.com/ansible/ansible/pull/44904)
