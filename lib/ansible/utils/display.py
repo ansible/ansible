@@ -323,9 +323,7 @@ class Display:
                     result = do_prompt(msg, private)
                     second = do_prompt("confirm " + msg, private)
 
-                    if allow_empty and result == second:
-                        break
-                    elif not allow_empty and not all((result, second)):
+                    if allow_empty and not all((result, second)):
                         self.display("***** RESPONSES CANNOT BE EMPTY ****")
                     elif result != second:
                         self.display("***** VALUES ENTERED DO NOT MATCH ****")
