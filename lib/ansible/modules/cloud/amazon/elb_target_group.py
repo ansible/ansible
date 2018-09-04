@@ -430,7 +430,7 @@ def create_or_update_target_group(connection, module):
             fail_if_ip_target_type_not_supported(module)
 
     # Correct type of target ports
-    for target in params['Targets']:
+    for target in params.get('Targets', []):
         target['Port'] = int(target.get('Port', module.params.get('port')))
 
     # Get target group
