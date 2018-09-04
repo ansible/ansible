@@ -126,7 +126,7 @@ webapps:
         outbound_ip_addresses:
             description: Outbound ip address of the web app.
             type: str
-        publish_url:
+        ftp_publish_url:
             description: Publishing url of the web app when depeloyment type is FTP.
             type: str
             sample: ftp://xxxx.ftp.azurewebsites.windows.net
@@ -279,7 +279,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             self.fail('Error getting web app {0} publishing credentials - {1}'.format(request_id, str(ex)))
         return response
 
-    def get_webapp_publish_url(self, resource_group, name):
+    def get_webapp_ftp_publish_url(self, resource_group, name):
         import xmltodict
 
         self.log('Get web app {0} app publish profile'.format(name))
@@ -314,17 +314,23 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             site_config = self.list_webapp_configuration(resource_group, name)
             app_settings = self.list_webapp_appsettings(resource_group, name)
             publish_cred = self.get_publish_credentials(resource_group, name)
-            publish_url = self.get_webapp_publish_url(resource_group, name)
+            ftp_publish_url = self.get_webapp_ftp_publish_url(resource_group, name)
         except CloudError as ex:
             pass
         return self.construct_curated_webapp(webapp=pip,
                                              configuration=site_config,
                                              app_settings=app_settings,
                                              deployment_slot=None,
-                                             publish_url=publish_url,
+                                             ftp_publish_url=ftp_publish_url,
                                              publish_credentials=publish_cred)
 
-    def construct_curated_webapp(self, webapp, configuration=None, app_settings=None, deployment_slot=None, publish_url=None, publish_credentials=None):
+    def construct_curated_webapp(self,
+                                 webapp,
+                                 configuration=None,
+                                 app_settings=None,
+                                 deployment_slot=None,
+                                 ftp_publish_url=None,
+                                 publish_credentials=None):
         curated_output = dict()
         curated_output['id'] = webapp['id']
         curated_output['name'] = webapp['name']
@@ -380,9 +386,9 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         if deployment_slot:
             curated_output['deployment_slot'] = deployment_slot
 
-        # publish_url
-        if publish_url:
-            curated_output['publish_url'] = publish_url
+        # ftp_publish_url
+        if ftp_publish_url:
+            curated_output['ftp_publish_url'] = ftp_publish_url
 
         # curated publish credentials
         if publish_credentials and self.return_publish_profile:
