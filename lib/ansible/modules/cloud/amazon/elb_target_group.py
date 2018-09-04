@@ -397,15 +397,14 @@ def create_or_update_target_group(connection, module):
     stickiness_lb_cookie_duration = module.params.get("stickiness_lb_cookie_duration")
     stickiness_type = module.params.get("stickiness_type")
 
+    health_option_keys = [
+        "health_check_path", "health_check_protocol", "health_check_interval", "health_check_timeout",
+        "healthy_threshold_count", "unhealthy_threshold_count", "successful_response_codes"
+    ]
+    health_options = any([module.params[health_option_key] is not None for health_option_key in health_option_keys])
+
     # Set health check if anything set
-    if (module.params.get("health_check_path") is not None or
-            module.params.get("health_check_protocol") is not None or
-            module.params.get("health_check_port") is not None or
-            module.params.get("health_check_interval") is not None or
-            module.params.get("health_check_timeout") is not None or
-            module.params.get("healthy_threshold_count") is not None or
-            module.params.get("unhealthy_threshold_count") is not None or
-            module.params.get("successful_response_codes") is not None):
+    if health_options:
 
         if module.params.get("health_check_protocol") is not None:
             params['HealthCheckProtocol'] = module.params.get("health_check_protocol").upper()
@@ -454,14 +453,7 @@ def create_or_update_target_group(connection, module):
         health_check_params = dict()
 
         # Modify health check if anything set
-        if (module.params.get("health_check_path") is not None or
-                module.params.get("health_check_protocol") is not None or
-                module.params.get("health_check_port") is not None or
-                module.params.get("health_check_interval") is not None or
-                module.params.get("health_check_timeout") is not None or
-                module.params.get("healthy_threshold_count") is not None or
-                module.params.get("unhealthy_threshold_count") is not None or
-                module.params.get("successful_response_codes") is not None):
+        if health_options:
 
             # Health check protocol
             if 'HealthCheckProtocol' in params and tg['HealthCheckProtocol'] != params['HealthCheckProtocol']:
