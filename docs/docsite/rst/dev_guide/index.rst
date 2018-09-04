@@ -4,26 +4,62 @@ Developer Guide
 
 Welcome to the Ansible Developer Guide!
 
-The purpose of this guide is to document all of the paths available to you for interacting and shaping Ansible with code, ranging from developing modules and plugins to helping to develop the Ansible Core Engine via pull requests.
+Who should use this guide?
+================================================================================
 
-To get started, select one of the following topics.
+If you want to extend Ansible by using a non-core module or plugin locally, creating a module or plugin, adding functionality to an existing module, or expanding test coverage, this guide is for you. We've included detailed information for developers on how to test and document modules, as well as the pre-requisites for getting your module or plugin accepted into Ansible Core.
 
+Find the task that best describes what you want to do:
+
+* I'm looking for a way to address a use case:
+
+   * I want to :ref:`add a custom plugin or module locally <developing_locally>`.
+   * I have a use case, and I wonder if :ref:`developing a module is the right approach <module_dev_should_you>`?
+
+* I'm ready to start developing:
+
+   * I want to :ref:`set up my Python development environment <environment_setup>`.
+   * I want to :ref:`get started writing a module <developing_modules_general>`.
+   * I want to :ref:`write a Windows module <developing_modules_general_windows>`.
+   * I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
+
+* I want to refine my code:
+
+   * I want to :ref:`debug my module code <debugging>`.
+   * I want to :ref:`test my module <developing_testing>`.
+   * I want to :ref:`document my module <module_documenting>`.
+   * I want to :ref:`make sure my code runs on Python-2 and Python-3 <developing_python_3>`.
+
+* I want to work on other development projects:
+
+   * I want to :ref:`write a plugin <developing_plugins>`.
+   * I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`.
+   * I want to :ref:`deprecate an outdated module <deprecating_modules>`.
+
+* I want to :ref:`contribute my module or plugin to Ansible Core <developing_modules_checklist>`.
+
+If you prefer to read the entire guide, here's a list of the pages in order.
 
 .. toctree::
    :maxdepth: 2
 
-   overview_architecture
+   developing_locally
    developing_modules
-   developing_program_flow_modules
-   developing_module_utilities
+   developing_modules_general
+   developing_modules_checklist
+   developing_modules_best_practices
+   developing_python_3
+   debugging
+   developing_modules_documenting
+   developing_modules_general_windows
+   developing_modules_in_groups
+   testing
+   module_lifecycle
    developing_plugins
    developing_inventory
    developing_core
-   developing_python_3
+   developing_program_flow_modules
    developing_api
    developing_rebasing
-   testing
-   repomerge
-   ../reference_appendices/release_and_maintenance
-   ../community/committer_guidelines
-   ./style_guide/index
+   developing_module_utilities
+   overview_architecture

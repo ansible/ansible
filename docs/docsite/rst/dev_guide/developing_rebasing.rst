@@ -76,3 +76,9 @@ Getting Help Rebasing
 
 For help with rebasing your PR, or other development related questions, join us on our #ansible-devel IRC chat channel
 on `freenode.net <https://freenode.net>`_.
+
+.. seealso::
+
+   :ref:`community_development_process`
+       Information on roadmaps, opening PRs, Ansibullbot, and more
+
