@@ -204,7 +204,7 @@ class NetconfBase(AnsiblePlugin):
         :param filter: specifies the portion of the configuration to retrieve (by default entire configuration is retrieved)
         :return: Returns xml string containing the RPC response received from remote host
         """
-        if rpc_command:
+        if rpc_command is None:
             raise ValueError('rpc_command value must be provided')
         req = fromstring(rpc_command)
         resp = self.m.dispatch(req, source=source, filter=filter)
@@ -270,8 +270,6 @@ class NetconfBase(AnsiblePlugin):
         :param format: format of the schema to be retrieved, yang is the default
         :return: Returns xml string containing the RPC response received from remote host
         """
-        if identifier:
-            raise ValueError('identifier value must be provided')
         resp = self.m.get_schema(identifier, version=version, format=format)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
