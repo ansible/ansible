@@ -127,7 +127,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.end_ip_address = None
 
         self.results = dict(changed=False)
-        self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
 
@@ -144,9 +143,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
         old_response = None
         response = None
-
-        self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -214,11 +210,11 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.log("Creating / Updating the Firewall Rule instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.firewall_rules.create_or_update(resource_group_name=self.resource_group,
-                                                                        server_name=self.server_name,
-                                                                        firewall_rule_name=self.name,
-                                                                        start_ip_address=self.start_ip_address,
-                                                                        end_ip_address=self.end_ip_address)
+            response = self.mysql_client.firewall_rules.create_or_update(resource_group_name=self.resource_group,
+                                                                         server_name=self.server_name,
+                                                                         firewall_rule_name=self.name,
+                                                                         start_ip_address=self.start_ip_address,
+                                                                         end_ip_address=self.end_ip_address)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -235,9 +231,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         '''
         self.log("Deleting the Firewall Rule instance {0}".format(self.name))
         try:
-            response = self.mgmt_client.firewall_rules.delete(resource_group_name=self.resource_group,
-                                                              server_name=self.server_name,
-                                                              firewall_rule_name=self.name)
+            response = self.mysql_client.firewall_rules.delete(resource_group_name=self.resource_group,
+                                                               server_name=self.server_name,
+                                                               firewall_rule_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the Firewall Rule instance.')
             self.fail("Error deleting the Firewall Rule instance: {0}".format(str(e)))
@@ -253,9 +249,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.log("Checking if the Firewall Rule instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.firewall_rules.get(resource_group_name=self.resource_group,
-                                                           server_name=self.server_name,
-                                                           firewall_rule_name=self.name)
+            response = self.mysql_client.firewall_rules.get(resource_group_name=self.resource_group,
+                                                            server_name=self.server_name,
+                                                            firewall_rule_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Firewall Rule instance : {0} found".format(response.name))
