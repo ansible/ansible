@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - To resolve nios_network issue where vendor-encapsulated-options can not have a use_option flag.
+    (https://github.com/ansible/ansible/pull/43925)
