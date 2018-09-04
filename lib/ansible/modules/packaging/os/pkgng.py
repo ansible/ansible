@@ -209,7 +209,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg, sta
         else:
             rc, out, err = module.run_command("%s %s update" % (pkgng_path, dir_arg))
         if rc != 0:
-            module.fail_json(msg="Could not update catalogue")
+            module.fail_json(msg="Could not update catalogue [%d]: %s %s" % (rc, out, err))
 
     for package in packages:
         already_installed = query_package(module, pkgng_path, package, dir_arg)
