@@ -45,7 +45,7 @@ options:
         required: false
         default: false
         description:
-        -   If true will add the `--prune` option to the `docker stack deploy` command.
+        -   If true will add the C(--prune) option to the C(docker stack deploy) command.
             This will have docker remove the services not present in the
             current stack definition.
         type: bool
@@ -53,22 +53,22 @@ options:
         required: false
         default: false
         description:
-        -   If true will add the `--with-registry-auth` option to the `docker stack deploy` command.
+        -   If true will add the C(--with-registry-auth) option to the C(docker stack deploy) command.
             This will have docker send registry authentication details to Swarm agents.
         type: bool
     resolve_image:
         required: false
         choices: ["always", "changed", "never"]
         description:
-        -   If set will add the `--resolve-image` option to the `docker stack deploy` command.
+        -   If set will add the C(--resolve-image) option to the C(docker stack deploy) command.
             This will have docker query the registry to resolve image digest and
             supported platforms. If not set, docker use "always" by default.
     absent_retries:
         required: false
         default: 0
         description:
-        -   If `>0` and `state==absent` the module will retry up to
-            `absent_retries` times to delete the stack until all the
+        -   If C(>0) and C(state==absent) the module will retry up to
+            C(absent_retries) times to delete the stack until all the
             resources have been effectively deleted.
             If the last try still reports the stack as not completely
             removed the module will fail.
@@ -76,7 +76,7 @@ options:
         required: false
         default: 1
         description:
-        -   Interval in seconds between `absent_retries`
+        -   Interval in seconds between C(absent_retries)
 
 requirements:
 -   jsondiff
@@ -222,10 +222,10 @@ def main():
     )
 
     if not HAS_JSONDIFF:
-        return module.fail_json(msg="jsondiff is not installed, try `pip install jsondiff`")
+        return module.fail_json(msg="jsondiff is not installed, try 'pip install jsondiff'")
 
     if not HAS_YAML:
-        return module.fail_json(msg="yaml is not installed, try `pip install pyyaml`")
+        return module.fail_json(msg="yaml is not installed, try 'pip install pyyaml'")
 
     state = module.params['state']
     compose = module.params['compose']
@@ -236,7 +236,7 @@ def main():
     if state == 'present':
         if not compose:
             module.fail_json(msg=("compose parameter must be a list "
-                                  "containing at least an element"))
+                                  "containing at least one element"))
 
         try:
             compose_files = []
@@ -251,8 +251,8 @@ def main():
                 elif isinstance(compose_def, string_types):
                     compose_files.append(compose_def)
                 else:
-                    module.fail_json(msg="compose %s is not a string " +
-                                     "or a dictionary" % compose_def)
+                    module.fail_json(msg="compose element '%s' must be a " +
+                                     "string or a dictionary" % compose_def)
 
             before_stack_services = docker_stack_inspect(module, name)
 

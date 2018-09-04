@@ -29,7 +29,7 @@
   assert:
     that:
     - output.failed
-    - 'output.msg == "compose parameter must be a list containing at least an element"'
+    - 'output.msg == "compose parameter must be a list containing at least one element"'
 
 - name: Ensure stack is absent
   register: output
