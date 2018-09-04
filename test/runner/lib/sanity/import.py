@@ -67,7 +67,9 @@ class ImportTest(SanityMultipleVersion):
 
         remove_tree(virtual_environment_path)
 
-        cmd = ['virtualenv', virtual_environment_path, '--python', find_python(python_version), '--no-setuptools', '--no-wheel']
+        python = find_python(python_version)
+
+        cmd = [python, '-m', 'virtualenv', virtual_environment_path, '--python', python, '--no-setuptools', '--no-wheel']
 
         if not args.coverage:
             cmd.append('--no-pip')
