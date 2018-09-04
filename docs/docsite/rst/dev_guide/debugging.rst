@@ -7,7 +7,7 @@ Debugging Modules
 Debugging (local)
 =================
 
-To break into a module running on localhost and step through with the debugger:
+To break into a module running on ``localhost`` and step through with the debugger:
 
 - Set a breakpoint in the module: ``import pdb; pdb.set_trace()``
 - Run the module on the local machine: ``$ python -m pdb ./my_new_test_module.py ./args.json``
@@ -15,9 +15,9 @@ To break into a module running on localhost and step through with the debugger:
 Debugging (remote)
 ==================
 
-To debug a module running on a remote target (i.e. not localhost):
+To debug a module running on a remote target (i.e. not ``localhost``):
 
-- On your controller machine (running Ansible) set `ANSIBLE_KEEP_REMOTE_FILES=1` (this tells Ansible to retain the modules it sends to the remote machine instead of removing them)
+- On your controller machine (running Ansible) set ``ANSIBLE_KEEP_REMOTE_FILES=1`` (this tells Ansible to retain the modules it sends to the remote machine instead of removing them)
 - Run your playbook targetting the remote machine and specify ``-vvvv`` (the verbose output will show you many things, including the remote location that Ansible uses for the modules)
 - Take note of the remote path Ansible used on the remote host
 - SSH into the remote target after the completion of the playbook
@@ -27,7 +27,7 @@ To debug a module running on a remote target (i.e. not localhost):
 - Navigate to ``./debug-dir`` (notice that unzipping has caused the generation of ``ansible_module_my_test_module.py``)
 - Modify or set a breakpoint in the unzipped module
 - Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``
-- Run the unzipped module directly passing the args file: ``$ ./ansible_module_my_test_module.py args`` (args is the file that contains the params that were originally passed. Good for repro and debugging)
+- Run the unzipped module directly passing the ``args`` file: ``$ ./ansible_module_my_test_module.py args`` (the ``args`` file contains the params that were originally passed; this approach is good for reproducing behavior as well as modifying the parameters for debugging)
 
 
 .. _debugging_ansiblemodule_based_modules:
@@ -43,7 +43,7 @@ Debugging AnsibleModule-based modules
     module is used in a playbook then you may need to use this information
     instead of relying on test-module.
 
-Starting with Ansible-2.1.0, AnsibleModule-based modules are put together as
+Starting with Ansible 2.1, AnsibleModule-based modules are put together as
 a zip file consisting of the module file and the various python module
 boilerplate inside of a wrapper script instead of as a single file with all of
 the code concatenated together.  Without some help, this can be harder to
@@ -148,10 +148,3 @@ module file and test that the real module works via :command:`ansible` or
     not work with ``excommunicate`` or may behave differently than when used
     with Ansible normally.  Those are not bugs in the module; they're
     limitations of ``excommunicate``.  Use at your own risk.
-
-
-Credit
-======
-
-Thank you to Thomas Stringer (`@tstringer <https://github.com/tstringer>`_) for contributing source
-material for this topic.
