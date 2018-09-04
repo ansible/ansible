@@ -68,48 +68,36 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
+# Note: examples below use the following group_vars/asa.yaml file to handle
 #       transport and authentication to the node.
 ---
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    authorize: yes
-    auth_pass: cisco
-    transport: cli
+ansible_connection: network_cli
+ansible_network_os: asa
+ansible_user: ansible
+ansible_become: yes
+ansible_become_method: enable
+ansible_become_pass: cisco
+command_timeout: 60
+
 
 ---
 - name: "Show the ASA version"
   asa_command:
     commands:
       - show version
-    provider: "{{ cli }}"
 
 - name: "Show ASA drops and memory"
   asa_command:
     commands:
       - show asp drop
       - show memory
-    provider: "{{ cli }}"
-
-- name: "Show the ASA version for the system context mode"
-  asa_command:
-    commands:
-      - show version
-    provider: "{{ cli }}"
-    context: system
 
 - name: "Send repeat pings and wait for the result to pass 100%"
   asa_command:
     commands:
       - ping 8.8.8.8 repeat 20 size 350
-    authorize: yes
-    auth_pass: "{{ ansible_become_pass }}"
     wait_for:
       - result[0] contains 100
-    timeout: 60
     retries: 2
 """
 
