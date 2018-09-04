@@ -407,7 +407,7 @@ class AzureRMVaults(AzureRMModuleBase):
                 return self.results
 
             self.parameters["tags"] = self.tags
-            
+
             response = self.create_update_keyvault()
 
             if not old_response:
