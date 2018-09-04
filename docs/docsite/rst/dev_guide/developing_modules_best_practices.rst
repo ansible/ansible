@@ -19,7 +19,7 @@ Especially if you want to contribute your module(s) back to Ansible Core, make s
 * Do not add ``list`` or ``info`` state options to an existing module - create a new ``_facts`` module.
 * Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
 * Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, :ref:`create multiple modules <developing_modules_in_groups>` that interact with smaller individual pieces of the API.
-* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role. 
+* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role.
 
 Designing module interfaces
 ===========================
@@ -28,8 +28,8 @@ Designing module interfaces
 * Modules accepting boolean status should accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
 * Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
 
-General best practices
-======================
+General guidelines & tips
+=========================
 
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
 * Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
@@ -79,7 +79,7 @@ Importing and using shared code
 
   And document the dependency in the ``requirements`` section of your module's :ref:`documentation_block`.
 
-.. _module_failures: 
+.. _module_failures:
 
 Handling module failures
 ========================
@@ -116,7 +116,7 @@ Modules must output valid JSON only. Follow these guidelines for creating correc
 * Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
 * Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
 * Return diff if in diff mode. This is not required for all modules, as it won't make sense for certain ones, but please include it when applicable.
-* Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, etc) are serializable.  
+* Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, etc) are serializable.
 * Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
 * Results from many hosts will be aggregated at once, so your module should return only relevant output. Returning the entire contents of a log file is generally bad form.
 
