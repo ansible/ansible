@@ -483,6 +483,15 @@ def main():
 
     connection = module.client('application-autoscaling')
 
+    # Remove any target_tracking_scaling_policy_configuration suboptions that are None
+    policy_config_options = [
+        'CustomizedMetricSpecification', 'DisableScaleIn', 'PredefinedMetricSpecification', 'ScaleInCooldown', 'ScaleOutCooldown', 'TargetValue'
+    ]
+    if isinstance(module.params['target_tracking_scaling_policy_configuration'], dict):
+        for option in policy_config_options:
+            if module.params['target_tracking_scaling_policy_configuration'][option] is None:
+                module.params['target_tracking_scaling_policy_configuration'].pop(option)
+
     if module.params.get("state") == 'present':
         # A scalable target must be registered prior to creating a scaling policy
         scalable_target_result = create_scalable_target(connection, module)
