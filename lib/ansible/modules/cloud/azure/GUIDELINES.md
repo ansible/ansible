@@ -145,7 +145,8 @@ Samples should include all possible combinations of input parameters showing how
 ## Testing
 
 Following rules should apply to tests:
-- Do not create a separate test, add **azure_xx_facts** tests to **azure_xx** module tests
+- Do not create a separate test, add **azure_xx_facts** tests to **/test/integration/targets/azure_xx** module tests
+- Remember to add **azure_xx_facts** to **/test/integration/targets/azure_xx/aliases**
 - Do not create any additional instances of costly resources just to test facts - one is sufficient
 - Test all possible parameter combinations
 - Check if all expected return values are present in the structure
