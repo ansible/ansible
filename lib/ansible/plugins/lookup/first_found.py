@@ -15,12 +15,12 @@ DOCUMENTATION = """
         to the containing role/play/include/etc's location.
       - The list of files has precedence over the paths searched.
         i.e, A task in a  role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
+      - Either a list of files (``_terms``) or a key `files` with a list of files is required for this plugin to operate.
     notes:
       - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has ``files`` and ``paths``.
     options:
       _terms:
         description: list of file names
-        required: True
       files:
         description: list of file names
       paths:
