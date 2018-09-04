@@ -118,6 +118,10 @@ class LookupModule(LookupBase):
         if anydict:
             for term in terms:
                 if isinstance(term, dict):
+
+                    if 'skip' in term:
+                        display.deprecated('Use errors="ignore" instead of skip', version='2.12')
+
                     files = term.get('files', [])
                     paths = term.get('paths', [])
                     skip = boolean(term.get('skip', False), strict=False)
