@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix network config diff issue for lines (https://github.com/ansible/ansible/pull/43889)

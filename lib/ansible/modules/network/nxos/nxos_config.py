@@ -296,11 +296,11 @@ def get_running_config(module, config=None):
         else:
             flags = ['all']
             contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=2, contents=contents)
+    return NetworkConfig(indent=2, contents=contents, ignore_lines=module.params['diff_ignore_lines'])
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=2)
+    candidate = NetworkConfig(indent=2, ignore_lines=module.params['diff_ignore_lines'])
     if module.params['src']:
         if module.params['replace'] != 'config':
             candidate.load(module.params['src'])

@@ -273,7 +273,7 @@ from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=3)
+    candidate = NetworkConfig(indent=3, ignore_lines=module.params['diff_ignore_lines'])
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
@@ -292,7 +292,7 @@ def get_running_config(module, config=None):
             if module.params['defaults']:
                 flags.append('all')
             contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=3, contents=contents)
+    return NetworkConfig(indent=3, contents=contents, ignore_lines=module.params['diff_ignore_lines'])
 
 
 def save_config(module, result):
@@ -364,10 +364,11 @@ def main():
         result['warnings'] = warnings
 
     config = None
+    diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module)
-        config = NetworkConfig(indent=3, contents=contents)
+        config = NetworkConfig(indent=3, contents=contents, ignore_lines=diff_ignore_lines)
         if module.params['backup']:
             result['__backup__'] = contents
 
@@ -379,7 +380,7 @@ def main():
 
         if match != 'none' and replace != 'config':
             config_text = get_running_config(module)
-            config = NetworkConfig(indent=3, contents=config_text)
+            config = NetworkConfig(indent=3, contents=config_text, ignore_lines=diff_ignore_lines)
             path = module.params['parents']
             configobjs = candidate.difference(config, match=match, replace=replace, path=path)
         else:
@@ -412,8 +413,6 @@ def main():
 
     running_config = module.params['running_config']
     startup_config = None
-
-    diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['save_when'] == 'always' or module.params['save']:
         save_config(module, result)
