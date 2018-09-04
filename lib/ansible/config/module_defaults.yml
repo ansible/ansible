@@ -300,6 +300,8 @@ groupings:
   - aws
   rds:
   - aws
+  rds_instance:
+  - aws
   rds_instance_facts:
   - aws
   rds_param_group:
