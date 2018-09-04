@@ -42,8 +42,9 @@ options:
       not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
-    - If C(file), the file will NOT be created if it does not exist; see the C(touch)
-      value or the M(copy) or M(template) module if you want that behavior.
+    - If C(file), the file will NOT be created if it does not exist but this behaviour
+      will be changed in Ansible 2.12; for now, see the C(touch) value or the M(copy) or
+      M(template) module if you want that behavior.
     - If C(hard), the hard link will be created or changed.
     - If C(link), the symbolic link will be created or changed.
     - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
@@ -500,8 +501,14 @@ def ensure_file_attributes(path, follow, timestamps):
             prev_state = get_state(b_path)
             file_args['path'] = path
 
+    if prev_state == "absent":
+        module.deprecate("The file %s is absent but, in Ansible 2.12, the default behaviour "
+                         "will be to create this file. If you want to determine whether the "
+                         "file exists or not, you should be using the stat module instead." % path,
+                         version=2.12)
+
     if prev_state not in ('file', 'hard'):
-        # file is not absent and any other state is a conflict
+        # any other state is a conflict
         raise AnsibleModuleError(results={'msg': 'file (%s) is %s, cannot continue' % (path, prev_state),
                                           'path': path})
 
