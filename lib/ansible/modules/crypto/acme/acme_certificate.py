@@ -330,7 +330,7 @@ account_uri:
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, fetch_url, write_file, nopad_b64, simple_get, pem_to_der, ACMEAccount,
+    ModuleFailException, write_file, nopad_b64, pem_to_der, ACMEAccount,
     HAS_CURRENT_CRYPTOGRAPHY, cryptography_get_csr_domains, cryptography_get_cert_days,
     set_crypto_backend,
 )
@@ -553,7 +553,7 @@ class ACMEClient(object):
         status = ''
 
         while status not in ['valid', 'invalid', 'revoked']:
-            result = simple_get(self.module, auth['uri'])
+            result, dummy = self.account.get_request(auth['uri'])
             result['uri'] = auth['uri']
             if self._add_or_update_auth(domain, result):
                 self.changed = True
@@ -590,7 +590,7 @@ class ACMEClient(object):
         status = result['status']
         while status not in ['valid', 'invalid']:
             time.sleep(2)
-            result = simple_get(self.module, order)
+            result, dummy = self.account.get_request(order)
             status = result['status']
 
         if status != 'valid':
@@ -611,11 +611,7 @@ class ACMEClient(object):
         Download and parse the certificate chain.
         https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.4.2
         '''
-        resp, info = fetch_url(self.module, url, headers={'Accept': 'application/pem-certificate-chain'})
-        try:
-            content = resp.read()
-        except AttributeError:
-            content = info.get('body')
+        content, info = self.account.get_request(url, parse_json_result=False, headers={'Accept': 'application/pem-certificate-chain'})
 
         if not content or not info['content-type'].startswith('application/pem-certificate-chain'):
             raise ModuleFailException("Cannot download certificate chain from {0}: {1} (headers: {2})".format(url, content, info))
@@ -642,9 +638,9 @@ class ACMEClient(object):
             parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
             if parsed_link and parsed_link.group(2) == "up":
                 chain_link = parsed_link.group(1)
-                chain_result, chain_info = fetch_url(self.module, chain_link, method='GET')
+                chain_result, chain_info = self.account.get_request(chain_link, parse_json_result=False)
                 if chain_info['status'] in [200, 201]:
-                    chain.append(self._der_to_pem(chain_result.read()))
+                    chain.append(self._der_to_pem(chain_result))
 
         if cert is None or current:
             raise ModuleFailException("Failed to parse certificate chain download from {0}: {1} (headers: {2})".format(url, content, info))
@@ -669,9 +665,9 @@ class ACMEClient(object):
             parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
             if parsed_link and parsed_link.group(2) == "up":
                 chain_link = parsed_link.group(1)
-                chain_result, chain_info = fetch_url(self.module, chain_link, method='GET')
+                chain_result, chain_info = self.account.get_request(chain_link, parse_json_result=False)
                 if chain_info['status'] in [200, 201]:
-                    chain = [self._der_to_pem(chain_result.read())]
+                    chain = [self._der_to_pem(chain_result)]
 
         if info['status'] not in [200, 201]:
             raise ModuleFailException("Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
@@ -698,7 +694,7 @@ class ACMEClient(object):
             raise ModuleFailException("Error new order: CODE: {0} RESULT: {1}".format(info['status'], result))
 
         for auth_uri in result['authorizations']:
-            auth_data = simple_get(self.module, auth_uri)
+            auth_data, dummy = self.account.get_request(auth_uri)
             auth_data['uri'] = auth_uri
             domain = auth_data['identifier']['value']
             if auth_data.get('wildcard', False):
@@ -774,11 +770,7 @@ class ACMEClient(object):
         else:
             # For ACME v2, we obtain the order object by fetching the
             # order URI, and extract the information from there.
-            resp, info = fetch_url(self.module, self.order_uri)
-            try:
-                result = resp.read()
-            except AttributeError:
-                result = info.get('body')
+            result, info = self.account.get_request(self.order_uri)
 
             if not result:
                 raise ModuleFailException("Cannot download order from {0}: {1} (headers: {2})".format(self.order_uri, result, info))
@@ -786,9 +778,8 @@ class ACMEClient(object):
             if info['status'] not in [200]:
                 raise ModuleFailException("Error on downloading order: CODE: {0} RESULT: {1}".format(info['status'], result))
 
-            result = self.module.from_json(result.decode('utf8'))
             for auth_uri in result['authorizations']:
-                auth_data = simple_get(self.module, auth_uri)
+                auth_data, dummy = self.account.get_request(auth_uri)
                 auth_data['uri'] = auth_uri
                 domain = auth_data['identifier']['value']
                 if auth_data.get('wildcard', False):
