@@ -15,17 +15,29 @@ DOCUMENTATION = """
         to the containing role/play/include/etc's location.
       - The list of files has precedence over the paths searched.
         i.e, A task in a  role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
+    notes:
+      - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has ``files`` and ``paths``.
     options:
       _terms:
         description: list of file names
         required: True
+      files:
+        description: list of file names
       paths:
         description: list of paths in which to look for the files
+      skip:
+        type: boolean
+        default: False
+        description: Return an empty list if no file is found, instead of an error.
+        deprecated:
+            why: A generic that applies to all errors exists for all lookups.
+            version: "2.8"
+            alternative: The generic ``errors=ignore``
 """
 
 EXAMPLES = """
-- name: show first existing file
-  debug: msg={{lookup('first_found', findme)}}
+- name: show first existing file or ignore if none do
+  debug: msg={{lookup('first_found', findme, errors='ignore')}}
   vars:
     findme:
       - "/path/to/foo.txt"
