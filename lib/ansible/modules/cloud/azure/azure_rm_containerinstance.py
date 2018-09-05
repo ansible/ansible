@@ -97,7 +97,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -257,19 +256,17 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         self.containers = None
 
-        self.tags = None
-
         self.results = dict(changed=False, state=dict())
         self.cgmodels = None
 
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                        supports_check_mode=True,
-                                                       supports_tags=True)
+                                                       supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
 
         resource_group = None
@@ -303,9 +300,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.log("Container instance deleted")
             elif self.state == 'present':
                 self.log("Need to check if container group has to be deleted or may be updated")
-                update_tags, newtags = self.update_tags(response.get('tags', dict()))
-                if update_tags:
-                    self.tags = newtags
 
                 if self.force_update:
                     self.log('Deleting container instance before update')
@@ -382,8 +376,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                   restart_policy=None,
                                                   ip_address=ip_address,
                                                   os_type=self.os_type,
-                                                  volumes=None,
-                                                  tags=self.tags)
+                                                  volumes=None)
 
         response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
                                                                                    container_group_name=self.name,
