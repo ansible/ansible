@@ -458,9 +458,6 @@ class PathMapper(object):
 
                 test_path = os.path.dirname(test_path)
 
-        if path.startswith('test/runner/docker/'):
-            return minimal  # not used by tests, only used to build the default container
-
         if path.startswith('test/runner/lib/cloud/'):
             cloud_target = 'cloud/%s/' % name
 
