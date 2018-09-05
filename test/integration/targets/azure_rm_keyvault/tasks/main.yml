@@ -92,6 +92,7 @@
 
 - name: Use REST API to retrieve keyvault (as facts not available yet)
   azure_rm_resource_facts:
+    api_version: '2018-02-14'
     resource_group: "{{ resource_group }}"
     provider: keyvault
     resource_type: vaults
