@@ -327,4 +327,4 @@
 - name: Assert publish profile returned
   assert:
     that:
-      - facts.ftp_publish_url != ''
+      - facts.webapps[0].ftp_publish_url != ''
