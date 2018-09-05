@@ -1,5 +1,46 @@
+# General Coding Guidelines for Azure Modules
 
-# Rules for Azure Ansible facts modules
+Note: This section is still under development
+
+## Input parameters
+
+### General Rules
+- options structure should be as flat as possible, preferably only 2 levels
+- option names should follow **python_case**
+- choice option names should follow **python_case**
+- resource name option should always be **name** not **xxx_name** (adding alias is allowed)
+- **location** option should be optional, if not specified, should be taken from the resource group
+- **tags** option should be implemented if resource supports tags
+- modules should support **check_mode**
+
+
+
+## Return values for main modules
+
+Return values should include only minimal information:
+- resource **id**
+- any specific information allocated by the service that is important for the user
+
+## Idempotence
+
+- modules should be idempotent -- calling with the same options  should not result in any change
+- there may be some exceptions, for instance passwords, when they can't be compared ith existing passwords. When password option is not specified, it should be ommited in idempotence check. Specifying password should cause update.
+
+## Testing
+
+### Tests that need to be performed on every module
+- create resource
+- create resource again with the same parameters, make sure no change was recorded
+- create resource again with different parameters, make sure proper changes were made and change was recorded
+- delete resource, make sure change was recorded
+- delete unexising resource, make sure no change was recorder
+
+### Testing Idempotence
+
+- every field that should be idempotent shall be tested using check_mode
+- single udpate test should be done with changes to all fields to check if they were updated correctly
+
+# Specific Guidelines for Azure Facts Modules
 
 ## Input Parameters
 
