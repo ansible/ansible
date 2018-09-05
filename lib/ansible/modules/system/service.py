@@ -531,7 +531,7 @@ class LinuxService(Service):
         elif out.startswith('disabled'):
             return False
         # `systemctl is-enabled` returns rc 0 for enabled, 1 for disabled, and 4 for service file not found
-        elif rc > 1 and sysv_exists(service_name): 
+        elif rc > 1 and sysv_exists(service_name):
             return sysv_is_enabled(service_name)
         else:
             return False
