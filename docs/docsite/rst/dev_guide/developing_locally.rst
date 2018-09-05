@@ -12,11 +12,11 @@ The easiest, quickest, and most popular way to extend Ansible is to copy or writ
 
 Extending Ansible with local modules and plugins offers lots of shortcuts:
 
-* you can copy other people's modules and plugins
-* if you're writing a new module, you can choose any programming language you like
-* you don't have to clone the main Ansible repo
-* you don't have to open a pull request
-* you don't have to add tests (though we recommend that you do!)
+* You can copy other people's modules and plugins.
+* If you're writing a new module, you can choose any programming language you like.
+* You don't have to clone the main Ansible repo.
+* You don't have to open a pull request.
+* You don't have to add tests (though we recommend that you do!).
 
 To save a local module or plugin so Ansible can find and use it, drop the module or plugin in the correct "magic" directory. For local modules, use the name of the file as the module name: for example, if the module file is ``~/.ansible/plugins/modules/local_users.py``, use ``local_users`` as the module name.
 
