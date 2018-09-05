@@ -46,9 +46,9 @@ Other YAML files may be included in certain directories. For example, it is comm
     # roles/example/tasks/main.yml
     - name: added in 2.4, previously you used 'include'
       import_tasks: redhat.yml
-      when: ansible_facts['os_platform']|lower == 'redhat'
+      when: ansible_facts['os_family']|lower == 'redhat'
     - import_tasks: debian.yml
-      when: ansible_facts['os_platform']|lower == 'debian'
+      when: ansible_facts['os_family']|lower == 'debian'
 
     # roles/example/tasks/redhat.yml
     - yum:
