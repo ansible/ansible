@@ -25,7 +25,8 @@ version_added: 2.6
 author:
     - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
-    - Tested on vSphere 6.0 and 6.5
+    - Tested on vSphere 6.0 and 6.5.
+    - Disk UUID information is added in version 2.8.
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -149,6 +150,7 @@ class PyVmomiHelper(PyVmomi):
                     backing_disk_mode=disk.backing.diskMode,
                     backing_writethrough=disk.backing.writeThrough,
                     backing_thinprovisioned=disk.backing.thinProvisioned,
+                    backing_uuid=disk.backing.uuid,
                     backing_eagerlyscrub=bool(disk.backing.eagerlyScrub),
                     controller_key=disk.controllerKey,
                     unit_number=disk.unitNumber,
@@ -167,8 +169,11 @@ def main():
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[['name', 'uuid']],
+        supports_check_mode=True,
+    )
 
     if module.params['folder']:
         # FindByInventoryPath() does not require an absolute path
