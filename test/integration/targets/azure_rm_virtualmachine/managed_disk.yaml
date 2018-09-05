@@ -1,6 +1,6 @@
 ---
 
-- name: Create virtual machine with managed disk and no public IP
+- name: Create virtual machine with managed disk
   azure_rm_virtualmachine:
     resource_group: "{{ hostvars['localhost'].resource_group }}"
     name: "{{ hostvars['localhost'].vm_names.managed_disk }}"

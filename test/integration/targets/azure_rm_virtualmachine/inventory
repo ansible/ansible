@@ -1,6 +1,7 @@
 basic
 managed_disk
 os_disk_size
+; Enable the `accept_terms` tests when the CI user has marketplace permissions
 ;accept_terms
 
 [all:vars]
