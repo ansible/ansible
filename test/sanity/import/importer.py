@@ -4,11 +4,17 @@
 from __future__ import absolute_import, print_function
 
 import contextlib
-import imp
 import os
 import re
 import sys
 import traceback
+
+try:
+    import importlib.util
+    imp = None
+except ImportError:
+    importlib = None
+    import imp
 
 try:
     from StringIO import StringIO
@@ -76,10 +82,18 @@ def test_python_module(path, base_dir, messages, ansible_module):
         filter_dir = base_dir
 
     capture = Capture()
+
     try:
-        with open(path, 'r') as module_fd:
+        if imp:
+            with open(path, 'r') as module_fd:
+                with capture_output(capture):
+                    imp.load_module(name, module_fd, os.path.abspath(path), ('.py', 'r', imp.PY_SOURCE))
+        else:
+            spec = importlib.util.spec_from_file_location(name, os.path.abspath(path))
+            module = importlib.util.module_from_spec(spec)
+
             with capture_output(capture):
-                imp.load_module(name, module_fd, os.path.abspath(path), ('.py', 'r', imp.PY_SOURCE))
+                spec.loader.exec_module(module)
 
         capture_report(path, capture, messages)
     except ImporterAnsibleModuleException:
