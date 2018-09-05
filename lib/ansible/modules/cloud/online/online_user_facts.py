@@ -16,7 +16,7 @@ module: online_user_facts
 short_description: Gather facts about Online user.
 description:
   - Gather facts about the user.
-version_added: "2.7"
+version_added: "2.8"
 author:
   - "Remy Leone (@sieben)"
 extends_documentation_fragment: online
