@@ -10,13 +10,13 @@
 - name: Create a stack without name
   register: output
   docker_stack:
-    state: tresent
+    state: present
   ignore_errors: yes
 
 - name: assert failure when name not set
   assert:
     that:
-    - output.failed
+    - output is failed
     - 'output.msg == "missing required arguments: name"'
 
 - name: Create a stack without compose
@@ -28,7 +28,7 @@
 - name: assert failure when compose not set
   assert:
     that:
-    - output.failed
+    - output is failed
     - 'output.msg == "compose parameter must be a list containing at least one element"'
 
 - name: Ensure stack is absent
@@ -96,4 +96,4 @@
 - name: assert state=absent idempotency
   assert:
     that:
-    - not output is changed
+    - output is not changed
