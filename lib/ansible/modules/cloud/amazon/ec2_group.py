@@ -293,7 +293,6 @@ owner_id:
 import json
 import re
 import itertools
-from copy import deepcopy
 from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
