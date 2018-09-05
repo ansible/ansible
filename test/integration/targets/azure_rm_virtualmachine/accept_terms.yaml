@@ -1,6 +1,6 @@
 ---
 
-- name: Create virtual machine with image and plan which requires acceptance of terms
+- name: Create virtual machine with Marketplace image and plan requiring acceptance of terms
   azure_rm_virtualmachine:
     resource_group: "{{ hostvars['localhost'].resource_group }}"
     name: "{{ hostvars['localhost'].vm_names.accept_terms }}"
@@ -22,7 +22,7 @@
       - output.changed
       - output.ansible_facts.azure_vm.properties.storageProfile.imageReference.publisher == hostvars['localhost'].image_paid.publisher
 
-- name: Should be idempotent with image and plan which requires acceptance of terms
+- name: Should be idempotent with image and plan requiring acceptance of terms
   azure_rm_virtualmachine:
     resource_group: "{{ hostvars['localhost'].resource_group }}"
     name: "{{ hostvars['localhost'].vm_names.accept_terms }}"
