@@ -42,6 +42,7 @@
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
       register: vpc_result
+    - include: ./numeric_protos.yml
     - include: ./rule_group_create.yml
     - include: ./egress_tests.yml
     - include: ./data_validation.yml
