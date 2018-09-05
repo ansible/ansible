@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlfirewallrule
-version_added: "2.5"
+version_added: "2.8"
 short_description: Manage Firewall Rule instance.
 description:
     - Create, update and delete instance of Firewall Rule.
@@ -34,9 +34,6 @@ options:
         description:
             - The name of the server firewall rule.
         required: True
-    parameters:
-        description:
-            - The required parameters for creating or updating a firewall rule.
     start_ip_address:
         description:
             - The start IP address of the server firewall rule. Must be IPv4 format.
@@ -58,7 +55,6 @@ EXAMPLES = '''
       resource_group: TestGroup
       server_name: testserver
       name: rule1
-      parameters: parameters
 '''
 
 RETURN = '''
@@ -105,9 +101,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            parameters=dict(
-                type='dict'
-            ),
             start_ip_address=dict(
                 type='str'
             ),
@@ -128,7 +121,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.end_ip_address = None
 
         self.results = dict(changed=False)
-        self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
 
@@ -145,9 +137,6 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
         old_response = None
         response = None
-
-        self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -215,11 +204,11 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.log("Creating / Updating the Firewall Rule instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.firewall_rules.create_or_update(resource_group_name=self.resource_group,
-                                                                        server_name=self.server_name,
-                                                                        firewall_rule_name=self.name,
-                                                                        start_ip_address=self.start_ip_address,
-                                                                        end_ip_address=self.end_ip_address)
+            response = self.postgresql_client.firewall_rules.create_or_update(resource_group_name=self.resource_group,
+                                                                              server_name=self.server_name,
+                                                                              firewall_rule_name=self.name,
+                                                                              start_ip_address=self.start_ip_address,
+                                                                              end_ip_address=self.end_ip_address)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -236,9 +225,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         '''
         self.log("Deleting the Firewall Rule instance {0}".format(self.name))
         try:
-            response = self.mgmt_client.firewall_rules.delete(resource_group_name=self.resource_group,
-                                                              server_name=self.server_name,
-                                                              firewall_rule_name=self.name)
+            response = self.postgresql_client.firewall_rules.delete(resource_group_name=self.resource_group,
+                                                                    server_name=self.server_name,
+                                                                    firewall_rule_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the Firewall Rule instance.')
             self.fail("Error deleting the Firewall Rule instance: {0}".format(str(e)))
@@ -254,9 +243,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.log("Checking if the Firewall Rule instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.firewall_rules.get(resource_group_name=self.resource_group,
-                                                           server_name=self.server_name,
-                                                           firewall_rule_name=self.name)
+            response = self.postgresql_client.firewall_rules.get(resource_group_name=self.resource_group,
+                                                                 server_name=self.server_name,
+                                                                 firewall_rule_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Firewall Rule instance : {0} found".format(response.name))
@@ -271,6 +260,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMFirewallRules()
+
 
 if __name__ == '__main__':
     main()
