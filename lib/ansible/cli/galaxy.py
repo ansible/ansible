@@ -422,7 +422,9 @@ class GalaxyCLI(CLI):
                                 display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
                                                 (str(dep_role), role.name, dep_role.install_info['version']))
                             else:
-                                display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+                                if dep_role not in roles_left:
+                                    display.display('- adding dependency: %s' % str(dep_role))
+                                    roles_left.append(dep_role)
 
             if not installed:
                 display.warning("- %s was NOT installed successfully." % role.name)
