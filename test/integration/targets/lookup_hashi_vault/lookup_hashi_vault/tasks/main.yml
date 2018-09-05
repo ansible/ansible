@@ -3,7 +3,7 @@
 
   vars:
     vault_version: '0.11.0'
-    vault_uri: 'https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_{{ ansible_system | lower }}_{{ vault_arch }}.zip'
+    vault_uri: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/lookup_hashi_vault/vault_{{ vault_version }}_{{ ansible_system | lower }}_{{ vault_arch }}.zip'
     vault_cmd: '{{ local_temp_dir }}/vault'
 
   connection: local  # already defined in inventory for testhost, usefull when used with another inventory
