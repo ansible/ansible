@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_linkagg mode fix (https://github.com/ansible/ansible/pull/44294).
