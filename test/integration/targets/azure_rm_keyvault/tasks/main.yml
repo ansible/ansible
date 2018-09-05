@@ -64,7 +64,7 @@
     that:
       - output.changed == false
 
-- name: Update existing Key Vault (add a rule)
+- name: Update existing Key Vault (add a rule and tags)
   azure_rm_keyvault:
     resource_group: "{{ resource_group }}"
     vault_name: "vault{{ rpfx }}"
@@ -82,11 +82,26 @@
         keys:
           - get
           - list
+    tags:
+      aaa: bbb
   register: output
 - name: Assert the state has changed
   assert:
     that:
       - output.changed == true
+
+- name: Use REST API to retrieve keyvault (as facts not available yet)
+  azure_rm_resource_facts:
+    api_version: '2018-02-14'
+    resource_group: "{{ resource_group }}"
+    provider: keyvault
+    resource_type: vaults
+    resource_name: "vault{{ rpfx }}"
+  register: output
+- name: Assert the facts are properly set
+  assert:
+    that:
+      - output.response[0].tags.aaa == "bbb"
 
 - name: Delete instance of Key Vault -- check mode
   azure_rm_keyvault:
