@@ -26,8 +26,10 @@ DOCUMENTATION = """
         required: False
         default: False
     notes:
-      - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
-      - this lookup does not understand 'globing', use the fileglob lookup instead.
+      - If read in variable context and the file is valid YAML/JSON, it will be interpreted as a data structure
+        which you can manipulate as you would any other variable.
+      - If the file is vaulted, it will be transparently 'opened' if the appropriate secrets are available.
+      - This lookup does not understand 'globing', use the fileglob lookup instead.
 """
 
 EXAMPLES = """
