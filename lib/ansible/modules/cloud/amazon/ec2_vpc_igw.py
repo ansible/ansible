@@ -37,6 +37,9 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+  - botocore
+  - boto3
 '''
 
 EXAMPLES = '''
@@ -80,15 +83,20 @@ vpc_id:
 '''
 
 try:
-    import boto.ec2
-    import boto.vpc
-    from boto.exception import EC2ResponseError
-    HAS_BOTO = True
+    import botocore
 except ImportError:
-    HAS_BOTO = False
+    pass # Handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (
+    AnsibleAWSError,
+    AWSRetry,
+    boto3_conn,
+    ec2_argument_spec,
+    get_aws_connection_info,
+    camel_dict_to_snake_dict,
+    boto3_tag_list_to_ansible_dict
+)
 from ansible.module_utils.six import string_types
 
 
@@ -213,7 +221,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
@@ -221,15 +229,12 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto is required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-
-    if region:
-        try:
-            connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-            module.fail_json(msg=str(e))
-    else:
-        module.fail_json(msg="region must be specified")
+    try:
+        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+        connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url,
+                            **aws_connect_params)
+    except botocore.exceptions.NoCredentialsError as e:
+        module.fail_json(msg="Can't authorize connection - %s" % to_native(e), exception=traceback.format_exc())
 
     vpc_id = module.params.get('vpc_id')
     state = module.params.get('state', 'present')
