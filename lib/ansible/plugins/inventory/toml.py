@@ -22,30 +22,46 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 example1: |
     [all.vars]
-    group_var1 = "value2"
+    has_java = false
 
-    [all.hosts.test1]
+    [web]
+    children = [
+        "apache",
+        "nginx"
+    ]
+    vars = { http_port = 8080, myvar = 23 }
 
-    [all.hosts.test2]
-    var1 = "value1"
+    [web.hosts]
+    host1 = {}
+    host2 = { ansible_port = 222 }
 
-    [all.children.last_group]
-    hosts = "test1"
+    [apache.hosts]
+    tomcat1 = {}
+    tomcat2 = { myvar = 34 }
+    tomcat3 = { mysecret = "03#pa33w0rd" }
 
-    [all.children.other_group.vars]
-    g2_var2 = "value3"
+    [nginx.hosts]
+    jenkins1 = {}
 
-    [all.children.last_group.vars]
-    last_var = "MYVALUE"
+    [nginx.vars]
+    has_java = true
 
-    [all.children.other_group.children.group_x]
-    hosts = "test5"
+example2: |
+    [ungrouped.hosts]
+    host1 = {}
+    host2 = { ansible_host = 127.0.0.1, ansible_port = 44 }
+    host3 = { ansible_host = 127.0.0.1, ansible_port = 45 }
 
-    [all.children.other_group.hosts.test4]
-    ansible_host = "127.0.0.1"
+    [g1.hosts]
+    host4 = {}
+
+    [g2.hosts]
+    host4 = {}
 '''
 
 import os
+
+from collections import MutableMapping
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils.six import string_types
@@ -94,3 +110,45 @@ class InventoryModule(YAMLInventoryModule):
                 "an error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)),
                 orig_exc=e
             )
+
+    def _parse_group(self, group, group_data):
+
+        if isinstance(group_data, (MutableMapping, type(None))):
+
+            self.inventory.add_group(group)
+
+            if group_data is not None:
+                # make sure they are dicts
+                for section in ('vars', 'children', 'hosts'):
+                    if section in group_data:
+                        # convert strings to dicts as these are allowed
+                        if isinstance(group_data[section], string_types):
+                            group_data[section] = {group_data[section]: None}
+
+                        if section in ('vars', 'hosts') and not isinstance(group_data[section], (MutableMapping, type(None))):
+                            raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
+                                                     (section, group, type(group_data[section])))
+                        elif section in ('children',) and not isinstance(group_data[section], list):
+                            raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a list, found "%s" instead.' %
+                                                     (section, group, type(group_data[section])))
+
+                for key in group_data:
+                    if key == 'vars':
+                        for var in group_data['vars']:
+                            self.inventory.set_variable(group, var, group_data['vars'][var])
+
+                    elif key == 'children':
+                        for subgroup in group_data['children']:
+                            self._parse_group(subgroup, {})
+                            self.inventory.add_child(group, subgroup)
+
+                    elif key == 'hosts':
+                        for host_pattern in group_data['hosts']:
+                            hosts, port = self._parse_host(host_pattern)
+                            self._populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
+                    else:
+                        self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
+                        pass
+
+        else:
+            self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
