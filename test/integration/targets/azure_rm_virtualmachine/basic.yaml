@@ -98,9 +98,12 @@
 - assert:
     that: not output.changed
 
+- set_fact:
+    new_azure_vm_hostname: "{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}"
+
 #- add_host:
     #name: new_azure_vm
-    #ansible_host: '{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
+    #ansible_host: "{{ new_azure_vm_hostname }}"
     #ansible_connection: paramiko  # not guaranteed to have sshpass...
     #ansible_user: "{{ hostvars['localhost'].admin_user }}"
     #ansible_password: "{{ hostvars['localhost'].password }}"
@@ -108,7 +111,7 @@
 
 #- name: wait for SSH port to be open
   #wait_for:
-    #host: "{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}"
+    #host: "{{ new_azure_vm_hostname }}"
     #port: 22
     #timeout: 60
     #state: started
