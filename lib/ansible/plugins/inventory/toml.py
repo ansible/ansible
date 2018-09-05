@@ -61,7 +61,7 @@ example2: |
 
 import os
 
-from collections import MutableMapping
+from collections import MutableMapping, MutableSequence
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils.six import string_types
@@ -112,43 +112,37 @@ class InventoryModule(YAMLInventoryModule):
             )
 
     def _parse_group(self, group, group_data):
-
-        if isinstance(group_data, (MutableMapping, type(None))):
-
-            self.inventory.add_group(group)
-
-            if group_data is not None:
-                # make sure they are dicts
-                for section in ('vars', 'children', 'hosts'):
-                    if section in group_data:
-                        # convert strings to dicts as these are allowed
-                        if isinstance(group_data[section], string_types):
-                            group_data[section] = {group_data[section]: None}
-
-                        if section in ('vars', 'hosts') and not isinstance(group_data[section], (MutableMapping, type(None))):
-                            raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
-                                                     (section, group, type(group_data[section])))
-                        elif section in ('children',) and not isinstance(group_data[section], list):
-                            raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a list, found "%s" instead.' %
-                                                     (section, group, type(group_data[section])))
-
-                for key in group_data:
-                    if key == 'vars':
-                        for var in group_data['vars']:
-                            self.inventory.set_variable(group, var, group_data['vars'][var])
-
-                    elif key == 'children':
-                        for subgroup in group_data['children']:
-                            self._parse_group(subgroup, {})
-                            self.inventory.add_child(group, subgroup)
-
-                    elif key == 'hosts':
-                        for host_pattern in group_data['hosts']:
-                            hosts, port = self._parse_host(host_pattern)
-                            self._populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
-                    else:
-                        self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
-                        pass
-
-        else:
+        if not isinstance(group_data, (MutableMapping, type(None))):
             self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
+            return
+
+        self.inventory.add_group(group)
+        if group_data is not None:
+            for key, data in group_data.items():
+                if key == 'vars':
+                    if not isinstance(data, MutableMapping):
+                        raise AnsibleParserError(
+                            'Invalid "vars" entry for "%s" group, requires a dict, found "%s" instead.' % (group, type(data))
+                        )
+                    for var, value in data.items():
+                        self.inventory.set_variable(group, var, value)
+
+                elif key == 'children':
+                    if not isinstance(data, MutableSequence):
+                        raise AnsibleParserError(
+                            'Invalid "vars" entry for "%s" group, requires a list, found "%s" instead.' % (group, type(data))
+                        )
+                    for subgroup in data:
+                        self._parse_group(subgroup, {})
+                        self.inventory.add_child(group, subgroup)
+
+                elif key == 'hosts':
+                    if not isinstance(data, MutableMapping):
+                        raise AnsibleParserError(
+                            'Invalid "hosts" entry for "%s" group, requires a dict, found "%s" instead.' % (group, type(data))
+                        )
+                    for host_pattern, value in data.items():
+                        hosts, port = self._parse_host(host_pattern)
+                        self._populate_host_vars(hosts, value, group, port)
+                else:
+                    self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
