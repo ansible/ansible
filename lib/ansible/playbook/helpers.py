@@ -186,7 +186,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         include_target = templar.template(t.args['_raw_params'])
                         if t._role:
                             new_basedir = os.path.join(t._role._role_path, subdir, cumulative_path)
-                            include_file = loader.path_dwim_relative(new_basedir, subdir, include_target)
+                            include_file = loader.path_dwim_relative(new_basedir, "", include_target)
                         else:
                             include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 
