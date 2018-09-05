@@ -54,9 +54,9 @@ options:
     description:
       - Whether to enable private networking or not.
     type: bool
-  network_id:
+  networks:
     description:
-      - Specifiy a Private Network ID to be used.
+      - Specifiy an array of private networks to attach to the server.
       - If specified, private_network_enabled is ignored.
     version_added: "2.7"
 
@@ -143,6 +143,19 @@ EXAMPLES = '''
     module: vultr_server
     name: "{{ vultr_server_name }}"
     state: absent
+
+- name: create a server with multiple private networks
+  local_action:
+    module: vultr_server
+    name: "{{ vultr_server_name }}"
+    os: CentOS 7 x64
+    plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    region: Amsterdam
+    state: present
+    networks:
+      - Private Network 1
+      - Private Network 2
+
 '''
 
 RETURN = '''
@@ -396,6 +409,14 @@ class AnsibleVultrServer(Vultr):
             use_cache=True
         )
 
+    def get_networks(self):
+        return self.query_resources_by_key(
+            key='description',
+            value=self.module.params.get('networks'),
+            resource='network',
+            use_cache=True
+        )
+
     def get_region(self):
         return self.query_resource_by_key(
             key='name',
@@ -503,8 +524,8 @@ class AnsibleVultrServer(Vultr):
                 'user_data': self.get_user_data(),
                 'SCRIPTID': self.get_startup_script().get('SCRIPTID'),
             }
-            if self.module.params.get('network_id'):
-                data['NETWORKID'] = self.module.params.get('network_id')
+            if self.module.params.get('networks'):
+                data['NETWORKID'] = [n.get('NETWORKID') for n in self.get_networks()]
             else:
                 data['enable_private_network'] = self.get_yes_or_no('private_network_enabled')
             self.api_query(
@@ -844,7 +865,7 @@ def main():
         force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
         private_network_enabled=dict(type='bool'),
-        network_id=dict(),
+        networks=dict(type='list'),
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
         tag=dict(),

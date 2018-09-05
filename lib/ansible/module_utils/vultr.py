@@ -236,6 +236,36 @@ class Vultr:
 
         self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
+    def query_resources_by_key(self, key, value, resource='regions', query_by='list', params=None, use_cache=False):
+        r_list = list()
+        if not value:
+            return r_list
+        elif isinstance(value, list):
+            for v in value:
+                r_list.append(
+                    self.query_resource_by_key(
+                        key=key,
+                        value=v,
+                        resource=resource,
+                        query_by=query_by,
+                        params=params,
+                        use_cache=use_cache
+                        )
+                    )
+            return r_list
+        else:
+            r_list.append(
+                self.query_resource_by_key(
+                    key=key,
+                    value=value,
+                    resource=resource,
+                    query_by=query_by,
+                    params=params,
+                    use_cache=use_cache
+                    )
+                )
+            return r_list
+
     @staticmethod
     def normalize_result(resource, schema, remove_missing_keys=True):
         if remove_missing_keys:
