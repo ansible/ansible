@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlfirewallrule
 version_added: "2.8"
-short_description: Manage Firewall Rule instance.
+short_description: Manage MySQL firewall rule instance.
 description:
-    - Create, update and delete instance of Firewall Rule.
+    - Create, update and delete instance of MySQL firewall rule.
 
 options:
     resource_group:
@@ -32,14 +32,14 @@ options:
         required: True
     name:
         description:
-            - The name of the server firewall rule.
+            - The name of the MySQL firewall rule.
         required: True
     start_ip_address:
         description:
-            - The start IP address of the server firewall rule. Must be IPv4 format.
+            - The start IP address of the MySQL firewall rule. Must be IPv4 format.
     end_ip_address:
         description:
-            - The end IP address of the server firewall rule. Must be IPv4 format.
+            - The end IP address of the MySQL firewall rule. Must be IPv4 format.
     state:
         description:
             - Assert the state of the MySQL Database. Use 'present' to create or update a database and 'absent' to delete it.
@@ -57,11 +57,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Firewall Rule
+  - name: Create (or update) MySQL firewall rule
     azure_rm_mysqlfirewallrule:
       resource_group: TestGroup
       server_name: testserver
       name: rule1
+      start_ip_address: 10.0.0.17
+      end_ip_address: 10.0.0.20
 '''
 
 RETURN = '''
@@ -78,7 +80,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -91,7 +93,7 @@ class Actions:
 
 
 class AzureRMFirewallRules(AzureRMModuleBase):
-    """Configuration class for an Azure RM Firewall Rule resource"""
+    """Configuration class for an Azure RM MySQL firewall rule resource"""
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -149,24 +151,24 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         old_response = self.get_firewallrule()
 
         if not old_response:
-            self.log("Firewall Rule instance doesn't exist")
+            self.log("MySQL firewall rule instance doesn't exist")
             if self.state == 'absent':
                 self.log("Old instance didn't exist")
             else:
                 self.to_do = Actions.Create
         else:
-            self.log("Firewall Rule instance already exists")
+            self.log("MySQL firewall rule instance already exists")
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                self.log("Need to check if Firewall Rule instance has to be deleted or may be updated")
+                self.log("Need to check if MySQL firewall rule instance has to be deleted or may be updated")
                 if (self.start_ip_address is not None) and (self.start_ip_address != old_response['start_ip_address']):
                     self.to_do = Actions.Update
                 if (self.end_ip_address is not None) and (self.end_ip_address != old_response['end_ip_address']):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
-            self.log("Need to Create / Update the Firewall Rule instance")
+            self.log("Need to Create / Update the MySQL firewall rule instance")
 
             if self.check_mode:
                 self.results['changed'] = True
@@ -180,7 +182,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                 self.results['changed'] = old_response.__ne__(response)
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
-            self.log("Firewall Rule instance deleted")
+            self.log("MySQL firewall rule instance deleted")
             self.results['changed'] = True
 
             if self.check_mode:
@@ -192,7 +194,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
             while self.get_firewallrule():
                 time.sleep(20)
         else:
-            self.log("Firewall Rule instance unchanged")
+            self.log("MySQL firewall rule instance unchanged")
             self.results['changed'] = False
             response = old_response
 
@@ -203,11 +205,11 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
     def create_update_firewallrule(self):
         '''
-        Creates or updates Firewall Rule with the specified configuration.
+        Creates or updates MySQL firewall rule with the specified configuration.
 
-        :return: deserialized Firewall Rule instance state dictionary
+        :return: deserialized MySQL firewall rule instance state dictionary
         '''
-        self.log("Creating / Updating the Firewall Rule instance {0}".format(self.name))
+        self.log("Creating / Updating the MySQL firewall rule instance {0}".format(self.name))
 
         try:
             response = self.mysql_client.firewall_rules.create_or_update(resource_group_name=self.resource_group,
@@ -215,38 +217,38 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                                                                          firewall_rule_name=self.name,
                                                                          start_ip_address=self.start_ip_address,
                                                                          end_ip_address=self.end_ip_address)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
-            self.log('Error attempting to create the Firewall Rule instance.')
-            self.fail("Error creating the Firewall Rule instance: {0}".format(str(exc)))
+            self.log('Error attempting to create the MySQL firewall rule instance.')
+            self.fail("Error creating the MySQL firewall rule instance: {0}".format(str(exc)))
         return response.as_dict()
 
     def delete_firewallrule(self):
         '''
-        Deletes specified Firewall Rule instance in the specified subscription and resource group.
+        Deletes specified MySQL firewall rule instance in the specified subscription and resource group.
 
         :return: True
         '''
-        self.log("Deleting the Firewall Rule instance {0}".format(self.name))
+        self.log("Deleting the MySQL firewall rule instance {0}".format(self.name))
         try:
             response = self.mysql_client.firewall_rules.delete(resource_group_name=self.resource_group,
                                                                server_name=self.server_name,
                                                                firewall_rule_name=self.name)
         except CloudError as e:
-            self.log('Error attempting to delete the Firewall Rule instance.')
-            self.fail("Error deleting the Firewall Rule instance: {0}".format(str(e)))
+            self.log('Error attempting to delete the MySQL firewall rule instance.')
+            self.fail("Error deleting the MySQL firewall rule instance: {0}".format(str(e)))
 
         return True
 
     def get_firewallrule(self):
         '''
-        Gets the properties of the specified Firewall Rule.
+        Gets the properties of the specified MySQL firewall rule.
 
-        :return: deserialized Firewall Rule instance state dictionary
+        :return: deserialized MySQL firewall rule instance state dictionary
         '''
-        self.log("Checking if the Firewall Rule instance {0} is present".format(self.name))
+        self.log("Checking if the MySQL firewall rule instance {0} is present".format(self.name))
         found = False
         try:
             response = self.mysql_client.firewall_rules.get(resource_group_name=self.resource_group,
@@ -254,9 +256,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                                                             firewall_rule_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
-            self.log("Firewall Rule instance : {0} found".format(response.name))
+            self.log("MySQL firewall rule instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the Firewall Rule instance.')
+            self.log('Did not find the MySQL firewall rule instance.')
         if found is True:
             return response.as_dict()
 
