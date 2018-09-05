@@ -8,6 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
+                    'cloud_auth': {'version': 1, 'type': 'amazon'},
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''

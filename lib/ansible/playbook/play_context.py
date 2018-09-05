@@ -363,6 +363,18 @@ class PlayContext(Base):
                 if exe_var in variables:
                     setattr(new_info, 'executable', variables.get(exe_var))
 
+        if variables.get('param_profile') and all(v not in variables for v in C.COMMON_CONNECTION_VARS) and all(v not in variables for v in C.MAGIC_VARIABLE_MAPPING.get('remote_addr')):
+            if task.delegate_to is None:
+                display.debug("Parameter profile is used, and no Ansible host target has been set for %s. Overriding to use local connection." % variables.get('inventory_hostname'))
+                setattr(new_info, 'remote_addr', 'localhost')
+                setattr(new_info, 'connection', 'local')
+            elif delegated_vars.get('param_profile'):
+                display.debug("Parameter profile is used on the delegated host, and no Ansible host target has been set for %s. Overriding to use local connection." % variables.get('inventory_hostname'))
+                # TODO: we are delegated, so use the delegated host's variables
+                pass
+            elif not delegated_vars.get('param_profile'):
+                display.debug("Parameter profile is not used on the delegated host %s, ignoring parameter profile plugin" % variables.get('inventory_hostname'))
+
         attrs_considered = []
         for (attr, variable_names) in iteritems(C.MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:

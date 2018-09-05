@@ -734,6 +734,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._update_module_args(module_name, module_args, task_vars)
 
+        module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, '.py')
+        with open(module_path, 'rb') as f:
+            from ansible.parsing.metadata import extract_metadata
+            module_meta = extract_metadata(module_data=f.read())[0] #TODO fail gracefully when no metadata is parsed
+            #TODO this part should be in configure_module, but we don't have it there because we need to finalize args first
+        if module_meta.get('cloud_auth') and task_vars.get('param_profile') and module_meta.get('cloud_auth').get('type') == task_vars.get('param_profile'):
+            from ansible.plugins.param_profiles import load as load_param_profile
+            final_params = load_param_profile(module_meta['cloud_auth']).parameterize(task_vars, self._task.args)
+            import sys
+            if 'ansible_python_interpreter' not in task_vars:
+                task_vars['ansible_python_interpreter'] = sys.executable
+            module_args = final_params
+
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
