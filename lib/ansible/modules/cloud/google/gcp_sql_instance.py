@@ -246,6 +246,12 @@ options:
                       instances, this field determines whether the instance is Second Generation (recommended)
                       or First Generation.
                 required: false
+            settings_version:
+                description:
+                    - The version of instance settings. This is a required field for  update method to
+                      make sure concurrent updates are handled properly.  During update, use the most
+                      recent settingsVersion value for this  instance and do not try to update this value.
+                required: false
 extends_documentation_fragment: gcp
 '''
 
@@ -517,6 +523,13 @@ RETURN = '''
                       or First Generation.
                 returned: success
                 type: str
+            settings_version:
+                description:
+                    - The version of instance settings. This is a required field for  update method to
+                      make sure concurrent updates are handled properly.  During update, use the most
+                      recent settingsVersion value for this  instance and do not try to update this value.
+                returned: success
+                type: int
 '''
 
 ################################################################################
@@ -578,7 +591,8 @@ def main():
                     )),
                     require_ssl=dict(type='bool')
                 )),
-                tier=dict(type='str')
+                tier=dict(type='str'),
+                settings_version=dict(type='int')
             ))
         )
     )
@@ -895,13 +909,15 @@ class InstanceSettings(object):
     def to_request(self):
         return remove_nones_from_dict({
             u'ipConfiguration': InstanceIpConfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
-            u'tier': self.request.get('tier')
+            u'tier': self.request.get('tier'),
+            u'settingsVersion': self.request.get('settings_version')
         })
 
     def from_response(self):
         return remove_nones_from_dict({
             u'ipConfiguration': InstanceIpConfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
-            u'tier': self.request.get(u'tier')
+            u'tier': self.request.get(u'tier'),
+            u'settingsVersion': self.request.get(u'settingsVersion')
         })
 
 
