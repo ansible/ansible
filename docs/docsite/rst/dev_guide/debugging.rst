@@ -17,17 +17,16 @@ Debugging (remote)
 
 To debug a module running on a remote target (i.e. not ``localhost``):
 
-- On your controller machine (running Ansible) set ``ANSIBLE_KEEP_REMOTE_FILES=1`` (this tells Ansible to retain the modules it sends to the remote machine instead of removing them)
-- Run your playbook targetting the remote machine and specify ``-vvvv`` (the verbose output will show you many things, including the remote location that Ansible uses for the modules)
-- Take note of the remote path Ansible used on the remote host
-- SSH into the remote target after the completion of the playbook
-- Navigate to the directory (most likely it is going to be your ansible remote user defined or implied from the playbook: ``~/.ansible/tmp/ansible-tmp-...``)
-- Here you should see the module that you executed from your Ansible controller, but this is the zipped file that Ansible sent to the remote host. You can run this by specifying ``python my_test_module.py`` (not necessary)
-- To debug, though, we will want to extract this zip out to the original module format: ``python my_test_module.py explode`` (Ansible will expand the module into ``./debug-dir``)
-- Navigate to ``./debug-dir`` (notice that unzipping has caused the generation of ``ansible_module_my_test_module.py``)
-- Modify or set a breakpoint in the unzipped module
-- Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``
-- Run the unzipped module directly passing the ``args`` file: ``$ ./ansible_module_my_test_module.py args`` (the ``args`` file contains the params that were originally passed; this approach is good for reproducing behavior as well as modifying the parameters for debugging)
+1. On your controller machine (running Ansible) set ``ANSIBLE_KEEP_REMOTE_FILES=1`` to tell Ansible to retain the modules it sends to the remote machine instead of removing them after you playbook runs.
+2. Run your playbook targeting the remote machine and specify ``-vvvv`` (verbose) to display the remote location Ansible is using for the modules (among many other things).
+3. Take note of the directory Ansible used to store modules on the remote host. This directory is usually under the home directory of your ``ansible_ssh_user``, in the form ``~/.ansible/tmp/ansible-tmp-...``.
+4. SSH into the remote target after the playbook runs.
+5. Navigate to the directory you noted in step 3.
+6. Extract the module you want to debug from the zipped file that Ansible sent to the remote host: ``$ python my_test_module.py explode``. Ansible will expand the module into ``./debug-dir``. You can optionally run the zipped file by specifying ``python my_test_module.py``.
+7. Navigate to the debug directory: ``$ cd debug-dir``.
+8. Modify or set a breakpoint in ``ansible_module_my_test_module.py``.
+9. Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``.
+10. Run the unzipped module directly, passing the ``args`` file that contains the params that were originally passed: ``$ ./ansible_module_my_test_module.py args``. This approach is good for reproducing behavior as well as modifying the parameters for debugging.
 
 
 .. _debugging_ansiblemodule_based_modules:
