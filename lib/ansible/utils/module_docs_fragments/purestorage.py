@@ -39,7 +39,7 @@ options:
     description:
       - FlashBlade API token for admin privileged user.
 notes:
-  - This module requires the ```purity_fb``` Python library
+  - This module requires the ``purity_fb`` Python library
   - You must set C(PUREFB_URL) and C(PUREFB_API) environment variables
     if I(fb_url) and I(api_token) arguments are not passed to the module directly
 requirements:
@@ -59,7 +59,7 @@ options:
       - FlashArray API token for admin privileged user.
     required: true
 notes:
-  - This module requires the ```purestorage``` Python library
+  - This module requires the ``purestorage`` Python library
   - You must set C(PUREFA_URL) and C(PUREFA_API) environment variables
     if I(fa_url) and I(api_token) arguments are not passed to the module directly
 requirements:
