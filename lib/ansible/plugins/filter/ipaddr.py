@@ -1080,8 +1080,8 @@ def macaddr(value, query=''):
 
 
 def _need_netaddr(f_name, *args, **kwargs):
-    raise errors.AnsibleFilterError('The %s filter requires python-netaddr be '
-                                    'installed on the ansible controller' % f_name)
+    raise errors.AnsibleFilterError("The %s filter requires python's netaddr be "
+                                    "installed on the ansible controller" % f_name)
 
 
 def ip4_hex(arg, delimiter=''):
@@ -1120,5 +1120,5 @@ class FilterModule(object):
         if netaddr:
             return self.filter_map
         else:
-            # Need to install python-netaddr for these filters to work
+            # Need to install python's netaddr for these filters to work
             return dict((f, partial(_need_netaddr, f)) for f in self.filter_map)
