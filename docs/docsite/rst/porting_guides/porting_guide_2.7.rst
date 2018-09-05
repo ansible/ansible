@@ -204,6 +204,10 @@ Noteworthy module changes
 * The ``win_disk_image`` module has deprecated the return value ``mount_path``, use ``mount_paths[0]`` instead. This will
   be removed in Ansible 2.11.
 
+* ``include_role`` and ``include_tasks`` can now be used directly from ``ansible`` (adhoc) and ``ansible-console``::
+
+    #> ansible -m include_role -a 'name=myrole' all
+
 Plugins
 =======
 
