@@ -30,13 +30,6 @@
     access_policies:
       - tenant_id: "{{ tenant_id }}"
         object_id: "{{ object_id }}"
-        keys:
-          - get
-          - list
-          - update
-          - create
-          - import
-          - delete
         secrets:
           - get
           - list
@@ -64,13 +57,6 @@
     access_policies:
       - tenant_id: "{{ tenant_id }}"
         object_id: "{{ object_id }}"
-        keys:
-          - get
-          - list
-          - update
-          - create
-          - import
-          - delete
         secrets:
           - get
           - list
@@ -97,13 +83,6 @@
     access_policies:
       - tenant_id: "{{ tenant_id }}"
         object_id: "{{ object_id }}"
-        keys:
-          - get
-          - list
-          - update
-          - create
-          - import
-          - delete
         secrets:
           - get
           - list
