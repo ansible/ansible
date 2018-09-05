@@ -34,6 +34,7 @@ from itertools import chain
 from struct import pack
 from socket import inet_aton, inet_ntoa
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils.basic import AnsibleFallbackNotFound
@@ -58,6 +59,13 @@ def to_list(val):
         return [val]
     else:
         return list()
+
+
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, string_types):
+            item = to_text(item).split('\n')
+        yield item
 
 
 def sort_list(val):

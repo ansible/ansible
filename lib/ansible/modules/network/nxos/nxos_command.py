@@ -124,21 +124,11 @@ failed_conditions:
 """
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
-from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.common.utils import ComplexList, to_lines
 from ansible.module_utils.network.nxos.nxos import check_args, nxos_argument_spec, run_commands
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
-
-
-def to_lines(stdout):
-    lines = list()
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        lines.append(item)
-    return lines
 
 
 def parse_commands(module, warnings):
@@ -189,19 +179,16 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    result = {'changed': False}
-
     warnings = list()
+    result = {'changed': False, 'warnings': warnings}
     check_args(module, warnings)
     commands = parse_commands(module, warnings)
-    result['warnings'] = warnings
-
     wait_for = module.params['wait_for'] or list()
 
     try:
         conditionals = [Conditional(c) for c in wait_for]
     except AttributeError as exc:
-        module.fail_json(msg=to_native(exc))
+        module.fail_json(msg=to_text(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
@@ -218,7 +205,7 @@ def main():
                         break
                     conditionals.remove(item)
             except FailedConditionalError as exc:
-                module.fail_json(msg=to_native(exc))
+                module.fail_json(msg=to_text(exc))
 
         if not conditionals:
             break
@@ -233,7 +220,7 @@ def main():
 
     result.update({
         'stdout': responses,
-        'stdout_lines': to_lines(responses)
+        'stdout_lines': to_lines(responses),
     })
 
     module.exit_json(**result)
