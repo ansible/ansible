@@ -52,6 +52,7 @@ RETURN = """
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import string_types
 
 try:
     from __main__ import display
@@ -74,12 +75,19 @@ class LookupModule(LookupBase):
             display.vvvv(u"File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
-                    b_contents, show_data = self._loader._get_file_contents(lookupfile)
-                    contents = to_text(b_contents, errors='surrogate_or_strict')
-                    if kwargs.get('lstrip', False):
-                        contents = contents.lstrip()
-                    if kwargs.get('rstrip', True):
-                        contents = contents.rstrip()
+                    try:
+                        contents = self._loader.load_from_file(lookupfile, unsafe=True)
+                    except AnsibleParserError:
+                        # failed to load as data
+                        b_contents, show_data = self._loader._get_file_contents(lookupfile)
+                        contents = to_text(b_contents, errors='surrogate_or_strict')
+
+                    if isinstance(contents, string_types):
+                        if kwargs.get('lstrip', False):
+                            contents = contents.lstrip()
+                        if kwargs.get('rstrip', True):
+                            contents = contents.rstrip()
+
                     ret.append(contents)
                 else:
                     raise AnsibleParserError()
