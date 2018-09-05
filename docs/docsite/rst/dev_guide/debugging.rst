@@ -17,16 +17,16 @@ Debugging (remote)
 
 To debug a module running on a remote target (i.e. not ``localhost``):
 
-1. On your controller machine (running Ansible) set ``ANSIBLE_KEEP_REMOTE_FILES=1`` to tell Ansible to retain the modules it sends to the remote machine instead of removing them after you playbook runs.
-2. Run your playbook targeting the remote machine and specify ``-vvvv`` (verbose) to display the remote location Ansible is using for the modules (among many other things).
-3. Take note of the directory Ansible used to store modules on the remote host. This directory is usually under the home directory of your ``ansible_ssh_user``, in the form ``~/.ansible/tmp/ansible-tmp-...``.
-4. SSH into the remote target after the playbook runs.
-5. Navigate to the directory you noted in step 3.
-6. Extract the module you want to debug from the zipped file that Ansible sent to the remote host: ``$ python my_test_module.py explode``. Ansible will expand the module into ``./debug-dir``. You can optionally run the zipped file by specifying ``python my_test_module.py``.
-7. Navigate to the debug directory: ``$ cd debug-dir``.
-8. Modify or set a breakpoint in ``ansible_module_my_test_module.py``.
-9. Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``.
-10. Run the unzipped module directly, passing the ``args`` file that contains the params that were originally passed: ``$ ./ansible_module_my_test_module.py args``. This approach is good for reproducing behavior as well as modifying the parameters for debugging.
+#. On your controller machine (running Ansible) set ``ANSIBLE_KEEP_REMOTE_FILES=1`` to tell Ansible to retain the modules it sends to the remote machine instead of removing them after you playbook runs.
+#. Run your playbook targeting the remote machine and specify ``-vvvv`` (verbose) to display the remote location Ansible is using for the modules (among many other things).
+#. Take note of the directory Ansible used to store modules on the remote host. This directory is usually under the home directory of your ``ansible_ssh_user``, in the form ``~/.ansible/tmp/ansible-tmp-...``.
+#. SSH into the remote target after the playbook runs.
+#. Navigate to the directory you noted in step 3.
+#. Extract the module you want to debug from the zipped file that Ansible sent to the remote host: ``$ python my_test_module.py explode``. Ansible will expand the module into ``./debug-dir``. You can optionally run the zipped file by specifying ``python my_test_module.py``.
+#. Navigate to the debug directory: ``$ cd debug-dir``.
+#. Modify or set a breakpoint in ``ansible_module_my_test_module.py``.
+#. Ensure that the unzipped module is executable: ``$ chmod 755 ansible_module_my_test_module.py``.
+#. Run the unzipped module directly, passing the ``args`` file that contains the params that were originally passed: ``$ ./ansible_module_my_test_module.py args``. This approach is good for reproducing behavior as well as modifying the parameters for debugging.
 
 
 .. _debugging_ansiblemodule_based_modules:
