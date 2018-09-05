@@ -50,8 +50,9 @@ options:
         aliases: [ daemon-reload ]
     user:
         description:
-            - run systemctl talking to the service manager of the calling user, rather than the service manager
-              of the system. This is deprecated and the scope paramater should be used instead.
+            - (deprecated) run ``systemctl`` talking to the service manager of the calling user, rather than the service manager
+              of the system.
+            - This option is deprecated and will eventually be removed in 2.11. The ``scope`` option should be used instead.
         type: bool
         default: 'no'
     scope:
@@ -315,7 +316,7 @@ def main():
 
     systemctl = module.get_bin_path('systemctl', True)
     if module.params['user'] and module.params['scope'] == 'system':
-        module.deprecate("The 'user' paramater is being renamed to 'scope'", version=2.8)
+        module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11')
         systemctl = systemctl + " --user"
     if module.params['scope'] == 'user':
         systemctl = systemctl + " --user"
