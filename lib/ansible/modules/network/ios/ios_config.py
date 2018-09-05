@@ -364,7 +364,7 @@ def get_running_config(module, current_config=None, flags=None):
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=1, ignore_lines=module.params['diff_ignore_lines'])
+    candidate = NetworkConfig(indent=1)
     banners = {}
 
     if module.params['src']:

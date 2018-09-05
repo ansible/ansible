@@ -273,7 +273,7 @@ from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=3, ignore_lines=module.params['diff_ignore_lines'])
+    candidate = NetworkConfig(indent=3)
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
