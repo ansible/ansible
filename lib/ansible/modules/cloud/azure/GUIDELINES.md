@@ -63,7 +63,7 @@ Facts module should allow users to:
 Return values should be a composite of:
 - input of the main module
     - structure should be preserved as closely as possible
-    - fields should be omited only if impossible or difficult to retrieve
+    - fields should be omitted only if impossible or difficult to retrieve
 - additional read only fields assigned by the service, for instance:
     - resource **id** field
     - assigned **ip_address**
