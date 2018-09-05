@@ -109,29 +109,29 @@ def test_python_module(path, base_dir, messages, ansible_module):
         line = 0
         offset = 0
 
-        for result in results:
-            if result[0].startswith(filter_dir):
-                source = result[0][len(base_dir) + 1:].replace('test/sanity/import/', '')
-                line = result[1] or 0
-                break
-
-        if not source:
-            # If none of our source files are found in the traceback, report the file we were testing.
-            # I haven't been able to come up with a test case that encounters this issue yet.
+        if isinstance(ex, SyntaxError) and ex.filename.endswith(path):  # pylint: disable=locally-disabled, no-member
+            # A SyntaxError in the source we're importing will have the correct path, line and offset.
+            # However, the traceback will report the path to this importer.py script instead.
+            # We'll use the details from the SyntaxError in this case, as it's more accurate.
             source = path
-            message += ' (in %s:%d)' % (results[-1][0], results[-1][1] or 0)
-        elif isinstance(ex, SyntaxError):
-            if ex.filename.endswith(path):  # pylint: disable=locally-disabled, no-member
-                # A SyntaxError in the source we're importing will have the correct path, line and offset.
-                # However, the traceback will report the path to this importer.py script instead.
-                # We'll use the details from the SyntaxError in this case, as it's more accurate.
-                source = path
-                line = ex.lineno or 0  # pylint: disable=locally-disabled, no-member
-                offset = ex.offset or 0  # pylint: disable=locally-disabled, no-member
-                message = str(ex)
+            line = ex.lineno or 0  # pylint: disable=locally-disabled, no-member
+            offset = ex.offset or 0  # pylint: disable=locally-disabled, no-member
+            message = str(ex)
 
-                # Hack to remove the filename and line number from the message, if present.
-                message = message.replace(' (%s, line %d)' % (os.path.basename(path), line), '')
+            # Hack to remove the filename and line number from the message, if present.
+            message = message.replace(' (%s, line %d)' % (os.path.basename(path), line), '')
+        else:
+            for result in results:
+                if result[0].startswith(filter_dir):
+                    source = result[0][len(base_dir) + 1:].replace('test/sanity/import/', '')
+                    line = result[1] or 0
+                    break
+
+            if not source:
+                # If none of our source files are found in the traceback, report the file we were testing.
+                # I haven't been able to come up with a test case that encounters this issue yet.
+                source = path
+                message += ' (in %s:%d)' % (results[-1][0], results[-1][1] or 0)
 
         message = re.sub(r'\n *', ': ', message)
         error = '%s:%d:%d: %s: %s' % (source, line, offset, exc_type.__name__, message)
