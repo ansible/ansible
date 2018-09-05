@@ -101,7 +101,7 @@
 - name: Assert the facts are properly set
   assert:
     that:
-      - output.response[1].tags.aaa == "bbb"
+      - output.response[0].tags.aaa == "bbb"
 
 - name: Delete instance of Key Vault -- check mode
   azure_rm_keyvault:
