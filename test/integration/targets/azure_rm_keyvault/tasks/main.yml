@@ -92,7 +92,6 @@
 
 - name: Use REST API to retrieve keyvault (as facts not available yet)
   azure_rm_resource_facts:
-    # url: /subscriptions/{{ lookup('env','AZURE_SUBSCRIPTION_ID') }}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}
     resource_group: "{{ resource_group }}"
     provider: keyvault
     resource_type: vaults
