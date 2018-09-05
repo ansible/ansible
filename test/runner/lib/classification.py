@@ -602,9 +602,6 @@ class PathMapper(object):
             if path == 'test/runner/completion/docker.txt':
                 return all_tests(self.args, force=True)  # force all tests due to risk of breaking changes in new test environment
 
-        if path.startswith('test/runner/docker/'):
-            return minimal  # not used by tests, only used to build the default container
-
         if path.startswith('test/runner/lib/cloud/'):
             cloud_target = 'cloud/%s/' % name
 
@@ -647,12 +644,6 @@ class PathMapper(object):
                     }
 
         if path.startswith('test/runner/'):
-            if dirname == 'test/runner' and name in (
-                    'Dockerfile',
-                    '.dockerignore',
-            ):
-                return minimal  # not used by tests, only used to build the default container
-
             return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/shippable/tools/'):
