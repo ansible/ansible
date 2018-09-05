@@ -157,7 +157,7 @@ class ActionModule(ActionBase):
         new_task.args.pop('variable_end_string', None)
         new_task.args.pop('trim_blocks', None)
         try:
-            tempdir = tempfile.mkdtemp()
+            tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
             result_file = os.path.join(tempdir, os.path.basename(source))
             with open(result_file, 'wb') as f:
                 f.write(to_bytes(resultant, errors='surrogate_or_strict'))
