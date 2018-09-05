@@ -300,7 +300,7 @@ def get_running_config(module, config=None):
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=2, ignore_lines=module.params['diff_ignore_lines'])
+    candidate = NetworkConfig(indent=2)
     if module.params['src']:
         if module.params['replace'] != 'config':
             candidate.load(module.params['src'])
