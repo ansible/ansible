@@ -75,12 +75,14 @@ class LookupModule(LookupBase):
             display.vvvv(u"File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
+                    b_contents, show_data = self._loader._get_file_contents(lookupfile)
+                    contents = to_text(b_contents, errors='surrogate_or_strict')
+
                     try:
-                        contents = self._loader.load_from_file(lookupfile, unsafe=True)
+                        contents = self._loader.load(contents)
                     except AnsibleParserError:
+                        pass
                         # failed to load as data
-                        b_contents, show_data = self._loader._get_file_contents(lookupfile)
-                        contents = to_text(b_contents, errors='surrogate_or_strict')
 
                     if isinstance(contents, string_types):
                         if kwargs.get('lstrip', False):
