@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlfirewallrule
 version_added: "2.8"
-short_description: Manage Firewall Rule instance.
+short_description: Manage PostgreSQL firewall rule instance.
 description:
-    - Create, update and delete instance of Firewall Rule.
+    - Create, update and delete instance of PostgreSQL firewall rule.
 
 options:
     resource_group:
@@ -32,17 +32,17 @@ options:
         required: True
     name:
         description:
-            - The name of the server firewall rule.
+            - The name of the PostgreSQL firewall rule.
         required: True
     start_ip_address:
         description:
-            - The start IP address of the server firewall rule. Must be IPv4 format.
+            - The start IP address of the PostgreSQL firewall rule. Must be IPv4 format.
     end_ip_address:
         description:
-            - The end IP address of the server firewall rule. Must be IPv4 format.
+            - The end IP address of the PostgreSQL firewall rule. Must be IPv4 format.
     state:
         description:
-            - Assert the state of the firewall rule. Use 'present' to create or update a firewall rule and 'absent' to delete it.
+            - Assert the state of the PostgreSQL firewall rule. Use 'present' to create or update a PostgreSQL firewall rule and 'absent' to delete it.
         default: present
         choices:
             - absent
@@ -57,11 +57,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Firewall Rule
+  - name: Create (or update) PostgreSQL firewall rule
     azure_rm_postgresqlfirewallrule:
       resource_group: TestGroup
       server_name: testserver
       name: rule1
+      start_ip_address: 10.0.0.16
+      end_ip_address: 10.0.0.18
 '''
 
 RETURN = '''
@@ -92,7 +94,7 @@ class Actions:
 
 
 class AzureRMFirewallRules(AzureRMModuleBase):
-    """Configuration class for an Azure RM Firewall Rule resource"""
+    """Configuration class for an Azure RM PostgreSQL firewall rule resource"""
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -150,24 +152,24 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         old_response = self.get_firewallrule()
 
         if not old_response:
-            self.log("Firewall Rule instance doesn't exist")
+            self.log("PostgreSQL firewall rule instance doesn't exist")
             if self.state == 'absent':
                 self.log("Old instance didn't exist")
             else:
                 self.to_do = Actions.Create
         else:
-            self.log("Firewall Rule instance already exists")
+            self.log("PostgreSQL firewall rule instance already exists")
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                self.log("Need to check if Firewall Rule instance has to be deleted or may be updated")
+                self.log("Need to check if PostgreSQL firewall rule instance has to be deleted or may be updated")
                 if (self.start_ip_address is not None) and (self.start_ip_address != old_response['start_ip_address']):
                     self.to_do = Actions.Update
                 if (self.end_ip_address is not None) and (self.end_ip_address != old_response['end_ip_address']):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
-            self.log("Need to Create / Update the Firewall Rule instance")
+            self.log("Need to Create / Update the PostgreSQL firewall rule instance")
 
             if self.check_mode:
                 self.results['changed'] = True
@@ -181,7 +183,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                 self.results['changed'] = old_response.__ne__(response)
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
-            self.log("Firewall Rule instance deleted")
+            self.log("PostgreSQL firewall rule instance deleted")
             self.results['changed'] = True
 
             if self.check_mode:
@@ -193,7 +195,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
             while self.get_firewallrule():
                 time.sleep(20)
         else:
-            self.log("Firewall Rule instance unchanged")
+            self.log("PostgreSQL firewall rule instance unchanged")
             self.results['changed'] = False
             response = old_response
 
@@ -204,11 +206,11 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
     def create_update_firewallrule(self):
         '''
-        Creates or updates Firewall Rule with the specified configuration.
+        Creates or updates PostgreSQL firewall rule with the specified configuration.
 
-        :return: deserialized Firewall Rule instance state dictionary
+        :return: deserialized PostgreSQL firewall rule instance state dictionary
         '''
-        self.log("Creating / Updating the Firewall Rule instance {0}".format(self.name))
+        self.log("Creating / Updating the PostgreSQL firewall rule instance {0}".format(self.name))
 
         try:
             response = self.postgresql_client.firewall_rules.create_or_update(resource_group_name=self.resource_group,
@@ -220,34 +222,34 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
-            self.log('Error attempting to create the Firewall Rule instance.')
-            self.fail("Error creating the Firewall Rule instance: {0}".format(str(exc)))
+            self.log('Error attempting to create the PostgreSQL firewall rule instance.')
+            self.fail("Error creating the PostgreSQL firewall rule instance: {0}".format(str(exc)))
         return response.as_dict()
 
     def delete_firewallrule(self):
         '''
-        Deletes specified Firewall Rule instance in the specified subscription and resource group.
+        Deletes specified PostgreSQL firewall rule instance in the specified subscription and resource group.
 
         :return: True
         '''
-        self.log("Deleting the Firewall Rule instance {0}".format(self.name))
+        self.log("Deleting the PostgreSQL firewall rule instance {0}".format(self.name))
         try:
             response = self.postgresql_client.firewall_rules.delete(resource_group_name=self.resource_group,
                                                                     server_name=self.server_name,
                                                                     firewall_rule_name=self.name)
         except CloudError as e:
-            self.log('Error attempting to delete the Firewall Rule instance.')
-            self.fail("Error deleting the Firewall Rule instance: {0}".format(str(e)))
+            self.log('Error attempting to delete the PostgreSQL firewall rule instance.')
+            self.fail("Error deleting the PostgreSQL firewall rule instance: {0}".format(str(e)))
 
         return True
 
     def get_firewallrule(self):
         '''
-        Gets the properties of the specified Firewall Rule.
+        Gets the properties of the specified PostgreSQL firewall rule.
 
-        :return: deserialized Firewall Rule instance state dictionary
+        :return: deserialized PostgreSQL firewall rule instance state dictionary
         '''
-        self.log("Checking if the Firewall Rule instance {0} is present".format(self.name))
+        self.log("Checking if the PostgreSQL firewall rule instance {0} is present".format(self.name))
         found = False
         try:
             response = self.postgresql_client.firewall_rules.get(resource_group_name=self.resource_group,
@@ -255,9 +257,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
                                                                  firewall_rule_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
-            self.log("Firewall Rule instance : {0} found".format(response.name))
+            self.log("PostgreSQL firewall rule instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the Firewall Rule instance.')
+            self.log('Did not find the PostgreSQL firewall rule instance.')
         if found is True:
             return response.as_dict()
 
