@@ -164,21 +164,19 @@ VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
 
 def parse_commands(module, warnings):
-    spec = dict(
+    transform = ComplexList(dict(
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
-        answer=dict()
-    )
-
-    transform = ComplexList(spec, module)
+        answer=dict(),
+    ), module)
     commands = transform(module.params['commands'])
 
     if module.check_mode:
         for item in list(commands):
             if not item['command'].startswith('show'):
                 warnings.append(
-                    'Only show commands are supported when using check_mode, not '
+                    'Only show commands are supported when using check mode, not '
                     'executing %s' % item['command']
                 )
                 commands.remove(item)

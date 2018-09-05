@@ -147,22 +147,23 @@ from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def parse_commands(module, warnings):
-    command = ComplexList(dict(
+    transform = ComplexList(dict(
         command=dict(key=True),
         prompt=dict(),
         answer=dict(),
     ), module)
-    commands = command(module.params['commands'])
-    items = []
+    commands = transform(module.params['commands'])
 
-    for item in commands:
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % item['command'])
-        else:
-            items.append(item)
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check mode, not '
+                    'executing %s' % item['command']
+                )
+                commands.remove(item)
 
-    return items
+    return commands
 
 
 def main():
