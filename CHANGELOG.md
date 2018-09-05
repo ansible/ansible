@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 <a id="2.4.7"></a>
 
-## 2.4.7 "Dancing Days" - 2018-07-05
+## 2.4.7 "Dancing Days" - TBD
 
 ### Bugfixes
 
