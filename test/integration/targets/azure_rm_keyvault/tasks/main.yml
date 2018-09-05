@@ -218,7 +218,7 @@
     that: output.changed
 
 #
-# azure_rm_keyvault filalize & clean up
+# azure_rm_keyvault finalize & clean up
 #
 
 - name: Delete instance of Key Vault -- check mode
