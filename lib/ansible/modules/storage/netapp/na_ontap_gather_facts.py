@@ -196,7 +196,7 @@ class NetAppGatherFacts(object):
         self.netapp_info['volume_info'] = self.get_generic_get_iter(
             'volume-get-iter',
             attribute='volume-attributes',
-            field=('name', 'node', 'aggr-name'),
+            field=('name', 'owning-vserver-name', 'aggr-name'),
             query={'max-records': '1024'}
         )
         self.netapp_info['lun_info'] = self.get_generic_get_iter(
