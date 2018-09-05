@@ -970,7 +970,7 @@ class PyVmomi(object):
 
     def get_vm_or_template(self, template_name=None):
         """
-        Function to find the virtual machine or virtual machine template using name
+        Find the virtual machine or virtual machine template using name
         used for cloning purpose.
         Args:
             template_name: Name of virtual machine or virtual machine template
@@ -981,6 +981,10 @@ class PyVmomi(object):
         template_obj = None
 
         if template_name:
+            template_obj = find_vm_by_id(self.content, vm_id=template_name, vm_id_type="uuid")
+            if template_obj:
+                return template_obj
+
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
             templates = []
 
