@@ -481,6 +481,10 @@ def create_or_update_target_group(connection, module):
             if module.params.get("targets"):
                 params['Targets'] = module.params.get("targets")
 
+                # Correct type of target ports
+                for target in params['Targets']:
+                    target['Port'] = int(target.get('Port', module.params.get('port')))
+
                 # get list of current target instances. I can't see anything like a describe targets in the doco so
                 # describe_target_health seems to be the only way to get them
 
