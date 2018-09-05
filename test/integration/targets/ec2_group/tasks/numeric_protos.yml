@@ -47,13 +47,15 @@
         description: '{{ ec2_group_description }}'
         tags:
           foo: 1
-    - name: Readd a tag with a numeric value
+        <<: *aws_connection_info
+    - name: Read a tag with a numeric value
       ec2_group:
         name: '{{ group_tmp_name }}'
         vpc_id: '{{ vpc_result.vpc.id }}'
         description: '{{ ec2_group_description }}'
         tags:
           foo: 1
+        <<: *aws_connection_info
       register: result
     - assert:
         that:
