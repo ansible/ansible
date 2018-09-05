@@ -25,8 +25,7 @@ DOCUMENTATION = '''
         - Task execution is as fast as possible per batch as defined by C(serial) (default all).
           Ansible will not wait for other hosts to finish the current task before queuing more tasks for other hosts.
           All hosts are still attempted for the current task, but it prevents blocking new tasks for hosts that have already finished.
-        - This basically translates to a host that is 'slow/stuck' on a specific task won't hold up the rest of the hosts and tasks,
-          as it happens with the linear strategy.
+        - With the free strategy, unlike the default linear strategy, a host that is 'slow/stuck' on a specific task won't hold up the rest of the hosts and tasks.
     version_added: "2.0"
     author: Ansible Core Team
 '''
