@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - hashi_vault: fix AttributeError when 'auth_method' isn't 'token' (https://github.com/ansible/ansible/pull/36513)
