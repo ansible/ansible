@@ -329,6 +329,7 @@ import pwd
 import shutil
 import socket
 import time
+import re
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
@@ -1415,6 +1416,9 @@ class SunOS(User):
                 line = line.strip()
                 if (line.startswith('#') or line == ''):
                     continue
+                m = re.match(r'^([^#]*)#(.*)$', line)
+                if m:  # The line contains a hash / comment
+                    line = m.group(1)
                 key, value = line.split('=')
                 if key == "MINWEEKS":
                     minweeks = value.rstrip('\n')
