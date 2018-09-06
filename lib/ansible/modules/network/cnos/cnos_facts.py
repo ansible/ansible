@@ -231,7 +231,7 @@ class FactsBase(object):
 
 class Default(FactsBase):
 
-    COMMANDS = ['display sys-info', 'display running-config']
+    COMMANDS = ['show sys-info', 'show running-config']
 
     def populate(self):
         super(Default, self).populate()
@@ -297,12 +297,12 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     COMMANDS = [
-        'display running-config'
+        'show running-config'
     ]
 
     def populate(self):
         super(Hardware, self).populate()
-        data = self.run(['display process memory'])
+        data = self.run(['show process memory'])
         data = to_text(data, errors='surrogate_or_strict').strip()
         data = data.replace(r"\n", "\n")
         if data:
@@ -331,7 +331,7 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-    COMMANDS = ['display running-config']
+    COMMANDS = ['show running-config']
 
     def populate(self):
         super(Config, self).populate()
@@ -342,7 +342,7 @@ class Config(FactsBase):
 
 class Interfaces(FactsBase):
 
-    COMMANDS = ['display interface brief']
+    COMMANDS = ['show interface brief']
 
     def populate(self):
         super(Interfaces, self).populate()
@@ -350,10 +350,10 @@ class Interfaces(FactsBase):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data1 = self.run(['display interface status'])
+        data1 = self.run(['show interface status'])
         data1 = to_text(data1, errors='surrogate_or_strict').strip()
         data1 = data1.replace(r"\n", "\n")
-        data2 = self.run(['display interface mac-address'])
+        data2 = self.run(['show interface mac-address'])
         data2 = to_text(data2, errors='surrogate_or_strict').strip()
         data2 = data2.replace(r"\n", "\n")
         lines1 = None
@@ -364,7 +364,7 @@ class Interfaces(FactsBase):
             lines2 = self.parse_interfaces(data2)
         if lines1 is not None and lines2 is not None:
             self.facts['interfaces'] = self.populate_interfaces(lines1, lines2)
-        data3 = self.run(['display lldp neighbors'])
+        data3 = self.run(['show lldp neighbors'])
         data3 = to_text(data3, errors='surrogate_or_strict').strip()
         data3 = data3.replace(r"\n", "\n")
         if data3:
@@ -372,9 +372,9 @@ class Interfaces(FactsBase):
         if lines3 is not None:
             self.facts['neighbors'] = self.populate_neighbors(lines3)
 
-        data4 = self.run(['display ip interface brief vrf all'])
-        data5 = self.run(['display ipv6 interface brief vrf all'])
-        data4 = to_text(data4, errors='surrogate_or_stdisplay').strip()
+        data4 = self.run(['show ip interface brief vrf all'])
+        data5 = self.run(['show ipv6 interface brief vrf all'])
+        data4 = to_text(data4, errors='surrogate_or_strict).strip()
         data4 = data4.replace(r"\n", "\n")
         data5 = to_text(data5, errors='surrogate_or_strict').strip()
         data5 = data5.replace(r"\n", "\n")
@@ -484,14 +484,24 @@ class Interfaces(FactsBase):
 
     def populate_neighbors(self, lines3):
         neighbors = dict()
+        device_name = ''
         for line in lines3:
             neighborSplit = line.split()
             innerData = dict()
-            innerData['Local Interface'] = neighborSplit[1].strip()
-            innerData['Hold Time'] = neighborSplit[2].strip()
-            innerData['Capability'] = neighborSplit[3].strip()
-            innerData['Remote Port'] = neighborSplit[4].strip()
-            neighbors[neighborSplit[0].strip()] = innerData
+            count = len(neighborSplit)
+            if count == 5:
+                device_name =  neighborSplit[0].strip()
+                innerData['Local Interface'] = neighborSplit[1].strip()
+                innerData['Hold Time'] = neighborSplit[2].strip()
+                innerData['Capability'] = neighborSplit[3].strip()
+                innerData['Remote Port'] = neighborSplit[4].strip()
+                neighbors[device_name] = innerData
+            elif count == 4:
+                innerData['Local Interface'] = neighborSplit[0].strip()
+                innerData['Hold Time'] = neighborSplit[1].strip()
+                innerData['Capability'] = neighborSplit[2].strip()
+                innerData['Remote Port'] = neighborSplit[3].strip()
+                neighbors['mgmt'] = innerData
         return neighbors
 
     def parse_neighbors(self, neighbors):
