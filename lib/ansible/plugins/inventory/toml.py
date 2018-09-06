@@ -106,12 +106,6 @@ except ImportError:
 class InventoryModule(BaseFileInventoryPlugin):
     NAME = 'toml'
 
-    def __init__(self):
-        if not HAS_TOML:
-            raise AnsibleParserError('The TOML inventory plugin requires the python "toml" library')
-
-        super(InventoryModule, self).__init__()
-
     def _parse_group(self, group, group_data):
         if not isinstance(group_data, (MutableMapping, type(None))):
             self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
@@ -183,6 +177,9 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory file '''
+        if not HAS_TOML:
+            raise AnsibleParserError('The TOML inventory plugin requires the python "toml" library')
+
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
 

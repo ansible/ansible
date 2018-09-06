@@ -1419,7 +1419,7 @@ INVENTORY_ANY_UNPARSED_IS_FAILED:
   version_added: "2.7"
 INVENTORY_ENABLED:
   name: Active Inventory plugins
-  default: ['host_list', 'script', 'yaml', 'toml', 'ini', 'auto']
+  default: ['host_list', 'script', 'yaml', 'ini', 'auto', 'toml']
   description: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
