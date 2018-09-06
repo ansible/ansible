@@ -1,0 +1,2 @@
+bugfixes:
+    - corrected and clarified 'user' option deprecation in systemd module in favor of 'scope' option.
