@@ -132,7 +132,7 @@ class Cliconf(CliconfBase):
 
         # prepare candidate configuration
         sanitized_candidate = sanitize_config(candidate)
-        candidate_obj = NetworkConfig(indent=1, ignore_lines=diff_ignore_lines)
+        candidate_obj = NetworkConfig(indent=1)
         candidate_obj.load(sanitized_candidate)
 
         if running and diff_match != 'none':

@@ -115,7 +115,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
-        candidate_obj = NetworkConfig(indent=2, ignore_lines=diff_ignore_lines)
+        candidate_obj = NetworkConfig(indent=2)
         candidate_obj.load(candidate)
 
         if running and diff_match != 'none' and diff_replace != 'config':
