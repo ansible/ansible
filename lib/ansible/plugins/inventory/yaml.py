@@ -85,9 +85,6 @@ class InventoryModule(BaseFileInventoryPlugin):
                 valid = True
         return valid
 
-    def _load_file(self, path):
-        return self.loader.load_from_file(path, cache=False)
-
     def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory file '''
 
@@ -95,16 +92,16 @@ class InventoryModule(BaseFileInventoryPlugin):
         self.set_options()
 
         try:
-            data = self._load_file(path)
+            data = self.loader.load_from_file(path, cache=False)
         except Exception as e:
             raise AnsibleParserError(e)
 
         if not data:
-            raise AnsibleParserError('Parsed empty %s file' % self.NAME.upper())
+            raise AnsibleParserError('Parsed empty YAML file')
         elif not isinstance(data, MutableMapping):
-            raise AnsibleParserError('%s inventory has invalid structure, it should be a dictionary, got: %s' % (self.NAME.upper(), type(data)))
+            raise AnsibleParserError('YAML inventory has invalid structure, it should be a dictionary, got: %s' % type(data))
         elif data.get('plugin'):
-            raise AnsibleParserError('Plugin configuration %s file, not %s inventory' % (self.NAME.upper(), self.NAME.upper()))
+            raise AnsibleParserError('Plugin configuration YAML file, not YAML inventory')
 
         # We expect top level keys to correspond to groups, iterate over them
         # to get host, vars and subgroups (which we iterate over recursivelly)
