@@ -1,6 +1,8 @@
 bugfixes:
 - Fix lambda_policy updates when principal is an account number. Backport of
   https://github.com/ansible/ansible/pull/44871
+- Support key names that contain spaces in ec2_metadata_facts module.
+  https://github.com/ansible/ansible/pull/45313
 - Fix ec2_group support for multi-account and peered VPC security groups.
   Reported in https://github.com/ansible/ansible/issue/44788 and fixed in
   https://github.com/ansible/ansible/pull/45296
