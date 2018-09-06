@@ -2,6 +2,65 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.4
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-09-06
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Minor Changes
+-------------
+
+- add azure_rm_storageaccount support to StorageV2 kind. (https://github.com/ansible/ansible/pull/44242)
+- import_tasks - Do not allow import_tasks to transition to dynamic if the file is missing (https://github.com/ansible/ansible/issues/44822)
+
+Bugfixes
+--------
+
+- Add md5sum check in nxos_file_copy module (https://github.com/ansible/ansible/pull/43423).
+- Allow arbitrary ``log_driver`` for docker_container (https://github.com/ansible/ansible/pull/33579).
+- Fix Python2.6 regex bug terminal plugin nxos, iosxr (https://github.com/ansible/ansible/pull/45135).
+- Fix check_mode in nxos_static_route module (https://github.com/ansible/ansible/pull/44252).
+- Fix glob path of rc.d Some distribtuions like SUSE has the rc%.d directories under /etc/init.d
+- Fix network config diff issue for lines (https://github.com/ansible/ansible/pull/43889)
+- Fixed an issue where ``ansible_facts.pkg_mgr`` would incorrectly set to ``zypper`` on Debian/Ubuntu systems that happened to have the command installed.
+- The docker_* modules respect the DOCKER_* environment variables again (https://github.com/ansible/ansible/pull/42641).
+- The fix for `CVE-2018-10875 <https://access.redhat.com/security/cve/cve-2018-10875>`_ prints out a warning message about skipping a config file from a world writable current working directory.  However, if the user is in a world writable current working directory which does not contain a config file, it should not print a warning message.  This release fixes that extaneous warning.
+- To resolve nios_network issue where vendor-encapsulated-options can not have a use_option flag. (https://github.com/ansible/ansible/pull/43925)
+- To resolve the issue of handling exception for Nios lookup gracefully. (https://github.com/ansible/ansible/pull/44078)
+- always correctly template no log for tasks https://github.com/ansible/ansible/issues/43294
+- ansible-galaxy - properly list all roles in roles_path (https://github.com/ansible/ansible/issues/43010)
+- basic.py - catch ValueError in case a FIPS enabled platform raises this exception - https://github.com/ansible/ansible/issues/44447
+- docker_container: fixing ``working_dir`` idempotency problem (https://github.com/ansible/ansible/pull/42857)
+- docker_container: makes unit parsing for memory sizes more consistent, and fixes idempotency problem when ``kernel_memory`` is set (see https://github.com/ansible/ansible/pull/16748 and https://github.com/ansible/ansible/issues/42692)
+- fix  example code for AWS lightsail documentation
+- fix the enable_snat parameter that is only supposed to be used by an user with the right policies. https://github.com/ansible/ansible/pull/44418
+- fixes docker_container check and debug mode (https://github.com/ansible/ansible/pull/42380)
+- improves docker_container idempotency (https://github.com/ansible/ansible/pull/44808)
+- ios_l2_interface - fix bug when list of vlans ends with comma (https://github.com/ansible/ansible/pull/43879)
+- ios_l2_interface - fix issue with certain interface types (https://github.com/ansible/ansible/pull/43819)
+- ios_user - fix unable to delete user admin issue (https://github.com/ansible/ansible/pull/44904)
+- ios_vlan - fix unable to work on certain interface types issue (https://github.com/ansible/ansible/pull/43819)
+- nxos_facts test lldp feature and fix nxapi check_rc (https://github.com/ansible/ansible/pull/44104).
+- nxos_interface port-channel idempotence fix for mode (https://github.com/ansible/ansible/pull/44248).
+- nxos_linkagg mode fix (https://github.com/ansible/ansible/pull/44294).
+- nxos_system idempotence fix (https://github.com/ansible/ansible/pull/44752).
+- nxos_vlan refactor to support non structured output (https://github.com/ansible/ansible/pull/43805).
+- one_host - fixes settings via environment variables (https://github.com/ansible/ansible/pull/44568)
+- use retry_json nxos_banner (https://github.com/ansible/ansible/pull/44376).
+- user - Strip trailing comments in /etc/default/passwd (https://github.com/ansible/ansible/pull/43931)
+- user - when creating a new user without an expiration date, properly set no expiration rather that expirining the account (https://github.com/ansible/ansible/issues/44155)
+- win_domain_computer - fixed deletion of computer active directory object that have dependent objects (https://github.com/ansible/ansible/pull/44500)
+- win_domain_computer - fixed error in diff_support
+- win_domain_computer - fixed error when description parameter is empty (https://github.com/ansible/ansible/pull/44054)
+- win_psexec - changed code to not escape the command option when building the args - https://github.com/ansible/ansible/issues/43839
+- win_uri -- Fix support for JSON output when charset is set
+- win_wait_for - fix issue where timeout doesn't wait unless state=drained - https://github.com/ansible/ansible/issues/43446
+
 v2.6.3
 ======
 
