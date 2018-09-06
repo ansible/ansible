@@ -25,7 +25,7 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
             name: bar
             state: started
             enabled: True
-      when: ansible_distribution == 'CentOS'
+      when: ansible_facts['distribution'] == 'CentOS'
       become: true
       become_user: root
 
