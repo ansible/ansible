@@ -15,8 +15,8 @@
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
-
   block:
+    # ============================================================
     - name: set up aws connection info
       set_fact:
         aws_connection_info: &aws_connection_info
@@ -43,6 +43,7 @@
         name: "{{ resource_prefix }}-vpc"
         state: present
         cidr_block: "10.232.232.128/26"
+        <<: *aws_connection_info
         tags:
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
@@ -58,6 +59,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: absent
       check_mode: true
       register: result
@@ -72,6 +74,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: absent
       register: result
 
@@ -80,6 +83,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
       check_mode: true
       register: result
@@ -94,6 +98,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
       register: result
 
@@ -108,6 +113,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}CHANGED'
+        <<: *aws_connection_info
         state: present
       check_mode: true
       register: result
@@ -122,6 +128,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}CHANGED'
+        <<: *aws_connection_info
         state: present
       ignore_errors: true
       register: result
@@ -137,6 +144,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
       register: result
 
@@ -161,6 +169,7 @@
             description: '{{ ec2_group_description }}-2'
             state: present
             vpc_id: '{{ vpc_result.vpc.id }}'
+            <<: *aws_connection_info
           check_mode: true
           register: result
 
@@ -176,6 +185,7 @@
             description: '{{ ec2_group_description }}-2'
             state: present
             vpc_id: '{{ vpc_result.vpc.id }}'
+            <<: *aws_connection_info
           register: result
 
         - name: assert state=present (expected changed=true)
@@ -196,6 +206,7 @@
               from_port: 8182
               to_port: 8182
               cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
           check_mode: true
           register: result
 
@@ -216,6 +227,7 @@
               from_port: 8182
               to_port: 8182
               cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
           register: result
 
         - name: assert state=present (expected changed=true)
@@ -236,6 +248,7 @@
               from_port: 8182
               to_port: 8182
               cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
           check_mode: true
           register: result
 
@@ -256,6 +269,7 @@
               from_port: 8182
               to_port: 8182
               cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
           register: result
 
         - name: assert nothing changed
@@ -280,6 +294,7 @@
               from_port: 8181
               to_port: 8181
               cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
           check_mode: true
           diff: true
           register: result
@@ -308,6 +323,7 @@
               from_port: 8181
               to_port: 8181
               cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
           register: result
 
         - name: assert state=present (expected changed=true)
@@ -323,6 +339,7 @@
             description: '{{ ec2_group_description }}-2'
             state: absent
             vpc_id: '{{ vpc_result.vpc.id }}'
+            <<: *aws_connection_info
           check_mode: true
           diff: true
           register: result
@@ -340,6 +357,7 @@
             description: '{{ ec2_group_description }}-2'
             state: absent
             vpc_id: '{{ vpc_result.vpc.id }}'
+            <<: *aws_connection_info
           register: result
 
         - name: assert group was removed
@@ -352,6 +370,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         rules:
         - proto: "tcp"
           from_port: 8182
@@ -370,6 +389,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         rules:
         - proto: "tcp"
           from_port: 8182
@@ -390,6 +410,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -410,6 +431,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -434,6 +456,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         purge_rules: no
         rules:
@@ -454,6 +477,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         purge_rules: no
         rules:
@@ -477,6 +501,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -501,6 +526,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -528,6 +554,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -552,6 +579,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -576,6 +604,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -598,6 +627,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -620,6 +650,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -641,6 +672,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -662,6 +694,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -678,6 +711,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -708,6 +742,7 @@
           ec2_group:
             name: '{{ec2_group_name}}'
             description: '{{ec2_group_description}}'
+            <<: *aws_connection_info
             state: present
             # set purge_rules to false so we don't get a false positive from previously added rules
             purge_rules: false
@@ -729,6 +764,7 @@
           ec2_group:
             name: '{{ec2_group_name}}'
             description: '{{ec2_group_description}}'
+            <<: *aws_connection_info
             state: present
             # set purge_rules to false so we don't get a false positive from previously added rules
             purge_rules: false
@@ -751,6 +787,7 @@
           ec2_group:
             name: '{{ec2_group_name}}'
             description: '{{ec2_group_description}}'
+            <<: *aws_connection_info
             state: present
             # set purge_rules to false so we don't get a false positive from previously added rules
             purge_rules: false
@@ -775,6 +812,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
+        <<: *aws_connection_info
       check_mode: true
       register: result
 
@@ -788,6 +826,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
+        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -801,6 +840,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -821,6 +861,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -842,6 +883,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -869,6 +911,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -892,6 +935,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         purge_rules_egress: false
@@ -916,6 +960,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         purge_rules_egress: false
@@ -940,6 +985,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -962,6 +1008,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -985,6 +1032,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -1006,6 +1054,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -1027,6 +1076,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         # purge the other rules so assertions work for the subsequent tests for rule descriptions
         purge_rules_egress: true
@@ -1067,6 +1117,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         # purge the other rules so assertions work for the subsequent tests for rule descriptions
         purge_rules_egress: true
@@ -1108,6 +1159,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -1147,6 +1199,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -1188,6 +1241,7 @@
       ec2_group:
         name: '{{ec2_group_name}}-default-vpc'
         description: '{{ec2_group_description}} default VPC'
+        <<: *aws_connection_info
         purge_rules_egress: true
         state: present
         rules:
@@ -1218,6 +1272,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -1257,6 +1312,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -1297,6 +1353,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -1336,6 +1393,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -1377,6 +1435,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
+        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -1391,24 +1450,28 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: tidy up security group for IPv6 EC2-Classic tests
       ec2_group:
         name: '{{ ec2_group_name }}-2'
         state: absent
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: tidy up default VPC security group
       ec2_group:
         name: '{{ec2_group_name}}-default-vpc'
         state: absent
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: tidy up automatically created SG
       ec2_group:
         name: "{{ resource_prefix }} - Another security group"
         state: absent
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: tidy up VPC
@@ -1416,4 +1479,5 @@
         name: "{{ resource_prefix }}-vpc"
         state: absent
         cidr_block: "10.232.232.128/26"
+        <<: *aws_connection_info
       ignore_errors: yes
