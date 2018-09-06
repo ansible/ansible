@@ -1,0 +1,4 @@
+---
+bugfixes:
+- ec2_vpc_route_table - check the origin before replacing routes.
+  Routes with the origin 'EnableVgwRoutePropagation' may not be replaced.
