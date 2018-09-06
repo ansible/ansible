@@ -28,17 +28,16 @@ It's actually pretty simple::
     tasks:
       - name: "shut down Debian flavored systems"
         command: /sbin/shutdown -t now
-        when: ansible_os_family == "Debian"
-        # note that Ansible facts and vars like ansible_os_family can be used
-        # directly in conditionals without double curly braces
+        when: ansible_facts['os_family'] == "Debian"
+        # note that all variables can be directly in conditionals without double curly braces
 
 You can also use parentheses to group conditions::
 
     tasks:
       - name: "shut down CentOS 6 and Debian 7 systems"
         command: /sbin/shutdown -t now
-        when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6") or
-              (ansible_distribution == "Debian" and ansible_distribution_major_version == "7")
+        when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6") or
+              (ansible_facts['distribution'] == "Debian" and ansible_facts['distribution_major_version'] == "7")
 
 Multiple conditions that all need to be true (a logical 'and') can also be specified as a list::
 
@@ -46,8 +45,8 @@ Multiple conditions that all need to be true (a logical 'and') can also be speci
       - name: "shut down CentOS 6 systems"
         command: /sbin/shutdown -t now
         when:
-          - ansible_distribution == "CentOS"
-          - ansible_distribution_major_version == "6"
+          - ansible_facts['distribution'] == "CentOS"
+          - ansible_facts['distribution_major_version'] == "6"
 
 A number of Jinja2 "tests" and "filters" can also be used in when statements, some of which are unique
 and provided by Ansible.  Suppose we want to ignore the error of one statement and then
@@ -72,17 +71,18 @@ decide to do something conditionally based on success or failure::
 .. note:: both `success` and `succeeded` work (`fail`/`failed`, etc).
 
 
-As a reminder, to see what facts are available on a particular system, you can do the following::
+To see what facts are available on a particular system, you can do the following in a playbook::
 
-    ansible hostname.example.com -m setup
+    - debug: var=ansible_facts
+
 
 Tip: Sometimes you'll get back a variable that's a string and you'll want to do a math operation comparison on it.  You can do this like so::
 
     tasks:
       - shell: echo "only on Red Hat 6, derivatives, and later"
-        when: ansible_os_family == "RedHat" and ansible_lsb.major_release|int >= 6
+        when: ansible_facts['os_family'] == "RedHat" and ansible_facts['lsb']['major_release']|int >= 6
 
-.. note:: the above example requires the lsb_release package on the target host in order to return the ansible_lsb.major_release fact.
+.. note:: the above example requires the lsb_release package on the target host in order to return the 'lsb major_release' fact.
 
 Variables defined in the playbooks or inventory can also be used.  An example may be the execution of a task based on a variable's boolean value::
 
@@ -170,7 +170,7 @@ Or with a role::
     - hosts: webservers
       roles:
          - role: debian_stock_config
-           when: ansible_os_family == 'Debian'
+           when: ansible_facts['os_family'] == 'Debian'
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
 In many cases the ``group_by`` module (see :doc:`modules`) can be a more streamlined way to accomplish the same thing; see
@@ -224,13 +224,13 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
       remote_user: root
       vars_files:
         - "vars/common.yml"
-        - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
+        - [ "vars/{{ ansible_facts['os_family'] }}.yml", "vars/os_defaults.yml" ]
       tasks:
       - name: make sure apache is started
         service: name={{ apache }} state=started
 
 .. note::
-   The variable 'ansible_os_family' is being interpolated into
+   The variable "ansible_facts['os_family']" is being interpolated into
    the list of filenames being defined for vars_files.
 
 As a reminder, the various YAML files contain just keys and values::
@@ -267,7 +267,7 @@ The following example shows how to template out a configuration file that was ve
       loop: "{{ query('first_found', { 'files': myfiles, 'paths': mypaths}) }}"
       vars:
         myfiles:
-          - "{{ansible_distribution}}.conf"
+          - "{{ansible_facts['distribution']}}.conf"
           -  default.conf
         mypaths: ['search_location_one/somedir/', '/opt/other_location/somedir/']
 
@@ -338,10 +338,10 @@ The following Facts are frequently used in Conditionals - see above for examples
 
 .. _ansible_distribution:
 
-ansible_distribution
---------------------
+ansible_facts['distribution']
+-----------------------------
 
-Possible values::
+Possible values (sample, not complete list)::
 
     Alpine
     Altlinux
@@ -366,17 +366,17 @@ Possible values::
 
 .. _ansible_distribution_major_version:
 
-ansible_distribution_major_version
-----------------------------------
+ansible_facts['distribution_major_version']
+-------------------------------------------
 
 This will be the major version of the operating system. For example, the value will be `16` for Ubuntu 16.04.
 
 .. _ansible_os_family:
 
-ansible_os_family
------------------
+ansible_facts['os_family']
+--------------------------
 
-Possible values::
+Possible values (sample, not complete list)::
 
     AIX
     Alpine
