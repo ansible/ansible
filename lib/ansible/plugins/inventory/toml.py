@@ -80,8 +80,8 @@ example2: |
 example3: |
     [ungrouped.hosts]
     host1 = {}
-    host2 = { ansible_host = 127.0.0.1, ansible_port = 44 }
-    host3 = { ansible_host = 127.0.0.1, ansible_port = 45 }
+    host2 = { ansible_host = "127.0.0.1", ansible_port = 44 }
+    host3 = { ansible_host = "127.0.0.1", ansible_port = 45 }
 
     [g1.hosts]
     host4 = {}
