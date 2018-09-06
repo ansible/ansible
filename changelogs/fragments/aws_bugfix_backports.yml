@@ -1,0 +1,20 @@
+bugfixes:
+- Fix lambda_policy updates when principal is an account number. Backport of
+  https://github.com/ansible/ansible/pull/44871
+- Fix ec2_group support for multi-account and peered VPC security groups.
+  Reported in https://github.com/ansible/ansible/issue/44788 and fixed in
+  https://github.com/ansible/ansible/pull/45296
+- Fix s3_lifecycle module backwards compatibility without providing prefix.
+  Blank prefixes regression was introduced in boto3 rewrite.
+  https://github.com/ansible/ansible/pull/45318
+- Fix ecs_taskdefinition handling of changed role_arn. If the task role in a
+  ECS task definition changes ansible should create a new revsion of the task
+  definition. https://github.com/ansible/ansible/pull/45317
+- Fix health check parameter handling in elb_target_group per
+  https://github.com/ansible/ansible/issues/43244 about health_check_port.
+  Fixed in https://github.com/ansible/ansible/pull/45314
+- Remove spurious `changed=True` returns when ec2_group module is used with
+  numeric ports. https://github.com/ansible/ansible/pull/45240
+- Add argspec to aws_application_scaling_policy module to handle metric
+  specifications, scaling cooldowns, and target values.
+  https://github.com/ansible/ansible/pull/45235
