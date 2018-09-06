@@ -1170,7 +1170,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     availability_set_resource = None
                     try:
-                        availability_set_resource = self.compute_models.SubResource(vm_dict['properties']['availabilitySet'].get('id')
+                        availability_set_resource = self.compute_models.SubResource(vm_dict['properties']['availabilitySet'].get('id'))
                     except Exception:
                         # pass if the availability set is not set
                         pass
