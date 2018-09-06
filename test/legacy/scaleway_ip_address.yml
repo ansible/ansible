@@ -1,0 +1,118 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_ip_address.yml
+
+- name: Test ip address lifecyle on a Scaleway instance
+  hosts: localhost
+  gather_facts: no
+  environment:
+    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
+
+  tasks:
+
+  - name: Create a server
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: 857de28c-39ce-4b15-9389-b68d8bb1bb51
+      organization: 43a3b6c8-916f-477b-b7ec-ff1898f5fdd9
+      region: par1
+      commercial_type: START1-S
+      wait: true
+
+    register: server_creation_task
+
+  - debug: var=server_creation_task
+
+  - set_fact:
+      server_id: "{{ server_creation_task.msg.id }}"
+
+  - debug: var=server_id
+
+  - name: Check mode static ip reservation
+    check_mode: yes
+    scaleway_ip:
+      state: present
+      region: par1
+      server_id: "{{ server_id }}"
+      organization: 43a3b6c8-916f-477b-b7ec-ff1898f5fdd9
+    register: server_ip_check_task
+
+  - debug: var=server_ip_check_task
+
+  - assert:
+      that:
+        - server_ip_check_task is success
+        - server_ip_check_task is changed    
+
+  - name: Reserve static ip address
+    scaleway_ip:
+      state: present
+      region: par1
+      server_id: "{{ server_id }}"
+      organization: 43a3b6c8-916f-477b-b7ec-ff1898f5fdd9
+    register: server_ip_check_task
+
+  - debug: var=server_ip_check_task
+
+  - assert:
+      that:
+        - server_ip_check_task is success
+        - server_ip_check_task is changed
+
+  - name: Reserve static ip address (Confirmation)
+    scaleway_ip:
+      state: present
+      region: par1
+      server_id: "{{ server_id }}"
+      organization: 43a3b6c8-916f-477b-b7ec-ff1898f5fdd9
+    register: server_ip_check_confirmation_task
+
+  - debug: var=server_ip_check_confirmation_task
+
+  - assert:
+      that:
+        - server_ip_check_confirmation_task is success
+        - server_ip_check_confirmation_task is not changed
+
+  - name: Check mode delete static ip address
+    check_mode: yes
+    scaleway_ip:
+      state: absent
+      region: par1
+      server_id: "{{ server_id }}"
+      organization: 43a3b6c8-916f-477b-b7ec-ff1898f5fdd9
+    register: server_ip_delete_task
+
+  - debug: var=server_ip_delete_task
+
+  - assert:
+      that:
+        - server_ip_delete_task is success
+        - server_ip_delete_task is changed
+
+  - name: Delete static ip address
+    scaleway_ip:
+      state: absent
+      region: par1
+      server_id: "{{ server_id }}"
+      organization: 43a3b6c8-916f-477b-b7ec-ff1898f5fdd9
+    register: server_ip_delete_task
+
+  - debug: var=server_ip_delete_task
+
+  - assert:
+      that:
+        - server_ip_delete_task is success
+        - server_ip_delete_task is changed
+
+  - name: Destroy it
+    scaleway_compute:
+      name: foobar
+      state: absent
+      region: par1
+      image: 857de28c-39ce-4b15-9389-b68d8bb1bb51
+      organization: 43a3b6c8-916f-477b-b7ec-ff1898f5fdd9
+      commercial_type: START1-S
+      wait: true
+    register: server_destroy_task
+
+  - debug: var=server_destroy_task
