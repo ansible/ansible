@@ -14,7 +14,7 @@ This section discusses how to get multiple related modules into Ansible.
 
 This document is intended for both companies wishing to add modules for their own products as well as users of 3rd party products wishing to add Ansible functionality.
 
-It's based on module development best practices that the Ansible core team and community have accumulated.
+It's based on module development tips and tricks that the Ansible core team and community have accumulated.
 
 .. include:: shared_snippets/licensing.txt
 

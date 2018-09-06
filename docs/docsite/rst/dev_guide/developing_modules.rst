@@ -42,7 +42,7 @@ The functionality you want may be too large for a single module. If you want to 
 If your use case isn't covered by an existing module, an open PR, an action plugin, or a role, and you don't need to create multiple modules, then you're ready to start developing a new module. Choose from the topics below for next steps:
 
 * I want to :ref:`get started on a new module <developing_modules_general>`.
-* I want to review :ref:`best practices for developing modules <developing_modules_best_practices>`.
+* I want to review :ref:`tips and conventions for developing good modules <developing_modules_best_practices>`.
 * I want to :ref:`write a Windows module <developing_modules_general_windows>`.
 * I want :ref:`an overview of Ansible's architecture <developing_program_flow_modules>`.
 * I want to :ref:`document my module <developing_modules_documenting>`.
