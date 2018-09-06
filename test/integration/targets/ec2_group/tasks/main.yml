@@ -9,7 +9,13 @@
 # - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
 
 - include: ./credential_tests.yml
-- block:
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  block:
     # ============================================================
     - name: set up aws connection info
       set_fact:
@@ -42,6 +48,8 @@
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
       register: vpc_result
+    #TODO(ryansb): Update CI for VPC peering permissions
+    #- include: ./multi_account.yml
     - include: ./numeric_protos.yml
     - include: ./rule_group_create.yml
     - include: ./egress_tests.yml
