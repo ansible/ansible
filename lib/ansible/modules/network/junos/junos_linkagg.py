@@ -164,7 +164,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring, get_commit_args
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, get_configuration
 
@@ -328,7 +328,8 @@ def main():
         commit = not module.check_mode
         if diff:
             if commit:
-                commit_configuration(module)
+                kwargs = get_commit_args(module)
+                commit_configuration(module, **kwargs)
             else:
                 discard_changes(module)
             result['changed'] = True

@@ -37,6 +37,7 @@ ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
 JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
 FORMATS = frozenset(['xml', 'text', 'json'])
 CONFIG_FORMATS = frozenset(['xml', 'text', 'json', 'set'])
+DEFAULT_COMMENT = 'configured by junos_config'
 
 junos_provider_spec = {
     'host': dict(),
@@ -49,6 +50,8 @@ junos_provider_spec = {
 }
 junos_argument_spec = {
     'provider': dict(type='dict', options=junos_provider_spec),
+    'confirm': dict(default=0, type='int', version_added="2.8"),
+    'comment': dict(default=DEFAULT_COMMENT, version_added="2.8"),
 }
 junos_top_spec = {
     'host': dict(removed_in_version=2.9),
@@ -443,3 +446,18 @@ def to_param_list(module):
             return aggregate
     else:
         return [module.params]
+
+
+def get_commit_args(module):
+    kwargs = {
+        'comment': module.params['comment']
+    }
+
+    confirm = module.params['confirm']
+    if confirm > 0:
+        kwargs.update({
+            'confirm': True,
+            'confirm_timeout': to_text(confirm, errors='surrogate_then_replace')
+        })
+
+    return kwargs

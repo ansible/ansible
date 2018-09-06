@@ -68,6 +68,25 @@ options:
             used to authenticate the SSH session. If the value is not specified in
             the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
             will be used instead.
+  confirm:
+    description:
+      - The C(confirm) argument will configure a time out value in minutes
+        for the commit to be confirmed before it is automatically
+        rolled back.  If the C(confirm) argument is set to False, this
+        argument is silently ignored.  If the value for this argument
+        is set to 0, the commit is confirmed immediately.
+      - Not work on C(junos_command), C(junos_fact), C(junos_package), C(junos_rpc), C(junos_scp)
+    default: 0
+    version_added: "2.8"
+  comment:
+    description:
+      - The C(comment) argument specifies a text string to be used
+        when committing the configuration.  If the C(confirm) argument
+        is set to False, this argument is silently ignored.
+      - Not work on C(junos_command), C(junos_fact), C(junos_package), C(junos_rpc), C(junos_scp)
+    default: configured by junos_config
+    version_added: "2.8"
+
 notes:
   - For information on using CLI and netconf see the :ref:`Junos OS Platform Options guide <junos_platform_options>`
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`

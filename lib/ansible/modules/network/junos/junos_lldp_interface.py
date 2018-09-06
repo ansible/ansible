@@ -96,7 +96,7 @@ diff.prepared:
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_commit_args
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele, tostring
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
 
@@ -147,7 +147,8 @@ def main():
         commit = not module.check_mode
         if diff:
             if commit:
-                commit_configuration(module)
+                kwargs = get_commit_args(module)
+                commit_configuration(module, **kwargs)
             else:
                 discard_changes(module)
             result['changed'] = True

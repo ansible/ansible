@@ -61,20 +61,6 @@ options:
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
         statements on the remote device.
-  confirm:
-    description:
-      - The C(confirm) argument will configure a time out value in minutes
-        for the commit to be confirmed before it is automatically
-        rolled back.  If the C(confirm) argument is set to False, this
-        argument is silently ignored.  If the value for this argument
-        is set to 0, the commit is confirmed immediately.
-    default: 0
-  comment:
-    description:
-      - The C(comment) argument specifies a text string to be used
-        when committing the configuration.  If the C(confirm) argument
-        is set to False, this argument is silently ignored.
-    default: configured by junos_config
   replace:
     description:
       - The C(replace) argument will instruct the remote device to
@@ -197,7 +183,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import get_diff, load_config, get_configuration
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
-from ansible.module_utils.network.junos.junos import junos_argument_spec, load_configuration, tostring
+from ansible.module_utils.network.junos.junos import junos_argument_spec, load_configuration, tostring, get_commit_args
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
 
@@ -217,7 +203,6 @@ except ImportError:
         ParseError = ExpatError
 
 USE_PERSISTENT_CONNECTION = True
-DEFAULT_COMMENT = 'configured by junos_config'
 
 
 def check_args(module, warnings):
@@ -310,8 +295,6 @@ def main():
         # deprecated replace in Ansible 2.3
         replace=dict(type='bool'),
 
-        confirm=dict(default=0, type='int'),
-        comment=dict(default=DEFAULT_COMMENT),
         confirm_commit=dict(type='bool', default=False),
 
         # config operations
@@ -352,11 +335,9 @@ def main():
     if rollback_id:
         diff = rollback(module, rollback_id)
         if commit:
-            kwargs = {
-                'comment': module.params['comment']
-            }
             with locked_config(module):
                 load_configuration(module, rollback=rollback_id)
+                kwargs = get_commit_args(module)
                 commit_configuration(module, **kwargs)
             if module._diff:
                 result['diff'] = {'prepared': diff}
@@ -373,16 +354,7 @@ def main():
                 diff = configure_device(module, warnings, candidate)
                 if diff:
                     if commit:
-                        kwargs = {
-                            'comment': module.params['comment']
-                        }
-
-                        confirm = module.params['confirm']
-                        if confirm > 0:
-                            kwargs.update({
-                                'confirm': True,
-                                'confirm_timeout': to_text(confirm, errors='surrogate_then_replace')
-                            })
+                        kwargs = get_commit_args(module)
                         commit_configuration(module, **kwargs)
                     else:
                         discard_changes(module)
