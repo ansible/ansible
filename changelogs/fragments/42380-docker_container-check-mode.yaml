@@ -1,0 +1,2 @@
+bugfixes:
+- "fixes docker_container check and debug mode (https://github.com/ansible/ansible/pull/42380)"

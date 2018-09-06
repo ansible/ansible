@@ -1,0 +1,2 @@
+bugfixes:
+- "The docker_* modules respect the DOCKER_* environment variables again (https://github.com/ansible/ansible/pull/42641)."

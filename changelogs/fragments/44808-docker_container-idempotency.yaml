@@ -1,0 +1,2 @@
+bugfixes:
+- "improves docker_container idempotency (https://github.com/ansible/ansible/pull/44808)"

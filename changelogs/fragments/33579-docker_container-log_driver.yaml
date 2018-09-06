@@ -1,0 +1,2 @@
+bugfixes:
+- "Allow arbitrary ``log_driver`` for docker_container (https://github.com/ansible/ansible/pull/33579)."
