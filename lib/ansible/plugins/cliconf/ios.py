@@ -105,7 +105,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
-        candidate_obj = NetworkConfig(indent=1, ignore_lines=diff_ignore_lines)
+        candidate_obj = NetworkConfig(indent=1)
         want_src, want_banners = self._extract_banners(candidate)
         candidate_obj.load(want_src)
 
