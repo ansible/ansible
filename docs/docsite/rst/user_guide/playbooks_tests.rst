@@ -43,7 +43,7 @@ To match strings against a substring or a regex, use the "match" or "search" fil
       url: "http://example.com/users/foo/resources/bar"
 
     tasks:
-        - debug: 
+        - debug:
             msg: "matched pattern 1"
           when: url is match("http://example.com/users/.*/resources/.*")
 
@@ -67,14 +67,14 @@ Version Comparison
 
 .. note:: In 2.5 ``version_compare`` was renamed to ``version``
 
-To compare a version number, such as checking if the ``ansible_distribution_version``
+To compare a version number, such as checking if the ``ansible_facts['distribution_version']``
 version is greater than or equal to '12.04', you can use the ``version`` test.
 
-The ``version`` test can also be used to evaluate the ``ansible_distribution_version``::
+The ``version`` test can also be used to evaluate the ``ansible_facts['distribution_version']``::
 
-    {{ ansible_distribution_version is version('12.04', '>=') }}
+    {{ ansible_facts['distribution_version'] is version('12.04', '>=') }}
 
-If ``ansible_distribution_version`` is greater than or equal to 12.04, this test returns True, otherwise False.
+If ``ansible_facts['distribution_version']`` is greater than or equal to 12.04, this test returns True, otherwise False.
 
 The ``version`` test accepts the following operators::
 
