@@ -5,7 +5,7 @@
 Module format and documentation
 *******************************
 
-If you want to contribute your module to Ansible, you must write your module in Python and follow the standard format described below. (Unless you're writing a Windows module, in which case the :ref:`Windows guidelines <developing_modules_general_windows>` apply.) In addition to following this format, you should review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`programming tips <developing_modules_best_practices>`, and :ref:`strategy for maintaining Python-2 and Python-3 compatibility <developing_python_3>`, as well as information about :ref:`testing <developing_testing>` before you open a pull request.
+If you want to contribute your module to Ansible, you must write your module in Python and follow the standard format described below. (Unless you're writing a Windows module, in which case the :ref:`Windows guidelines <developing_modules_general_windows>` apply.) In addition to following this format, you should review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`programming tips <developing_modules_best_practices>`, and :ref:`strategy for maintaining Python 2 and Python 3 compatibility <developing_python_3>`, as well as information about :ref:`testing <developing_testing>` before you open a pull request.
 
 Every Ansible module written in Python must begin with seven standard sections in a particular order, followed by the code. The sections in order are:
 

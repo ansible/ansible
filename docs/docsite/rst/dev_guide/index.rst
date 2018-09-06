@@ -27,7 +27,7 @@ Find the task that best describes what you want to do:
    * I want to :ref:`debug my module code <debugging>`.
    * I want to :ref:`test my module <developing_testing>`.
    * I want to :ref:`document my module <module_documenting>`.
-   * I want to :ref:`make sure my code runs on Python-2 and Python-3 <developing_python_3>`.
+   * I want to :ref:`make sure my code runs on Python 2 and Python 3 <developing_python_3>`.
 
 * I want to work on other development projects:
 
