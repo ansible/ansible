@@ -37,6 +37,9 @@ description:
       must contain a virtual network with at least one subnet.
     - Currently requires an image found in the Azure Marketplace. Use azure_rm_virtualmachineimage_facts module
       to discover the publisher, offer, sku and version of a particular image.
+    - If you need to use the custom_data option, some images in the marketplace are not cloud-init ready. Thus, data 
+      sent to the custom_data option will be ignored. If the image you are attempting to use is not in [this list](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
+      you will need to follow the instructions [here](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image) to prepare an image to use cloud-init.
 
 options:
     resource_group:
