@@ -16,6 +16,8 @@ Not only is this inventory configurable, but you can also use multiple inventory
 pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
 Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
 
+The TOML inventory format was introduced in version 2.8.
+
 .. _inventoryformat:
 
 Hosts and Groups
