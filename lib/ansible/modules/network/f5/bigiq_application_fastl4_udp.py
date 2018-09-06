@@ -119,7 +119,7 @@ EXAMPLES = r'''
         port: 8080
     inbound_virtual:
       name: foo
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 53
     provider:
