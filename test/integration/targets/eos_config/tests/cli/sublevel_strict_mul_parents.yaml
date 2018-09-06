@@ -10,6 +10,7 @@
       - class c1
     before: ['no policy-map type qos p1', 'no class-map type qos match-any c1']
     match: none
+  become: yes
 
 - name: configure sub level command using strict match
   eos_config:
@@ -19,6 +20,7 @@
     parents: ['policy-map type qos p1', 'class c1']
     match: strict
   register: result
+  become: yes
 
 - assert:
     that:
@@ -34,6 +36,7 @@
     parents: ['policy-map type qos p1', 'class c1']
     match: strict
   register: result
+  become: yes
 
 - assert:
     that:
@@ -51,6 +54,7 @@
     parents: ['policy-map type qos p1', 'class c1']
     match: strict
   register: result
+  become: yes
 
 - assert:
     that:
@@ -62,5 +66,6 @@
       - no policy-map type qos p1
       - no class-map type qos match-any c1
     match: none
+  become: yes
 
 - debug: msg="END cli/sublevel_strict_mul_parents.yaml on connection={{ ansible_connection }}"
