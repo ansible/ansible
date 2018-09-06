@@ -9,10 +9,7 @@ DOCUMENTATION = '''
     version_added: "2.7"
     short_description: Uses a specific TOML file as an inventory source.
     description:
-        - "TOML based inventory, starts with the 'all' group and has hosts/vars/children entries."
-        - Host entries can have sub-entries defined, which will be treated as variables.
-        - Vars entries are normal group vars.
-        - "Children are 'child groups', which can also have their own vars/hosts/children and so on."
+        - TOML based inventory format
         - File MUST have a valid '.toml' file extension
     notes:
         - To function it requires the 'toml' plugin being whitelisted in configuration.
@@ -196,10 +193,6 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         if not data:
             raise AnsibleParserError('Parsed empty TOML file')
-        elif not isinstance(data, MutableMapping):
-            raise AnsibleParserError(
-                'TOML inventory has an invalid structure, it should be a dict, got: %s' % type(data)
-            )
         elif data.get('plugin'):
             raise AnsibleParserError('Plugin configuration TOML file, not TOML inventory')
 
@@ -207,9 +200,8 @@ class InventoryModule(BaseFileInventoryPlugin):
             self._parse_group(group_name, data[group_name])
 
     def verify_file(self, path):
-        valid = False
-        if BaseFileInventoryPlugin.verify_file(self, path):
+        if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
             if ext == '.toml':
-                valid = True
-        return valid
+                return True
+        return False
