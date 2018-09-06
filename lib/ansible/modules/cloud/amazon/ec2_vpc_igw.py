@@ -95,121 +95,193 @@ from ansible.module_utils.ec2 import (
     ec2_argument_spec,
     get_aws_connection_info,
     camel_dict_to_snake_dict,
-    boto3_tag_list_to_ansible_dict
+    boto3_tag_list_to_ansible_dict,
+    ansible_dict_to_boto3_filter_list,
+    ansible_dict_to_boto3_tag_list,
+    compare_aws_tags
 )
 from ansible.module_utils.six import string_types
-
+import time
 
 class AnsibleIGWException(Exception):
     pass
 
 
-def get_igw_info(igw):
-    return {'gateway_id': igw.id,
-            'tags': igw.tags,
-            'vpc_id': igw.vpc_id
-            }
+class AnsibleEc2Igw(object):
+
+    def __init__(self, module, results):
+        self._module = module
+        self._results = results
+        self._connection = None
+        self._check_mode = self._module.check_mode
+
+    def connect(self):
+        try:
+            region, ec2_url, aws_connect_params = get_aws_connection_info(self._module, boto3=True)
+            self._connection = boto3_conn(self._module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url,
+                                    **aws_connect_params)
+
+        except botocore.exceptions.NoCredentialsError as e:
+            self.fail(msg="Can't authorize connection - %s" % to_native(e), exception=traceback.format_exc())
+
+    def start_timer(self):
+        self._start_time = time.time()
+
+    def process(self):
+        self.connect()
+
+        self.start_timer()
+        vpc_id = self._module.params.get('vpc_id')
+        state = self._module.params.get('state', 'present')
+        tags = self._module.params.get('tags')
+
+        result = None
+        try:
+            if state == 'present':
+                result = self.ensure_igw_present(vpc_id, tags)
+            elif state == 'absent':
+                result = self.ensure_igw_absent(vpc_id)
+        except AnsibleIGWException as e:
+            self.fail(msg=str(e))
+
+    def get_matching_igw(self, vpc_id):
+        filters = ansible_dict_to_boto3_filter_list({'attachment.vpc-id': vpc_id})
+        igws = None
+        try:
+            response = self._connection.describe_internet_gateways(Filters=filters)
+            igws = response['InternetGateways']
+        except botocore.exceptions.ClientError as e:
+            self.fail(msg=str(e))
 
 
-def get_resource_tags(vpc_conn, resource_id):
-    return dict((t.name, t.value) for t in
-                vpc_conn.get_all_tags(filters={'resource-id': resource_id}))
 
+        igw = None
+        if len(igws) > 1:
+            raise AnsibleIGWException(
+                'EC2 returned more than one Internet Gateway for VPC {0}, aborting'.format(vpc_id))
+        elif igws:
+            igw = camel_dict_to_snake_dict(igws[0])
 
-def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
-    try:
-        cur_tags = get_resource_tags(vpc_conn, resource_id)
-        if cur_tags == tags:
-            return {'changed': False, 'tags': cur_tags}
+        return igw
 
-        if check_mode:
-            latest_check_mode_tags = cur_tags
+    def check_input_tags(self, tags):
+        nonstring_tags = [k for k, v in tags.items() if not isinstance(v, string_types)]
+        if nonstring_tags:
+            self.fail(msg='One or more tags contain non-string values: {0}'.format(nonstring_tags))
 
-        to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
+    def ensure_tags(self, igw_id, tags, add_only):
+        final_tags = []
+
+        filters = ansible_dict_to_boto3_filter_list({'resource-id': igw_id, 'resource-type': 'internet-gateway'})
+        try:
+            cur_tags = self._connection.describe_tags(Filters=filters)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="Couldn't describe tags")
+
+        to_update, to_delete = compare_aws_tags(boto3_tag_list_to_ansible_dict(cur_tags.get('Tags')), tags, True)
+        final_tags = boto3_tag_list_to_ansible_dict(cur_tags.get('Tags'))
+
+        if to_update:
+            try:
+                if self._check_mode:
+                    # update tags
+                    final_tags.update(to_update)
+                else:
+                    AWSRetry.exponential_backoff(
+                        catch_extra_error_codes=['InvalidInternetID.NotFound']
+                    )(self._connection.create_tags)(
+                        Resources=[igw_id],
+                        Tags=ansible_dict_to_boto3_tag_list(to_update)
+                    )
+
+                self._results['changed'] = True
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                self._module.fail_json_aws(e, msg="Couldn't create tags")
+
         if to_delete and not add_only:
-            if check_mode:
-                # just overwriting latest_check_mode_tags instead of deleting keys
-                latest_check_mode_tags = dict((k, cur_tags[k]) for k in cur_tags if k not in to_delete)
-            else:
-                vpc_conn.delete_tags(resource_id, to_delete)
+            try:
+                if self.check_mode:
+                    # update tags
+                    for key in to_delete:
+                        del final_tags[key]
+                else:
+                    tags_list = []
+                    for key in to_delete:
+                        tags_list.append({'Key': key})
 
-        to_add = dict((k, tags[k]) for k in tags if k not in cur_tags or cur_tags[k] != tags[k])
-        if to_add:
-            if check_mode:
-                latest_check_mode_tags.update(to_add)
-            else:
-                vpc_conn.create_tags(resource_id, to_add)
+                    AWSRetry.exponential_backoff(
+                        catch_extra_error_codes=['InvalidSubnetID.NotFound']
+                    )(self._connection.delete_tags)(Resources=[igw_id], Tags=tags_list)
 
-        if check_mode:
-            return {'changed': True, 'tags': latest_check_mode_tags}
-        latest_tags = get_resource_tags(vpc_conn, resource_id)
-        return {'changed': True, 'tags': latest_tags}
-    except EC2ResponseError as e:
-        raise AnsibleIGWException(
-            'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
+                self._results['changed'] = True
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                self._module.fail_json_aws(e, msg="Couldn't delete tags")
 
+        if not self._check_mode and (to_update or to_delete):
+            try:
+                response = self._connection.describe_tags(Filters=filters)
+                final_tags = boto3_tag_list_to_ansible_dict(response.get('Tags'))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                self._module.fail_json_aws(e, msg="Couldn't describe tags")
 
-def get_matching_igw(vpc_conn, vpc_id):
-    igws = vpc_conn.get_all_internet_gateways(filters={'attachment.vpc-id': vpc_id})
-    if len(igws) > 1:
-        raise AnsibleIGWException(
-            'EC2 returned more than one Internet Gateway for VPC {0}, aborting'
-            .format(vpc_id))
-    return igws[0] if igws else None
+        return final_tags
 
 
-def ensure_igw_absent(vpc_conn, vpc_id, check_mode):
-    igw = get_matching_igw(vpc_conn, vpc_id)
-    if igw is None:
-        return {'changed': False}
+    def get_igw_info(self, igw):
+        return {
+            'gateway_id': igw['internet_gateway_id'],
+            'tags': igw['tags'],
+            'vpc_id': igw['vpc_id']
+        }
 
-    if check_mode:
-        return {'changed': True}
+    def ensure_igw_absent(self, vpc_id):
+        igw = self.get_matching_igw(vpc_id)
+        if igw is None:
+            return self._results
 
-    try:
-        vpc_conn.detach_internet_gateway(igw.id, vpc_id)
-        vpc_conn.delete_internet_gateway(igw.id)
-    except EC2ResponseError as e:
-        raise AnsibleIGWException(
-            'Unable to delete Internet Gateway, error: {0}'.format(e))
-
-    return {'changed': True}
-
-
-def ensure_igw_present(vpc_conn, vpc_id, tags, check_mode):
-    igw = get_matching_igw(vpc_conn, vpc_id)
-    changed = False
-    if igw is None:
-        if check_mode:
-            return {'changed': True, 'gateway_id': None}
+        if self._check_mode:
+            self._results['changed'] = True
+            return self._results
 
         try:
-            igw = vpc_conn.create_internet_gateway()
-            vpc_conn.attach_internet_gateway(igw.id, vpc_id)
-            changed = True
-        except EC2ResponseError as e:
-            raise AnsibleIGWException(
-                'Unable to create Internet Gateway, error: {0}'.format(e))
+            self._results['changed'] = True
+            self._connection.detach_internet_gateway(InternetGatewayId=igw['internet_gateway_id'], VpcId=vpc_id)
+            self._connection.delete_internet_gateway(InternetGatewayId=igw['internet_gateway_id'])
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="Unable to delete Internet Gateway")
 
-    igw.vpc_id = vpc_id
+        return self._results
 
-    if tags != igw.tags:
-        if check_mode:
-            check_mode_tags = ensure_tags(vpc_conn, igw.id, tags, False, check_mode)
-            igw_info = get_igw_info(igw)
-            igw_info.get('tags', {}).update(check_mode_tags.get('tags', {}))
-            return {'changed': True, 'gateway': igw_info}
-        ensure_tags(vpc_conn, igw.id, tags, False, check_mode)
-        igw.tags = tags
-        changed = True
+    def ensure_igw_present(self, vpc_id, tags):
+        self.check_input_tags(tags)
 
-    igw_info = get_igw_info(igw)
+        igw = self.get_matching_igw(vpc_id)
 
-    return {
-        'changed': changed,
-        'gateway': igw_info
-    }
+        if igw is None:
+            if self._check_mode:
+                self._results['changed'] = True
+                self._results['gateway_id'] = None
+                return self._results
 
+            try:
+                response = self._connection.create_internet_gateway()
+                igw = camel_dict_to_snake_dict(response['InternetGateway'])
+                self._connection.attach_internet_gateway(InternetGatewayId=igw['internet_gateway_id'], VpcId=vpc_id)
+                self._results['changed'] = True
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                self._module.fail_json_aws(e, msg='Unable to create Internet Gateway')
+
+        igw['vpc_id'] = vpc_id
+
+        igw['tags'] = self.ensure_tags(igw_id=igw['internet_gateway_id'], tags=tags, add_only=False)
+
+        igw_info = self.get_igw_info(igw)
+        self._results.update(igw_info)
+
+        return self._results
+
+    def fail(self, **kwargs):
+        self._module.fail_json(**kwargs)
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -225,34 +297,13 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+    results = dict(
+        changed=False
+    )
+    igw_manager = AnsibleEc2Igw(module=module, results=results)
+    igw_manager.process()
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required for this module')
-
-    try:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-        connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url,
-                            **aws_connect_params)
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - %s" % to_native(e), exception=traceback.format_exc())
-
-    vpc_id = module.params.get('vpc_id')
-    state = module.params.get('state', 'present')
-    tags = module.params.get('tags')
-
-    nonstring_tags = [k for k, v in tags.items() if not isinstance(v, string_types)]
-    if nonstring_tags:
-        module.fail_json(msg='One or more tags contain non-string values: {0}'.format(nonstring_tags))
-
-    try:
-        if state == 'present':
-            result = ensure_igw_present(connection, vpc_id, tags, check_mode=module.check_mode)
-        elif state == 'absent':
-            result = ensure_igw_absent(connection, vpc_id, check_mode=module.check_mode)
-    except AnsibleIGWException as e:
-        module.fail_json(msg=str(e))
-
-    module.exit_json(changed=result['changed'], **result.get('gateway', {}))
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':
