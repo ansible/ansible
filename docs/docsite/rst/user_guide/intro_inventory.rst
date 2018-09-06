@@ -62,7 +62,7 @@ A YAML version would look like:
 
 A TOML version would look like:
 
-.. code-block:: toml
+.. code-block:: guess
 
     [ungrouped.hosts]
     mail.example.com = {}
@@ -110,7 +110,7 @@ In YAML:
 
 In TOML:
 
-.. code-block:: toml
+.. code-block:: guess
 
     ...
     [ungrouped.hosts.jumper]
@@ -119,7 +119,7 @@ In TOML:
 
 or in inline TOML format:
 
-.. code-block:: toml
+.. code-block:: guess
 
     ...
     [ungrouped.hosts]
@@ -205,7 +205,7 @@ The YAML version:
 
 The TOML version:
 
-.. code-block:: toml
+.. code-block:: guess
 
    [atlanta.hosts]
    host1 = {}
@@ -282,7 +282,7 @@ In YAML:
 
 In TOML:
 
-.. code-block:: toml
+.. code-block:: guess
 
    [atlanta.hosts]
    host1 = {}
