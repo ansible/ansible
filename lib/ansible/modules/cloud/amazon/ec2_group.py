@@ -356,10 +356,10 @@ def to_permission(rule):
             pair = {}
             if rule.target[0]:
                 pair['UserId'] = rule.target[0]
-            # groupid/groupname are mutually exclusive
-            if rule.target[1] and not rule.target[2]:
+            # group_id/group_name are mutually exclusive - give group_id more precedence as it is more specific
+            if rule.target[1]:
                 pair['GroupId'] = rule.target[1]
-            if rule.target[2]:
+            elif rule.target[2]:
                 pair['GroupName'] = rule.target[2]
             perm['UserIdGroupPairs'] = [pair]
         else:
@@ -498,8 +498,9 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
         group_instance = dict(UserId=owner_id, GroupId=group_id, GroupName=group_name)
         groups[group_id] = group_instance
         groups[group_name] = group_instance
+        # group_id/group_name are mutually exclusive - give group_id more precedence as it is more specific
         if group_id and group_name:
-            group_id = None
+            group_name = None
         return 'group', (owner_id, group_id, group_name), False
     elif 'group_id' in rule:
         return 'group', rule['group_id'], False
