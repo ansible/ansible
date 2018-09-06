@@ -106,7 +106,6 @@ class Connection(ConnectionBase):
         process = Popen(local_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         process.communicate()
 
-
     def fetch_file(self, in_path, out_path):
         """ fetch a file from lxd to local """
         super(Connection, self).fetch_file(in_path, out_path)
