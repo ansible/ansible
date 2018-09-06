@@ -316,3 +316,15 @@
 - name: Assert the web app was created
   assert:
     that: output.changed
+
+- name: Get facts with publish profile
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}13"
+  no_log: true
+  register: facts
+
+- name: Assert publish profile returned
+  assert:
+    that:
+      - facts.webapps[0].ftp_publish_url != ''
