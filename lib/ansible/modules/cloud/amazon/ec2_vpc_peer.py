@@ -220,9 +220,11 @@ except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 import distutils.version
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, HAS_BOTO3
+from ansible.module_utils.aws.core import is_boto3_error_code
 
 
 def tags_changed(pcx_id, client, module):
@@ -328,8 +330,13 @@ def remove_peer_connection(client, module):
 def peer_status(client, module):
     params = dict()
     params['VpcPeeringConnectionIds'] = [module.params.get('peering_id')]
-    vpc_peering_connection = client.describe_vpc_peering_connections(**params)
-    return vpc_peering_connection['VpcPeeringConnections'][0]['Status']['Code']
+    try:
+        vpc_peering_connection = client.describe_vpc_peering_connections(**params)
+        return vpc_peering_connection['VpcPeeringConnections'][0]['Status']['Code']
+    except is_boto3_error_code('InvalidVpcPeeringConnectionId.Malformed') as e:
+        module.fail_json(msg='Malformed connection ID: {0}'.format(e), traceback=traceback.format_exc())
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg='Error while describing peering connection by peering_id: {0}'.format(e), traceback=traceback.format_exc())
 
 
 def accept_reject(state, client, module):
