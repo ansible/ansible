@@ -1,7 +1,8 @@
 .. _module_lifecycle:
 
+**********************************
 The lifecycle of an Ansible module
-======================================
+**********************************
 
 Modules in the main Ansible repo have a defined life cycle, from first introduction to final removal. The module life cycle is tied to the `Ansible release cycle <release_cycle>` and reflected in the :ref:`ansible_metadata_block`. A module may move through these four states:
 
@@ -11,12 +12,12 @@ Modules in the main Ansible repo have a defined life cycle, from first introduct
 
 3. If a module's target API changes radically, or if someone creates a better implementation of its functionality, we may mark it ``deprecated``. Modules that are ``deprecated`` are still available but they are reaching the end of their life cycle. We retain deprecated modules for 4 release cycles with deprecation warnings to help users update playbooks and roles that use them.
 
-4. When a module has been deprecated for four release cycles, we remove the code and mark the stub file ``removed``. Modules that are ``removed`` are no longer shipped with Ansible. The stub file helps users find alternative modules. 
+4. When a module has been deprecated for four release cycles, we remove the code and mark the stub file ``removed``. Modules that are ``removed`` are no longer shipped with Ansible. The stub file helps users find alternative modules.
 
 .. _deprecating_modules:
 
 Deprecating modules
-^^^^^^^^^^^^^^^^^^^
+===================
 
 To deprecate a module, you must:
 
@@ -33,7 +34,7 @@ To deprecate a module, you must:
 * For an example of documenting deprecation, see this `PR that deprecates multiple modules <https://github.com/ansible/ansible/pull/43781/files>`_.
 
 Changing a module name
-----------------------
+======================
 
 You can also rename a module and keep an alias to the old name by using a symlink that starts with _.
 This example allows the ``stat`` module to be called with ``fileinfo``, making the following examples equivalent::

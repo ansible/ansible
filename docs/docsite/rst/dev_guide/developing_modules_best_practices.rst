@@ -1,14 +1,14 @@
 .. _developing_modules_best_practices:
 .. _module_dev_conventions:
 
-*****************************************
-Conventions, Best Practices, and Pitfalls
-*****************************************
+*******************************
+Conventions, tips, and pitfalls
+*******************************
 
 .. contents:: Topics
    :local:
 
-As you design and develop modules, follow these basic conventions and best practices:
+As you design and develop modules, follow these basic conventions and tips for clean, usable code:
 
 Scoping your module(s)
 ======================
@@ -39,9 +39,8 @@ General guidelines & tips
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 * If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
 
-Python best practices
-======================
-
+Python tips
+===========
 
 * When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
 * Include a ``main`` function that wraps the normal execution.
@@ -125,7 +124,7 @@ If a module returns stderr or otherwise fails to produce valid JSON, the actual 
 .. _module_conventions:
 
 Following Ansible conventions
-===================================
+=============================
 
 Ansible conventions offer a predictable user interface across all modules, playbooks, and roles. To follow Ansible conventions in your module development:
 

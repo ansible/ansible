@@ -2,7 +2,7 @@
 .. _module_dev_tutorial_sample:
 
 *******************************************
-Ansible Module Development: Getting Started
+Ansible module development: getting started
 *******************************************
 
 A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Ansible ships with thousands of modules, and you can easily write your own. If you're writing a module for local use, you can choose any programming language and follow your own rules. This tutorial illustrates how to get started developing an Ansible module in Python.
@@ -15,7 +15,7 @@ A module is a reusable, standalone script that Ansible runs on your behalf, eith
 Environment setup
 =================
 
-Prerequisites Via Apt (Ubuntu)
+Prerequisites via apt (Ubuntu)
 ------------------------------
 
 Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
@@ -25,7 +25,7 @@ Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
     sudo apt update
     sudo apt install build-essential libssl-dev libffi-dev python-dev
 
-Common Environment setup
+Common environment setup
 ------------------------------
 
 1. Clone the Ansible repository:
@@ -286,7 +286,7 @@ your feature branch as a source and the Ansible devel branch as
 a target.
 
 If you want to contribute your module back to the upstream Ansible repo,
-review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`best practices <developing_modules_best_practices>`,
+review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`programming tips <developing_modules_best_practices>`,
 and :ref:`strategy for maintaining Python-2 and Python-3 compatibility <developing_python_3>`, as well as
 information about :ref:`testing <developing_testing>` before you open a pull request.
 The :ref:`Community Guide <ansible_community_guide>` covers how to open a pull request and what happens next.

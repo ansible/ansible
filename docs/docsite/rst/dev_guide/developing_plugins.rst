@@ -2,7 +2,7 @@
 .. _plugin_guidelines:
 
 ******************
-Developing Plugins
+Developing plugins
 ******************
 
 .. contents:: Topics
@@ -16,12 +16,12 @@ Plugins augment Ansible's core functionality with logic and features that are ac
 
 Once you've reviewed these general guidelines, you can skip to the particular type of plugin you want to develop.
 
-Writing Plugins in Python
+Writing plugins in Python
 =========================
 
 You must write your plugin in Python so it can be loaded by the ``PluginLoader`` and returned as a Python object that any module can use. Since your plugin will execute on the controller, you must write it in a :ref:`compatible version of Python <control_machine_requirements>`.
 
-Raising Errors
+Raising errors
 ==============
 
 You should return errors encountered during plugin execution by raising ``AnsibleError()`` or a similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_text`` Ansible function to ensure proper string compatibility across Python versions:
@@ -37,7 +37,7 @@ You should return errors encountered during plugin execution by raising ``Ansibl
 
 Check the different `AnsibleError objects <https://github.com/ansible/ansible/blob/devel/lib/ansible/errors/__init__.py>`_ and see which one applies best to your situation.
 
-String Encoding
+String encoding
 ===============
 
 You must convert any strings returned by your plugin into Python's unicode type. Converting to unicode ensures that these strings can run through Jinja2. To convert strings:
@@ -47,7 +47,7 @@ You must convert any strings returned by your plugin into Python's unicode type.
     from ansible.module_utils._text import to_text
     result_string = to_text(result_string)
 
-Plugin Configuration & Documentation Standards
+Plugin configuration & documentation standards
 ==============================================
 
 To define configurable options for your plugin, describe them in the ``DOCUMENTATION`` section of the python file. Callback and connection plugins have declared configuration requirements this way since Ansible version 2.4; most plugin types now do the same. This approach ensures that the documentation of your plugin's options will always be correct and up-to-date. To add a configurable option to your plugin, define it in this format:
@@ -71,12 +71,12 @@ To access the configuration settings in your plugin, use ``self.get_option(<opti
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
-Developing Particular Plugin Types
+Developing particular plugin types
 ==================================
 
 .. _developing_callbacks:
 
-Callback Plugins
+Callback plugins
 ----------------
 
 Callback plugins add new behaviors to Ansible when responding to events. By default, callback plugins control most of the output you see when running the command line programs.
@@ -169,7 +169,7 @@ For example callback plugins, see the source code for the `callback plugins incl
 
 .. _developing_connection_plugins:
 
-Connection Plugins
+Connection plugins
 ------------------
 
 Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time. The most commonly used connection plugins are the ``paramiko`` SSH, native ssh (just called ``ssh``), and ``local`` connection types.  All of these can be used in playbooks and with ``/usr/bin/ansible`` to connect to remote machines.
@@ -182,7 +182,7 @@ For example connection plugins, see the source code for the `connection plugins 
 
 .. _developing_filter_plugins:
 
-Filter Plugins
+Filter plugins
 --------------
 
 Filter plugins manipulate data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a ``core.py``.
@@ -193,7 +193,7 @@ For example filter plugins, see the source code for the `filter plugins included
 
 .. _developing_inventory_plugins:
 
-Inventory Plugins
+Inventory plugins
 -----------------
 
 Inventory plugins parse inventory sources and form an in-memory representation of the inventory. Inventory plugins were added in Ansible version 2.4.
@@ -202,7 +202,7 @@ You can see the details for inventory plugins in the :ref:`developing_inventory`
 
 .. _developing_lookup_plugins:
 
-Lookup Plugins
+Lookup plugins
 --------------
 
 Lookup plugins pull in data from external data stores. Lookup plugins can be used within playbooks both for looping --- playbook language constructs like ``with_fileglob`` and ``with_items`` are implemented via lookup plugins --- and to return values into a variable or parameter.
@@ -294,7 +294,7 @@ For more usage examples of lookup plugins, see :ref:`Using Lookups<playbooks_loo
 
 .. _developing_test_plugins:
 
-Test Plugins
+Test plugins
 ------------
 
 Test plugins verify data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a ``core.py``. These are specially useful in conjunction with some filter plugins like ``map`` and ``select``; they are also available for conditional directives like ``when:``.
@@ -305,7 +305,7 @@ For example test plugins, see the source code for the `test plugins included wit
 
 .. _developing_vars_plugins:
 
-Vars Plugins
+Vars plugins
 ------------
 
 Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins.

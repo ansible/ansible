@@ -2,7 +2,7 @@
 .. _module_dev_should_you:
 
 ****************************
-Should You Develop A Module?
+Should you develop a module?
 ****************************
 
 Developing Ansible modules is easy, but often it isn't necessary. Before you start writing a new module, ask:

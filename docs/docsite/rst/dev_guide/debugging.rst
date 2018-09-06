@@ -1,8 +1,8 @@
 .. _debugging:
 
-=================
-Debugging Modules
-=================
+*****************
+Debugging modules
+*****************
 
 Debugging (local)
 =================
@@ -32,7 +32,7 @@ To debug a module running on a remote target (i.e. not ``localhost``):
 .. _debugging_ansiblemodule_based_modules:
 
 Debugging AnsibleModule-based modules
-`````````````````````````````````````
+=====================================
 
 .. tip::
 

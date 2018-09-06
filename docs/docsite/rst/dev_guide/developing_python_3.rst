@@ -15,7 +15,7 @@ of Python as the rest of Ansible.
 
 To ensure that your code runs on Python-3 as well as on Python-2, learn the tips and tricks and idioms
 described here. Most of these considerations apply to all three types of Ansible code:
- 
+
 1. controller-side code - code that runs on the machine where you invoke :command:`/usr/bin/ansible`
 2. modules - the code which Ansible transmits to and invokes on the managed machine.
 3. shared ``module_utils`` code - the common code that's used by modules to perform tasks and sometimes used by controller-side code as well
@@ -23,7 +23,7 @@ described here. Most of these considerations apply to all three types of Ansible
 However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure
 to read the section on string strategy carefully.
 
-Minimum Version of Python-3.x and Python-2.x
+Minimum version of Python-3.x and Python-2.x
 ============================================
 
 On the controller we support Python-3.5 or greater and Python-2.7 or greater.  Module-side, we
@@ -104,7 +104,7 @@ the outside world we first convert the text back into bytes.
 To visualize this, imagine a 'sandwich' consisting of a top and bottom layer
 of bytes, a layer of conversion between, and all text type in the center.
 
-Unicode Sandwich Common Borders: Places to convert bytes to text in controller code
+Unicode Sandwich common borders: places to convert bytes to text in controller code
 -----------------------------------------------------------------------------------
 
 This is a partial list of places where we have to convert to and from bytes
@@ -149,7 +149,7 @@ Note that we don't have to catch :exc:`UnicodeError` here because we're
 transforming to UTF-8 and all text strings in Python can be transformed back
 to UTF-8.
 
-Filesystem Interaction
+Filesystem interaction
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Dealing with filenames often involves dropping back to bytes because on UNIX-like
@@ -194,7 +194,7 @@ and manipulate in bytes.
     all the types are the same (either all bytes or all text).  Mixing
     bytes and text will cause tracebacks.
 
-Interacting with Other Programs
+Interacting with other programs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Interacting with other programs goes through the operating system and
@@ -206,7 +206,7 @@ subprocess library and byte strings should be expected back from it.
 One of the main places in Ansible's controller code that we interact with
 other programs is the connection plugins' ``exec_command`` methods.  These
 methods transform any text strings they receive in the command (and arguments
-to the command) to execute into bytes and return stdout and stderr as byte strings 
+to the command) to execute into bytes and return stdout and stderr as byte strings
 Higher level functions (like action plugins' ``_low_level_execute_command``)
 transform the output into text strings.
 
@@ -244,7 +244,7 @@ The module_utils code attempts to accept native strings as input
 to its functions and emit native strings as their output.
 
 In ``module_utils`` code:
- 
+
 * Functions **must** accept string parameters as either text strings or byte strings.
 * Functions may return either the same type of string as they were given or the native string type for the Python version they are run on.
 * Functions that return strings **must** document whether they return strings of the same type as they were given or native strings.
@@ -402,7 +402,7 @@ does have support for the older, percent-formatting.
 
 .. _testing_modules_python_3:
 
-Testing Modules on Python-3
+Testing modules on Python-3
 ===================================
 
 Ansible modules are slightly harder to code to support Python-3 than normal code from other

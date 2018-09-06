@@ -2,7 +2,7 @@
 .. _developing_locally:
 
 **********************************
-Adding Modules and Plugins Locally
+Adding modules and plugins locally
 **********************************
 
 .. contents:: Topics
@@ -22,7 +22,7 @@ To save a local module or plugin so Ansible can find and use it, drop the module
 
 .. _modules_vs_plugins:
 
-Modules and Plugins: What's the Difference?
+Modules and plugins: what's the difference?
 ===========================================
 If you're looking to add local functionality to Ansible, you may be wondering whether you need a module or a plugin. Here's a quick overview of the differences:
 
@@ -31,7 +31,7 @@ If you're looking to add local functionality to Ansible, you may be wondering wh
 
 .. _local_modules:
 
-Adding a Module Locally
+Adding a module locally
 =======================
 Ansible automatically loads all executable files found in certain directories as modules, so you can create or add a local module in any of these locations:
 
@@ -56,7 +56,7 @@ To use a local module only in a single role:
 .. _distributing_plugins:
 .. _local_plugins:
 
-Adding a Plugin Locally
+Adding a plugin locally
 =======================
 Ansible loads plugins automatically too, loading each type of plugin separately from a directory named for the type of plugin. Here's the full list of plugin directory names:
 

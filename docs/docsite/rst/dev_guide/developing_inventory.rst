@@ -1,7 +1,8 @@
 .. _developing_inventory:
 
-Developing Dynamic Inventory
-============================
+****************************
+Developing dynamic inventory
+****************************
 
 .. contents:: Topics
    :local:
@@ -21,7 +22,7 @@ While with :ref:`inventory plugins <inventory_plugins>` you can leverage the Ans
 .. _inventory_sources:
 
 Inventory sources
------------------
+=================
 
 Inventory sources are strings (i.e what you pass to ``-i`` in the command line),
 they can represent a path to a file/script or just be the raw data for the plugin to use.
@@ -44,11 +45,10 @@ Here are some plugins and the type of source they use:
 +--------------------------------------------+--------------------------------------+
 
 
-
 .. _developing_inventory_inventory_plugins:
 
-Inventory Plugins
------------------
+Inventory plugins
+=================
 
 Like most plugin types (except modules) they must be developed in Python, since they execute on the controller they should match the same requirements :ref:`control_machine_requirements`.
 
@@ -61,8 +61,8 @@ When using the 'persistent' cache, inventory plugins can also use the configured
 
 .. _developing_an_inventory_plugin:
 
-Developing an Inventory Plugin
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Developing an inventory plugin
+------------------------------
 
 The first thing you want to do is use the base class:
 
@@ -91,7 +91,7 @@ For the bulk of the work in the plugin, We mostly want to deal with 2 methods ``
 .. _inventory_plugin_verify_file:
 
 verify_file
-"""""""""""
+^^^^^^^^^^^
 
 This method is used by Ansible to make a quick determination if the inventory source is usable by the plugin. It does not need to be 100% accurate as there might be overlap in what plugins can handle and Ansible will try the enabled plugins (in order) by default.
 
@@ -128,7 +128,7 @@ This method is just to expedite the inventory process and avoid uneccessary pars
 .. _inventory_plugin_parse:
 
 parse
-"""""
+^^^^^
 
 This method does the bulk of the work in the plugin.
 
@@ -194,8 +194,8 @@ For examples on how to implement an inventory plug in, see the source code here:
 
 .. _inventory_source_common_format:
 
-inventory source common format
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Inventory source common format
+------------------------------
 
 To simplify development, most plugins use a mostly standard configuration file as the inventory source, YAML based and with just one required field ``plugin`` which should contain the name of the plugin that is expected to consume the file.
 Depending on other common features used, other fields might be needed, but each plugin can also add it's own custom options as needed.
@@ -204,7 +204,7 @@ For example, if you use the integrated caching, ``cache_plugin``, ``cache_timeou
 .. _inventory_development_auto:
 
 The 'auto' plugin
-^^^^^^^^^^^^^^^^^
+-----------------
 
 Since Ansible 2.5, we include the :ref:`auto inventory plugin <auto_inventory>` enabled by default, which itself just loads other plugins if they use the common YAML configuration format that specifies a ``plugin`` field that matches an inventory plugin name, this makes it easier to use your plugin w/o having to update configurations.
 
@@ -212,8 +212,8 @@ Since Ansible 2.5, we include the :ref:`auto inventory plugin <auto_inventory>` 
 .. _inventory_scripts:
 .. _developing_inventory_scripts:
 
-Inventory Scripts
------------------
+Inventory scripts
+=================
 
 Even though we now have inventory plugins, we still support inventory scripts, not only for backwards compatibility but also to allow users to leverage other programming languages.
 
@@ -221,7 +221,7 @@ Even though we now have inventory plugins, we still support inventory scripts, n
 .. _inventory_script_conventions:
 
 Inventory script conventions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 Inventory scripts must accept the ``--list`` and ``--host <hostname>`` arguments, other arguments are allowed but Ansible will not use them.
 They might still be useful for when executing the scripts directly.
@@ -264,8 +264,8 @@ Printing variables is optional. If the script does not do this, it should print 
 
 .. _inventory_script_tuning:
 
-Tuning the External Inventory Script
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Tuning the external inventory script
+------------------------------------
 
 .. versionadded:: 1.3
 
