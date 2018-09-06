@@ -27,7 +27,7 @@ notes:
     - "Based on the C(onepassword) lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
 short_description: Fetch facts from 1Password items
 description:
-    - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1password items and return as Ansible facts.
+    - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1Password items and return as Ansible facts.
     - A fatal error occurs if any of the items being searched for can not be found.
     - Recommend using with the C(no_log) option to avoid logging the values of the secrets being retrieved.
 options:
@@ -53,22 +53,22 @@ options:
         required: True
     auto_login:
         description:
-            - A dictionary containing authentication details. If this is set, M(onepassword_facts) will attempt to login to 1password automatically.
-            - The required values can be stored in Ansible Vault, and passed to the module securely that way.
+            - A dictionary containing authentication details. If this is set, M(onepassword_facts) will attempt to login to 1Password automatically.
+            - The required values can be stored in an Ansible Vault and passed to the module securely that way.
             - Without this option, you must have already logged in via the 1Password CLI before running Ansible.
         suboptions:
-            account:
+            subdomain:
                 description:
-                    - 1Password account name (<account>.1password.com).
+                    - 1Password subdomain name (<subdomain>.1password.com).
             username:
                 description:
                     - 1Password username.
-            masterpassword:
+            master_password:
                 description:
-                    - The master password for your user.
-            secretkey:
+                    - The master password for your subdomain.
+            secret_key:
                 description:
-                    - The secret key for your user.
+                    - The secret key for your subdomain.
         default: {}
         required: False
     cli_path:
@@ -83,7 +83,7 @@ EXAMPLES = '''
   onepassword_facts:
     search_terms: My 1Password item
   delegate_to: local
-  no_log:      true   # Don't want to log the secrets to the console!
+  no_log: true         # Don't want to log the secrets to the console!
 
 # Gather secrets from 1Password, with more advanced search terms:
 - name: Get a password
@@ -94,7 +94,7 @@ EXAMPLES = '''
         section: Custom section name     # optional, defaults to 'None'
         vault:   Name of the vault       # optional, only necessary if there is more than 1 Vault available
   delegate_to: local
-  no_log:      true   # Don't want to log the secrets to the console!
+  no_log: True                           # Don't want to log the secrets to the console!
 
 # Gather secrets combining simple and advanced search terms to retrieve two items, one of which we fetch two
 # fields. In the first 'password' is fetched, as a field name is not specified (default behaviour) and in the
@@ -110,7 +110,7 @@ EXAMPLES = '''
         vault:   Name of the vault       # optional, only necessary if there is more than 1 Vault available
       - name: A 1Password item with document attachment
   delegate_to: local
-  no_log:      true   # Don't want to log the secrets to the console!
+  no_log: true                           # Don't want to log the secrets to the console!
 '''
 
 RETURN = '''
@@ -139,6 +139,7 @@ import re
 from subprocess import Popen, PIPE
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class OnePasswordFacts(object):
@@ -149,7 +150,7 @@ class OnePasswordFacts(object):
         self.token = {}
 
         terms = module.params.get('search_terms')
-        self.terms = self.parse_search_terms(module.params.get('search_terms'))
+        self.terms = self.parse_search_terms(terms)
 
     def parse_search_terms(self, terms):
         processed_terms = []
@@ -159,7 +160,7 @@ class OnePasswordFacts(object):
                 term = {'name': term}
 
             if 'name' not in term:
-                module.fail_json(msg="Missing required 'name' field from search term, got: '%s'" % str(term))
+                module.fail_json(msg="Missing required 'name' field from search term, got: '%s'" % to_native(term))
 
             term['field'] = term.get('field', 'password')
             term['section'] = term.get('section', None)
@@ -194,32 +195,33 @@ class OnePasswordFacts(object):
 
         except OSError as e:
             if e.errno == errno.ENOENT:
-                module.fail_json(msg="1Password CLI tool not installed in path '%s': %s" % (self.cli_path, e))
+                module.fail_json(msg="1Password CLI tool not installed in path '%s': %s" % (self.cli_path, to_native(e)))
             else:
-                module.fail_json(msg="1Password CLI tool failed to execute at path '%s': %s" % (self.cli_path, e))
+                module.fail_json(msg="1Password CLI tool failed to execute at path '%s': %s" % (self.cli_path, to_native(e)))
 
         except Exception as e:
             # 1Password's CLI doesn't seem to return different error codes, so we need to handle a few of the common
             # error cases by searching via regex, so we can provide a clearer error message to the user.
-            if re.search(".*You are not currently signed in.*", str(e)) is not None:
+            if re.search(".*You are not currently signed in.*", to_native(e)) is not None:
                 if (self.auto_login is not None):
                     try:
                         token = self._run([
-                            "signin", "%s.1password.com" % self.auto_login['account'],
+                            "signin",
+                            "%s.1password.com" % self.auto_login['subdomain'],
                             self.auto_login['username'],
-                            self.auto_login['secretkey'],
-                            self.auto_login['masterpassword'],
-                            "--shorthand=ansible_%s" % self.auto_login['account'],
+                            self.auto_login['secret_key'],
+                            self.auto_login['master_password'],
+                            "--shorthand=ansible_%s" % self.auto_login['subdomain'],
                             "--output=raw"
                         ])
-                        self.token = {'OP_SESSION_ansible_%s' % self.auto_login['account']: token[0].strip()}
+                        self.token = {'OP_SESSION_ansible_%s' % self.auto_login['subdomain']: token[0].strip()}
 
                     except Exception as e:
                         module.fail_json(msg="Unable to automatically login to 1Password: %s " % e)
                 else:
                     module.fail_json(msg=(
                         "Not logged into 1Password: please run '%s signin' first, or see the module docs for "
-                        "how to configure for automatic login." % self.cli_path)
+                        "how to use automatic login." % self.cli_path)
                     )
 
     def get_raw(self, item_id, vault=None):
@@ -231,7 +233,7 @@ class OnePasswordFacts(object):
             return output
 
         except Exception as e:
-            if re.search(".*not found.*", str(e)):
+            if re.search(".*not found.*", to_native(e)):
                 module.fail_json(msg="Unable to find an item in 1Password named '%s'." % item_id)
             else:
                 module.fail_json(msg="Unexpected error attempting to find an item in 1Password named '%s': %s" % (item_id, e))
@@ -293,10 +295,10 @@ def main():
         argument_spec=dict(
             cli_path=dict(type='path', default='op'),
             auto_login=dict(type='dict', options=dict(
-                account=dict(required=True, type='str'),
+                subdomain=dict(required=True, type='str'),
                 username=dict(required=True, type='str'),
-                masterpassword=dict(required=True, type='str'),
-                secretkey=dict(required=True, type='str'),
+                master_password=dict(required=True, type='str'),
+                secret_key=dict(required=True, type='str'),
             ), default=None),
             search_terms=dict(required=True, type='list')
         ),
