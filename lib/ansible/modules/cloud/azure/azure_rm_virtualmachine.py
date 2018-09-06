@@ -29,9 +29,11 @@ description:
     - Before Ansible 2.5, this required an image found in the Azure Marketplace which can be discovered with
       M(azure_rm_virtualmachineimage_facts). In Ansible 2.5 and newer, custom images can be used as well, see the
       examples for more details.
-    - If you need to use the I(custom_data) option, many images in the marketplace are not cloud-init ready. Thus, data 
-      sent to the I(custom_data) would be ignored. If the image you are attempting to use is not in L(this list, https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
-      you will need to follow the instructions L(here, https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image) to prepare your image to use cloud-init.
+    - If you need to use the I(custom_data) option, many images in the marketplace are not cloud-init ready. Thus, data
+      sent to the I(custom_data) would be ignored. If the image you are attempting to use is not in
+      L(this list, https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
+      you will need to follow the instructions
+      L(here, https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
 
 options:
     resource_group:
