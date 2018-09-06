@@ -12,10 +12,9 @@ Introduction
 =============
 With Ansible integration, you can use Ansible playbooks to automate Infoblox Core Network Services for IP address management (IPAM), DNS, and inventory tracking.
 
-See the `Infoblox <https://www.infoblox.com/>`_ website for mor information on the Infoblox product.
+See the `Infoblox <https://www.infoblox.com/>`_ website for more information on the Infoblox product.
 
-NOTE: You can retrieve most of the example playbooks used in this guide from the  `network-automation/infoblox_ansible
- <https://github.com/network-automation/infoblox_ansible>`_ Github repository.
+NOTE: You can retrieve most of the example playbooks used in this guide from the  `network-automation/infoblox_ansible <https://github.com/network-automation/infoblox_ansible>`_ GitHub repository.
 
 Prerequisites
 -------------
@@ -52,73 +51,6 @@ Ansible supports the following modules for NIOS:
 
 Each module includes simple documented example tasks for how to use them.
 
-Use cases with modules
-======================
-
-You can use ``nios`` modules in tasks to simplify common Infoblox workflows.
-
-For these examples, you need to set up your NIOS credentials. See `Credentials and authenticating`_.
-
-Configuring an IPv4 network
----------------------------
-
-The following example ``configure_network`` playbook uses the ``nios_network`` module to configure an IPv4 network:
-
-.. code-block:: yaml
-
-    ---
-    - hosts: localhost
-      connection: local
-      tasks:
-        - name: set dhcp options for a network
-          nios_network:
-            network: 192.168.100.0/24
-            comment: sets the IPv4 network
-            options:
-              - name: domain-name
-                value: ansible.com
-            state: present
-            provider: "{{nios_provider}}"
-
-Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``group_vars/`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
-
-Creating a host record
-----------------------
-
-This example ``host_record.yml`` playbook builds on the newly-created IPv4 network to create a host record named `testhost`:
-
----
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: configure an ipv4 host record
-      nios_host_record:
-        name: testhost
-        ipv4:
-          - address: "192.168.100.200"
-        state: present
-provider: "{{nios_provider}}"
-
-
-Creating a forward DNS zone
---------------------------------------
-
-The following example playbook uses the ``nios_zone`` module to configure a forward DNS zone:
-
-.. code-block:: yaml
-
-    ---
-    - hosts: localhost
-      connection: local
-      tasks:
-        - name: "Create a forward DNS zone called {{ ansible.local }}"
-          nios_zone:
-            name: "{{ ansible.local }}"
-            comment: local DNS zone
-            state: present
-            provider: "{{ nios_provider }}"
-
-
 NIOS lookup plugin
 ==================
 
@@ -133,17 +65,18 @@ Retrieving all network views
 This example playbook uses the ``set_fact`` module with the ``nios`` lookup to retrieve all the network views, which are then saved in the ``networkviews`` variable:
 
 .. code-block:: yaml
----
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: fetch all networkview objects
-      set_fact:
-        networkviews: "{{ lookup('nios', 'networkview', provider=nios_provider) }}"
 
-    - name: check the networkviews
-      debug:
-        var: networkviews
+    ---
+    - hosts: localhost
+      connection: local
+      tasks:
+        - name: fetch all networkview objects
+          set_fact:
+            networkviews: "{{ lookup('nios', 'networkview', provider=nios_provider) }}"
+
+        - name: check the networkviews
+          debug:
+            var: networkviews
 
 
 Retrieving a host record
@@ -153,29 +86,29 @@ This example playbook uses the ``set_fact`` module with the ``nios`` lookup to r
 
 .. code-block:: yaml
 
----
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: fetch host leaf01
-      set_fact:
-        host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf01'}, provider=nios_provider) }}"
+    ---
+    - hosts: localhost
+      connection: local
+      tasks:
+        - name: fetch host leaf01
+          set_fact:
+             host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf01'}, provider=nios_provider) }}"
 
-    - name: check the leaf01 return variable
-      debug:
-        var: host
+        - name: check the leaf01 return variable
+          debug:
+            var: host
 
-    - name: debug specific variable (ipv4 address)
-      debug:
-        var: host.ipv4addrs[0].ipv4addr
+        - name: debug specific variable (ipv4 address)
+          debug:
+            var: host.ipv4addrs[0].ipv4addr
 
-    - name: fetch host leaf02
-      set_fact:
-        host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf02'}, provider=nios_provider) }}"
+        - name: fetch host leaf02
+          set_fact:
+            host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf02'}, provider=nios_provider) }}"
 
-    - name: check the leaf02 return variable
-      debug:
-        var: host
+        - name: check the leaf02 return variable
+          debug:
+            var: host
 
 
 If you run this ``get_host_record.yml`` playbook, you should see results similar to the following:
@@ -235,6 +168,72 @@ See the `nios lookup plugin examples <https://docs.ansible.com/ansible/latest/pl
 
 You can access these playbooks at `Infoblox lookup playbooks <https://github.com/network-automation/infoblox_ansible/tree/master/lookup_playbooks>`_.
 
+Use cases with modules
+======================
+
+You can use ``nios`` modules in tasks to simplify common Infoblox workflows.
+
+For these examples, you need to set up your NIOS credentials. See `Credentials and authenticating`_.
+
+Configuring an IPv4 network
+---------------------------
+
+The following example ``configure_network`` playbook uses the ``nios_network`` module to configure an IPv4 network:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: localhost
+      connection: local
+      tasks:
+        - name: set DHCP options for a network
+          nios_network:
+            network: 192.168.100.0/24
+            comment: sets the IPv4 network
+            options:
+              - name: domain-name
+                value: ansible.com
+            state: present
+            provider: "{{nios_provider}}"
+
+Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``group_vars/`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
+
+Creating a host record
+----------------------
+
+This example ``host_record.yml`` playbook builds on the newly-created IPv4 network to create a host record named `testhost`:
+
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: configure an ipv4 host record
+      nios_host_record:
+        name: testhost
+        ipv4:
+          - address: "192.168.100.200"
+        state: present
+provider: "{{nios_provider}}"
+
+
+Creating a forward DNS zone
+--------------------------------------
+
+The following example playbook uses the ``nios_zone`` module to configure a forward DNS zone:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: localhost
+      connection: local
+      tasks:
+        - name: "Create a forward DNS zone called {{ ansible.local }}"
+          nios_zone:
+            name: "{{ ansible.local }}"
+            comment: local DNS zone
+            state: present
+            provider: "{{ nios_provider }}"
+
 Dynamic inventory script
 ========================
 
@@ -266,7 +265,7 @@ To use the Infoblox dynamic inventory script:
 
 After a few minutes, you should see your Infoblox inventory in JSON format.
 
-You can explicitely use the Infoblox dynamic inventory script as follows:
+You can explicitly use the Infoblox dynamic inventory script as follows:
 
 .. code-block:: bash
 
