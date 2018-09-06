@@ -1,0 +1,2 @@
+bugfixes:
+- Fix python2.6 `nothing to repeat` nxos terminal plugin bug (https://github.com/ansible/ansible/pull/45271).
