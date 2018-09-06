@@ -319,9 +319,12 @@ def main():
 
     ''' Set CLI options depending on params '''
     if module.params['user'] is not None:
-        # handle user deprecation and 'scope' conflicts
+        # handle user deprecation, mutually exclusive with scope
         module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11')
-        systemctl = systemctl + " --user"
+        if module.params['user']:
+            module.params['scope'] = 'user'
+        else:
+            module.params['scope'] = 'system'
 
     # if scope is 'system' or None, we can ignore as there is no extra switch.
     # The other choices match the corresponding switch
