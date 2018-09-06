@@ -761,6 +761,12 @@ class PyVmomiCache(object):
 
         return objects
 
+    def get_dvs(self, network):
+        if network not in self.networks:
+            self.networks[network] = self.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network)
+
+        return self.networks[network]
+
     def get_network(self, network):
         if network not in self.networks:
             self.networks[network] = self.find_obj(self.content, [vim.Network], network)
@@ -1197,6 +1203,9 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Device MAC address '%s' is invalid."
                                           " Please provide correct MAC address." % network['mac'])
 
+            if 'dvs' not in network:
+                network['dvs'] = False
+
             network_devices.append(network)
 
         return network_devices
@@ -1261,7 +1270,12 @@ class PyVmomiHelper(PyVmomi):
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 nic_change_detected = True
 
-            if hasattr(self.cache.get_network(network_name), 'portKeys'):
+            if network_devices[key]['dvs']:
+                network = self.cache.get_dvs(network_name)
+            else:
+                network = self.cache.get_network(network_name)
+
+            if hasattr(network, 'portKeys'):
                 # VDS switch
 
                 pg_obj = None
