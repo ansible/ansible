@@ -20,25 +20,34 @@ DOCUMENTATION = """
     version_added: "2.6"
     requirements:
       - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
-      - must have already logged into 1Password using op CLI
-    short_description: fetch raw json data from 1Password
+    short_description: fetch an entire item from 1Password
     description:
-      - onepassword_raw wraps C(op) command line utility to fetch an entire item from 1Password
+      - C(onepassword_raw) wraps C(op) command line utility to fetch an entire item from 1Password
     options:
       _terms:
         description: identifier(s) (UUID, name, or domain; case-insensitive) of item(s) to retrieve
         required: True
+      master_password:
+        description: The password used to unlock the specified vault.
+        default: None
+        version_added: '2.7'
+        aliases: ['vault_password']
+      section:
+        description: Item section containing the field to retrieve (case-insensitive). If absent will return first match from any section.
+        default: None
       subdomain:
         description: The 1Password subdomain to authenticate against.
         default: None
         version_added: '2.7'
-      vault:
-        description: vault containing the item to retrieve (case-insensitive); if absent will search all vaults
-        default: None
-      vault_password:
-        description: The password used to unlock the specified vault.
-        default: None
+      username:
+        description: The username used to sign in.
         version_added: '2.7'
+      secret_key:
+        description: The secret key used when performing an initial sign in.
+        version_added: '2.7'
+      vault:
+        description: Vault containing the item to retrieve (case-insensitive). If absent will search all vaults
+        default: None
 """
 
 EXAMPLES = """
@@ -68,8 +77,10 @@ class LookupModule(LookupBase):
         op = OnePass()
 
         vault = kwargs.get('vault')
-        op._subdomain = kwargs.get('subdomain')
-        op._vault_password = kwargs.get('vault_password')
+        op.subdomain = kwargs.get('subdomain')
+        op.username = kwargs.get('username')
+        op.secret_key = kwargs.get('secret_key')
+        op.master_password = kwargs.get('master_password', kwargs.get('vault_password'))
 
         op.assert_logged_in()
 

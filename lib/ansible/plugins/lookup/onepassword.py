@@ -20,10 +20,9 @@ DOCUMENTATION = """
     version_added: "2.6"
     requirements:
       - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
-      - must have already logged into 1Password using C(op) CLI
     short_description: fetch field values from 1Password
     description:
-      - onepassword wraps the C(op) command line utility to fetch specific field values from 1Password
+      - C(onepassword) wraps the C(op) command line utility to fetch specific field values from 1Password.
     options:
       _terms:
         description: identifier(s) (UUID, name, or subdomain; case-insensitive) of item(s) to retrieve
@@ -31,38 +30,66 @@ DOCUMENTATION = """
       field:
         description: field to return from each matching item (case-insensitive)
         default: 'password'
+      master_password:
+        description: The password used to unlock the specified vault.
+        default: None
+        version_added: '2.7'
+        aliases: ['vault_password']
       section:
-        description: item section containing the field to retrieve (case-insensitive); if absent will return first match from any section
+        description: Item section containing the field to retrieve (case-insensitive). If absent will return first match from any section.
         default: None
       subdomain:
         description: The 1Password subdomain to authenticate against.
         default: None
         version_added: '2.7'
-      vault:
-        description: vault containing the item to retrieve (case-insensitive); if absent will search all vaults
-        default: None
-      vault_password:
-        description: The password used to unlock the specified vault.
-        default: None
+      username:
+        description: The username used to sign in.
         version_added: '2.7'
+      secret_key:
+        description: The secret key used when performing an initial sign in.
+        version_added: '2.7'
+      vault:
+        description: Vault containing the item to retrieve (case-insensitive). If absent will search all vaults
+        default: None
+    notes:
+      - This lookup will use an existing 1Password session if one exists. If not, and you have already
+        performed an initial sign in (meaning C(~/.op/config exists)), then only the C(master_password) is required.
+        You may optionally specify C(subdomain) in this scenario, otherwise the last used subdomain will be used by C(op).
+      - This lookup can perform an initial login by providing C(subdomain), C(username), C(secret_key), and C(master_password).
+      - Due to the B(very) sensitive nature of these credentials, it is B(highly) recommeneded that you only pass in the minial credentials
+        needed at any given time. Also, store these credentials in an Ansible Vault using a key that is equal to or greater in strength
+        to the 1Password master password.
 """
 
 EXAMPLES = """
-- name: Retrieve password for KITT
+# These examples only work when already signed in to 1Password
+- name: Retrieve password for KITT when already signed in to 1Password
   debug:
     var: lookup('onepassword', 'KITT')
 
-- name: Retrieve password for Wintermute
+- name: Retrieve password for Wintermute when already signed in to 1Password
   debug:
     var: lookup('onepassword', 'Tessier-Ashpool', section='Wintermute')
 
-- name: Retrieve username for HAL
+- name: Retrieve username for HAL when already signed in to 1Password
   debug:
     var: lookup('onepassword', 'HAL 9000', field='username', vault='Discovery')
 
 - name: Retrieve password for HAL when not signed in to 1Password
   debug:
-    var: lookup('onepassword', 'HAL 9000', subdomain='Discovery', vault_password='DmbslfLvasjdl')
+    var: lookup('onepassword'
+                'HAL 9000'
+                subdomain='Discovery'
+                master_password=vault_master_password)
+
+- name: Retrieve password for HAL when never signed in to 1Password
+  debug:
+    var: lookup('onepassword'
+                'HAL 9000'
+                subdomain='Discovery'
+                master_password=vault_master_password
+                username='tweety@acme.com'
+                secret_key=vault_secret_key)
 """
 
 RETURN = """
@@ -70,56 +97,71 @@ RETURN = """
     description: field data requested
 """
 
-import json
 import errno
+import json
+import os
 
 from subprocess import Popen, PIPE
 
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleLookupError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 
 
 class OnePass(object):
 
     def __init__(self, path='op'):
-        self._cli_path = path
-        self._logged_in = False
-        self._token = None
-        self._subdomain = None
-        self._vault_password = None
-
-    @property
-    def cli_path(self):
-        return self._cli_path
+        self.cli_path = path
+        self.config_file_path = os.path.expanduser('~/.op/config')
+        self.logged_in = False
+        self.token = None
+        self.subdomain = None
+        self.username = None
+        self.secret_key = None
+        self.master_password = None
 
     def get_token(self):
-        if not self._subdomain and not self._vault_password:
-            raise AnsibleLookupError('Both subdomain and password are required when logging in.')
-        args = ['signin', self._subdomain, '--output=raw']
-        rc, out, err = self._run(args, command_input=to_bytes(self._vault_password))
-        self._token = out.strip()
+
+        # If the config file exists, assume an initial signin has taken place and try basic sign in
+        if os.path.isfile(self.config_file_path):
+
+            if not self.master_password:
+                raise AnsibleLookupError('Failed to sign in to 1Password. master_password is required.')
+
+            try:
+                args = ['signin', '--output=raw']
+
+                if self.subdomain:
+                    args = ['signin', self.subdomain, '--output=raw']
+
+                rc, out, err = self._run(args, command_input=to_bytes(self.master_password))
+                self.token = out.strip()
+
+            except AnsibleLookupError:
+                self.full_login()
+
+        else:
+            # Attempt a full sign in since there appears to be no existing sign in
+            self.full_login()
 
     def assert_logged_in(self):
         try:
             rc, out, err = self._run(['get', 'account'], ignore_errors=True)
             if rc != 1:
-                self._logged_in = True
-            if not self._logged_in:
+                self.logged_in = True
+            if not self.logged_in:
                 self.get_token()
         except OSError as e:
             if e.errno == errno.ENOENT:
                 raise AnsibleLookupError("1Password CLI tool not installed in path on control machine")
             raise e
-        except AnsibleLookupError:
-            raise AnsibleLookupError("Not logged into 1Password: please run 'op signin' first, or provide both subdomain and vault_password.")
 
     def get_raw(self, item_id, vault=None):
         args = ["get", "item", item_id]
         if vault is not None:
             args += ['--vault={0}'.format(vault)]
-        if not self._logged_in:
-            args += [to_bytes('--session=') + self._token]
+        if not self.logged_in:
+            args += [to_bytes('--session=') + self.token]
         rc, output, dummy = self._run(args)
         return output
 
@@ -127,13 +169,30 @@ class OnePass(object):
         output = self.get_raw(item_id, vault)
         return self._parse_field(output, field, section) if output != '' else ''
 
+    def full_login(self):
+
+        if None in [self.subdomain, self.username, self.secret_key, self.master_password]:
+            raise AnsibleLookupError('Failed to perform initial sign in to 1Password. '
+                                     'subdomain, username, secret_key, and master_password are required to perform initial sign in.')
+
+        args = [
+            'signin',
+            '{0}.1password.com'.format(self.subdomain),
+            to_bytes(self.username),
+            to_bytes(self.secret_key),
+            '--output=raw',
+        ]
+
+        rc, out, err = self._run(args, command_input=to_bytes(self.master_password))
+        self.token = out.strip()
+
     def _run(self, args, expected_rc=0, command_input=None, ignore_errors=False):
         command = [self.cli_path] + args
         p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         out, err = p.communicate(input=command_input)
         rc = p.wait()
         if not ignore_errors and rc != expected_rc:
-            raise AnsibleLookupError(err)
+            raise AnsibleLookupError(to_text(err))
         return rc, out, err
 
     def _parse_field(self, data_json, field_name, section_title=None):
@@ -159,8 +218,10 @@ class LookupModule(LookupBase):
         field = kwargs.get('field', 'password')
         section = kwargs.get('section')
         vault = kwargs.get('vault')
-        op._subdomain = kwargs.get('subdomain')
-        op._vault_password = kwargs.get('vault_password')
+        op.subdomain = kwargs.get('subdomain')
+        op.username = kwargs.get('username')
+        op.secret_key = kwargs.get('secret_key')
+        op.master_password = kwargs.get('master_password', kwargs.get('vault_password'))
 
         op.assert_logged_in()
 
