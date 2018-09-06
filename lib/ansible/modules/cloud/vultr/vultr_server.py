@@ -58,7 +58,7 @@ options:
     description:
       - Specifiy an array of private networks to attach to the server.
       - If specified, private_network_enabled is ignored.
-    version_added: "2.7"
+    version_added: "2.8"
 
   auto_backup_enabled:
     description:
