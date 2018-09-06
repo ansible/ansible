@@ -12,7 +12,7 @@ installed on the host running Ansible.
 
 .. code-block:: bash
 
-    $ pip install ansible[azure]
+    $ pip install 'ansible[azure]'
 
 If you are running Ansible from source, you can install the dependencies from the
 root directory of the Ansible repo.
