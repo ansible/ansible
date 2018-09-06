@@ -68,17 +68,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following group_vars/asa.yaml file to handle
-#       transport and authentication to the node.
----
-ansible_connection: network_cli
-ansible_network_os: asa
-ansible_user: ansible
-ansible_become: yes
-ansible_become_method: enable
-ansible_become_pass: cisco
-command_timeout: 60
-
 
 ---
 - name: "Show the ASA version"
