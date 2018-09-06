@@ -405,12 +405,6 @@ def rule_from_group_permission(perm):
     if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
         for pair in perm['UserIdGroupPairs']:
             target = pair['GroupId']
-            if pair.get('UserId') and pair['UserId'] != current_account_id:
-                target = (
-                    pair.get('UserId', None),
-                    pair.get('GroupId', None),
-                    pair.get('GroupName', None),
-                )
             if pair.get('UserId', '').startswith('amazon-'):
                 # amazon-elb and amazon-prefix rules don't need
                 # group-id specified, so remove it when querying
@@ -419,6 +413,12 @@ def rule_from_group_permission(perm):
                     target[0],
                     None,
                     target[2],
+                )
+            elif 'VpcPeeringConnectionId' in pair or pair['UserId'] != current_account_id:
+                target = (
+                    pair.get('UserId', None),
+                    pair.get('GroupId', None),
+                    pair.get('GroupName', None),
                 )
 
             yield Rule(
@@ -492,7 +492,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     target_group_created = False
 
     validate_rule(module, rule)
-    if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']) and current_account_id not in rule['group_id']:
+    if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
         group_instance = dict(UserId=owner_id, GroupId=group_id, GroupName=group_name)
