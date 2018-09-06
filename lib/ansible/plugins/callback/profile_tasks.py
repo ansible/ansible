@@ -43,6 +43,16 @@ DOCUMENTATION = '''
         ini:
           - section: callback_profile_tasks
             key: sort_order
+      summary_only:
+        description: Only show summary, not individual task profiles
+        type: bool
+        default: False
+        env:
+          - name: PROFILE_TASKS_SUMMARY_ONLY
+        ini:
+          - section: callback_profile_tasks
+            key: summary_only
+        version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -119,12 +129,15 @@ class CallbackModule(CallbackBase):
 
         self.sort_order = None
         self.task_output_limit = None
+        self.summary_only = None
 
         super(CallbackModule, self).__init__()
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.summary_only = self.get_option('summary_only')
 
         self.sort_order = self.get_option('sort_order')
         if self.sort_order == 'ascending':
@@ -154,11 +167,15 @@ class CallbackModule(CallbackBase):
                                   "by descending or ascending" %
                                   self.task_output_limit)
 
+    def _display_tasktime(self):
+        if not self.summary_only:
+            self._display.display(tasktime())
+
     def _record_task(self, task):
         """
         Logs the start of each task
         """
-        self._display.display(tasktime())
+        self._display_tasktime()
         timestamp(self)
 
         # Record the start time of the current task
@@ -174,10 +191,11 @@ class CallbackModule(CallbackBase):
         self._record_task(task)
 
     def playbook_on_setup(self):
-        self._display.display(tasktime())
+        self._display_tasktime()
 
     def playbook_on_stats(self, stats):
-        self._display.display(tasktime())
+        self._display_tasktime()
+
         self._display.display(filled("", fchar="="))
 
         timestamp(self)
