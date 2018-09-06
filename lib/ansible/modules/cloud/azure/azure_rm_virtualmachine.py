@@ -1196,7 +1196,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             ),
                             image_reference=self.compute_models.ImageReference(
                                 id=vm_dict['properties']['storageProfile']['imageReference']['id'],
-                            ) if 'id' in vm_dict['properties']'storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
+                            ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference'].get('publisher'),
                                 offer=vm_dict['properties']['storageProfile']['imageReference'].get('offer'),
                                 sku=vm_dict['properties']['storageProfile']['imageReference'].get('sku'),
