@@ -25,6 +25,7 @@ import re
 import string
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native

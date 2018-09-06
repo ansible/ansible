@@ -73,8 +73,7 @@ EXAMPLES = '''
 import ast
 import re
 
-from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
-from ansible.parsing.utils.addresses import parse_address
+from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_text

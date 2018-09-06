@@ -25,8 +25,7 @@ import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.inventory import BaseInventoryPlugin, detect_range, expand_hostname_range
+from ansible.plugins.inventory import BaseInventoryPlugin
 
 
 class InventoryModule(BaseInventoryPlugin):

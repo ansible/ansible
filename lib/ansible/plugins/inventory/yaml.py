@@ -64,8 +64,7 @@ from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
+from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 
 class InventoryModule(BaseFileInventoryPlugin):
