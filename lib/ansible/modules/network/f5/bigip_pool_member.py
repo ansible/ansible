@@ -433,7 +433,7 @@ class ModuleParameters(Parameters):
         elif self._values['address'] == 'any6':
             return 'any6'
         try:
-            addr = netaddr.IPAddress(self._values['address'])
+            addr = netaddr.IPAddress(self._values['address'].split('%')[0])
             return str(addr)
         except netaddr.AddrFormatError:
             raise F5ModuleError(
