@@ -1137,6 +1137,7 @@ lib/ansible/modules/system/selinux_permissive.py E322
 lib/ansible/modules/system/seport.py E324
 lib/ansible/modules/system/service.py E323
 lib/ansible/modules/system/service.py E210
+lib/ansible/modules/system/systemd.py E324
 lib/ansible/modules/system/solaris_zone.py E324
 lib/ansible/modules/system/svc.py E322
 lib/ansible/modules/system/svc.py E324
