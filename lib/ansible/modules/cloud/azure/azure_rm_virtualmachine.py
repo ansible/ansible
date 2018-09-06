@@ -32,8 +32,7 @@ description:
     - If you need to use the I(custom_data) option, many images in the marketplace are not cloud-init ready. Thus, data
       sent to the I(custom_data) would be ignored. If the image you are attempting to use is not in
       L(this list, https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
-      you will need to follow the instructions
-      L(here, https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
+      follow L(this, https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
 
 options:
     resource_group:
