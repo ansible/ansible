@@ -352,7 +352,7 @@
   register: result_sha256_with_dot
 
 - stat:
-    path: "{{ output_dir }}/27617.txt"
+    path: "{{ output_dir }}/27617sha256_with_dot.txt"
   register: stat_result_sha256_with_dot
 
 - name: Assert that the file was downloaded
