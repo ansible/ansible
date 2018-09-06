@@ -306,26 +306,34 @@ def main():
             force=dict(type='bool'),
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
-            user=dict(type='bool', default=False),
-            scope=dict(type='str', default='system', choices=['system', 'user', 'global']),
+            user=dict(type='bool'),
+            scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
+        mutually_exclusive=[['scope', 'user']],
     )
 
     systemctl = module.get_bin_path('systemctl', True)
-    if module.params['user'] and module.params['scope'] == 'system':
+
+    ''' Set CLI options depending on params '''
+    if module.params['user'] is not None:
+        # handle user deprecation and 'scope' conflicts
         module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11')
         systemctl = systemctl + " --user"
-    if module.params['scope'] == 'user':
-        systemctl = systemctl + " --user"
-    if module.params['scope'] == 'global':
-        systemctl = systemctl + " --global"
+
+    # if scope is 'system' or None, we can ignore as there is no extra switch.
+    # The other choices match the corresponding switch
+    elif module.params['scope'] not in (None, 'system'):
+        systemctl += " --%s" % module.params['scope']
+
     if module.params['no_block']:
-        systemctl = systemctl + " --no-block"
+        systemctl += " --no-block"
+
     if module.params['force']:
-        systemctl = systemctl + " --force"
+        systemctl += " --force"
+
     unit = module.params['name']
     rc = 0
     out = err = ''
