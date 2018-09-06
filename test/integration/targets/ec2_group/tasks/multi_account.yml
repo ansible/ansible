@@ -78,7 +78,7 @@
       ignore_errors: true
     - assert:
         that:
-          - out is failed changed
+          - out is failed
   always:
     - pause: seconds=5
     - name: Delete secondary-VPC side of peer
