@@ -1,11 +1,11 @@
-default name=ansible/ansible:default@sha256:b651e5964e192c12ef574646a9c724e72fd94615d37d47ffad986408b2097a07
-centos6 name=quay.io/ansible/centos6-test-container:1.4.0
-centos7 name=quay.io/ansible/centos7-test-container:1.4.0
-fedora24 name=quay.io/ansible/fedora24-test-container:1.4.0
-fedora25 name=quay.io/ansible/fedora25-test-container:1.4.0
+default name=quay.io/ansible/default-test-container:1.0.0
+centos6 name=quay.io/ansible/centos6-test-container:1.4.0 seccomp=unconfined
+centos7 name=quay.io/ansible/centos7-test-container:1.4.0 seccomp=unconfined
+fedora24 name=quay.io/ansible/fedora24-test-container:1.4.0 seccomp=unconfined
+fedora25 name=quay.io/ansible/fedora25-test-container:1.4.0 seccomp=unconfined
 fedora26py3 name=quay.io/ansible/fedora26py3-test-container:1.4.0
 fedora27py3 name=quay.io/ansible/fedora27py3-test-container:1.4.0
-opensuse42.3 name=quay.io/ansible/opensuse42.3-test-container:1.4.0
-ubuntu1404 name=quay.io/ansible/ubuntu1404-test-container:1.4.0
-ubuntu1604 name=quay.io/ansible/ubuntu1604-test-container:1.4.0
-ubuntu1604py3 name=quay.io/ansible/ubuntu1604py3-test-container:1.4.0
+opensuse42.3 name=quay.io/ansible/opensuse42.3-test-container:1.4.0 seccomp=unconfined
+ubuntu1404 name=quay.io/ansible/ubuntu1404-test-container:1.4.0 seccomp=unconfined
+ubuntu1604 name=quay.io/ansible/ubuntu1604-test-container:1.4.0 seccomp=unconfined
+ubuntu1604py3 name=quay.io/ansible/ubuntu1604py3-test-container:1.4.0 seccomp=unconfined

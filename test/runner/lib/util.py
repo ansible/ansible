@@ -172,6 +172,22 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
+def find_python(version, path=None):
+    """
+    :type version: str
+    :type path: str | None
+    :rtype: str
+    """
+    version_info = tuple(int(n) for n in version.split('.'))
+
+    if not path and version_info == sys.version_info[:len(version_info)]:
+        python_bin = sys.executable
+    else:
+        python_bin = find_executable('python%s' % version, path=path)
+
+    return python_bin
+
+
 def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
     """
     :type args: TestConfig

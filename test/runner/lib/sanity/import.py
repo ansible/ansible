@@ -17,6 +17,7 @@ from lib.util import (
     run_command,
     intercept_command,
     remove_tree,
+    find_python,
 )
 
 from lib.ansible_util import (
@@ -65,7 +66,9 @@ class ImportTest(SanityMultipleVersion):
 
         remove_tree(virtual_environment_path)
 
-        cmd = ['virtualenv', virtual_environment_path, '--python', 'python%s' % python_version, '--no-setuptools', '--no-wheel']
+        python = find_python(python_version)
+
+        cmd = [python, '-m', 'virtualenv', virtual_environment_path, '--python', python, '--no-setuptools', '--no-wheel']
 
         if not args.coverage:
             cmd.append('--no-pip')
