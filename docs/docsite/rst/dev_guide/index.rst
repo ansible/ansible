@@ -4,7 +4,7 @@ Developer Guide
 
 Welcome to the Ansible Developer Guide!
 
-** Who should use this guide?**
+**Who should use this guide?**
 
 If you want to extend Ansible by using a custom module or plugin locally, creating a module or plugin, adding functionality to an existing module, or expanding test coverage, this guide is for you. We've included detailed information for developers on how to test and document modules, as well as the prerequisites for getting your module or plugin accepted into the main Ansible repository.
 
