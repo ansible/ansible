@@ -1244,7 +1244,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                         for data_disk in vm_dict['properties']['storageProfile']['dataDisks']:
                             if data_disk.get('managedDisk'):
-                                managed_disk_type = data_disk['managedDisk']['storageAccountType']
+                                managed_disk_type = data_disk['managedDisk'].get('storageAccountType')
                                 data_disk_managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=managed_disk_type)
                                 data_disk_vhd = None
                             else:
