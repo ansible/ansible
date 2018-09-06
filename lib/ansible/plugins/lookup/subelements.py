@@ -115,9 +115,7 @@ class LookupModule(LookupBase):
             if terms[0].get('skipped', False) is not False:
                 # the registered result was completely skipped
                 return []
-            elementlist = []
-            for key in terms[0]:
-                elementlist.append(terms[0][key])
+            elementlist = list(terms[0].values())
         else:
             elementlist = terms[0]
 
@@ -139,17 +137,15 @@ class LookupModule(LookupBase):
 
             skip_missing = boolean(flags.get('skip_missing', False), strict=False)
             subvalue = item0
-            lastsubkey = False
+            last_index = len(subelements) - 1
             sublist = []
-            for subkey in subelements:
-                if subkey == subelements[-1]:
-                    lastsubkey = True
+            for index, subkey in enumerate(subelements):
                 if subkey not in subvalue:
                     if skip_missing:
                         continue
                     else:
                         raise AnsibleError("could not find '%s' key in iterated item '%s'" % (subkey, subvalue))
-                if not lastsubkey:
+                if not index == last_index:
                     if not isinstance(subvalue[subkey], dict):
                         if skip_missing:
                             continue
@@ -158,10 +154,12 @@ class LookupModule(LookupBase):
                     else:
                         subvalue = subvalue[subkey]
                 else:  # lastsubkey
-                    if not isinstance(subvalue[subkey], list):
-                        raise AnsibleError("the key %s should point to a list, got '%s'" % (subkey, subvalue[subkey]))
-                    else:
+                    if isinstance(subvalue[subkey], list):
                         sublist = subvalue.pop(subkey, [])
+                    elif isinstance(subvalue[subkey], dict):
+                        sublist = subvalue.pop(subkey, {}).values()
+                    else:
+                        raise AnsibleError("the key %s should point to a list or dict, got '%s'" % (subkey, subvalue[subkey]))
             for item1 in sublist:
                 ret.append((item0, item1))
 
