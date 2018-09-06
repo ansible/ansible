@@ -1178,8 +1178,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     vm_resource = self.compute_models.VirtualMachine(
                         vm_dict['location'],
                         os_profile=self.compute_models.OSProfile(
-                            admin_username=vm_dict['properties']['osProfile'].get('adminUsername'),
-                            computer_name=vm_dict['properties']['osProfile'].get('computerName')
+                            admin_username=vm_dict['properties'].get('osProfile', {}).get('adminUsername'),
+                            computer_name=vm_dict['properties'].get('osProfile', {}).get('computerName')
                         ),
                         hardware_profile=self.compute_models.HardwareProfile(
                             vm_size=vm_dict['properties']['hardwareProfile'].get('vmSize')
