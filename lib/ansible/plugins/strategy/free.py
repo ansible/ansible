@@ -20,11 +20,13 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     strategy: free
-    short_description: Executes tasks on each host independently
+    short_description: Executes tasks without waiting for all hosts
     description:
-        - Task execution is as fast as possible per host in batch as defined by C(serial) (default all).
-          Ansible will not wait for other hosts to finish the current task before queuing the next task for a host that has finished.
-          Once a host is done with the play, it opens it's slot to a new host that was waiting to start.
+        - Task execution is as fast as possible per batch as defined by C(serial) (default all).
+          Ansible will not wait for other hosts to finish the current task before queuing more tasks for other hosts.
+          All hosts are still attempted for the current task, but it prevents blocking new tasks for hosts that have already finished.
+        - With the free strategy, unlike the default linear strategy, a host that is slow or stuck on a specific task
+          won't hold up the rest of the hosts and tasks.
     version_added: "2.0"
     author: Ansible Core Team
 '''
