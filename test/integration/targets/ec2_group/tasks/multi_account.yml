@@ -1,4 +1,6 @@
 - block:
+    - aws_caller_facts:
+      register: caller_facts
     - name: create a VPC
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc-2"
@@ -7,6 +9,21 @@
         tags:
           Description: "Created by ansible-test"
       register: vpc_result_2
+    - name: Peer the secondary-VPC to the main VPC
+      ec2_vpc_peer:
+        vpc_id: '{{ vpc_result_2.vpc.id }}'
+        peer_vpc_id: '{{ vpc_result.vpc.id }}'
+        peer_owner_id: '{{ caller_facts.account }}'
+        peer_region: '{{ aws_region }}'
+      register: peer_origin
+    - name: Accept the secondary-VPC peering connection in the main VPC
+      ec2_vpc_peer:
+        peer_vpc_id: '{{ vpc_result_2.vpc.id }}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: accept
+        peering_id: '{{ peer_origin.peering_id }}'
+        peer_owner_id: '{{ caller_facts.account }}'
+        peer_region: '{{ aws_region }}'
     - name: Create group in second VPC
       ec2_group:
         name: '{{ ec2_group_name }}-external'
@@ -20,8 +37,6 @@
           - 80
           rule_desc: 'http whoo'
       register: external
-    - aws_caller_facts:
-      register: caller_facts
     - name: Create group in internal VPC
       ec2_group:
         name: '{{ ec2_group_name }}-internal'
@@ -35,18 +50,38 @@
           - 80
   always:
     - pause: seconds=5
+    - name: Delete secondary-VPC side of peer
+      ec2_vpc_peer:
+        vpc_id: '{{ vpc_result_2.vpc.id }}'
+        peer_vpc_id: '{{ vpc_result.vpc.id }}'
+        peering_id: '{{ peer_origin.peering_id }}'
+        state: absent
+        peer_owner_id: '{{ caller_facts.account }}'
+        peer_region: '{{ aws_region }}'
+      ignore_errors: yes
+    - name: Delete main-VPC side of peer
+      ec2_vpc_peer:
+        peer_vpc_id: '{{ vpc_result_2.vpc.id }}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: absent
+        peering_id: '{{ peer_origin.peering_id }}'
+        peer_owner_id: '{{ caller_facts.account }}'
+        peer_region: '{{ aws_region }}'
+      ignore_errors: yes
     - name: Clean up group in second VPC
       ec2_group:
         name: '{{ ec2_group_name }}-external'
         description: '{{ ec2_group_description }}'
         state: absent
         vpc_id: '{{ vpc_result_2.vpc.id }}'
+      ignore_errors: yes
     - name: Clean up group in second VPC
       ec2_group:
         name: '{{ ec2_group_name }}-internal'
         description: '{{ ec2_group_description }}'
         state: absent
         vpc_id: '{{ vpc_result.vpc.id }}'
+      ignore_errors: yes
     - name: tidy up VPC
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc-2"
