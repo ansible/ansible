@@ -12,28 +12,30 @@ __metaclass__ = type
 DOCUMENTATION = '''
     callback: profile_tasks
     type: aggregate
-    short_description: adds time information to tasks
+    short_description: adds time and summary information to tasks
     version_added: "2.0"
     description:
       - Ansible callback plugin for timing individual tasks and overall execution time.
-      - "Mashup of 2 excellent original works: https://github.com/jlafon/ansible-profile,
-         https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old"
-      - "Format: C(<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>)"
+      - 'Mashup of 2 excellent original works: U(https://github.com/jlafon/ansible-profile),
+        U(https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old)'
+      - 'Format: C("<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>")'
       - It also lists the top/bottom time consuming tasks in the summary (configurable)
       - Before 2.4 only the environment variables were available for configuration.
     requirements:
       - whitelisting in configuration
     options:
-      output_limit:
-        description: Number of tasks to display in the summary
+      task_output_limit:
+        description: Number of tasks to display in the summary.  Integer value, or C(all) disables trimming.
         default: 20
         env:
           - name: PROFILE_TASKS_TASK_OUTPUT_LIMIT
         ini:
           - section: callback_profile_tasks
             key: task_output_limit
+        aliases: ['output_limit']
       sort_order:
         description: Adjust the sorting output of summary tasks
+        type: string
         choices: ['descending', 'ascending', 'none']
         default: 'descending'
         env:
@@ -58,6 +60,7 @@ EXAMPLES = '''
 import collections
 import time
 
+from ansible.errors import AnsibleCallbackError
 from ansible.module_utils.six.moves import reduce
 from ansible.plugins.callback import CallbackBase
 
@@ -124,20 +127,32 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self.sort_order = self.get_option('sort_order')
-        if self.sort_order is not None:
-            if self.sort_order == 'ascending':
-                self.sort_order = False
-            elif self.sort_order == 'descending':
-                self.sort_order = True
-            elif self.sort_order == 'none':
-                self.sort_order = None
+        if self.sort_order == 'ascending':
+            self.sort_order = False
+        elif self.sort_order == 'descending':
+            self.sort_order = True
+        elif self.sort_order == 'none':
+            self.sort_order = None
+        else:
+            raise AnsibleCallbackError(
+                "Invalid sort_order: %s" % self.sort_order)
 
-        self.task_output_limit = self.get_option('output_limit')
-        if self.task_output_limit is not None:
-            if self.task_output_limit == 'all':
-                self.task_output_limit = None
-            else:
+        self.task_output_limit = self.get_option('task_output_limit')
+        if self.task_output_limit == 'all':
+            self.task_output_limit = None
+        else:
+            try:
                 self.task_output_limit = int(self.task_output_limit)
+            except ValueError:
+                raise AnsibleCallbackError(
+                    "Invalid task_output_limit: %s" % self.task_output_limit)
+
+        if self.task_output_limit and self.sort_order is None:
+            self._display.warning("You have limited profile output to %d task "
+                                  "entries, but not sorted. This output is "
+                                  "unlikely to be useful. Consider sorting "
+                                  "by descending or ascending" %
+                                  self.task_output_limit)
 
     def _record_task(self, task):
         """
@@ -176,9 +191,14 @@ class CallbackModule(CallbackBase):
                 key=lambda x: x[1]['time'],
                 reverse=self.sort_order,
             )
+        else:
+            # even for 'none' sort, be sure to have results
+            # as a list for potential trimming
+            results = list(results)
 
         # Display the number of tasks specified or the default of 20
-        results = results[:self.task_output_limit]
+        if self.task_output_limit:
+            results = results[:self.task_output_limit]
 
         # Print the timings
         for uuid, result in results:
