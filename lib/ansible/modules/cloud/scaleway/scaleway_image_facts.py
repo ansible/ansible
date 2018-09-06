@@ -26,7 +26,7 @@ extends_documentation_fragment: scaleway
 options:
 
   region:
-    version_added: "2.8"
+    version_added: "2.7"
     description:
     - Scaleway compute zone
     required: true
