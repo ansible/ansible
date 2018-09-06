@@ -328,7 +328,7 @@ def main():
 
     # if scope is 'system' or None, we can ignore as there is no extra switch.
     # The other choices match the corresponding switch
-    elif module.params['scope'] not in (None, 'system'):
+    if module.params['scope'] not in (None, 'system'):
         systemctl += " --%s" % module.params['scope']
 
     if module.params['no_block']:
