@@ -378,7 +378,7 @@ class Interfaces(FactsBase):
 
         data4 = self.run(['show ip interface brief vrf all'])
         data5 = self.run(['show ipv6 interface brief vrf all'])
-        data4 = to_text(data4, errors='surrogate_or_strict).strip()
+        data4 = to_text(data4, errors='surrogate_or_strict').strip()
         data4 = data4.replace(r"\n", "\n")
         data5 = to_text(data5, errors='surrogate_or_strict').strip()
         data5 = data5.replace(r"\n", "\n")
