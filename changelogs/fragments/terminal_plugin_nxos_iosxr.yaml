@@ -1,2 +1,3 @@
 bugfixes:
-- Fix Python2.6 regex bug terminal plugin nxos, iosxr (https://github.com/ansible/ansible/pull/45135).
+- Fix terminal plugin regex nxos, iosxr (https://github.com/ansible/ansible/pull/45135).
+- Fix python2.6 `nothing to repeat` nxos terminal plugin bug (https://github.com/ansible/ansible/pull/45271).
