@@ -531,13 +531,15 @@ class DnfModule(YumDnf):
 
         # Disable repositories
         for repo_pattern in disablerepo:
-            for repo in repos.get_matching(repo_pattern):
-                repo.disable()
+            if repo_pattern:
+                for repo in repos.get_matching(repo_pattern):
+                    repo.disable()
 
         # Enable repositories
         for repo_pattern in enablerepo:
-            for repo in repos.get_matching(repo_pattern):
-                repo.enable()
+            if repo_pattern:
+                for repo in repos.get_matching(repo_pattern):
+                    repo.enable()
 
     def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot):
         """Return a fully configured dnf Base object."""
@@ -927,7 +929,7 @@ class DnfModule(YumDnf):
 
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
-                    if installed.filter(name=pkg_spec):
+                    if ("*" in pkg_spec) or installed.filter(name=pkg_spec):
                         self.base.remove(pkg_spec)
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
