@@ -262,7 +262,7 @@ class AzureRMServers(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if PostgreSQL Server instance has to be deleted or may be updated")
-                update_tags, newtags = self.update_tags(old_response.get('tags', {}}))
+                update_tags, newtags = self.update_tags(old_response.get('tags', {}))
                 if update_tags:
                     self.tags = newtags
                 self.to_do = Actions.Update

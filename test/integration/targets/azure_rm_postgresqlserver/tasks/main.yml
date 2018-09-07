@@ -72,6 +72,24 @@
     enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
+    tags:
+      aaa: bbb
+
+- name: Create second instance of PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}second
+    sku:
+      name: GP_Gen4_2
+      tier: GeneralPurpose
+    location: westus
+    storage_mb: 51200
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    tags:
+      aaa: bbb
+      ccc: ddd
 
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
