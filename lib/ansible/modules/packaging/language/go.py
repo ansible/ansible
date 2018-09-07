@@ -40,7 +40,7 @@ options:
             - Path to be used for C(GOPATH), defaults to the target systems C(GOPATH) environment variable
 requirements: []
 short_description: Manage Go packages
-version_added: 2.7
+version_added: 2.8
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
