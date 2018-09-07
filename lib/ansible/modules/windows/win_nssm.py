@@ -43,14 +43,15 @@ options:
       - >
         See commit 0b386fc1984ab74ee59b7bed14b7e8f57212c22b in the nssm.git project for more info:
         U(https://git.nssm.cc/?p=nssm.git;a=commit;h=0b386fc1984ab74ee59b7bed14b7e8f57212c22b)
+    type: path
   stdout_file:
     description:
       - Path to receive output.
-    type: str
+    type: path
   stderr_file:
     description:
       - Path to receive error output.
-    type: str
+    type: path
   app_parameters:
     description:
       - A string representing a dictionary of parameters to be passed to the application when it starts.

@@ -28,13 +28,13 @@ $result = @{
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","started","stopped","restarted" -resultobj $result
 
-$application = Get-AnsibleParam -obj $params -name "application" -type "str"
+$application = Get-AnsibleParam -obj $params -name "application" -type "path"
 $appParameters = Get-AnsibleParam -obj $params -name "app_parameters"
 $appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
 
-$stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "str"
-$stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "str"
+$stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "path"
+$stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "path"
 $dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "list"
 
 $user = Get-AnsibleParam -obj $params -name "user" -type "str"
