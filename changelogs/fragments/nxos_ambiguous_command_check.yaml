@@ -1,0 +1,2 @@
+bugfixes:
+- Add ambiguous command check as the error message is not persistent on nexus devices (https://github.com/ansible/ansible/pull/45337).
