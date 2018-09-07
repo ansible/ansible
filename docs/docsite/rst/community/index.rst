@@ -20,6 +20,7 @@ To get started, please read and understand the :ref:`code_of_conduct`, and then 
    development_process
    triage_process
    other_tools_and_programs
+   ../dev_guide/style_guide/index
 
 .. toctree::
    :caption: Guidelines for specific types of contributors
