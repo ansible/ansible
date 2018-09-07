@@ -119,6 +119,7 @@ stdout:
 '''
 
 import subprocess
+import codecs
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -145,9 +146,11 @@ def remote_exists(module, binary, name, method):
     command = "{0} remote-list -d --{1}".format(binary, method)
     # The query operation for the remote needs to be run even in check mode
     output = _flatpak_command(module, False, command)
+    # Convert name to byte-like object (For Python 2/3 compatibility)
+    byte_name = codecs.encode(name, 'utf-8')
     for line in output.splitlines():
         listed_remote = line.split()
-        if listed_remote[0] == name:
+        if listed_remote[0] == byte_name:
             return True
     return False
 
@@ -205,7 +208,7 @@ def main():
     if not binary:
         module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
 
-    remote_already_exists = remote_exists(module, binary, bytes(name, 'utf-8'), method)
+    remote_already_exists = remote_exists(module, binary, name, method)
 
     if state == 'present' and not remote_already_exists:
         add_remote(module, binary, name, flatpakrepo_url, method)
