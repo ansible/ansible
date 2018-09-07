@@ -63,7 +63,7 @@ options:
         type: bool
 requirements:
   - speedtest-cli>=2.0.0
-version_added: 2.7.0
+version_added: 2.8
 '''
 
 EXAMPLES = '''
