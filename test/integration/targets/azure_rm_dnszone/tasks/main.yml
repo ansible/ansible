@@ -42,6 +42,18 @@
       - results.state.tags.test == 'new_modified'
       - results.check_mode == true
 
+- name: Retrieve DNS Zone Facts
+  azure_rm_dnszone_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+  register: results
+
+- name: Assert that facts module returned result
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_dnszones[0].tags.test == 'modified'
+
 - name: Delete DNS zone
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
