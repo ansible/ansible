@@ -192,7 +192,7 @@ RETURN = '''
         description:
             - URL of router resource to be used for dynamic routing.
         returned: success
-        type: str
+        type: dict
     peer_ip:
         description:
             - IP address of the peer VPN gateway. Only IPv4 is supported.
@@ -271,7 +271,7 @@ def main():
             name=dict(required=True, type='str'),
             description=dict(type='str'),
             target_vpn_gateway=dict(required=True, type='dict'),
-            router=dict(type='str'),
+            router=dict(type='dict'),
             peer_ip=dict(required=True, type='str'),
             shared_secret=dict(required=True, type='str'),
             ike_version=dict(default=2, type='int'),
@@ -354,7 +354,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'description': module.params.get('description'),
         u'targetVpnGateway': replace_resource_dict(module.params.get(u'target_vpn_gateway', {}), 'selfLink'),
-        u'router': module.params.get('router'),
+        u'router': replace_resource_dict(module.params.get(u'router', {}), 'selfLink'),
         u'peerIp': module.params.get('peer_ip'),
         u'sharedSecret': module.params.get('shared_secret'),
         u'ikeVersion': module.params.get('ike_version'),
@@ -430,7 +430,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'description': module.params.get('description'),
         u'targetVpnGateway': replace_resource_dict(module.params.get(u'target_vpn_gateway', {}), 'selfLink'),
-        u'router': module.params.get('router'),
+        u'router': replace_resource_dict(module.params.get(u'router', {}), 'selfLink'),
         u'peerIp': response.get(u'peerIp'),
         u'sharedSecret': response.get(u'sharedSecret'),
         u'sharedSecretHash': response.get(u'sharedSecretHash'),
