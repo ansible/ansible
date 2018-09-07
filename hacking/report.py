@@ -10,8 +10,6 @@ import os
 import sqlite3
 import sys
 
-from ansible.module_utils.urls import open_url
-
 DATABASE_PATH = os.path.expanduser('~/.ansible/report.db')
 BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')) + '/'
 ANSIBLE_PATH = os.path.join(BASE_PATH, 'lib')
@@ -23,7 +21,9 @@ if ANSIBLE_PATH not in sys.path:
 if ANSIBLE_TEST_PATH not in sys.path:
     sys.path.insert(0, ANSIBLE_TEST_PATH)
 
+from ansible.module_utils.urls import open_url
 from ansible.parsing.metadata import extract_metadata
+
 from lib.target import walk_integration_targets
 
 
