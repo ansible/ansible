@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # Copyright: (c) 2018, Derek Rushing <derek.rushing@geekops.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -19,75 +19,78 @@ DOCUMENTATION = '''
 module: vmware_object_role_permission
 short_description: Manage local roles on an ESXi host
 description: This module can be used to manage object permissions on the given host.
-version_added: "2.7"
+version_added: 2.8
 author:
-- Derek Rushing (@kryptsi) <drush@kryptsi.com>
+- Derek Rushing (@kryptsi)
 notes:
-    - Tested on ESXi 6.5
-    - Be sure that the ESXi user used for login, has the appropriate rights to administer permissions
+  - Tested on ESXi 6.5
+   - Be sure that the ESXi user used for login, has the appropriate rights to administer permissions
 requirements:
-    - "python >= 2.7"
-    - PyVmomi
+  - "python >= 2.7"
+  - PyVmomi
 options:
-    role:
-        description:
-            - The role to be assigned permission.
-        required: True
-    principal:
-        description:
-            - The user to be assigned permission.  Required if group is not specified.
-    group:
-        description:
-            - The group to be assigned permission. Required if principal is not specified.
-    object_name:
-        description:
-            - The object name to assigned permission.
-        required: True
-    object_type:
-        description:
-            - The object type being targeted.
-        default: 'Folder'
-        choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
-                  'Datastore', 'Network', 'HostSystem', 'ComputeResource',
-                  'ClusterComputeResource', 'DistributedVirtualSwitch']
-    recursive:
-        description:
-            - Should the permissions be recursively applied.
-        default: True
-        type: bool
-    state:
-        description:
-            - Indicate desired state of the object's permission. When C(state=present), the permission will be added
-              if it doesn't already exist.
-            - When C(state=absent), the permission is removed if it exists.
-        choices: ['present', 'absent']
-        default: present
+  role:
+    description:
+    - The role to be assigned permission.
+    required: True
+  principal:
+    description:
+    - The user to be assigned permission.
+    - Required if C(group) is not specified.
+  group:
+    description:
+    - The group to be assigned permission.
+    - Required if C(principal) is not specified.
+  object_name:
+    description:
+    - The object name to assigned permission.
+    required: True
+  object_type:
+    description:
+    - The object type being targeted.
+    default: 'Folder'
+    choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
+              'Datastore', 'Network', 'HostSystem', 'ComputeResource',
+              'ClusterComputeResource', 'DistributedVirtualSwitch']
+  recursive:
+    description:
+    - Should the permissions be recursively applied.
+    default: True
+    type: bool
+  state:
+    description:
+    - Indicate desired state of the object's permission.
+    - When C(state=present), the permission will be added if it doesn't already exist.
+    - When C(state=absent), the permission is removed if it exists.
+    choices: ['present', 'absent']
+    default: present
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example vmware_object_permission command from Ansible Playbooks
 - name: Assign user to VM folder
   vmware_object_role_permission:
-      role: administrator
-      principal: user_bob
-      object_name: services
-      state: present
+    role: administrator
+    principal: user_bob
+    object_name: services
+    state: present
+  delegate_to: localhost
 
 - name: Remove user from VM folder
   vmware_object_role_permission:
-      role: administrator
-      principal: user_bob
-      object_name: services
-      state: absent
+    role: administrator
+    principal: user_bob
+    object_name: services
+    state: absent
+  delegate_to: localhost
 
 - name: Assign finance group to VM folder
   vmware_object_role_permission:
-      role: Limited Users
-      group: finance
-      object_name: Accounts
-      state: present
-
+    role: Limited Users
+    group: finance
+    object_name: Accounts
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -201,21 +204,31 @@ class VMwareObjectRolePermission(PyVmomi):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(role=dict(required=True, type='str'),
-                              object_name=dict(required=True, type='str'),
-                              object_type=dict(type='str', default='Folder',
-                                               choices=['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
-                                                        'Datastore', 'Network', 'HostSystem', 'ComputeResource',
-                                                        'ClusterComputeResource', 'DistributedVirtualSwitch']),
-                              principal=dict(type='str'),
-                              group=dict(type='str'),
-                              recursive=dict(type='bool', default=True),
-                              state=dict(default='present', choices=['present', 'absent'], type='str')))
+    argument_spec.update(dict(
+        role=dict(required=True, type='str'),
+        object_name=dict(required=True, type='str'),
+        object_type=dict(type='str', default='Folder',
+                         choices=['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
+                                  'Datastore', 'Network', 'HostSystem', 'ComputeResource',
+                                  'ClusterComputeResource', 'DistributedVirtualSwitch']
+                         ),
+        principal=dict(type='str'),
+        group=dict(type='str'),
+        recursive=dict(type='bool', default=True),
+        state=dict(default='present', choices=['present', 'absent'], type='str')
+    )
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
-                           mutually_exclusive=[['principal', 'group'], ],
-                           required_one_of=[['principal', 'group'], ])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=False,
+        mutually_exclusive=[
+            ['principal', 'group'],
+        ],
+        required_one_of=[
+            ['principal', 'group'],
+        ]
+    )
 
     vmware_object_permission = VMwareObjectRolePermission(module)
     vmware_object_permission.process_state()
