@@ -1111,14 +1111,15 @@ class YumModule(YumDnf):
             # ignore irrelevant lines
             # '*' in line matches lines like mirror lists:
             #      * base: mirror.corbina.net
-            # len(line) != 3 could be junk or a continuation
+            # len(line) != 3 or 6 could be junk or a continuation
+            # len(line) = 6 is package obsoletes
             #
             # FIXME: what is  the '.' not in line  conditional for?
 
-            if '*' in line or len(line) != 3 or '.' not in line[0]:
+            if '*' in line or len(line) not in [3, 6] or '.' not in line[0]:
                 continue
             else:
-                pkg, version, repo = line
+                pkg, version, repo = line[0], line[1], line[2]
                 name, dist = pkg.rsplit('.', 1)
                 updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
         return updates
