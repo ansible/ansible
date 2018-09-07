@@ -500,7 +500,12 @@ class VariableManager:
             else:
                 raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
         elif task.loop is not None:
-            items = templar.template(task.loop)
+            try:
+                items = templar.template(task.loop)
+            except AnsibleUndefinedVariable:
+                # This task will be skipped later due to this, so we just setup
+                # a dummy array for the later code so it doesn't fail
+                items = [None]
         else:
             items = [None]
 

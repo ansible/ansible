@@ -223,3 +223,22 @@
 - assert:
     that:
       - with_list_passed_a_dict is failed
+
+# https://github.com/ansible/ansible/issues/45189
+- name: with_X conditional delegate_to shortcircuit on templating error
+  debug:
+    msg: "loop"
+  when: false
+  delegate_to: localhost
+  with_list: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: loop conditional delegate_to shortcircuit on templating error
+  debug:
+    msg: "loop"
+  when: false
+  delegate_to: localhost
+  loop: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
