@@ -350,7 +350,7 @@ def main():
                 result['changed'] = True
                 module.exit_json(**result)
 
-            if lock:
+            if execute_lock:
                 conn.lock(target=target)
                 locked = True
             if before is None:
