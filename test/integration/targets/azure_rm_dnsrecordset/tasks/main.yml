@@ -112,19 +112,6 @@
 
 # FUTURE: add facts module calls to ensure that we really didn't touch anything
 
-- name: (idempotence test) re-run record set absent
-  azure_rm_dnsrecordset:
-    resource_group: "{{ resource_group }}"
-    relative_name: www
-    zone_name: "{{ domain_name }}.com"
-    record_type: A
-    state: absent
-  register: results
-
-- name:
-  assert:
-    that: not results.changed
-
 - name: create SRV records in a new record set
   azure_rm_dnsrecordset:
     resource_group: "{{ resource_group }}"
@@ -218,3 +205,16 @@
 - name: Assert that record set deleted
   assert:
     that: results.changed
+
+- name: (idempotence test) re-run record set absent
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    state: absent
+  register: results
+
+- name:
+  assert:
+    that: not results.changed
