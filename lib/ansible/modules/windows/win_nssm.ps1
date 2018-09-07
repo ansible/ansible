@@ -83,10 +83,10 @@ function Install-NssmService {
     )
 
     if (!$application) {
-        throw "Error installing service ""$service"". No application was supplied."
+        Fail-Json -obj $result -message "Error installing service ""$service"". No application was supplied."
     }
     if (-Not (Test-Path -Path $application -PathType Leaf)) {
-        throw "$application does not exist on the host"
+        Fail-Json -obj $result -message "$application does not exist on the host"
     }
 
     if (!(Test-NssmServiceExists -service $service)) {
@@ -95,7 +95,7 @@ function Install-NssmService {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error installing service ""$service"""
+            Fail-Json -obj $result -message "Error installing service ""$service"""
         }
 
         $result.changed_by = "install_service"
@@ -107,7 +107,7 @@ function Install-NssmService {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error installing service ""$service"""
+            Fail-Json -obj $result -message "Error installing service ""$service"""
         }
 
         if ($nssm_result.stdout.split("`n`r")[0] -ne $application) {
@@ -116,7 +116,7 @@ function Install-NssmService {
             if ($nssm_result.rc -ne 0) {
                 $result.nssm_error_cmd = $nssm_result.arguments
                 $result.nssm_error_log = $nssm_result.stderr
-                throw "Error installing service ""$service"""
+                Fail-Json -obj $result -message "Error installing service ""$service"""
             }
             $result.application = "$application"
 
@@ -133,7 +133,7 @@ function Install-NssmService {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error installing service ""$service"""
+            Fail-Json -obj $result -message "Error installing service ""$service"""
         }
     }
 }
@@ -155,7 +155,7 @@ function Uninstall-NssmService {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error removing service ""$service"""
+            Fail-Json -obj $result -message "Error removing service ""$service"""
         }
 
         $result.changed_by = "remove_service"
@@ -191,7 +191,7 @@ function Update-NssmServiceAppParameters {
     if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $nssm_result.arguments
         $result.nssm_error_log = $nssm_result.stderr
-        throw "Error updating AppParameters for service ""$service"""
+        Fail-Json -obj $result -message "Error updating AppParameters for service ""$service"""
     }
 
     $appParamKeys = @()
@@ -234,7 +234,7 @@ function Update-NssmServiceAppParameters {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error updating AppParameters for service ""$service"""
+            Fail-Json -obj $result -message "Error updating AppParameters for service ""$service"""
         }
 
         $result.changed_by = "update_app_parameters"
@@ -256,7 +256,7 @@ function Update-NssmServiceOutputFiles {
     if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $nssm_result.arguments
         $result.nssm_error_log = $nssm_result.stderr
-        throw "Error retrieving existing stdout file for service ""$service"""
+        Fail-Json -obj $result -message "Error retrieving existing stdout file for service ""$service"""
     }
 
     if ($nssm_result.stdout.split("`n`r")[0] -ne $stdout) {
@@ -269,7 +269,7 @@ function Update-NssmServiceOutputFiles {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error setting stdout file for service ""$service"""
+            Fail-Json -obj $result -message "Error setting stdout file for service ""$service"""
         }
 
         $result.changed_by = "set_stdout"
@@ -281,7 +281,7 @@ function Update-NssmServiceOutputFiles {
     if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $nssm_result.arguments
         $result.nssm_error_log = $nssm_result.stderr
-        throw "Error retrieving existing stderr file for service ""$service"""
+        Fail-Json -obj $result -message "Error retrieving existing stderr file for service ""$service"""
     }
 
     if ($nssm_result.stdout.split("`n`r")[0] -ne $stderr) {
@@ -291,7 +291,7 @@ function Update-NssmServiceOutputFiles {
             if ($nssm_result.rc -ne 0) {
                 $result.nssm_error_cmd = $nssm_result.arguments
                 $result.nssm_error_log = $nssm_result.stderr
-                throw "Error clearing stderr file setting for service ""$service"""
+                Fail-Json -obj $result -message "Error clearing stderr file setting for service ""$service"""
             }
         } else {
             $nssm_result = Invoke-NssmCommand -arguments @("set", $service, "AppStderr", $stderr)
@@ -299,7 +299,7 @@ function Update-NssmServiceOutputFiles {
             if ($nssm_result.rc -ne 0) {
                 $result.nssm_error_cmd = $nssm_result.arguments
                 $result.nssm_error_log = $nssm_result.stderr
-                throw "Error setting stderr file for service ""$service"""
+                Fail-Json -obj $result -message "Error setting stderr file for service ""$service"""
             }
         }
 
@@ -345,12 +345,12 @@ function Update-NssmServiceCredentials {
     if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $nssm_result.arguments
         $result.nssm_error_log = $nssm_result.stderr
-        throw "Error updating credentials for service ""$service"""
+        Fail-Json -obj $result -message "Error updating credentials for service ""$service"""
     }
 
     if ($user) {
         if (!$password) {
-            throw "User without password is informed for service ""$service"""
+            Fail-Json -obj $result -message "User without password is informed for service ""$service"""
         }
         else {
             $fullUser = $user
@@ -364,7 +364,7 @@ function Update-NssmServiceCredentials {
                 if ($nssm_result.rc -ne 0) {
                     $result.nssm_error_cmd = $nssm_result.arguments
                     $result.nssm_error_log = $nssm_result.stderr
-                    throw "Error updating credentials for service ""$service"""
+                    Fail-Json -obj $result -message "Error updating credentials for service ""$service"""
                 }
 
                 $result.changed_by = "update_credentials"
@@ -393,7 +393,7 @@ function Update-NssmServiceDependencies {
     if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $nssm_result.arguments
         $result.nssm_error_log = $nssm_result.stderr
-        throw "Error updating dependencies for service ""$service"""
+        Fail-Json -obj $result -message "Error updating dependencies for service ""$service"""
     }
 
     $current_dependencies = @($nssm_result.stdout.split("`n`r") | where { $_ -ne '' })
@@ -404,7 +404,7 @@ function Update-NssmServiceDependencies {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error updating dependencies for service ""$service"""
+            Fail-Json -obj $result -message "Error updating dependencies for service ""$service"""
         }
 
         $result.changed_by = "update-dependencies"
@@ -426,7 +426,7 @@ function Update-NssmServiceStartMode {
     if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $nssm_result.arguments
         $result.nssm_error_log = $nssm_result.stderr
-        throw "Error updating start mode for service ""$service"""
+        Fail-Json -obj $result -message "Error updating start mode for service ""$service"""
     }
 
     $modes=@{"auto" = "SERVICE_AUTO_START"; "delayed" = "SERVICE_DELAYED_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
@@ -437,7 +437,7 @@ function Update-NssmServiceStartMode {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error updating start mode for service ""$service"""
+            Fail-Json -obj $result -message "Error updating start mode for service ""$service"""
         }
 
         $result.changed_by = "start_mode"
@@ -457,7 +457,7 @@ function Invoke-NssmStart {
     if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $nssm_result.arguments
         $result.nssm_error_log = $nssm_result.stderr
-        throw "Error starting service ""$service"""
+        Fail-Json -obj $result -message "Error starting service ""$service"""
     }
 
     $result.changed_by = "start_service"
@@ -476,7 +476,7 @@ function Invoke-NssmStop {
     if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $nssm_result.arguments
         $result.nssm_error_log = $nssm_result.stderr
-        throw "Error stopping service ""$service"""
+        Fail-Json -obj $result -message "Error stopping service ""$service"""
     }
 
     $result.changed_by = "stop_service_command"
@@ -495,7 +495,7 @@ function Start-NssmService {
     if ($currentStatus.rc -ne 0) {
         $result.nssm_error_cmd = $currentStatus.arguments
         $result.nssm_error_log = $currentStatus.stderr
-        throw "Error starting service ""$service"""
+        Fail-Json -obj $result -message "Error starting service ""$service"""
     }
 
     switch -wildcard ($currentStatus.stdout) {
@@ -522,7 +522,7 @@ function Stop-NssmService {
     if ($currentStatus.rc -ne 0) {
         $result.nssm_error_cmd = $currentStatus.arguments
         $result.nssm_error_log = $currentStatus.stderr
-        throw "Error stopping service ""$service"""
+        Fail-Json -obj $result -message "Error stopping service ""$service"""
     }
 
     if ($currentStatus.stdout -notlike "*SERVICE_STOPPED*") {
@@ -531,7 +531,7 @@ function Stop-NssmService {
         if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $nssm_result.arguments
             $result.nssm_error_log = $nssm_result.stderr
-            throw "Error stopping service ""$service"""
+            Fail-Json -obj $result -message "Error stopping service ""$service"""
         }
 
         $result.changed_by = "stop_service"
@@ -574,30 +574,25 @@ if (($appParameters -ne $null) -and ($appParameters -isnot [string])) {
     Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
 }
 
-try
-{
-    switch ($state) {
-        "absent" {
-            Uninstall-NssmService -service $name
-        }
-        "present" {
-            NssmProcedure -service $name
-        }
-        "started" {
-            NssmProcedure -service $name
-            Start-NssmService -service $name
-        }
-        "stopped" {
-            NssmProcedure -service $name
-            Stop-NssmService -service $name
-        }
-        "restarted" {
-            NssmProcedure -service $name
-            Restart-NssmService -service $name
-        }
+switch ($state) {
+    "absent" {
+        Uninstall-NssmService -service $name
     }
-
-    Exit-Json $result
-} catch {
-     Fail-Json $result $_.Exception.Message
+    "present" {
+        NssmProcedure -service $name
+    }
+    "started" {
+        NssmProcedure -service $name
+        Start-NssmService -service $name
+    }
+    "stopped" {
+        NssmProcedure -service $name
+        Stop-NssmService -service $name
+    }
+    "restarted" {
+        NssmProcedure -service $name
+        Restart-NssmService -service $name
+    }
 }
+
+Exit-Json $result
