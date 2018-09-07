@@ -125,6 +125,7 @@ stdout:
 '''
 
 import subprocess
+import codecs
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
 
@@ -154,7 +155,9 @@ def flatpak_exists(module, binary, name, method):
     command = "{0} list --{1} --app".format(binary, method)
     output = _flatpak_command(module, False, command)
     name = _parse_flatpak_name(name).lower()
-    if name in output.lower():
+    # Convert name to byte-like object (For Python 2/3 compatibility)
+    byte_name = codecs.encode(name, 'utf-8')
+    if byte_name in output.lower():
         return True
     return False
 
@@ -167,9 +170,13 @@ def _match_installed_flat_name(module, binary, name, method):
     command = "{0} list --{1} --app".format(binary, method)
     output = _flatpak_command(module, False, command)
     parsed_name = _parse_flatpak_name(name)
-    for row in output.split('\n'):
-        if parsed_name.lower() in row.lower():
-            return row.split()[0]
+    # Convert name to byte-like object (For Python 2/3 compatibility)
+    byte_parsed_name = codecs.encode(parsed_name, 'utf-8')
+    for line in output.splitlines():
+        if byte_parsed_name.lower() in line.lower():
+            matched_name = line.split()[0]
+            # decode the byte-like object into a string
+            return codecs.decode(matched_name, 'utf-8')
 
     result['msg'] = "Flatpak removal failed: Could not match any installed flatpaks to " +\
         "the name `{0}`. ".format(_parse_flatpak_name(name)) +\
@@ -181,7 +188,7 @@ def _parse_flatpak_name(name):
     if name.startswith('http://') or name.startswith('https://'):
         file_name = urlparse(name).path.split('/')[-1]
         file_name_without_extension = file_name.split('.')[0:-1]
-        common_name = ".".join(file_name_without_extension)
+        common_name = '.'.join(file_name_without_extension)
     else:
         common_name = name
     return common_name
@@ -237,9 +244,11 @@ def main():
     if not binary:
         module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
 
-    if state == 'present' and not flatpak_exists(module, binary, name, method):
+    flatpak_already_exists = flatpak_exists(module, binary, name, method)
+
+    if state == 'present' and not flatpak_already_exists:
         install_flat(module, binary, remote, name, method)
-    elif state == 'absent' and flatpak_exists(module, binary, name, method):
+    elif state == 'absent' and flatpak_already_exists:
         uninstall_flat(module, binary, name, method)
 
     module.exit_json(**result)
