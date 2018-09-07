@@ -27,7 +27,8 @@ options:
     description:
       - The config to be pushed to the network device. This argument
         is mutually exclusive with C(rollback) and either one of the
-        option should be given as input.
+        option should be given as input. The config should have
+        indentation that the device uses.
     type: 'str'
   commit:
     description:
@@ -120,10 +121,7 @@ EXAMPLES = """
 
 - name: Use diff_match
   cli_config:
-    config: |
-      interface loopback999
-      no description
-      shutdown
+    config: "{{ lookup('file', 'interface_config') }}"
     diff_match: none
 
 - name: nxos replace config
