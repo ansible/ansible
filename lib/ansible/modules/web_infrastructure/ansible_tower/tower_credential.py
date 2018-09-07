@@ -58,7 +58,7 @@ options:
         - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
     ssh_key_data:
       description:
-        - Path to SSH private key.
+        - Path to SSH private key. Since 2.7, this can also be the private key data itself.
     ssh_key_unlock:
       description:
         - Unlock password for ssh_key. Use ASK for prompting.
@@ -123,6 +123,15 @@ EXAMPLES = '''
     organization: test-org
     state: present
     tower_config_file: "~/tower_cli.cfg"
+
+- name: Add scm credential
+  tower_credential:
+    name: github
+    description: git private ssh key
+    organization: test-org
+    state: present
+    kind: scm
+    ssh_key_data: "{{ ssh_key_data_from_vault }}"
 '''
 
 import os
@@ -253,14 +262,18 @@ def main():
                 team = team_res.get(name=module.params.get('team'))
                 params['team'] = team['id']
 
-            if module.params.get('ssh_key_data'):
-                filename = module.params.get('ssh_key_data')
-                if not os.path.exists(filename):
-                    module.fail_json(msg='file not found: %s' % filename)
-                if os.path.isdir(filename):
-                    module.fail_json(msg='attempted to read contents of directory: %s' % filename)
-                with open(filename, 'rb') as f:
-                    module.params['ssh_key_data'] = to_text(f.read())
+            ssh_key_data = module.params.get('ssh_key_data')
+            if ssh_key_data:
+                if ssh_key_data.startswith('-----'):
+                    module.params['ssh_key_data'] = ssh_key_data
+                else:
+                    filename = ssh_key_data
+                    if not os.path.exists(filename):
+                        module.fail_json(msg='file not found: %s' % filename)
+                    if os.path.isdir(filename):
+                        module.fail_json(msg='attempted to read contents of directory: %s' % filename)
+                    with open(filename, 'rb') as f:
+                        module.params['ssh_key_data'] = to_text(f.read())
 
             for key in ('authorize', 'authorize_password', 'client',
                         'security_token', 'secret', 'tenant', 'subscription',
