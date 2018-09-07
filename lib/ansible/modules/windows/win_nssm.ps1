@@ -12,6 +12,13 @@
 
 $ErrorActionPreference = "Stop"
 
+$start_modes_map = @{
+    "auto" = "SERVICE_AUTO_START"
+    "delayed" = "SERVICE_DELAYED_AUTO_START"
+    "manual" = "SERVICE_DEMAND_START"
+    "disabled" = "SERVICE_DISABLED"
+}
+
 $params = Parse-Args $args
 
 $result = @{
@@ -24,7 +31,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $application = Get-AnsibleParam -obj $params -name "application" -type "str"
 $appParameters = Get-AnsibleParam -obj $params -name "app_parameters"
 $appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
-$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","delayed","manual","disabled" -resultobj $result
+$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
 
 $stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "str"
 $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "str"
@@ -429,8 +436,7 @@ function Update-NssmServiceStartMode {
         Fail-Json -obj $result -message "Error updating start mode for service ""$service"""
     }
 
-    $modes=@{"auto" = "SERVICE_AUTO_START"; "delayed" = "SERVICE_DELAYED_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
-    $mappedMode = $modes.$mode
+    $mappedMode = $start_modes_map.$mode
     if ($nssm_result.stdout -notlike "*$mappedMode*") {
         $nssm_result = Invoke-NssmCommand -arguments @("set", $service, "Start", $mappedMode)
 
@@ -526,72 +532,35 @@ function Stop-NssmService {
     }
 
     if ($currentStatus.stdout -notlike "*SERVICE_STOPPED*") {
-        $nssm_result = Invoke-NssmCommand -arguments @("stop", $service)
-
-        if ($nssm_result.rc -ne 0) {
-            $result.nssm_error_cmd = $nssm_result.arguments
-            $result.nssm_error_log = $nssm_result.stderr
-            Fail-Json -obj $result -message "Error stopping service ""$service"""
-        }
-
+        Invoke-NssmStop -service $service
         $result.changed_by = "stop_service"
-        $result.changed = $true
     }
 }
 
-function Restart-NssmService {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service
-    )
-
-    Invoke-NssmStop -service $service
-    Invoke-NssmStart -service $service
-}
-
-function NssmProcedure
-{
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service
-    )
-
-    Install-NssmService -service $service -application $application
-    Update-NssmServiceAppParameters -service $service -appParameters $appParameters -appParametersFree $appParametersFree
-    Update-NssmServiceOutputFiles -service $service -stdout $stdoutFile -stderr $stderrFile
-    Update-NssmServiceDependencies -service $service -dependencies $dependencies
-    Update-NssmServiceCredentials -service $service -user $user -password $password
-    Update-NssmServiceStartMode -service $service -mode $startMode
-}
-
-if (($appParameters -ne $null) -and ($appParametersFree -ne $null))
-{
+if (($appParameters -ne $null) -and ($appParametersFree -ne $null)) {
     Fail-Json $result "Use either app_parameters or app_parameteres_free_form, but not both"
 }
+
 if (($appParameters -ne $null) -and ($appParameters -isnot [string])) {
     Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
 }
 
-switch ($state) {
-    "absent" {
-        Uninstall-NssmService -service $name
-    }
-    "present" {
-        NssmProcedure -service $name
-    }
-    "started" {
-        NssmProcedure -service $name
-        Start-NssmService -service $name
-    }
-    "stopped" {
-        NssmProcedure -service $name
+if ($state -eq 'absent') {
+    Uninstall-NssmService -service $name
+} else {
+    Install-NssmService -service $name -application $application
+    Update-NssmServiceAppParameters -service $name -appParameters $appParameters -appParametersFree $appParametersFree
+    Update-NssmServiceOutputFiles -service $name -stdout $stdoutFile -stderr $stderrFile
+    Update-NssmServiceDependencies -service $name -dependencies $dependencies
+    Update-NssmServiceCredentials -service $name -user $user -password $password
+    Update-NssmServiceStartMode -service $name -mode $startMode
+
+    if ($state -in "stopped","restarted") {
         Stop-NssmService -service $name
     }
-    "restarted" {
-        NssmProcedure -service $name
-        Restart-NssmService -service $name
+
+    if($state -in "started","restarted") {
+        Start-NssmService -service $name
     }
 }
 
