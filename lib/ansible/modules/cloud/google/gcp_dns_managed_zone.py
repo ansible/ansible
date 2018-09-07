@@ -77,7 +77,7 @@ EXAMPLES = '''
       dns_name: test.somewild2.example.com.
       description: test zone
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''

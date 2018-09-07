@@ -123,7 +123,7 @@ EXAMPLES = '''
       network: "{{ network }}"
       ip_cidr_range: 172.16.0.0/16
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''

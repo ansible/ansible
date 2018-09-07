@@ -198,7 +198,7 @@ EXAMPLES = '''
       port_range: 80-80
       ip_address: "{{ address.address }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''

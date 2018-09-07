@@ -100,7 +100,7 @@ EXAMPLES = '''
       name: "test_object"
       auto_create_subnetworks: true
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''

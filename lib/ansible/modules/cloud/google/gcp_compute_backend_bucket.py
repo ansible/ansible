@@ -96,7 +96,7 @@ EXAMPLES = '''
       description: A BackendBucket to connect LNB w/ Storage Bucket
       enable_cdn: true
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''

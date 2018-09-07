@@ -89,7 +89,7 @@ EXAMPLES = '''
       charset: utf8
       instance: "{{ instance }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''

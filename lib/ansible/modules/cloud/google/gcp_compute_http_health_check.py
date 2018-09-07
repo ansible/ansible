@@ -115,7 +115,7 @@ EXAMPLES = '''
       timeout_sec: 2
       unhealthy_threshold: 5
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''

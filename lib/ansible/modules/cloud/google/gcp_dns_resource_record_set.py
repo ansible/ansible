@@ -97,7 +97,7 @@ EXAMPLES = '''
       - 10.1.2.3
       - 40.5.6.7
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
