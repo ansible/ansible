@@ -119,8 +119,8 @@ stdout:
 '''
 
 import subprocess
-import codecs
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def add_remote(module, binary, name, flatpakrepo_url, method):
@@ -147,7 +147,7 @@ def remote_exists(module, binary, name, method):
     # The query operation for the remote needs to be run even in check mode
     output = _flatpak_command(module, False, command)
     # Convert name to byte-like object (For Python 2/3 compatibility)
-    byte_name = codecs.encode(name, 'utf-8')
+    byte_name = to_bytes(name, errors='surrogate_or_strict')
     for line in output.splitlines():
         listed_remote = line.split()
         if listed_remote[0] == byte_name:

@@ -125,9 +125,9 @@ stdout:
 '''
 
 import subprocess
-import codecs
-from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils._text import to_bytes, to_text
 
 
 def install_flat(module, binary, remote, name, method):
@@ -154,9 +154,9 @@ def flatpak_exists(module, binary, name, method):
     """Check if the flatpak is installed."""
     command = "{0} list --{1} --app".format(binary, method)
     output = _flatpak_command(module, False, command)
-    name = _parse_flatpak_name(name).lower()
+    parsed_name = _parse_flatpak_name(name).lower()
     # Convert name to byte-like object (For Python 2/3 compatibility)
-    byte_name = codecs.encode(name, 'utf-8')
+    byte_name = to_bytes(parsed_name, errors='surrogate_or_strict')
     if byte_name in output.lower():
         return True
     return False
@@ -171,12 +171,12 @@ def _match_installed_flat_name(module, binary, name, method):
     output = _flatpak_command(module, False, command)
     parsed_name = _parse_flatpak_name(name)
     # Convert name to byte-like object (For Python 2/3 compatibility)
-    byte_parsed_name = codecs.encode(parsed_name, 'utf-8')
+    byte_parsed_name = to_bytes(parsed_name, errors='surrogate_or_strict')
     for line in output.splitlines():
         if byte_parsed_name.lower() in line.lower():
             matched_name = line.split()[0]
             # decode the byte-like object into a string
-            return codecs.decode(matched_name, 'utf-8')
+            return to_text(matched_name, errors='surrogate_or_strict')
 
     result['msg'] = "Flatpak removal failed: Could not match any installed flatpaks to " +\
         "the name `{0}`. ".format(_parse_flatpak_name(name)) +\
