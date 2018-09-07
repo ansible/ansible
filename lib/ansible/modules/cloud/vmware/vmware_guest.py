@@ -610,7 +610,7 @@ class PyVmomiDeviceHelper(object):
         cdrom_spec = vim.vm.device.VirtualDeviceSpec()
         cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         cdrom_spec.device = vim.vm.device.VirtualCdrom()
-        cdrom_spec.device.controllerKey = ide_ctl.device.key
+        cdrom_spec.device.controllerKey = ide_ctl.key
         cdrom_spec.device.key = -1
         cdrom_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         cdrom_spec.device.connectable.allowGuestControl = True
