@@ -239,22 +239,25 @@ class InvalidPrivsError(Exception):
 #
 
 
-# User Authentication Management was change in MySQL 5.7
-# This is a generic check for if the server version is less than version 5.7
-def server_version_check(cursor):
+# User Authentication Management changed in MySQL 5.7 and MariaDB 10.2.0
+def use_old_user_mgmt(cursor):
     cursor.execute("SELECT VERSION()")
     result = cursor.fetchone()
     version_str = result[0]
     version = version_str.split('.')
 
-    # Currently we have no facility to handle new-style password update on
-    # mariadb and the old-style update continues to work
     if 'mariadb' in version_str.lower():
-        return True
-    if int(version[0]) <= 5 and int(version[1]) < 7:
-        return True
+        # Prior to MariaDB 10.2
+        if int(version[0]) * 1000 + int(version[1]) < 100002:
+            return True
+        else:
+            return False
     else:
-        return False
+        # Prior to MySQL 5.7
+        if int(version[0]) * 1000 + int(version[1]) < 5007:
+            return True
+        else:
+            return False
 
 
 def get_mode(cursor):
@@ -319,12 +322,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
         # Handle clear text and hashed passwords.
         if bool(password):
             # Determine what user management method server uses
-            old_user_mgmt = server_version_check(cursor)
+            old_user_mgmt = use_old_user_mgmt(cursor)
 
-            if old_user_mgmt:
-                cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user, host))
-            else:
-                cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user, host))
+            cursor.execute("SELECT COALESCE( CASE WHEN Password = '' THEN NULL ELSE Password END, CASE WHEN authentication_string = '' THEN NULL ELSE authentication_string END ) FROM user WHERE user = %s AND host = %s", (user, host))
             current_pass_hash = cursor.fetchone()
 
             if encrypted:
