@@ -1,3 +1,5 @@
+.. _testing_integration:
+
 *****************
 Integration tests
 *****************
