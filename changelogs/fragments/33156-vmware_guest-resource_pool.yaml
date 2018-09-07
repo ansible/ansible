@@ -1,0 +1,2 @@
+bugfixes:
+- Rewrite get_resource_pool method for correct resource_pool selection.
