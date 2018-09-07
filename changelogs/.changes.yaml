@@ -391,3 +391,23 @@ releases:
       lookup:
       - cpm_metering
     release_date: '2018-08-31'
+  2.7.0rc1:
+    codename: In the Light
+    fragments:
+    - 16748-docker_container-memory.yaml
+    - 33579-docker_container-log_driver.yaml
+    - 42380-docker_container-check-mode.yaml
+    - 42641-44812-docker-env-variables.yaml
+    - 42857-docker_container-working_dir.yaml
+    - 44808-docker_container-idempotency.yaml
+    - aws_bugfix_backports.yml
+    - cb_fix_config.yml
+    - dnf-group-removal.yaml
+    - ec2_vpc_route_table_replace_route_fix.yaml
+    - elb_target_group_fix_KeyError.yaml
+    - systemd_user_dep_fixes.yml
+    - terminal_plugin_nxos_iosxr.yaml
+    - v2.7.0rc1_summary.yaml
+    modules:
+    - online_user_facts
+    release_date: '2018-09-06'
