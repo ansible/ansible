@@ -449,60 +449,10 @@ def list_snapshots(vm):
 
 def get_vnc_extraconfig(vm):
     result = {}
-    extraconfig = vm.config.extraConfig
-    for opts in extraconfig:
+    for opts in vm.config.extraConfig:
         for optkeyname in ['enabled', 'ip', 'port', 'password']:
             if opts.key.lower() == "remotedisplay.vnc." + optkeyname:
                 result[optkeyname] = opts.value
-    return result
-
-
-def set_vnc_extraconfig(content, vm, enabled, ip, port, password):
-    result = dict(
-        changed=False,
-        failed=False,
-    )
-    # set new values
-    key_prefix = "remotedisplay.vnc."
-    new_values = dict()
-    for key in ['enabled', 'ip', 'port', 'password']:
-        new_values[key_prefix + key] = ""
-    if enabled:
-        new_values[key_prefix + "enabled"] = "true"
-        new_values[key_prefix + "password"] = str(password).strip()
-        new_values[key_prefix + "ip"] = str(ip).strip()
-        new_values[key_prefix + "port"] = str(port).strip()
-    # get current vnc config
-    current_values = get_vnc_extraconfig(vm)
-    # check if any value is changed
-    reconfig_vm = False
-    for key, val in new_values.items():
-        key = key.replace(key_prefix, "")
-        current_value = current_values.get(key, "")
-        # enabled is not case-sensitive
-        if key == "enabled":
-            current_value = current_value.lower()
-            val = val.lower()
-        if current_value != val:
-            reconfig_vm = True
-    if not reconfig_vm:
-        return result
-    # reconfigure vm
-    spec = vim.vm.ConfigSpec()
-    spec.extraConfig = []
-    for key, val in new_values.items():
-        opt = vim.option.OptionValue()
-        opt.key = key
-        opt.value = val
-        spec.extraConfig.append(opt)
-    task = vm.ReconfigVM_Task(spec)
-    wait_for_task(task)
-    if task.info.state == 'error':
-        result['failed'] = True
-        result['msg'] = task.info.error.msg
-    else:
-        result['changed'] = True
-        result['instance'] = gather_vm_facts(content, vm)
     return result
 
 
