@@ -1,3 +1,5 @@
+.. _testing_units:
+
 **********
 Unit Tests
 **********
