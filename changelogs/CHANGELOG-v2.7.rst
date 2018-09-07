@@ -2,6 +2,59 @@
 Ansible 2.7 "In the Light" Release Notes
 ========================================
 
+.. contents:: Topics
+
+
+v2.7.0rc1
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-09-06
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- dnf - group removal does not work if group was installed with Ansible because of dnf upstream bug https://bugzilla.redhat.com/show_bug.cgi?id=1620324
+
+Bugfixes
+--------
+
+- Add argspec to aws_application_scaling_policy module to handle metric specifications, scaling cooldowns, and target values. https://github.com/ansible/ansible/pull/45235
+- Allow arbitrary ``log_driver`` for docker_container (https://github.com/ansible/ansible/pull/33579).
+- Fix ec2_group support for multi-account and peered VPC security groups. Reported in https://github.com/ansible/ansible/issue/44788 and fixed in https://github.com/ansible/ansible/pull/45296
+- Fix ecs_taskdefinition handling of changed role_arn. If the task role in a ECS task definition changes ansible should create a new revsion of the task definition. https://github.com/ansible/ansible/pull/45317
+- Fix health check parameter handling in elb_target_group per https://github.com/ansible/ansible/issues/43244 about health_check_port. Fixed in https://github.com/ansible/ansible/pull/45314
+- Fix lambda_policy updates when principal is an account number. Backport of https://github.com/ansible/ansible/pull/44871
+- Fix python2.6 `nothing to repeat` nxos terminal plugin bug (https://github.com/ansible/ansible/pull/45271).
+- Fix s3_lifecycle module backwards compatibility without providing prefix. Blank prefixes regression was introduced in boto3 rewrite. https://github.com/ansible/ansible/pull/45318
+- Fix terminal plugin regex nxos, iosxr (https://github.com/ansible/ansible/pull/45135).
+- Remove spurious `changed=True` returns when ec2_group module is used with numeric ports. https://github.com/ansible/ansible/pull/45240
+- Support key names that contain spaces in ec2_metadata_facts module. https://github.com/ansible/ansible/pull/45313
+- The docker_* modules respect the DOCKER_* environment variables again (https://github.com/ansible/ansible/pull/42641).
+- corrected and clarified 'user' option deprecation in systemd module in favor of 'scope' option.
+- docker_container: fixing ``working_dir`` idempotency problem (https://github.com/ansible/ansible/pull/42857)
+- docker_container: makes unit parsing for memory sizes more consistent, and fixes idempotency problem when ``kernel_memory`` is set (see https://github.com/ansible/ansible/pull/16748 and https://github.com/ansible/ansible/issues/42692)
+- ec2_vpc_route_table - check the origin before replacing routes. Routes with the origin 'EnableVgwRoutePropagation' may not be replaced.
+- elb_target_group - cast target ports to integers before making API calls after the key 'Targets' is in params.
+- fixed typo in config that prevented keys matching
+- fixes docker_container check and debug mode (https://github.com/ansible/ansible/pull/42380)
+- improves docker_container idempotency (https://github.com/ansible/ansible/pull/44808)
+
+New Modules
+-----------
+
+Cloud
+~~~~~
+
+online
+^^^^^^
+
+- online_user_facts - Gather facts about Online user.
+
 v2.7.0b1
 ========
 
