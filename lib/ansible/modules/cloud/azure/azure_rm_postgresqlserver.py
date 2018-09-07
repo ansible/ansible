@@ -267,7 +267,6 @@ class AzureRMServers(AzureRMModuleBase):
                     self.tags = newtags
                 self.to_do = Actions.Update
 
-
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the PostgreSQL Server instance")
 
