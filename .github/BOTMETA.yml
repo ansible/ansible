@@ -855,8 +855,9 @@ files:
       - inventory
     labels:
       - cloud
-  lib/ansible/plugins/inventory/vultr.py: *vultr
+  lib/ansible/plugins/inventory/netbox.py: sieben
   lib/ansible/plugins/inventory/scaleway.py: *scaleway
+  lib/ansible/plugins/inventory/vultr.py: *vultr
   lib/ansible/plugins/inventory/yaml.py:
     support: core
 ###############################
