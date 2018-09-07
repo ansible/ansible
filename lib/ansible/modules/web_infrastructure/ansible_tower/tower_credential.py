@@ -58,7 +58,7 @@ options:
         - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
     ssh_key_data:
       description:
-        - SSH private key. In order to use a file content, use the lookup function
+        - SSH private key content. To extract the content from a file path, use the lookup function (see examples).
       required: False
     ssh_key_unlock:
       description:
@@ -124,6 +124,7 @@ EXAMPLES = '''
     organization: test-org
     state: present
     tower_config_file: "~/tower_cli.cfg"
+
 - name: Create a valid SCM credential from a private_key file
   tower_credential:
     name: SCM Credential
