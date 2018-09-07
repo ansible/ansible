@@ -295,6 +295,7 @@ def gather_vm_facts(content, vm):
         'customvalues': {},
         'snapshots': [],
         'current_snapshot': None,
+        'vnc': {},
     }
 
     # facts that may or may not exist
@@ -398,6 +399,8 @@ def gather_vm_facts(content, vm):
     if 'snapshots' in snapshot_facts:
         facts['snapshots'] = snapshot_facts['snapshots']
         facts['current_snapshot'] = snapshot_facts['current_snapshot']
+
+    facts['vnc'] = get_vnc_extraconfig(vm)
     return facts
 
 
@@ -441,6 +444,15 @@ def list_snapshots(vm):
         result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
     else:
         result['current_snapshot'] = dict()
+    return result
+
+
+def get_vnc_extraconfig(vm):
+    result = {}
+    for opts in vm.config.extraConfig:
+        for optkeyname in ['enabled', 'ip', 'port', 'password']:
+            if opts.key.lower() == "remotedisplay.vnc." + optkeyname:
+                result[optkeyname] = opts.value
     return result
 
 
