@@ -24,7 +24,7 @@ from ansible.module_utils.six.moves import configparser, StringIO
 
 
 def from_ini(o):
-    parser = configparser.ConfigParser()
+    parser = configparser.RawConfigParser()
     parser.readfp(StringIO(o))
     d = dict(parser._sections)
     for k in d:
@@ -36,8 +36,8 @@ def from_ini(o):
 
 def to_ini(o):
     data = copy.deepcopy(o)
-    defaults = configparser.ConfigParser(data.pop('DEFAULT', {}))
-    parser = configparser.ConfigParser()
+    defaults = configparser.RawConfigParser(data.pop('DEFAULT', {}))
+    parser = configparser.RawConfigParser()
     for section, items in data.items():
         parser.add_section(section)
         for k, v in items.items():
