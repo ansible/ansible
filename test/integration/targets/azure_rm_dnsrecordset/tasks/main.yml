@@ -182,7 +182,7 @@
       - not results.changed
       - results.ansible_facts.azure_dnsrecordset[0].name == '@'
       - results.ansible_facts.azure_dnsrecordset[1].name == '@'
-      - results.ansible_facts.azure_dnsrecordset[2].name == 'www'
+      - results.ansible_facts.azure_dnsrecordset[4].name == 'www'
 
 - name: Delete DNS zone
   azure_rm_dnszone:
