@@ -184,12 +184,6 @@
       - results.ansible_facts.azure_dnsrecordset[1].name == '@'
       - results.ansible_facts.azure_dnsrecordset[4].name == 'www'
 
-- name: Delete DNS zone
-  azure_rm_dnszone:
-    resource_group: "{{ resource_group }}"
-    name: "{{ domain_name }}.com"
-    state: absent
-
 #
 # clean up
 #
@@ -218,3 +212,9 @@
 - name:
   assert:
     that: not results.changed
+
+- name: Delete DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+    state: absent
