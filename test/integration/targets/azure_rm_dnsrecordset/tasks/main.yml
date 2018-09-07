@@ -178,6 +178,38 @@
     that:
       - results.changed
 
+#
+# azure_rm_dnsrecordset_facts
+#
+
+- name: Retrieve DNS Record Set Facts for single Record Set
+  azure_rm_dnsrecordset_facts:
+    resource_group: "{{ resource_group }}"
+    zone_name: "{{ domain_name }}.com"
+    relative_name: www
+    record_type: A
+  register: results
+
+- name: Assert that facts module returned result for single Record Set
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_dnsrecordset[0].name == 'www'
+
+- name: Retrieve DNS Record Set Facts for all Record Sets
+  azure_rm_dnsrecordset_facts:
+    resource_group: "{{ resource_group }}"
+    zone_name: "{{ domain_name }}.com"
+  register: results
+
+- name: Assert that facts module returned result for all Record Sets
+  assert:
+    that: 
+      - not results.changed
+      - results.ansible_facts.azure_dnsrecordset[0].name == '@'
+      - results.ansible_facts.azure_dnsrecordset[1].name == '@'
+      - results.ansible_facts.azure_dnsrecordset[2].name == 'www'
+
 - name: Delete DNS zone
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
