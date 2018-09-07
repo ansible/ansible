@@ -75,7 +75,7 @@ Ansible releases a new major release of Ansible approximately every two months. 
    network/index
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Reference & Appendices
 
    ../modules/modules_by_category
@@ -90,6 +90,8 @@ Ansible releases a new major release of Ansible approximately every two months. 
    dev_guide/testing/sanity/index
    reference_appendices/faq
    reference_appendices/glossary
+   reference_appendices/module_utils
+   reference_appendices/special_variables
    reference_appendices/tower
 
 
