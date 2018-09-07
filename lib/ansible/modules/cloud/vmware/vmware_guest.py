@@ -552,6 +552,7 @@ try:
 except ImportError:
     pass
 
+from random import randint
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
@@ -566,38 +567,30 @@ class PyVmomiDeviceHelper(object):
     def __init__(self, module):
         self.module = module
         self.next_disk_unit_number = 0
+        self.scsi_device_type = {
+            'lsilogic': vim.vm.device.VirtualLsiLogicController,
+            'paravirtual': vim.vm.device.ParaVirtualSCSIController,
+            'buslogic': vim.vm.device.VirtualBusLogicController,
+            'lsilogicsas': vim.vm.device.VirtualLsiLogicSASController,
+        }
 
-    @staticmethod
-    def create_scsi_controller(scsi_type):
+    def create_scsi_controller(self, scsi_type):
         scsi_ctl = vim.vm.device.VirtualDeviceSpec()
         scsi_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        if scsi_type == 'lsilogic':
-            scsi_ctl.device = vim.vm.device.VirtualLsiLogicController()
-        elif scsi_type == 'paravirtual':
-            scsi_ctl.device = vim.vm.device.ParaVirtualSCSIController()
-        elif scsi_type == 'buslogic':
-            scsi_ctl.device = vim.vm.device.VirtualBusLogicController()
-        elif scsi_type == 'lsilogicsas':
-            scsi_ctl.device = vim.vm.device.VirtualLsiLogicSASController()
-
-        scsi_ctl.device.deviceInfo = vim.Description()
-        scsi_ctl.device.slotInfo = vim.vm.device.VirtualDevice.PciBusSlotInfo()
-        scsi_ctl.device.slotInfo.pciSlotNumber = 16
-        scsi_ctl.device.controllerKey = 100
-        scsi_ctl.device.unitNumber = 3
+        scsi_device = self.scsi_device_type.get(scsi_type, vim.vm.device.ParaVirtualSCSIController)
+        scsi_ctl.device = scsi_device()
         scsi_ctl.device.busNumber = 0
+        # While creating a new SCSI controller, temporary key value
+        # should be unique negative integers
+        scsi_ctl.device.key = -randint(1000, 9999)
         scsi_ctl.device.hotAddRemove = True
         scsi_ctl.device.sharedBus = 'noSharing'
         scsi_ctl.device.scsiCtlrUnitNumber = 7
 
         return scsi_ctl
 
-    @staticmethod
-    def is_scsi_controller(device):
-        return isinstance(device, vim.vm.device.VirtualLsiLogicController) or \
-            isinstance(device, vim.vm.device.ParaVirtualSCSIController) or \
-            isinstance(device, vim.vm.device.VirtualBusLogicController) or \
-            isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
+    def is_scsi_controller(self, device):
+        return isinstance(device, tuple(self.scsi_device_type.values()))
 
     @staticmethod
     def create_ide_controller():
@@ -605,6 +598,9 @@ class PyVmomiDeviceHelper(object):
         ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         ide_ctl.device = vim.vm.device.VirtualIDEController()
         ide_ctl.device.deviceInfo = vim.Description()
+        # While creating a new IDE controller, temporary key value
+        # should be unique negative integers
+        ide_ctl.device.key = -randint(200, 299)
         ide_ctl.device.busNumber = 0
 
         return ide_ctl
@@ -1090,38 +1086,32 @@ class PyVmomiHelper(PyVmomi):
                         # Don't fail if VM is already upgraded.
                         pass
 
-    def get_vm_cdrom_device(self, vm=None):
-        if vm is None:
+    def get_device_by_type(self, vm=None, type=None):
+        if vm is None or type is None:
             return None
 
         for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualCdrom):
+            if isinstance(device, type):
                 return device
 
         return None
+
+    def get_vm_cdrom_device(self, vm=None):
+        return self.get_device_by_type(vm=vm, type=vim.vm.device.VirtualCdrom)
 
     def get_vm_ide_device(self, vm=None):
-        if vm is None:
-            return None
-
-        for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualIDEController):
-                return device
-
-        return None
+        return self.get_device_by_type(vm=vm, type=vim.vm.device.VirtualIDEController)
 
     def get_vm_network_interfaces(self, vm=None):
-        if vm is None:
-            return []
-
         device_list = []
+        if vm is None:
+            return device_list
+
+        nw_device_types = (vim.vm.device.VirtualPCNet32, vim.vm.device.VirtualVmxnet2,
+                           vim.vm.device.VirtualVmxnet3, vim.vm.device.VirtualE1000,
+                           vim.vm.device.VirtualE1000e, vim.vm.device.VirtualSriovEthernetCard)
         for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualPCNet32) or \
-               isinstance(device, vim.vm.device.VirtualVmxnet2) or \
-               isinstance(device, vim.vm.device.VirtualVmxnet3) or \
-               isinstance(device, vim.vm.device.VirtualE1000) or \
-               isinstance(device, vim.vm.device.VirtualE1000e) or \
-               isinstance(device, vim.vm.device.VirtualSriovEthernetCard):
+            if isinstance(device, nw_device_types):
                 device_list.append(device)
 
         return device_list
