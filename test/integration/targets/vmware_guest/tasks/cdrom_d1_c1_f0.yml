@@ -135,7 +135,7 @@
     folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
     name: CDROM-Test-38679
     datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusterlist['json'][0] }}"
+    cluster: "{{ clusterlist['json'][0].split('/')[-1] }}"
     resource_pool: Resources
     guest_id: centos64Guest
     hardware:
