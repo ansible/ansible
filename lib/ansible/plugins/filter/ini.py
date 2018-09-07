@@ -45,7 +45,7 @@ def to_ini(o):
     out = StringIO()
     defaults.write(out)
     parser.write(out)
-    return out.getvalue()
+    return out.getvalue().rstrip()
 
 
 class FilterModule(object):
