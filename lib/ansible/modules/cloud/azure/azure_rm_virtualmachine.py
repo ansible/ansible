@@ -30,7 +30,7 @@ description:
       M(azure_rm_virtualmachineimage_facts). In Ansible 2.5 and newer, custom images can be used as well, see the
       examples for more details.
     - If you need to use the I(custom_data) option, many images in the marketplace are not cloud-init ready. Thus, data
-      sent to I(custom_data) would be ignored. If the image you are attempting to use is not listed in 
+      sent to I(custom_data) would be ignored. If the image you are attempting to use is not listed in
       U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
       follow these steps U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
 
