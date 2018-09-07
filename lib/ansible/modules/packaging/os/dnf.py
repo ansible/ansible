@@ -184,6 +184,22 @@ options:
     default: "no"
     type: bool
     version_added: "2.7"
+  lock_poll:
+    description:
+      - Poll interval to wait for the dnf lockfile to be freed.
+      - "By default this is set to -1, if you set it to a positive integer it will enable to polling"
+    required: false
+    default: -1
+    type: int
+    version_added: "2.8"
+  lock_timeout:
+    description:
+      - Amount of time to wait for the dnf lockfile to be freed
+      - This should be set along with C(lock_poll) to enable the lockfile polling.
+    required: false
+    default: 10
+    type: int
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -286,6 +302,8 @@ class DnfModule(YumDnf):
         super(DnfModule, self).__init__(module)
 
         self._ensure_dnf()
+        self.lockfile = "/var/cache/dnf/*_lock.pid"
+        self.pkg_mgr_name = "dnf"
 
     def _sanitize_dnf_error_msg(self, spec, error):
         """

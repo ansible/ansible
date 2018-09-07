@@ -192,6 +192,22 @@ options:
     default: "no"
     type: bool
     version_added: "2.7"
+  lock_poll:
+    description:
+      - Poll interval to wait for the yum lockfile to be freed.
+      - "By default this is set to -1, if you set it to a positive integer it will enable to polling"
+    required: false
+    default: -1
+    type: int
+    version_added: "2.8"
+  lock_timeout:
+    description:
+      - Amount of time to wait for the yum lockfile to be freed
+      - This should be set along with C(lock_poll) to enable the lockfile polling.
+    required: false
+    default: 10
+    type: int
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -373,6 +389,9 @@ class YumModule(YumDnf):
 
         # This populates instance vars for all argument spec params
         super(YumModule, self).__init__(module)
+
+        self.pkg_mgr_name = "yum"
+        self.lockfile = '/var/run/yum.pid'
 
     def fetch_rpm_from_url(self, spec):
         # FIXME: Remove this once this PR is merged:
@@ -1439,6 +1458,8 @@ class YumModule(YumDnf):
             error_msgs.append('The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
         if not HAS_YUM_PYTHON:
             error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
+
+        self.wait_for_lock()
 
         if self.disable_excludes and yum.__version_info__ < (3, 4):
             self.module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
