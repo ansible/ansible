@@ -1,5 +1,3 @@
-:orphan:
-
 .. _testing_integration:
 
 *****************
