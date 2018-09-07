@@ -38,7 +38,7 @@ The Core Team is aware that this can be a difficult process at times. Sometimes,
 Roles on Core
 =============
 * Core committers: Fine to do PRs for most things, but we should have a timebox. Hanging PRs may merge on the judgement of these devs.
-* :ref:`Module maintainers <maintainers>``: Module maintainers own specific modules and have indirect commit access via the current module PR mechanisms.
+* :ref:`Module maintainers <maintainers>`: Module maintainers own specific modules and have indirect commit access via the current module PR mechanisms.
 
 General rules
 =============
