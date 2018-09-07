@@ -17,11 +17,12 @@ In addition the ones provided by Jinja2, Ansible ships with it's own and allows 
 Filters For Formatting Data
 ```````````````````````````
 
-The following filters will take a data structure in a template and render it in a slightly different format.  These
+The following filters will take a data structure in a template and render it in a slightly different format. These
 are occasionally useful for debugging::
 
     {{ some_variable | to_json }}
     {{ some_variable | to_yaml }}
+    {{ some_variable | to_ini }}
 
 For human readable output, you can use::
 
@@ -37,6 +38,7 @@ Alternatively, you may be reading in some already formatted data::
 
     {{ some_variable | from_json }}
     {{ some_variable | from_yaml }}
+    {{ some_variable | from_ini }}
 
 for example::
 
@@ -61,6 +63,10 @@ for example::
    - debug:
        msg: '{{ item }}'
     loop: '{{ result.stdout | from_yaml_all | list }}'
+
+.. versionadded:: 2.8
+
+The ``to_ini`` and ``from_ini`` allow converting a dict to ini format, and ini format to a dict.
 
 
 .. _forcing_variables_to_be_defined:
