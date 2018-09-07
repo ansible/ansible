@@ -531,10 +531,10 @@ A helpful development approach to this should be to ensure that all of the tests
 run under Python 2.6 and that each assertion in the test cases has been checked to work by breaking
 the code in Ansible to trigger that failure.
 
-.. warning:: Maintain Python-2.6 compatibility
+.. warning:: Maintain Python 2.6 compatibility
 
-    Please remember that modules need to maintain compatibility with Python-2.6 so the unittests for
-    modules should also be compatible with Python-2.6.
+    Please remember that modules need to maintain compatibility with Python 2.6 so the unittests for
+    modules should also be compatible with Python 2.6.
 
 
 .. seealso::

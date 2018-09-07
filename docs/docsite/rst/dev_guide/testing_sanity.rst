@@ -1,3 +1,5 @@
+.. _testing_sanity:
+
 ************
 Sanity Tests
 ************
