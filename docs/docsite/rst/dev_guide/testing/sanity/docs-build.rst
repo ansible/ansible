@@ -1,4 +1,4 @@
-.. orphan:
+:orphan:
 
 Sanity Tests » docs-build
 =========================
