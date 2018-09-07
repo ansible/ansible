@@ -153,6 +153,10 @@ options:
         default: ReadOnly
         aliases:
             - disk_caching
+    os_disk_size_gb:
+        description:
+            - Type of OS disk size in GB.
+        version_added: "2.7"
     os_type:
         description:
             - Base type of operating system.
@@ -280,6 +284,13 @@ options:
             promotion_code:
                 description:
                     - optional promotion code
+    accept_terms:
+        description:
+            - Accept terms for marketplace images that require it
+            - Only Azure service admin/account admin users can purchase images from the marketplace
+        type: bool
+        default: false
+        version_added: "2.7"
 
 extends_documentation_fragment:
     - azure
@@ -288,7 +299,6 @@ extends_documentation_fragment:
 author:
     - "Chris Houseknecht (@chouseknecht)"
     - "Matt Davis (@nitzmahone)"
-
 '''
 EXAMPLES = '''
 
@@ -304,21 +314,27 @@ EXAMPLES = '''
       sku: '7.1'
       version: latest
 
+- name: Create an availability set for managed disk vm
+  azure_rm_availabilityset:
+    name: avs-managed-disk
+    resource_group: Testing
+    platform_update_domain_count: 5
+    platform_fault_domain_count: 2
+    sku: Aligned
+
 - name: Create a VM with managed disk
   azure_rm_virtualmachine:
     resource_group: Testing
-    name: testvm001
-    vm_size: Standard_D4
-    managed_disk_type: Standard_LRS
+    name: vm-managed-disk
     admin_username: adminUser
-    ssh_public_keys:
-      - path: /home/adminUser/.ssh/authorized_keys
-        key_data: < insert yor ssh public key here... >
+    availability_set: avs-managed-disk
+    managed_disk_type: Standard_LRS
     image:
       offer: CoreOS
       publisher: CoreOS
       sku: Stable
       version: latest
+    vm_size: Standard_D4
 
 - name: Create a VM with existing storage account and NIC
   azure_rm_virtualmachine:
@@ -407,6 +423,35 @@ EXAMPLES = '''
     image:
       name: customimage001
       resource_group: Testing
+
+- name: Create VM with spcified OS disk size
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: big-os-disk
+    admin_username: chouseknecht
+    admin_password: <your password here>
+    os_disk_size_gb: 512
+    image:
+      offer: CentOS
+      publisher: OpenLogic
+      sku: '7.1'
+      version: latest
+
+- name: Create VM with OS and Plan, accepting the terms
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: f5-nva
+    admin_username: chouseknecht
+    admin_password: <your password here>
+    image:
+      publisher: f5-networks
+      offer: f5-big-ip-best
+      sku: f5-bigip-virtual-edition-200m-best-hourly
+      version: latest
+    plan:
+      name: f5-bigip-virtual-edition-200m-best-hourly
+      product: f5-big-ip-best
+      publisher: f5-networks
 
 - name: Power Off
   azure_rm_virtualmachine:
@@ -659,6 +704,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
                                  default='ReadOnly'),
+            os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
@@ -673,7 +719,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
             data_disks=dict(type='list'),
-            plan=dict(type='dict')
+            plan=dict(type='dict'),
+            accept_terms=dict(type='bool', default=False)
         )
 
         self.resource_group = None
@@ -694,6 +741,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.storage_blob_name = None
         self.os_type = None
         self.os_disk_caching = None
+        self.os_disk_size_gb = None
         self.managed_disk_type = None
         self.network_interface_names = None
         self.remove_on_absent = set()
@@ -710,6 +758,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.differences = None
         self.data_disks = None
         self.plan = None
+        self.accept_terms = None
 
         self.results = dict(
             changed=False,
@@ -844,6 +893,20 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     differences.append('OS Disk caching')
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['caching'] = self.os_disk_caching
+
+                if self.os_disk_size_gb and \
+                   self.os_disk_size_gb != vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']:
+                    self.log('CHANGED: virtual machine {0} - OS disk size '.format(self.name))
+                    differences.append('OS Disk size')
+                    changed = True
+                    vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB'] = self.os_disk_size_gb
+
+                if self.vm_size and \
+                   self.vm_size != vm_dict['properties']['hardwareProfile']['vmSize']:
+                    self.log('CHANGED: virtual machine {0} - size '.format(self.name))
+                    differences.append('VM size')
+                    changed = True
+                    vm_dict['properties']['hardwareProfile']['vmSize'] = self.vm_size
 
                 update_tags, vm_dict['tags'] = self.update_tags(vm_dict.get('tags', dict()))
                 if update_tags:
@@ -980,6 +1043,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
                                 caching=self.os_disk_caching,
+                                disk_size_gb=self.os_disk_size_gb
                             ),
                             image_reference=image_reference,
                         ),
@@ -1065,6 +1129,24 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                         vm_resource.storage_profile.data_disks = data_disks
 
+                    # Before creating VM accept terms of plan if `accept_terms` is True
+                    if self.accept_terms is True:
+                        if not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
+                            self.fail("parameter error: plan must be specified and include name, product, and publisher")
+                        try:
+                            plan_name = self.plan.get('name')
+                            plan_product = self.plan.get('product')
+                            plan_publisher = self.plan.get('publisher')
+                            term = self.marketplace_client.marketplace_agreements.get(
+                                publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name)
+                            term.accepted = True
+                            agreement = self.marketplace_client.marketplace_agreements.create(
+                                publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name, parameters=term)
+                        except Exception as exc:
+                            self.fail(("Error accepting terms for virtual machine {0} with plan {1}. " +
+                                       "Only service admin/account admin users can purchase images " +
+                                       "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
+
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vm(vm_resource)
 
@@ -1110,8 +1192,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 create_option=vm_dict['properties']['storageProfile']['osDisk']['createOption'],
                                 os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
+                                disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']
                             ),
                             image_reference=self.compute_models.ImageReference(
+                                id=vm_dict['properties']['storageProfile']['imageReference']['id'],
+                            ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
                                 offer=vm_dict['properties']['storageProfile']['imageReference']['offer'],
                                 sku=vm_dict['properties']['storageProfile']['imageReference']['sku'],
@@ -1466,6 +1551,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                       self.image['offer'],
                                                                       self.image['sku'],
                                                                       self.image['version']))
+        return None
 
     def get_custom_image_reference(self, name, resource_group=None):
         try:
@@ -1482,6 +1568,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 return self.compute_models.ImageReference(id=vm_image.id)
 
         self.fail("Error could not find image with name {0}".format(name))
+        return None
 
     def get_availability_set(self, resource_group, name):
         try:

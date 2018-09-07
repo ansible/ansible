@@ -382,18 +382,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                         if isinstance(value, string_types) and '%' in value:
                             value = value.replace('%', '')
                         value = float(value)
-                    elif attribute.isa in ('list', 'barelist'):
+                    elif attribute.isa == 'list':
                         if value is None:
                             value = []
                         elif not isinstance(value, list):
-                            if isinstance(value, string_types) and attribute.isa == 'barelist':
-                                display.deprecated(
-                                    "Using comma separated values for a list has been deprecated. "
-                                    "You should instead use the correct YAML syntax for lists. "
-                                )
-                                value = value.split(',')
-                            else:
-                                value = [value]
+                            value = [value]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
@@ -581,6 +574,7 @@ class Base(FieldAttributeBase):
     _no_log = FieldAttribute(isa='bool')
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
+    _ignore_unreachable = FieldAttribute(isa='bool')
     _check_mode = FieldAttribute(isa='bool')
     _diff = FieldAttribute(isa='bool')
     _any_errors_fatal = FieldAttribute(isa='bool')

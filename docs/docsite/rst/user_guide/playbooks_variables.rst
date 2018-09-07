@@ -161,11 +161,17 @@ Information discovered from systems: Facts
 
 There are other places where variables can come from, but these are a type of variable that are discovered, not set by the user.
 
-Facts are information derived from speaking with your remote systems.
+Facts are information derived from speaking with your remote systems. You can find a complete set under the ``ansible_facts`` variable,
+most facts are also 'injected' as top level variables preserving the ``ansible_`` prefix, but some are dropped due to conflicts.
+This can be disabled via the :ref:INJECT_FACTS_AS_VARS setting.
 
 An example of this might be the IP address of the remote host, or what the operating system is.
 
-To see what information is available, try the following::
+To see what information is available, try the following in a play::
+
+    - debug: var=ansible_facts
+
+To see the 'raw' information as gathered::
 
     ansible hostname -m setup
 
@@ -406,15 +412,15 @@ This will return a large amount of variable data, which may look like this, as t
 
 In the above the model of the first harddrive may be referenced in a template or playbook as::
 
-    {{ ansible_devices.sda.model }}
+    {{ ansible_facts['devices']['sda']['model'] }}
 
 Similarly, the hostname as the system reports it is::
 
-    {{ ansible_nodename }}
+    {{ ansible_facts['nodename'] }}
 
 and the unqualified hostname shows the string before the first period(.)::
 
-    {{ ansible_hostname }}
+    {{ ansible_facts['hostname'] }}
 
 Facts are frequently used in conditionals (see :doc:`playbooks_conditionals`) and also in templates.
 
@@ -475,11 +481,11 @@ And you will see the following fact added::
 
 And this data can be accessed in a ``template/playbook`` as::
 
-     {{ ansible_local.preferences.general.asdf }}
+     {{ ansible_local['preferences']['general']['asdf'] }}
 
 The local namespace prevents any user supplied fact from overriding system facts or variables defined elsewhere in the playbook.
 
-.. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local.preferences.general.xyz }}`` and not ``{{ ansible_local.preferences.general.XYZ }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
+.. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local['preferences']['general']['xyz'] }}`` and not ``{{ ansible_local['preferences']['general']['XYZ'] }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
 
 .. _ConfigParser: https://docs.python.org/2/library/configparser.html
 .. _optionxform: https://docs.python.org/2/library/configparser.html#ConfigParser.RawConfigParser.optionxform
@@ -526,7 +532,7 @@ Fact Caching
 
 As shown elsewhere in the docs, it is possible for one server to reference variables about another, like so::
 
-    {{ hostvars['asdf.example.com']['ansible_os_family'] }}
+    {{ hostvars['asdf.example.com']['ansible_facts']['os_family'] }}
 
 With "Fact Caching" disabled, in order to do this, Ansible must have already talked to 'asdf.example.com' in the
 current play, or another play up higher in the playbook.  This is the default configuration of ansible.
@@ -615,11 +621,11 @@ We already described facts a little higher up in the documentation.
 Some provided facts, like networking information, are made available as nested data structures.  To access
 them a simple ``{{ foo }}`` is not sufficient, but it is still easy to do.   Here's how we get an IP address::
 
-    {{ ansible_eth0["ipv4"]["address"] }}
+    {{ ansible_facts["eth0"]["ipv4"]["address"] }}
 
 OR alternatively::
 
-    {{ ansible_eth0.ipv4.address }}
+    {{ ansible_facts.eth0.ipv4.address }}
 
 Similarly, this is how we access the first element of an array::
 
@@ -641,7 +647,7 @@ or set of playbooks, you can still get the variables, but you will not be able t
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
 
-    {{ hostvars['test.example.com']['ansible_distribution'] }}
+    {{ hostvars['test.example.com']['ansible_facts']['distribution'] }}
 
 Additionally, ``group_names`` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host
 
@@ -666,7 +672,7 @@ A frequently used idiom is walking a group to find all IP addresses in that grou
 .. code-block:: jinja
 
    {% for host in groups['app_servers'] %}
-      {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
+      {{ hostvars[host]['ansible_facts']['eth0']['ipv4']['address'] }}
    {% endfor %}
 
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
@@ -828,6 +834,7 @@ If multiple variables of the same name are defined in different places, they get
 
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
+  * command line values (eg "-u user")
   * role defaults [1]_
   * inventory file or script group vars [2]_
   * inventory group_vars/all [3]_
@@ -864,26 +871,34 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
 .. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
-.. note:: Group loading follows parent/child relationships. Groups of the same 'patent/child' level are then merged following alphabetical order.
+.. note:: Group loading follows parent/child relationships. Groups of the same 'parent/child' level are then merged following alphabetical order.
           This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
+          This variable, ``ansible_group_priority``, can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars/.
 
 
-Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example, if your inventory specifies ``ansible_ssh_user: ramon`` and you run::
 
     ansible -u lola myhost
 
-This will still connect as ``ramon`` because ``ansible_ssh_user`` is set to ``ramon`` in inventory for myhost.
-For plays/tasks this is also true for ``remote_user``::
+This will still connect as ``ramon`` because the value from the variable takes priority (in this case, the variable came from the inventory, but the same would be true no matter where the variable was defined).
+
+For plays/tasks this is also true for ``remote_user``. Assuming the same inventory config, the following play::
 
  - hosts: myhost
    tasks:
-    - command: i'll connect as ramon still
+    - command: I'll connect as ramon still
       remote_user: lola
 
-This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
-but they behave like other variables. If you want to override the remote user globally (even over inventory) you can use extra vars::
+will have the value of ``remote_user`` overwritten by ``ansible_ssh_user`` in the inventory.
 
-    ansible... -e "ansible_user=<user>"
+This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables.
+
+If you want to override the remote user globally (even over inventory) you can use extra vars. For instance, if you run::
+
+    ansible... -e "ansible_user=maria" -u lola
+
+the ``lola`` value is still ignored, but ``ansible_user=maria`` takes precedence over all other places where ``ansible_user`` (or ``ansible_ssh_user``, or ``remote_user``) might be set.
 
 You can also override as a normal variable in a play::
 
@@ -891,7 +906,7 @@ You can also override as a normal variable in a play::
       vars:
         ansible_user: lola
       tasks:
-        - command: i'll connect as lola!
+        - command: I'll connect as lola!
 
 .. _variable_scopes:
 
@@ -1041,9 +1056,9 @@ For information about advanced YAML syntax used to declare variables and have mo
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
+   :ref:`special_variables`
+       List of special variables
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

@@ -169,7 +169,7 @@ class VmwareConfigManager(PyVmomi):
             if changed:
                 try:
                     option_manager.UpdateOptions(changedValue=change_option_list)
-                except vmodl.fault.InvalidArgument as e:
+                except (vmodl.fault.SystemError, vmodl.fault.InvalidArgument) as e:
                     self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
                                               "contains an invalid value: %s" % to_native(e.msg))
                 except vim.fault.InvalidName as e:

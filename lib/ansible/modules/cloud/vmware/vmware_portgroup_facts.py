@@ -59,7 +59,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_firewall_facts:
+hosts_portgroup_facts:
     description: metadata about host's portgroup configuration
     returned: on success
     type: dict

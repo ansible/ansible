@@ -161,7 +161,7 @@ class Cli:
 
                 if network_api == 'cliconf' and out:
                     for index, resp in enumerate(out):
-                        if 'Invalid command at' in resp and 'json' in resp:
+                        if ('Invalid command at' in resp or 'Ambiguous command at' in resp) and 'json' in resp:
                             if commands[index]['output'] == 'json':
                                 commands[index]['output'] = 'text'
                                 out = connection.run_commands(commands, check_rc)
@@ -341,7 +341,7 @@ class Nxapi:
             if response['ins_api'].get('outputs'):
                 output = response['ins_api']['outputs']['output']
                 for item in to_list(output):
-                    if check_status and item['code'] != '200':
+                    if check_status is True and item['code'] != '200':
                         if return_error:
                             result.append(item)
                         else:

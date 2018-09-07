@@ -49,10 +49,12 @@ options:
       want to use C(merge) if you see "strategic merge patch format is not supported"
     - See U(https://kubernetes.io/docs/tasks/run-application/update-api-object-kubectl-patch/#use-a-json-merge-patch-to-update-a-deployment)
     - Requires openshift >= 0.6.2
+    - If more than one merge_type is given, the merge_types will be tried in order
     choices:
     - json
     - merge
     - strategic-merge
+    type: list
     version_added: "2.7"
 
 requirements:

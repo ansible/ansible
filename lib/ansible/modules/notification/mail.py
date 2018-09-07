@@ -248,7 +248,7 @@ def main():
     try:
         if secure != 'never':
             try:
-                smtp = smtplib.SMTP_SSL(timeout=timeout)
+                smtp = smtplib.SMTP_SSL(host=host, timeout=timeout)
                 code, smtpmessage = smtp.connect(host, port=port)
                 secure_state = True
             except ssl.SSLError as e:

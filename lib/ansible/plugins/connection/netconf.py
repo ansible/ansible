@@ -102,7 +102,8 @@ options:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
   look_for_keys:
     default: True
-    description: 'TODO: write it'
+    description:
+      -  enables looking for ssh keys in the usual locations for ssh keys (e.g. :file:`~/.ssh/id_*`)
     env:
       - name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS
     ini:
@@ -200,6 +201,7 @@ logging.getLogger('ncclient').setLevel(logging.INFO)
 NETWORK_OS_DEVICE_PARAM_MAP = {
     "nxos": "nexus",
     "ios": "default",
+    "dellos10": "default",
     "sros": "alu",
     "ce": "huawei"
 }
@@ -218,6 +220,7 @@ class Connection(NetworkConnectionBase):
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None
+        self.key_filename = None
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         """Sends the request to the node and returns the reply
@@ -252,9 +255,9 @@ class Connection(NetworkConnectionBase):
             allow_agent = False
         setattr(self._play_context, 'allow_agent', allow_agent)
 
-        key_filename = None
-        if self._play_context.private_key_file:
-            key_filename = os.path.expanduser(self._play_context.private_key_file)
+        self.key_filename = self._play_context.private_key_file or self.get_option('private_key_file')
+        if self.key_filename:
+            self.key_filename = str(os.path.expanduser(self.key_filename))
 
         if self._network_os == 'default':
             for cls in netconf_loader.all(class_only=True):
@@ -277,7 +280,7 @@ class Connection(NetworkConnectionBase):
                 port=self._play_context.port or 830,
                 username=self._play_context.remote_user,
                 password=self._play_context.password,
-                key_filename=str(key_filename),
+                key_filename=self.key_filename,
                 hostkey_verify=self.get_option('host_key_checking'),
                 look_for_keys=self.get_option('look_for_keys'),
                 device_params=device_params,
@@ -304,6 +307,8 @@ class Connection(NetworkConnectionBase):
             netconf = netconf_loader.get("default", self)
             display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
         self._implementation_plugins.append(netconf)
+
+        super(Connection, self)._connect()
 
         return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 

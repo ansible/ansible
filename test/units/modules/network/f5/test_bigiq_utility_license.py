@@ -86,7 +86,7 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             license_key='XXXX-XXXX-XXXX-XXXX-XXXX',
             accept_eula=True,
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

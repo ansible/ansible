@@ -10,6 +10,7 @@ matrix:
   include:
     - env: T=sanity/1
     - env: T=sanity/2
+    - env: T=sanity/3
 
     - env: T=units/2.6
     - env: T=units/2.7
@@ -99,6 +100,18 @@ matrix:
 
     - env: T=azure/2.7/4
     - env: T=azure/3.6/4
+
+    - env: T=azure/2.7/5
+    - env: T=azure/3.6/5
+
+    - env: T=azure/2.7/6
+    - env: T=azure/3.6/6
+
+    - env: T=azure/2.7/7
+    - env: T=azure/3.6/7
+
+    - env: T=azure/2.7/8
+    - env: T=azure/3.6/8
 
     - env: T=vcenter/2.7/1
     - env: T=vcenter/3.6/1

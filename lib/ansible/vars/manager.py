@@ -307,6 +307,7 @@ class VariableManager:
             all_vars = combine_vars(all_vars, _plugins_play([host]))
 
             # finally, the facts caches for this host, if it exists
+            # TODO: cleaning of facts should eventually become part of taskresults instead of vars
             try:
                 facts = wrap_var(self._fact_cache.get(host.name, {}))
                 all_vars.update(namespace_facts(facts))
@@ -486,6 +487,10 @@ class VariableManager:
         return variables
 
     def _get_delegated_vars(self, play, task, existing_variables):
+        if not hasattr(task, 'loop'):
+            # This "task" is not a Task, so we need to skip it
+            return {}
+
         # we unfortunately need to template the delegate_to field here,
         # as we're fetching vars before post_validate has been called on
         # the task that has been passed in
@@ -493,6 +498,7 @@ class VariableManager:
         templar = Templar(loader=self._loader, variables=vars_copy)
 
         items = []
+        has_loop = True
         if task.loop_with is not None:
             if task.loop_with in lookup_loader:
                 try:
@@ -506,8 +512,14 @@ class VariableManager:
             else:
                 raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
         elif task.loop is not None:
-            items = templar.template(task.loop)
+            try:
+                items = templar.template(task.loop)
+            except AnsibleUndefinedVariable:
+                # This task will be skipped later due to this, so we just setup
+                # a dummy array for the later code so it doesn't fail
+                items = [None]
         else:
+            has_loop = False
             items = [None]
 
         delegated_host_vars = dict()
@@ -582,7 +594,7 @@ class VariableManager:
                 include_hostvars=False,
             )
 
-        if cache_items:
+        if has_loop and cache_items:
             # delegate_to templating produced a change, update task.loop with templated items,
             # this ensures that delegate_to+loop doesn't produce different results than TaskExecutor
             # which may reprocess the loop

@@ -272,6 +272,16 @@ EXAMPLES = """
       - shutdown
     # parents: int gig1/0/11
     parents: interface GigabitEthernet1/0/11
+
+# Set boot image based on comparison to a group_var (version) and the version
+# that is returned from the `ios_facts` module
+- name: SETTING BOOT IMAGE
+  ios_config:
+    lines:
+      - no boot system
+      - boot system flash bootflash:{{new_image}}
+    host: "{{ inventory_hostname }}"
+  when: ansible_net_version != version
 """
 
 RETURN = """
@@ -317,6 +327,13 @@ def expand_lines(lines):
         for anotherline in thisline.split('\n'):
             newlines.append(anotherline)
     return newlines
+
+
+def edit_config_or_macro(connection, commands):
+    if "macro name" in commands[0]:
+        connection.edit_macro(candidate=commands)
+    else:
+        connection.edit_config(candidate=commands)
 
 
 def get_candidate_config(module):
@@ -458,7 +475,7 @@ def main():
             # them with the current running config
             if not module.check_mode:
                 if commands:
-                    connection.edit_config(candidate=commands)
+                    edit_config_or_macro(connection, commands)
                 if banner_diff:
                     connection.edit_banner(candidate=json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
 

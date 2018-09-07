@@ -1,8 +1,0 @@
-/* Local CSS tweaks for ansible */
-.dropdown-menu {
-    overflow-y: auto;
-}
-
-h2 {
-    padding-top: 40px;
-}

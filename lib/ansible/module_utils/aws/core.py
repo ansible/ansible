@@ -69,7 +69,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
 
 # We will also export HAS_BOTO3 so end user modules can use it.
-__all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
+__all__ = ('AnsibleAWSModule', 'HAS_BOTO3', 'is_boto3_error_code')
 
 
 class AnsibleAWSModule(object):
@@ -117,6 +117,7 @@ class AnsibleAWSModule(object):
                 msg='Python modules "botocore" or "boto3" are missing, please install both')
 
         self.check_mode = self._module.check_mode
+        self._diff = self._module._diff
         self._name = self._module._name
 
     @property
@@ -282,3 +283,15 @@ def is_boto3_error_code(code, e=None):
     if isinstance(e, ClientError) and e.response['Error']['Code'] == code:
         return ClientError
     return type('NeverEverRaisedException', (Exception,), {})
+
+
+def get_boto3_client_method_parameters(client, method_name, required=False):
+    op = client.meta.method_to_api_mapping.get(method_name)
+    input_shape = client._service_model.operation_model(op).input_shape
+    if not input_shape:
+        parameters = []
+    elif required:
+        parameters = list(input_shape.required_members)
+    else:
+        parameters = list(input_shape.members.keys())
+    return parameters

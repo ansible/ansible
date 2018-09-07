@@ -185,6 +185,20 @@ options:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
+    enable_ip_forwarding:
+        description:
+            - Whether to enable IP forwarding
+        aliases:
+            - ip_forwarding
+        type: bool
+        default: False
+        version_added: 2.7
+    dns_servers:
+        description:
+            - Which DNS servers should the NIC lookup
+            - List of IP's
+        type: list
+        version_added: 2.7
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -270,6 +284,27 @@ EXAMPLES = '''
         virtual_network_name: vnet001
         subnet_name: subnet001
         enable_accelerated_networking: True
+
+    - name: Create a network interface with IP forwarding
+      azure_rm_networkinterface:
+        name: nic001
+        resource_group: Testing
+        virtual_network: vnet001
+        subnet_name: subnet001
+        ip_forwarding: True
+        ip_configurations:
+          - name: ipconfig1
+            public_ip_address_name: publicip001
+            primary: True
+
+    - name: Create a network interface with dns servers
+      azure_rm_networkinterface:
+        name: nic009
+        resource_group: Testing
+        virtual_network: vnet001
+        subnet_name: subnet001
+        dns_servers:
+          - 8.8.8.8
 
     - name: Delete network interface
       azure_rm_networkinterface:
@@ -379,6 +414,7 @@ def nic_to_dict(nic):
         provisioning_state=nic.provisioning_state,
         etag=nic.etag,
         enable_accelerated_networking=nic.enable_accelerated_networking,
+        dns_servers=nic.dns_settings.dns_servers,
     )
 
 
@@ -415,6 +451,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
             open_ports=dict(type='list'),
+            enable_ip_forwarding=dict(type='bool', aliases=['ip_forwarding'], default=False),
+            dns_servers=dict(type='list'),
         )
 
         required_if = [
@@ -438,7 +476,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.tags = None
         self.os_type = None
         self.open_ports = None
+        self.enable_ip_forwarding = None
         self.ip_configurations = None
+        self.dns_servers = None
 
         self.results = dict(
             changed=False,
@@ -510,6 +550,22 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     self.log("CHANGED: Accelerated Networking set to {0} (previously {1})".format(
                         self.enable_accelerated_networking,
                         results.get('enable_accelerated_networking')))
+                    changed = True
+
+                if self.enable_ip_forwarding != bool(results.get('enable_ip_forwarding')):
+                    self.log("CHANGED: IP forwarding set to {0} (previously {1})".format(
+                        self.enable_ip_forwarding,
+                        results.get('enable_ip_forwarding')))
+                    changed = True
+
+                # We need to ensure that dns_servers are list like
+                dns_servers_res = results.get('dns_settings').get('dns_servers')
+                _dns_servers_set = sorted(self.dns_servers) if isinstance(self.dns_servers, list) else list()
+                _dns_servers_res = sorted(dns_servers_res) if isinstance(self.dns_servers, list) else list()
+                if _dns_servers_set != _dns_servers_res:
+                    self.log("CHANGED: DNS servers set to {0} (previously {1})".format(
+                        ", ".join(_dns_servers_set),
+                        ", ".join(_dns_servers_res)))
                     changed = True
 
                 if not changed:
@@ -591,8 +647,13 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     tags=self.tags,
                     ip_configurations=nic_ip_configurations,
                     enable_accelerated_networking=self.enable_accelerated_networking,
+                    enable_ip_forwarding=self.enable_ip_forwarding,
                     network_security_group=nsg
                 )
+                if self.dns_servers:
+                    dns_settings = self.network_models.NetworkInterfaceDnsSettings(
+                        dns_servers=self.dns_servers)
+                    nic.dns_settings = dns_settings
                 self.results['state'] = self.create_or_update_nic(nic)
             elif self.state == 'absent':
                 self.log('Deleting network interface {0}'.format(self.name))

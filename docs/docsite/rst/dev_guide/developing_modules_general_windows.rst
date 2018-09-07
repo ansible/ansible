@@ -1,7 +1,8 @@
 .. _developing_modules_general_windows:
 
-Windows Ansible Module Development Walkthrough
-==============================================
+**********************************************
+Windows Ansible module development walkthrough
+**********************************************
 
 In this section, we will walk through developing, testing, and debugging an
 Ansible Windows module.
@@ -39,7 +40,7 @@ VirtualBox documentation for installation instructions):
 - Vagrant
 - VirtualBox
 
-Create a Windows Server in a VM
+Create a Windows server in a VM
 ===============================
 
 To create a single Windows Server 2016 instance, run the following:
@@ -55,7 +56,7 @@ for the first time, the Windows VM will run through the sysprep process and
 then create a HTTP and HTTPS WinRM listener automatically. Vagrant will finish
 its process once the listeners are onlinem, after which the VM can be used by Ansible.
 
-Create an Ansible Inventory
+Create an Ansible inventory
 ===========================
 
 The following Ansible inventory file can be used to connect to the newly
@@ -121,7 +122,7 @@ hosts that are defined under the ``domain_children`` key. The host variable
 only network adapter while ``vagrant_box`` is the box that will be used to
 create the VM.
 
-Provisioning the Environment
+Provisioning the environment
 ============================
 
 To provision the environment as is, run the following:
@@ -206,7 +207,7 @@ into PowerShell as well as some Ansible-specific requirements specified by
 but are most commonly near the top. They are used to make it easier to state the
 requirements of the module without writing any of the checks. Each ``requires``
 statement must be on its own line, but there can be multiple requires statements
-in one script. 
+in one script.
 
 These are the checks that can be used within Ansible modules:
 
@@ -228,7 +229,7 @@ can be imported by adding the following line to a PowerShell module:
     #Requires -Module Ansible.ModuleUtils.Legacy
 
 This will import the module_util at ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1``
-and enable calling all of its functions. 
+and enable calling all of its functions.
 
 The following is a list of module_utils that are packaged with Ansible and a general description of what
 they do:
@@ -241,7 +242,7 @@ they do:
 - LinkUtil: Utility to create, remove, and get information about symbolic links, junction points and hard inks.
 - SID: Utilities used to convert a user or group to a Windows SID and vice versa.
 
-For more details on any specific module utility and their requirements, please see the `Ansible 
+For more details on any specific module utility and their requirements, please see the `Ansible
 module utilities source code <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils/powershell>`_.
 
 PowerShell module utilities can be stored outside of the standard Ansible
@@ -336,7 +337,7 @@ the most popular are
 - `Powershell ISE`_
 - `Visual Studio Code`_
 
-.. _Powershell ISE: https://msdn.microsoft.com/en-us/powershell/scripting/core-powershell/ise/how-to-debug-scripts-in-windows-powershell-ise
+.. _Powershell ISE: https://docs.microsoft.com/en-us/powershell/scripting/core-powershell/ise/how-to-debug-scripts-in-windows-powershell-ise
 .. _Visual Studio Code: https://blogs.technet.microsoft.com/heyscriptingguy/2017/02/06/debugging-powershell-script-in-visual-studio-code-part-1/
 
 To be able to view the arguments as passed by Ansible to the module follow
@@ -360,7 +361,7 @@ Windows integration testing
 
 Integration tests for Ansible modules are typically written as Ansible roles. These test
 roles are located in ``./test/integration/targets``. You must first set up your testing
-environment, and configure a test inventory for Ansible to connect to. 
+environment, and configure a test inventory for Ansible to connect to.
 
 In this example we will set up a test inventory to connect to two hosts and run the integration
 tests for win_stat:
@@ -386,11 +387,11 @@ idempotent and does not report changes. For example:
         state: absent
       register: remove_file_check
       check_mode: yes
-    
+
     - name: get result of remove a file (check mode)
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
       register: remove_file_actual_check
-    
+
     - name: assert remove a file (check mode)
       assert:
         that:
@@ -402,11 +403,11 @@ idempotent and does not report changes. For example:
         path: C:\temp
         state: absent
       register: remove_file
-    
+
     - name: get result of remove a file
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
       register: remove_file_actual
-    
+
     - name: assert remove a file
       assert:
         that:
@@ -418,7 +419,7 @@ idempotent and does not report changes. For example:
         path: C:\temp
         state: absent
       register: remove_file_again
-    
+
     - name: assert remove a file (idempotent)
       assert:
         that:

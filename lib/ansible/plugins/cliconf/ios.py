@@ -105,7 +105,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
-        candidate_obj = NetworkConfig(indent=1, ignore_lines=diff_ignore_lines)
+        candidate_obj = NetworkConfig(indent=1)
         want_src, want_banners = self._extract_banners(candidate)
         candidate_obj.load(want_src)
 
@@ -128,7 +128,7 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
         requests = []
@@ -151,13 +151,39 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
+    def edit_macro(self, candidate=None, commit=True, replace=None, comment=None):
+        resp = {}
+        operations = self.get_device_operations()
+        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+
+        results = []
+        requests = []
+        if commit:
+            commands = ''
+            for line in candidate:
+                if line != 'None':
+                    commands += (' ' + line + '\n')
+                self.send_command('config terminal', sendonly=True)
+                obj = {'command': commands, 'sendonly': True}
+                results.append(self.send_command(**obj))
+                requests.append(commands)
+
+            self.send_command('end', sendonly=True)
+            time.sleep(0.1)
+            results.append(self.send_command('\n'))
+            requests.append('\n')
+
+        resp['request'] = requests
+        resp['response'] = results
+        return resp
+
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_device_info(self):
         device_info = {}
@@ -188,7 +214,7 @@ class Cliconf(CliconfBase):
             'supports_defaults': True,
             'supports_onbox_diff': False,
             'supports_commit_comment': False,
-            'supports_multiline_delimiter': False,
+            'supports_multiline_delimiter': True,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
             'supports_generate_diff': True,

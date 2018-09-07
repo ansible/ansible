@@ -30,10 +30,14 @@ options:
       - A single regex pattern or a sequence of patterns to evaluate the expected
         prompt from I(command).
     required: false
+    type: list
   answer:
     description:
-      - The answer to reply with if I(prompt) is matched.
+      - The answer to reply with if I(prompt) is matched. The value can be a single answer
+        or a list of answer for multiple prompts. In case the command execution results in
+        multiple prompts the sequence of the prompt and excepted answer should be in same order.
     required: false
+    type: list
   sendonly:
     description:
       - The boolean value, that when set to true will send I(command) to the
@@ -41,6 +45,14 @@ options:
     type: bool
     default: false
     required: false
+  check_all:
+    description:
+      - By default if any one of the prompts mentioned in C(prompt) option is matched it won't check
+        for other prompts. This boolean flag, that when set to I(True) will check for all the prompts
+        mentioned in C(prompt) option in the given order. If the option is set to I(True) all the prompts
+        should be received from remote host if not it will result in timeout.
+    type: bool
+    default: false
 """
 
 EXAMPLES = """
@@ -57,6 +69,30 @@ EXAMPLES = """
     command: commit replace
     prompt: This commit will replace or remove the entire running configuration
     answer: yes
+
+- name: run config mode command and handle prompt/answer
+  cli_command:
+    command: "{{ item }}"
+    prompt:
+      - "Exit with uncommitted changes"
+    answer: 'y'
+  loop:
+    - configure
+    - set system syslog file test any any
+    - exit
+
+- name: multiple prompt, multiple answer (mandatory check for all prompts)
+  cli_command:
+    command: "copy sftp sftp://user@host//user/test.img"
+    check_all: True
+    prompt:
+      - "Confirm download operation"
+      - "Password"
+      - "Do you want to change that to the standby image"
+    answer:
+      - 'y'
+      - <password>
+      - 'y'
 """
 
 RETURN = """
@@ -91,10 +127,11 @@ def main():
     argument_spec = dict(
         command=dict(type='str', required=True),
         prompt=dict(type='list', required=False),
-        answer=dict(type='str', required=False),
+        answer=dict(type='list', required=False),
         sendonly=dict(type='bool', default=False, required=False),
+        check_all=dict(type='bool', default=False, required=False),
     )
-    required_together = [['prompt', 'response']]
+    required_together = [['prompt', 'answer']]
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together,
                            supports_check_mode=True)
 

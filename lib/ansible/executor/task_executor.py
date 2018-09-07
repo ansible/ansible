@@ -68,7 +68,7 @@ class TaskExecutor:
     # the module
     SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -77,7 +77,7 @@ class TaskExecutor:
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
-        self._rslt_q = rslt_q
+        self._final_q = final_q
         self._loop_eval_error = None
 
         self._task.squash()
@@ -171,9 +171,10 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')))
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._play_context.no_log)
         except Exception as e:
-            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()), stdout='')
+            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
+                        stdout='', _ansible_no_log=self._play_context.no_log)
         finally:
             try:
                 self._connection.close()
@@ -303,6 +304,7 @@ class TaskExecutor:
             # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
             items = self._squash_items(items, loop_var, task_vars)
 
+        no_log = False
         for item_index, item in enumerate(items):
             task_vars[loop_var] = item
             if index_var:
@@ -337,6 +339,9 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
+            # update 'general no_log' based on specific no_log
+            no_log = no_log or tmp_task.no_log
+
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
@@ -348,7 +353,7 @@ class TaskExecutor:
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             res['_ansible_item_label'] = templar.template(label, cache=False)
 
-            self._rslt_q.put(
+            self._final_q.put(
                 TaskResult(
                     self._host.name,
                     self._task._uuid,
@@ -359,6 +364,8 @@ class TaskExecutor:
             )
             results.append(res)
             del task_vars[loop_var]
+
+        self._task.no_log = no_log
 
         return results
 
@@ -519,7 +526,11 @@ class TaskExecutor:
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
-                raise AnsibleError("Using a variable for a task's 'args' is not allowed as it is unsafe, facts can come from untrusted sources.")
+                if C.INJECT_FACTS_AS_VARS:
+                    display.warning("Using a variable for a task's 'args' is unsafe in some situations "
+                                    "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe)")
+                variable_params.update(self._task.args)
+                self._task.args = variable_params
 
         # get the connection and the handler for this execution
         if (not self._connection or
@@ -548,6 +559,11 @@ class TaskExecutor:
             tmp_args = module_defaults[self._task.action].copy()
             tmp_args.update(self._task.args)
             self._task.args = tmp_args
+        if self._task.action in C.config.module_defaults_groups:
+            for group in C.config.module_defaults_groups.get(self._task.action, []):
+                tmp_args = (module_defaults.get('group/{0}'.format(group)) or {}).copy()
+                tmp_args.update(self._task.args)
+                self._task.args = tmp_args
 
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
@@ -625,6 +641,7 @@ class TaskExecutor:
                 if self._task.action in ('set_fact', 'include_vars'):
                     vars_copy.update(result['ansible_facts'])
                 else:
+                    # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     vars_copy.update(namespace_facts(result['ansible_facts']))
                     if C.INJECT_FACTS_AS_VARS:
                         vars_copy.update(clean_facts(result['ansible_facts']))
@@ -669,7 +686,7 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
+                        self._final_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
                         time.sleep(delay)
         else:
             if retries > 1:
@@ -686,6 +703,7 @@ class TaskExecutor:
             if self._task.action in ('set_fact', 'include_vars'):
                 variables.update(result['ansible_facts'])
             else:
+                # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                 variables.update(namespace_facts(result['ansible_facts']))
                 if C.INJECT_FACTS_AS_VARS:
                     variables.update(clean_facts(result['ansible_facts']))

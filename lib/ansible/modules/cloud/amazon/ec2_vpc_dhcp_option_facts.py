@@ -124,10 +124,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-    if module._name == 'ec2_vpc_dhcp_options_facts':
-        module.deprecate("The 'ec2_vpc_dhcp_options_facts' module has been renamed "
-                         "'ec2_vpc_dhcp_option_facts' (option is no longer plural)",
-                         version=2.8)
 
     # Validate Requirements
     if not HAS_BOTO3:

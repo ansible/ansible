@@ -1,0 +1,12 @@
+- name: Get ip informations and register it in a variable
+  scaleway_ip_facts:
+  register: ips
+
+- name: Display ips variable
+  debug:
+    var: ips
+
+- name: Ensure retrieval of ips facts is success
+  assert:
+    that:
+      - ips is success

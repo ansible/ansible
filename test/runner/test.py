@@ -564,7 +564,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
     environments.add_argument('--remote',
                               metavar='PLATFORM',
                               default=None,
-                              help='run from a remote instance').completer = complete_remote
+                              help='run from a remote instance').completer = complete_remote_shell if parser.prog.endswith(' shell') else complete_remote
 
     remote = parser.add_argument_group(title='remote arguments')
 
@@ -651,6 +651,12 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='transfer git related files into the docker container')
 
+    docker.add_argument('--docker-seccomp',
+                        metavar='SC',
+                        choices=('default', 'unconfined'),
+                        default=None,
+                        help='set seccomp confinement for the test container: %(choices)s')
+
     if not integration:
         return
 
@@ -681,6 +687,24 @@ def complete_remote(prefix, parsed_args, **_):
 
     with open('test/runner/completion/remote.txt', 'r') as completion_fd:
         images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix)]
+
+
+def complete_remote_shell(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    del parsed_args
+
+    with open('test/runner/completion/remote.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    # 2008 doesn't support SSH so we do not add to the list of valid images
+    with open('test/runner/completion/windows.txt', 'r') as completion_fd:
+        images.extend(["windows/%s" % i for i in completion_fd.read().splitlines() if i != '2008'])
 
     return [i for i in images if i.startswith(prefix)]
 

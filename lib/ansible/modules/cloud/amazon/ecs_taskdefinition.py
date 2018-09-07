@@ -26,7 +26,7 @@ short_description: register a task definition in ecs
 description:
     - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
-author: Mark Chance(@Java1Guy)
+author: Mark Chance (@Java1Guy)
 requirements: [ json, botocore, boto3 ]
 options:
     state:
@@ -390,8 +390,11 @@ def main():
 
                 return True
 
-            def _task_definition_matches(requested_volumes, requested_containers, existing_task_definition):
+            def _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, existing_task_definition):
                 if td['status'] != "ACTIVE":
+                    return None
+
+                if requested_task_role_arn != td.get('taskRoleArn', ""):
                     return None
 
                 existing_volumes = td.get('volumes', []) or []
@@ -433,9 +436,10 @@ def main():
 
             # No revision explicitly specified. Attempt to find an active, matching revision that has all the properties requested
             for td in existing_definitions_in_family:
-                requested_volumes = module.params.get('volumes', []) or []
-                requested_containers = module.params.get('containers', []) or []
-                existing = _task_definition_matches(requested_volumes, requested_containers, td)
+                requested_volumes = module.params['volumes'] or []
+                requested_containers = module.params['containers'] or []
+                requested_task_role_arn = module.params['task_role_arn']
+                existing = _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, td)
 
                 if existing:
                     break

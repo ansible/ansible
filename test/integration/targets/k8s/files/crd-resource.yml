@@ -1,0 +1,20 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: acme-crt
+spec:
+  secretName: acme-crt-secret
+  dnsNames:
+  - foo.example.com
+  - bar.example.com
+  acme:
+    config:
+    - ingressClass: nginx
+      domains:
+      - foo.example.com
+      - bar.example.com
+  issuerRef:
+    name: letsencrypt-prod
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: Issuer

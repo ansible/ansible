@@ -76,28 +76,20 @@ def wait_for_vm_ip(content, vm, timeout=300):
     return facts
 
 
-def find_obj(content, vimtype, name, first=True):
-    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
-    obj_list = container.view
+def find_obj(content, vimtype, name, first=True, folder=None):
+    container = content.viewManager.CreateContainerView(folder or content.rootFolder, recursive=True, type=vimtype)
+    # Get all objects matching type (and name if given)
+    obj_list = [obj for obj in container.view if not name or to_text(obj.name) == to_text(name)]
     container.Destroy()
 
-    # Backward compatible with former get_obj() function
-    if name is None:
+    # Return first match or None
+    if first:
         if obj_list:
             return obj_list[0]
         return None
 
-    # Select the first match
-    if first is True:
-        for obj in obj_list:
-            if to_text(obj.name) == to_text(name):
-                return obj
-
-        # If no object found, return None
-        return None
-
-    # Return all matching objects if needed
-    return [obj for obj in obj_list if obj.name == name]
+    # Return all matching objects or empty list
+    return obj_list
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
@@ -295,6 +287,7 @@ def gather_vm_facts(content, vm):
         'customvalues': {},
         'snapshots': [],
         'current_snapshot': None,
+        'vnc': {},
     }
 
     # facts that may or may not exist
@@ -398,6 +391,8 @@ def gather_vm_facts(content, vm):
     if 'snapshots' in snapshot_facts:
         facts['snapshots'] = snapshot_facts['snapshots']
         facts['current_snapshot'] = snapshot_facts['current_snapshot']
+
+    facts['vnc'] = get_vnc_extraconfig(vm)
     return facts
 
 
@@ -441,6 +436,15 @@ def list_snapshots(vm):
         result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
     else:
         result['current_snapshot'] = dict()
+    return result
+
+
+def get_vnc_extraconfig(vm):
+    result = {}
+    for opts in vm.config.extraConfig:
+        for optkeyname in ['enabled', 'ip', 'port', 'password']:
+            if opts.key.lower() == "remotedisplay.vnc." + optkeyname:
+                result[optkeyname] = opts.value
     return result
 
 

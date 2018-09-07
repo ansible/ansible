@@ -552,6 +552,7 @@ try:
 except ImportError:
     pass
 
+from random import randint
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
@@ -566,38 +567,30 @@ class PyVmomiDeviceHelper(object):
     def __init__(self, module):
         self.module = module
         self.next_disk_unit_number = 0
+        self.scsi_device_type = {
+            'lsilogic': vim.vm.device.VirtualLsiLogicController,
+            'paravirtual': vim.vm.device.ParaVirtualSCSIController,
+            'buslogic': vim.vm.device.VirtualBusLogicController,
+            'lsilogicsas': vim.vm.device.VirtualLsiLogicSASController,
+        }
 
-    @staticmethod
-    def create_scsi_controller(scsi_type):
+    def create_scsi_controller(self, scsi_type):
         scsi_ctl = vim.vm.device.VirtualDeviceSpec()
         scsi_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        if scsi_type == 'lsilogic':
-            scsi_ctl.device = vim.vm.device.VirtualLsiLogicController()
-        elif scsi_type == 'paravirtual':
-            scsi_ctl.device = vim.vm.device.ParaVirtualSCSIController()
-        elif scsi_type == 'buslogic':
-            scsi_ctl.device = vim.vm.device.VirtualBusLogicController()
-        elif scsi_type == 'lsilogicsas':
-            scsi_ctl.device = vim.vm.device.VirtualLsiLogicSASController()
-
-        scsi_ctl.device.deviceInfo = vim.Description()
-        scsi_ctl.device.slotInfo = vim.vm.device.VirtualDevice.PciBusSlotInfo()
-        scsi_ctl.device.slotInfo.pciSlotNumber = 16
-        scsi_ctl.device.controllerKey = 100
-        scsi_ctl.device.unitNumber = 3
+        scsi_device = self.scsi_device_type.get(scsi_type, vim.vm.device.ParaVirtualSCSIController)
+        scsi_ctl.device = scsi_device()
         scsi_ctl.device.busNumber = 0
+        # While creating a new SCSI controller, temporary key value
+        # should be unique negative integers
+        scsi_ctl.device.key = -randint(1000, 9999)
         scsi_ctl.device.hotAddRemove = True
         scsi_ctl.device.sharedBus = 'noSharing'
         scsi_ctl.device.scsiCtlrUnitNumber = 7
 
         return scsi_ctl
 
-    @staticmethod
-    def is_scsi_controller(device):
-        return isinstance(device, vim.vm.device.VirtualLsiLogicController) or \
-            isinstance(device, vim.vm.device.ParaVirtualSCSIController) or \
-            isinstance(device, vim.vm.device.VirtualBusLogicController) or \
-            isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
+    def is_scsi_controller(self, device):
+        return isinstance(device, tuple(self.scsi_device_type.values()))
 
     @staticmethod
     def create_ide_controller():
@@ -605,6 +598,9 @@ class PyVmomiDeviceHelper(object):
         ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         ide_ctl.device = vim.vm.device.VirtualIDEController()
         ide_ctl.device.deviceInfo = vim.Description()
+        # While creating a new IDE controller, temporary key value
+        # should be unique negative integers
+        ide_ctl.device.key = -randint(200, 299)
         ide_ctl.device.busNumber = 0
 
         return ide_ctl
@@ -1090,38 +1086,32 @@ class PyVmomiHelper(PyVmomi):
                         # Don't fail if VM is already upgraded.
                         pass
 
-    def get_vm_cdrom_device(self, vm=None):
-        if vm is None:
+    def get_device_by_type(self, vm=None, type=None):
+        if vm is None or type is None:
             return None
 
         for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualCdrom):
+            if isinstance(device, type):
                 return device
 
         return None
+
+    def get_vm_cdrom_device(self, vm=None):
+        return self.get_device_by_type(vm=vm, type=vim.vm.device.VirtualCdrom)
 
     def get_vm_ide_device(self, vm=None):
-        if vm is None:
-            return None
-
-        for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualIDEController):
-                return device
-
-        return None
+        return self.get_device_by_type(vm=vm, type=vim.vm.device.VirtualIDEController)
 
     def get_vm_network_interfaces(self, vm=None):
-        if vm is None:
-            return []
-
         device_list = []
+        if vm is None:
+            return device_list
+
+        nw_device_types = (vim.vm.device.VirtualPCNet32, vim.vm.device.VirtualVmxnet2,
+                           vim.vm.device.VirtualVmxnet3, vim.vm.device.VirtualE1000,
+                           vim.vm.device.VirtualE1000e, vim.vm.device.VirtualSriovEthernetCard)
         for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualPCNet32) or \
-               isinstance(device, vim.vm.device.VirtualVmxnet2) or \
-               isinstance(device, vim.vm.device.VirtualVmxnet3) or \
-               isinstance(device, vim.vm.device.VirtualE1000) or \
-               isinstance(device, vim.vm.device.VirtualE1000e) or \
-               isinstance(device, vim.vm.device.VirtualSriovEthernetCard):
+            if isinstance(device, nw_device_types):
                 device_list.append(device)
 
         return device_list
@@ -1850,33 +1840,6 @@ class PyVmomiHelper(PyVmomi):
             if current_parent is None:
                 return False
 
-    def select_resource_pool_by_name(self, resource_pool_name):
-        resource_pool = self.cache.find_obj(self.content, [vim.ResourcePool], resource_pool_name)
-        if resource_pool is None:
-            self.module.fail_json(msg='Could not find resource_pool "%s"' % resource_pool_name)
-        return resource_pool
-
-    def select_resource_pool_by_host(self, host):
-        resource_pools = self.cache.get_all_objs(self.content, [vim.ResourcePool])
-        for rp in resource_pools.items():
-            if not rp[0]:
-                continue
-
-            if not hasattr(rp[0], 'parent') or not rp[0].parent:
-                continue
-
-            # Find resource pool on host
-            if self.obj_has_parent(rp[0].parent, host.parent):
-                # If no resource_pool selected or it's the selected pool, return it
-                if self.module.params['resource_pool'] is None or rp[0].name == self.module.params['resource_pool']:
-                    return rp[0]
-
-        if self.module.params['resource_pool'] is not None:
-            self.module.fail_json(msg="Could not find resource_pool %s for selected host %s"
-                                  % (self.module.params['resource_pool'], host.name))
-        else:
-            self.module.fail_json(msg="Failed to find a resource group for %s" % host.name)
-
     def get_scsi_type(self):
         disk_controller_type = "paravirtual"
         # set cpu/memory/etc
@@ -1921,28 +1884,39 @@ class PyVmomiHelper(PyVmomi):
 
         return root
 
-    def get_resource_pool(self):
-        resource_pool = None
-        # highest priority, resource_pool given.
-        if self.params['resource_pool']:
-            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
-        # next priority, esxi hostname given.
-        elif self.params['esxi_hostname']:
-            host = self.select_host()
-            resource_pool = self.select_resource_pool_by_host(host)
-        # next priority, cluster given, take the root of the pool
-        elif self.params['cluster']:
-            cluster = self.cache.get_cluster(self.params['cluster'])
-            if cluster is None:
-                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
-            resource_pool = cluster.resourcePool
-        # fallback, pick any RP
+    def get_resource_pool(self, cluster=None, host=None, resource_pool=None):
+        """ Get a resource pool, filter on cluster, esxi_hostname or resource_pool if given """
+
+        cluster_name = cluster or self.params.get('cluster', None)
+        host_name = host or self.params.get('esxi_hostname', None)
+        resource_pool_name = resource_pool or self.params.get('resource_pool', None)
+
+        # get the datacenter object
+        datacenter = find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
+        if not datacenter:
+            self.module.fail_json(msg='Unable to find datacenter "%s"' % self.params['datacenter'])
+
+        # if cluster is given, get the cluster object
+        if cluster_name:
+            cluster = find_obj(self.content, [vim.ComputeResource], cluster_name, folder=datacenter)
+            if not cluster:
+                self.module.fail_json(msg='Unable to find cluster "%s"' % cluster_name)
+        # if host is given, get the cluster object using the host
+        elif host_name:
+            host = find_obj(self.content, [vim.HostSystem], host_name, folder=datacenter)
+            if not host:
+                self.module.fail_json(msg='Unable to find host "%s"' % host_name)
+            cluster = host.parent
         else:
-            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+            cluster = None
 
-        if resource_pool is None:
-            self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
-
+        # get resource pools limiting search to cluster or datacenter
+        resource_pool = find_obj(self.content, [vim.ResourcePool], resource_pool_name, folder=cluster or datacenter)
+        if not resource_pool:
+            if resource_pool_name:
+                self.module.fail_json(msg='Unable to find resource_pool "%s"' % resource_pool_name)
+            else:
+                self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
         return resource_pool
 
     def deploy_vm(self):
@@ -2189,12 +2163,9 @@ class PyVmomiHelper(PyVmomi):
 
         relospec = vim.vm.RelocateSpec()
         if self.params['resource_pool']:
-            relospec.pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+            relospec.pool = self.get_resource_pool()
 
-            if relospec.pool is None:
-                self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
-
-            elif relospec.pool != self.current_vm_obj.resourcePool:
+            if relospec.pool != self.current_vm_obj.resourcePool:
                 task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
                 self.wait_for_task(task)
                 change_applied = True

@@ -90,7 +90,7 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
 
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         resp = {}
         results = []
@@ -123,10 +123,10 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     @configure
     def commit(self, comment=None, confirmed=False, at_time=None, synchronize=False):
@@ -167,6 +167,22 @@ class Cliconf(CliconfBase):
         if rollback_id is not None:
             command += ' rollback %s' % int(rollback_id)
         resp = self.send_command(command)
+
+        r = resp.splitlines()
+        if len(r) == 1 and '[edit]' in r[0]:
+            resp = ''
+
+        return resp
+
+    @configure
+    def rollback(self, rollback_id, commit=True):
+        resp = {}
+        self.send_command('rollback %s' % int(rollback_id))
+        resp['diff'] = self.compare_configuration()
+        if commit:
+            self.commit()
+        else:
+            self.discard_changes()
         return resp
 
     def get_diff(self, rollback_id=None):

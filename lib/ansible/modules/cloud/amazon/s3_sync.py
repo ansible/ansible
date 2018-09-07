@@ -101,7 +101,7 @@ requirements:
   - botocore
   - python-dateutil
 
-author: tedder
+author: Ted Timmons (@tedder)
 extends_documentation_fragment:
 - aws
 - ec2

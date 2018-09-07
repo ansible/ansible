@@ -69,7 +69,7 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
         requests = []
@@ -99,19 +99,20 @@ class Cliconf(CliconfBase):
         else:
             self.send_command('exit')
 
-        resp['diff'] = diff_config
+        if diff_config:
+            resp['diff'] = diff_config
         resp['response'] = results
         resp['request'] = requests
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
 
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:
@@ -220,7 +221,7 @@ class Cliconf(CliconfBase):
         return {
             'supports_diff_replace': False,
             'supports_commit': True,
-            'supports_rollback': True,
+            'supports_rollback': False,
             'supports_defaults': False,
             'supports_onbox_diff': True,
             'supports_commit_comment': True,

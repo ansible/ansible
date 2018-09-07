@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: rhevm
-author: Timothy Vandenbrande
+author: Timothy Vandenbrande (@TimothyVandenbrande)
 short_description: RHEV/oVirt automation
 description:
     - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vms) supports oVirt/RHV version 4.

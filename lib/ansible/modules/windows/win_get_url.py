@@ -141,6 +141,11 @@ dest:
     returned: always
     type: string
     sample: C:\Users\RandomUser\earthrise.jpg
+elapsed:
+    description: The elapsed seconds between the start of poll and the end of the module.
+    returned: always
+    type: float
+    sample: 2.1406487
 url:
     description: requested url
     returned: always

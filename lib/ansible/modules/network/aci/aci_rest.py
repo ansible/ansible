@@ -69,7 +69,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a tenant using certifcate authentication
+- name: Add a tenant using certificate authentication
   aci_rest:
     host: apic
     username: admin

@@ -53,7 +53,7 @@ class CsCloudProvider(CloudProvider):
         super(CsCloudProvider, self).__init__(args, config_extension='.ini')
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'quay.io/ansible/cloudstack-test-container:1.0.0'
+        self.image = 'quay.io/ansible/cloudstack-test-container:1.2.0'
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
@@ -163,7 +163,7 @@ class CsCloudProvider(CloudProvider):
             docker_pull(self.args, self.image)
             docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
             if not self.args.explain:
-                display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
+                display.notice('The CloudStack simulator will probably be ready in 2 - 4 minutes.')
 
         container_id = get_docker_container_id()
 
@@ -233,7 +233,7 @@ class CsCloudProvider(CloudProvider):
             except SubprocessError:
                 pass
 
-            time.sleep(30)
+            time.sleep(10)
 
         raise ApplicationError('Timeout waiting for CloudStack service.')
 
@@ -255,7 +255,7 @@ class CsCloudProvider(CloudProvider):
                 except HttpError as ex:
                     display.error(ex)
 
-            time.sleep(30)
+            time.sleep(10)
 
         raise ApplicationError('Timeout waiting for CloudStack credentials.')
 

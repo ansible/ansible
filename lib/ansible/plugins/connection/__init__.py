@@ -301,6 +301,7 @@ class NetworkConnectionBase(ConnectionBase):
         self._local.set_options()
 
         self._implementation_plugins = []
+        self._cached_variables = (None, None, None)
 
         # reconstruct the socket_path and set instance values accordingly
         self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
@@ -316,6 +317,10 @@ class NetworkConnectionBase(ConnectionBase):
                     if method is not None:
                         return method
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
+
+    def _connect(self):
+        self.set_implementation_plugin_options(*self._cached_variables)
+        self._cached_variables = (None, None, None)
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         return self._local.exec_command(cmd, in_data, sudoable)
@@ -344,7 +349,11 @@ class NetworkConnectionBase(ConnectionBase):
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-        self.set_implementation_plugin_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        if self._implementation_plugins:
+            self.set_implementation_plugin_options(task_keys, var_options, direct)
+        else:
+            self._cached_variables = (task_keys, var_options, direct)
 
     def set_implementation_plugin_options(self, task_keys=None, var_options=None, direct=None):
         '''

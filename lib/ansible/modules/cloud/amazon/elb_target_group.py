@@ -397,9 +397,14 @@ def create_or_update_target_group(connection, module):
     stickiness_lb_cookie_duration = module.params.get("stickiness_lb_cookie_duration")
     stickiness_type = module.params.get("stickiness_type")
 
-    # If health check path not None, set health check attributes
-    if module.params.get("health_check_path") is not None:
-        params['HealthCheckPath'] = module.params.get("health_check_path")
+    health_option_keys = [
+        "health_check_path", "health_check_protocol", "health_check_interval", "health_check_timeout",
+        "healthy_threshold_count", "unhealthy_threshold_count", "successful_response_codes"
+    ]
+    health_options = any([module.params[health_option_key] is not None for health_option_key in health_option_keys])
+
+    # Set health check if anything set
+    if health_options:
 
         if module.params.get("health_check_protocol") is not None:
             params['HealthCheckProtocol'] = module.params.get("health_check_protocol").upper()
@@ -419,9 +424,15 @@ def create_or_update_target_group(connection, module):
         if module.params.get("unhealthy_threshold_count") is not None:
             params['UnhealthyThresholdCount'] = module.params.get("unhealthy_threshold_count")
 
-        if module.params.get("successful_response_codes") is not None:
-            params['Matcher'] = {}
-            params['Matcher']['HttpCode'] = module.params.get("successful_response_codes")
+        # Only need to check response code and path for http(s) health checks
+        if module.params.get("health_check_protocol") is not None and module.params.get("health_check_protocol").upper() != 'TCP':
+
+            if module.params.get("health_check_path") is not None:
+                params['HealthCheckPath'] = module.params.get("health_check_path")
+
+            if module.params.get("successful_response_codes") is not None:
+                params['Matcher'] = {}
+                params['Matcher']['HttpCode'] = module.params.get("successful_response_codes")
 
     # Get target type
     if module.params.get("target_type") is not None:
@@ -441,8 +452,9 @@ def create_or_update_target_group(connection, module):
         # Target group exists so check health check parameters match what has been passed
         health_check_params = dict()
 
-        # If we have no health check path then we have nothing to modify
-        if module.params.get("health_check_path") is not None:
+        # Modify health check if anything set
+        if health_options:
+
             # Health check protocol
             if 'HealthCheckProtocol' in params and tg['HealthCheckProtocol'] != params['HealthCheckProtocol']:
                 health_check_params['HealthCheckProtocol'] = params['HealthCheckProtocol']
@@ -450,10 +462,6 @@ def create_or_update_target_group(connection, module):
             # Health check port
             if 'HealthCheckPort' in params and tg['HealthCheckPort'] != params['HealthCheckPort']:
                 health_check_params['HealthCheckPort'] = params['HealthCheckPort']
-
-            # Health check path
-            if 'HealthCheckPath'in params and tg['HealthCheckPath'] != params['HealthCheckPath']:
-                health_check_params['HealthCheckPath'] = params['HealthCheckPath']
 
             # Health check interval
             if 'HealthCheckIntervalSeconds' in params and tg['HealthCheckIntervalSeconds'] != params['HealthCheckIntervalSeconds']:
@@ -471,14 +479,20 @@ def create_or_update_target_group(connection, module):
             if 'UnhealthyThresholdCount' in params and tg['UnhealthyThresholdCount'] != params['UnhealthyThresholdCount']:
                 health_check_params['UnhealthyThresholdCount'] = params['UnhealthyThresholdCount']
 
-            # Matcher (successful response codes)
-            # TODO: required and here?
-            if 'Matcher' in params:
-                current_matcher_list = tg['Matcher']['HttpCode'].split(',')
-                requested_matcher_list = params['Matcher']['HttpCode'].split(',')
-                if set(current_matcher_list) != set(requested_matcher_list):
-                    health_check_params['Matcher'] = {}
-                    health_check_params['Matcher']['HttpCode'] = ','.join(requested_matcher_list)
+            # Only need to check response code and path for http(s) health checks
+            if tg['HealthCheckProtocol'] != 'TCP':
+                # Health check path
+                if 'HealthCheckPath'in params and tg['HealthCheckPath'] != params['HealthCheckPath']:
+                    health_check_params['HealthCheckPath'] = params['HealthCheckPath']
+
+                # Matcher (successful response codes)
+                # TODO: required and here?
+                if 'Matcher' in params:
+                    current_matcher_list = tg['Matcher']['HttpCode'].split(',')
+                    requested_matcher_list = params['Matcher']['HttpCode'].split(',')
+                    if set(current_matcher_list) != set(requested_matcher_list):
+                        health_check_params['Matcher'] = {}
+                        health_check_params['Matcher']['HttpCode'] = ','.join(requested_matcher_list)
 
             try:
                 if health_check_params:
@@ -491,6 +505,10 @@ def create_or_update_target_group(connection, module):
         if module.params.get("modify_targets"):
             if module.params.get("targets"):
                 params['Targets'] = module.params.get("targets")
+
+                # Correct type of target ports
+                for target in params['Targets']:
+                    target['Port'] = int(target.get('Port', module.params.get('port')))
 
                 # get list of current target instances. I can't see anything like a describe targets in the doco so
                 # describe_target_health seems to be the only way to get them
@@ -515,7 +533,7 @@ def create_or_update_target_group(connection, module):
                     instances_to_add = []
                     for target in params['Targets']:
                         if target['Id'] in add_instances:
-                            instances_to_add.append({'Id': target['Id'], 'Port': int(target.get('Port', module.params.get('port')))})
+                            instances_to_add.append({'Id': target['Id'], 'Port': target['Port']})
 
                     changed = True
                     try:
