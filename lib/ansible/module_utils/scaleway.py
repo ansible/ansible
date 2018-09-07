@@ -4,7 +4,8 @@ import sys
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.six.moves.urllib.parse import urlencode, quote
+from ansible.module_utils._text import to_native
 
 
 def scaleway_argument_spec():
@@ -113,15 +114,16 @@ class Scaleway(object):
 
         if path[0] == '/':
             path = path[1:]
-        return '%s/%s?%s' % (self.module.params.get('api_url'), path, query_string)
+        return '%s/%s?%s' % (self.module.params.get('api_url'), quote(to_native(path)), query_string)
 
     def send(self, method, path, data=None, headers=None, params=None):
         url = self._url_builder(path=path, params=params)
-        self.warn(url)
-        data = self.module.jsonify(data)
 
         if headers is not None:
             self.headers.update(headers)
+
+        if self.headers["Content-type"] == "application/json":
+            data = self.module.jsonify(data)
 
         resp, info = fetch_url(
             self.module, url, data=data, headers=self.headers, method=method,

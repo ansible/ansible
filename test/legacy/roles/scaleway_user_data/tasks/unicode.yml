@@ -1,0 +1,51 @@
+- name: Try to assign a Unicode value for user_data
+  scaleway_user_data:
+    region: '{{ scaleway_region }}'
+    server_id: "{{ server_id }}"
+    user_data:
+      é: '{{ unicode_value }}'
+  register: unicode_test
+
+- name: Print outcome of Unicode assignation
+  debug: var=unicode_test
+
+- name: unicode_test is success
+  assert:
+    that:
+      - unicode_test is success
+
+- name: unicode_test is changed
+  assert:
+    that:
+      - unicode_test is changed
+
+- name: user_data pushed equals the one defined
+  assert:
+    that:
+      - unicode_test.scaleway_user_data["é"]  == '{{ unicode_value }}'
+
+- name: Try to assign a Unicode value for user_data (Confirmation)
+  scaleway_user_data:
+    region: '{{ scaleway_region }}'
+    server_id: "{{ server_id }}"
+    user_data:
+      é: '{{ unicode_value }}'
+  register: unicode_test_confirmation
+
+- name: Print outcome of Unicode assignation
+  debug: var=unicode_test_confirmation
+
+- name: unicode_test_confirmation is success
+  assert:
+    that:
+      - unicode_test_confirmation is success
+
+- name: unicode_test_confirmation is changed
+  assert:
+    that:
+      - unicode_test_confirmation is changed
+
+- name: user_data pushed equals the one defined
+  assert:
+    that:
+      - unicode_test_confirmation.scaleway_user_data["é"]  == '{{ unicode_value }}'
