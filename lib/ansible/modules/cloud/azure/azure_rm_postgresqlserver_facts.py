@@ -222,7 +222,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
             'admin_username': d['administrator_login'],
             'user_visible_state': d['user_visible_state'],
             'fully_qualified_domain_name': d['fully_qualified_domain_name'],
-            'tags': d['tags']
+            'tags': d.get('tags')
         }
 
         return d
