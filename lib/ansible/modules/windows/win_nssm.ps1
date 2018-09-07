@@ -191,218 +191,6 @@ function Test-NssmServiceExists {
     return [bool](Get-Service "$service" -ErrorAction SilentlyContinue)
 }
 
-function Install-NssmService {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service,
-        [Parameter(Mandatory=$true)]
-        [AllowEmptyString()]
-        [string]$application
-    )
-
-    if (!$application) {
-        Fail-Json -obj $result -message "Error installing service ""$service"". No application was supplied."
-    }
-    if (-Not (Test-Path -Path $application -PathType Leaf)) {
-        Fail-Json -obj $result -message "$application does not exist on the host"
-    }
-
-    if (!(Test-NssmServiceExists -service $service)) {
-        $nssm_result = Invoke-NssmCommand -arguments @("install", $service, $application)
-
-        if ($nssm_result.rc -ne 0) {
-            $result.nssm_error_cmd = $nssm_result.arguments
-            $result.nssm_error_log = $nssm_result.stderr
-            Fail-Json -obj $result -message "Error installing service ""$service"""
-        }
-
-        $result.changed_by = "install_service"
-        $result.changed = $true
-
-    } else {
-        Update-NssmServiceParameter -service $service -parameter "Application" -value $application
-    }
-
-    if ($result.changed) {
-        $applicationPath = (Get-Item $application).DirectoryName
-
-        Update-NssmServiceParameter -service $service -parameter "AppDirectory" -value $applicationPath
-    }
-}
-
-function Uninstall-NssmService {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service
-    )
-
-    if (Test-NssmServiceExists -service $service) {
-        if ((Get-Service -Name $service).Status -ne "Stopped") {
-            $nssm_result = Invoke-NssmCommand -arguments @("stop", $service)
-        }
-
-        $nssm_result = Invoke-NssmCommand -arguments @("remove", $service, "confirm")
-
-        if ($nssm_result.rc -ne 0) {
-            $result.nssm_error_cmd = $nssm_result.arguments
-            $result.nssm_error_log = $nssm_result.stderr
-            Fail-Json -obj $result -message "Error removing service ""$service"""
-        }
-
-        $result.changed_by = "remove_service"
-        $result.changed = $true
-    }
-}
-
-function Parse-AppParameters
-{
-   [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [AllowEmptyString()]
-        [string]$appParameters
-    )
-
-    $escapedAppParameters = $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n").Replace("\","\\")
-
-    return ConvertFrom-StringData -StringData $escapedAppParameters
-}
-
-function Update-NssmServiceAppParameters {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service,
-        $appParameters,
-        [string]$appParametersFree
-    )
-
-    $appParamKeys = @()
-    $appParamVals = @()
-    $singleLineParams = ""
-
-    if ($null -ne $appParameters) {
-        $appParametersHash = Parse-AppParameters -appParameters $appParameters
-        $appParamsArray = @()
-        $appParametersHash.GetEnumerator() | foreach {
-            $key = $($_.Name)
-            $val = $($_.Value)
-
-            $appParamKeys += $key
-            $appParamVals += $val
-
-            if ($key -ne "_") {
-                $appParamsArray += $key
-            }
-
-            $appParamsArray += $val
-        }
-
-        $result.nssm_app_parameters_keys = $appParamKeys
-        $result.nssm_app_parameters_vals = $appParamVals
-
-        $singleLineParams = Argv-ToString -arguments $appParamsArray
-    }
-    elseif ($null -ne $appParametersFree) {
-        $result.nssm_app_parameters_free_form = $appParametersFree
-        $singleLineParams = $appParametersFree
-    }
-
-    $result.nssm_app_parameters = $appParameters
-    $result.nssm_single_line_app_parameters = $singleLineParams
-
-    Update-NssmServiceParameter -service $service -parameter "AppParameters" -value $singleLineParams
-}
-
-function Update-NssmServiceOutputFiles {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service,
-        [string]$stdout,
-        [string]$stderr
-    )
-
-    Update-NssmServiceParameter -service $service -parameter "AppStdout" -value $stdoutFile
-    Update-NssmServiceParameter -service $service -parameter "AppStderr" -value $stderrFile
-
-    ###
-    # Setup file rotation so we don't accidentally consume too much disk
-    ###
-
-    #set files to overwrite
-    Update-NssmServiceParameter -service $service -parameter "AppStdoutCreationDisposition" -value 2
-    Update-NssmServiceParameter -service $service -parameter "AppStderrCreationDisposition" -value 2
-
-    #enable file rotation
-    Update-NssmServiceParameter -service $service -parameter "AppRotateFiles" -value 1
-
-    #don't rotate until the service restarts
-    Update-NssmServiceParameter -service $service -parameter "AppRotateOnline" -value 0
-
-    #both of the below conditions must be met before rotation will happen
-    #minimum age before rotating
-    Update-NssmServiceParameter -service $service -parameter "AppRotateSeconds" -value 86400
-
-    #minimum size before rotating
-    Update-NssmServiceParameter -service $service -parameter "AppRotateBytes" -value 104858
-}
-
-function Update-NssmServiceCredentials {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service,
-        [Parameter(Mandatory=$false)]
-        [string]$user,
-        [Parameter(Mandatory=$false)]
-        [string]$password
-    )
-
-    if ($user) {
-        $fullUser = $user
-        if (!$password) {
-            Fail-Json -obj $result -message "User without password is informed for service ""$name"""
-        }
-
-        if (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
-            $fullUser = ".\" + $user
-        }
-
-        # Use custom compare callback to test only the username (and not the password)
-        Update-NssmServiceParameter -service $service -parameter "ObjectName" -arguments @($fullUser, $password) -compare {param($actual,$expected) $actual[0] -eq $expected[0]}
-    }
-}
-
-function Update-NssmServiceDependencies {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service,
-        [Parameter(Mandatory=$false)]
-        $dependencies
-    )
-
-    if($null -ne $dependencies) {
-        Update-NssmServiceParameter -service $service -parameter "DependOnService" -arguments $dependencies
-    }
-}
-
-function Update-NssmServiceStartMode {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service,
-        [Parameter(Mandatory=$true)]
-        [string]$mode
-    )
-
-    $mappedMode = $start_modes_map.$startMode
-    Update-NssmServiceParameter -service $service -parameter "Start" -value $mappedMode
-}
-
 function Invoke-NssmStart {
     [CmdletBinding()]
     param(
@@ -497,15 +285,141 @@ if (($appParameters -ne $null) -and ($appParameters -isnot [string])) {
     Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
 }
 
+if ($state -ne 'absent') {
+    if ($null -eq $application) {
+        Fail-Json -obj $result -message "The application parameter must be defined when the state is not absent."
+    }
+
+    if (-not (Test-Path -Path $application -PathType Leaf)) {
+        Fail-Json -obj $result -message "The application specified ""$application"" does not exist on the host."
+    }
+
+    #TODO Add module parameter
+    $applicationPath = (Get-Item $application).DirectoryName
+}
+
+
+$service_exists = Test-NssmServiceExists -service $name
+
 if ($state -eq 'absent') {
-    Uninstall-NssmService -service $name
+    if ($service_exists) {
+        if ((Get-Service -Name $name).Status -ne "Stopped") {
+            $nssm_result = Invoke-NssmStop -service $name
+        }
+
+        $nssm_result = Invoke-NssmCommand -arguments @("remove", $name, "confirm")
+
+        if ($nssm_result.rc -ne 0) {
+            $result.nssm_error_cmd = $nssm_result.arguments
+            $result.nssm_error_log = $nssm_result.stderr
+            Fail-Json -obj $result -message "Error removing service ""$name"""
+        }
+
+        $result.changed_by = "remove_service"
+        $result.changed = $true
+    }
 } else {
-    Install-NssmService -service $name -application $application
-    Update-NssmServiceAppParameters -service $name -appParameters $appParameters -appParametersFree $appParametersFree
-    Update-NssmServiceOutputFiles -service $name -stdout $stdoutFile -stderr $stderrFile
-    Update-NssmServiceDependencies -service $name -dependencies $dependencies
-    Update-NssmServiceCredentials -service $name -user $user -password $password
-    Update-NssmServiceStartMode -service $name -mode $startMode
+    if (-not $service_exists) {
+        $nssm_result = Invoke-NssmCommand -arguments @("install", $name, $application)
+
+        if ($nssm_result.rc -ne 0) {
+            $result.nssm_error_cmd = $nssm_result.arguments
+            $result.nssm_error_log = $nssm_result.stderr
+            Fail-Json -obj $result -message "Error installing service ""$name"""
+        }
+
+        $result.changed_by = "install_service"
+        $result.changed = $true
+
+    } else {
+        Update-NssmServiceParameter -service $name -parameter "Application" -value $application
+    }
+
+    Update-NssmServiceParameter -service $name -parameter "AppDirectory" -value $applicationPath
+
+    $appParamKeys = @()
+    $appParamVals = @()
+    $singleLineParams = ""
+
+    if ($null -ne $appParameters) {
+        $escapedAppParameters = $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n").Replace("\","\\")
+        $appParametersHash = ConvertFrom-StringData -StringData $escapedAppParameters
+
+        $appParamsArray = @()
+        $appParametersHash.GetEnumerator() | foreach {
+            $key = $($_.Name)
+            $val = $($_.Value)
+
+            $appParamKeys += $key
+            $appParamVals += $val
+
+            if ($key -ne "_") {
+                $appParamsArray += $key
+            }
+
+            $appParamsArray += $val
+        }
+
+        $result.nssm_app_parameters_keys = $appParamKeys
+        $result.nssm_app_parameters_vals = $appParamVals
+
+        $singleLineParams = Argv-ToString -arguments $appParamsArray
+    } elseif ($null -ne $appParametersFree) {
+        $result.nssm_app_parameters_free_form = $appParametersFree
+        $singleLineParams = $appParametersFree
+    }
+
+    $result.nssm_app_parameters = $appParameters
+    $result.nssm_single_line_app_parameters = $singleLineParams
+
+    Update-NssmServiceParameter -service $name -parameter "AppParameters" -value $singleLineParams
+
+
+    Update-NssmServiceParameter -service $name -parameter "AppStdout" -value $stdoutFile
+    Update-NssmServiceParameter -service $name -parameter "AppStderr" -value $stderrFile
+
+    ###
+    # Setup file rotation so we don't accidentally consume too much disk
+    ###
+
+    #set files to overwrite
+    Update-NssmServiceParameter -service $name -parameter "AppStdoutCreationDisposition" -value 2
+    Update-NssmServiceParameter -service $name -parameter "AppStderrCreationDisposition" -value 2
+
+    #enable file rotation
+    Update-NssmServiceParameter -service $name -parameter "AppRotateFiles" -value 1
+
+    #don't rotate until the service restarts
+    Update-NssmServiceParameter -service $name -parameter "AppRotateOnline" -value 0
+
+    #both of the below conditions must be met before rotation will happen
+    #minimum age before rotating
+    Update-NssmServiceParameter -service $name -parameter "AppRotateSeconds" -value 86400
+
+    #minimum size before rotating
+    Update-NssmServiceParameter -service $name -parameter "AppRotateBytes" -value 104858
+
+
+    if($null -ne $dependencies) {
+        Update-NssmServiceParameter -service $name -parameter "DependOnService" -arguments $dependencies
+    }
+
+    if ($user) {
+        $fullUser = $user
+        if (!$password) {
+            Fail-Json -obj $result -message "User without password is informed for service ""$name"""
+        }
+
+        if (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
+            $fullUser = ".\" + $user
+        }
+
+        # Use custom compare callback to test only the username (and not the password)
+        Update-NssmServiceParameter -service $name -parameter "ObjectName" -arguments @($fullUser, $password) -compare {param($actual,$expected) $actual[0] -eq $expected[0]}
+    }
+
+    $mappedMode = $start_modes_map.$startMode
+    Update-NssmServiceParameter -service $name -parameter "Start" -value $mappedMode
 
     if ($state -in "stopped","restarted") {
         Stop-NssmService -service $name
