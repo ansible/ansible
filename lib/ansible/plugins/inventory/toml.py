@@ -94,13 +94,25 @@ from collections import MutableMapping, MutableSequence
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 try:
     import toml
+    toml_version = tuple(int(x) for x in toml.__version__.split('.'))
     HAS_TOML = True
-except ImportError:
+except (ImportError, AttributeError):
     HAS_TOML = False
+
+
+if HAS_TOML and toml_version >= (0, 10, 0):
+    class AnsibleTomlEncoder(toml.TomlEncoder):
+        def __init__(self, *args, **kwargs):
+            super(AnsibleTomlEncoder, self).__init__(*args, **kwargs)
+            self.dump_funcs.update({
+                AnsibleSequence: self.dump_funcs.get(list),
+                AnsibleUnicode: self.dump_funcs.get(str),
+            })
 
 
 class InventoryModule(BaseFileInventoryPlugin):
@@ -177,8 +189,10 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory file '''
-        if not HAS_TOML:
-            raise AnsibleParserError('The TOML inventory plugin requires the python "toml" library')
+        if not HAS_TOML or toml_version < (0, 10, 0):
+            raise AnsibleParserError(
+                'The TOML inventory plugin requires version 0.10.0 or newer of the python "toml" library'
+            )
 
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
