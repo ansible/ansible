@@ -3,6 +3,8 @@ Information for submitting a group of modules
 
 .. contents:: Topics
 
+.. include:: shared_snippets/Licensing.txt
+
 Submitting a group of modules
 `````````````````````````````
 
@@ -21,7 +23,6 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Read though all the pages linked off :doc:`developing_modules`; paying particular focus to the :doc:`developing_modules_checklist`.
 * For new modules going into Ansible 2.4 we are raising the bar so they must be PEP 8 compliant. See :doc:`testing_pep8` for more information.
 * Starting with Ansible version 2.4, all new modules must support Python 2.6 and Python 3.5+. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
-* All modules shipped with Ansible must be done so under the GPLv3 license. Files under the ``lib/ansible/module_utils/`` directory should be done so under the BSD license.
 * Have a look at the existing modules and how they've been named in the :ref:`all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.

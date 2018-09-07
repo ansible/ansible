@@ -1,0 +1,12 @@
+.. note::
+   **LICENSING GUIDELINE** - All modules shipped with Ansible must be done so
+   under the GPLv3 license. Files under the ``lib/ansible/module_utils/``
+   directory should be done so under the BSD license. However, some exceptions
+   exist. ``module_utils`` that are for a small set of modules for a specific
+   vendor's hardware, provider, or service are allowed to be under GPLv3+
+   instead of BSD Licensing. ``module_utils`` that are generic in nature (could
+   be used with modules from more than one vendor or project) must be BSD as this
+   allows third party and Galaxy modules to utilize the libraries without
+   dictating their license.  If there's doubt as to which category a
+   ``module_util`` falls into, the Ansible Core Team will decide during an
+   Ansible Core Community Meeting.
