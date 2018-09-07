@@ -202,3 +202,22 @@
     that:
       - "output.results[0]['_ansible_item_label'] == 'looped_var foo_label'"
       - "output.results[1]['_ansible_item_label'] == 'looped_var bar_label'"
+
+# https://github.com/ansible/ansible/issues/45189
+- name: with_X conditional delegate_to shortcircuit on templating error
+  debug:
+    msg: "loop"
+  when: false
+  delegate_to: localhost
+  with_list: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: loop conditional delegate_to shortcircuit on templating error
+  debug:
+    msg: "loop"
+  when: false
+  delegate_to: localhost
+  loop: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
