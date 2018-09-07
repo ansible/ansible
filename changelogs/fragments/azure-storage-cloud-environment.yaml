@@ -1,0 +1,3 @@
+---
+bugfixes:
+- fix azure storage blob cannot create blob container in non-public azure cloud environment. (https://github.com/ansible/ansible/issues/35223)
