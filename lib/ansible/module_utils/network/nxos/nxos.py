@@ -156,7 +156,7 @@ class Cli:
 
                 if network_api == 'cliconf' and out:
                     for index, resp in enumerate(out):
-                        if 'Invalid command at' in resp and 'json' in resp:
+                        if ('Invalid command at' in resp or 'Ambiguous command at' in resp) and 'json' in resp:
                             if commands[index]['output'] == 'json':
                                 commands[index]['output'] = 'text'
                                 out = connection.run_commands(commands, check_rc)
