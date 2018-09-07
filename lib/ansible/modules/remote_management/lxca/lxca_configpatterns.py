@@ -143,91 +143,160 @@ EXAMPLES = r'''
 '''
 
 import traceback
-from ansible.module_utils.remote_management.lxca_common import LXCAModuleBase
+from ansible.module_utils.basic import AnsibleModule
 from pylxca import configpatterns
+from pylxca import connect
+from pylxca import disconnect
+
+SUCCESS_MSG = "Success %s result"
+__changed__ = False
 
 
-class ConfigpatternsModule(LXCAModuleBase):
-    '''
-    This class fetch information about configpatterns in lxca
-    '''
+def _get_configpatterns(module, lxca_con):
+    result = configpatterns(lxca_con)
+    return result
 
-    SUCCESS_MSG = "Success %s result"
 
-    def __init__(self):
-        self.func_dict = {
-            'get_configpatterns': self._get_configpatterns,
-            'get_particular_configpattern': self._get_particular_configpattern,
-            'import_configpatterns': self._import_configpatterns,
-            'apply_configpatterns': self._apply_configpatterns,
-            'get_configstatus': self._get_configstatus,
-        }
-        args_spec = dict(
-            command_options=dict(default='get_configpatterns', choices=list(self.func_dict)),
-            id=dict(default=None),
-            status=dict(default=None),
-            endpoint=dict(default=None),
-            restart=dict(default=None, choices=[None, 'defer', 'immediate', 'pending']),
-            type=dict(default=None, choices=[None, 'node', 'rack', 'tower', 'flex']),
-            config_pattern_name=dict(default=None),
-            pattern_update_dict=dict(default=None, type=('dict')),
-            includeSettings=dict(default=None),
-        )
-        super(ConfigpatternsModule, self).__init__(input_args_spec=args_spec)
-        self._changed = False
+def _get_particular_configpattern(module, lxca_con):
+    pattern_dict = {}
+    pattern_dict['id'] = module.params['id']
+    pattern_dict['includeSettings'] = module.params['includeSettings']
+    result = configpatterns(lxca_con, **pattern_dict)
+    return result
 
-    def execute_module(self):
-        try:
-            result = self.func_dict[self.module.params['command_options']]()
-            return dict(changed=self._changed,
-                        msg=self.SUCCESS_MSG % self.module.params['command_options'],
-                        result=result)
-        except Exception as exception:
-            error_msg = '; '.join((e) for e in exception.args)
-            self.module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
-    def _get_configpatterns(self):
-        result = configpatterns(self.lxca_con)
-        return result
+def _import_configpatterns(module, lxca_con):
+    global __changed__
+    pattern_dict = {}
+    pattern_dict['pattern_update_dict'] = module.params['pattern_update_dict']
+    result = configpatterns(lxca_con, **pattern_dict)
+    __changed__ = True
 
-    def _get_particular_configpattern(self):
-        pattern_dict = {}
-        pattern_dict['id'] = self.module.params['id']
-        pattern_dict['includeSettings'] = self.module.params['includeSettings']
-        result = configpatterns(self.lxca_con, **pattern_dict)
-        return result
+    return result
 
-    def _import_configpatterns(self):
-        pattern_dict = {}
-        pattern_dict['pattern_update_dict'] = self.module.params['pattern_update_dict']
-        result = configpatterns(self.lxca_con, **pattern_dict)
-        self._changed = True
 
-        return result
+def _apply_configpatterns(module, lxca_con):
+    global __changed__
+    pattern_dict = {}
+    pattern_dict['id'] = module.params['id']
+    pattern_dict['name'] = module.params['config_pattern_name']
+    pattern_dict['endpoint'] = module.params['endpoint']
+    pattern_dict['restart'] = module.params['restart']
+    pattern_dict['type'] = module.params['type']
+    result = configpatterns(lxca_con, **pattern_dict)
+    __changed__ = True
+    return result
 
-    def _apply_configpatterns(self):
-        pattern_dict = {}
-        pattern_dict['id'] = self.module.params['id']
-        pattern_dict['name'] = self.module.params['config_pattern_name']
-        pattern_dict['endpoint'] = self.module.params['endpoint']
-        pattern_dict['restart'] = self.module.params['restart']
-        pattern_dict['type'] = self.module.params['type']
-        result = configpatterns(self.lxca_con, **pattern_dict)
-        self._changed = True
-        return result
 
-    def _get_configstatus(self):
-        pattern_dict = {}
-        pattern_dict['endpoint'] = self.module.params['endpoint']
-        pattern_dict['status'] = self.module.params['status']
-        result = configpatterns(self.lxca_con, **pattern_dict)
-        if 'items' in result and len(result['items']) and result['items'][0]:
-            result = result['items'][0]
-        return result
+def _get_configstatus(module, lxca_con):
+    pattern_dict = {}
+    pattern_dict['endpoint'] = module.params['endpoint']
+    pattern_dict['status'] = module.params['status']
+    result = configpatterns(lxca_con, **pattern_dict)
+    if 'items' in result and len(result['items']) and result['items'][0]:
+        result = result['items'][0]
+    return result
+
+
+def setup_module_object():
+    """
+    this function merge argument spec and create ansible module object
+    :return:
+    """
+    args_spec = dict(LXCA_COMMON_ARGS)
+    args_spec.update(INPUT_ARG_SPEC)
+    module = AnsibleModule(argument_spec=args_spec, supports_check_mode=False)
+
+    return module
+
+
+def setup_conn(module):
+    """
+    this function create connection to LXCA
+    :param module:
+    :return:  lxca connection
+    """
+    lxca_con = None
+    try:
+        lxca_con = connect(module.params['auth_url'],
+                           module.params['login_user'],
+                           module.params['login_password'],
+                           module.params['noverify'], )
+    except Exception as exception:
+        error_msg = '; '.join((e) for e in exception.args)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+    return lxca_con
+
+
+def validate_parameters(module):
+    """
+    validate parameters mostly it will be place holder
+    :param module:
+    """
+    pass
+
+
+FUNC_DICT = {
+    'get_configpatterns': _get_configpatterns,
+    'get_particular_configpattern': _get_particular_configpattern,
+    'import_configpatterns': _import_configpatterns,
+    'apply_configpatterns': _apply_configpatterns,
+    'get_configstatus': _get_configstatus,
+}
+
+
+LXCA_COMMON_ARGS = dict(
+    login_user=dict(required=True),
+    login_password=dict(required=True, no_log=True),
+    auth_url=dict(required=True),
+    noverify=dict(default=True)
+)
+
+INPUT_ARG_SPEC = dict(
+    command_options=dict(default='get_configpatterns', choices=list(FUNC_DICT)),
+    id=dict(default=None),
+    status=dict(default=None),
+    endpoint=dict(default=None),
+    restart=dict(default=None, choices=[None, 'defer', 'immediate', 'pending']),
+    type=dict(default=None, choices=[None, 'node', 'rack', 'tower', 'flex']),
+    config_pattern_name=dict(default=None),
+    pattern_update_dict=dict(default=None, type=('dict')),
+    includeSettings=dict(default=None),
+)
+
+
+def execute_module(module, lxca_con):
+    """
+    This function invoke commands
+    :param module: Ansible module object
+    :param lxca_con:  lxca connection object
+    """
+    try:
+        result = FUNC_DICT[module.params['command_options']](module, lxca_con)
+        disconnect(lxca_con)
+        module.exit_json(changed=__changed__,
+                         msg=SUCCESS_MSG % module.params['command_options'],
+                         result=result)
+    except Exception as exception:
+        error_msg = '; '.join((e) for e in exception.args)
+        disconnect(lxca_con)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+
+
+def run_tasks(module, lxca_con):
+    """
+
+    :param module: Ansible module object
+    :param lxca_con:  lxca connection object
+    """
+    execute_module(module, lxca_con)
 
 
 def main():
-    ConfigpatternsModule().run()
+    module = setup_module_object()
+    validate_parameters(module)
+    lxca_con = setup_conn(module)
+    run_tasks(module, lxca_con)
 
 
 if __name__ == '__main__':

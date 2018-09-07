@@ -151,70 +151,138 @@ EXAMPLES = r'''
 '''
 
 import traceback
-from ansible.module_utils.remote_management.lxca_common import LXCAModuleBase
+from ansible.module_utils.basic import AnsibleModule
 from pylxca import configprofiles
+from pylxca import connect
+from pylxca import disconnect
 
 
-class ConfigprofilesModule(LXCAModuleBase):
-    '''
-    This class fetch information about configprofiles in lxca
-    '''
+SUCCESS_MSG = "Success %s result"
+__changed__ = False
 
-    SUCCESS_MSG = "Success %s result"
-    def __init__(self):
-        self.func_dict = {
-            'configprofiles': self._get_configprofiles,
-        }
-        args_spec = dict(
-            command_options=dict(default='configprofiles', choices=list(self.func_dict)),
-            id=dict(default=None),
-            lxca_action=dict(default=None, choices=['delete', 'unassign', None]),
-            endpoint=dict(default=None),
-            restart=dict(default=None, choices=[None, 'immediate', 'pending']),
-            config_profile_name=dict(default=None),
-            powerdown=dict(default=None),
-            resetimm=dict(default=None),
-            force=dict(default=None),
-        )
-        super(ConfigprofilesModule, self).__init__(input_args_spec=args_spec)
-        self._changed = False
 
-    def execute_module(self):
-        try:
-            result = self.func_dict[self.module.params['command_options']]()
-            return dict(changed=self._changed,
-                        msg=self.SUCCESS_MSG % self.module.params['command_options'],
-                        result=result)
-        except Exception as exception:
-            error_msg = '; '.join((e) for e in exception.args)
-            self.module.fail_json(msg=error_msg, exception=traceback.format_exc())
+def _get_configprofiles(module, lxca_con):
+    global __changed__
+    delete_profile = None
+    unassign_profile = None
+    action = module.params["lxca_action"]
+    if action:
+        if action.lower() in ['delete']:
+            delete_profile = 'True'
+            __changed__ = True
+        elif action.lower() in ['unassign']:
+            unassign_profile = 'True'
+            __changed__ = True
 
-    def _get_configprofiles(self):
-        delete_profile = None
-        unassign_profile = None
-        action = self.module.params["lxca_action"]
-        if action:
-            if action.lower() in ['delete']:
-                delete_profile = 'True'
-                self._changed = True
-            elif action.lower() in ['unassign']:
-                unassign_profile = 'True'
-                self._changed = True
+    result = configprofiles(lxca_con,
+                            module.params['id'],
+                            module.params['config_profile_name'],
+                            module.params['endpoint'],
+                            module.params['restart'],
+                            delete_profile,
+                            unassign_profile,
+                            module.params['powerdown'],
+                            module.params['resetimm'],
+                            module.params['force'], )
+    return result
 
-        result = configprofiles(self.lxca_con,
-                                self.module.params['id'],
-                                self.module.params['config_profile_name'],
-                                self.module.params['endpoint'],
-                                self.module.params['restart'],
-                                delete_profile,
-                                unassign_profile,
-                                self.module.params['powerdown'],
-                                self.module.params['resetimm'],
-                                self.module.params['force'], )
-        return result
+
+def setup_module_object():
+    """
+    this function merge argument spec and create ansible module object
+    :return:
+    """
+    args_spec = dict(LXCA_COMMON_ARGS)
+    args_spec.update(INPUT_ARG_SPEC)
+    module = AnsibleModule(argument_spec=args_spec, supports_check_mode=False)
+
+    return module
+
+
+def setup_conn(module):
+    """
+    this function create connection to LXCA
+    :param module:
+    :return:  lxca connection
+    """
+    lxca_con = None
+    try:
+        lxca_con = connect(module.params['auth_url'],
+                           module.params['login_user'],
+                           module.params['login_password'],
+                           module.params['noverify'], )
+    except Exception as exception:
+        error_msg = '; '.join((e) for e in exception.args)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+    return lxca_con
+
+
+def validate_parameters(module):
+    """
+    validate parameters mostly it will be place holder
+    :param module:
+    """
+    pass
+
+
+FUNC_DICT = {
+    'configprofiles': _get_configprofiles,
+}
+
+
+LXCA_COMMON_ARGS = dict(
+    login_user=dict(required=True),
+    login_password=dict(required=True, no_log=True),
+    auth_url=dict(required=True),
+    noverify=dict(default=True)
+)
+
+
+INPUT_ARG_SPEC = dict(
+    command_options=dict(default='configprofiles', choices=list(FUNC_DICT)),
+    id=dict(default=None),
+    lxca_action=dict(default=None, choices=['delete', 'unassign', None]),
+    endpoint=dict(default=None),
+    restart=dict(default=None, choices=[None, 'immediate', 'pending']),
+    config_profile_name=dict(default=None),
+    powerdown=dict(default=None),
+    resetimm=dict(default=None),
+    force=dict(default=None),
+)
+
+
+def execute_module(module, lxca_con):
+    """
+    This function invoke commands
+    :param module: Ansible module object
+    :param lxca_con:  lxca connection object
+    """
+    try:
+        result = FUNC_DICT[module.params['command_options']](module, lxca_con)
+        disconnect(lxca_con)
+        module.exit_json(changed=__changed__,
+                         msg=SUCCESS_MSG % module.params['command_options'],
+                         result=result)
+    except Exception as exception:
+        error_msg = '; '.join((e) for e in exception.args)
+        disconnect(lxca_con)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+
+
+def run_tasks(module, lxca_con):
+    """
+
+    :param module: Ansible module object
+    :param lxca_con:  lxca connection object
+    """
+    execute_module(module, lxca_con)
+
 
 def main():
-    ConfigprofilesModule().run()
+    module = setup_module_object()
+    validate_parameters(module)
+    lxca_con = setup_conn(module)
+    run_tasks(module, lxca_con)
 
 
 if __name__ == '__main__':

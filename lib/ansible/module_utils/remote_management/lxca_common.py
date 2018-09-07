@@ -41,15 +41,52 @@ except Exception:
 from ansible.module_utils import six
 from ansible.module_utils.basic import AnsibleModule
 
+LXCA_COMMON_ARGS = dict(
+    login_user=dict(default=None, required=True),
+    login_password=dict(default=None, required=True, no_log=True),
+    auth_url=dict(default=None, required=True),
+    noverify=dict(default=True)
+)
+
+
+def setup_module_object(input_arg_spec):
+    """
+    this function merge argument spec and create ansible module object
+    :return:
+    """
+    args_spec = dict(LXCA_COMMON_ARGS)
+    args_spec.update(input_arg_spec)
+    module = AnsibleModule(argument_spec=args_spec, supports_check_mode=False)
+
+    return module
+
+
+def setup_conn(module):
+    """
+    this function create connection to LXCA
+    :param module:
+    :return:  lxca connection
+    """
+    lxca_con = None
+    try:
+        lxca_con = connect(module.params['auth_url'],
+                           module.params['login_user'],
+                           module.params['login_password'],
+                           module.params['noverify'], )
+    except Exception as exception:
+        error_msg = '; '.join((e) for e in exception.args)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+    return lxca_con
+
 
 @six.add_metaclass(abc.ABCMeta)
 class LXCAModuleBase(object):
     PYLXCA_REQUIRED = 'Lenovo xClarity Administrator Python Client (pylxca) is required for this module.'
 
     LXCA_COMMON_ARGS = dict(
-        login_user=dict(default=None, required=False),
-        login_password=dict(default=None, required=False, no_log=True),
-        auth_url=dict(default=None),
+        login_user=dict(default=None, required=True),
+        login_password=dict(default=None, required=True, no_log=True),
+        auth_url=dict(default=None, required=True),
         noverify=dict(default=True)
     )
 

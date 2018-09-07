@@ -93,65 +93,132 @@ EXAMPLES = '''
 '''
 
 import traceback
-from ansible.module_utils.remote_management.lxca_common import LXCAModuleBase
+from ansible.module_utils.basic import AnsibleModule
+from pylxca import connect
 from pylxca import manage
+from pylxca import disconnect
 
 
-class ManageModule(LXCAModuleBase):
-    '''
-    This class fetch information about manage in lxca
-    '''
+SUCCESS_MSG = "Success %s result"
+__changed__ = False
 
-    SUCCESS_MSG = "Success %s result"
 
-    def __init__(self):
-        self.func_dict = {
-            'manage': self._manage,
-            'manage_status': self._manage_status,
-        }
-        args_spec = dict(
-            command_options=dict(default='manage', choices=list(self.func_dict)),
-            endpoint_ip=dict(default=None),
-            jobid=dict(default=None),
-            user=dict(default=None, required=False),
-            password=dict(default=None, required=False, no_log=True),
-            force=dict(default=None),
-            recovery_password=dict(default=None, no_log=True),
-            storedcredential_id=dict(default=None),
-        )
-        super(ManageModule, self).__init__(input_args_spec=args_spec)
-        self._changed = False
+def _manage(module, lxca_con):
+    global __changed__
+    result = None
 
-    def execute_module(self):
-        try:
-            result = self.func_dict[self.module.params['command_options']]()
-            return dict(changed=self._changed,
-                        msg=self.SUCCESS_MSG % self.module.params['command_options'],
-                        result=result)
-        except Exception as exception:
-            error_msg = '; '.join((e) for e in exception.args)
-            self.module.fail_json(msg=error_msg, exception=traceback.format_exc())
+    result = manage(lxca_con, module.params['endpoint_ip'],
+                    module.params['user'],
+                    module.params['password'],
+                    module.params['recovery_password'],
+                    None,
+                    module.params['force'],
+                    module.params['storedcredential_id'],)
+    __changed__ = True
+    return result
 
-    def _manage(self):
-        result = None
 
-        result = manage(self.lxca_con, self.module.params['endpoint_ip'],
-                        self.module.params['user'],
-                        self.module.params['password'],
-                        self.module.params['recovery_password'],
-                        None,
-                        self.module.params['force'],
-                        self.module.params['storedcredential_id'],)
-        self._changed = True
-        return result
+def _manage_status(module, lxca_con):
+    result = manage(lxca_con, job=module.params['jobid'])
+    return result
 
-    def _manage_status(self):
-        result = manage(self.lxca_con, job=self.module.params['jobid'])
-        return result
+
+def setup_module_object():
+    """
+    this function merge argument spec and create ansible module object
+    :return:
+    """
+    args_spec = dict(LXCA_COMMON_ARGS)
+    args_spec.update(INPUT_ARG_SPEC)
+    module = AnsibleModule(argument_spec=args_spec, supports_check_mode=False)
+
+    return module
+
+
+def setup_conn(module):
+    """
+    this function create connection to LXCA
+    :param module:
+    :return:  lxca connection
+    """
+    lxca_con = None
+    try:
+        lxca_con = connect(module.params['auth_url'],
+                           module.params['login_user'],
+                           module.params['login_password'],
+                           module.params['noverify'], )
+    except Exception as exception:
+        error_msg = '; '.join((e) for e in exception.args)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+    return lxca_con
+
+
+def validate_parameters(module):
+    """
+    validate parameters mostly it will be place holder
+    :param module:
+    """
+    pass
+
+
+FUNC_DICT = {
+    'manage': _manage,
+    'manage_status': _manage_status,
+}
+
+
+LXCA_COMMON_ARGS = dict(
+    login_user=dict(required=True),
+    login_password=dict(required=True, no_log=True),
+    auth_url=dict(required=True),
+    noverify=dict(default=True)
+)
+
+
+INPUT_ARG_SPEC = dict(
+    command_options=dict(default='manage', choices=list(FUNC_DICT)),
+    endpoint_ip=dict(default=None),
+    jobid=dict(default=None),
+    user=dict(default=None, required=False),
+    password=dict(default=None, required=False, no_log=True),
+    force=dict(default=None),
+    recovery_password=dict(default=None, no_log=True),
+    storedcredential_id=dict(default=None),
+)
+
+
+def execute_module(module, lxca_con):
+    """
+    This function invoke commands
+    :param module: Ansible module object
+    :param lxca_con:  lxca connection object
+    """
+    try:
+        result = FUNC_DICT[module.params['command_options']](module, lxca_con)
+        disconnect(lxca_con)
+        module.exit_json(changed=__changed__,
+                         msg=SUCCESS_MSG % module.params['command_options'],
+                         result=result)
+    except Exception as exception:
+        error_msg = '; '.join((e) for e in exception.args)
+        disconnect(lxca_con)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+
+
+def run_tasks(module, lxca_con):
+    """
+
+    :param module: Ansible module object
+    :param lxca_con:  lxca connection object
+    """
+    execute_module(module, lxca_con)
 
 
 def main():
-    ManageModule().run()
+    module = setup_module_object()
+    validate_parameters(module)
+    lxca_con = setup_conn(module)
+    run_tasks(module, lxca_con)
 
 
 if __name__ == '__main__':
