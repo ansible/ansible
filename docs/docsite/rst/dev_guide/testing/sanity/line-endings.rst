@@ -1,3 +1,5 @@
+:orphan:
+
 Sanity Tests » line-endings
 ===========================
 

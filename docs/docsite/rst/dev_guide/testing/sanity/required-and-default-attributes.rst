@@ -1,3 +1,5 @@
+:orphan:
+
 Sanity Tests » required-and-default-attributes
 ==============================================
 
