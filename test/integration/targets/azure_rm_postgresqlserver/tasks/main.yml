@@ -93,7 +93,7 @@
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
-    name: postgresqlsrv{{ rpfx }}.second
+    name: postgresqlsrv{{ rpfx }}second
   register: output 
 
 - name: Assert that facts are returned
