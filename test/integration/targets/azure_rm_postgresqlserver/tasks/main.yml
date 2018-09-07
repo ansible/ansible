@@ -88,13 +88,12 @@
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
     tags:
-      aaa: bbb
       ccc: ddd
 
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
-    name: postgresqlsrv{{ rpfx }}
+    name: postgresqlsrv{{ rpfx }}.second
   register: output 
 
 - name: Assert that facts are returned
@@ -110,6 +109,8 @@
       - output.servers[0]['version'] != None
       - output.servers[0]['user_visible_state'] != None
       - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.servers[0]['tags']['aaa'] == 'bbb'
+      - output.servers[0]['tags']['ccc'] == 'ddd'
 
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
