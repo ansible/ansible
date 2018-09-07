@@ -33,16 +33,7 @@ $dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "list"
 $user = Get-AnsibleParam -obj $params -name "user" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 
-if (($appParameters -ne $null) -and ($appParametersFree -ne $null))
-{
-    Fail-Json $result "Use either app_parameters or app_parameteres_free_form, but not both"
-}
-if (($appParameters -ne $null) -and ($appParameters -isnot [string])) {
-    Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
-}
-
-Function Invoke-NssmCommand
-{
+function Invoke-NssmCommand {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -54,8 +45,20 @@ Function Invoke-NssmCommand
     return $nssm_result
 }
 
-Function Test-NssmServiceExists
-{
+function Get-NssmServiceStatus {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$service
+    )
+
+    $cmd = "status ""$service"""
+    $nssm_result = Invoke-NssmCommand $cmd
+
+    return $nssm_result
+}
+
+function Test-NssmServiceExists {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -65,37 +68,7 @@ Function Test-NssmServiceExists
     return [bool](Get-Service "$service" -ErrorAction SilentlyContinue)
 }
 
-Function Uninstall-NssmService
-{
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service
-    )
-
-    if (Test-NssmServiceExists -service $service)
-    {
-        if ((Get-Service -Name $service).Status -ne "Stopped") {
-            $cmd = "stop ""$service"""
-            $nssm_result = Invoke-NssmCommand $cmd
-        }
-        $cmd = "remove ""$service"" confirm"
-        $nssm_result = Invoke-NssmCommand $cmd
-
-        if ($nssm_result.rc -ne 0)
-        {
-            $result.nssm_error_cmd = $cmd
-            $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error removing service ""$service"""
-        }
-
-        $result.changed_by = "remove_service"
-        $result.changed = $true
-     }
-}
-
-Function Install-NssmService
-{
+function Install-NssmService {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -105,74 +78,92 @@ Function Install-NssmService
         [string]$application
     )
 
-    if (!$application)
-    {
-        Throw "Error installing service ""$service"". No application was supplied."
+    if (!$application) {
+        throw "Error installing service ""$service"". No application was supplied."
     }
-    If (-Not (Test-Path -Path $application -PathType Leaf)) {
-        Throw "$application does not exist on the host"
+    if (-Not (Test-Path -Path $application -PathType Leaf)) {
+        throw "$application does not exist on the host"
     }
 
-    if (!(Test-NssmServiceExists -service $service))
-    {
+    if (!(Test-NssmServiceExists -service $service)) {
         $nssm_result = Invoke-NssmCommand "install ""$service"" ""$application"""
 
-        if ($nssm_result.rc -ne 0)
-        {
+        if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $cmd
             $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error installing service ""$service"""
+            throw "Error installing service ""$service"""
         }
 
         $result.changed_by = "install_service"
         $result.changed = $true
 
-     } else {
+    } else {
         $nssm_result = Invoke-NssmCommand "get ""$service"" Application"
 
-        if ($nssm_result.rc -ne 0)
-        {
+        if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $cmd
             $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error installing service ""$service"""
+            throw "Error installing service ""$service"""
         }
 
-        if ($nssm_result.stdout.split("`n`r")[0] -ne $application)
-        {
+        if ($nssm_result.stdout.split("`n`r")[0] -ne $application) {
             $cmd = "set ""$service"" Application ""$application"""
 
             $nssm_result = Invoke-NssmCommand $cmd
 
-            if ($nssm_result.rc -ne 0)
-            {
+            if ($nssm_result.rc -ne 0) {
                 $result.nssm_error_cmd = $cmd
                 $result.nssm_error_log = $nssm_result.stderr
-                Throw "Error installing service ""$service"""
+                throw "Error installing service ""$service"""
             }
             $result.application = "$application"
 
             $result.changed_by = "reinstall_service"
             $result.changed = $true
         }
-     }
+    }
 
-     if ($result.changed)
-     {
+    if ($result.changed) {
         $applicationPath = (Get-Item $application).DirectoryName
         $cmd = "set ""$service"" AppDirectory ""$applicationPath"""
 
         $nssm_result = Invoke-NssmCommand $cmd
 
-        if ($nssm_result.rc -ne 0)
-        {
+        if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $cmd
             $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error installing service ""$service"""
+            throw "Error installing service ""$service"""
         }
-     }
+    }
 }
 
-Function Parse-AppParameters
+function Uninstall-NssmService {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$service
+    )
+
+    if (Test-NssmServiceExists -service $service) {
+        if ((Get-Service -Name $service).Status -ne "Stopped") {
+            $cmd = "stop ""$service"""
+            $nssm_result = Invoke-NssmCommand $cmd
+        }
+        $cmd = "remove ""$service"" confirm"
+        $nssm_result = Invoke-NssmCommand $cmd
+
+        if ($nssm_result.rc -ne 0) {
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = $nssm_result.stderr
+            throw "Error removing service ""$service"""
+        }
+
+        $result.changed_by = "remove_service"
+        $result.changed = $true
+    }
+}
+
+function Parse-AppParameters
 {
    [CmdletBinding()]
     param(
@@ -186,8 +177,7 @@ Function Parse-AppParameters
     return ConvertFrom-StringData -StringData $escapedAppParameters
 }
 
-Function Update-NssmServiceAppParameters
-{
+function Update-NssmServiceAppParameters {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -199,19 +189,17 @@ Function Update-NssmServiceAppParameters
     $cmd = "get ""$service"" AppParameters"
     $nssm_result = Invoke-NssmCommand $cmd
 
-    if ($nssm_result.rc -ne 0)
-    {
+    if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $cmd
         $result.nssm_error_log = $nssm_result.stderr
-        Throw "Error updating AppParameters for service ""$service"""
+        throw "Error updating AppParameters for service ""$service"""
     }
 
     $appParamKeys = @()
     $appParamVals = @()
     $singleLineParams = ""
 
-    if ($null -ne $appParameters)
-    {
+    if ($null -ne $appParameters) {
         $appParametersHash = Parse-AppParameters -appParameters $appParameters
         $appParamsArray = @()
         $appParametersHash.GetEnumerator() | foreach {
@@ -241,19 +229,17 @@ Function Update-NssmServiceAppParameters
     $result.nssm_app_parameters = $appParameters
     $result.nssm_single_line_app_parameters = $singleLineParams
 
-    if ($nssm_result.stdout.split("`n`r")[0] -ne $singleLineParams)
-    {
+    if ($nssm_result.stdout.split("`n`r")[0] -ne $singleLineParams) {
         # Escape argument line to preserve possible quotes and spaces
         $singleLineParams = Escape-Argument -argument $singleLineParams
         $cmd = "set ""$service"" AppParameters $singleLineParams"
 
         $nssm_result = Invoke-NssmCommand $cmd
 
-        if ($nssm_result.rc -ne 0)
-        {
+        if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $cmd
             $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error updating AppParameters for service ""$service"""
+            throw "Error updating AppParameters for service ""$service"""
         }
 
         $result.changed_by = "update_app_parameters"
@@ -261,8 +247,7 @@ Function Update-NssmServiceAppParameters
     }
 }
 
-Function Update-NssmServiceOutputFiles
-{
+function Update-NssmServiceOutputFiles {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -274,17 +259,14 @@ Function Update-NssmServiceOutputFiles
     $cmd = "get ""$service"" AppStdout"
     $nssm_result = Invoke-NssmCommand $cmd
 
-    if ($nssm_result.rc -ne 0)
-    {
+    if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $cmd
         $result.nssm_error_log = $nssm_result.stderr
-        Throw "Error retrieving existing stdout file for service ""$service"""
+        throw "Error retrieving existing stdout file for service ""$service"""
     }
 
-    if ($nssm_result.stdout.split("`n`r")[0] -ne $stdout)
-    {
-        if (!$stdout)
-        {
+    if ($nssm_result.stdout.split("`n`r")[0] -ne $stdout) {
+        if (!$stdout) {
             $cmd = "reset ""$service"" AppStdout"
         } else {
             $cmd = "set ""$service"" AppStdout $stdout"
@@ -292,11 +274,10 @@ Function Update-NssmServiceOutputFiles
 
         $nssm_result = Invoke-NssmCommand $cmd
 
-        if ($nssm_result.rc -ne 0)
-        {
+        if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $cmd
             $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error setting stdout file for service ""$service"""
+            throw "Error setting stdout file for service ""$service"""
         }
 
         $result.changed_by = "set_stdout"
@@ -306,35 +287,30 @@ Function Update-NssmServiceOutputFiles
     $cmd = "get ""$service"" AppStderr"
     $nssm_result = Invoke-NssmCommand $cmd
 
-    if ($nssm_result.rc -ne 0)
-    {
+    if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $cmd
         $result.nssm_error_log = $nssm_result.stderr
-        Throw "Error retrieving existing stderr file for service ""$service"""
+        throw "Error retrieving existing stderr file for service ""$service"""
     }
 
-    if ($nssm_result.stdout.split("`n`r")[0] -ne $stderr)
-    {
-        if (!$stderr)
-        {
+    if ($nssm_result.stdout.split("`n`r")[0] -ne $stderr) {
+        if (!$stderr) {
             $cmd = "reset ""$service"" AppStderr"
             $nssm_result = Invoke-NssmCommand $cmd
 
-            if ($nssm_result.rc -ne 0)
-            {
+            if ($nssm_result.rc -ne 0) {
                 $result.nssm_error_cmd = $cmd
                 $result.nssm_error_log = $nssm_result.stderr
-                Throw "Error clearing stderr file setting for service ""$service"""
+                throw "Error clearing stderr file setting for service ""$service"""
             }
         } else {
             $cmd = "set ""$service"" AppStderr $stderr"
             $nssm_result = Invoke-NssmCommand $cmd
 
-            if ($nssm_result.rc -ne 0)
-            {
+            if ($nssm_result.rc -ne 0) {
                 $result.nssm_error_cmd = $cmd
                 $result.nssm_error_log = $nssm_result.stderr
-                Throw "Error setting stderr file for service ""$service"""
+                throw "Error setting stderr file for service ""$service"""
             }
         }
 
@@ -371,8 +347,7 @@ Function Update-NssmServiceOutputFiles
     $nssm_result = Invoke-NssmCommand $cmd
 }
 
-Function Update-NssmServiceCredentials
-{
+function Update-NssmServiceCredentials {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -386,32 +361,30 @@ Function Update-NssmServiceCredentials
     $cmd = "get ""$service"" ObjectName"
     $nssm_result = Invoke-NssmCommand $cmd
 
-    if ($nssm_result.rc -ne 0)
-    {
+    if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $cmd
         $result.nssm_error_log = $nssm_result.stderr
-        Throw "Error updating credentials for service ""$service"""
+        throw "Error updating credentials for service ""$service"""
     }
 
     if ($user) {
         if (!$password) {
-            Throw "User without password is informed for service ""$service"""
+            throw "User without password is informed for service ""$service"""
         }
         else {
             $fullUser = $user
-            If (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
+            if (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
                 $fullUser = ".\" + $user
             }
 
-            If ($nssm_result.stdout.split("`n`r")[0] -ne $fullUser) {
+            if ($nssm_result.stdout.split("`n`r")[0] -ne $fullUser) {
                 $cmd = "set ""$service"" ObjectName $fullUser '$password'"
                 $nssm_result = Invoke-NssmCommand $cmd
 
-                if ($nssm_result.rc -ne 0)
-                {
+                if ($nssm_result.rc -ne 0) {
                     $result.nssm_error_cmd = $cmd
                     $result.nssm_error_log = $nssm_result.stderr
-                    Throw "Error updating credentials for service ""$service"""
+                    throw "Error updating credentials for service ""$service"""
                 }
 
                 $result.changed_by = "update_credentials"
@@ -421,8 +394,7 @@ Function Update-NssmServiceCredentials
     }
 }
 
-Function Update-NssmServiceDependencies
-{
+function Update-NssmServiceDependencies {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -439,25 +411,23 @@ Function Update-NssmServiceDependencies
     $cmd = "get ""$service"" DependOnService"
     $nssm_result = Invoke-NssmCommand $cmd
 
-    if ($nssm_result.rc -ne 0)
-    {
+    if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $cmd
         $result.nssm_error_log = $nssm_result.stderr
-        Throw "Error updating dependencies for service ""$service"""
+        throw "Error updating dependencies for service ""$service"""
     }
 
     $current_dependencies = @($nssm_result.stdout.split("`n`r") | where { $_ -ne '' })
 
-    If (@(Compare-Object -ReferenceObject $current_dependencies -DifferenceObject $dependencies).Length -ne 0) {
+    if (@(Compare-Object -ReferenceObject $current_dependencies -DifferenceObject $dependencies).Length -ne 0) {
         $dependencies_str = Argv-ToString -arguments $dependencies
         $cmd = "set ""$service"" DependOnService $dependencies_str"
         $nssm_result = Invoke-NssmCommand $cmd
 
-        if ($nssm_result.rc -ne 0)
-        {
+        if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $cmd
             $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error updating dependencies for service ""$service"""
+            throw "Error updating dependencies for service ""$service"""
         }
 
         $result.changed_by = "update-dependencies"
@@ -465,8 +435,7 @@ Function Update-NssmServiceDependencies
     }
 }
 
-Function Update-NssmServiceStartMode
-{
+function Update-NssmServiceStartMode {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -478,11 +447,10 @@ Function Update-NssmServiceStartMode
     $cmd = "get ""$service"" Start"
     $nssm_result = Invoke-NssmCommand $cmd
 
-    if ($nssm_result.rc -ne 0)
-    {
+    if ($nssm_result.rc -ne 0) {
         $result.nssm_error_cmd = $cmd
         $result.nssm_error_log = $nssm_result.stderr
-        Throw "Error updating start mode for service ""$service"""
+        throw "Error updating start mode for service ""$service"""
     }
 
     $modes=@{"auto" = "SERVICE_AUTO_START"; "delayed" = "SERVICE_DELAYED_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
@@ -491,11 +459,10 @@ Function Update-NssmServiceStartMode
         $cmd = "set ""$service"" Start $mappedMode"
         $nssm_result = Invoke-NssmCommand $cmd
 
-        if ($nssm_result.rc -ne 0)
-        {
+        if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $cmd
             $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error updating start mode for service ""$service"""
+            throw "Error updating start mode for service ""$service"""
         }
 
         $result.changed_by = "start_mode"
@@ -503,22 +470,49 @@ Function Update-NssmServiceStartMode
     }
 }
 
-Function Get-NssmServiceStatus
-{
+function Invoke-NssmStart {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
         [string]$service
     )
 
-    $cmd = "status ""$service"""
+    $cmd = "start ""$service"""
+
     $nssm_result = Invoke-NssmCommand $cmd
 
-    return $nssm_result
+    if ($nssm_result.rc -ne 0) {
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = $nssm_result.stderr
+        throw "Error starting service ""$service"""
+    }
+
+    $result.changed_by = "start_service"
+    $result.changed = $true
 }
 
-Function Start-NssmService
-{
+function Invoke-NssmStop {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$service
+    )
+
+    $cmd = "stop ""$service"""
+
+    $nssm_result = Invoke-NssmCommand $cmd
+
+    if ($nssm_result.rc -ne 0) {
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = $nssm_result.stderr
+        throw "Error stopping service ""$service"""
+    }
+
+    $result.changed_by = "stop_service_command"
+    $result.changed = $true
+}
+
+function Start-NssmService {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -527,15 +521,13 @@ Function Start-NssmService
 
     $currentStatus = Get-NssmServiceStatus -service $service
 
-    if ($currentStatus.rc -ne 0)
-    {
+    if ($currentStatus.rc -ne 0) {
         $result.nssm_error_cmd = $cmd
         $result.nssm_error_log = $currentStatus.stderr
-        Throw "Error starting service ""$service"""
+        throw "Error starting service ""$service"""
     }
 
-    switch -wildcard ($currentStatus.stdout)
-    {
+    switch -wildcard ($currentStatus.stdout) {
         "*SERVICE_RUNNING*" { <# Nothing to do #> }
         "*SERVICE_STOPPED*" { Invoke-NssmStart -service $service }
 
@@ -547,54 +539,7 @@ Function Start-NssmService
     }
 }
 
-Function Invoke-NssmStart
-{
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service
-    )
-
-    $cmd = "start ""$service"""
-
-    $nssm_result = Invoke-NssmCommand $cmd
-
-    if ($nssm_result.rc -ne 0)
-    {
-        $result.nssm_error_cmd = $cmd
-        $result.nssm_error_log = $nssm_result.stderr
-        Throw "Error starting service ""$service"""
-    }
-
-    $result.changed_by = "start_service"
-    $result.changed = $true
-}
-
-Function Invoke-NssmStop
-{
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [string]$service
-    )
-
-    $cmd = "stop ""$service"""
-
-    $nssm_result = Invoke-NssmCommand $cmd
-
-    if ($nssm_result.rc -ne 0)
-    {
-        $result.nssm_error_cmd = $cmd
-        $result.nssm_error_log = $nssm_result.stderr
-        Throw "Error stopping service ""$service"""
-    }
-
-    $result.changed_by = "stop_service_command"
-    $result.changed = $true
-}
-
-Function Stop-NssmService
-{
+function Stop-NssmService {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -603,24 +548,21 @@ Function Stop-NssmService
 
     $currentStatus = Get-NssmServiceStatus -service $service
 
-    if ($currentStatus.rc -ne 0)
-    {
+    if ($currentStatus.rc -ne 0) {
         $result.nssm_error_cmd = $cmd
         $result.nssm_error_log = $currentStatus.stderr
-        Throw "Error stopping service ""$service"""
+        throw "Error stopping service ""$service"""
     }
 
-    if ($currentStatus.stdout -notlike "*SERVICE_STOPPED*")
-    {
+    if ($currentStatus.stdout -notlike "*SERVICE_STOPPED*") {
         $cmd = "stop ""$service"""
 
         $nssm_result = Invoke-NssmCommand $cmd
 
-        if ($nssm_result.rc -ne 0)
-        {
+        if ($nssm_result.rc -ne 0) {
             $result.nssm_error_cmd = $cmd
             $result.nssm_error_log = $nssm_result.stderr
-            Throw "Error stopping service ""$service"""
+            throw "Error stopping service ""$service"""
         }
 
         $result.changed_by = "stop_service"
@@ -628,8 +570,7 @@ Function Stop-NssmService
     }
 }
 
-Function Restart-NssmService
-{
+function Restart-NssmService {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -640,7 +581,7 @@ Function Restart-NssmService
     Invoke-NssmStart -service $service
 }
 
-Function NssmProcedure
+function NssmProcedure
 {
     [CmdletBinding()]
     param(
@@ -656,10 +597,17 @@ Function NssmProcedure
     Update-NssmServiceStartMode -service $service -mode $startMode
 }
 
-Try
+if (($appParameters -ne $null) -and ($appParametersFree -ne $null))
 {
-    switch ($state)
-    {
+    Fail-Json $result "Use either app_parameters or app_parameteres_free_form, but not both"
+}
+if (($appParameters -ne $null) -and ($appParameters -isnot [string])) {
+    Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
+}
+
+try
+{
+    switch ($state) {
         "absent" {
             Uninstall-NssmService -service $name
         }
@@ -681,8 +629,6 @@ Try
     }
 
     Exit-Json $result
-}
-Catch
-{
+} catch {
      Fail-Json $result $_.Exception.Message
 }
