@@ -104,7 +104,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
 
     def wait_for_lock(self):
         '''Poll until the lock is removed if interval is a positive number'''
-        if os.path.isfile(self.lockfile) and self.lock_timeout > 0:
+        if (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)) and self.lock_timeout > 0:
             for iteration in range(0, self.lock_timeout):
                 time.sleep(self.lock_poll)
                 if not os.path.isfile(self.lockfile) or not glob.glob(self.lockfile):
