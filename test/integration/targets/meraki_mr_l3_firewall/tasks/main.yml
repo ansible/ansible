@@ -77,7 +77,7 @@
       - query.changed == False
 
 - name: Delete wireless network
-  meraki_network:
+  meraki_ssid:
     auth_key: '{{ auth_key }}'
     state: absent
     org_name: '{{test_org_name}}'
