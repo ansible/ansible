@@ -197,6 +197,9 @@ class InventoryManager(object):
 
         parsed = False
         # allow for multiple inventory parsing
+        all_sources = len(set(self._sources))
+        parsed_sources = 0
+
         for source in self._sources:
 
             if source:
@@ -205,15 +208,18 @@ class InventoryManager(object):
                 parse = self.parse_source(source, cache=cache)
                 if parse and not parsed:
                     parsed = True
+                    parsed_sources += 1
+
+        if all_sources != parsed_sources and C.INVENTORY_UNPARSED_IS_FAILED:
+            if parsed:
+                raise AnsibleError("An incomplete inventory was parsed, please check your configuration and options.")
+            raise AnsibleError("No inventory was parsed, please check your configuration and options.")
 
         if parsed:
             # do post processing
             self._inventory.reconcile_inventory()
         else:
-            if C.INVENTORY_UNPARSED_IS_FAILED:
-                raise AnsibleError("No inventory was parsed, please check your configuration and options.")
-            else:
-                display.warning("No inventory was parsed, only implicit localhost is available")
+            display.warning("No inventory was parsed, only implicit localhost is available")
 
         self._inventory_plugins = []
 
