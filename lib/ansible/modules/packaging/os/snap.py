@@ -103,7 +103,7 @@ def is_snap_installed(module, snap_name):
     return rc == 0
 
 
-def install_snaps(module, snap_names, classic):
+def install_snaps(module, snap_names):
     snaps_to_install = list()
     for snap_name in snap_names:
         rc = is_snap_installed(module, snap_name)
@@ -113,7 +113,7 @@ def install_snaps(module, snap_names, classic):
 
     if not snaps_to_install:
         snaps_already_installed = ', '.join(snap_names)
-        module.exit_json(msg="Snap(s) already installed: %s" % str(snaps_already_installed), classic=classic, changed=False)
+        module.exit_json(msg="Snap(s) already installed: %s" % str(snaps_already_installed), classic=module.params['classic'], changed=False)
 
     # Transform the list into a string with whitespace-separated snaps
     snaps_to_install = ' '.join(snaps_to_install)
@@ -121,9 +121,9 @@ def install_snaps(module, snap_names, classic):
     snaps_installed = snaps_to_install.replace(' ', ', ')
 
     if module.check_mode:
-        module.exit_json(msg="Snap(s) that would have been installed: %s" % str(snaps_installed), classic=classic, changed=True)
+        module.exit_json(msg="Snap(s) that would have been installed: %s" % str(snaps_installed), classic=module.params['classic'], changed=True)
 
-    classic = '--classic' if classic else ''
+    classic = '--classic' if module.params['classic'] else ''
 
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'install', snaps_to_install, classic]
@@ -133,10 +133,10 @@ def install_snaps(module, snap_names, classic):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        module.exit_json(msg="Snap(s) installed: %s" % str(snaps_installed), classic=classic, changed=True)
+        module.exit_json(msg="Snap(s) installed: %s" % str(snaps_installed), classic=module.params['classic'], changed=True)
     else:
         err = clean_err(err)
-        module.fail_json(msg="Something went wrong.", classic=classic, err=err)
+        module.fail_json(msg="Something went wrong.", classic=module.params['classic'], err=err)
 
 
 def remove_snaps(module, snap_names):
@@ -185,7 +185,6 @@ def main():
     # This argument is a list and will be treated as such, even if there is only one snap
     snap_names = module.params['name']
     state = module.params['state']
-    classic = module.params['classic']
 
     # Check if snaps are valid
     for snap_name in snap_names:
@@ -195,7 +194,7 @@ def main():
 
     # Apply changes to the snaps
     if state == 'present':
-        install_snaps(module, snap_names, classic)
+        install_snaps(module, snap_names)
     elif state == 'absent':
         remove_snaps(module, snap_names)
 
