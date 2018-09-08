@@ -98,16 +98,16 @@ def is_snap_installed(module, snap_name):
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'list', snap_name]
     cmd = ' '.join(cmd_parts)
-    rc, out, err = module.run_command(cmd, check_rc=False)
+    rc = module.run_command(cmd, check_rc=False)
 
-    return rc, out, err
+    return rc == 0
 
 
 def install_snaps(module, snap_names, classic):
     snaps_to_install = list()
     for snap_name in snap_names:
-        rc, out, err = is_snap_installed(module, snap_name)
-        if rc != 0:
+        rc = is_snap_installed(module, snap_name)
+        if not rc:
             # Snap is not installed
             snaps_to_install.append(snap_name)
 
@@ -142,8 +142,8 @@ def install_snaps(module, snap_names, classic):
 def remove_snaps(module, snap_names):
     snaps_to_remove = list()
     for snap_name in snap_names:
-        rc, out, err = is_snap_installed(module, snap_name)
-        if rc == 0:
+        rc = is_snap_installed(module, snap_name)
+        if rc:
             # Snap is installed
             snaps_to_remove.append(snap_name)
     if not snaps_to_remove:
