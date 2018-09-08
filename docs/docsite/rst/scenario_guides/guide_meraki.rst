@@ -105,7 +105,8 @@ Meraki and its related Ansible modules return most information in the form of a 
 .. code-block:: yaml
 
 	[
-		{'orgAccess': 'full', 
+		{
+			'orgAccess': 'full', 
 			'name': 'John Doe',
 			'tags': [],
 			'networks': [],
@@ -124,4 +125,4 @@ Error Handling
 
 Ansible's Meraki modules will often fail if improper or incompatible parameters are specified. However, there will likely be scenarios where the module accepts the information but the Meraki API rejects the data. If this happens, the error will be returned in the ``body`` field for HTTP status of 400 return code.
 
-Meraki's API returns a 404 error if the API key is not correct. It does not provide any specific error saying the key is incorrect. If you receive a 404 error, check the API key first. 404 errors can also occur if improper object IDs (ex. ``org_id`` are specified.
+Meraki's API returns a 404 error if the API key is not correct. It does not provide any specific error saying the key is incorrect. If you receive a 404 error, check the API key first. 404 errors can also occur if improper object IDs (ex. ``org_id``) are specified.
