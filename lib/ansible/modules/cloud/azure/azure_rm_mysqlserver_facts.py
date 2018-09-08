@@ -63,7 +63,7 @@ servers:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
         resource_group:
             description:
                 - Resource group name.
