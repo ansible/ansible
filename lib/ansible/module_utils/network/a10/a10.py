@@ -78,7 +78,7 @@ def axapi_call(module, url, post=None):
             data = {"response": {"status": "OK"}}
         else:
             data = {"response": {"status": "fail", "err": {"msg": raw_data}}}
-    except:
+    except Exception:
         module.fail_json(msg="could not read the result from the host")
     finally:
         rsp.close()
@@ -126,7 +126,7 @@ def axapi_call_v3(module, url, method=None, body=None, signature=None):
             data = {"response": {"status": "OK"}}
         else:
             data = {"response": {"status": "fail", "err": {"msg": raw_data}}}
-    except:
+    except Exception:
         module.fail_json(msg="could not read the result from the host")
     finally:
         rsp.close()

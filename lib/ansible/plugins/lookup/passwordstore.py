@@ -116,7 +116,7 @@ def check_output2(*popenargs, **kwargs):
     process = subprocess.Popen(*popenargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
     try:
         b_out, b_err = process.communicate(b_inputdata)
-    except:
+    except Exception:
         process.kill()
         process.wait()
         raise

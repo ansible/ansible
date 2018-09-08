@@ -198,7 +198,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 self.results['response'] = response
             else:
                 self.results['response'] = [response]
-        except:
+        except Exception:
             self.results['response'] = []
 
         return self.results

@@ -103,7 +103,7 @@ class Display(with_metaclass(Singleton, object)):
                 self.cows_available = set([to_text(c) for c in out.split()])
                 if C.ANSIBLE_COW_WHITELIST:
                     self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
-            except:
+            except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
 

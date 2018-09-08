@@ -143,7 +143,7 @@ def blueprint_virtnet(module):
     # --------------------------------------------------------------------
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     # --------------------------------------------------------------------
@@ -153,7 +153,7 @@ def blueprint_virtnet(module):
         blueprint = find_collection_item(aos.Blueprints,
                                          item_name=margs['blueprint'],
                                          item_id=margs['blueprint'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to find the Blueprint based on name or ID, something went wrong")
 
     if blueprint.exists is False:
@@ -181,7 +181,7 @@ def blueprint_virtnet(module):
     # --------------------------------------------------------------------
     try:
         virtnet = blueprint.VirtualNetworks[item_name]
-    except:
+    except Exception:
         module.fail_json(msg="Something went wrong while trying to find Virtual Network %s in blueprint %s"
                          % (item_name, blueprint.name))
 

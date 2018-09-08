@@ -96,7 +96,7 @@ import traceback
 try:
     from datadog import initialize, api
     HAS_DATADOG = True
-except:
+except Exception:
     HAS_DATADOG = False
 
 from ansible.module_utils.basic import AnsibleModule

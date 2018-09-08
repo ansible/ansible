@@ -292,7 +292,7 @@ class MerakiModule(object):
                            body=json.loads(to_native(info['body'])))
         try:
             return json.loads(to_native(resp.read()))
-        except:
+        except Exception:
             pass
 
     def exit_json(self, **kwargs):

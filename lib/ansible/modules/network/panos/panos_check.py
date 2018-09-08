@@ -123,7 +123,7 @@ def main():
     while True:
         try:
             xapi.op(cmd="show jobs all", cmd_xml=True)
-        except:
+        except Exception:
             pass
         else:
             jobs = xapi.element_root.findall('.//job')

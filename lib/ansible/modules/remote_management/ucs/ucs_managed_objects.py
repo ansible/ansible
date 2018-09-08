@@ -164,7 +164,7 @@ RETURN = r'''
 try:
     from importlib import import_module
     HAS_IMPORT_MODULE = True
-except:
+except Exception:
     HAS_IMPORT_MODULE = False
 
 from copy import deepcopy

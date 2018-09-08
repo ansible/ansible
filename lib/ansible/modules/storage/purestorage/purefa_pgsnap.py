@@ -112,7 +112,7 @@ def get_pgroup(module, array):
     """Return Protection Group or None"""
     try:
         return array.get_pgroup(module.params['name'])
-    except:
+    except Exception:
         return None
 
 
@@ -123,7 +123,7 @@ def get_pgroupvolume(module, array):
         for volume in pgroup['volumes']:
             if volume == module.params['restore']:
                 return volume
-    except:
+    except Exception:
         return None
 
 
@@ -134,7 +134,7 @@ def get_rpgsnapshot(module, array):
         for snap in array.list_volumes(snap='true'):
             if snap['name'] == snapname:
                 return snapname
-    except:
+    except Exception:
         return None
 
 
@@ -145,7 +145,7 @@ def get_pgsnapshot(module, array):
         for snap in array.get_pgroup(module.params['name'], snap='true'):
             if snap['name'] == snapname:
                 return snapname
-    except:
+    except Exception:
         return None
 
 
@@ -157,7 +157,7 @@ def create_pgsnapshot(module, array):
                                      snap=True,
                                      apply_retention=True)
         changed = True
-    except:
+    except Exception:
         changed = False
     module.exit_json(changed=changed)
 
@@ -168,7 +168,7 @@ def restore_pgsnapvolume(module, array):
     try:
         array.copy_volume(volume, module.params['target'], overwrite=module.params['overwrite'])
         changed = True
-    except:
+    except Exception:
         changed = False
     module.exit_json(changed=changed)
 
@@ -189,9 +189,9 @@ def delete_pgsnapshot(module, array):
             try:
                 array.eradicate_pgroup(snapname)
                 changed = True
-            except:
+            except Exception:
                 changed = False
-    except:
+    except Exception:
         changed = False
     module.exit_json(changed=changed)
 

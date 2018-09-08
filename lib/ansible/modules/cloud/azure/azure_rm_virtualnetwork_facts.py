@@ -86,7 +86,7 @@ azure_virtualnetworks:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 

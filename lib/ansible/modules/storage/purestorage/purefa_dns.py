@@ -81,7 +81,7 @@ def delete_dns(module, array):
         try:
             array.set_dns(domain='', nameservers=[])
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Delete DNS settigs failed')
     module.exit_json(changed=changed)
 
@@ -95,7 +95,7 @@ def create_dns(module, array):
             array.set_dns(domain=module.params['domain'],
                           nameservers=module.params['nameservers'][0:3])
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Set DNS settings failed: Check configuration')
     module.exit_json(changed=changed)
 

@@ -71,7 +71,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if 'Value' in ipinfo:
                 a, ip = ipinfo.split(':', 1)
                 ret = ip.strip()
-        except:
+        except Exception:
             pass
         return ret
 
@@ -137,7 +137,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 continue
             try:
                 k, v = line.split(':', 1)
-            except:
+            except Exception:
                 # skip non splitable
                 continue
 

@@ -185,7 +185,7 @@ class ConnectionProcess(object):
                     self.sock.close()
                 if self.connection:
                     self.connection.close()
-            except:
+            except Exception:
                 pass
             finally:
                 if os.path.exists(self.socket_path):

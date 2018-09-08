@@ -207,7 +207,7 @@ def get_collection_from_param_map(module, aos):
 
         try:
             param_map = yaml.safe_load(param_map_json)
-        except:
+        except Exception:
             module.fail_json(msg="Unable to parse param_map information")
 
     else:
@@ -292,7 +292,7 @@ def blueprint_param(module):
     # --------------------------------------------------------------------
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     # --------------------------------------------------------------------
@@ -302,7 +302,7 @@ def blueprint_param(module):
         blueprint = find_collection_item(aos.Blueprints,
                                          item_name=margs['blueprint'],
                                          item_id=margs['blueprint'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to find the Blueprint based on name or ID, something went wrong")
 
     if blueprint.exists is False:

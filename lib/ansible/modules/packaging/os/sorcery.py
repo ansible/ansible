@@ -198,7 +198,7 @@ def codex_fresh(codex, module):
 
         try:
             mtime = os.stat(lastupdate_path).st_mtime
-        except:
+        except Exception:
             return False
 
         lastupdate_ts = datetime.datetime.fromtimestamp(mtime)
@@ -472,7 +472,7 @@ def manage_spells(module):
 
             try:
                 queue_size = os.stat(sorcery_queue).st_size
-            except:
+            except Exception:
                 module.fail_json(msg="failed to read the update queue")
 
             if queue_size != 0:

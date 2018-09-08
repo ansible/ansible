@@ -148,7 +148,7 @@ class ACIModule(object):
                 return true
             elif bool_value is False:
                 return false
-        except:
+        except Exception:
             # This provides backward compatibility to Ansible v2.4, deprecate in Ansible v2.8
             if value == true:
                 self.module.deprecate("Boolean value '%s' is no longer valid, please use 'yes' as a boolean value." % value, '2.9')
@@ -164,7 +164,7 @@ class ACIModule(object):
         ''' Return an ACI-compatible ISO8601 formatted time: 2123-12-12T00:00:00.000+00:00 '''
         try:
             return dt.isoformat(timespec='milliseconds')
-        except:
+        except Exception:
             tz = dt.strftime('%z')
             return '%s.%03d%s:%s' % (dt.strftime('%Y-%m-%dT%H:%M:%S'), dt.microsecond / 1000, tz[:3], tz[3:])
 
@@ -231,7 +231,7 @@ class ACIModule(object):
 
         try:
             sig_key = load_privatekey(FILETYPE_PEM, open(self.params['private_key'], 'r').read())
-        except:
+        except Exception:
             self.module.fail_json(msg='Cannot load private key %s' % self.params['private_key'])
 
         # NOTE: ACI documentation incorrectly adds a space between method and path

@@ -506,7 +506,7 @@ class Ec2Metadata(object):
                         self._data['%s' % (new_uri)] = content
                         for (key, value) in dict.items():
                             self._data['%s:%s' % (new_uri, key.lower())] = value
-                    except:
+                    except Exception:
                         self._data['%s' % (new_uri)] = content  # not a stringifed JSON string
 
     def fix_invalid_varnames(self, data):

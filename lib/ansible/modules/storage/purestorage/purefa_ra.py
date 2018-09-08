@@ -65,14 +65,14 @@ def enable_ra(module, array):
             ra_facts['fa_ra'] = {'name': ra_data['name'],
                                  'port': ra_data['port']}
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Enabling Remote Assist failed')
     else:
         try:
             ra_data = array.get_remote_assist_status()
             ra_facts['fa_ra'] = {'name': ra_data['name'],
                                  'port': ra_data['port']}
-        except:
+        except Exception:
             module.fail_json(msg='Getting Remote Assist failed')
     module.exit_json(changed=changed, ansible_facts=ra_facts)
 
@@ -84,7 +84,7 @@ def disable_ra(module, array):
         try:
             array.disable_remote_assist()
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Disabling Remote Assist failed')
     module.exit_json(changed=changed)
 

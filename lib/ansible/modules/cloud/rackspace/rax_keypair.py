@@ -128,7 +128,7 @@ def rax_keypair(module, name, public_key, state):
     elif state == 'absent':
         try:
             keypair = cs.keypairs.find(name=name)
-        except:
+        except Exception:
             pass
 
         if keypair:

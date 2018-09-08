@@ -88,7 +88,7 @@ import json
 
 try:
     import libbrook
-except:
+except Exception:
     sys.exit('Brook.io inventory script requires libbrook. See https://github.com/doalitic/libbrook')
 
 

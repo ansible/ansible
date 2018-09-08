@@ -78,7 +78,7 @@ class ConfigCLI(CLI):
                     raise AnsibleOptionsError("%s is not a valid file" % (self.config_file))
 
                 os.environ['ANSIBLE_CONFIG'] = to_native(self.config_file)
-            except:
+            except Exception:
                 if self.action in ['view']:
                     raise
                 elif self.action in ['edit', 'update']:

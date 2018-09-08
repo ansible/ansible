@@ -354,7 +354,7 @@ class Virt(object):
                         results.append(x.name())
                 else:
                     results.append(x.name())
-            except:
+            except Exception:
                 pass
         return results
 

@@ -181,7 +181,7 @@ class TarFileProgressReader(tarfile.ExFileObject):
     def __exit__(self, exc_type, exc_value, traceback):
         try:
             self.close()
-        except:
+        except Exception:
             pass
 
     def read(self, size=10240):

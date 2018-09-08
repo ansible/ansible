@@ -100,7 +100,7 @@ def main():
     msg_object = Pushover(module, module.params['user_key'], module.params['app_token'])
     try:
         response = msg_object.run(module.params['pri'], module.params['msg'])
-    except:
+    except Exception:
         module.fail_json(msg='Unable to send msg via pushover')
 
     module.exit_json(msg='message sent successfully: %s' % response, changed=False)

@@ -139,7 +139,7 @@ def stop_slave(cursor):
     try:
         cursor.execute("STOP SLAVE")
         stopped = True
-    except:
+    except Exception:
         stopped = False
     return stopped
 
@@ -148,7 +148,7 @@ def reset_slave(cursor):
     try:
         cursor.execute("RESET SLAVE")
         reset = True
-    except:
+    except Exception:
         reset = False
     return reset
 
@@ -157,7 +157,7 @@ def reset_slave_all(cursor):
     try:
         cursor.execute("RESET SLAVE ALL")
         reset = True
-    except:
+    except Exception:
         reset = False
     return reset
 
@@ -166,7 +166,7 @@ def start_slave(cursor):
     try:
         cursor.execute("START SLAVE")
         started = True
-    except:
+    except Exception:
         started = False
     return started
 

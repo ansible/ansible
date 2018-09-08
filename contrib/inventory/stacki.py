@@ -53,7 +53,7 @@ import json
 
 try:
     import requests
-except:
+except Exception:
     sys.exit('requests package is required for this inventory script')
 
 

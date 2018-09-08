@@ -77,7 +77,7 @@ azure_publicipaddresses:
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 

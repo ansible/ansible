@@ -254,7 +254,7 @@ class NSoTInventory(object):
         obj[group]['vars'] = hostvars
         try:
             assert isinstance(query, string_types)
-        except:
+        except Exception:
             sys.exit('ERR: Group queries must be a single string\n'
                      '  Group: %s\n'
                      '  Query: %s\n' % (group, query)

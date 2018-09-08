@@ -532,7 +532,7 @@ def main():
                     mimetype, charset = out.split(':')[1].split(';')
                     output['mimetype'] = mimetype.strip()
                     output['charset'] = charset.split('=')[1].strip()
-            except:
+            except Exception:
                 pass
 
     # try to get attr data

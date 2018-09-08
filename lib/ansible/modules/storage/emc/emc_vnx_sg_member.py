@@ -88,7 +88,7 @@ try:
     from storops.exception import VNXCredentialError, VNXStorageGroupError, \
         VNXAluAlreadyAttachedError, VNXAttachAluError, VNXDetachAluNotFoundError
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 
 

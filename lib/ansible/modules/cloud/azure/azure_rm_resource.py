@@ -258,7 +258,7 @@ class AzureRMResource(AzureRMModuleBase):
                 try:
                     response = json.loads(original.text)
                     needs_update = (dict_merge(response, self.body) != response)
-                except:
+                except Exception:
                     pass
 
         if needs_update:
@@ -266,7 +266,7 @@ class AzureRMResource(AzureRMModuleBase):
             if self.state == 'present':
                 try:
                     response = json.loads(response.text)
-                except:
+                except Exception:
                     response = response.text
             else:
                 response = None

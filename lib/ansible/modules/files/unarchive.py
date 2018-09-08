@@ -241,7 +241,7 @@ class ZipArchive(object):
             try:
                 for item in archive.infolist():
                     self._infodict[item.filename] = int(item.CRC)
-            except:
+            except Exception:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
 
@@ -273,7 +273,7 @@ class ZipArchive(object):
                                 break
                     if not exclude_flag:
                         self._files_in_archive.append(to_native(member))
-            except:
+            except Exception:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
 
@@ -328,7 +328,7 @@ class ZipArchive(object):
         else:
             try:
                 fut_owner = run_owner
-            except:
+            except Exception:
                 pass
             fut_uid = run_uid
 
@@ -347,7 +347,7 @@ class ZipArchive(object):
         else:
             try:
                 fut_group = run_group
-            except:
+            except Exception:
                 pass
             fut_gid = run_gid
 
@@ -427,7 +427,7 @@ class ZipArchive(object):
             dest = os.path.join(self.dest, path)
             try:
                 st = os.lstat(dest)
-            except:
+            except Exception:
                 change = True
                 self.includes.append(path)
                 err += 'Path %s is missing\n' % path

@@ -508,7 +508,7 @@ def main():
     for _connection_state in module.params['active_connection_states']:
         try:
             get_connection_state_id(_connection_state)
-        except:
+        except Exception:
             module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state, elapsed=0)
 
     start = datetime.datetime.utcnow()
@@ -534,7 +534,7 @@ def main():
                     s = _create_connection(host, port, connect_timeout)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
-                except:
+                except Exception:
                     break
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
@@ -582,7 +582,7 @@ def main():
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
                     s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
-                except:
+                except Exception:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
                 else:

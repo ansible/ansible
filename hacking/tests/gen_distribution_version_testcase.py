@@ -62,7 +62,7 @@ ansible_facts = {}
 for fact in facts:
     try:
         ansible_facts[fact] = parsed['ansible_facts']['ansible_' + fact]
-    except:
+    except Exception:
         ansible_facts[fact] = "N/A"
 
 nicename = ansible_facts['distribution'] + ' ' + ansible_facts['distribution_version']

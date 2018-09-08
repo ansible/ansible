@@ -174,36 +174,36 @@ def make_pgroup(module, array):
         if set(module.params['target'][0:4]).issubset(connected_arrays):
             try:
                 array.create_pgroup(module.params['pgroup'], targetlist=[module.params['target'][0:4]])
-            except:
+            except Exception:
                 module.fail_json(msg='Creation of replicated pgroup {0} failed.'.format(module.params['pgroup']))
         else:
             module.fail_json(msg='Target arrays {0} not connected to source array.'.format(module.params['target']))
     else:
         try:
             array.create_pgroup(module.params['pgroup'])
-        except:
+        except Exception:
             module.fail_json(msg='Creation of pgroup {0} failed.'.format(module.params['pgroup']))
     try:
         if module.params['target']:
             array.set_pgroup(module.params['pgroup'], replicate_enabled=module.params['enabled'])
         else:
             array.set_pgroup(module.params['pgroup'], snap_enabled=module.params['enabled'])
-    except:
+    except Exception:
         module.fail_json(msg='Enabling pgroup {0} failed.'.format(module.params['pgroup']))
     if module.params['volume']:
         try:
             array.set_pgroup(module.params['pgroup'], vollist=module.params['volume'])
-        except:
+        except Exception:
             module.fail_json(msg='Adding volumes to pgroup {0} failed.'.format(module.params['pgroup']))
     if module.params['host']:
         try:
             array.set_pgroup(module.params['pgroup'], hostlist=module.params['host'])
-        except:
+        except Exception:
             module.fail_json(msg='Adding hosts to pgroup {0} failed.'.format(module.params['pgroup']))
     if module.params['hostgroup']:
         try:
             array.set_pgroup(module.params['pgroup'], hgrouplist=module.params['hostgroup'])
-        except:
+        except Exception:
             module.fail_json(msg='Adding hostgroups to pgroup {0} failed.'.format(module.params['pgroup']))
     changed = True
     module.exit_json(changed=changed)
@@ -220,20 +220,20 @@ def update_pgroup(module, array):
             try:
                 array.set_pgroup(module.params['pgroup'], targetlist=[module.params['target'][0:4]])
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Changing targets for pgroup {0} failed.'.format(module.params['pgroup']))
 
     if module.params['target'] and module.params['enabled'] != get_pgroup_sched(module, array)['replicate_enabled']:
         try:
             array.set_pgroup(module.params['pgroup'], replicate_enabled=module.params['enabled'])
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Changing enabled status of pgroup {0} failed.'.format(module.params['pgroup']))
     elif not module.params['target'] and module.params['enabled'] != get_pgroup_sched(module, array)['snap_enabled']:
         try:
             array.set_pgroup(module.params['pgroup'], snap_enabled=module.params['enabled'])
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Changing enabled status of pgroup {0} failed.'.format(module.params['pgroup']))
 
     if module.params['volume'] and get_pgroup(module, array)['hosts'] is None and get_pgroup(module, array)['hgroups'] is None:
@@ -241,14 +241,14 @@ def update_pgroup(module, array):
             try:
                 array.set_pgroup(module.params['pgroup'], vollist=module.params['volume'])
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Adding volumes to pgroup {0} failed.'.format(module.params['pgroup']))
         else:
             if not all(x in get_pgroup(module, array)['volumes'] for x in module.params['volume']):
                 try:
                     array.set_pgroup(module.params['pgroup'], vollist=module.params['volume'])
                     changed = True
-                except:
+                except Exception:
                     module.fail_json(msg='Changing volumes in pgroup {0} failed.'.format(module.params['pgroup']))
 
     if module.params['host'] and get_pgroup(module, array)['volumes'] is None and get_pgroup(module, array)['hgroups'] is None:
@@ -256,14 +256,14 @@ def update_pgroup(module, array):
             try:
                 array.set_pgroup(module.params['pgroup'], hostlist=module.params['host'])
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Adding hosts to pgroup {0} failed.'.format(module.params['pgroup']))
         else:
             if not all(x in get_pgroup(module, array)['hosts'] for x in module.params['host']):
                 try:
                     array.set_pgroup(module.params['pgroup'], hostlist=module.params['host'])
                     changed = True
-                except:
+                except Exception:
                     module.fail_json(msg='Changing hosts in pgroup {0} failed.'.format(module.params['pgroup']))
 
     if module.params['hostgroup'] and get_pgroup(module, array)['hosts'] is None and get_pgroup(module, array)['volumes'] is None:
@@ -271,14 +271,14 @@ def update_pgroup(module, array):
             try:
                 array.set_pgroup(module.params['pgroup'], hgrouplist=module.params['hostgroup'])
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Adding hostgroups to pgroup {0} failed.'.format(module.params['pgroup']))
         else:
             if not all(x in get_pgroup(module, array)['hgroups'] for x in module.params['hostgroup']):
                 try:
                     array.set_pgroup(module.params['pgroup'], hgrouplist=module.params['hostgroup'])
                     changed = True
-                except:
+                except Exception:
                     module.fail_json(msg='Changing hostgroups in pgroup {0} failed.'.format(module.params['pgroup']))
 
     module.exit_json(changed=changed)
@@ -319,14 +319,14 @@ def main():
         try:
             for hst in module.params['host']:
                 array.get_host(hst)
-        except:
+        except Exception:
             module.fail_json(msg='Host {} not found'.format(hst))
 
     if module.params['hostgroup']:
         try:
             for hstg in module.params['hostgroup']:
                 array.get_hgroup(hstg)
-        except:
+        except Exception:
             module.fail_json(msg='Hostgroup {} not found'.format(hstg))
 
     if pgroup and state == 'present':

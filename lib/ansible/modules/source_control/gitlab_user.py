@@ -124,7 +124,7 @@ RETURN = '''# '''
 try:
     import gitlab
     HAS_GITLAB_PACKAGE = True
-except:
+except Exception:
     HAS_GITLAB_PACKAGE = False
 
 from ansible.module_utils.basic import AnsibleModule

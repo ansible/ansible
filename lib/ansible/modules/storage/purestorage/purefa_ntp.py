@@ -79,7 +79,7 @@ def delete_ntp(module, array):
         try:
             array.set(ntpserver=[])
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Deletion of NTP servers failed')
     module.exit_json(changed=changed)
 
@@ -92,7 +92,7 @@ def create_ntp(module, array):
     try:
         array.set(ntpserver=module.params['ntp_servers'][0:4])
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Update of NTP servers failed')
     module.exit_json(changed=changed)
 

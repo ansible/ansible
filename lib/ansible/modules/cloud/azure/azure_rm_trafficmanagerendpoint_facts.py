@@ -141,7 +141,7 @@ from ansible.module_utils.common.dict_transformations import (
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureHttpError
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 

@@ -546,7 +546,7 @@ class NosystemdTimezone(Timezone):
                     try:
                         if not filecmp.cmp('/etc/localtime', '/usr/share/zoneinfo/' + planned):
                             return 'n/a'
-                    except:
+                    except Exception:
                         return 'n/a'
         else:
             self.abort('unknown parameter "%s"' % key)
@@ -610,7 +610,7 @@ class SmartOSTimezone(Timezone):
                     m = re.match('^TZ=(.*)$', line.strip())
                     if m:
                         return m.groups()[0]
-            except:
+            except Exception:
                 self.module.fail_json(msg='Failed to read /etc/default/init')
         else:
             self.module.fail_json(msg='%s is not a supported option on target platform' % key)
@@ -745,7 +745,7 @@ class BSDTimezone(Timezone):
             try:
                 if not os.path.isfile(zonefile):
                     self.module.fail_json(msg='%s is not a recognized timezone' % value)
-            except:
+            except Exception:
                 self.module.fail_json(msg='Failed to stat %s' % zonefile)
 
             # Now (somewhat) atomically update the symlink by creating a new
@@ -759,7 +759,7 @@ class BSDTimezone(Timezone):
             try:
                 os.symlink(zonefile, new_localtime)
                 os.rename(new_localtime, '/etc/localtime')
-            except:
+            except Exception:
                 os.remove(new_localtime)
                 self.module.fail_json(msg='Could not update /etc/localtime')
         else:

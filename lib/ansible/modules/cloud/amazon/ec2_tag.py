@@ -124,7 +124,7 @@ from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dic
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
-except:
+except Exception:
     pass    # Handled by AnsibleAWSModule
 
 

@@ -432,7 +432,7 @@ def remount(module, args):
             rc = 1
         else:
             rc, out, err = module.run_command(cmd)
-    except:
+    except Exception:
         rc = 1
 
     msg = ''

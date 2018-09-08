@@ -268,7 +268,7 @@ def transfer_file_to_device(module, dest):
     scp = SCPClient(ssh.get_transport())
     try:
         scp.put(module.params['local_file'], full_remote_path)
-    except:
+    except Exception:
         time.sleep(10)
         temp_size = verify_remote_file_exists(
             module, dest, file_system=module.params['file_system'])

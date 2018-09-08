@@ -263,7 +263,7 @@ try:
     from docker.errors import NotFound
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
-except Exception as dummy:
+except Exception:
     # missing docker-py handled in ansible.module_utils.docker_common
     pass
 

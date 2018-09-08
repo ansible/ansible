@@ -124,7 +124,7 @@ def create_bucket(module, blade):
         attr.account = Reference(name=module.params['account'])
         blade.buckets.create_buckets(names=[module.params['name']], account=attr)
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Object Store Bucket {0}: Creation failed'.format(module.params['name']))
     module.exit_json(changed=changed)
 
@@ -140,9 +140,9 @@ def delete_bucket(module, blade):
             try:
                 blade.buckets.delete_buckets(names=[module.params['name']])
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Object Store Bucket {0}: Eradication failed'.format(module.params['name']))
-    except:
+    except Exception:
         module.fail_json(msg='Object Store Bucket {0}: Deletion failed'.format(module.params['name']))
     module.exit_json(changed=changed)
 
@@ -154,7 +154,7 @@ def recover_bucket(module, blade):
         blade.buckets.update_buckets(names=[module.params['name']],
                                      destroyed=Bucket(destroyed=False))
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Object Store Bucket {0}: Recovery failed'.format(module.params['name']))
     module.exit_json(changed=changed)
 
@@ -165,7 +165,7 @@ def eradicate_bucket(module, blade):
     try:
         blade.buckets.delete_buckets(names=[module.params['name']])
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Object Store Bucket {0}: Eradication failed'.format(module.params['name']))
     module.exit_json(changed=changed)
 

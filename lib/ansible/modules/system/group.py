@@ -347,7 +347,7 @@ class DarwinGroup(Group):
             if highest == 0 or highest == 499:
                 return False
             return (highest + 1)
-        except:
+        except Exception:
             return False
 
 
