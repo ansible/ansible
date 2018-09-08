@@ -104,21 +104,21 @@ def is_snap_installed(module, snap_name):
 
 
 def install_snaps(module, snap_names):
-    snaps_to_install = list()
+    snaps_not_installed = list()
     for snap_name in snap_names:
         rc = is_snap_installed(module, snap_name)
         if not rc:
             # Snap is not installed
-            snaps_to_install.append(snap_name)
+            snaps_not_installed.append(snap_name)
 
-    if not snaps_to_install:
+    if not snaps_not_installed:
         snaps_already_installed = ', '.join(snap_names)
         module.exit_json(msg="Snap(s) already installed: %s" % str(snaps_already_installed), classic=module.params['classic'], changed=False)
 
     # Transform the list into a string with whitespace-separated snaps
-    snaps_to_install = ' '.join(snaps_to_install)
+    snaps_to_install = ' '.join(snaps_not_installed)
     # Create a string with commas for the output
-    snaps_installed = snaps_to_install.replace(' ', ', ')
+    snaps_installed = ', '.join(snaps_not_installed)
 
     if module.check_mode:
         module.exit_json(msg="Snap(s) that would have been installed: %s" % str(snaps_installed), classic=module.params['classic'], changed=True)
@@ -140,20 +140,20 @@ def install_snaps(module, snap_names):
 
 
 def remove_snaps(module, snap_names):
-    snaps_to_remove = list()
+    snaps_installed = list()
     for snap_name in snap_names:
         rc = is_snap_installed(module, snap_name)
         if rc:
             # Snap is installed
-            snaps_to_remove.append(snap_name)
-    if not snaps_to_remove:
+            snaps_installed.append(snap_name)
+    if not snaps_installed:
         snaps_not_installed = ', '.join(snap_names)
         module.exit_json(msg="Snap(s) not installed: %s" % str(snaps_not_installed), changed=False)
 
     # Transform the list into a string with whitespace-separated snaps
-    snaps_to_remove = ' '.join(snaps_to_remove)
+    snaps_to_remove = ' '.join(snaps_installed)
     # Create a string with commas for the output
-    snaps_removed = snaps_to_remove.replace(' ', ', ')
+    snaps_removed = ', '.join(snaps_installed)
 
     if module.check_mode:
         module.exit_json(msg="Snap(s) that would have been removed: %s" % str(snaps_removed), changed=True)
