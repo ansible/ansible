@@ -296,50 +296,6 @@
         that: item.resources[0].status.phase == 'Active'
       loop: "{{ k8s_namespaces.results }}"
 
-    - name: install custom resource definitions
-      k8s:
-        definition: "{{ lookup('file', role_path + '/files/setup-crd.yml') }}"
-
-    - name: create custom resource definition
-      k8s:
-        definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: testing4
-      register: create_crd
-
-    - name: recreate custom resource definition
-      k8s:
-        definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: testing4
-      register: recreate_crd
-      ignore_errors: yes
-
-    - name: assert that recreating crd fails
-      assert:
-        that:
-          - recreate_crd is failed
-
-    - name: recreate custom resource definition with merge_type
-      k8s:
-        definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        merge_type: merge
-        namespace: testing4
-      register: recreate_crd_with_merge
-
-    - name: recreate custom resource definition with merge_type list
-      k8s:
-        definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        merge_type:
-          - strategic-merge
-          - merge
-        namespace: testing4
-      register: recreate_crd_with_merge_list
-
-    - name: remove crd
-      k8s:
-        definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: testing4
-        state: absent
-
     - name: Delete resources from a list
       k8s:
         state: absent
@@ -368,12 +324,6 @@
       loop: "{{ k8s_facts.results }}"
 
   always:
-    - name: remove crd
-      k8s:
-        definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: testing4
-        state: absent
-      ignore_errors: yes
 
     - name: Delete all namespaces
       k8s:
@@ -400,3 +350,5 @@
             metadata:
               name: testing5
       ignore_errors: yes
+
+- include_tasks: crd.yml
