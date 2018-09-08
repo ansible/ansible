@@ -20,7 +20,7 @@ try:
     import boto3
     import botocore
     HAS_BOTO3 = True
-except:
+except Exception:
     HAS_BOTO3 = False
 
 import pytest

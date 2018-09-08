@@ -130,7 +130,7 @@ def query(module, url, check, subscription):
 
     try:
         json_out = json.loads(response.read())
-    except:
+    except Exception:
         json_out = ""
 
     return False, json_out, False
@@ -182,7 +182,7 @@ def clear(module, url, check, subscription):
 
         try:
             json_out = json.loads(response.read())
-        except:
+        except Exception:
             json_out = ""
 
         return False, json_out, True
@@ -247,7 +247,7 @@ def create(
 
         try:
             json_out = json.loads(response.read())
-        except:
+        except Exception:
             json_out = ""
 
         return False, json_out, True

@@ -890,7 +890,7 @@ try:
     else:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import APIError, NotFound
-except Exception as dummy:
+except Exception:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 

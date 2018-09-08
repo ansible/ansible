@@ -183,7 +183,7 @@ class GalaxyAPI(object):
             role_name = parts[-1]
             if notify:
                 display.display("- downloading role '%s', owned by %s" % (role_name, user_name))
-        except:
+        except Exception:
             raise AnsibleError("Invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
@@ -210,7 +210,7 @@ class GalaxyAPI(object):
                 results += data['results']
                 done = (data.get('next_link', None) is None)
             return results
-        except:
+        except Exception:
             return None
 
     @g_connect

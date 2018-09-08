@@ -608,7 +608,7 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
         if isinstance(tags, str):
             try:
                 tags = literal_eval(tags)
-            except:
+            except Exception:
                 pass
 
         # if not a string type, convert and make sure it's a text string

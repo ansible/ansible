@@ -108,7 +108,7 @@ import ansible.module_utils.netapp as netapp_utils
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except:
+except Exception:
     HAS_SF_SDK = False
 
 

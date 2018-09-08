@@ -218,7 +218,7 @@ class TestOnePass(unittest.TestCase):
         op = MockOnePass()
         try:
             op.assert_logged_in()
-        except:
+        except Exception:
             self.fail()
 
     def test_onepassword_logged_out(self):

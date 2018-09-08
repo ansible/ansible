@@ -120,7 +120,7 @@ try:
     from azure.mgmt.cdn.models import ErrorResponseException
     from azure.common import AzureHttpError
     from azure.mgmt.cdn import CdnManagementClient
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 

@@ -153,7 +153,7 @@ from ansible.module_utils.aws.direct_connect import (DirectConnectError, delete_
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
-except:
+except Exception:
     pass
     # handled by imported AnsibleAWSModule
 

@@ -93,7 +93,7 @@ msg:
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
     HAS_URLPARSE = True
-except:
+except Exception:
     HAS_URLPARSE = False
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
