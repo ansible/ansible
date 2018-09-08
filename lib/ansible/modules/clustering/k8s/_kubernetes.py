@@ -376,7 +376,7 @@ def main():
             f.close()
             if not data:
                 module.fail_json(msg="No valid data could be found.")
-        except:
+        except Exception:
             module.fail_json(msg="The file '%s' was not found or contained invalid YAML/JSON data" % file_reference)
 
     # set the transport type and build the target endpoint url

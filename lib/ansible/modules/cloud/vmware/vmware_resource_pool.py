@@ -229,7 +229,7 @@ class VMwareResourcePool(object):
             task = self.resource_pool_obj.Destroy()
             success, result = wait_for_task(task)
 
-        except:
+        except Exception:
             self.module.fail_json(msg="Failed to remove resource pool '%s' '%s'" % (
                 self.resource_pool, resource_pool))
         self.module.exit_json(changed=changed, result=str(result))

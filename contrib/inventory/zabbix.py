@@ -45,7 +45,7 @@ except ImportError:
 
 try:
     from zabbix_api import ZabbixAPI
-except:
+except Exception:
     print("Error: Zabbix API library must be installed: pip install zabbix-api.",
           file=sys.stderr)
     sys.exit(1)

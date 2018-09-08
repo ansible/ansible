@@ -144,7 +144,7 @@ class Connection(ConnectionBase):
                     raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:
                     stdout, stderr = p.communicate()
-                except:
+                except Exception:
                     traceback.print_exc()
                     raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
@@ -169,7 +169,7 @@ class Connection(ConnectionBase):
                 while chunk:
                     out_file.write(chunk)
                     chunk = p.stdout.read(BUFSIZE)
-            except:
+            except Exception:
                 traceback.print_exc()
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()

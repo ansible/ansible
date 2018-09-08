@@ -181,7 +181,7 @@ def lang_drop(cursor, lang, cascade):
             cursor.execute("DROP LANGUAGE \"%s\" CASCADE" % lang)
         else:
             cursor.execute("DROP LANGUAGE \"%s\"" % lang)
-    except:
+    except Exception:
         cursor.execute("ROLLBACK TO SAVEPOINT ansible_pgsql_lang_drop")
         cursor.execute("RELEASE SAVEPOINT ansible_pgsql_lang_drop")
         return False

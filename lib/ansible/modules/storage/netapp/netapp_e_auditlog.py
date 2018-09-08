@@ -110,7 +110,7 @@ from ansible.module_utils._text import to_native
 
 try:
     from urlparse import urlparse, urlunparse
-except:
+except Exception:
     from urllib.parse import urlparse, urlunparse
 
 

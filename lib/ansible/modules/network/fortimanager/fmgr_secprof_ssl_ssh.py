@@ -770,7 +770,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
     if msg != "NULL" and len(results) == 0:
         try:
             fmg.logout()
-        except:
+        except Exception:
             pass
         module.fail_json(msg=msg)
 
@@ -779,7 +779,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
         if msg == "NULL":
             try:
                 msg = results[1]['status']['message']
-            except:
+            except Exception:
                 msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
 
         if results[0] not in good_codes:
@@ -1056,13 +1056,13 @@ def main():
         override_data = list()
         try:
             override_data = module.params[list_variable]
-        except:
+        except Exception:
             pass
         try:
             if override_data:
                 del paramgram[list_variable]
                 paramgram[list_variable] = override_data
-        except:
+        except Exception:
             pass
 
     # CHECK IF THE HOST/USERNAME/PW EXISTS, AND IF IT DOES, LOGIN.

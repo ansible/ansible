@@ -173,7 +173,7 @@ import json
 try:
     import pynetbox
     HAS_PYNETBOX = True
-except:
+except ImportError:
     HAS_PYNETBOX = False
 
 

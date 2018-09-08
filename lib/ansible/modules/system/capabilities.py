@@ -145,7 +145,7 @@ class CapabilitiesModule(object):
             while opind == -1:
                 opind = cap.find(OPS[i])
                 i += 1
-        except:
+        except Exception:
             if op_required:
                 self.module.fail_json(msg="Couldn't find operator (one of: %s)" % str(OPS))
             else:

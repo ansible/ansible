@@ -159,21 +159,21 @@ def _set_host_initiators(module, array):
             try:
                 array.set_host(module.params['host'],
                                nqnlist=module.params['nqn'])
-            except:
+            except Exception:
                 module.fail_json(msg='Setting of NVMeF NQN failed.')
     if module.params['protocol'] in ['iscsi', 'mixed']:
         if module.params['iqn']:
             try:
                 array.set_host(module.params['host'],
                                iqnlist=module.params['iqn'])
-            except:
+            except Exception:
                 module.fail_json(msg='Setting of iSCSI IQN failed.')
     if module.params['protocol'] in ['fc', 'mixed']:
         if module.params['wwns']:
             try:
                 array.set_host(module.params['host'],
                                wwnlist=module.params['wwns'])
-            except:
+            except Exception:
                 module.fail_json(msg='Setting of FC WWNs failed.')
 
 
@@ -184,21 +184,21 @@ def _update_host_initiators(module, array):
             try:
                 array.set_host(module.params['host'],
                                nqnlist=module.params['nqn'])
-            except:
+            except Exception:
                 module.fail_json(msg='Change of NVMeF NQN failed.')
     if module.params['protocol'] in ['iscsi', 'mixed']:
         if module.params['iqn']:
             try:
                 array.set_host(module.params['host'],
                                iqnlist=module.params['iqn'])
-            except:
+            except Exception:
                 module.fail_json(msg='Change of iSCSI IQN failed.')
     if module.params['protocol'] in ['fc', 'mixed']:
         if module.params['wwns']:
             try:
                 array.set_host(module.params['host'],
                                addwwnlist=module.params['wwns'])
-            except:
+            except Exception:
                 module.fail_json(msg='FC WWN additiona failed.')
 
 
@@ -211,7 +211,7 @@ def _connect_new_volume(module, array, answer=False):
                                module.params['volume'],
                                lun=module.params['lun'])
             answer = True
-        except:
+        except Exception:
             module.fail_json(msg='LUN ID {0} invalid. Check for duplicate LUN IDs.'.format(module.params['lun']))
     else:
         array.connect_host(module.params['host'], module.params['volume'])
@@ -260,7 +260,7 @@ def make_host(module, array):
     try:
         array.create_host(module.params['host'])
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Host {0} creation failed.'.format(module.params['host']))
     try:
         _set_host_initiators(module, array)
@@ -274,7 +274,7 @@ def make_host(module, array):
                                    lun=module.params['lun'])
             else:
                 array.connect_host(module.params['host'], module.params['volume'])
-    except:
+    except Exception:
         module.fail_json(msg='Host {0} configuration failed.'.format(module.params['host']))
     module.exit_json(changed=changed)
 
@@ -303,7 +303,7 @@ def delete_host(module, array):
             array.disconnect_host(module.params['host'], vol["vol"])
         array.delete_host(module.params['host'])
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Host {0} deletion failed'.format(module.params['host']))
     module.exit_json(changed=changed)
 
@@ -341,7 +341,7 @@ def main():
     if module.params['volume']:
         try:
             array.get_volume(module.params['volume'])
-        except:
+        except Exception:
             module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
 
     if host is None and state == 'present':

@@ -71,7 +71,7 @@ EXAMPLES = '''
 try:
     import pingdom
     HAS_PINGDOM = True
-except:
+except Exception:
     HAS_PINGDOM = False
 
 from ansible.module_utils.basic import AnsibleModule

@@ -183,7 +183,7 @@ class MSCModule(object):
         elif self.status >= 400:
             try:
                 payload = json.loads(resp.read())
-            except:
+            except Exception:
                 payload = json.loads(info['body'])
             if 'code' in payload:
                 self.fail_json(msg='MSC Error {code}: {message}'.format(**payload), data=data, info=info, payload=payload)

@@ -166,7 +166,7 @@ def create_update_parameter(client, module):
 
     try:
         existing_parameter = client.get_parameter(Name=args['Name'], WithDecryption=True)
-    except:
+    except Exception:
         pass
 
     if existing_parameter:

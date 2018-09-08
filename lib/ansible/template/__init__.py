@@ -495,7 +495,7 @@ class Templar:
                 new = self.do_template(data, fail_on_undefined=True)
             except (AnsibleUndefinedVariable, UndefinedError):
                 return True
-            except:
+            except Exception:
                 return False
             return (new != data)
         elif isinstance(data, (list, tuple)):
@@ -515,7 +515,7 @@ class Templar:
         templatable = True
         try:
             self.template(data)
-        except:
+        except Exception:
             templatable = False
         return templatable
 

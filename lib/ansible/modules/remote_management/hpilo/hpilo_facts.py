@@ -138,7 +138,7 @@ warnings.simplefilter('ignore')
 def parse_flat_interface(entry, non_numeric='hw_eth_ilo'):
     try:
         factname = 'hw_eth' + str(int(entry['Port']) - 1)
-    except:
+    except Exception:
         factname = non_numeric
 
     facts = {
@@ -193,7 +193,7 @@ def main():
                     if name.startswith('Port'):
                         try:
                             factname = 'hw_eth' + str(int(value) - 1)
-                        except:
+                        except Exception:
                             factname = 'hw_eth_ilo'
                     elif name.startswith('MAC'):
                         facts[factname] = {
@@ -208,7 +208,7 @@ def main():
                 if name.startswith('Port'):
                     try:
                         factname = 'hw_iscsi' + str(int(value) - 1)
-                    except:
+                    except Exception:
                         factname = 'hw_iscsi_ilo'
                 elif name.startswith('MAC'):
                     facts[factname] = {

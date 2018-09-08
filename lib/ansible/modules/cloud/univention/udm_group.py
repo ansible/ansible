@@ -143,7 +143,7 @@ def main():
                     grp.create()
                 else:
                     grp.modify()
-        except:
+        except Exception:
             module.fail_json(
                 msg="Creating/editing group {} in {} failed".format(name, container)
             )
@@ -154,7 +154,7 @@ def main():
             if not module.check_mode:
                 grp.remove()
             changed = True
-        except:
+        except Exception:
             module.fail_json(
                 msg="Removing group {} failed".format(name)
             )

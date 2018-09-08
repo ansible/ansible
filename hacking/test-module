@@ -221,7 +221,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
         print(out)
         print(err)
         results = json.loads(out)
-    except:
+    except Exception:
         print("*" * 35)
         print("INVALID OUTPUT FORMAT")
         print(out)

@@ -35,7 +35,7 @@ class RedfishUtils(object):
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
-        except:
+        except Exception:
             return {'ret': False, 'msg': "Unknown error"}
         return {'ret': True, 'data': data}
 
@@ -53,7 +53,7 @@ class RedfishUtils(object):
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
-        except:
+        except Exception:
             return {'ret': False, 'msg': "Unknown error"}
         return {'ret': True, 'resp': resp}
 
@@ -71,7 +71,7 @@ class RedfishUtils(object):
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
-        except:
+        except Exception:
             return {'ret': False, 'msg': "Unknown error"}
         return {'ret': True, 'resp': resp}
 
@@ -89,7 +89,7 @@ class RedfishUtils(object):
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
-        except:
+        except Exception:
             return {'ret': False, 'msg': "Unknown error"}
         return {'ret': True, 'resp': resp}
 

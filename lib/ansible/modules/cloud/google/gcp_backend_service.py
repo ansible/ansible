@@ -203,7 +203,7 @@ def _validate_params(params):
     try:
         check_params(params, fields)
         _validate_backend_params(params['backends'])
-    except:
+    except Exception:
         raise
 
     return (True, '')
@@ -233,7 +233,7 @@ def _validate_backend_params(backends):
     for backend in backends:
         try:
             check_params(backend, fields)
-        except:
+        except Exception:
             raise
 
         if 'max_rate' in backend and 'max_rate_per_instance' in backend:

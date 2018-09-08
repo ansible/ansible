@@ -242,7 +242,7 @@ def main():
     elif display == 'json':
         try:
             output = jxmlease.parse(xml_resp)
-        except:
+        except Exception:
             raise ValueError(xml_resp)
     elif display == 'pretty':
         output = tostring(response, pretty_print=True)

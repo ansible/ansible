@@ -107,7 +107,7 @@ try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     _ = Provider.GCE
-except:
+except Exception:
     sys.exit("GCE inventory script requires libcloud >= 0.13")
 
 
@@ -289,7 +289,7 @@ class GceInventory(object):
             args = list(secrets.GCE_PARAMS)
             kwargs = secrets.GCE_KEYWORD_PARAMS
             secrets_found = True
-        except:
+        except Exception:
             pass
 
         if not secrets_found and secrets_path:
@@ -303,7 +303,7 @@ class GceInventory(object):
                 args = list(getattr(secrets, 'GCE_PARAMS', []))
                 kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
                 secrets_found = True
-            except:
+            except Exception:
                 pass
 
         if not secrets_found:

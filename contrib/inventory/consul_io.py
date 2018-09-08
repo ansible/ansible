@@ -335,7 +335,7 @@ class ConsulInventory(object):
                     metadata = json.loads(metadata['Value'])
                     for k, v in metadata.items():
                         self.add_metadata(node_data, k, v)
-                except:
+                except Exception:
                     pass
 
     def load_groups_from_kv(self, node_data):

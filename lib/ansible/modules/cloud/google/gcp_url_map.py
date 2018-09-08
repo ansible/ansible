@@ -178,7 +178,7 @@ def _validate_params(params):
             _validate_path_matcher_params(params['path_matchers'])
         if 'host_rules' in params and params['host_rules'] is not None:
             _validate_host_rules_params(params['host_rules'])
-    except:
+    except Exception:
         raise
 
     return (True, '')
@@ -220,7 +220,7 @@ def _validate_path_matcher_params(path_matchers):
                     if not path.startswith('/'):
                         raise ValueError("path for %s must start with /" % (
                             pm['name']))
-        except:
+        except Exception:
             raise
 
     return (True, '')
@@ -259,7 +259,7 @@ def _validate_host_rules_params(host_rules):
                             raise ValueError("wildcard be followed by a '.' or '-', %s" % (
                                 host))
 
-        except:
+        except Exception:
             raise
 
     return (True, '')
@@ -341,7 +341,7 @@ def get_url_map(client, name, project_id=None):
     try:
         req = client.urlMaps().get(project=project_id, urlMap=name)
         return GCPUtils.execute_api_client_req(req, raise_404=False)
-    except:
+    except Exception:
         raise
 
 
@@ -367,7 +367,7 @@ def create_url_map(client, params, project_id):
                                       name=params['url_map_name'],
                                       project_id=project_id)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 
@@ -391,7 +391,7 @@ def delete_url_map(client, name, project_id):
         req = client.urlMaps().delete(project=project_id, urlMap=name)
         return_data = GCPUtils.execute_api_client_req(req, client)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 
@@ -431,7 +431,7 @@ def update_url_map(client, url_map, params, name, project_id):
                                       urlMap=name, body=gcp_dict)
         return_data = GCPUtils.execute_api_client_req(req, client=client, raw=False)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 

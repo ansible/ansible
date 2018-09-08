@@ -222,7 +222,7 @@ class PagerDutyRequest(object):
     def _read_response(self, response):
         try:
             return json.loads(response.read())
-        except:
+        except Exception:
             return ""
 
 

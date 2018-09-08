@@ -135,7 +135,7 @@ def not_in_host_file(self, host):
                     hash.update(host)
                     if hash.digest() == kn_host.decode('base64'):
                         return False
-                except:
+                except Exception:
                     # invalid hashed host key, skip it
                     continue
             else:
@@ -164,7 +164,7 @@ def add_host_key(module, fqdn, port=22, key_type="rsa", create_dir=False):
         if create_dir:
             try:
                 os.makedirs(user_ssh_dir, int('700', 8))
-            except:
+            except Exception:
                 module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
         else:
             module.fail_json(msg="%s does not exist" % user_ssh_dir)

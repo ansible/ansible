@@ -137,7 +137,7 @@ def validate_servers(module, servers):
         if 'port' in item:
             try:
                 item['port'] = int(item['port'])
-            except:
+            except Exception:
                 module.fail_json(msg="server port definitions must be integers")
         else:
             module.fail_json(msg="server definitions must define the port field")

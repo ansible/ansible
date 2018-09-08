@@ -239,7 +239,7 @@ def main():
                         zone, node_name = node.split('/')
                         nodes.append(gce.ex_get_node(node_name, zone))
                         output_nodes.append(node)
-                    except:
+                    except Exception:
                         # skip nodes that are badly formatted or don't exist
                         pass
             try:

@@ -50,7 +50,7 @@ def load_fixture(module_name, name, device=''):
 
     try:
         data = json.loads(data)
-    except:
+    except Exception:
         pass
 
     fixture_data[path] = data

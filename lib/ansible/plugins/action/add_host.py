@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
 
         try:
             name, port = parse_address(new_name, allow_ranges=False)
-        except:
+        except Exception:
             # not a parsable hostname, but might still be usable
             name = new_name
             port = None

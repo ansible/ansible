@@ -230,7 +230,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
     if msg != "NULL" and len(results) == 0:
         try:
             fmg.logout()
-        except:
+        except Exception:
             pass
         module.fail_json(msg=msg)
 
@@ -239,7 +239,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
         if msg == "NULL":
             try:
                 msg = results[1]['status']['message']
-            except:
+            except Exception:
                 msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
 
             if results[0] not in good_codes:
@@ -374,7 +374,7 @@ def main():
                         if sn_compare == paramgram["fmgr_ha_peer_sn"]:
                             paramgram["peer_id"] = peer_loopcount
                             paramgram["next_peer_id"] = paramgram["peer_id"]
-                    except:
+                    except Exception:
                         pass
                     # ADVANCE THE LOOP AND REPEAT UNTIL DONE
                     peer_loopcount += 1

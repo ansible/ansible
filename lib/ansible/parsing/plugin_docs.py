@@ -74,7 +74,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
             # Add default metadata
             data['metadata'] = {'supported_by': 'community',
                                 'status': ['preview']}
-    except:
+    except Exception:
         if verbose:
             display.error("unable to parse %s" % filename)
         if not ignore_errors:

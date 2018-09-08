@@ -234,7 +234,7 @@ if __name__ == '__main__':
     if not os.path.exists(jobdir):
         try:
             os.makedirs(jobdir)
-        except:
+        except Exception:
             print(json.dumps({
                 "failed": 1,
                 "msg": "could not create: %s" % jobdir

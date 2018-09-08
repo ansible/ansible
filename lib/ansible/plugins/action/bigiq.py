@@ -32,7 +32,7 @@ from ansible.utils.display import Display
 
 try:
     from library.module_utils.network.f5.common import f5_provider_spec
-except:
+except Exception:
     from ansible.module_utils.network.f5.common import f5_provider_spec
 
 display = Display()

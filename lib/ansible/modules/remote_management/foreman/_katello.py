@@ -232,7 +232,7 @@ try:
     from nailgun import entities, entity_fields, entity_mixins
     from nailgun.config import ServerConfig
     HAS_NAILGUN_PACKAGE = True
-except:
+except Exception:
     HAS_NAILGUN_PACKAGE = False
 
 from ansible.module_utils.basic import AnsibleModule

@@ -242,7 +242,7 @@ import os
 try:
     from ansible.module_utils.six.moves.urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
     HAS_URLPARSE = True
-except:
+except Exception:
     HAS_URLPARSE = False
 
 # Optional, only used for XML payload
@@ -263,7 +263,7 @@ except ImportError:
 try:
     import yaml
     HAS_YAML = True
-except:
+except Exception:
     HAS_YAML = False
 
 from ansible.module_utils.basic import AnsibleModule

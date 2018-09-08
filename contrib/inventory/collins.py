@@ -208,7 +208,7 @@ class CollinsInventory(object):
                     break
                 cur_page += 1
                 num_retries = 0
-            except:
+            except Exception:
                 self.log.error("Error while communicating with Collins, retrying:\n%s", traceback.format_exc())
                 num_retries += 1
         return assets
@@ -277,7 +277,7 @@ class CollinsInventory(object):
         # Locates all server assets from Collins.
         try:
             server_assets = self.find_assets()
-        except:
+        except Exception:
             self.log.error("Error while locating assets from Collins:\n%s", traceback.format_exc())
             return False
 
@@ -288,7 +288,7 @@ class CollinsInventory(object):
                 ip_index = self._asset_get_attribute(asset, 'ANSIBLE_IP_INDEX')
                 try:
                     ip_index = int(ip_index)
-                except:
+                except Exception:
                     self.log.error(
                         "ANSIBLE_IP_INDEX attribute on asset %s not an integer: %s", asset,
                         ip_index)
@@ -350,7 +350,7 @@ class CollinsInventory(object):
         try:
             self.write_to_cache(self.cache, self.cache_path_cache)
             self.write_to_cache(self.inventory, self.cache_path_inventory)
-        except:
+        except Exception:
             self.log.error("Error while writing to cache:\n%s", traceback.format_exc())
             return False
         return True
@@ -388,7 +388,7 @@ class CollinsInventory(object):
             json_inventory = cache.read()
             self.inventory = json.loads(json_inventory)
             return True
-        except:
+        except Exception:
             self.log.error("Error while loading inventory:\n%s",
                            traceback.format_exc())
             self.inventory = {}
@@ -402,7 +402,7 @@ class CollinsInventory(object):
             json_cache = cache.read()
             self.cache = json.loads(json_cache)
             return True
-        except:
+        except Exception:
             self.log.error("Error while loading host cache:\n%s",
                            traceback.format_exc())
             self.cache = {}

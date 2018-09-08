@@ -38,7 +38,7 @@ try:
     from ansible.module_utils.network.cnos import cnos_errorcodes
     from ansible.module_utils.network.cnos import cnos_devicerules
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from distutils.cmd import Command
 from ansible.module_utils._text import to_text
@@ -1372,7 +1372,7 @@ def enterEnableModeForDevice(enablePassword, timeout, obj):
                 gotit = buff.find("#")
                 if(gotit != -1):
                     return retVal
-        except:
+        except Exception:
             retVal = retVal + "\n Error-101"
             flag = True
     if(retVal == ""):
@@ -1396,7 +1396,7 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
             gotit = buff.find(prompt)
             if(gotit != -1):
                 flag = True
-        except:
+        except Exception:
             # debugOutput(prompt)
             if prompt == "(yes/no)?":
                 retVal = retVal

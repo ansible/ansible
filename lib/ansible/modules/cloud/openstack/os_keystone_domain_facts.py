@@ -111,7 +111,7 @@ def main():
             # Let's suppose user is passing domain ID
             try:
                 domains = opcloud.get_domain(name)
-            except:
+            except Exception:
                 domains = opcloud.search_domains(filters={'name': name})
 
         else:

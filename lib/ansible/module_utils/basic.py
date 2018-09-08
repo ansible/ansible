@@ -553,7 +553,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
     try:
         num = float(m.group(1))
-    except:
+    except Exception:
         raise ValueError("human_to_bytes() can't interpret following number: %s (original input string: %s)" % (m.group(1), number))
 
     unit = m.group(2)
@@ -566,7 +566,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     range_key = unit[0].upper()
     try:
         limit = SIZE_RANGES[range_key]
-    except:
+    except Exception:
         raise ValueError("human_to_bytes() failed to convert %s (unit = %s). The suffix must be one of %s" % (number, unit, ", ".join(SIZE_RANGES.keys())))
 
     # default value
@@ -1028,7 +1028,7 @@ class AnsibleModule(object):
             f = open('/proc/mounts', 'r')
             mount_data = f.readlines()
             f.close()
-        except:
+        except Exception:
             return (False, None)
         path_mount_point = self.find_mount_point(path)
         for line in mount_data:
@@ -1310,7 +1310,7 @@ class AnsibleModule(object):
                     output['attr_flags'] = res[1].replace('-', '').strip()
                     output['version'] = res[0].strip()
                     output['attributes'] = format_attributes(output['attr_flags'])
-            except:
+            except Exception:
                 pass
         return output
 
@@ -1820,7 +1820,7 @@ class AnsibleModule(object):
             if value.startswith("{"):
                 try:
                     return json.loads(value)
-                except:
+                except Exception:
                     (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
                     if exc is not None:
                         raise TypeError('unable to evaluate string as dictionary')
@@ -2163,7 +2163,7 @@ class AnsibleModule(object):
             if not os.access(cwd, os.F_OK | os.R_OK):
                 raise Exception()
             return cwd
-        except:
+        except Exception:
             # we don't have access to the cwd, probably because of sudo.
             # Try and move to a neutral location to prevent errors
             for cwd in [self.tmpdir, os.path.expandvars('$HOME'), tempfile.gettempdir()]:
@@ -2171,7 +2171,7 @@ class AnsibleModule(object):
                     if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
                         return cwd
-                except:
+                except Exception:
                     pass
         # we won't error here, as it may *not* be a problem,
         # and we don't want to break modules unnecessarily

@@ -28,7 +28,7 @@ def get_distribution():
                     distribution = 'Amazon'
                 else:
                     distribution = 'OtherLinux'
-        except:
+        except Exception:
             # FIXME: MethodMissing, I assume?
             distribution = platform.dist()[0].capitalize()
     return distribution

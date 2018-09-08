@@ -476,7 +476,7 @@ def main():
                     obj.create()
                 elif changed:
                     obj.modify()
-        except:
+        except Exception:
             module.fail_json(
                 msg="Creating/editing user {} in {} failed".format(
                     username,
@@ -497,7 +497,7 @@ def main():
                         if not module.check_mode:
                             grp.modify()
                         changed = True
-        except:
+        except Exception:
             module.fail_json(
                 msg="Adding groups to user {} failed".format(username)
             )
@@ -508,7 +508,7 @@ def main():
             if not module.check_mode:
                 obj.remove()
             changed = True
-        except:
+        except Exception:
             module.fail_json(
                 msg="Removing user {} failed".format(username)
             )

@@ -160,12 +160,12 @@ def _get_domain_id(cloud, domain):
     try:
         # We assume admin is passing domain id
         domain_id = cloud.get_domain(domain)['id']
-    except:
+    except Exception:
         # If we fail, maybe admin is passing a domain name.
         # Note that domains have unique names, just like id.
         try:
             domain_id = cloud.search_domains(filters={'name': domain})[0]['id']
-        except:
+        except Exception:
             # Ok, let's hope the user is non-admin and passing a sane id
             domain_id = domain
 
