@@ -74,7 +74,19 @@ RETURN = '''
 msg:
     description: An informative message on the task's output
     type: str
-    returned: on error
+    returned: Always
+classic:
+    description: Whether or not the snaps were installed with the classic confinement
+    type: bool
+    returned: When snaps are installed
+changed:
+    description: True if one or more snaps are installed/removed
+    type: bool
+    returned: on success
+err:
+    description: The stderr output
+    type: str
+    returned: on failure
 '''
 
 from ansible.module_utils.basic import AnsibleModule
