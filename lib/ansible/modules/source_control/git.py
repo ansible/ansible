@@ -300,7 +300,7 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
             f = open(headfile, 'r')
             rawdata = f.readline()
             f.close()
-        except:
+        except Exception:
             if fail_on_error and module:
                 module.fail_json(msg="Unable to read %s" % headfile)
         if rawdata:
@@ -310,7 +310,7 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
                 newref = refparts[-1]
                 nrefparts = newref.split('/', 2)
                 res = nrefparts[-1].rstrip('\n')
-            except:
+            except Exception:
                 if fail_on_error and module:
                     module.fail_json(msg="Unable to split head from '%s'" % rawdata)
     return res
@@ -448,7 +448,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     dest_dirname = os.path.dirname(dest)
     try:
         os.makedirs(dest_dirname)
-    except:
+    except Exception:
         pass
     cmd = [git_path, 'clone']
 
@@ -1065,7 +1065,7 @@ def main():
             module.fail_json(msg="umask must be defined as a quoted octal integer")
         try:
             umask = int(umask, 8)
-        except:
+        except Exception:
             module.fail_json(msg="umask must be an octal integer",
                              details=str(sys.exc_info()[1]))
         os.umask(umask)

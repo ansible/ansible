@@ -25,7 +25,7 @@ try:
     from passlib.utils.handlers import HasRawSalt
 
     PASSLIB_AVAILABLE = True
-except:
+except Exception:
     pass
 
 display = Display()
@@ -126,7 +126,7 @@ class PasslibHash(BaseHash):
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
-        except:
+        except Exception:
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
 
     def hash(self, secret, salt=None, salt_size=None, rounds=None):

@@ -357,7 +357,7 @@ class PolicyRcD(object):
         if self.backup_dir:
             try:
                 shutil.move('/usr/sbin/policy-rc.d', self.backup_dir)
-            except:
+            except Exception:
                 self.m.fail_json(msg="Fail to move /usr/sbin/policy-rc.d to %s" % self.backup_dir)
 
         # we write /usr/sbin/policy-rc.d so it always exit with code policy_rc_d
@@ -366,7 +366,7 @@ class PolicyRcD(object):
                 policy_rc_d.write('#!/bin/sh\nexit %d\n' % self.m.params['policy_rc_d'])
 
             os.chmod('/usr/sbin/policy-rc.d', 0o0755)
-        except:
+        except Exception:
             self.m.fail_json(msg="Failed to create or chmod /usr/sbin/policy-rc.d")
 
     def __exit__(self, type, value, traceback):
@@ -385,7 +385,7 @@ class PolicyRcD(object):
                 shutil.move(os.path.join(self.backup_dir, 'policy-rc.d'),
                             '/usr/sbin/policy-rc.d')
                 os.rmdir(self.tmpdir_name)
-            except:
+            except Exception:
                 self.m.fail_json(msg="Fail to move back %s to /usr/sbin/policy-rc.d"
                                      % os.path.join(self.backup_dir, 'policy-rc.d'))
         else:
@@ -393,7 +393,7 @@ class PolicyRcD(object):
             # we just remove the file
             try:
                 os.remove('/usr/sbin/policy-rc.d')
-            except:
+            except Exception:
                 self.m.fail_json(msg="Fail to remove /usr/sbin/policy-rc.d (after package manipulation)")
 
 

@@ -400,7 +400,7 @@ def main():
                     json_resp = jxmlease.parse(resp)
                     transformed.append(json_resp)
                     output.append(json_resp)
-                except:
+                except Exception:
                     raise ValueError(resp)
             else:
                 transformed.append(resp)

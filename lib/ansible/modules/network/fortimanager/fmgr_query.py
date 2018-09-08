@@ -282,7 +282,7 @@ def fmgr_get_cluster_nodes(fmg, paramgram):
     try:
         returned_nodes = response[1][0]["ha_slave"]
         num_of_nodes = len(returned_nodes)
-    except:
+    except Exception:
         error_msg = {"cluster_status": "MISSING"}
         return error_msg
 

@@ -466,7 +466,7 @@ def user_delete(cursor, user):
     cursor.execute("SAVEPOINT ansible_pgsql_user_delete")
     try:
         cursor.execute("DROP USER %s" % pg_quote_identifier(user, 'role'))
-    except:
+    except Exception:
         cursor.execute("ROLLBACK TO SAVEPOINT ansible_pgsql_user_delete")
         cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
         return False

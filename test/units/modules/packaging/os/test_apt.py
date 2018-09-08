@@ -9,7 +9,7 @@ try:
     from ansible.modules.packaging.os.apt import (
         expand_pkgspec_from_fnmatches,
     )
-except:
+except Exception:
     # Need some more module_utils work (porting urls.py) before we can test
     # modules.  So don't error out in this case.
     if sys.version_info[0] >= 3:
