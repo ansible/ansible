@@ -140,6 +140,10 @@ container_groups:
                     returned: always
                     type: list
                     sample: [ 80, 81 ]
+        tags:
+            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            type: dict
+            sample: { tag1: abc }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -267,7 +271,8 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
             'ip_address': 'public' if d['ip_address']['type'] == 'Public' else 'none',
             'ports': ports,
             'location': d['location'],
-            'containers': containers
+            'containers': containers,
+            'tags': d.get('tags', None)
         }
         return d
 
