@@ -118,10 +118,9 @@ def is_snap_installed(module, snap_name):
 def install_snaps(module, snap_names):
     snaps_not_installed = list()
     for snap_name in snap_names:
-        rc = is_snap_installed(module, snap_name)
-        if not rc:
-            # Snap is not installed
-            snaps_not_installed.append(snap_name)
+        if is_snap_installed(module, snap_name):
+            continue
+        snaps_not_installed.append(snap_name)
 
     if not snaps_not_installed:
         snaps_already_installed = ', '.join(snap_names)
@@ -154,10 +153,9 @@ def install_snaps(module, snap_names):
 def remove_snaps(module, snap_names):
     snaps_installed = list()
     for snap_name in snap_names:
-        rc = is_snap_installed(module, snap_name)
-        if rc:
-            # Snap is installed
-            snaps_installed.append(snap_name)
+        if is_snap_installed(module, snap_name):
+            continue
+        snaps_installed.append(snap_name)
     if not snaps_installed:
         snaps_not_installed = ', '.join(snap_names)
         module.exit_json(msg="Snap(s) not installed: %s" % snaps_not_installed, changed=False)
