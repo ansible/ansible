@@ -207,7 +207,6 @@ class InventoryManager(object):
                 all_parsed_results.append(parse)
 
         # ensure all inventories parsed returned true
-        print(all_parsed_results)
         if all(all_parsed_results):
             # do post processing
             self._inventory.reconcile_inventory()
