@@ -471,7 +471,7 @@ from ansible.module_utils._text import to_text
 try:
     from distutils.version import LooseVersion
     from docker import types
-except Exception as dummy:
+except Exception:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
@@ -846,7 +846,7 @@ class DockerService(DockerBaseClass):
             network_id = None
             try:
                 network_id = list(filter(lambda n: n['name'] == network_name, docker_networks))[0]['id']
-            except Exception as dummy:
+            except Exception:
                 pass
             if network_id:
                 networks.append({'Target': network_id})

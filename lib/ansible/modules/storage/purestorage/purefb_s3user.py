@@ -113,7 +113,7 @@ def update_s3user(module, blade):
             s3user_facts['fb_s3user'] = {'user': user,
                                          'access_key': result.items[0].secret_access_key,
                                          'access_id': result.items[0].name}
-        except:
+        except Exception:
             delete_s3user(module, blade)
             module.fail_json(msg='Object Store User {0}: Creation failed'.format(user))
     changed = True
@@ -134,11 +134,11 @@ def create_s3user(module, blade):
                 s3user_facts['fb_s3user'] = {'user': user,
                                              'access_key': result.items[0].secret_access_key,
                                              'access_id': result.items[0].name}
-            except:
+            except Exception:
                 delete_s3user(module, blade)
                 module.fail_json(msg='Object Store User {0}: Creation failed'.format(user))
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Object Store User {0}: Creation failed'.format(user))
     module.exit_json(changed=changed, ansible_facts=s3user_facts)
 
@@ -150,7 +150,7 @@ def delete_s3user(module, blade):
     try:
         blade.object_store_users.delete_object_store_users(names=[user])
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Object Store Account {0}: Deletion failed'.format(module.params['name']))
     module.exit_json(changed=changed)
 

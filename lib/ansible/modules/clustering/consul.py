@@ -514,7 +514,7 @@ class ConsulCheck(object):
             if attr is None:
                 attr = key
             data[key] = getattr(self, attr)
-        except:
+        except Exception:
             pass
 
 

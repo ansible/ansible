@@ -81,7 +81,7 @@ try:
     from solidfire.models import Schedule, ScheduleInfo
 
     HAS_SF_SDK = True
-except:
+except Exception:
     HAS_SF_SDK = False
 
 
@@ -124,7 +124,7 @@ def create_sf_connection(module, port=None):
         try:
             return_val = ElementFactory.create(hostname, username, password, port=port)
             return return_val
-        except:
+        except Exception:
             raise Exception("Unable to create SF connection")
     else:
         module.fail_json(msg="the python SolidFire SDK module is required")
@@ -237,7 +237,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

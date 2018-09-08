@@ -1156,7 +1156,7 @@ def create_autoscaling_group(connection):
         else:
             try:
                 ag['LaunchConfigurationName'] = as_group['LaunchConfigurationName']
-            except:
+            except Exception:
                 launch_template = as_group['LaunchTemplate']
                 # Prefer LaunchTemplateId over Name as it's more specific.  Only one can be used for update_asg.
                 ag['LaunchTemplate'] = {"LaunchTemplateId": launch_template['LaunchTemplateId'], "Version": launch_template['Version']}

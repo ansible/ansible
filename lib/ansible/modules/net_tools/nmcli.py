@@ -632,7 +632,7 @@ class Nmcli(object):
             for setting in secrets:
                 for key in secrets[setting]:
                     config[setting_name][key] = secrets[setting][key]
-        except:
+        except Exception:
             pass
 
     def dict_to_string(self, d):

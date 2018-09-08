@@ -60,12 +60,12 @@ class GalaxyLogin(object):
 
         try:
             self.github_username = input("Github Username: ")
-        except:
+        except Exception:
             pass
 
         try:
             self.github_password = getpass.getpass("Password for %s: " % self.github_username)
-        except:
+        except Exception:
             pass
 
         if not self.github_username or not self.github_password:

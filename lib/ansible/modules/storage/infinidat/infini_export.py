@@ -102,7 +102,7 @@ def get_filesystem(module, system):
     """Return Filesystem or None"""
     try:
         return system.filesystems.get(name=module.params['filesystem'])
-    except:
+    except Exception:
         return None
 
 

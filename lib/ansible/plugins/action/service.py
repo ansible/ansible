@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
                     module = self._templar.template("{{hostvars['%s']['ansible_facts']['service_mgr']}}" % self._task.delegate_to)
                 else:
                     module = self._templar.template('{{ansible_facts.service_mgr}}')
-            except:
+            except Exception:
                 pass  # could not get it from template!
 
         try:

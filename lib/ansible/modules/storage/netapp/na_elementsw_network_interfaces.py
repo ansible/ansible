@@ -165,7 +165,7 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     from solidfire.models import Network, NetworkConfig
     HAS_SF_SDK = True
-except:
+except Exception:
     HAS_SF_SDK = False
 
 
