@@ -226,7 +226,7 @@ def main():
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
             payload['timeZone'] = meraki.params['timezone']
-        if meraki.params['disable_my_meraki'] or meraki.params['disable_my_meraki'] is False:
+        if meraki.params['disable_my_meraki'] is not None:
             payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
 
     # manipulate or modify the state as needed (this is going to be the
