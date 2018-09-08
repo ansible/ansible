@@ -364,7 +364,7 @@ from collections import defaultdict
 for path in [os.getcwd(), '', os.path.dirname(os.path.abspath(__file__))]:
     try:
         del sys.path[sys.path.index(path)]
-    except:
+    except Exception:
         pass
 
 HAS_DOCKER_PY = True

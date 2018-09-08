@@ -376,7 +376,7 @@ def main():
     # Store cookie for future requests
     try:
         cookie = result['aaaLogin']['attributes']['outCookie']
-    except:
+    except Exception:
         module.fail_json(msg='Could not find cookie in output', **result)
 
     # If we would not log out properly, we run out of sessions quickly

@@ -158,7 +158,7 @@ def enable_ds(module, array):
     try:
         array.enable_directory_service()
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Enable Directory Service failed: Check Configuration')
     module.exit_json(changed=changed)
 
@@ -170,7 +170,7 @@ def disable_ds(module, array):
     try:
         array.disable_directory_service()
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Disable Directory Service failed')
     module.exit_json(changed=changed)
 
@@ -190,7 +190,7 @@ def delete_ds(module, array):
                                     array_admin_group="",
                                     certificate="")
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Delete Directory Service failed')
     module.exit_json(changed=changed)
 
@@ -215,7 +215,7 @@ def create_ds(module, array):
                                     array_admin_group=module.params['aa_group'])
         array.set_directory_service(enabled=module.params['enable'])
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Create Directory Service failed: Check configuration')
     module.exit_json(changed=changed)
 

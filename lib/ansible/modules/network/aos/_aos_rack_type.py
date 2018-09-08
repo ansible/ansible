@@ -155,7 +155,7 @@ def rack_type_absent(module, aos, my_rack_type):
     if not module.check_mode:
         try:
             my_rack_type.delete()
-        except:
+        except Exception:
             module.fail_json(msg="An error occurred, while trying to delete the Rack Type")
 
     module.exit_json(changed=True,
@@ -195,7 +195,7 @@ def rack_type(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False

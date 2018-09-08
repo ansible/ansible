@@ -91,7 +91,7 @@ rules:
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
-except:
+except Exception:
     # handled by HAS_BOTO3 check in main
     pass
 

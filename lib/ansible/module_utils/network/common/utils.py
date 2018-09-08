@@ -461,7 +461,7 @@ class Template:
         if value:
             try:
                 return ast.literal_eval(value)
-            except:
+            except Exception:
                 return str(value)
         else:
             return None

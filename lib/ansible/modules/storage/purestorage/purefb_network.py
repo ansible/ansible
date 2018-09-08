@@ -102,7 +102,7 @@ def get_iface(module, blade):
     try:
         res = blade.network_interfaces.list_network_interfaces(names=iface)
         return res.items[0]
-    except:
+    except Exception:
         return None
 
 
@@ -121,7 +121,7 @@ def create_iface(module, blade):
                                                                                               )
                                                            )
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Interface creation failed. Check valid subnet exists for IP address {0}'.format(module.params['address']))
         changed = False
     module.exit_json(changed=changed)
@@ -138,7 +138,7 @@ def modify_iface(module, blade):
             blade.network_interfaces.update_network_interfaces(names=iface_new,
                                                                network_interface=NetworkInterface(address=module.params['address']))
             changed = True
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -150,7 +150,7 @@ def delete_iface(module, blade):
     try:
         blade.network_interfaces.delete_network_interfaces(names=iface)
         changed = True
-    except:
+    except Exception:
         changed = False
     module.exit_json(changed=changed)
 

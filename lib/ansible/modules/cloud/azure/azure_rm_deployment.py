@@ -590,7 +590,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                 )
                 for op in self._get_failed_nested_operations(operations)
             ]
-        except:
+        except Exception:
             # If we fail here, the original error gets lost and user receives wrong error message/stacktrace
             pass
         self.log(dict(failed_deployment_operations=results), pretty_print=True)

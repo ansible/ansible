@@ -107,7 +107,7 @@ def get_volume(module, array):
     """Return Volume or None"""
     try:
         return array.get_volume(module.params['name'])
-    except:
+    except Exception:
         return None
 
 
@@ -115,7 +115,7 @@ def get_target(module, array):
     """Return Volume or None"""
     try:
         return array.get_volume(module.params['target'])
-    except:
+    except Exception:
         return None
 
 
@@ -126,7 +126,7 @@ def get_snapshot(module, array):
         for s in array.get_volume(module.params['name'], snap='true'):
             if s['name'] == snapname:
                 return snapname
-    except:
+    except Exception:
         return None
 
 
@@ -136,7 +136,7 @@ def create_snapshot(module, array):
     if not module.check_mode:
         try:
             array.create_snapshot(module.params['name'], suffix=module.params['suffix'])
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -177,9 +177,9 @@ def delete_snapshot(module, array):
             if module.params['eradicate']:
                 try:
                     array.eradicate_volume(snapname)
-                except:
+                except Exception:
                     changed = False
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 

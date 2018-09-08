@@ -477,7 +477,7 @@ def stack_operation(cfn, stack_name, operation, events_limit, op_token=None):
         try:
             stack = get_stack_facts(cfn, stack_name)
             existed.append('yes')
-        except:
+        except Exception:
             # If the stack previously existed, and now can't be found then it's
             # been deleted successfully.
             if 'yes' in existed or operation == 'DELETE':  # stacks may delete fast, look in a few ways.

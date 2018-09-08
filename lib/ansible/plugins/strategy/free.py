@@ -137,7 +137,7 @@ class StrategyModule(StrategyBase):
                         try:
                             task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
                             display.debug("done templating", host=host_name)
-                        except:
+                        except Exception:
                             # just ignore any errors during task name templating,
                             # we don't care if it just shows the raw name
                             display.debug("templating failed for some reason", host=host_name)

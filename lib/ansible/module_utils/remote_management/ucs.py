@@ -31,7 +31,7 @@
 try:
     import ucsmsdk
     HAS_UCSMSDK = True
-except:
+except Exception:
     HAS_UCSMSDK = False
 
 ucs_argument_spec = dict(

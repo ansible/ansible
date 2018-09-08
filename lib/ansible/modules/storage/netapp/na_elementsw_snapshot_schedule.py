@@ -187,7 +187,7 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     from solidfire.custom.models import DaysOfWeekFrequency, Weekday, DaysOfMonthFrequency
     from solidfire.common import ApiServerError
-except:
+except Exception:
     HAS_SF_SDK = False
 
 

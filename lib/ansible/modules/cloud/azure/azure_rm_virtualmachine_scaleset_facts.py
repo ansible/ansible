@@ -240,7 +240,7 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 
@@ -308,7 +308,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     subnet_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
                                  ['properties']['ipConfigurations'][0]['properties']['subnet']['id'])
                     subnet_name = re.sub('.*subnets\\/', '', subnet_id)
-                except:
+                except Exception:
                     self.log('Could not extract subnet name')
 
                 try:
@@ -316,13 +316,13 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                                                ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
                     load_balancer_name = re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
                     virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
-                except:
+                except Exception:
                     self.log('Could not extract load balancer / virtual network name')
 
                 try:
                     ssh_password_enabled = (not vmss['properties']['virtualMachineProfile']['osProfile'],
                                                     ['linuxConfiguration']['disablePasswordAuthentication'])
-                except:
+                except Exception:
                     self.log('Could not extract SSH password enabled')
 
                 data_disks = vmss['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])

@@ -246,7 +246,7 @@ class CronTab(object):
             except IOError:
                 # cron file does not exist
                 return
-            except:
+            except Exception:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
@@ -371,7 +371,7 @@ class CronTab(object):
         except OSError:
             # cron file does not exist
             return False
-        except:
+        except Exception:
             raise CronTabError("Unexpected error:", sys.exc_info()[0])
 
     def find_job(self, name, job=None):

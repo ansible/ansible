@@ -285,7 +285,7 @@ class FileCopy(object):
         scp = SCPClient(ssh.get_transport())
         try:
             scp.put(self.local_file, full_remote_path)
-        except:
+        except Exception:
             time.sleep(10)
             file_exists, temp_size = self.remote_file_exists(
                 dest, self.file_system)

@@ -476,7 +476,7 @@ def fmgr_fwobj_ipv4(fmg, paramgram):
             try:
                 for member in group_members.split(","):
                     members.append(member)
-            except:
+            except Exception:
                 pass
 
             datagram["member"] = members
@@ -579,7 +579,7 @@ def fmgr_fwobj_ipv6(fmg, paramgram):
             try:
                 for member in group_members.split(","):
                     members.append(member)
-            except:
+            except Exception:
                 pass
 
             datagram["member"] = members
@@ -703,7 +703,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
     if msg != "NULL" and len(results) == 0:
         try:
             fmg.logout()
-        except:
+        except Exception:
             pass
         module.fail_json(msg=msg)
 
@@ -712,7 +712,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
         if msg == "NULL":
             try:
                 msg = results[1]['status']['message']
-            except:
+            except Exception:
                 msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
 
             if results[0] not in good_codes:
@@ -791,7 +791,7 @@ def main():
         response = fmg.login()
         if response[1]['status']['code'] != 0:
             module.fail_json(msg="Connection to FortiManager Failed")
-    except:
+    except Exception:
         module.fail_json(msg="Connection to FortiManager Failed")
     else:
         # START SESSION LOGIC

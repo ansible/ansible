@@ -100,7 +100,7 @@ def update_role(module, blade):
             blade.directory_services.update_directory_services_roles(names=[module.params['role']],
                                                                      directory_service_role=role)
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Update Directory Service Role {0} failed'.format(module.params['role']))
     module.exit_json(changed=changed)
 
@@ -114,7 +114,7 @@ def delete_role(module, blade):
         blade.directory_services.update_directory_services_roles(names=[module.params['role']],
                                                                  directory_service_role=role)
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Delete Directory Service Role {0} failed'.format(module.params['role']))
     module.exit_json(changed=changed)
 
@@ -128,7 +128,7 @@ def create_role(module, blade):
         blade.directory_services.update_directory_services_roles(names=[module.params['role']],
                                                                  directory_service_role=role)
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Create Directory Service Role {0} failed: Check configuration'.format(module.params['role']))
     module.exit_json(changed=changed)
 

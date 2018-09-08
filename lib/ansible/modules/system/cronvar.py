@@ -145,7 +145,7 @@ class CronVar(object):
             except IOError:
                 # cron file does not exist
                 return
-            except:
+            except Exception:
                 raise CronVarError("Unexpected error:", sys.exc_info()[0])
         else:
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
@@ -200,7 +200,7 @@ class CronVar(object):
         except OSError:
             # cron file does not exist
             return False
-        except:
+        except Exception:
             raise CronVarError("Unexpected error:", sys.exc_info()[0])
 
     def parse_for_var(self, line):

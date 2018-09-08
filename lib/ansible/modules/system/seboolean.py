@@ -307,7 +307,7 @@ def main():
                     module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
                 try:
                     selinux.security_commit_booleans()
-                except:
+                except Exception:
                     module.fail_json(msg="Failed to commit pending boolean %s value" % name)
 
     result['changed'] = changed

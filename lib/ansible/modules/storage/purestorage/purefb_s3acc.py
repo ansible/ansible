@@ -81,7 +81,7 @@ def create_s3acc(module, blade):
     try:
         blade.object_store_accounts.create_object_store_accounts(names=[module.params['name']])
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Object Store Account {0}: Creation failed'.format(module.params['name']))
     module.exit_json(changed=changed)
 
@@ -96,7 +96,7 @@ def delete_s3acc(module, blade):
         try:
             blade.object_store_accounts.delete_object_store_accounts(names=[module.params['name']])
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Object Store Account {0}: Deletion failed'.format(module.params['name']))
     module.exit_json(changed=changed)
 

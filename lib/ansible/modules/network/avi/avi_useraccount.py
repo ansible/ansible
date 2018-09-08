@@ -115,7 +115,7 @@ def main():
             token=api_creds.token, port=api_creds.port)
         password_changed = True
         return ansible_return(module, None, False, req=data)
-    except:
+    except Exception:
         pass
 
     if not password_changed:

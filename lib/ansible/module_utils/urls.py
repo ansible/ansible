@@ -71,13 +71,13 @@ urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectH
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
     HAS_URLPARSE = True
-except:
+except Exception:
     HAS_URLPARSE = False
 
 try:
     import ssl
     HAS_SSL = True
-except:
+except Exception:
     HAS_SSL = False
 
 try:
@@ -436,7 +436,7 @@ def generic_urlparse(parts):
             generic_parts['password'] = password
             generic_parts['hostname'] = hostname
             generic_parts['port'] = port
-        except:
+        except Exception:
             generic_parts['username'] = None
             generic_parts['password'] = None
             generic_parts['hostname'] = parts[1]
@@ -673,7 +673,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             (http_version, resp_code, msg) = re.match(br'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:
                 raise Exception
-        except:
+        except Exception:
             raise ProxyError('Connection to proxy failed')
 
     def detect_no_proxy(self, url):
@@ -784,7 +784,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # cleanup the temp file created, don't worry
             # if it fails for some reason
             os.remove(tmp_ca_cert_path)
-        except:
+        except Exception:
             pass
 
         try:
@@ -792,7 +792,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # if it fails for some reason
             if to_add_ca_cert_path:
                 os.remove(to_add_ca_cert_path)
-        except:
+        except Exception:
             pass
 
         return req
@@ -1305,7 +1305,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         try:
             # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
             info.update(dict((k.lower(), v) for k, v in e.info().items()))
-        except:
+        except Exception:
             pass
 
         info.update({'msg': to_native(e), 'body': body, 'status': e.code})

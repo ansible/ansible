@@ -162,7 +162,7 @@ import time
 
 try:
     import botocore
-except:
+except Exception:
     pass
     # handled by imported HAS_BOTO3
 

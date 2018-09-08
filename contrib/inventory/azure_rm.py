@@ -397,7 +397,7 @@ class AzureRM(object):
         for key in AZURE_CREDENTIAL_ENV_MAPPING:
             try:
                 credentials[key] = config.get(profile, key, raw=True)
-            except:
+            except Exception:
                 pass
 
         if credentials.get('client_id') is not None or credentials.get('ad_user') is not None:
@@ -921,7 +921,7 @@ class AzureInventory(object):
         try:
             config = cp.ConfigParser()
             config.read(path)
-        except:
+        except Exception:
             pass
 
         if config is not None:
@@ -929,7 +929,7 @@ class AzureInventory(object):
             for key in AZURE_CONFIG_SETTINGS:
                 try:
                     settings[key] = config.get('azure', key, raw=True)
-                except:
+                except Exception:
                     pass
 
         return settings

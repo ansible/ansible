@@ -182,7 +182,7 @@ def get_xml_request(module, request, xmlns, content):
         try:
             # trying if content contains dict
             content = ast.literal_eval(content)
-        except:
+        except Exception:
             module.fail_json(msg='unsupported content value `%s`' % content)
 
     if isinstance(content, dict):
@@ -246,7 +246,7 @@ def main():
     elif display == 'json':
         try:
             output = jxmlease.parse(xml_resp)
-        except:
+        except Exception:
             raise ValueError(xml_resp)
     elif display == 'pretty':
         output = tostring(response, pretty_print=True)

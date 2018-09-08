@@ -158,7 +158,7 @@ def logical_device_absent(module, aos, my_logical_dev):
             # Need to way 1sec before a delete to workaround a current limitation in AOS
             time.sleep(1)
             my_logical_dev.delete()
-        except:
+        except Exception:
             module.fail_json(msg="An error occurred, while trying to delete the Logical Device")
 
     module.exit_json(changed=True,
@@ -198,7 +198,7 @@ def logical_device(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False

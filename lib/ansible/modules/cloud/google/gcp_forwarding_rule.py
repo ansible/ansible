@@ -178,7 +178,7 @@ def get_global_forwarding_rule(client, name, project_id=None):
         req = client.globalForwardingRules().get(
             project=project_id, forwardingRule=name)
         return GCPUtils.execute_api_client_req(req, raise_404=False)
-    except:
+    except Exception:
         raise
 
 
@@ -204,7 +204,7 @@ def create_global_forwarding_rule(client, params, project_id):
                                                      name=params['forwarding_rule_name'],
                                                      project_id=project_id)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 
@@ -229,7 +229,7 @@ def delete_global_forwarding_rule(client, name, project_id):
             project=project_id, forwardingRule=name)
         return_data = GCPUtils.execute_api_client_req(req, client)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 
@@ -270,7 +270,7 @@ def update_global_forwarding_rule(client, forwarding_rule, params, name, project
         return_data = GCPUtils.execute_api_client_req(
             req, client=client, raw=False)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 

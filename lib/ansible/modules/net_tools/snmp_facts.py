@@ -169,7 +169,7 @@ from collections import defaultdict
 try:
     from pysnmp.entity.rfc3413.oneliner import cmdgen
     has_pysnmp = True
-except:
+except Exception:
     has_pysnmp = False
 
 from ansible.module_utils.basic import AnsibleModule

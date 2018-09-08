@@ -588,7 +588,7 @@ def main():
             try:
                 js = json.loads(u_content)
                 uresp['json'] = js
-            except:
+            except Exception:
                 if PY2:
                     sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     else:

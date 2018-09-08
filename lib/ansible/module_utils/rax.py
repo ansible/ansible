@@ -217,7 +217,7 @@ def rax_find_loadbalancer(module, rax_module, loadbalancer):
     clb = rax_module.cloud_loadbalancers
     try:
         found = clb.get(loadbalancer)
-    except:
+    except Exception:
         found = []
         for lb in clb.list():
             if loadbalancer == lb.name:

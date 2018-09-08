@@ -156,7 +156,7 @@ def main():
                 try:
                     lam = lm.licenseAssignmentManager
                     lam.UpdateAssignedLicense(entity=content.about.instanceUuid, licenseKey=license)
-                except:
+                except Exception:
                     module.warn('Could not assign "%s" (%s) to vCenter.' % (license, key.name))
 
             result['licenses'] = list_keys(lm.licenses)

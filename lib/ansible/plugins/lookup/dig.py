@@ -222,7 +222,7 @@ class LookupModule(LookupBase):
                     try:
                         socket.inet_aton(ns)
                         nameservers.append(ns)
-                    except:
+                    except Exception:
                         try:
                             nsaddr = dns.resolver.query(ns)[0].address
                             nameservers.append(nsaddr)
@@ -233,7 +233,7 @@ class LookupModule(LookupBase):
             if '=' in t:
                 try:
                     opt, arg = t.split('=')
-                except:
+                except Exception:
                     pass
 
                 if opt == 'qtype':
@@ -251,7 +251,7 @@ class LookupModule(LookupBase):
             if '/' in t:
                 try:
                     domain, qtype = t.split('/')
-                except:
+                except Exception:
                     domain = t
             else:
                 domain = t

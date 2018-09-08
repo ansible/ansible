@@ -167,7 +167,7 @@ def template_absent(module, aos, my_template):
             # need to way 1sec before delete to workaround a current limitation in AOS
             time.sleep(1)
             my_template.delete()
-        except:
+        except Exception:
             module.fail_json(msg="An error occurred, while trying to delete the Template")
 
     module.exit_json(changed=True,
@@ -209,7 +209,7 @@ def aos_template(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False
@@ -237,7 +237,7 @@ def aos_template(module):
         my_template = find_collection_item(aos.DesignTemplates,
                                            item_name=item_name,
                                            item_id=item_id)
-    except:
+    except Exception:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
     # ----------------------------------------------------

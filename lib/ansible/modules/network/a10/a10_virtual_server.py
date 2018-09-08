@@ -119,7 +119,7 @@ def validate_ports(module, ports):
         if 'port' in item:
             try:
                 item['port'] = int(item['port'])
-            except:
+            except Exception:
                 module.fail_json(msg="port definitions must be integers")
         else:
             module.fail_json(msg="port definitions must define the port field")

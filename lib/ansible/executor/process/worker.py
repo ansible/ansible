@@ -30,7 +30,7 @@ HAS_PYCRYPTO_ATFORK = False
 try:
     from Crypto.Random import atfork
     HAS_PYCRYPTO_ATFORK = True
-except:
+except Exception:
     # We only need to call atfork if pycrypto is used because it will need to
     # reinitialize its RNG.  Since old paramiko could be using pycrypto, we
     # need to take charge of calling it.
@@ -153,7 +153,7 @@ class WorkerProcess(multiprocessing.Process):
                         task_fields=self._task.dump_attrs(),
                     )
                     self._final_q.put(task_result, block=False)
-                except:
+                except Exception:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
 

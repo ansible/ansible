@@ -294,7 +294,7 @@ def wait_for_instance(module, id):
             completed = vsManager.wait_for_ready(id, 10, 2)
             if completed:
                 instance = vsManager.get_instance(id)
-        except:
+        except Exception:
             completed = False
 
     return completed, instance
@@ -310,12 +310,12 @@ def cancel_instance(module):
         for instance in instances:
             try:
                 vsManager.cancel_instance(instance['id'])
-            except:
+            except Exception:
                 canceled = False
     elif module.params.get('instance_id') and module.params.get('instance_id') != 0:
         try:
             vsManager.cancel_instance(instance['id'])
-        except:
+        except Exception:
             canceled = False
     else:
         return False, None

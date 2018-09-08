@@ -240,7 +240,7 @@ def split_name_version(name):
         if version is None:
             version = ''
         return prefix, name, version
-    except:
+    except Exception:
         return prefix, name, ''
 
 

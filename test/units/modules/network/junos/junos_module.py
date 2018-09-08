@@ -44,12 +44,12 @@ def load_fixture(name, content='xml'):
             data = f.read()
         try:
             data = json.load(path)
-        except:
+        except Exception:
             pass
     else:
         try:
             data = parse(path).getroot()
-        except:
+        except Exception:
             pass
 
     fixture_data[path] = data

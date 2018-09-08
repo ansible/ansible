@@ -118,7 +118,7 @@ def get_subnet(module, blade):
     try:
         res = blade.subnets.list_subnets(names=subnet)
         return res.items[0]
-    except:
+    except Exception:
         return None
 
 
@@ -136,7 +136,7 @@ def create_subnet(module, blade):
                                                    )
                                      )
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Failed to create subnet {0}. Confirm supplied parameters'.format(module.params['name']))
     module.exit_json(changed=changed)
 
@@ -153,7 +153,7 @@ def modify_subnet(module, blade):
                 blade.subnets.update_subnets(names=subnet_new,
                                              subnet=Subnet(prefix=module.params['prefix']))
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Failed to change subnet {0} prefix to {1}'.format(module.params['name'],
                                                                                         module.params['prefix']))
     if module.params['vlan']:
@@ -162,7 +162,7 @@ def modify_subnet(module, blade):
                 blade.subnets.update_subnets(names=subnet_new,
                                              subnet=Subnet(vlan=module.params['vlan']))
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Failed to change subnet {0} VLAN to {1}'.format(module.params['name'],
                                                                                       module.params['vlan']))
     if module.params['gateway']:
@@ -171,7 +171,7 @@ def modify_subnet(module, blade):
                 blade.subnets.update_subnets(names=subnet_new,
                                              subnet=Subnet(gateway=module.params['gateway']))
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Failed to change subnet {0} gateway to {1}'.format(module.params['name'],
                                                                                          module.params['gateway']))
     if module.params['mtu']:
@@ -180,7 +180,7 @@ def modify_subnet(module, blade):
                 blade.subnets.update_subnets(names=subnet_new,
                                              subnet=Subnet(mtu=module.params['mtu']))
                 changed = True
-            except:
+            except Exception:
                 module.fail_json(msg='Failed to change subnet {0} MTU to {1}'.format(module.params['name'],
                                                                                      module.params['mtu']))
     module.exit_json(changed=changed)
@@ -193,7 +193,7 @@ def delete_subnet(module, blade):
     try:
         blade.subnets.delete_subnets(names=subnet)
         changed = True
-    except:
+    except Exception:
         changed = False
     module.exit_json(changed=changed)
 

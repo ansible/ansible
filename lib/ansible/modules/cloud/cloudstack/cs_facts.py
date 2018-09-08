@@ -165,7 +165,7 @@ class CloudStackFacts(object):
         try:
             # this data come form users, we try what we can to parse it...
             return yaml.safe_load(self._fetch(CS_USERDATA_BASE_URL))
-        except:
+        except Exception:
             return None
 
     def _fetch(self, path):
