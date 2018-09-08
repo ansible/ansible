@@ -4,7 +4,7 @@
 # Copyright: (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, and others
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# this is a windows documentation stub.  actual code lives in the .ps1
+# This is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -28,6 +28,7 @@ options:
     description:
     - The full URL of a file to download.
     required: yes
+    type: str
   dest:
     description:
     - The location to save the file at the URL.
@@ -53,10 +54,12 @@ options:
   url_username:
     description:
     - Basic authentication username.
+    type: str
     aliases: [ username ]
   url_password:
     description:
     - Basic authentication password.
+    type: str
     aliases: [ password ]
   force_basic_auth:
     description:
@@ -76,14 +79,17 @@ options:
   proxy_url:
     description:
     - The full URL of the proxy server to download through.
+    type: str
     version_added: "2.0"
   proxy_username:
     description:
     - Proxy authentication username.
+    type: str
     version_added: "2.0"
   proxy_password:
     description:
     - Proxy authentication password.
+    type: str
     version_added: "2.0"
   use_proxy:
     description:
@@ -98,6 +104,10 @@ options:
     type: int
     default: 10
     version_added : '2.4'
+notes:
+- If your URL includes an escaped slash character (%2F) this module will convert it to a real slash.
+  This is a result of the behaviour of the System.Uri class
+  L(as described in the documentation,https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/schemesettings-element-uri-settings#remarks).
 '''
 
 EXAMPLES = r'''
