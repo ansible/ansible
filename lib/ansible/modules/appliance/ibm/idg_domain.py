@@ -17,7 +17,7 @@ module: idg_domain
 short_description: Manages IBM DataPower Gateway(IDG) domains
 description:
   - Manages IBM DataPower Gateway(IDG) domains.
-version_added: "2.7"
+version_added: "2.8"
 options:
 
   name:
@@ -453,7 +453,7 @@ def main():
                     if idg_mgmt.is_ok(idg_mgmt.last_call()):
                         if state == 'present':
                             # We focus only on the properties we administer
-                            dc_data = idg_mgmt.last_call()["data"] # Save domain configuration
+                            dc_data = idg_mgmt.last_call()["data"]  # Save domain configuration
                             del dc_data['_links']
                             for k, v in dc_data['Domain'].items():
                                 if k not in domain_obj_items:
@@ -517,7 +517,7 @@ def main():
                                     domain_quiesce_status = idg_mgmt.last_call()["data"]['DomainStatus']['QuiesceState']
                                 else:
                                     domain_quiesce_status = [d['QuiesceState'] for d in idg_mgmt.last_call()["data"]['DomainStatus'] if
-                                                                                   d['Domain'] == domain_name][0]
+                                                             d['Domain'] == domain_name][0]
 
                                 if state == 'quiesced':
                                     if domain_quiesce_status == '':

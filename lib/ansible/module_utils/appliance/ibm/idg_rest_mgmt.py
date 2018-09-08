@@ -13,6 +13,8 @@ from ansible.module_utils.six import string_types, iteritems, iterkeys
 
 import json
 from time import sleep
+import re
+
 # import pdb
 
 #############################
@@ -153,7 +155,7 @@ class IDGApi(object):
         self.validate_certs = kwargs['validate_certs']
 
         # API call queue
-        self.calls=[]
+        self.calls = []
 
     @staticmethod
     def apifilestore_uri2path(uri):
@@ -270,10 +272,10 @@ class IDGApi(object):
 
     def api_event_sink(self, uri, **kwargs):
         # Validate and wait for the execution and completion of an asynchronous operation
-        str_results=['processed', 'completed']
-        max_steps=30
-        count=0
-        action_result=''
+        str_results = ['processed', 'completed']
+        max_steps = 30
+        count = 0
+        action_result = ''
         resource = uri.rsplit('/', 1)[-1]
 
         while (action_result.lower() not in str_results) and (count < max_steps):

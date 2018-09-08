@@ -69,7 +69,7 @@ class IDGUtils(object):
             r = dict(
                 failed=False,
                 changed=False,
-                msg = IDGUtils.CHECK_MODE_MESSAGE
+                msg=IDGUtils.CHECK_MODE_MESSAGE
             )
             module.exit_json(**r)
 
