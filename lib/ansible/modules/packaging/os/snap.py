@@ -58,7 +58,7 @@ EXAMPLES = '''
     name: foo
 
 # Remove "foo" snap
-- name: Remove VLC
+- name: Remove foo
   snap:
     name: foo
     state: absent
@@ -67,7 +67,7 @@ EXAMPLES = '''
 - name: Install "foo" with option --classic
   snap:
     name: foo
-    classic: True
+    classic: yes
 '''
 
 RETURN = '''
