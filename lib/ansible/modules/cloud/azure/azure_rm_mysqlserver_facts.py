@@ -182,7 +182,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
         results = []
         try:
             response = self.mysql_client.servers.get(resource_group_name=self.resource_group,
-                                                          server_name=self.name)
+                                                     server_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for MySQL Server.')
