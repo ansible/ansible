@@ -98,7 +98,7 @@ def is_snap_installed(module, snap_name):
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'list', snap_name]
     cmd = ' '.join(cmd_parts)
-    rc = module.run_command(cmd, check_rc=False)
+    rc, out, err = module.run_command(cmd, check_rc=False)
 
     return rc == 0
 
