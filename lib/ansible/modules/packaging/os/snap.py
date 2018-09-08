@@ -149,11 +149,11 @@ def remove_snaps(module, snap_names):
     if not snaps_to_remove:
         snaps_not_installed = ', '.join(snap_names)
         module.exit_json(msg="Snap(s) not installed: %s" % str(snaps_not_installed), changed=False)
-    else:
-        # Transform the list into a string with whitespace-separated snaps
-        snaps_to_remove = ' '.join(snaps_to_remove)
-        # Create a string with commas for the output
-        snaps_removed = snaps_to_remove.replace(' ', ', ')
+
+    # Transform the list into a string with whitespace-separated snaps
+    snaps_to_remove = ' '.join(snaps_to_remove)
+    # Create a string with commas for the output
+    snaps_removed = snaps_to_remove.replace(' ', ', ')
 
     if module.check_mode:
         module.exit_json(msg="Snap(s) that would have been removed: %s" % str(snaps_removed), changed=True)
