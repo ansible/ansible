@@ -2911,26 +2911,36 @@ class AnsibleModule(object):
             while True:
                 rfds, wfds, efds = select.select(rpipes, [], rpipes, 1)
 
-                if rfds or rpipes:
-                    stdout_tmp = self._read_from_pipes(rpipes, rfds, cmd.stdout)
-                    stderr_tmp = self._read_from_pipes(rpipes, rfds, cmd.stderr)
+                stdout_tmp = self._read_from_pipes(rpipes, rfds, cmd.stdout)
+                stderr_tmp = self._read_from_pipes(rpipes, rfds, cmd.stderr)
 
-                    if stdout_tmp or stderr_tmp:
-                        self.update_json({'stdout': stdout_tmp, 'stderr': stderr_tmp})
+                if stdout_tmp or stderr_tmp:
+                    self.update_json({'stdout': stdout_tmp, 'stderr': stderr_tmp})
 
-                    stdout += stdout_tmp
-                    stderr += stderr_tmp
+                stdout += stdout_tmp
+                stderr += stderr_tmp
 
-                    # if we're checking for prompts, do it now
-                    if prompt_re:
-                        if prompt_re.search(stdout) and not data:
-                            if encoding:
-                                stdout = to_native(stdout, encoding=encoding, errors=errors)
-                            else:
-                                stdout = stdout
-                            return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
-                elif cmd.poll() is not None:
-                    # only break out if (no pipes are left to read or the pipes are completely read) and the process is terminated
+                # if we're checking for prompts, do it now
+                if prompt_re:
+                    if prompt_re.search(stdout) and not data:
+                        if encoding:
+                            stdout = to_native(stdout, encoding=encoding, errors=errors)
+                        else:
+                            stdout = stdout
+                        return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
+
+                # only break out if no pipes are left to read or
+                # the pipes are completely read and
+                # the process is terminated
+                if (not rpipes or not rfds) and cmd.poll() is not None:
+                    break
+                # No pipes are left to read but process is not yet terminated
+                # Only then it is safe to wait for the process to be finished
+                # NOTE: Actually cmd.poll() is always None here if rpipes is empty
+                elif not rpipes and cmd.poll() is None:
+                    cmd.wait()
+                    # The process is terminated. Since no pipes to read from are
+                    # left, there is no need to call select() again.
                     break
 
             cmd.stdout.close()
