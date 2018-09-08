@@ -114,11 +114,11 @@ def install_snaps(module, snap_names, classic):
     if not snaps_to_install:
         snaps_already_installed = ', '.join(snap_names)
         module.exit_json(msg="Snap(s) already installed: %s" % str(snaps_already_installed), classic=classic, changed=False)
-    else:
-        # Transform the list into a string with whitespace-separated snaps
-        snaps_to_install = ' '.join(snaps_to_install)
-        # Create a string with commas for the output
-        snaps_installed = snaps_to_install.replace(' ', ', ')
+
+    # Transform the list into a string with whitespace-separated snaps
+    snaps_to_install = ' '.join(snaps_to_install)
+    # Create a string with commas for the output
+    snaps_installed = snaps_to_install.replace(' ', ', ')
 
     if module.check_mode:
         module.exit_json(msg="Snap(s) that would have been installed: %s" % str(snaps_installed), classic=classic, changed=True)
