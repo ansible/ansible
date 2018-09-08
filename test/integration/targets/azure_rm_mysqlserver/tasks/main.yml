@@ -335,6 +335,16 @@
     name: firewallrule{{ rpfx }}
     start_ip_address: 172.28.10.136
     end_ip_address: 172.28.10.138
+# azure_rm_mysqlserverconfiguration tests
+#
+
+- name: Create instance of Configuration -- check mode
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+    source: user-override
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
@@ -349,6 +359,13 @@
     name: firewallrule{{ rpfx }}
     start_ip_address: 172.28.10.136
     end_ip_address: 172.28.10.138
+- name: Create instance of Configuration
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+    source: user-override
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -362,6 +379,13 @@
     name: firewallrule{{ rpfx }}
     start_ip_address: 172.28.10.136
     end_ip_address: 172.28.10.138
+- name: Create again instance of Configuration
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+    source: user-override
   register: output
 - name: Assert the state has not changed
   assert:
