@@ -1,10 +1,12 @@
 #!powershell
 
+# Copyright: (c) 2018, Denis Pastukhov <past20005@yandex.ru>
 # Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
-#win_psmodule (Powershell modules Additions/Removal)
+
+# win_psmodule (Powershell modules Additions/Removal)
 
 $params = Parse-Args $args -supports_check_mode $true
 
@@ -111,6 +113,7 @@ Function Install-PsModule {
       [string]$RequiredVersion,
       [bool]$ForceRequiredVersion
     )
+    $need_remove = $false
     $need_update = $false
     $module_version_current = $null
     $ht = @{
@@ -141,9 +144,9 @@ Function Install-PsModule {
         $ht['AllowClobber'] = $AllowClobber;
     }
 
-    #Check if module present and save to variable
+    #Check if module is present and save to variable
     $module = Get-Module -Listavailable|?{$_.name -eq $Name}
-    #If module present, save info about latest version
+    #If module is present, save info about latest version
     if ($module){
         $module_version_current = $module.version | select -First 1
     }
@@ -156,11 +159,11 @@ Function Install-PsModule {
         $ErrorMessage = "Problems searching $($Name) module in repository: $($_.Exception.Message)"
         Fail-Json $result $ErrorMessage
     }
-    #Saving old logic: if module present, and no new parameters - do nothing, no matter which version
+    #Saving old logic: if module is present, and no new parameters are specified - do nothing, no matter which version
     if ($module -and ($Latest -eq $false) -and !($RequiredVersion)){
         $result.output = "Module $($Name) already present"
     }
-    #If module present and latest version needed
+    #If module is present and latest version is needed
     elseif ($module -and $Latest -eq $true) {
         if ($module_version_current -lt $search_result.version) {
             $need_update = $true
@@ -174,7 +177,7 @@ Function Install-PsModule {
             Fail-Json $result $ErrorMessage
         }    
     }
-    #If module present and version is required
+    #If module is present and version is required
     elseif ($module -and $RequiredVersion) {    
         if ($module_version_current -ne $search_result.version) {
             #if current version higher than required
@@ -199,7 +202,7 @@ Function Install-PsModule {
         }
     }
     
-    #if no module installed or update needed
+    #if no module installed or update is needed
     if (!($module) -or $need_update -eq $true){
         try{
             # Install NuGet Provider if needed
@@ -239,7 +242,7 @@ Function Remove-PsModule {
     # If module is present, unistalls it.
     if (Get-Module -Listavailable|?{$_.name -eq $Name}){
       try{
-        #remove all versions, because now we can have multiple versions installed
+        #remove all versions, because now it is possible to have multiple versions installed
         Uninstall-Module -Name $Name -Confirm:$false -Force -ErrorAction Stop -AllVersions -WhatIf:$CheckMode | out-null
         $result.output = "Module $($Name) removed"
         $result.changed = $true
