@@ -45,6 +45,22 @@ def unique(a):
     return c
 
 
+def duplicate(a):
+    if isinstance(a, collections.Hashable):
+        c = set(a)
+    else:
+        s = {}
+        c = []
+
+        for x in a:
+            if x not in s:
+                s[x] = 1
+            else:
+                if s[x] == 1:
+                    c.append(x)
+                s[x] += 1
+    return c
+
 def intersect(a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) & set(b)
@@ -192,6 +208,7 @@ class FilterModule(object):
 
             # set theory
             'unique': unique,
+            'duplicate': duplicate,
             'intersect': intersect,
             'difference': difference,
             'symmetric_difference': symmetric_difference,
