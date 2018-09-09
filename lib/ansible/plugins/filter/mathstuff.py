@@ -61,6 +61,7 @@ def duplicate(a):
                 s[x] += 1
     return c
 
+
 def intersect(a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) & set(b)
