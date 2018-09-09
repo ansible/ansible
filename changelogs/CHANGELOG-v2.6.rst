@@ -21,6 +21,7 @@ Minor Changes
 Bugfixes
 --------
 
+- fix for cloudfront module when CloudFrontOriginAccessIdentityList is missing https://github.com/ansible/ansible/pull/44984
 - Add md5sum check in nxos_file_copy module (https://github.com/ansible/ansible/pull/43423).
 - Allow arbitrary ``log_driver`` for docker_container (https://github.com/ansible/ansible/pull/33579).
 - Fix Python2.6 regex bug terminal plugin nxos, iosxr (https://github.com/ansible/ansible/pull/45135).
