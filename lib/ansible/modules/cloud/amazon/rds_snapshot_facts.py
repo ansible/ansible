@@ -285,7 +285,8 @@ cluster_snapshots:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (AWSRetry, HAS_BOTO3, boto3_tag_list_to_ansible_dict,
+                                      camel_dict_to_snake_dict)
 
 try:
     import botocore
@@ -366,6 +367,9 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[['db_snapshot_identifier', 'db_instance_identifier', 'db_cluster_identifier', 'db_cluster_snapshot_identifier']]
     )
+
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
     conn = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10))
     results = dict()

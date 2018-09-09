@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Print a nice error message when attempting to use rds_snapshot_facts and boto3 is not installed
