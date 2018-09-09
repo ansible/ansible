@@ -57,6 +57,13 @@ options:
         description:
             - The list of actions that trigger the webhook to post notifications.
         type: list
+    state:
+        description:
+            - Assert the state of the container registry webhook. Use 'present' to create or update a webhook and 'absent' to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
