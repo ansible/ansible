@@ -213,42 +213,92 @@
     that:
       - output.changed == false
 
-- name: Delete instance of Firewall Rule -- check mode
+#
+# azure_rm_sqlserverfirewallrule_facts
+#
+
+- name: Create Firewall Rule - second
   azure_rm_sqlfirewallrule:
     resource_group: "{{ resource_group }}"
-    server_name: "sqlsrv{{ random_postfix }}"
-    name: firewallrule{{ random_postfix }}
-    state: absent
-  check_mode: yes
+    server_name: sqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}second
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    firewall_rule_name: firewallrule{{ rpfx }}
   register: output
-- name: Assert the state has changed
+- name: Assert that facts are returned
   assert:
     that:
-      - output.changed
+      - output.changed == False
+      - output.firewall_rules.firewallrule{{ rpfx }}.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.type != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.kind != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.location != None
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.firewall_rules.firewallrule{{ rpfx }}.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.type != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.kind != None
+      - output.firewall_rules.firewallrule{{ rpfx }}.location != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.id != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.name != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.type != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.kind != None
+      - output.firewall_rules.firewallrule{{ rpfx }}second.location != None
 
 - name: Delete instance of Firewall Rule
   azure_rm_sqlfirewallrule:
     resource_group: "{{ resource_group }}"
-    server_name: "sqlsrv{{ random_postfix }}"
-    name: firewallrule{{ random_postfix }}
+    server_name: sqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
     state: absent
-  register: output
-- name: Assert the state has changed
-  assert:
-    that:
-      - output.changed
-
-- name: Delete unexisting instance of Firewall Rule
+- name: Delete instance of Firewall Rule
   azure_rm_sqlfirewallrule:
     resource_group: "{{ resource_group }}"
-    server_name: "sqlsrv{{ random_postfix }}"
-    name: firewallrule{{ random_postfix }}
+    server_name: sqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}second
     state: absent
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    firewall_rule_name: firewallrule{{ rpfx }}
   register: output
-- name: Assert the state has changed
+- name: Assert that empty dictionary was returned
   assert:
     that:
-      - output.changed == false
+      - output.changed == False
+      - "'firewallrule{{ rpfx }}' not in output.firewall_rules"
+      - "'firewallrule{{ rpfx }}second' not in output.firewall_rules"
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - "'firewallrule{{ rpfx }}' not in output.firewall_rules"
+      - "'firewallrule{{ rpfx }}second' not in output.firewall_rules"
+
 
 # finalise & clean up azure_rm_sqlserver test
 

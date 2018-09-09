@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_sqlfirewallrule_facts
-version_added: "2.5"
+version_added: "2.8"
 short_description: Get SQL Firewall Rule facts.
 description:
     - Get facts of SQL Firewall Rule.
@@ -131,7 +131,6 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
             changed=False,
             ansible_facts=dict()
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
         self.firewall_rule_name = None
@@ -140,8 +139,6 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
                 self.server_name is not None and
@@ -161,9 +158,9 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         response = None
         results = {}
         try:
-            response = self.mgmt_client.firewall_rules.get(resource_group_name=self.resource_group,
-                                                           server_name=self.server_name,
-                                                           firewall_rule_name=self.firewall_rule_name)
+            response = self.sql_client.firewall_rules.get(resource_group_name=self.resource_group,
+                                                          server_name=self.server_name,
+                                                          firewall_rule_name=self.firewall_rule_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for FirewallRules.')
@@ -182,8 +179,8 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         response = None
         results = {}
         try:
-            response = self.mgmt_client.firewall_rules.list_by_server(resource_group_name=self.resource_group,
-                                                                      server_name=self.server_name)
+            response = self.sql_client.firewall_rules.list_by_server(resource_group_name=self.resource_group,
+                                                                     server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for FirewallRules.')
