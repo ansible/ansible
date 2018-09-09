@@ -194,5 +194,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
 
 def main():
     AzureRMFirewallRulesFacts()
+
+
 if __name__ == '__main__':
     main()
