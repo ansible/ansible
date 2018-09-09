@@ -158,7 +158,6 @@ class AzureRMWebhooks(AzureRMModuleBase):
         self.parameters = dict()
 
         self.results = dict(changed=False)
-        self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
 
@@ -186,14 +185,8 @@ class AzureRMWebhooks(AzureRMModuleBase):
                 elif key == "actions":
                     self.parameters["actions"] = kwargs[key]
 
-        old_response = None
+
         response = None
-
-        self.mgmt_client = self.get_mgmt_svc_client(ContainerRegistryManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
-
-        resource_group = self.get_resource_group(self.resource_group)
-
         old_response = self.get_webhook()
 
         if not old_response:
@@ -257,15 +250,15 @@ class AzureRMWebhooks(AzureRMModuleBase):
 
         try:
             if self.to_do == Actions.Create:
-                response = self.mgmt_client.webhooks.create(resource_group_name=self.resource_group,
-                                                            registry_name=self.registry_name,
-                                                            webhook_name=self.name,
-                                                            webhook_create_parameters=self.parameters)
+                response = self.containerregistry_client.webhooks.create(resource_group_name=self.resource_group,
+                                                                         registry_name=self.registry_name,
+                                                                         webhook_name=self.name,
+                                                                         webhook_create_parameters=self.parameters)
             else:
-                response = self.mgmt_client.webhooks.update(resource_group_name=self.resource_group,
-                                                            registry_name=self.registry_name,
-                                                            webhook_name=self.name,
-                                                            webhook_update_parameters=self.parameters)
+                response = self.containerregistry_client.webhooks.update(resource_group_name=self.resource_group,
+                                                                         registry_name=self.registry_name,
+                                                                         webhook_name=self.name,
+                                                                         webhook_update_parameters=self.parameters)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -282,9 +275,9 @@ class AzureRMWebhooks(AzureRMModuleBase):
         '''
         self.log("Deleting the Webhook instance {0}".format(self.name))
         try:
-            response = self.mgmt_client.webhooks.delete(resource_group_name=self.resource_group,
-                                                        registry_name=self.registry_name,
-                                                        webhook_name=self.name)
+            response = self.containerregistry_client.webhooks.delete(resource_group_name=self.resource_group,
+                                                                     registry_name=self.registry_name,
+                                                                     webhook_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the Webhook instance.')
             self.fail("Error deleting the Webhook instance: {0}".format(str(e)))
@@ -300,9 +293,9 @@ class AzureRMWebhooks(AzureRMModuleBase):
         self.log("Checking if the Webhook instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.webhooks.get(resource_group_name=self.resource_group,
-                                                     registry_name=self.registry_name,
-                                                     webhook_name=self.name)
+            response = self.containerregistry_client.webhooks.get(resource_group_name=self.resource_group,
+                                                                  registry_name=self.registry_name,
+                                                                  webhook_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Webhook instance : {0} found".format(response.name))
