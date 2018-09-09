@@ -174,6 +174,11 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
+.. versionadded:: 2.x
+
+To get the duplicate values from a lists (the resulting list contains unique duplicates)::
+
+    {{ list1 | duplicate }}
 
 .. _dict_filter:
 
