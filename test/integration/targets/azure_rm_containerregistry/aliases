@@ -2,3 +2,4 @@ cloud/azure
 shippable/azure/group1
 destructive
 azure_rm_containerregistry_facts
+azure_rm_containerregistrywebhook
