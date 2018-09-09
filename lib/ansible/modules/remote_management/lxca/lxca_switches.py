@@ -226,7 +226,11 @@ LXCA_COMMON_ARGS = dict(
 )
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='switches', choices=list(FUNC_DICT)),
+    command_options=dict(default='switches', choices=['switches',
+                                                      'switches_by_uuid',
+                                                      'switches_by_chassis_uuid',
+                                                      'switches_list_ports',
+                                                      'switches_change_status_of_ports']),
     uuid=dict(default=None),
     chassis=dict(default=None),
     ports=dict(default=None),

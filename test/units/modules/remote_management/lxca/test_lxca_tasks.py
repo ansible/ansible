@@ -1,10 +1,11 @@
 import json
+import pytest
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
-from ansible.modules.remote_management.lxca import lxca_nodes
+from ansible.modules.remote_management.lxca import lxca_tasks
 
 import pylxca
 import mock
@@ -58,23 +59,21 @@ class TestMyModule(unittest.TestCase):
                 "auth_url": "https://10.240.14.195",
                 "login_user": "USERID",
             })
-            lxca_nodes.main()
+            lxca_tasks.main()
 
 
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.setup_conn", autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.execute_module", autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.AnsibleModule", autospec=True)
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_tasks.setup_conn", autospec=True)
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_tasks.execute_module", autospec=True)
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_tasks.AnsibleModule", autospec=True)
     def test__ansible_module_argument_spec(self, ansible_mod_cls, _execute_module,  _setup_conn):
         expected_arguments_spec = dict(
             login_user=dict(required=True),
             login_password=dict(required=True, no_log=True),
-            command_options=dict(default='nodes', choices=['nodes', 'nodes_by_uuid',
-                                                           'nodes_by_chassis_uuid',
-                                                           'nodes_status_managed',
-                                                           'nodes_status_unmanaged']),
+            command_options=dict(default='tasks', choices=['tasks']),
             auth_url=dict(required=True),
-            uuid=dict(default=None),
-            chassis=dict(default=None),
+            id=dict(default=None),
+            lxca_action=dict(default=None, choices=[None, 'cancel', 'delete', 'update']),
+            update_list=dict(default=None, type=('list')),
             noverify=dict(default=True),
         )
         _setup_conn.return_value = "Fake connection"
@@ -84,47 +83,45 @@ class TestMyModule(unittest.TestCase):
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
             "login_password": "CME44ibm",
-            "command_options": "nodes",
+            "command_options": "tasks",
         }
         mod_obj.params = args
-        lxca_nodes.main()
-        assert(mock.call(argument_spec=expected_arguments_spec,
-                         supports_check_mode=False) == ansible_mod_cls.call_args)
+        lxca_tasks.main()
+        assert mock.call(argument_spec=expected_arguments_spec,
+                         supports_check_mode=False) == ansible_mod_cls.call_args
 
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes._nodes_by_uuid",
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_tasks._tasks",
                 autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule",
                 autospec=True)
-    def test__nodes_empty_list(self, ansible_mod_cls, _get_nodes):
+    def test__tasks_empty_list(self, ansible_mod_cls, _get_tasks):
         mod_obj = ansible_mod_cls.return_value
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
             "login_password": "CME44ibm",
-            "uuid": "3C737AA5E31640CE949B10C129A8B01F",
-            "command_options": "nodes_by_uuid",
+            "command_options": "tasks_by_uuid",
         }
         mod_obj.params = args
-        empty_nodes_list = []
-        _get_nodes.return_value = empty_nodes_list
-        ret_nodes = _get_nodes(mod_obj, args)
-        assert mock.call(mod_obj, mod_obj.params) == _get_nodes.call_args
-        assert _get_nodes.return_value == ret_nodes
+        _get_tasks.return_value = []
+        ret_tasks = _get_tasks(mod_obj, args)
+        assert mock.call(mod_obj, mod_obj.params) == _get_tasks.call_args
+        assert _get_tasks.return_value == ret_tasks
 
     '''
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes._nodes", autospec=True)
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_tasks._tasks", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule", autospec=True)
-    def test__nodes_throw_exception(self, ansible_mod_cls, _get_nodes):
+    def test__nodes_throw_exception(self, ansible_mod_cls, _get_tasks):
         mod_obj = ansible_mod_cls.return_value
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
             "login_password": "CME44ibm",
-            "command_options": "nodes",
+            "command_options": "tasks",
         }
         mod_obj.params = args
-        _get_nodes.side_effect = {'msg': "Failed", 'result': "throw exception"}
+        _get_tasks.side_effect = "failed to get tasks"
         with self.assertRaises(AnsibleFailJson):
-            lxca_nodes.main()
+            lxca_tasks.main()
 
     '''

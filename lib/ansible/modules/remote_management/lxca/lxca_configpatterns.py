@@ -78,7 +78,7 @@ options:
   command_options:
     description:
       options to perform configpatterns operation
-    default: get_configpatterns
+    default: configpatterns
     choices:
         - get_configpatterns
         - get_particular_configpattern
@@ -237,6 +237,7 @@ def validate_parameters(module):
 
 
 FUNC_DICT = {
+    'configpatterns': _get_configpatterns,
     'get_configpatterns': _get_configpatterns,
     'get_particular_configpattern': _get_particular_configpattern,
     'import_configpatterns': _import_configpatterns,
@@ -253,7 +254,11 @@ LXCA_COMMON_ARGS = dict(
 )
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='get_configpatterns', choices=list(FUNC_DICT)),
+    command_options=dict(default='configpatterns', choices=['get_configpatterns',
+                                                            'get_particular_configpattern',
+                                                            'import_configpatterns',
+                                                            'apply_configpatterns',
+                                                            'get_configstatus']),
     id=dict(default=None),
     status=dict(default=None),
     endpoint=dict(default=None),

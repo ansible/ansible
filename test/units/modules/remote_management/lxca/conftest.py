@@ -1,10 +1,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 import pytest
 
-from mock import Mock, patch
-from lxca_module_loader import LXCA_MODULE_UTILS_PATH
-from pylxca import connect
+#from mock import Mock, patch
+#from lxca_module_loader import LXCA_MODULE_UTILS_PATH
+#from pylxca import connect
 
+'''
 
 @pytest.fixture
 def mock_lxca_connection():
@@ -19,3 +20,4 @@ def mock_ansible_module():
     ansible_module = Mock()
     patcher_ansible.return_value = ansible_module
     return ansible_module
+'''
