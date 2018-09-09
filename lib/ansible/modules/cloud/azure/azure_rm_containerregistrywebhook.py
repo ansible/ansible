@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_containerregistrywebhook
-version_added: "2.5"
+version_added: "2.8"
 short_description: Manage Webhook instance.
 description:
     - Create, update and delete instance of Webhook.
@@ -30,7 +30,7 @@ options:
         description:
             - The name of the container registry.
         required: True
-    webhook_name:
+    name:
         description:
             - The name of the webhook.
         required: True
@@ -71,7 +71,7 @@ EXAMPLES = '''
     azure_rm_containerregistrywebhook:
       resource_group: myResourceGroup
       registry_name: myRegistry
-      webhook_name: myWebhook
+      name: myWebhook
       location: eastus
 '''
 
@@ -121,7 +121,7 @@ class AzureRMWebhooks(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            webhook_name=dict(
+            name=dict(
                 type='str',
                 required=True
             ),
@@ -154,7 +154,7 @@ class AzureRMWebhooks(AzureRMModuleBase):
 
         self.resource_group = None
         self.registry_name = None
-        self.webhook_name = None
+        self.name = None
         self.parameters = dict()
 
         self.results = dict(changed=False)
@@ -253,18 +253,18 @@ class AzureRMWebhooks(AzureRMModuleBase):
 
         :return: deserialized Webhook instance state dictionary
         '''
-        self.log("Creating / Updating the Webhook instance {0}".format(self.webhook_name))
+        self.log("Creating / Updating the Webhook instance {0}".format(self.name))
 
         try:
             if self.to_do == Actions.Create:
                 response = self.mgmt_client.webhooks.create(resource_group_name=self.resource_group,
                                                             registry_name=self.registry_name,
-                                                            webhook_name=self.webhook_name,
+                                                            webhook_name=self.name,
                                                             webhook_create_parameters=self.parameters)
             else:
                 response = self.mgmt_client.webhooks.update(resource_group_name=self.resource_group,
                                                             registry_name=self.registry_name,
-                                                            webhook_name=self.webhook_name,
+                                                            webhook_name=self.name,
                                                             webhook_update_parameters=self.parameters)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
@@ -280,11 +280,11 @@ class AzureRMWebhooks(AzureRMModuleBase):
 
         :return: True
         '''
-        self.log("Deleting the Webhook instance {0}".format(self.webhook_name))
+        self.log("Deleting the Webhook instance {0}".format(self.name))
         try:
             response = self.mgmt_client.webhooks.delete(resource_group_name=self.resource_group,
                                                         registry_name=self.registry_name,
-                                                        webhook_name=self.webhook_name)
+                                                        webhook_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the Webhook instance.')
             self.fail("Error deleting the Webhook instance: {0}".format(str(e)))
@@ -297,12 +297,12 @@ class AzureRMWebhooks(AzureRMModuleBase):
 
         :return: deserialized Webhook instance state dictionary
         '''
-        self.log("Checking if the Webhook instance {0} is present".format(self.webhook_name))
+        self.log("Checking if the Webhook instance {0} is present".format(self.name))
         found = False
         try:
             response = self.mgmt_client.webhooks.get(resource_group_name=self.resource_group,
                                                      registry_name=self.registry_name,
-                                                     webhook_name=self.webhook_name)
+                                                     webhook_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Webhook instance : {0} found".format(response.name))
@@ -317,6 +317,7 @@ class AzureRMWebhooks(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMWebhooks()
+
 
 if __name__ == '__main__':
     main()
