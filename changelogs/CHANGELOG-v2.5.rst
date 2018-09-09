@@ -21,6 +21,8 @@ Release Summary
 Bugfixes
 --------
 
+- fix for cloudfront module when CloudFrontOriginAccessIdentityList is missing https://github.com/ansible/ansible/pull/44984
+
 - fix for the bundled selectors module (used in the ssh and local connection plugins) when a syscall is restarted after being interrupted by a signal (https://github.com/ansible/ansible/issues/41630)
 
 - Fix the mount module's handling of swap entries in fstab (https://github.com/ansible/ansible/pull/42837)
