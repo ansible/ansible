@@ -155,7 +155,9 @@ LXCA_COMMON_ARGS = dict(
 )
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='powersupplies', choices=list(FUNC_DICT)),
+    command_options=dict(default='powersupplies', choices=['powersupplies',
+                                                           'powersupplies_by_uuid',
+                                                           'powersupplies_by_chassis_uuid']),
     uuid=dict(default=None), chassis=dict(default=None)
 )
 

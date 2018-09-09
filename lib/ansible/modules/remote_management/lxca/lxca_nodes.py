@@ -182,7 +182,10 @@ LXCA_COMMON_ARGS = dict(
     noverify=dict(default=True)
 )
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='nodes', choices=list(FUNC_DICT)),
+    command_options=dict(default='nodes', choices=['nodes', 'nodes_by_uuid',
+                                                   'nodes_by_chassis_uuid',
+                                                   'nodes_status_managed',
+                                                   'nodes_status_unmanaged']),
     uuid=dict(default=None), chassis=dict(default=None)
 )
 

@@ -160,7 +160,10 @@ LXCA_COMMON_ARGS = dict(
 )
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='chassis', choices=list(FUNC_DICT)),
+    command_options=dict(default='chassis', choices=['chassis',
+                                                     'chassis_by_uuid',
+                                                     'chassis_status_managed',
+                                                     'chassis_status_unmanaged']),
     uuid=dict(default=None)
 )
 

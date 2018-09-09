@@ -155,7 +155,8 @@ LXCA_COMMON_ARGS = dict(
 )
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='fans', choices=list(FUNC_DICT)),
+    command_options=dict(default='fans', choices=['fans', 'fans_by_uuid',
+                                                  'fans_by_chassis_uuid']),
     uuid=dict(default=None), chassis=dict(default=None))
 
 

@@ -156,7 +156,8 @@ LXCA_COMMON_ARGS = dict(
 )
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='cmms', choices=list(FUNC_DICT)),
+    command_options=dict(default='cmms', choices=['cmms', 'cmms_by_uuid',
+                                                  'cmms_by_chassis_uuid']),
     uuid=dict(default=None),
     chassis=dict(default=None)
 )
