@@ -49,6 +49,7 @@ options:
       - Requires I(state=present).
     type: bool
     default: 'no'
+    version_added: '2.8'
   required_version:
     description:
       - Allows to select version of powershell module to install. Requires I(state=present).
@@ -57,12 +58,14 @@ options:
       - If there is higher version present warning will be returned. No changed will be done. I(force_required_version) can be used to change this behavior.
       - This is mutually exclusive with I(latest).
     default: 'null'
+    version_added: '2.8'
   force_required_version:
     description:
       - Changes behavior of I(required_version). If there is higher version of a module present all versions will be uninstalled, than selected version will be installed.
       - Requires I(required_version).
     type: bool
     default: 'no'
+    version_added: '2.8'
 notes:
    -  Powershell 5.0 or higher is needed.
 
