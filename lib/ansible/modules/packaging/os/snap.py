@@ -103,7 +103,7 @@ def snap_exists(module, snap_name):
     cmd = ' '.join(cmd_parts)
     rc, out, err = module.run_command(cmd, check_rc=False)
 
-    return rc, out, err
+    return rc == 0
 
 
 def is_snap_installed(module, snap_name):
@@ -198,8 +198,7 @@ def main():
 
     # Check if snaps are valid
     for snap_name in snap_names:
-        rc, out, err = snap_exists(module, snap_name)
-        if rc != 0:
+        if not snap_exists(module, snap_name):
             module.fail_json(msg="No snap matching '%s' available." % snap_name)
 
     # Apply changes to the snaps
