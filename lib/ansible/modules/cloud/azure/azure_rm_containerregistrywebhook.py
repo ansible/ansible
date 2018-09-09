@@ -192,7 +192,6 @@ class AzureRMWebhooks(AzureRMModuleBase):
                 elif key == "actions":
                     self.parameters["actions"] = kwargs[key]
 
-
         response = None
         old_response = self.get_webhook()
 
@@ -317,6 +316,7 @@ class AzureRMWebhooks(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMWebhooks()
+
 
 if __name__ == '__main__':
     main()
