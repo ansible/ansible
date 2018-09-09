@@ -118,7 +118,7 @@
   azure_rm_containerregistrywebhook:
     resource_group: "{{ resource_group }}"
     registry_name: acr{{ rpfx }}
-    webhook_name: webhook{{ rpfx }}
+    name: webhook{{ rpfx }}
     location: eastus2
     service_uri: http://serviceuri.com
     actions:
@@ -134,7 +134,7 @@
   azure_rm_containerregistrywebhook:
     resource_group: "{{ resource_group }}"
     registry_name: acr{{ rpfx }}
-    webhook_name: webhook{{ rpfx }}
+    name: webhook{{ rpfx }}
     location: eastus2
     service_uri: http://serviceuri.com
     actions:
@@ -149,7 +149,7 @@
   azure_rm_containerregistrywebhook:
     resource_group: "{{ resource_group }}"
     registry_name: acr{{ rpfx }}
-    webhook_name: webhook{{ rpfx }}
+    name: webhook{{ rpfx }}
     location: eastus2
     service_uri: http://serviceuri.com
     actions:
@@ -164,7 +164,7 @@
   azure_rm_containerregistrywebhook:
     resource_group: "{{ resource_group }}"
     registry_name: acr{{ rpfx }}
-    webhook_name: webhook{{ rpfx }}
+    name: webhook{{ rpfx }}
     state: absent
   check_mode: yes
   register: output
@@ -177,7 +177,7 @@
   azure_rm_containerregistrywebhook:
     resource_group: "{{ resource_group }}"
     registry_name: acr{{ rpfx }}
-    webhook_name: webhook{{ rpfx }}
+    name: webhook{{ rpfx }}
     state: absent
   register: output
 - name: Assert the state has changed
@@ -189,7 +189,7 @@
   azure_rm_containerregistrywebhook:
     resource_group: "{{ resource_group }}"
     registry_name: acr{{ rpfx }}
-    webhook_name: webhook{{ rpfx }}
+    name: webhook{{ rpfx }}
     state: absent
   register: output
 - name: Assert the state has changed
