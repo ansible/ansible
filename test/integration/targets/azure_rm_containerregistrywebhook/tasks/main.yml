@@ -1,0 +1,105 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create an container registry
+  azure_rm_containerregistry:
+    name: acr{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    location: eastus2
+    state: present
+    admin_user_enabled: true
+    sku: Premium
+    tags:
+        Release: beta1
+        Environment: Production
+
+- name: Create instance of Webhook -- check mode
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    location: eastus2
+    service_uri: http://serviceuri.com
+    actions:
+      - push
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Webhook
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    location: eastus2
+    service_uri: http://serviceuri.com
+    actions:
+      - push
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Webhook
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    location: eastus2
+    service_uri: http://serviceuri.com
+    actions:
+      - push
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete instance of Webhook -- check mode
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of Webhook
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of Webhook
+  azure_rm_containerregistrywebhook:
+    resource_group: "{{ resource_group }}"
+    registry_name: acr{{ rpfx }}
+    webhook_name: webhook{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete container registry
+  azure_rm_containerregistry:
+    name: acr{{ rpfx }}
+    resource_group: "{{ resource_group }}"
+    state: absent

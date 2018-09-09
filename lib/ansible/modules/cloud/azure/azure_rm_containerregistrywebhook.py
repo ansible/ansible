@@ -318,6 +318,5 @@ def main():
     """Main execution"""
     AzureRMWebhooks()
 
-
 if __name__ == '__main__':
     main()
