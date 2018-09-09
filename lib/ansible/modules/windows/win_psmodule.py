@@ -37,9 +37,31 @@ options:
   state:
     description:
       - If C(present) a new module is installed.
-      - If C(absent) a module is removed.
+      - If C(absent) all versions of a module are removed.
     choices: [ absent, present ]
     default: present
+  latest:
+    description:
+      - If C(yes) searches for new versions in repository.If found updates module, else installs latest version.
+      - If C(no) does not check versions. If module present makes no changes, else installs latest version.
+      - This is mutually exclusive with I(required_version).
+      - Requires I(state=present).
+    type: bool
+    default: 'no'
+  required_version:
+    description:
+      - Allows to select version of powershell module to install. Requires I(state=present).
+      - If there is no version present on target host a selected version will be installed.
+      - If lower versions of module are present a selected version will be installed.
+      - If there is higher version present warning will be returned. No changed will be done. I(force_required_version) can be used to change this behavior.
+      - This is mutually exclusive with I(latest).
+    default: 'null'
+  force_required_version:
+    description:
+      - Changes behavior of I(required_version). If there is higher version of a module present all versions will be uninstalled, than selected version will be installed.
+      - Requires I(required_version).
+    type: bool
+    default: 'no'
 notes:
    -  Powershell 5.0 or higher is needed.
 
@@ -66,6 +88,27 @@ EXAMPLES = '''
     name: PowershellModule
     repository: MyRepository
     state: present
+
+- name: Always install latest version of module when possible
+  win_psmodule:
+    name: MyCustomModule
+    state: present
+    latest: yes
+
+- name: Install a specific version of module from a specific repository
+  win_psmodule:
+    name: MyCustomModule
+    repository: MyRepository
+    state: present
+    required_version: 1.6.0.0
+
+- name: Install a specific version of module from a specific repository even if highest version already installed
+  win_psmodule:
+    name: MyCustomModule
+    repository: MyRepository
+    state: present
+    required_version: 1.6.0.0
+    force_required_version: yes
 
 - name: Remove a powershell module
   win_psmodule:
@@ -96,4 +139,9 @@ repository_changed:
   returned: always
   type: boolean
   sample: True
+version:
+  description: show changes of versions
+  returned: on success
+  type: string
+  sample: 1.0.0.9 => 1.0.0.5
 '''

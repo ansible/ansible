@@ -230,7 +230,6 @@ Function Install-PsModule {
     }           
 }
 
-
 Function Remove-PsModule {
     param(
       [Parameter(Mandatory=$true)]
