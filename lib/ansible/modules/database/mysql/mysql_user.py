@@ -324,9 +324,16 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             # Determine what user management method server uses
             old_user_mgmt = use_old_user_mgmt(cursor)
 
-            cursor.execute((
-                "SELECT COALESCE( CASE WHEN Password = '' THEN NULL ELSE Password END, CASE WHEN authentication_string = '' THEN NULL ELSE authentication_string END )"
-                + "FROM user WHERE user = %s AND host = %s"), (user, host))
+            if old_user_mgmt:
+                cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user, host))
+            else:
+                cursor.execute("""
+                    SELECT COALESCE(
+                            CASE WHEN Password = '' THEN NULL ELSE Password END,
+                            CASE WHEN authentication_string = '' THEN NULL ELSE authentication_string END
+                        )
+                    FROM user WHERE user = %s AND host = %s
+                    """, (user, host))
             current_pass_hash = cursor.fetchone()
 
             if encrypted:
