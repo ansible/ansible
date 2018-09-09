@@ -134,7 +134,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.firewall_rule_name = None
-        super(AzureRMFirewallRulesFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMFirewallRulesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
