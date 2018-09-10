@@ -23,7 +23,7 @@ sys.modules['cvprac.cvp_client_errors'] = Mock()
 from ansible.modules.network.cloudvision import cv_server_provision
 
 
-class MockException(BaseException):
+class MockException(Exception):
     pass
 
 

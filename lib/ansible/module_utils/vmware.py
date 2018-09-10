@@ -321,7 +321,7 @@ def gather_vm_facts(content, vm):
             for item in vm.layout.disk:
                 for disk in item.diskFile:
                     facts['hw_files'].append(disk)
-    except BaseException:
+    except Exception:
         pass
 
     facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
@@ -968,7 +968,7 @@ class PyVmomi(object):
                 folder_name = fp.name + '/' + folder_name
                 try:
                     fp = fp.parent
-                except BaseException:
+                except Exception:
                     break
             folder_name = '/' + folder_name
         return folder_name

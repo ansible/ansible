@@ -513,7 +513,7 @@ def main():
                     obj.create()
                 elif changed:
                     obj.modify()
-        except BaseException as err:
+        except Exception as err:
             module.fail_json(
                 msg='Creating/editing share {} in {} failed: {}'.format(
                     name,
@@ -528,7 +528,7 @@ def main():
             if not module.check_mode:
                 obj.remove()
             changed = True
-        except BaseException as err:
+        except Exception as err:
             module.fail_json(
                 msg='Removing share {} in {} failed: {}'.format(
                     name,

@@ -84,12 +84,12 @@ def get_hostname():
 def get_ip():
     try:
         return socket.gethostbyname(get_hostname())
-    except BaseException:
+    except Exception:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             s.connect(('10.255.255.255', 1))
             IP = s.getsockname()[0]
-        except BaseException:
+        except Exception:
             IP = '127.0.0.1'
         finally:
             s.close()
@@ -101,7 +101,7 @@ def isJSONable(obj):
     try:
         json.dumps(obj, sort_keys=True, cls=AnsibleJSONEncoder)
         return True
-    except BaseException:
+    except Exception:
         return False
 
 
@@ -165,7 +165,7 @@ class CallbackModule(CallbackBase):
     def sanitizeJSON(self, data):
         try:
             return json.loads(json.dumps(data, sort_keys=True, cls=AnsibleJSONEncoder))
-        except BaseException:
+        except Exception:
             return {'warnings': ['JSON Formatting Issue', json.dumps(data, sort_keys=True, cls=AnsibleJSONEncoder)]}
 
     def flush(self, log, options):
