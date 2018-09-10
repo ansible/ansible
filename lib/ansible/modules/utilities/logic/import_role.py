@@ -48,12 +48,6 @@ options:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     type: bool
     default: 'yes'
-  private:
-    description:
-      - This option is a no op, and the functionality described in previous versions was not implemented. This
-        option will be removed in Ansible v2.8.
-    type: bool
-    default: 'no'
 notes:
   - Handlers are made available to the whole play.
   - "Since Ansible 2.7: variables defined in C(vars) and C(defaults) for the role are exposed at playbook parsing time.

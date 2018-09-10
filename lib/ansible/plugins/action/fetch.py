@@ -55,9 +55,7 @@ class ActionModule(ActionBase):
             dest = self._task.args.get('dest', None)
             flat = boolean(self._task.args.get('flat'), strict=False)
             fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
-            validate_checksum = boolean(self._task.args.get('validate_checksum',
-                                                            self._task.args.get('validate_md5', True)),
-                                        strict=False)
+            validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
 
             # validate source and dest are strings FIXME: use basic.py and module specs
             if not isinstance(source, string_types):
@@ -65,13 +63,6 @@ class ActionModule(ActionBase):
 
             if not isinstance(dest, string_types):
                 result['msg'] = "Invalid type supplied for dest option, it must be a string"
-
-            # validate_md5 is the deprecated way to specify validate_checksum
-            if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
-                result['msg'] = "validate_checksum and validate_md5 cannot both be specified"
-
-            if 'validate_md5' in self._task.args:
-                display.deprecated('Use validate_checksum instead of validate_md5', version='2.8')
 
             if source is None or dest is None:
                 result['msg'] = "src and dest are required"
