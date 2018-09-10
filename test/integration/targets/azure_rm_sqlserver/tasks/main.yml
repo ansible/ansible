@@ -24,6 +24,8 @@
     location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
+    tags:
+      aaa: bbb
   register: output
 - name: Assert the resource instance is well created
   assert:
