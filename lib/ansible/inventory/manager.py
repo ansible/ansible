@@ -206,15 +206,22 @@ class InventoryManager(object):
                 parse = self.parse_source(source, cache=cache)
                 all_parsed_results.append(parse)
 
-        # ensure all inventories parsed returned true
+        # ensure all parsed inventories returned true
         if all(all_parsed_results):
             # do post processing
             self._inventory.reconcile_inventory()
         else:
             if C.INVENTORY_UNPARSED_IS_FAILED:
-                raise AnsibleError("No inventory was parsed or errors detected, please check your configuration and options.")
+                raise AnsibleError("Errors detected during parsing, please check your configuration and options.")
             else:
-                display.warning("No inventory was parsed, only implicit localhost is available")
+                # in case of partial positive parsing
+                if any(all_parsed_results):
+                    display.warning("Incomplete inventory caused by errors encountered during parsing")
+                    # do post processing
+                    self._inventory.reconcile_inventory()
+                # in case no positive parsing at all
+                else:
+                    display.warning("No inventory was parsed, only implicit localhost is available")
 
         self._inventory_plugins = []
 
