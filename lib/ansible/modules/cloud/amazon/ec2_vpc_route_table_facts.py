@@ -28,7 +28,7 @@ options:
     description:
       - Get details of a specific route tables. This value should be provided as a list.
     required: false
-    version_added: "2.7"
+    version_added: "2.8"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -180,7 +180,7 @@ except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, ansible_dict_to_boto3_filter_list, HAS_BOTO3,
+from ansible.module_utils.ec2 import (ec2_argument_spec, ansible_dict_to_boto3_filter_list,
                                       camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict)
 
 
@@ -200,7 +200,8 @@ def list_route_tables(route_table, module):
         module.fail_json_aws(e, msg="Cannot validate JSON data")
     except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e, msg="Could not describe route tables")
-    snaked_route_tables = [camel_dict_to_snake_dict(route_table) for route_table in result['RouteTables']]
+    snaked_route_tables = [camel_dict_to_snake_dict(route_table,
+                           ignore_list=['Tags']) for route_table in result['RouteTables']]
     if snaked_route_tables:
         for route_table in snaked_route_tables:
             route_table['tags'] = boto3_tag_list_to_ansible_dict(route_table.get('tags', []))
@@ -217,11 +218,7 @@ def main():
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
-                              mutually_exclusive=[['vpn_connection_ids', 'filters']],
                               supports_check_mode=True)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     connection = module.client('ec2')
     list_route_tables(connection, module)
