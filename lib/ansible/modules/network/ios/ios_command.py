@@ -145,18 +145,13 @@ import time
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.network.common.utils import ComplexList, to_lines
+from ansible.module_utils.network.common.utils import transform_commands, to_lines
 from ansible.module_utils.network.ios.ios import run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def parse_commands(module, warnings):
-    transform = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict(),
-    ), module)
-    commands = transform(module.params['commands'])
+    commands = transform_commands(module)
 
     if module.check_mode:
         for item in list(commands):

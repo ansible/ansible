@@ -68,6 +68,19 @@ def to_lines(stdout):
         yield item
 
 
+def transform_commands(module):
+    transform = ComplexList(dict(
+        command=dict(key=True),
+        output=dict(),
+        prompt=dict(type='list'),
+        answer=dict(type='list'),
+        sendonly=dict(type='bool', default=False),
+        check_all=dict(type='bool', default=False),
+    ), module)
+
+    return transform(module.params['commands'])
+
+
 def sort_list(val):
     if isinstance(val, list):
         return sorted(val)
