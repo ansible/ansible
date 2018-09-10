@@ -13,10 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: vcenter_plugin
-short_description: Register/deregister vCenter Plugins
+module: vcenter_extension
+short_description: Register/deregister vCenter Extensions
 description:
-    - This module can be used to register/deregister vCenter plugins.
+    - This module can be used to register/deregister vCenter Extensions.
 version_added: 2.8
 author:
     - Michael Tipton (@castawayegr)
@@ -28,71 +28,71 @@ requirements:
 options:
   extension_key:
     description:
-    - The extension key of the plugin to install or uninstall.
+    - The extension key of the extension to install or uninstall.
     required: True
   version:
     description:
-    - The version of the plugin you are installing or uninstalling.
+    - The version of the extension you are installing or uninstalling.
     required: True
   name:
     description:
-    - Required for C(state=present). The name of the plugin you are installing.
+    - Required for C(state=present). The name of the extension you are installing.
   company:
     description:
-    - Required for C(state=present). The name of the company that makes the plugin.
+    - Required for C(state=present). The name of the company that makes the extension.
   description:
     description:
-    - Required for C(state=present). A short description of the plugin.
+    - Required for C(state=present). A short description of the extension.
   email:
     description:
-    - Required for C(state=present). Administrator Email to use for Plugin.
+    - Required for C(state=present). Administrator email to use for extension.
   url:
     description:
-    - Required for C(state=present). Link to server hosting plugin zip file to install.
+    - Required for C(state=present). Link to server hosting extension zip file to install.
   ssl_thumbprint:
     description:
-    - Required for C(state=present). SSL thumbprint of the plugin hosting server.
+    - Required for C(state=present). SSL thumbprint of the extension hosting server.
   server_type:
     description:
-    - Required for C(state=present). Type of server being used to install the plugin (SOAP, REST, HTTP, etc.).
+    - Required for C(state=present). Type of server being used to install the extension (SOAP, REST, HTTP, etc.).
     default: vsphere-client-serenity
   client_type:
     description:
-    - Required for C(state=present). Type of client the plugin is (win32, .net, linux, etc.).
+    - Required for C(state=present). Type of client the extension is (win32, .net, linux, etc.).
     default: vsphere-client-serenity
   visible:
     description:
-    - Show the plugin in solution manager inside vCenter.
+    - Show the extension in solution manager inside vCenter.
     default: True
     type: bool
   state:
     description:
-    - Add or remove vCenter Plugin.
+    - Add or remove vCenter Extension.
     choices: [absent, present]
     default: present
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-    - name: Register vCenter Plugin
-      vcenter_plugin:
+    - name: Register vCenter Extension
+      vcenter_extension:
          hostname: "{{ groups['vcsa'][0] }}"
          username: "{{ vcenter_username }}"
          password: "{{ site_password }}"
          extension_key: "{{ extension_key }}"
          version: "1.0"
          company: "Acme"
-         name: "Acme Plugin"
+         name: "Acme Extension"
          description: "acme management"
          email: "user@example.com"
          url: "https://10.0.0.1/ACME-vSphere-web-plugin-1.0.zip"
          ssl_thumbprint: "{{ ssl_thumbprint }}"
          state: present
       delegate_to: localhost
-      register: register_plugin
+      register: register_extension
 
-    - name: Deregister vCenter Plugin
-      vcenter_plugin:
+    - name: Deregister vCenter Extension
+      vcenter_extension:
          hostname: "{{ groups['vcsa'][0] }}"
          username: "{{ vcenter_username }}"
          password: "{{ site_password }}"
@@ -100,7 +100,7 @@ EXAMPLES = '''
          version: "1.0"
          state: absent
       delegate_to: localhost
-      register: deregister_plugin
+      register: deregister_extension
 '''
 
 RETURN = """
@@ -108,19 +108,14 @@ result:
     description: information about performed operation
     returned: always
     type: string
-    sample: "'com.acme.plugin' installed."
+    sample: "'com.acme.Extension' installed."
 """
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
-try:
-    import datetime
-    HAS_DT = True
-except ImportError:
-    HAS_DT = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (PyVmomi, connect_to_api, vmware_argument_spec)
@@ -150,9 +145,6 @@ def main():
             ['state', 'present', ['email', 'description', 'company', 'name', 'url', 'ssl_thumbprint', 'server_type', 'client_type']]
         ]
     )
-
-    if not HAS_DT:
-        module.fail_json(msg='datetime is required for this module')
 
     state = module.params['state']
     extension_key = module.params['extension_key']
