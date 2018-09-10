@@ -116,6 +116,7 @@ try:
 except ImportError:
     pass
 
+import datetime
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (PyVmomi, connect_to_api, vmware_argument_spec)
