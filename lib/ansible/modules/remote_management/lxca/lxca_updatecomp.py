@@ -324,7 +324,10 @@ LXCA_COMMON_ARGS = dict(
 
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default=None, choices=list(FUNC_DICT)),
+    command_options=dict(default=None, choices=['update_firmware',
+                                                'update_firmware_all',
+                                                'update_firmware_query_status',
+                                                'update_firmware_query_comp']),
     lxca_action=dict(default=None, choices=['apply', 'cancelApply', 'power', None]),
     mode=dict(default=None, choices=[None, 'immediate', 'delayed']),
     server=dict(default=None),

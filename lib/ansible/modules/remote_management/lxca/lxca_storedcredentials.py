@@ -210,7 +210,11 @@ LXCA_COMMON_ARGS = dict(
 
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='storedcredentials', choices=list(FUNC_DICT)),
+    command_options=dict(default='storedcredentials',
+                         choices=['get_storedcredentials',
+                                  'create_storedcredentials',
+                                  'update_storedcredentials',
+                                  'delete_storedcredentials']),
     user=dict(default=None),
     password=dict(default=None, no_log=True),
     description=dict(default=None),

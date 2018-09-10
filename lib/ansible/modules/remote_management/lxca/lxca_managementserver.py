@@ -258,7 +258,11 @@ LXCA_COMMON_ARGS = dict(
 
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='managementserver', choices=list(FUNC_DICT)),
+    command_options=dict(default='managementserver',
+                         choices=['managementserver',
+                                  'get_managementserver_pkg',
+                                  'update_managementserver_pkg',
+                                  'import_managementserver_pkg']),
     update_key=dict(default=None,
                     choices=['all', 'currentVersion', 'history', 'importDir',
                              'size', 'updates', 'updatedDate', None]),

@@ -176,7 +176,7 @@ LXCA_COMMON_ARGS = dict(
 
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='manage', choices=list(FUNC_DICT)),
+    command_options=dict(default='manage', choices=['manage', 'manage_status']),
     endpoint_ip=dict(default=None),
     jobid=dict(default=None),
     user=dict(default=None, required=False),
