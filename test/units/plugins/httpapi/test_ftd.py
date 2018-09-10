@@ -18,6 +18,7 @@
 
 import json
 import os
+from io import BytesIO
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -28,7 +29,7 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ftd.common import HTTPMethod, ResponseParams
 from ansible.module_utils.network.ftd.fdm_swagger_client import SpecProp, FdmSwaggerParser
-from ansible.module_utils.six import BytesIO, PY3, StringIO
+from ansible.module_utils.six import PY3, StringIO
 from ansible.plugins.httpapi.ftd import HttpApi
 
 if PY3:
