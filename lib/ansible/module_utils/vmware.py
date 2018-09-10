@@ -975,7 +975,7 @@ class PyVmomi(object):
 
     def get_vm_or_template(self, template_name=None):
         """
-        Function to find the virtual machine or virtual machine template using name
+        Find the virtual machine or virtual machine template using name
         used for cloning purpose.
         Args:
             template_name: Name of virtual machine or virtual machine template
