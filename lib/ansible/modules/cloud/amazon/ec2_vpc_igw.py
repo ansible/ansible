@@ -252,6 +252,7 @@ class AnsibleEc2Igw(object):
 
         return self._results
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
