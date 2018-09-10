@@ -1,0 +1,2 @@
+bugfixes:
+- vmware - honor "wait_for_ip_address" when powering on a VM
