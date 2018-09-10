@@ -51,10 +51,6 @@ options:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     type: bool
     default: 'yes'
-  private:
-    description:
-      - This option is a no op, and the functionality described in previous versions was not implemented. This
-        option will be removed in Ansible v2.8.
   public:
     description:
       - This option dictates whether the role's C(vars) and C(defaults) are exposed to the playbook. If set to C(yes)

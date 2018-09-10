@@ -95,7 +95,7 @@ class Playbook:
 
             if any(action in entry for action in ('import_playbook', 'include')):
                 if 'include' in entry:
-                    display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead", version="2.8")
+                    display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead", version="2.12")
                 pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
                 if pb is not None:
                     self._entries.extend(pb._entries)
