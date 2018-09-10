@@ -8,9 +8,9 @@
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
     sku:
-      name: GP_Gen4_2
-      tier: GeneralPurpose
-    location: westus
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
     storage_mb: 51200
     enforce_ssl: True
     admin_username: zimxyz
@@ -27,9 +27,9 @@
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
     sku:
-      name: GP_Gen4_2
-      tier: GeneralPurpose
-    location: westus
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
     storage_mb: 51200
     enforce_ssl: True
     admin_username: zimxyz
@@ -46,9 +46,9 @@
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
     sku:
-      name: GP_Gen4_2
-      tier: GeneralPurpose
-    location: westus
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
     storage_mb: 51200
     enforce_ssl: True
     admin_username: zimxyz
