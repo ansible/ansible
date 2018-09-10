@@ -81,7 +81,7 @@ class TestMyModule(unittest.TestCase):
             user=dict(default=None),
             password=dict(default=None, no_log=True),
             description=dict(default=None),
-            storecredential_id=dict(default=None),
+            storedcredential_id=dict(default=None),
             noverify=dict(default=True),
         )
         _setup_conn.return_value = "Fake connection"
