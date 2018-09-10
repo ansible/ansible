@@ -325,11 +325,21 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             old_user_mgmt = use_old_user_mgmt(cursor)
 
             # Get a list of valid columns in mysql.user table to check if Password and/or authentication_string exist
-            cursor.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME IN ('Password', 'authentication_string') ORDER BY COLUMN_NAME DESC LIMIT 1")
+            cursor.execute("""
+                SELECT COLUMN_NAME FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME IN ('Password', 'authentication_string')
+                ORDER BY COLUMN_NAME DESC LIMIT 1
+            """)
             colA = cursor.fetchone()
-            cursor.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME IN ('Password', 'authentication_string') ORDER BY COLUMN_NAME ASC  LIMIT 1")
+
+            cursor.execute("""
+                SELECT COLUMN_NAME FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME IN ('Password', 'authentication_string')
+                ORDER BY COLUMN_NAME ASC  LIMIT 1
+            """)
             colB = cursor.fetchone()
 
+            # Select hash from either Password or authentication_string, depending which one exists and/or is filled
             cursor.execute("""
                 SELECT COALESCE(
                         CASE WHEN %s = '' THEN NULL ELSE %s END,
