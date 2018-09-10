@@ -194,12 +194,6 @@
 
   # ============================================================
 
-    - name: wait to avoid aws api getting angry at me
-      pause:
-        seconds: 60
-
-  # ============================================================
-
     - name: test create multi-node cluster with custom db-name
       redshift:
         command: create
@@ -211,7 +205,7 @@
         number_of_nodes: 3
         wait: yes
         db_name: "integration_test"
-        wait_timeout: 1000
+        wait_timeout: 1800
         <<: *aws_connection_info
       register: result
 
@@ -225,17 +219,17 @@
 
   #  ============================================================
 
-  always:
-
-    - name: cleanup test cluster
+    - name: test successful delete of multi-node cluster
       redshift:
         command: delete
-        identifier: '{{ redshift_cluster_name }}'
+        identifier: "{{ redshift_cluster_name }}"
         skip_final_cluster_snapshot: true
-        <<: *aws_connection_info
         wait: yes
-      register: removed_cluster
-      retries: 10
-      delay: 30
-      until: removed_cluster is not failed
-      ignore_errors: yes
+        wait_timeout: 1200
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert delete
+      assert:
+        that:
+          - 'result.changed'
