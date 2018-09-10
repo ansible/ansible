@@ -218,7 +218,7 @@ INPUT_ARG_SPEC = dict(
     user=dict(default=None),
     password=dict(default=None, no_log=True),
     description=dict(default=None),
-    storecredential_id=dict(default=None),
+    storedcredential_id=dict(default=None),
 )
 
 
