@@ -558,7 +558,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
-                                         find_dvs_by_name, find_dvspg_by_name)
+                                         find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip)
 
 
 class PyVmomiDeviceHelper(object):
@@ -2360,6 +2360,11 @@ def main():
             tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
             if tmp_result['changed']:
                 result["changed"] = True
+                if module.params['state'] in ['poweredon', 'restarted', 'rebootguest'] and module.params['wait_for_ip_address']:
+                    wait_result = wait_for_vm_ip(pyv.content, vm)
+                    if not wait_result:
+                        module.fail_json(msg='Waiting for IP address timed out')
+                    tmp_result['instance'] = wait_result
             if not tmp_result["failed"]:
                 result["failed"] = False
             result['instance'] = tmp_result['instance']
