@@ -166,9 +166,10 @@ import re
 import os
 import socket
 import traceback
+from io import BytesIO
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.six import BytesIO, PY3
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils._text import to_bytes, to_text

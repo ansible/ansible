@@ -140,9 +140,11 @@ options:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
 
+from io import BytesIO
+
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six import PY3, BytesIO
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
