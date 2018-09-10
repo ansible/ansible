@@ -19,7 +19,7 @@ module: jenkins_job_generator
 
 short_description: Manage jenkins jobs through YAML config files.
 
-version_added: "2.7"
+version_added: "2.8"
 
 description:
     - Manage jenkins jobs through YAML config files.
