@@ -159,7 +159,7 @@ def main():
                     obj.create()
                 else:
                     obj.modify()
-        except BaseException as e:
+        except Exception as e:
             module.fail_json(
                 msg='Creating/editing dns entry {} in {} failed: {}'.format(name, container, e)
             )
@@ -170,7 +170,7 @@ def main():
             if not module.check_mode:
                 obj.remove()
             changed = True
-        except BaseException as e:
+        except Exception as e:
             module.fail_json(
                 msg='Removing dns entry {} in {} failed: {}'.format(name, container, e)
             )

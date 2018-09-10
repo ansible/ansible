@@ -99,6 +99,8 @@ def test_python_module(path, base_dir, messages, ansible_module):
     except ImporterAnsibleModuleException:
         # module instantiated AnsibleModule without raising an exception
         pass
+    # We truly want to catch anything the plugin might do here, including call sys.exit() so we
+    # catch BaseException
     except BaseException as ex:  # pylint: disable=locally-disabled, broad-except
         capture_report(path, capture, messages)
 
