@@ -248,7 +248,7 @@ def use_old_user_mgmt(cursor):
 
     if 'mariadb' in version_str.lower():
         # Prior to MariaDB 10.2
-        if int(version[0]) * 1000 + int(version[1]) < 100002:
+        if int(version[0]) * 1000 + int(version[1]) < 10002:
             return True
         else:
             return False
