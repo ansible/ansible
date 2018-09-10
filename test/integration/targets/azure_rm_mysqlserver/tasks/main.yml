@@ -292,6 +292,16 @@
     resource_group: "{{ resource_group }}"
     name: mysqlsrv{{ rpfx }}
     state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete second instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}second
+    state: absent
   async: 400
   poll: 0
-  
