@@ -53,7 +53,7 @@ class TestMyModule(unittest.TestCase):
         self.addCleanup(self.mock_module_helper.stop)
 
 
-    def test__module_fail_when_required_args_missing(self):
+    def test__required_args_missing(self):
         with self.assertRaises(AnsibleFailJson):
             set_module_args({
                 "auth_url": "https://10.240.14.195",
@@ -65,7 +65,7 @@ class TestMyModule(unittest.TestCase):
     @mock.patch("ansible.modules.remote_management.lxca.lxca_configpatterns.setup_conn", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_configpatterns.execute_module", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_configpatterns.AnsibleModule", autospec=True)
-    def test__ansible_module_argument_spec(self, ansible_mod_cls, _execute_module,  _setup_conn):
+    def test__argument_spec(self, ansible_mod_cls, _execute_module, _setup_conn):
         expected_arguments_spec = dict(
             login_user=dict(required=True),
             login_password=dict(required=True, no_log=True),

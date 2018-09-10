@@ -157,7 +157,7 @@ LXCA_COMMON_ARGS = dict(
 
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='unmanage', choices=list(FUNC_DICT)),
+    command_options=dict(default='unmanage', choices=['unmanage', 'unmanage_status']),
     endpoint_ip=dict(default=None),
     jobid=dict(default=None),
     force=dict(default=None),

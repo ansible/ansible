@@ -242,7 +242,8 @@ LXCA_COMMON_ARGS = dict(
 
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='osimages', choices=list(FUNC_DICT)),
+    command_options=dict(default='osimages',
+                         choices=['osimages', 'get_osimages']),
     osimages_info=dict(default=None,
                        choices=[None, 'globalSettings', 'hostPlatforms',
                                 'remoteFileServers']),
