@@ -2,6 +2,51 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.9:
+
+v2.5.9
+======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.9_Minor Changes:
+
+Minor Changes
+-------------
+
+- import_tasks - Do not allow import_tasks to transition to dynamic if the file is missing (https://github.com/ansible/ansible/issues/44822)
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.9_Bugfixes:
+
+Bugfixes
+--------
+
+- user - Strip trailing comments in /etc/default/passwd (https://github.com/ansible/ansible/pull/43931)
+
+- fix  example code for AWS lightsail documentation
+
+- fix the enable_snat parameter that is only supposed to be used by an user with the right policies. https://github.com/ansible/ansible/pull/44418
+
+- ios_l2_interface - fix issue with certain interface types (https://github.com/ansible/ansible/pull/43819)
+
+- ios_user - fix unable to delete user admin issue (https://github.com/ansible/ansible/pull/44904)
+
+- ansible-galaxy - properly list all roles in roles_path (https://github.com/ansible/ansible/issues/43010)
+
+- ios_vlan - fix unable to work on certain interface types issue (https://github.com/ansible/ansible/pull/43819)
+
+- The fix for `CVE-2018-10875 <https://access.redhat.com/security/cve/cve-2018-10875>`_ prints out a warning message about skipping a config file from a world writable current working directory.  However, if the user is in a world writable current working directory which does not contain a config file, it should not print a warning message.  This release fixes that extaneous warning.
+
+- Add md5sum check in nxos_file_copy module (https://github.com/ansible/ansible/pull/43423).
+
+- nxos_interface port-channel idempotence fix for mode (https://github.com/ansible/ansible/pull/44248).
+
+- nxos_linkagg mode fix (https://github.com/ansible/ansible/pull/44294).
+
+- Fix check_mode in nxos_static_route module (https://github.com/ansible/ansible/pull/44252).
+
+- Fix Python2.6 regex bug terminal plugin nxos, iosxr (https://github.com/ansible/ansible/pull/45135).
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.8:
 
 v2.5.8
