@@ -49,6 +49,9 @@ class TerminalModule(TerminalBase):
         re.compile(br"% Subnet [0-9a-f.:/]+ overlaps", re.I),
         re.compile(br"Maximum number of pending sessions has been reached"),
     ]
+    stderr_whitelist_re = [
+        re.compile(br"! VLAN id \d+ not found in current VLAN configuration"),
+    ]
 
     def on_open_shell(self):
         try:
