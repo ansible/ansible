@@ -126,7 +126,7 @@ class AnsibleEc2Igw(object):
         try:
             response = self._connection.describe_internet_gateways(Filters=filters)
             igws = response.get('InternetGateways', [])
-        except botocore.exceptions.ClientError as e:
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e)
 
         igw = None
@@ -141,7 +141,7 @@ class AnsibleEc2Igw(object):
     def check_input_tags(self, tags):
         nonstring_tags = [k for k, v in tags.items() if not isinstance(v, string_types)]
         if nonstring_tags:
-            self.fail(msg='One or more tags contain non-string values: {0}'.format(nonstring_tags))
+            self._module.fail_json(msg='One or more tags contain non-string values: {0}'.format(nonstring_tags))
 
     def ensure_tags(self, igw_id, tags, add_only):
         final_tags = []
@@ -163,9 +163,7 @@ class AnsibleEc2Igw(object):
                     # update tags
                     final_tags.update(to_update)
                 else:
-                    AWSRetry.exponential_backoff(
-                        catch_extra_error_codes=['InvalidInternetID.NotFound']
-                    )(self._connection.create_tags)(
+                    AWSRetry.exponential_backoff()(self._connection.create_tags)(
                         Resources=[igw_id],
                         Tags=ansible_dict_to_boto3_tag_list(to_update)
                     )
@@ -185,9 +183,7 @@ class AnsibleEc2Igw(object):
                     for key in to_delete:
                         tags_list.append({'Key': key})
 
-                    AWSRetry.exponential_backoff(
-                        catch_extra_error_codes=['InvalidSubnetID.NotFound']
-                    )(self._connection.delete_tags)(Resources=[igw_id], Tags=tags_list)
+                    AWSRetry.exponential_backoff()(self._connection.delete_tags)(Resources=[igw_id], Tags=tags_list)
 
                 self._results['changed'] = True
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -255,10 +251,6 @@ class AnsibleEc2Igw(object):
         self._results.update(igw_info)
 
         return self._results
-
-    def fail(self, **kwargs):
-        self._module.fail_json(**kwargs)
-
 
 def main():
     argument_spec = ec2_argument_spec()
