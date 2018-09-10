@@ -24,6 +24,8 @@
     location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
+    tags:
+      aaa: bbb
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -64,6 +66,7 @@
       - output.servers.sqlsrv{{ random_postfix }}.version != None
       - output.servers.sqlsrv{{ random_postfix }}.state != None
       - output.servers.sqlsrv{{ random_postfix }}.fully_qualified_domain_name != None
+      - output.servers.sqlsrv{{ random_postfix }}.tags.aaa == 'bbb'
 
 - name: Gather facts SQL Server - unexisting
   azure_rm_sqlserver_facts:
