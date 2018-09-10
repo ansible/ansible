@@ -212,7 +212,7 @@ class InventoryManager(object):
             self._inventory.reconcile_inventory()
         else:
             if C.INVENTORY_UNPARSED_IS_FAILED:
-                raise AnsibleError("Errors detected during parsing, please check your configuration and options.")
+                raise AnsibleError("Errors detected during inventory(ies) parsing, please check your configuration and options.")
             else:
                 # in case of partial positive parsing
                 if any(all_parsed_results):
