@@ -46,9 +46,6 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
     #: compiled bytes regular expressions as stderr
     terminal_stderr_re = []
 
-    # List of compiled regular expressions which will not trigger stderr
-    stderr_whitelist_re = []
-
     #: compiled bytes regular expressions to remove ANSI codes
     ansi_re = [
         re.compile(br'(\x1b\[\?1h\x1b=)'),

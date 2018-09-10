@@ -463,15 +463,7 @@ class Connection(NetworkConnectionBase):
         is_error_message = False
         for regex in self._terminal.terminal_stderr_re:
             if regex.search(response):
-                # Some stderr regexes are overly broad, check for exceptions
-                for regex in self._terminal.stderr_whitelist_re:
-                    if regex.search(response):
-                        break
-                else:
-                    is_error_message = True
-
-                if not is_error_message:
-                    continue
+                is_error_message = True
 
                 # Check if error response ends with command prompt if not
                 # receive it buffered prompt
