@@ -150,9 +150,21 @@ state:
   sample: "Disabled jenkins job(s): test"
 '''
 
+import logging
 import xml.etree.ElementTree as ET
 
 from ansible.module_utils.basic import AnsibleModule
+
+# To avoid AttributeError: 'module' object has no attribute 'NullHandler' on python 2.6
+try:
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+logging.getLogger(__name__).addHandler(NullHandler())
+# for stevedore module
+logging.getLogger('stevedore').addHandler(NullHandler())
 
 
 # Import Jenkins builder

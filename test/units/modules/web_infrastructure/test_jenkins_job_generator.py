@@ -1,16 +1,11 @@
-import jenkins
-import os
 import pytest
-import sys
+import os
 import xml.etree.ElementTree as ET
 
 from mock import patch
 
-from nose.plugins.skip import SkipTest
-if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
-
 from ansible.modules.web_infrastructure.jenkins_job_generator import get_job_builder, ActionRunner
+import jenkins
 
 
 class TestJobBuilder(object):
