@@ -808,8 +808,8 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
         - shell: /usr/bin/bar
           when: foo_result.rc == 5
 
-Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
-in Ansible.  Effectively registered variables are just like facts.
+Registered variables are valid on the host the remainder of the playbook run, which is similar to the lifetime of "facts" in Ansible.
+Both registered variables and facts are host level variables, but they are not the same thing.
 
 When using ``register`` with a loop, the data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :ref:`playbooks_loops` section on using register with a loop.
 
