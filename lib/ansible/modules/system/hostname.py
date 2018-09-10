@@ -679,6 +679,12 @@ class AmazonLinuxHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class SangomaLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Derived from red hat enterprise linux '
+    strategy_class = RedHatStrategy
+
+
 class DebianHostname(Hostname):
     platform = 'Linux'
     distribution = 'Debian'
