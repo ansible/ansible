@@ -324,16 +324,19 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             # Determine what user management method server uses
             old_user_mgmt = use_old_user_mgmt(cursor)
 
-            if old_user_mgmt:
-                cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user, host))
-            else:
-                cursor.execute("""
-                    SELECT COALESCE(
-                            CASE WHEN Password = '' THEN NULL ELSE Password END,
-                            CASE WHEN authentication_string = '' THEN NULL ELSE authentication_string END
-                        )
-                    FROM user WHERE user = %s AND host = %s
-                    """, (user, host))
+            # Get a list of valid columns in mysql.user table to check if Password and/or authentication_string exist
+            cursor.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME IN ('Password', 'authentication_string') ORDER BY COLUMN_NAME DESC LIMIT 1")
+            colA = cursor.fetchone()
+            cursor.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME IN ('Password', 'authentication_string') ORDER BY COLUMN_NAME ASC  LIMIT 1")
+            colB = cursor.fetchone()
+
+            cursor.execute("""
+                SELECT COALESCE(
+                        CASE WHEN %s = '' THEN NULL ELSE %s END,
+                        CASE WHEN %s = '' THEN NULL ELSE %s END
+                    )
+                FROM user WHERE user = %%s AND host = %%s
+                """ % (colA[0], colA[0], colB[0], colB[0]), (user, host))
             current_pass_hash = cursor.fetchone()
 
             if encrypted:
