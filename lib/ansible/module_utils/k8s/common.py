@@ -173,6 +173,19 @@ class K8sAnsibleMixin(object):
         kubernetes.client.Configuration.set_default(configuration)
         return DynamicClient(kubernetes.client.ApiClient(configuration))
 
+    def client_from_kubeconfig(self, config_file, context):
+        try:
+            return kubernetes.config.new_client_from_config(config_file, context)
+        except (IOError, kubernetes.config.ConfigException):
+            # If we failed to load the default config file then we'll return
+            # an empty configuration
+            # If one was specified, we will crash
+            if not config_file:
+                return kubernetes.client.ApiClient()
+            raise
+        kubernetes.client.Configuration.set_default(configuration)
+        return DynamicClient(kubernetes.client.ApiClient(configuration))
+
     def find_resource(self, kind, api_version, fail=False):
         for attribute in ['kind', 'name', 'singular_name']:
             try:
