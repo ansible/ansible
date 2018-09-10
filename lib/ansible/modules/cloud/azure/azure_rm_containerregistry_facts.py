@@ -68,7 +68,7 @@ registries:
                 - The resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registr
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registr
                     ies/myRegistry"
         name:
             description:
@@ -130,6 +130,10 @@ registries:
                     returned: when registry exists and C(admin_user_enabled) is set
                     type: str
                     sample: pass2value
+        tags:
+            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            type: dict
+            sample: { "tag1": "abc" }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
