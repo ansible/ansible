@@ -32,8 +32,7 @@ author:
 options:
   lookup:
     description: Look up route table by either tags or by route table ID. Non-unique tag lookup will fail.
-      If tags or route_table_id are not specified, then a new route table will be created.
-      To change tags of a route you can set route_table_id, lookup on id is deprecated.
+      As of Ansible 2.8, I(lookup) is set automatically 'id' if I(route_table_id) is provided.
     default: tag
     choices: [ 'tag', 'id' ]
   propagating_vgw_ids:
@@ -53,7 +52,8 @@ options:
     type: bool
     default: 'no'
   route_table_id:
-    description: The ID of the route table to update or delete. On presence, lookup is set automatically to id.
+    description: The ID of the route table to update or delete.
+      As of Ansible 2.8, if I(route_table_id) is used in conjunction with I(state=present), I(lookup) is set automatically to 'id'.
   routes:
     description: List of routes in the route table.
         Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
