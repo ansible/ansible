@@ -20,7 +20,6 @@ description:
 version_added: "2.2"
 requirements: [ boto3 ]
 author:
-- "Nathan Webster (@nathanwebsterdotme)"
 - "Rob White (@wimnat)"
 options:
   name:
@@ -146,6 +145,15 @@ launch_configuration_name:
     returned: success
     type: str
     sample: "public-webapp-production-1"
+launch_template:
+    description: Dict of Launch Template associated with the ASG.
+    returned: success
+    type: dict
+    sample: {
+        "launch_template_id": "lt-1234456789",
+        "launch_template_name": "a_launch_template_name",
+        "version": "1"
+    }
 load_balancer_names:
     description: List of load balancers names attached to the ASG.
     returned: success
