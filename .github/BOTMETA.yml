@@ -107,7 +107,7 @@ files:
     maintainers: rambleraptor erjohnso
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
-  $modules/cloud/linode/linode.py: intheclouddan rwaweber
+  $modules/cloud/linode/linode.py: intheclouddan lwm
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: analbeard
   $modules/cloud/misc/ovirt.py:
@@ -380,7 +380,7 @@ files:
   contrib/inventory/linode.py:
     keywords:
     - linode dynamic inventory script
-    maintainers: intheclouddan rwaweber zbal
+    maintainers: intheclouddan lwm zbal
     labels: cloud
   contrib/inventory/openstack.py:
     keywords:
