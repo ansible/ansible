@@ -63,6 +63,7 @@ else:
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\(.*')
+SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 BLACKLIST_IMPORTS = {
     'requests': {
         'new_only': True,
@@ -371,13 +372,20 @@ class ModuleValidator(Validator):
                 )
 
     def _check_for_sys_exit(self):
-        if 'sys.exit(' in self.text:
-            # TODO: Add line/col
-            self.reporter.error(
-                path=self.object_path,
-                code=205,
-                msg='sys.exit() call found. Should be exit_json/fail_json'
-            )
+        # Optimize out the happy path
+        if 'sys.exit' not in self.text:
+            return
+
+        for line_no, line in enumerate(self.text.splitlines()):
+            sys_exit_usage = SYS_EXIT_REGEX.match(line)
+            if sys_exit_usage:
+                # TODO: add column
+                self.reporter.error(
+                    path=self.object_path,
+                    code=205,
+                    msg='sys.exit() call found. Should be exit_json/fail_json',
+                    line=line_no + 1
+                )
 
     def _check_gpl3_header(self):
         header = '\n'.join(self.text.split('\n')[:20])
