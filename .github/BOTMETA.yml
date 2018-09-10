@@ -416,7 +416,7 @@ files:
     labels:
     - cloud
     - aws
-    notify: ryansb s-hertel willthames
+    notified: ryansb s-hertel willthames
   contrib/inventory/vmware.py:
     keywords:
     - vmware inventory
@@ -814,7 +814,7 @@ files:
     maintainers: $team_networking samdoran
     labels: networking
   lib/ansible/release.py:
-    notify: mattclay nitzmahone
+    notified: mattclay nitzmahone
   lib/ansible/template:
     keywords:
     - jinja
@@ -841,17 +841,17 @@ files:
   test/:
     # 'test' is a component path, then 'test' label will be automatically added
   test/runner/:
-    notify: mattclay
+    notified: mattclay
   test/sanity/:
-    notify: mattclay
+    notified: mattclay
   test/utils/shippable/:
-    notify: mattclay
+    notified: mattclay
   test/integration/group_vars/:
-    notify: mattclay
+    notified: mattclay
   test/integration/host_vars/:
-    notify: mattclay
+    notified: mattclay
   test/integration/roles/:
-    notify: mattclay
+    notified: mattclay
   test/integration/targets/aci:
     maintainers: $team_aci
     labels:
@@ -881,13 +881,13 @@ files:
     - networking
   test/sanity/pep8/legacy-files.txt:
   hacking/report.py:
-    notify: mattclay
+    notified: mattclay
   shippable.yml:
-    notify: mattclay
+    notified: mattclay
   .yamllint:
-    notify: mattclay
+    notified: mattclay
   tox.ini:
-    notify: mattclay
+    notified: mattclay
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
