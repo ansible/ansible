@@ -121,12 +121,11 @@ class OnePass(object):
         self.master_password = None
 
     def get_token(self):
-
         # If the config file exists, assume an initial signin has taken place and try basic sign in
         if os.path.isfile(self.config_file_path):
 
             if not self.master_password:
-                raise AnsibleLookupError('Failed to sign in to 1Password. master_password is required.')
+                raise AnsibleLookupError('Unable to sign in to 1Password. master_password is required.')
 
             try:
                 args = ['signin', '--output=raw']
@@ -153,7 +152,7 @@ class OnePass(object):
                 self.get_token()
         except OSError as e:
             if e.errno == errno.ENOENT:
-                raise AnsibleLookupError("1Password CLI tool not installed in path on control machine")
+                raise AnsibleLookupError("1Password CLI tool '%s' not installed in path on control machine" % self.cli_path)
             raise e
 
     def get_raw(self, item_id, vault=None):
@@ -170,9 +169,8 @@ class OnePass(object):
         return self._parse_field(output, field, section) if output != '' else ''
 
     def full_login(self):
-
         if None in [self.subdomain, self.username, self.secret_key, self.master_password]:
-            raise AnsibleLookupError('Failed to perform initial sign in to 1Password. '
+            raise AnsibleLookupError('Unable to perform initial sign in to 1Password. '
                                      'subdomain, username, secret_key, and master_password are required to perform initial sign in.')
 
         args = [
