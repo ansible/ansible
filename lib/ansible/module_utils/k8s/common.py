@@ -184,8 +184,6 @@ class K8sAnsibleMixin(object):
                 return kubernetes.client.ApiClient()
             raise
 
-
-
     def find_resource(self, kind, api_version, fail=False):
         for attribute in ['kind', 'name', 'singular_name']:
             try:
