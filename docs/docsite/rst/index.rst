@@ -55,6 +55,7 @@ Ansible releases a new major release of Ansible approximately every two months. 
    scenario_guides/guide_cloudstack
    scenario_guides/guide_docker
    scenario_guides/guide_gce
+   scenario_guides/guide_meraki
    scenario_guides/guide_packet
    scenario_guides/guide_rax
    scenario_guides/guide_rolling_upgrade
