@@ -375,7 +375,6 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                             cursor.execute("UPDATE user SET plugin = %s, authentication_string = %s, Password = '' WHERE User = %s AND Host = %s",
                                 ('mysql_native_password', encrypted_password, user, host))
                             cursor.execute("FLUSH PRIVILEGES")
-                            logging.warning('Triggered manual UPDATE')
                 changed = True
 
         # Handle privileges
