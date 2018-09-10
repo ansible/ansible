@@ -183,8 +183,8 @@ class K8sAnsibleMixin(object):
             if not config_file:
                 return kubernetes.client.ApiClient()
             raise
-        kubernetes.client.Configuration.set_default(configuration)
-        return DynamicClient(kubernetes.client.ApiClient(configuration))
+
+
 
     def find_resource(self, kind, api_version, fail=False):
         for attribute in ['kind', 'name', 'singular_name']:
