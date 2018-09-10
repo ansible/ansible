@@ -163,7 +163,7 @@ EXAMPLES = r'''
 - name: Copy using the 'content' for inline data
   copy:
     content: '# This file was moved to /etc/other.conf'
-    dest: /etc/mine.conf'
+    dest: /etc/mine.conf
 '''
 
 RETURN = r'''
