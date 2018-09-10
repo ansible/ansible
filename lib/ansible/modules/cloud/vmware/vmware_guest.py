@@ -87,6 +87,7 @@ options:
     - If this value is not set, virtual machine is created without using a template.
     - If the virtual machine already exists, this parameter will be ignored.
     - This parameter is case sensitive.
+    - You can also specify template or VM UUID for identifying source. version_added 2.8. Use C(hw_product_uuid) from M(vmware_guest_facts) as UUID value.
     aliases: [ 'template_src' ]
   is_template:
     description:
