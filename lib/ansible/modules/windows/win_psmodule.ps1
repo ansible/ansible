@@ -29,6 +29,10 @@ If (($latest -eq $true) -and ($required_version -ne $null)) {
     Fail-Json $result "latest and required_version are mutually exclusive but have both been set"
 }
 
+if ((($latest -eq $true) -or ($required_version)) -and $state -eq 'absent'){
+    Fail-Json $result "latest and required_version can be user only when state = present"
+} 
+
 If (($force_required_version -eq $true) -and ($required_version -eq $null)) {
     Fail-Json $result "force_required_version can be used only when required_version is set"
 }
@@ -49,6 +53,7 @@ Function Install-NugetProvider {
         Fail-Json $result $ErrorMessage
       }
     }
+    return $PackageProvider
 }
 
 Function Install-Repository {
@@ -84,7 +89,7 @@ Function Remove-Repository{
     [bool]$CheckMode
     )
 
-    $Repo = (Get-PSRepository).SourceLocation
+    $Repo = (Get-PSRepository).Name
 
     # Try to remove the repository
     if ($Repo -contains $Name){
@@ -111,7 +116,8 @@ Function Install-PsModule {
       [bool]$CheckMode,
       [bool]$Latest,
       [string]$RequiredVersion,
-      [bool]$ForceRequiredVersion
+      [bool]$ForceRequiredVersion,
+      $NugetVersion
     )
     $need_remove = $false
     $need_update = $false
@@ -153,7 +159,23 @@ Function Install-PsModule {
 
     #search for latest or required version
     try {
-        $search_result = Find-Module @ht_find_module
+        #if checkmode, we should be carefull when using find-module. Need to check if nuget is installed
+        if ($CheckMode -eq $false){
+            $search_result_version = (Find-Module @ht_find_module).version
+        }
+        #if checkmode true and nuget is installed
+        elseif ($NugetVersion -and $NugetVersion -ge "2.8.5.201"){
+            $search_result_version = (Find-Module @ht_find_module).version
+        }
+        #if nuget is not intalled will use the same version as installed
+        elseif ($module){
+            $search_result_version = $module.version
+        }
+        #if module is not installed will use version 1.0.0
+        else {
+            $search_result_version = "1.0.0"
+            Add-Warning -obj $result -message "Cannot check version in repository because NuGet is not installed. Version set to 1.0.0. This happens only in check mode"
+        }
     }
     catch {
         $ErrorMessage = "Problems searching $($Name) module in repository: $($_.Exception.Message)"
@@ -165,23 +187,23 @@ Function Install-PsModule {
     }
     #If module is present and latest version is needed
     elseif ($module -and $Latest -eq $true) {
-        if ($module_version_current -lt $search_result.version) {
+        if ($module_version_current -lt $search_result_version) {
             $need_update = $true
         }
-        elseif ($module_version_current -eq $search_result.version) {
+        elseif ($module_version_current -eq $search_result_version) {
             $result.output = "Module $($Name):$($module_version_current) already present"
         }
         #when repository has lower version than target computer. Just to be safe
         else {
-            $ErrorMessage = "Installed version of module $($Name):$($module_version_current) higher than in repository:$($search_result.version)"
+            $ErrorMessage = "Installed version of module $($Name):$($module_version_current) higher than in repository:$search_result_version"
             Fail-Json $result $ErrorMessage
         }    
     }
     #If module is present and version is required
     elseif ($module -and $RequiredVersion) {    
-        if ($module_version_current -ne $search_result.version) {
+        if ($module_version_current -ne $search_result_version) {
             #if current version higher than required
-            if ($module_version_current -gt $search_result.version) {
+            if ($module_version_current -gt $search_result_version) {
                 # remove all versions and install required when forced
                 if ($force_required_version -eq $true){
                     $need_remove = $true
@@ -192,7 +214,7 @@ Function Install-PsModule {
                 }
             }
             #if current version lower than required - install required
-            if ($module_version_current -lt $search_result.version){
+            if ($module_version_current -lt $search_result_version){
                 $need_update = $true
             }
         }
@@ -205,26 +227,30 @@ Function Install-PsModule {
     #if no module installed or update is needed
     if (!($module) -or $need_update -eq $true){
         try{
-            # Install NuGet Provider if needed
-            Install-NugetProvider -CheckMode $CheckMode;
             #remove module if needed 
             if ($need_remove -eq $true){
                 try {
-                    Uninstall-Module -Name $Name -Confirm:$false -ErrorAction Stop -AllVersions -WhatIf:$CheckMode | out-null
+                    #if checkmode true and nuget not installed
+                    Write-Host 'test'
+                    if (!($CheckMode -eq $true -and !($NugetVersion -or $NugetVersion -ge "2.8.5.201"))){
+                        Uninstall-Module -Name $Name -Confirm:$false -ErrorAction Stop -AllVersions -WhatIf:$CheckMode | out-null
+                    }
+                    $result.changed = $true
                 }
                 catch {
                     $ErrorMessage = "Problems uninstalling $($Name) module: $($_.Exception.Message)"
                     Fail-Json $result $ErrorMessage
                 }
             }
-            Install-Module @ht | out-null;
-
+            if (!($CheckMode -eq $true -and !($NugetVersion -or $NugetVersion -ge "2.8.5.201"))){
+                Install-Module @ht | out-null;
+            }
             $result.output = "Module $($Name) installed"
             $result.changed = $true
             if ($module_version_current -eq $null){
                 $module_version_current = 'none'
             }
-            $result.version = "$module_version_current => $($search_result.version)"
+            $result.version = "$module_version_current => $search_result_version"
         }
         catch{
             $ErrorMessage = "Problems installing $($Name) module: $($_.Exception.Message)"
@@ -265,6 +291,8 @@ if ($PsVersion.Major -lt 5){
 }
 
 if ($state -eq "present") {
+    # Install NuGet Provider if needed
+    $nuget = Install-NugetProvider -CheckMode $check_mode;
     if (($repo) -and ($url)) {
         Install-Repository -Name $repo -Url $url -CheckMode $check_mode 
     }
@@ -272,7 +300,7 @@ if ($state -eq "present") {
         $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
     }
 
-    Install-PsModule -Name $Name -Repository $repo -CheckMode $check_mode -Latest $latest -RequiredVersion $required_version -AllowClobber $allow_clobber -ForceRequiredVersion $force_required_version;
+    Install-PsModule -Name $Name -Repository $repo -CheckMode $check_mode -Latest $latest -RequiredVersion $required_version -AllowClobber $allow_clobber -ForceRequiredVersion $force_required_version -NugetVersion $nuget.version;
 }
 else {  
     if ($repo) {   
@@ -282,4 +310,3 @@ else {
 }
 
 Exit-Json $result
-
