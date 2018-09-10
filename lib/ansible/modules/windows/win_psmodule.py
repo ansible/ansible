@@ -61,7 +61,7 @@ options:
     version_added: '2.8'
   force_required_version:
     description:
-      - Changes behavior of I(required_version). If there is higher version of a module present all versions will be uninstalled, than selected version will be installed.
+      - Changes behavior of I(required_version). If there is higher version present all versions will be uninstalled, selected version will be installed.
       - Requires I(required_version).
     type: bool
     default: 'no'
