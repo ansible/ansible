@@ -29,20 +29,55 @@ import math
 
 from ansible import errors
 from ansible.module_utils import basic
-from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.six import binary_type, text_type, string_types
 from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils._text import to_native
 
 
-def unique(a):
-    if isinstance(a, collections.Hashable):
-        c = set(a)
+def unique(value, case_sensitive=False, attribute=None):
+    getter = make_attrgetter(
+        attribute, postprocess=ignore_case if not case_sensitive else None
+    )
+    seen = []
+    unique_items = []
+    for item in value:
+        key = getter(item)
+
+        if key not in seen:
+            seen.append(key)
+            unique_items.append(item)
+
+    return unique_items
+
+
+def ignore_case(value):
+    """For use as a postprocessor for :func:`make_attrgetter`. Converts strings
+    to lowercase and returns other types as-is."""
+    return value.lower() if isinstance(value, string_types) else value
+
+
+def make_attrgetter(attribute, postprocess=None):
+    """Returns a callable that looks up the given attribute from a
+    passed object.  Dots are allowed to access attributes of attributes.
+    Integer parts in paths are looked up as integers.
+    """
+    if attribute is None:
+        attribute = []
+    elif isinstance(attribute, string_types):
+        attribute = [int(x) if x.isdigit() else x for x in attribute.split('.')]
     else:
-        c = []
-        for x in a:
-            if x not in c:
-                c.append(x)
-    return c
+        attribute = [attribute]
+
+    def attrgetter(item):
+        for part in attribute:
+            item = item[part]
+
+        if postprocess is not None:
+            item = postprocess(item)
+
+        return item
+
+    return attrgetter
 
 
 def intersect(a, b):

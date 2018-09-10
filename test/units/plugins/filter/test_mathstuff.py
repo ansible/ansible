@@ -11,10 +11,12 @@ import ansible.plugins.filter.mathstuff as ms
 from ansible.errors import AnsibleFilterError
 
 
-UNIQUE_DATA = (([1, 3, 4, 2], sorted([1, 2, 3, 4])),
-               ([1, 3, 2, 4, 2, 3], sorted([1, 2, 3, 4])),
-               (['a', 'b', 'c', 'd'], sorted(['a', 'b', 'c', 'd'])),
-               (['a', 'a', 'd', 'b', 'a', 'd', 'c', 'b'], sorted(['a', 'b', 'c', 'd'])),
+UNIQUE_DATA = (([1, 3, 4, 2], {}, [1, 3, 4, 2]),
+               ([1, 3, 2, 4, 2, 3], {}, [1, 3, 2, 4]),
+               (['a', 'b', 'c', 'd'], {}, ['a', 'b', 'c', 'd']),
+               (['a', 'a', 'd', 'b', 'a', 'd', 'c', 'b'], {}, ['a', 'd', 'b', 'c']),
+               ([dict(a='foo', b=1), dict(a='bar', b=2), dict(a='foo', b=3)], dict(attribute='a'), [dict(a='foo', b=1), dict(a='bar', b=2)]),
+               (['a', 'A', 'b', 'C'], dict(case_sensitive=False), ['a', 'b', 'C']),
                )
 
 TWO_SETS_DATA = (([1, 2], [3, 4], ([], sorted([1, 2]), sorted([1, 2, 3, 4]), sorted([1, 2, 3, 4]))),
@@ -23,13 +25,13 @@ TWO_SETS_DATA = (([1, 2], [3, 4], ([], sorted([1, 2]), sorted([1, 2, 3, 4]), sor
                  )
 
 
-@pytest.mark.parametrize('data, expected', UNIQUE_DATA)
+@pytest.mark.parametrize('data, kwargs, expected', UNIQUE_DATA)
 class TestUnique:
-    def test_unhashable(self, data, expected):
-        assert sorted(ms.unique(list(data))) == expected
+    def test_unhashable(self, data, kwargs, expected):
+        assert ms.unique(list(data), **kwargs) == expected
 
-    def test_hashable(self, data, expected):
-        assert sorted(ms.unique(tuple(data))) == expected
+    def test_hashable(self, data, kwargs, expected):
+        assert ms.unique(tuple(data), **kwargs) == expected
 
 
 @pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA)
