@@ -271,6 +271,7 @@ options:
     - ' - C(mac) (string): Customize MAC address.'
     - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
           This value is required if multiple distributed portgroups exists with the same name. version_added 2.7'
+    - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on. version_added: 2.5'
     - 'Optional parameters per entry (used for OS customization):'
     - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)). C(dhcp) is default.'
     - ' - C(ip) (string): Static IP address (implies C(type: static)).'
@@ -279,7 +280,6 @@ options:
     - ' - C(dns_servers) (string): DNS servers for this network interface (Windows).'
     - ' - C(domain) (string): Domain name for this network interface (Windows).'
     - ' - C(wake_on_lan) (bool): Indicates if wake-on-LAN is enabled on this virtual network adapter. version_added: 2.5'
-    - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on. version_added: 2.5'
     - ' - C(allow_guest_control) (bool): Enables guest control over whether the connectable device is connected. version_added: 2.5'
     version_added: '2.3'
   customization:
@@ -2015,7 +2015,7 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
                     network_changes = True
                     break
 
