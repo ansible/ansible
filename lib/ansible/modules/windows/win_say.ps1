@@ -35,7 +35,7 @@ $result = @{
 
 $words = $null
 
-f ($speech_speed -lt -10 -or $speech_speed -gt 10) {
+if ($speech_speed -lt -10 -or $speech_speed -gt 10) {
    Fail-Json $result "speech_speed needs to a integer in the range -10 to 10.  The value $speech_speed is outside this range."
 }
 
