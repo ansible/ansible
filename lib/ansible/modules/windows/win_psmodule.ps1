@@ -230,8 +230,7 @@ Function Install-PsModule {
             #remove module if needed 
             if ($need_remove -eq $true){
                 try {
-                    #if checkmode true and nuget not installed
-                    Write-Host 'test'
+                    #if checkmode true and nuget not installed'
                     if (!($CheckMode -eq $true -and !($NugetVersion -or $NugetVersion -ge "2.8.5.201"))){
                         Uninstall-Module -Name $Name -Confirm:$false -ErrorAction Stop -AllVersions -WhatIf:$CheckMode | out-null
                     }
