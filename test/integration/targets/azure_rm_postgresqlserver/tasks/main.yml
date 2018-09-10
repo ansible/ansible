@@ -293,3 +293,14 @@
   assert:
     that:
       - output.changed == false
+
+- name: Delete second instance of PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}second
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
