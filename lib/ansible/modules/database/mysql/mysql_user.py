@@ -351,31 +351,23 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
 
             if encrypted:
                 encrypted_string = (password)
-                if is_hash(password):
-                    if current_pass_hash[0] != encrypted_string:
-                        if module.check_mode:
-                            return True
-                        if old_user_mgmt:
-                            cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
-                        else:
-                            cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
-                        changed = True
-                else:
+                if not is_hash(encrypted_string):
                     module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
             else:
                 if old_user_mgmt:
                     cursor.execute("SELECT PASSWORD(%s)", (password,))
                 else:
                     cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
-                new_pass_hash = cursor.fetchone()
-                if current_pass_hash[0] != new_pass_hash[0]:
-                    if module.check_mode:
-                        return True
-                    if old_user_mgmt:
-                        cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
-                    else:
-                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s", (user, host, password))
-                    changed = True
+                encrypted_string = cursor.fetchone()
+
+            if current_pass_hash[0] != encrypted_string:
+                if module.check_mode:
+                    return True
+                if old_user_mgmt:
+                    cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
+                else:
+                    cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
+                changed = True
 
         # Handle privileges
         if new_priv is not None:
