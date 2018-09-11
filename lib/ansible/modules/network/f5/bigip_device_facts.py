@@ -12438,9 +12438,9 @@ class VirtualServersParameters(BaseParameters):
         result = []
         for item in self._values['profiles']['items']:
             context = item['context']
-            if 'context' == 'serverside':
+            if context == 'serverside':
                 context = 'server-side'
-            elif 'context' == 'clientside':
+            elif context == 'clientside':
                 context = 'client-side'
             name = item['name']
             if context in ['all', 'server-side', 'client-side']:
