@@ -1328,10 +1328,6 @@ def interfaceLevel2Config(module, cmd, prompt, answer):
 # EOM
 
 
-# Method Method for enter enable mode
-#
-
-
 def enterEnableModeForDevice(enablePassword, timeout, obj):
     command = "enable\n"
     pwdPrompt = "password:"
