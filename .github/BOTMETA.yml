@@ -302,7 +302,7 @@ files:
   $modules/remote_management/imc/: dagwieers
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/manageiq/: $team_manageiq
-  $modules/remote_management/redfish/: jose-delarosa
+  $modules/remote_management/redfish/: $team_redfish
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/ucs/: $team_ucs
   $modules/source_control/git.py: $team_ansible
@@ -561,7 +561,7 @@ files:
     labels:
     - windows
   $module_utils/redfish_utils.py:
-    maintainers: jose-delarosa
+    maintainers: $team_redfish
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
@@ -914,6 +914,7 @@ macros:
   team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gdpak
   team_rabbitmq: chrishoffman manuel-sousa hyperized
+  team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt flossware vritant
   team_scaleway: sieben hekonsek Spredzy
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
