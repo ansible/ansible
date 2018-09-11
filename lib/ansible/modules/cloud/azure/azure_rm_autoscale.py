@@ -521,11 +521,11 @@ class AzureRMAutoScale(AzureRMModuleBase):
 
             resource_id = self.target
             if isinstance(self.target, dict):
-                resource_id = format_resource_id(val=self.target.name,
-                                                 subscription_id=self.target.subscription_id or self.subscription_id,
-                                                 namespace=self.target.namespace,
-                                                 types=self.target.types,
-                                                 resource_group=self.target.resource_group or self.resource_group)
+                resource_id = format_resource_id(val=self.target['name'],
+                                                 subscription_id=self.target.get('subscription_id') or self.subscription_id,
+                                                 namespace=self.target['namespace'],
+                                                 types=self.target['types'],
+                                                 resource_group=self.target.get('resource_group') or self.resource_group)
             self.target = resource_id
             resource_name = self.name
 
