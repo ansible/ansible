@@ -137,13 +137,27 @@ EXAMPLES = '''
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from pylxca import jobs
-from pylxca import connect
-from pylxca import disconnect
+try:
+    from pylxca import connect
+    from pylxca import disconnect
+    from pylxca import jobs
+    HAS_PYLXCA = True
+except Exception:
+    HAS_PYLXCA = False
 
 
 SUCCESS_MSG = "Success %s result"
 __changed__ = False
+PYLXCA_REQUIRED = 'Lenovo xClarity Administrator Python Client pylxca is required for this module.'
+
+
+def has_pylxca(module):
+    """
+    Check pylxca is installed
+    :param module:
+    """
+    if not HAS_PYLXCA:
+        module.fail_json(msg=PYLXCA_REQUIRED)
 
 
 def _jobs(module, lxca_con):
@@ -221,9 +235,7 @@ LXCA_COMMON_ARGS = dict(
 )
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='jobs', choices=['jobs','jobs_by_uuid',
-                                                  'jobs_delete',
-                                                  'jobs_cancel']),
+    command_options=dict(default='jobs', choices=list(FUNC_DICT)),
     id=dict(default=None),
     uuid=dict(default=None),
     job_state=dict(default=None, choices=[None, 'Pending', 'Running', 'Complete',
@@ -248,7 +260,7 @@ def execute_module(module, lxca_con):
                          result=result)
     except Exception as exception:
         error_msg = '; '.join((e) for e in exception.args)
-        disconnect(lxca_con)
+
         module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
 
@@ -263,6 +275,7 @@ def run_tasks(module, lxca_con):
 
 def main():
     module = setup_module_object()
+    has_pylxca(module)
     validate_parameters(module)
     lxca_con = setup_conn(module)
     run_tasks(module, lxca_con)

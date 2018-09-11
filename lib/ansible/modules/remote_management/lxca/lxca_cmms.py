@@ -77,14 +77,28 @@ EXAMPLES = '''
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from pylxca import cmms
-from pylxca import connect
-from pylxca import disconnect
+try:
+    from pylxca import connect
+    from pylxca import disconnect
+    from pylxca import nodes
+    HAS_PYLXCA = True
+except Exception:
+    HAS_PYLXCA = False
 
 
 UUID_REQUIRED = 'UUID of device is required for nodes_by_uuid command.'
 CHASSIS_UUID_REQUIRED = 'UUID of chassis is required for cmms_by_chassis_uuid command.'
 SUCCESS_MSG = "Success %s result"
+PYLXCA_REQUIRED = 'Lenovo xClarity Administrator Python Client pylxca is required for this module.'
+
+
+def has_pylxca(module):
+    """
+    Check pylxca is installed
+    :param module:
+    """
+    if not HAS_PYLXCA:
+        module.fail_json(msg=PYLXCA_REQUIRED)
 
 
 def _cmms(module, lxca_con):
@@ -187,6 +201,7 @@ def run_tasks(module, lxca_con):
 
 def main():
     module = setup_module_object()
+    has_pylxca(module)
     validate_parameters(module)
     lxca_con = setup_conn(module)
     run_tasks(module, lxca_con)
