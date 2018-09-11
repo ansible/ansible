@@ -306,7 +306,13 @@ def main():
         category=UserWarning,
         module='distutils.dist',
     )
-    setup(**setup_params)
+    try:
+        setup(**setup_params)
+    except RuntimeError as err:
+        if os.getenv('ANSIBLE_DEBUG'):
+            raise
+        print('A fatal runtime error happened: %s' % str(err), file=sys.stderr)
+        sys.exit(1)
     warnings.resetwarnings()
 
 
