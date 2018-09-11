@@ -171,12 +171,12 @@
   register: async_custom_tmp
   async: 5
   vars:
-    ansible_remote_tmp: '{{win_output_dir}}'
+    ansible_async_dir: '{{win_output_dir}}'
 
 - name: assert results file is in the remote tmp specified
   assert:
     that:
-    - async_custom_tmp.results_file == win_output_dir + '\\.ansible_async\\' + async_custom_tmp.ansible_job_id
+    - async_custom_tmp.results_file == win_output_dir + '\\' + async_custom_tmp.ansible_job_id
 
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success

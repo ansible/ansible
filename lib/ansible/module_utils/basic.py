@@ -40,6 +40,7 @@ FILE_ATTRIBUTES = {
 }
 
 PASS_VARS = {
+    'async_dir': '_async_dir',
     'check_mode': 'check_mode',
     'debug': '_debug',
     'diff': '_diff',

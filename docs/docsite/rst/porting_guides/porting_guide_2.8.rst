@@ -58,7 +58,9 @@ Noteworthy module changes
 Plugins
 =======
 
-No notable changes.
+* The ``powershell`` shell plugin now uses ``async_dir`` to define the async path for the results file and the default
+  has changed to ``%USERPROFILE%\.ansible_async``. To control this path now, either set the ``ansible_async_dir``
+  variable or the ``async_dir`` value in the ``powershell`` section of the config ini.
 
 Porting custom scripts
 ======================

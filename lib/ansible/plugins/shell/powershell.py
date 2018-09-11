@@ -12,6 +12,17 @@ DOCUMENTATION = '''
     description:
       - The only option when using 'winrm' as a connection plugin
     options:
+      async_dir:
+        description:
+        - Directory in which ansible will keep async job information.
+        - Before Ansible 2.8, this was set to C(remote_tmp + "\\.ansible_async").
+        default: '%USERPROFILE%\\.ansible_async'
+        ini:
+        - section: powershell
+          key: async_dir
+        vars:
+        - name: ansible_async_dir
+        version_added: '2.8'
       remote_tmp:
         description:
         - Temporary directory to use on targets when copying files to the host.
@@ -1213,14 +1224,14 @@ $exec_wrapper = {
 
 
 Function Run($payload) {
-    $remote_tmp = $payload["module_args"]["_ansible_remote_tmp"]
-    $remote_tmp = [System.Environment]::ExpandEnvironmentVariables($remote_tmp)
+    $async_dir = $payload["module_args"]["_ansible_async_dir"]
+    $async_dir = [System.Environment]::ExpandEnvironmentVariables($async_dir)
 
     # calculate the result path so we can include it in the worker payload
     $jid = $payload.async_jid
     $local_jid = $jid + "." + $pid
 
-    $results_path = [System.IO.Path]::Combine($remote_tmp, ".ansible_async", $local_jid)
+    $results_path = [System.IO.Path]::Combine($async_dir, $local_jid)
 
     $payload.async_results_path = $results_path
 

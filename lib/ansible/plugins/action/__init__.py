@@ -681,6 +681,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
             module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
 
+        # make sure async_dir is sent through, powershell uses this for it's async implementation
+        try:
+            module_args['_ansible_async_dir'] = self._connection._shell.get_option('async_dir')
+        except KeyError:
+            # here for 3rd party shell plugin compatibility in case they do not define the async_dir option
+            module_args['_ansible_async_dir'] = '~/.ansible_async'
+
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
         update = {}

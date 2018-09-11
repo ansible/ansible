@@ -9,9 +9,9 @@ $results = @{changed=$false}
 $parsed_args = Parse-Args $args
 $jid = Get-AnsibleParam $parsed_args "jid" -failifempty $true -resultobj $results
 $mode = Get-AnsibleParam $parsed_args "mode" -Default "status" -ValidateSet "status","cleanup"
-$_remote_tmp = Get-AnsibleParam $parsed_args "_ansible_remote_tmp" -type "path" -default $env:TMP
+$_async_dir = Get-AnsibleParam $parsed_args "_ansible_async_dir" -type "path" -default "$($env:USERPROFILE)\.ansible_async"
 
-$log_path = [System.IO.Path]::Combine($_remote_tmp, ".ansible_async", $jid)
+$log_path = [System.IO.Path]::Combine($_async_dir, $jid)
 
 If(-not $(Test-Path $log_path))
 {
