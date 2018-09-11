@@ -59,4 +59,11 @@ options:
 
 requirement:
   - pylxca
+
+notes:
+  -  Additional detail about pylxca can be found at
+  -  U(https://github.com/lenovo/pylxca)
+  -  Playbooks using these modules can be found at
+  -  U(https://github.com/lenovo/ansible.lenovo-lxca)
+
 '''
