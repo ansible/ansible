@@ -91,7 +91,7 @@ options:
         If become is set to True and the remote device does not support
         privilege escalation or the privilege has already been elevated, then
         this option is silently ignored.
-      - Can be configured form the CLI via the C(--become) or C(-b) options.
+      - Can be configured from the CLI via the C(--become) or C(-b) options.
     default: False
     ini:
       - section: privilege_escalation
