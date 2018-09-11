@@ -150,7 +150,51 @@ else:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_native
-from mongodb_user import check_compatibility, load_mongocnf
+
+
+# =========================================
+# MongoDB module specific support methods.
+#
+
+def check_compatibility(module, client):
+    """Check the compatibility between the driver and the database.
+
+       See: https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#python-driver-compatibility
+
+    Args:
+        module: Ansible module.
+        client (cursor): Mongodb cursor on admin database.
+    """
+    loose_srv_version = LooseVersion(client.server_info()['version'])
+    loose_driver_version = LooseVersion(PyMongoVersion)
+
+    if loose_srv_version >= LooseVersion('3.2') and loose_driver_version < LooseVersion('3.2'):
+        module.fail_json(msg=' (Note: you must use pymongo 3.2+ with MongoDB >= 3.2)')
+
+    elif loose_srv_version >= LooseVersion('3.0') and loose_driver_version <= LooseVersion('2.8'):
+        module.fail_json(msg=' (Note: you must use pymongo 2.8+ with MongoDB 3.0)')
+
+    elif loose_srv_version >= LooseVersion('2.6') and loose_driver_version <= LooseVersion('2.7'):
+        module.fail_json(msg=' (Note: you must use pymongo 2.7+ with MongoDB 2.6)')
+
+    elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
+        module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
+
+
+def load_mongocnf():
+    config = configparser.RawConfigParser()
+    mongocnf = os.path.expanduser('~/.mongodb.cnf')
+
+    try:
+        config.readfp(open(mongocnf))
+        creds = dict(
+            user=config.get('client', 'user'),
+            password=config.get('client', 'pass')
+        )
+    except (configparser.NoOptionError, IOError):
+        return False
+
+    return creds
 
 def check_authentication_restrictions_support(client):
     loose_srv_version = LooseVersion(client.server_info()['version'])
