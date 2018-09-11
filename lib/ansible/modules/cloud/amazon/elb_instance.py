@@ -330,7 +330,7 @@ class ElbManager:
             instance = None
         if len(instances) > 1:
             self._module.fail_json(
-                msg='More than one instances was returned with id, aborting'.format(self.instance_id))
+                msg='More than one instances was returned with id, aborting')
         elif instances:
             instance = camel_dict_to_snake_dict(instances[0])
         return instance

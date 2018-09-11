@@ -700,7 +700,7 @@ class ElbManager(object):
         self.elb_conn.create_load_balancer_listeners(LoadBalancerName=self.name,
                                                      Listeners=boto_listeners)
         self.changed = True
-        self._register_changes('listeners', comment='Added {}'.format(boto_listeners))
+        self._register_changes('listeners', comment='Added {0}'.format(boto_listeners))
 
     def _delete_elb_listeners(self, listeners):
         """Takes a list of listener tuples and deletes them from the elb"""
@@ -710,7 +710,7 @@ class ElbManager(object):
         self.elb_conn.delete_load_balancer_listeners(LoadBalancerName=self.name,
                                                      LoadBalancerPorts=ports)
         self.changed = True
-        self._register_changes('listeners', comment='Deleted {}'.format(ports))
+        self._register_changes('listeners', comment='Deleted {0}'.format(ports))
 
     def _set_elb_listeners(self):
         """
@@ -823,8 +823,8 @@ class ElbManager(object):
             result = result and (str(actual['instance_protocol'].upper()) == str(expected['instance_protocol'].upper()))
 
         if 'ssl_certificate_id' in expected:
-            result = result and \
-                     (str(actual['ssl_certificate_id'].upper()) == str(expected['ssl_certificate_id'].upper()))
+            result = result and (
+                    str(actual['ssl_certificate_id'].upper()) == str(expected['ssl_certificate_id'].upper()))
 
         return result
 
@@ -836,7 +836,7 @@ class ElbManager(object):
             self.module.fail_json_aws(e, msg='unable to enable zones')
 
         self.changed = True
-        self._register_changes('zones', comment='Enabled {}'.format(zones))
+        self._register_changes('zones', comment='Enabled {0}'.format(zones))
 
     def _disable_zones(self, zones):
         try:
@@ -845,17 +845,17 @@ class ElbManager(object):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='unable to disable zones')
         self.changed = True
-        self._register_changes('zones', comment='Disabled {}'.format(zones))
+        self._register_changes('zones', comment='Disabled {0}'.format(zones))
 
     def _attach_subnets(self, subnets):
         self.elb_conn.attach_load_balancer_to_subnets(LoadBalancerName=self.name, Subnets=subnets)
         self.changed = True
-        self._register_changes('subnets', comment='Attach {}'.format(subnets))
+        self._register_changes('subnets', comment='Attach {0}'.format(subnets))
 
     def _detach_subnets(self, subnets):
         self.elb_conn.detach_load_balancer_from_subnets(LoadBalancerName=self.name, Subnets=subnets)
         self.changed = True
-        self._register_changes('subnets', comment='Dettach {}'.format(subnets))
+        self._register_changes('subnets', comment='Dettach {0}'.format(subnets))
 
     def _set_subnets(self):
         """Determine which subnets need to be attached or detached on the ELB"""
@@ -905,7 +905,7 @@ class ElbManager(object):
                 self.elb_conn.apply_security_groups_to_load_balancer(
                     LoadBalancerName=self.name, SecurityGroups=self.security_group_ids)
                 self.changed = True
-                self._register_changes('security_groups', comment='Apply {}'.format(self.security_group_ids))
+                self._register_changes('security_groups', comment='Apply {0}'.format(self.security_group_ids))
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg="Unable to update security group")
 
@@ -938,7 +938,7 @@ class ElbManager(object):
                 self.elb.configure_health_check(LoadBalancerName=self.name, HealthCheck=new_health_check_config)
                 self.elb['health_check'] = new_health_check_config
                 self.changed = True
-                self._register_changes('health_check', comment='Apply new {}'.format(new_health_check_config))
+                self._register_changes('health_check', comment='Apply new {0}'.format(new_health_check_config))
 
     def _get_attributes(self):
         attr_response = self.elb_conn.describe_load_balancer_attributes(LoadBalancerName=self.name)
@@ -1006,7 +1006,7 @@ class ElbManager(object):
         if update_attributes:
             try:
                 self.changed = True
-                self._register_changes('attributes', comment='Updated {}'.format(attr_to_update))
+                self._register_changes('attributes', comment='Updated {0}'.format(attr_to_update))
                 self.elb_conn.modify_load_balancer_attributes(
                     LoadBalancerName=self.name, LoadBalancerAttributes=attr_to_update)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -1040,12 +1040,12 @@ class ElbManager(object):
                     self._update_policy(policy_attrs['param_value'], policy_attrs['method'], policy_attrs['attr'],
                                         policy[0])
                     self.changed = True
-                    self._register_changes('stickiness_policy', comment='Update policy {}'.format(policy_attrs))
+                    self._register_changes('stickiness_policy', comment='Update policy {0}'.format(policy_attrs))
                 break
         else:
             self._create_policy(policy_attrs['param_value'], policy_attrs['method'], policy[0])
             self.changed = True
-            self._register_changes('stickiness_policy', comment='Create policy {}'.format(policy_attrs))
+            self._register_changes('stickiness_policy', comment='Create policy {0}'.format(policy_attrs))
 
         self._set_listener_policy(listeners_dict, policy)
 
@@ -1151,7 +1151,7 @@ class ElbManager(object):
                 ensure_proxy_protocol = True
                 want = True
 
-            if '%i:%s'.format(listener['instance_port'], POLICY_PROXY_PROTOCOL) in backend_policies:
+            if '{0}:{1}'.format(listener['instance_port'], POLICY_PROXY_PROTOCOL) in backend_policies:
                 if not want:
                     replace.append({'port': listener['instance_port'], 'policies': []})
             elif want:
@@ -1168,7 +1168,7 @@ class ElbManager(object):
                 InstancePort=item['port'],
                 PolicyNames=item['policies'])
             self.changed = True
-            self._register_changes('backend_policy', comment='Apply policy {}'.format(item))
+            self._register_changes('backend_policy', comment='Apply policy {0}'.format(item))
 
     def _get_proxy_protocol_policy(self, elb=None):
         if not elb:
@@ -1236,7 +1236,7 @@ class ElbManager(object):
                 Instances=self._instance_list_to_boto_list(add_instances)
             )
             self.changed = True
-            self._register_changes('instances', 'Added {}'.format(add_instances))
+            self._register_changes('instances', 'Added {0}'.format(add_instances))
 
         if self.purge_instance_ids:
             remove_instances = self._diff_list(has_instances, assert_instances)
@@ -1245,7 +1245,7 @@ class ElbManager(object):
                     LoadBalancerName=self.elb.name,
                     Instances=self._instance_list_to_boto_list(remove_instances))
                 self.changed = True
-                self._register_changes('instances', 'Removed {}'.format(add_instances))
+                self._register_changes('instances', 'Removed {0}'.format(add_instances))
 
     def _set_tags(self):
         """Add/Delete tags"""
@@ -1270,7 +1270,7 @@ class ElbManager(object):
                 )
 
                 self.changed = True
-                self._register_changes('tags', 'Added {}'.format(to_update))
+                self._register_changes('tags', 'Added {0}'.format(to_update))
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg="Couldn't create tags")
 
@@ -1288,7 +1288,7 @@ class ElbManager(object):
                 )
 
                 self.changed = True
-                self._register_changes('tags', 'Removed {}'.format(to_delete))
+                self._register_changes('tags', 'Removed {0}'.format(to_delete))
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg="Couldn't delete tags")
 
