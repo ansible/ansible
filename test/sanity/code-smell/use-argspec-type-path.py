@@ -11,7 +11,6 @@ def main():
         'lib/ansible/modules/cloud/lxc/lxc_container.py',
         'lib/ansible/modules/cloud/rackspace/rax_files_objects.py',
         'lib/ansible/modules/database/mongodb/mongodb_parameter.py',
-        'lib/ansible/modules/database/mongodb/mongodb_role.py',
         'lib/ansible/modules/database/mongodb/mongodb_user.py',
         'lib/ansible/modules/database/postgresql/postgresql_db.py',
         'lib/ansible/modules/files/synchronize.py',
