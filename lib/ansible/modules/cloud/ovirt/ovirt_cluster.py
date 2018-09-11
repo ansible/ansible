@@ -645,9 +645,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_clusters':
-        module.deprecate("The 'ovirt_clusters' module is being renamed 'ovirt_cluster'", version=2.8)
-
     check_sdk(module)
 
     try:

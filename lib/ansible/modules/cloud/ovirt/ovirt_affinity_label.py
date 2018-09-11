@@ -181,9 +181,6 @@ def main():
         ],
     )
 
-    if module._name == 'ovirt_affinity_labels':
-        module.deprecate("The 'ovirt_affinity_labels' module is being renamed 'ovirt_affinity_label'", version=2.8)
-
     check_sdk(module)
 
     try:

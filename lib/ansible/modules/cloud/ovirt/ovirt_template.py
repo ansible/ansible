@@ -467,9 +467,6 @@ def main():
         required_one_of=[['id', 'name']],
     )
 
-    if module._name == 'ovirt_templates':
-        module.deprecate("The 'ovirt_templates' module is being renamed 'ovirt_template'", version=2.8)
-
     check_sdk(module)
 
     try:

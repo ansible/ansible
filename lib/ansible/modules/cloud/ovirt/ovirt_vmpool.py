@@ -185,9 +185,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_vmpools':
-        module.deprecate("The 'ovirt_vmpools' module is being renamed 'ovirt_vmpool'", version=2.8)
-
     check_sdk(module)
     check_params(module)
 

@@ -86,9 +86,6 @@ def main():
     )
     module = AnsibleModule(argument_spec)
 
-    if module._name == 'ovirt_quotas_facts':
-        module.deprecate("The 'ovirt_quotas_facts' module is being renamed 'ovirt_quota_facts'", version=2.8)
-
     check_sdk(module)
 
     try:

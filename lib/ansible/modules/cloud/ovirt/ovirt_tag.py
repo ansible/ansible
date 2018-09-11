@@ -216,9 +216,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_tags':
-        module.deprecate("The 'ovirt_tags' module is being renamed 'ovirt_tag'", version=2.8)
-
     check_sdk(module)
 
     try:

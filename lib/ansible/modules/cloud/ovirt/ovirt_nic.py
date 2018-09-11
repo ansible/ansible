@@ -187,9 +187,6 @@ def main():
         required_one_of=[['vm', 'template']],
     )
 
-    if module._name == 'ovirt_nics':
-        module.deprecate("The 'ovirt_nics' module is being renamed 'ovirt_nic'", version=2.8)
-
     check_sdk(module)
 
     try:
