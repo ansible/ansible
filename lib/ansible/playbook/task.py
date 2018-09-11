@@ -66,6 +66,10 @@ class Task(Base, Conditional, Taggable, Become):
     # will be used if defined
     # might be possible to define others
 
+    # NOTE: ONLY set defaults on task attributes that are not inheritable,
+    # inheritance is only triggered if the 'current value' is None,
+    # default can be set at play/top level object and inheritance will take it's course.
+
     _args = FieldAttribute(isa='dict', default=dict())
     _action = FieldAttribute(isa='string')
 
