@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-# (c) 2012, Elliott Foster <elliott@fourkitchens.com>
-# Sponsored by Four Kitchens http://fourkitchens.com.
-# (c) 2014, Epic Games, Inc.
 # (c) 2018, Jakub Kramarz <jakub.kramarz@freshmail.pl>
 # Sponsored by FreshMail sp. z o.o. http://freshmail.pl
+# (c) 2014, Epic Games, Inc.
+# (c) 2012, Elliott Foster <elliott@fourkitchens.com>
+# Sponsored by Four Kitchens http://fourkitchens.com.
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
