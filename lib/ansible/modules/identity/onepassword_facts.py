@@ -145,16 +145,23 @@ import re
 
 from subprocess import Popen, PIPE
 
-from ansible.errors import AnsibleModuleError
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
+
+
+class AnsibleModuleError(Exception):
+    def __init__(self, results):
+        self.results = results
+
+    def __repr__(self):
+        return self.results
 
 
 class OnePasswordFacts(object):
 
     def __init__(self):
         self.cli_path = module.params.get('cli_path')
-        self.config_file_path = os.path.expanduser('~/.op/config')
+        self.config_file_path = '~/.op/config'
         self.auto_login = module.params.get('auto_login')
         self.logged_in = False
         self.token = None
