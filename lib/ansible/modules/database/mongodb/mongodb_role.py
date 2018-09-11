@@ -195,9 +195,11 @@ def load_mongocnf():
 
     return creds
 
+
 def check_authentication_restrictions_support(client):
     loose_srv_version = LooseVersion(client.server_info()['version'])
     return loose_srv_version >= LooseVersion('4.0')
+
 
 def role_find(client, db_name, role, authentication_restrictions_supported):
     db = client[db_name]
