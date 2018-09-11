@@ -51,7 +51,7 @@ Noteworthy module changes
 
 * The ``upgrade`` module option for ``win_chocolatey`` has been removed; use ``state: latest`` instead.
 * The ``reboot`` module option for ``win_feature`` has been removed; use the ``win_reboot`` action plugin instead.
-* The ``win_iis_webapppool`` module no longer accepts a string for the ``atributes`` module option; use the free form dictionary value instead.
+* The ``win_iis_webapppool`` module no longer accepts a string for the ``attributes`` module option; use the free form dictionary value instead.
 * The ``name`` module option for ``win_package`` has been removed; this is not used anywhere and should just be removed from your playbooks.
 * The ``win_regedit`` module no longer automatically corrects the hive path ``HCCC`` to ``HKCC``; use ``HKCC`` because this is the correct hive path.
 * The :ref:`file_module` now emits a deprecation warning when ``src`` is specified with a state
@@ -74,7 +74,7 @@ Noteworthy module changes
 * The ``k8s`` module will not automatically change ``Project`` creation requests into ``ProjectRequest`` creation requests as the ``openshift_raw`` module did. You must now specify the ``ProjectRequest`` kind explicitly.
 * The ``k8s`` module will not automatically remove secrets from the Ansible return values (and by extension the log). In order to prevent secret values in a task from being logged, specify the ``no_log`` parameter on the task block.
 * The ``k8s_scale`` module now supports scalable OpenShift objects, such as ``DeploymentConfig``.
-* Openstack modules are no longer using ``shade`` library. Instead ``openstacksdk`` is used. Since ``openstacksdk`` should be already present as a dependency to ``shade`` no additional actions are required
+* Openstack modules are no longer using ``shade`` library. Instead ``openstacksdk`` is used. Since ``openstacksdk`` should be already present as a dependency to ``shade`` no additional actions are required.
 
 Plugins
 =======
