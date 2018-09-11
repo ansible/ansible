@@ -250,8 +250,8 @@ class Vultr:
                         query_by=query_by,
                         params=params,
                         use_cache=use_cache
-                        )
                     )
+                )
             return r_list
         else:
             r_list.append(
@@ -262,8 +262,8 @@ class Vultr:
                     query_by=query_by,
                     params=params,
                     use_cache=use_cache
-                    )
                 )
+            )
             return r_list
 
     @staticmethod
