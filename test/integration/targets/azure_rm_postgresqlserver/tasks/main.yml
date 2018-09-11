@@ -72,11 +72,28 @@
     enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
+    tags:
+      aaa: bbb
+
+- name: Create second instance of PostgreSQL Server -- add tags
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}second
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    tags:
+      ccc: ddd
 
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
     resource_group: "{{ resource_group }}"
-    name: postgresqlsrv{{ rpfx }}
+    name: postgresqlsrv{{ rpfx }}second
   register: output 
 
 - name: Assert that facts are returned
@@ -92,6 +109,8 @@
       - output.servers[0]['version'] != None
       - output.servers[0]['user_visible_state'] != None
       - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.servers[0]['tags']['aaa'] == 'bbb'
+      - output.servers[0]['tags']['ccc'] == 'ddd'
 
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
@@ -274,3 +293,14 @@
   assert:
     that:
       - output.changed == false
+
+- name: Delete second instance of PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}second
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
