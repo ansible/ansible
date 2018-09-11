@@ -355,66 +355,6 @@ class Templar:
 
         return jinja_exts
 
-    def _clean_data(self, orig_data):
-        ''' remove jinja2 template tags from data '''
-
-        if hasattr(orig_data, '__ENCRYPTED__'):
-            ret = orig_data
-
-        elif isinstance(orig_data, list):
-            clean_list = []
-            for list_item in orig_data:
-                clean_list.append(self._clean_data(list_item))
-            ret = clean_list
-
-        elif isinstance(orig_data, (dict, Mapping)):
-            clean_dict = {}
-            for k in orig_data:
-                clean_dict[self._clean_data(k)] = self._clean_data(orig_data[k])
-            ret = clean_dict
-
-        elif isinstance(orig_data, string_types):
-            # This will error with str data (needs unicode), but all strings should already be converted already.
-            # If you get exception, the problem is at the data origin, do not add to_text here.
-            with contextlib.closing(StringIO(orig_data)) as data:
-                # these variables keep track of opening block locations, as we only
-                # want to replace matched pairs of print/block tags
-                print_openings = []
-                block_openings = []
-                for mo in self._clean_regex.finditer(orig_data):
-                    token = mo.group(0)
-                    token_start = mo.start(0)
-
-                    if token[0] == self.environment.variable_start_string[0]:
-                        if token == self.environment.block_start_string:
-                            block_openings.append(token_start)
-                        elif token == self.environment.variable_start_string:
-                            print_openings.append(token_start)
-
-                    elif token[1] == self.environment.variable_end_string[1]:
-                        prev_idx = None
-                        if token == self.environment.block_end_string and block_openings:
-                            prev_idx = block_openings.pop()
-                        elif token == self.environment.variable_end_string and print_openings:
-                            prev_idx = print_openings.pop()
-
-                        if prev_idx is not None:
-                            # replace the opening
-                            data.seek(prev_idx, os.SEEK_SET)
-                            data.write(to_text(self.environment.comment_start_string))
-                            # replace the closing
-                            data.seek(token_start, os.SEEK_SET)
-                            data.write(to_text(self.environment.comment_end_string))
-
-                    else:
-                        raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
-
-                ret = data.getvalue()
-        else:
-            ret = orig_data
-
-        return ret
-
     def set_available_variables(self, variables):
         '''
         Sets the list of template variables this Templar instance will use
