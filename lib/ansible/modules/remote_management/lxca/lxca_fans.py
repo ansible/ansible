@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-version_added: "1.1"
+version_added: "2.8"
 author:
   - Naval Patel (@navalkp)
   - Prashant Bhosale (@prabhosa)
