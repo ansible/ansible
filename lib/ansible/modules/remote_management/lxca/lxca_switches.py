@@ -119,9 +119,13 @@ EXAMPLES = '''
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from pylxca import switches
-from pylxca import connect
-from pylxca import disconnect
+try:
+    from pylxca import connect
+    from pylxca import disconnect
+    from pylxca import switches
+    HAS_PYLXCA = True
+except Exception:
+    HAS_PYLXCA = False
 
 
 UUID_REQUIRED = 'UUID of device is required for switches_by_uuid command.'
@@ -131,6 +135,16 @@ CHASSIS_UUID_REQUIRED = 'UUID of chassis is required for switches_by_chassis_uui
 PORTS_ACTION_REQUIRED = 'ports_action is required for switches_change_status_of_ports command.'
 PORTS_REQUIRED = 'ports is required for switches_change_status_of_ports command.'
 SUCCESS_MSG = "Success %s result"
+PYLXCA_REQUIRED = 'Lenovo xClarity Administrator Python Client pylxca is required for this module.'
+
+
+def has_pylxca(module):
+    """
+    Check pylxca is installed
+    :param module:
+    """
+    if not HAS_PYLXCA:
+        module.fail_json(msg=PYLXCA_REQUIRED)
 
 
 __changed__ = False
@@ -267,6 +281,7 @@ def run_tasks(module, lxca_con):
 
 def main():
     module = setup_module_object()
+    has_pylxca(module)
     validate_parameters(module)
     lxca_con = setup_conn(module)
     run_tasks(module, lxca_con)

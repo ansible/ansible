@@ -97,13 +97,27 @@ EXAMPLES = '''
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from pylxca import tasks
-from pylxca import connect
-from pylxca import disconnect
+try:
+    from pylxca import connect
+    from pylxca import disconnect
+    from pylxca import tasks
+    HAS_PYLXCA = True
+except Exception:
+    HAS_PYLXCA = False
 
 
 SUCCESS_MSG = "Success %s result"
 __changed__ = False
+PYLXCA_REQUIRED = 'Lenovo xClarity Administrator Python Client pylxca is required for this module.'
+
+
+def has_pylxca(module):
+    """
+    Check pylxca is installed
+    :param module:
+    """
+    if not HAS_PYLXCA:
+        module.fail_json(msg=PYLXCA_REQUIRED)
 
 
 def _tasks(module, lxca_con):
@@ -214,6 +228,7 @@ def run_tasks(module, lxca_con):
 
 def main():
     module = setup_module_object()
+    has_pylxca(module)
     validate_parameters(module)
     lxca_con = setup_conn(module)
     run_tasks(module, lxca_con)
