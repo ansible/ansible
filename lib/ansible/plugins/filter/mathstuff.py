@@ -27,6 +27,8 @@ import collections
 import itertools
 import math
 
+from jinja2.filters import environmentfilter, do_unique
+
 from ansible import errors
 from ansible.module_utils import basic
 from ansible.module_utils.six import binary_type, text_type
@@ -34,14 +36,19 @@ from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils._text import to_native
 
 
-def unique(a):
-    if isinstance(a, collections.Hashable):
-        c = set(a)
-    else:
-        c = []
-        for x in a:
-            if x not in c:
-                c.append(x)
+@environmentfilter
+def unique(environment, a, case_sensitive=False, attribute=None):
+
+    try:
+        c = set(do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute))
+    except Exception:
+        if isinstance(a, collections.Hashable):
+            c = set(a)
+        else:
+            c = []
+            for x in a:
+                if x not in c:
+                    c.append(x)
     return c
 
 
