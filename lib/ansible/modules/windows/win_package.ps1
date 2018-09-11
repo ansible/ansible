@@ -374,7 +374,6 @@ if ($state -eq "absent") {
 
                 if ($process_result.rc -eq 3010) {
                     $result.reboot_required = $true
-                    $result.restart_required = $true
                 }
             }
         } finally {
@@ -456,7 +455,6 @@ if ($state -eq "absent") {
 
                 if ($process_result.rc -eq 3010) {
                     $result.reboot_required = $true
-                    $result.restart_required = $true
                 }
             }
         } finally {

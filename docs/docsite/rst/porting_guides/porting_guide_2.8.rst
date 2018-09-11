@@ -55,6 +55,19 @@ Noteworthy module changes
   In order to work like Tower/AWX, ``ssh_key_data`` now contains the content of the file.
   The previous behavior can be achieved with ``lookup('file', '/path/to/file')``.
 
+* The ``win_feature`` module has removed the deprecated ``restart_needed`` return value, use the standardised
+  ``reboot_required`` value instead.
+
+* The ``win_package`` module has removed the deprecated ``restart_required`` and ``exit_code`` return value, use the
+  standardised ``reboot_required`` and ``rc`` value instead.
+
+* The ``win_get_url`` module has removed the deprecated ``win_get_url`` return dictionary, contained values are
+  returned directly.
+
+* The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardised
+  ``validate_certs`` option instead.
+
+
 Plugins
 =======
 
