@@ -838,7 +838,7 @@ class DockerService(DockerBaseClass):
         for network_name in self.networks:
             network_id = None
             try:
-                network_id = filter(lambda n: n['name'] == network_name, docker_networks)[0]['id']
+                network_id = list(filter(lambda n: n['name'] == network_name, docker_networks))[0]['id']
             except:
                 pass
             if network_id:
