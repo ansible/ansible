@@ -63,7 +63,13 @@ servers:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: testresourcegroup
         name:
             description:
                 - Resource name.
@@ -118,6 +124,10 @@ servers:
             returned: always
             type: str
             sample: myabdud1223.mys.database.azure.com
+        tags:
+            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            type: dict
+            sample: { tag1: abc }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -189,7 +199,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
             response = self.mysql_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail("Error listing for resource group {0} - {1}".format(self.resource_group, str(e)))
+            self.log('Could not get facts for MySQL Servers.')
 
         if response is not None:
             for item in response:
@@ -211,7 +221,8 @@ class AzureRMServersFacts(AzureRMModuleBase):
             'enforce_ssl': (d['ssl_enforcement'] == 'Enabled'),
             'admin_username': d['administrator_login'],
             'user_visible_state': d['user_visible_state'],
-            'fully_qualified_domain_name': d['fully_qualified_domain_name']
+            'fully_qualified_domain_name': d['fully_qualified_domain_name'],
+            'tags': d.get('tags')
         }
 
         return d
