@@ -494,18 +494,18 @@ class Interfaces(FactsBase):
             innerData = dict()
             count = len(neighborSplit)
             if count == 5:
-                device_name = neighborSplit[0].strip()
-                innerData['Local Interface'] = neighborSplit[1].strip()
+                local_interface = neighborSplit[1].strip()
+                innerData['Device Name'] = neighborSplit[0].strip()
                 innerData['Hold Time'] = neighborSplit[2].strip()
                 innerData['Capability'] = neighborSplit[3].strip()
                 innerData['Remote Port'] = neighborSplit[4].strip()
-                neighbors[device_name] = innerData
+                neighbors[local_interface] = innerData
             elif count == 4:
-                innerData['Local Interface'] = neighborSplit[0].strip()
+                local_interface = neighborSplit[0].strip()
                 innerData['Hold Time'] = neighborSplit[1].strip()
                 innerData['Capability'] = neighborSplit[2].strip()
                 innerData['Remote Port'] = neighborSplit[3].strip()
-                neighbors['mgmt'] = innerData
+                neighbors[local_interface] = innerData
         return neighbors
 
     def parse_neighbors(self, neighbors):
