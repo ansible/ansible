@@ -21,7 +21,7 @@ description:
   - Loads YAML/JSON variables dynamically from a file or directory, recursively, during task runtime.
   - If loading a directory, the files are sorted alphabetically before being loaded.
   - This module is also supported for Windows targets.
-  - To assign included variables to a different host than ``inventory_hostname``, you must use ``delegate_to`` and also set ``delegate_facts: True``. See also L(delegate_facts,../user_guide/playbooks_delegate.html#delegated-facts).
+  - To assign included variables to a different host than ``inventory_hostname``, use ``delegate_to`` and set L(delegate_facts: True,../user_guide/playbooks_delegate.html#delegated-facts).
 version_added: "1.4"
 options:
   file:
