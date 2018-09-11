@@ -39,7 +39,7 @@ options:
     version_added: "2.6"
   creates:
     description:
-      - A filename or (since 2.0) glob pattern. If it already exists, this step B(won't) be run. 
+      - A filename or (since 2.0) glob pattern. If it already exists, this step B(won't) be run.
   removes:
     description:
       - A filename or (since 2.0) glob pattern. If it already exists, this step B(will) be run.
