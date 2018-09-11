@@ -29,7 +29,7 @@ Credentials and authenticating
 
 To use Infoblox ``nios`` modules in playbooks, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/group_vars/all``.
 
-This is an example of this ``group_vars/all`` file. Replace these values with your Infoblox credentials:
+This is an example of this ``group_vars/nios.yml`` file. Replace these values with your Infoblox credentials:
 
 .. code-block:: yaml
 
@@ -67,7 +67,7 @@ This example playbook uses the ``set_fact`` module with the ``nios`` lookup to r
 .. code-block:: yaml
 
     ---
-    - hosts: localhost
+    - hosts: nios
       connection: local
       tasks:
         - name: fetch all networkview objects
@@ -87,12 +87,12 @@ This example playbook uses the ``set_fact`` module with the ``nios`` lookup to r
 .. code-block:: yaml
 
     ---
-    - hosts: localhost
+    - hosts: nios
       connection: local
       tasks:
         - name: fetch host leaf01
           set_fact:
-             host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf01'}, provider=nios_provider) }}"
+             host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf01.ansible.com'}, provider=nios_provider) }}"
 
         - name: check the leaf01 return variable
           debug:
@@ -104,7 +104,7 @@ This example playbook uses the ``set_fact`` module with the ``nios`` lookup to r
 
         - name: fetch host leaf02
           set_fact:
-            host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf02'}, provider=nios_provider) }}"
+            host: "{{ lookup('nios', 'record:host', filter={'name': 'leaf02.ansible.com'}, provider=nios_provider) }}"
 
         - name: check the leaf02 return variable
           debug:
@@ -129,7 +129,7 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
             "ipv4addrs": [
                 {
                     "configure_for_dhcp": false,
-                    "host": "leaf01",
+                    "host": "leaf01.example.com",
                     "ipv4addr": "192.168.1.11"
                 }
             ],
@@ -152,7 +152,7 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
             "ipv4addrs": [
                 {
                     "configure_for_dhcp": false,
-                    "host": "leaf02",
+                    "host": "leaf02.example.com",
                     "ipv4addr": "192.168.1.12"
                 }
             ],
@@ -183,10 +183,10 @@ The following example ``configure_network`` playbook uses the ``nios_network`` m
 .. code-block:: yaml
 
     ---
-    - hosts: localhost
+    - hosts: nios
       connection: local
       tasks:
-        - name: set DHCP options for a network
+        - name: Create a network on the default network view
           nios_network:
             network: 192.168.100.0/24
             comment: sets the IPv4 network
@@ -201,20 +201,24 @@ Notice the last parameter, ``provider``, uses the variable ``nios_provider`` def
 Creating a host record
 ----------------------
 
-This example ``host_record.yml`` playbook builds on the newly-created IPv4 network to create a host record named `testhost`:
+This example ``host_record.yml`` playbook builds on the newly-created IPv4 network to create a host record named `leaf03.ansible.com`:
 
----
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: configure an ipv4 host record
-      nios_host_record:
-        name: testhost
-        ipv4:
-          - address: "192.168.100.200"
-        state: present
-provider: "{{nios_provider}}"
+.. code-block:: yaml
 
+    ---
+    - hosts: nios
+      connection: local
+      tasks:
+        - name: configure an IPv4 host record
+          nios_host_record:
+            name: leaf03.ansible.com
+            ipv4addrs:
+              - ipv4addr:
+                  "{{ lookup('nios_next_ip', '192.168.100.0/24', provider=nios_provider)[0] }}"
+            state: present
+    provider: "{{nios_provider}}"
+
+Notice the IPv4 address in this example uses the ``nios_next_ip`` lookup to find the next available IPv4 address on the network.
 
 Creating a forward DNS zone
 --------------------------------------
@@ -224,7 +228,7 @@ The following example playbook uses the ``nios_zone`` module to configure a forw
 .. code-block:: yaml
 
     ---
-    - hosts: localhost
+    - hosts: nios
       connection: local
       tasks:
         - name: "Create a forward DNS zone called {{ ansible.local }}"
