@@ -222,7 +222,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $debug_level = Get-AnsibleParam -obj $params -name "_ansible_verbosity" -type "int"
 $debug = $debug_level -gt 2
 
-$site_name = Get-AnsibleParam $params "site_name" -type "str" -default "System" -aliases "dest", "file"
+$site_name = Get-AnsibleParam $params "site_name" -type "str" -default "System"
 $log_directory = Get-AnsibleParam $params "log_directory" -type "path" -default $null
 $log_format = Get-AnsibleParam $params "log_format" -type "path" -default "W3C"
 $log_ext_file_flags = Get-AnsibleParam $params "log_ext_file_flags" -type "list" 
