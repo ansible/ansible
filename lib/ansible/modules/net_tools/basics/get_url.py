@@ -482,9 +482,7 @@ def main():
         if not force and checksum != '':
             destination_checksum = module.digest_from_file(dest, algorithm)
 
-            if checksum == destination_checksum:
-                checksum_mismatch = False
-            else:
+            if checksum != destination_checksum:
                 checksum_mismatch = True
 
         # Not forcing redownload, unless checksum does not match
