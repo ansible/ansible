@@ -7,6 +7,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
@@ -182,7 +183,7 @@ def _repo_changes(realrepo, repocmp):
             valnew = v or ""
             if k == "url":
                 valold, valnew = valold.rstrip("/"), valnew.rstrip("/")
-            if valold != valnew:
+            if valold != valnew and realrepo['name'] != repocmp['name']:
                 return True
     return False
 
@@ -199,7 +200,7 @@ def repo_exists(module, repodata, overwrite_multiple):
 
     # look for repos that have matching alias or url to the one searched
     repos = []
-    for kw in ['alias', 'url']:
+    for kw in ['alias', 'name', 'url']:
         name = repodata[kw]
         for oldr in existing_repos:
             if repodata[kw] == oldr[kw] and oldr not in repos:
@@ -224,6 +225,7 @@ def repo_exists(module, repodata, overwrite_multiple):
 
 def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
     "Adds the repo, removes old repos before, that would conflict."
+
     repo = repodata['url']
     cmd = _get_cmd('addrepo', '--check')
     if repodata['name']:
@@ -330,6 +332,12 @@ def main():
         'name': module.params['description'],
         'priority': module.params['priority'],
     }
+    # Get name from .repo file
+    if repodata['url'] and repodata['url'].endswith('.repo'):
+        bareurl = repodata['url'].rsplit('/', 1)[0]
+        rc, stdout, stderr = module.run_command("sh -c 'zypper lr -u | grep " + bareurl + " | cut -d\"|\" -f3'", check_rc=False)
+        if stdout is not None:
+            repodata['name'] = stdout.strip()
     # rewrite bools in the language that zypper lr -x provides for easier comparison
     if module.params['enabled']:
         repodata['enabled'] = '1'
