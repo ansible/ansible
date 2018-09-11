@@ -108,4 +108,4 @@ No notable changes.
 Dynamic inventory scripts
 =========================
 
-* contrib/inventory/openstack.py is renamed to contrib/inventory/openstack_inventory.py.
+* ``contrib/inventory/openstack.py`` has been renamed to ``contrib/inventory/openstack_inventory.py``. If you have used ``openstack.py`` as a name for your OpenStack dynamic inventory file, change it to ``openstack_inventory.py``. Otherwise the file name will conflict with imports from ``openstacksdk``.
