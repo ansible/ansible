@@ -210,7 +210,7 @@ def check_authentication_restrictions_support(client):
     return loose_srv_version >= LooseVersion('4.0')
 
 
-def role_find(client, db_name, role, authentication_restrictions_supported):
+def role_find(module, client, db_name, role, authentication_restrictions_supported):
     db = client[db_name]
 
     if authentication_restrictions_supported:
@@ -226,15 +226,16 @@ def role_find(client, db_name, role, authentication_restrictions_supported):
                             showPrivileges=True
                             )
 
-    if not result['roles']:
-        return None
-    elif len(result['roles']) == 1:
+    if result['ok'] != 1:
+        module.fail_json(msg='rolesInfo failed', exception=traceback.format_exc())
+
+    if result['roles']:
         return result['roles'][0]
     else:
-        return False
+        return None
 
 
-def role_add(client, db_name, role, privileges, roles, authentication_restrictions, authentication_restrictions_supported):
+def role_add(module, client, db_name, role, privileges, roles, authentication_restrictions, authentication_restrictions_supported):
     db = client[db_name]
 
     if authentication_restrictions_supported:
@@ -250,10 +251,11 @@ def role_add(client, db_name, role, privileges, roles, authentication_restrictio
                             privileges=privileges,
                             roles=roles)
 
-    return result['ok'] == 1
+    if result['ok'] != 1:
+        module.fail_json(msg='createRole failed', exception=traceback.format_exc())
 
 
-def role_update(client, db_name, role, privileges, roles, authentication_restrictions, authentication_restrictions_supported):
+def role_update(module, client, db_name, role, privileges, roles, authentication_restrictions, authentication_restrictions_supported):
     db = client[db_name]
 
     if authentication_restrictions_supported:
@@ -270,13 +272,14 @@ def role_update(client, db_name, role, privileges, roles, authentication_restric
                             roles=roles
                             )
 
-    return result['ok'] == 1
+    if result['ok'] != 1:
+        module.fail_json(msg='updateRole failed', exception=traceback.format_exc())
 
 
 def role_compare(privileges, roles, authentication_restrictions, current, authentication_restrictions_supported):
     if authentication_restrictions_supported:
         # yes, rolesInfo does return single element list of lists
-        if len(current['authenticationRestrictions']) > 0:
+        if current['authenticationRestrictions']:
             current_restrictions = current['authenticationRestrictions'][0]
         else:
             current_restrictions = []
@@ -289,10 +292,12 @@ def role_compare(privileges, roles, authentication_restrictions, current, authen
             and sorted(current['privileges']) == sorted(privileges)
 
 
-def role_remove(client, db_name, role):
+def role_remove(module, client, db_name, role):
     db = client[db_name]
     result = db.command('dropRole', role)
-    return result['ok'] == 1
+
+    if result['ok'] != 1:
+        module.fail_json(msg='dropRole failed', exception=traceback.format_exc())
 
 
 # =========================================
@@ -369,7 +374,7 @@ def main():
         check_compatibility(module, client)
 
         authentication_restrictions_supported = check_authentication_restrictions_support(client)
-        if len(authentication_restrictions) > 0 and not authentication_restrictions_supported:
+        if authentication_restrictions and not authentication_restrictions_supported:
             module.fail_json(msg='Authentication Restrictions are supported from MongoDB 3.6, but not reporter properly up to 4.0')
 
         if login_user is None and login_password is None:
@@ -387,10 +392,7 @@ def main():
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
 
     changed = False
-
-    current = role_find(client, db_name, role, authentication_restrictions_supported)
-    if current == False:
-        module.fail_json(msg='rolesInfo failed', exception=traceback.format_exc())
+    current = role_find(module, client, db_name, role, authentication_restrictions_supported)
 
     if state == 'present':
         if not roles and not privileges:
@@ -404,36 +406,36 @@ def main():
                                               )
             if not role_is_up_to_date:
                 if not module.check_mode:
-                    result = role_update(client,
-                                         db_name,
-                                         role,
-                                         privileges,
-                                         roles,
-                                         authentication_restrictions,
-                                         authentication_restrictions_supported
-                                         )
-                    if not result:
-                        module.fail_json(msg='updateRole failed', exception=traceback.format_exc())
+                    role_update(module,
+                                client,
+                                db_name,
+                                role,
+                                privileges,
+                                roles,
+                                authentication_restrictions,
+                                authentication_restrictions_supported
+                                )
                 changed = True
         else:
             if not module.check_mode:
-                result = role_add(client,
-                                  db_name,
-                                  role,
-                                  privileges,
-                                  roles,
-                                  authentication_restrictions,
-                                  authentication_restrictions_supported
-                                  )
-                if not result:
-                    module.fail_json(msg='createRole failed', exception=traceback.format_exc())
+                role_add(module,
+                         client,
+                         db_name,
+                         role,
+                         privileges,
+                         roles,
+                         authentication_restrictions,
+                         authentication_restrictions_supported
+                         )
             changed = True
     elif state == 'absent':
         if current:
             if not module.check_mode:
-                result = role_remove(client, db_name, role)
-                if not result:
-                    module.fail_json(msg='dropRole failed', exception=traceback.format_exc())
+                role_remove(module,
+                            client,
+                            db_name,
+                            role
+                            )
             changed = True
 
     module.exit_json(changed=changed, role=role)
