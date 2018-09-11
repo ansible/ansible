@@ -77,6 +77,18 @@
     - stat_folder_with_task.task_exists is not defined
 
 # task stat tests
+- name: get stat of missing task with invalid folder
+  win_scheduled_task_stat:
+    path: fake path
+    name: fake task
+  register: stat_task_missing_folder
+
+- name: assert get stat of missing task with invalid folder
+  assert:
+    that:
+    - stat_task_missing_folder.folder_exists == False
+    - stat_task_missing_folder.task_exists == False
+
 - name: get stat of missing task
   win_scheduled_task_stat:
     path: '{{test_scheduled_task_stat_path}}'
