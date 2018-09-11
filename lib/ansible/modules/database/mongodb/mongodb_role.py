@@ -182,10 +182,10 @@ def check_compatibility(module, client):
 
 def load_mongocnf():
     config = configparser.RawConfigParser()
-    mongocnf = os.path.expanduser('~/.mongodb.cnf')
+    mongo_client_configuration_file = os.path.expanduser('~/.mongodb.cnf')
 
     try:
-        config.readfp(open(mongocnf))
+        config.readfp(open(mongo_client_configuration_file))
         creds = dict(
             user=config.get('client', 'user'),
             password=config.get('client', 'pass')
@@ -332,10 +332,10 @@ def main():
             module.fail_json(msg='Authentication Restrictions are supported from MongoDB 3.6, but not reporter properly up to 4.0')
 
         if login_user is None and login_password is None:
-            mongocnf_creds = load_mongocnf()
-            if mongocnf_creds is not False:
-                login_user = mongocnf_creds['user']
-                login_password = mongocnf_creds['password']
+            mongo_configuration_credentials = load_mongocnf()
+            if mongo_configuration_credentials is not False:
+                login_user = mongo_configuration_credentials['user']
+                login_password = mongo_configuration_credentials['password']
         elif login_password is None or login_user is None:
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
