@@ -118,7 +118,7 @@ class RoleRequirement(RoleDefinition):
                     role["src"] = "git+" + role["src"]
 
                 if '+' in role["src"]:
-                    (scm, src) = role["src"].split('+')
+                    (scm, src) = role["src"].split('+', 1)
                     role["scm"] = scm
                     role["src"] = src
 
