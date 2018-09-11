@@ -129,7 +129,6 @@ import os
 import ssl as ssl_lib
 import traceback
 from distutils.version import LooseVersion
-from collections import OrderedDict
 import yaml
 
 try:
@@ -202,25 +201,13 @@ def check_authentication_restrictions_support(client):
 
 def role_find(client, db_name, role, authentication_restrictions_supported):
     db = client[db_name]
+
     if authentication_restrictions_supported:
-        result = db.command(
-            OrderedDict(
-                [
-                    ('rolesInfo', role),
-                    ('showPrivileges', True),
-                    ('showAuthenticationRestrictions', True), # yes, it *is* undocumented
-                ]
-            )
-        )
+        # yes, showAuthenticationRestrictions *is* undocumented
+        result = db.command('rolesInfo', role, showPrivileges=True, showAuthenticationRestrictions=True)
     else:
-        result = db.command(
-            OrderedDict(
-                [
-                    ('rolesInfo', role),
-                    ('showPrivileges', True),
-                ]
-            )
-        )
+        result = db.command('rolesInfo', role, showPrivileges=True)
+
     if not result['roles']:
         return None
     elif len(result['roles']) == 1:
@@ -231,53 +218,23 @@ def role_find(client, db_name, role, authentication_restrictions_supported):
 
 def role_add(client, db_name, role, privileges, roles, authentication_restrictions, authentication_restrictions_supported):
     db = client[db_name]
+
     if authentication_restrictions_supported:
-        result = db.command(
-            OrderedDict(
-                [
-                    ('createRole', role),
-                    ('privileges', privileges),
-                    ('roles', roles),
-                    ('authenticationRestrictions', authentication_restrictions),
-                ]
-            )
-        )
+        result = db.command('createRole', role, privileges=privileges, roles=roles, authenticationRestrictions=authentication_restrictions)
     else:
-        result = db.command(
-            OrderedDict(
-                [
-                    ('createRole', role),
-                    ('privileges', privileges),
-                    ('roles', roles),
-                ]
-            )
-        )
+        result = db.command('createRole', role, privileges=privileges, roles=roles)
+
     return result['ok'] == 1
 
 
 def role_update(client, db_name, role, privileges, roles, authentication_restrictions, authentication_restrictions_supported):
     db = client[db_name]
+
     if authentication_restrictions_supported:
-        result = db.command(
-            OrderedDict(
-                [
-                    ('updateRole', role),
-                    ('privileges', privileges),
-                    ('roles', roles),
-                    ('authenticationRestrictions', authentication_restrictions),
-                ]
-            )
-        )
+        result = db.command('updateRole', role, privileges=privileges, roles=roles, authenticationRestrictions=authentication_restrictions)
     else:
-        result = db.command(
-            OrderedDict(
-                [
-                    ('updateRole', role),
-                    ('privileges', privileges),
-                    ('roles', roles),
-                ]
-            )
-        )
+        result = db.command('updateRole', role, privileges=privileges, roles=roles)
+
     return result['ok'] == 1
 
 
@@ -291,13 +248,10 @@ def role_compare(privileges, roles, authentication_restrictions, current, authen
         return sorted(current['roles']) == sorted(roles) and \
                sorted(current['privileges']) == sorted(privileges)
 
+
 def role_remove(client, db_name, role):
     db = client[db_name]
-    result = db.command(
-        {
-            'dropRole': role
-        }
-    )
+    result = db.command('dropRole', role)
     return result['ok'] == 1
 
 
