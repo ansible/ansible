@@ -120,9 +120,9 @@ class Connection(ConnectionBase):
 
         display.debug("starting update loop")
 
-        stdout = ''
+        stdout = b''
         stdout_done = False
-        stderr = ''
+        stderr = b''
         stderr_done = False
 
         while True:
