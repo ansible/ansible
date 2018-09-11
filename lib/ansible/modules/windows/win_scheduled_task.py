@@ -468,7 +468,7 @@ EXAMPLES = r'''
     triggers:
     - type: registration
       repetition:
-      - interval: PT1M
+        interval: PT1M
         duration: PT5M
         stop_at_duration_end: yes
 '''

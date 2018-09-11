@@ -83,7 +83,6 @@ lib/ansible/modules/windows/win_rabbitmq_plugin.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_rabbitmq_plugin.ps1 PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_region.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_route.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_scheduled_task.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_scheduled_task_stat.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_scheduled_task_stat.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_security_policy.ps1 PSUseApprovedVerbs
