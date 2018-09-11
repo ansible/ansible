@@ -84,9 +84,9 @@
     resource_group: "{{ resource_group }}"
     name: mysqlsrv{{ rpfx }}second
     sku:
-      name: GP_Gen4_2
+      name: B_Gen5_1
       tier: GeneralPurpose
-    location: westus
+    location: westus2
     storage_mb: 51200
     version: 5.6
     enforce_ssl: True
