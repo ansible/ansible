@@ -73,7 +73,7 @@ class Task(Base, Conditional, Taggable, Become):
     _changed_when = FieldAttribute(isa='list', default=[])
     _delay = FieldAttribute(isa='int', default=5)
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _delegate_facts = FieldAttribute(isa='bool')
     _failed_when = FieldAttribute(isa='list', default=[])
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
