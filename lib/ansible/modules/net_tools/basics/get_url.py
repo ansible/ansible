@@ -465,7 +465,7 @@ def main():
                 os.remove(checksum_tmpsrc)
                 lines = dict(s.split(None, 1) for s in lines)
                 filename = url_filename(url)
-                [checksum] = (k for (k, v) in lines.items() if v == filename)
+                [checksum] = (k for (k, v) in lines.items() if v.strip('./') == filename)
             # Remove any non-alphanumeric characters, including the infamous
             # Unicode zero-width space
             checksum = re.sub(r'\W+', '', checksum).lower()

@@ -300,6 +300,19 @@
     - '30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt'
     - 'd0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt'
 
+- name: create sha256 checksum file of src with a dot leading path
+  copy:
+    dest: '{{ files_dir }}/sha256sum_with_dot.txt'
+    content: "b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt"
+
+- name: add sha256 checksums with dot leading path not going to be downloaded
+  lineinfile:
+    dest: "{{ files_dir }}/sha256sum_with_dot.txt"
+    line: "{{ item }}"
+  loop:
+    - '30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt'
+    - 'd0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt'
+
 - copy:
     src: "testserver.py"
     dest: "{{ output_dir }}/testserver.py"
@@ -331,13 +344,26 @@
     path: "{{ output_dir }}/27617.txt"
   register: stat_result_sha256
 
+- name: download src with sha256 checksum url with dot leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ output_dir }}/27617sha256_with_dot.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+  register: result_sha256_with_dot
+
+- stat:
+    path: "{{ output_dir }}/27617sha256_with_dot.txt"
+  register: stat_result_sha256_with_dot
+
 - name: Assert that the file was downloaded
   assert:
     that:
       - result_sha1 is changed
       - result_sha256 is changed
+      - result_sha256_with_dot is changed
       - "stat_result_sha1.stat.exists == true"
       - "stat_result_sha256.stat.exists == true"
+      - "stat_result_sha256_with_dot.stat.exists == true"
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
