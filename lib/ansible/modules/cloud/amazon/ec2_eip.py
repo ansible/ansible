@@ -166,7 +166,7 @@ public_ip:
 try:
     import botocore
 except ImportError:
-    pass # Handled by AnsibleAWSModule
+    pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
@@ -271,7 +271,7 @@ class AnsibleEc2Eip(object):
         if len(devices) > 1:
             self._module.fail_json_aws(
                 None,
-                msg='More than one device was returned with id, aborting'.format(self.device_id))
+                msg='More than one device was returned with id {0}, aborting'.format(self.device_id))
         elif devices:
             device = camel_dict_to_snake_dict(devices[0])
         return device
