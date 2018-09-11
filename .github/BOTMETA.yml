@@ -151,7 +151,7 @@ files:
     ignored: astorije
     maintainers: $team_ansible
   $modules/files/assemble.py: $team_ansible
-  $modules/files/copy.py: $team_ansible
+  $modules/files/copy.py: $team_ansible ptux
   $modules/files/fetch.py: $team_ansible
   $modules/files/file.py: $team_ansible
   $modules/files/find.py: $team_ansible
