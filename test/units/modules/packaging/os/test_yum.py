@@ -3,7 +3,6 @@
 from ansible.compat.tests import unittest
 
 from ansible.modules.packaging.os.yum import YumModule
-import q
 
 
 yum_plugin_load_error = """
@@ -144,7 +143,6 @@ unwrapped_output_rhel7_expected_updated_pkgs = [
 
 
 class TestYumUpdateCheckParse(unittest.TestCase):
-    @q.t
     def _assert_expected(self, expected_pkgs, result):
 
         for expected_pkg in expected_pkgs:
@@ -200,8 +198,6 @@ class TestYumUpdateCheckParse(unittest.TestCase):
 
     def test_wrapped_output_rhel7_obsoletes(self):
         res, obs = YumModule.parse_check_update(unwrapped_output_rhel7_obsoletes)
-        q.q(res)
-        q.q(obs)
         self._assert_expected(
             unwrapped_output_rhel7_expected_updated_pkgs + unwrapped_output_rhel7_expected_new_obsoletes_pkgs,
             res
