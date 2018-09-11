@@ -70,7 +70,8 @@ def _maintain_symlinks(symlink_type, base_path):
             # cache now.  Will work if we're running directly from a git
             # checkout or from an sdist created earlier.
             symlink_data = {'script': _find_symlinks('bin'),
-                            'library': _find_symlinks('lib', '.py')}
+                            'library': _find_symlinks('lib', '.py')
+                            }
 
             # Sanity check that something we know should be a symlink was
             # found.  We'll take that to mean that the current directory
@@ -82,7 +83,6 @@ def _maintain_symlinks(symlink_type, base_path):
                                    "to be missing or broken")
         else:
             raise
-
     symlinks = symlink_data[symlink_type]
 
     for source in symlinks:
