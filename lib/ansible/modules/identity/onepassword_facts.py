@@ -25,6 +25,9 @@ requirements:
     - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
 notes:
     - "Based on the C(onepassword) lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
+    - This module stores potentially sensitive data from 1Password as Ansible facts.
+      Facts are subject to caching if enabled, which means this data could be stored in clear text
+      on disk or in a database.
 short_description: Gather items from 1Password and set them as facts
 description:
     - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1Password items and return as Ansible facts.

@@ -59,6 +59,9 @@ DOCUMENTATION = """
       - Due to the B(very) sensitive nature of these credentials, it is B(highly) recommeneded that you only pass in the minial credentials
         needed at any given time. Also, store these credentials in an Ansible Vault using a key that is equal to or greater in strength
         to the 1Password master password.
+      - This lookup stores potentially sensitive data from 1Password as Ansible facts.
+        Facts are subject to caching if enabled, which means this data could be stored in clear text
+        on disk or in a database.
 """
 
 EXAMPLES = """

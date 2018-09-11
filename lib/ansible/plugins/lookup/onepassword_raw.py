@@ -48,6 +48,17 @@ DOCUMENTATION = """
       vault:
         description: Vault containing the item to retrieve (case-insensitive). If absent will search all vaults
         default: None
+    notes:
+      - This lookup will use an existing 1Password session if one exists. If not, and you have already
+        performed an initial sign in (meaning C(~/.op/config exists)), then only the C(master_password) is required.
+        You may optionally specify C(subdomain) in this scenario, otherwise the last used subdomain will be used by C(op).
+      - This lookup can perform an initial login by providing C(subdomain), C(username), C(secret_key), and C(master_password).
+      - Due to the B(very) sensitive nature of these credentials, it is B(highly) recommeneded that you only pass in the minial credentials
+        needed at any given time. Also, store these credentials in an Ansible Vault using a key that is equal to or greater in strength
+        to the 1Password master password.
+      - This lookup stores potentially sensitive data from 1Password as Ansible facts.
+        Facts are subject to caching if enabled, which means this data could be stored in clear text
+        on disk or in a database.
 """
 
 EXAMPLES = """
