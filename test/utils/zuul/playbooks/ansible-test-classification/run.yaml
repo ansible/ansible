@@ -1,0 +1,4 @@
+---
+- hosts: all
+  roles:
+i    - ansible-test-classification

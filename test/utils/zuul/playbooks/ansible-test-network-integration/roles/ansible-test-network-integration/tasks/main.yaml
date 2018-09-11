@@ -1,0 +1,66 @@
+---
+
+# Ensure we have clean results structure to store results files
+# This could be used in the future to enable ansibullbot
+- name: Ensure previous results files have been removed
+  file:
+    path: "{{ ansible_path }}/test/results/bot"
+    state: absent
+
+- name: Create results directory
+  file:
+    path: "{{ ansible_path }}/test/results/bot"
+    state: directory
+
+- name: Create sub results file
+  copy:
+    content: '{"verified": false, "results": []}'
+    dest: "{{ ansible_path }}/test/results/bot/ansible-test-failure.json"
+
+
+- name: Install dependencies not listed in runner/requirements/network-integration.txt
+  pip:
+    name: tox
+    executable: "{{ item }}"
+  become: yes
+  with_items:
+    - pip2
+    - pip3
+
+- name: Wait for VM SSH
+  wait_for:
+    port: 8022
+    search_regex: SSH
+
+###
+# Run ansible-test
+#
+
+- name: Build test options
+  set_fact:
+    # FIXME Correctly set basebranch
+    standard_options: '--color no --tox --continue-on-error -v'
+
+- name: Run ansible-test network-integration
+  command: "{{ ansible_path }}/test/runner/ansible-test network-integration --inventory /var/lib/network-image-builder/output/{{ platform }}/inventory {{ standard_options }} --python {{ python_version }} {{ test_targets }}"
+
+##
+# Check for failures
+#
+
+- name: Remove temporary results file
+  file:
+    path: "{{ ansible_path }}/test/results/bot/ansible-test-failure.json"
+    state: absent
+
+- name: Examine results files
+  find:
+    path: "{{ ansible_path }}/test/results/bot"
+    patterns: "ansible-test-*.json"
+  register: results_files
+
+- name: Check for failing tests
+  fail:
+    msg: One or more tests have failed
+  when:
+    results_files.matched

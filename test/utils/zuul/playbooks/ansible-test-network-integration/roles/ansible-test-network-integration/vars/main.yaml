@@ -1,0 +1,3 @@
+---
+#ansible_path_query: "[?name=='ansible/ansible'].src_dir"
+ansible_path: "{{ ansible_user_dir }}/{{ zuul.project.src_dir }}"

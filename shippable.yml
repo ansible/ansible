@@ -42,8 +42,6 @@ matrix:
     - env: T=windows/2012-R2/4
     - env: T=windows/2016/4
 
-    - env: T=network
-
     - env: T=osx/10.11/1
     - env: T=rhel/7.4/1
     - env: T=freebsd/10.4/1

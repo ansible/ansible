@@ -1,0 +1,97 @@
+#####################################################################
+# Projects
+#
+
+- project:
+    third-party-check:
+      jobs:
+        - ansible-test-network-integration-vyos1-py2
+        - ansible-test-network-integration-vyos1-py3
+      debug: true
+    gate:
+      jobs:
+        - noop
+
+
+#####################################################################
+# ansible-test-network-integration
+#
+# Integration tests for Networking
+#
+
+- job:
+    name: ansible-test-network-integration
+    description: |
+       Parent job for ``ansible-test network-integration`` tests.
+
+       Responds to these variables:
+
+       .. zuul:jobvar:: python_version
+
+          Instruct ansible-test to test against this version of Python.
+
+          Example ``2.6``, ``2.7``, ``3.5``, ``3.6``
+
+       .. zuul:jobvar:: platform
+
+          Network platform to test against, such as ``eos``, ``ios``, ``vyos``
+
+       .. zuul:jobvar:: test_targets
+
+          Name of group, used to break up large integration tests into
+          multiple jobs to run concurrently.
+          Groups are used to balance tests across multiple CI jobs to minimize test run time.
+          https://docs.ansible.com/ansible/devel/dev_guide/testing/sanity/integration-aliases.html
+
+          Example ``zuul/vyos/group1/``
+
+    run: test/utils/zuul/playbooks/ansible-test-network-integration/run.yaml
+    timeout: 3000
+
+- job:
+    name: ansible-test-network-integration-vyos
+    description: ansible-test network-integration
+    parent: ansible-test-network-integration
+    files:
+      - ^.zuul.d/.*$
+      - ^test/utils/zuul/.*$
+      - ^lib/ansible/modules/network/vyos/.*$
+      - ^lib/ansible/module_utils/network/vyos/.*$
+      - ^lib/ansible/plugins/action/vyos.*$
+      - ^lib/ansible/plugins/cliconf/vyos.*$
+      - ^lib/ansible/plugins/terminal/vyos.*$
+    vars:
+      platform: vyos
+    nodeset:
+      nodes:
+        - name: test-node
+          label: ansible-network-vyos-1.1.8
+
+
+#####################################################################
+# Specific (directly runnable) jobs from this point down
+#
+#
+
+- job:
+    name: ansible-test-network-integration-vyos1-py2
+    description: ansible-test network-integration on Python 2
+    parent: ansible-test-network-integration-vyos
+    vars:
+      python_version: 2.7
+      test_targets: zuul/vyos/group1/
+
+- job:
+    name: ansible-test-network-integration-vyos1-py3
+    description: ansible-test network-integration on Python 3
+    parent: ansible-test-network-integration-vyos
+    vars:
+      python_version: 3.6
+      test_targets: zuul/vyos/group1/
+
+
+# ansible-test-network-integration-nxos1-py2
+# ansible-test-network-integration-nxos2-py2
+# ansible-test-network-integration-nxos3-py2
+# ansible-test-network-integration-nxos4-py2
+

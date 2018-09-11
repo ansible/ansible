@@ -1,1 +1,2 @@
-shippable/network
+zuul/vyos/group1
+zuul/network/smoketest
