@@ -92,7 +92,7 @@ class TestMyModule(unittest.TestCase):
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "update_key": "size",
             "command_options": "managementserver",
         }
@@ -103,14 +103,14 @@ class TestMyModule(unittest.TestCase):
 
     @mock.patch("ansible.modules.remote_management.lxca.lxca_managementserver._get_managementserver_pkg",
                 autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule",
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_managementserver.AnsibleModule",
                 autospec=True)
     def test__managementserver_empty_list(self, ansible_mod_cls, _get_managementserver):
         mod_obj = ansible_mod_cls.return_value
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "update_key": "size",
             "command_options": "managementserver",
         }
@@ -122,13 +122,13 @@ class TestMyModule(unittest.TestCase):
 
     '''
     @mock.patch("ansible.modules.remote_management.lxca.lxca_managementserver._managementserver", autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule", autospec=True)
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_managementserver.AnsibleModule", autospec=True)
     def test__nodes_throw_exception(self, ansible_mod_cls, _get_managementserver):
         mod_obj = ansible_mod_cls.return_value
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "command_options": "managementserver",
         }
         mod_obj.params = args

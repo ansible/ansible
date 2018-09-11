@@ -90,7 +90,7 @@ class TestMyModule(unittest.TestCase):
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "command_options": "updatecomp",
         }
         mod_obj.params = args
@@ -100,14 +100,14 @@ class TestMyModule(unittest.TestCase):
 
     @mock.patch("ansible.modules.remote_management.lxca.lxca_updatecomp._update_firmware_query_comp",
                 autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule",
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_updatecomp.AnsibleModule",
                 autospec=True)
     def test__updatecomp_empty_list(self, ansible_mod_cls, _get_updatecomp):
         mod_obj = ansible_mod_cls.return_value
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "command_options": "updatecomp",
         }
         mod_obj.params = args
@@ -118,13 +118,13 @@ class TestMyModule(unittest.TestCase):
 
     '''
     @mock.patch("ansible.modules.remote_management.lxca.lxca_updatecomp._updatecomp", autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule", autospec=True)
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_updatecomp.AnsibleModule", autospec=True)
     def test__nodes_throw_exception(self, ansible_mod_cls, _get_updatecomp):
         mod_obj = ansible_mod_cls.return_value
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "command_options": "updatecomp",
         }
         mod_obj.params = args
