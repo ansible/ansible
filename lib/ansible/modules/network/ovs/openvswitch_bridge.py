@@ -123,12 +123,18 @@ def map_obj_to_commands(want, have, module):
             commands.append(command)
     else:
         if have:
-            if want['fail_mode'] != have['fail_mode']:
-                templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
-                                       " set-fail-mode %(bridge)s"
-                                       " %(fail_mode)s")
-                command = templatized_command % module.params
-                commands.append(command)
+            wanted_fail_mode = want['fail_mode']
+            have_fail_mode = have['fail_mode']
+            if wanted_fail_mode != have_fail_mode:
+                if wanted_fail_mode is not None:
+                    if wanted_fail_mode.strip():
+                        # only set the fail-mode if specified and not empty
+                        templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                               " set-fail-mode %(bridge)s"
+                                               " %(fail_mode)s")
+
+                    command = templatized_command % module.params
+                    commands.append(command)
 
             if want['external_ids'] != have['external_ids']:
                 templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
