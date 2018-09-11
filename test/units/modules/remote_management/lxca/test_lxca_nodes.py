@@ -83,7 +83,7 @@ class TestMyModule(unittest.TestCase):
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "command_options": "nodes",
         }
         mod_obj.params = args
@@ -93,14 +93,14 @@ class TestMyModule(unittest.TestCase):
 
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes._nodes_by_uuid",
                 autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule",
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.AnsibleModule",
                 autospec=True)
     def test__nodes_empty_list(self, ansible_mod_cls, _get_nodes):
         mod_obj = ansible_mod_cls.return_value
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "uuid": "3C737AA5E31640CE949B10C129A8B01F",
             "command_options": "nodes_by_uuid",
         }
@@ -113,18 +113,17 @@ class TestMyModule(unittest.TestCase):
 
     '''
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes._nodes", autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule", autospec=True)
+    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.AnsibleModule", autospec=True)
     def test__nodes_throw_exception(self, ansible_mod_cls, _get_nodes):
         mod_obj = ansible_mod_cls.return_value
         args = {
             "auth_url": "https://10.243.30.195",
             "login_user": "USERID",
-            "login_password": "CME44ibm",
+            "login_password": "password",
             "command_options": "nodes",
         }
         mod_obj.params = args
         _get_nodes.side_effect = {'msg': "Failed", 'result': "throw exception"}
         with self.assertRaises(AnsibleFailJson):
             lxca_nodes.main()
-
     '''

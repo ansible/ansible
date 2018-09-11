@@ -235,7 +235,8 @@ LXCA_COMMON_ARGS = dict(
 )
 
 INPUT_ARG_SPEC = dict(
-    command_options=dict(default='jobs', choices=list(FUNC_DICT)),
+    command_options=dict(default='jobs', choices=['jobs', 'jobs_by_uuid',
+                                                  'jobs_delete', 'jobs_cancel']),
     id=dict(default=None),
     uuid=dict(default=None),
     job_state=dict(default=None, choices=[None, 'Pending', 'Running', 'Complete',
