@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - cloudfront_distribution - replace call to nonexistent method 'validate_distribution_id_from_caller_reference'
+    with 'validate_distribution_from_caller_reference' and set the distribution_id variable to the distribution's
+    'Id' key.
