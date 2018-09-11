@@ -1069,7 +1069,6 @@ class DockerServiceManager():
             else:
                 changed, changes, need_rebuild, force_update = new_service.compare(current_service)
                 if changed:
-                    changed = True
                     if need_rebuild:
                         if not module.check_mode:
                             self.remove_service(module.params['name'])
@@ -1077,7 +1076,6 @@ class DockerServiceManager():
                                                 new_service)
                         msg = 'Service rebuilt'
                         rebuilt = True
-                        changes = changes
                     else:
                         if not module.check_mode:
                             self.update_service(module.params['name'],
@@ -1085,7 +1083,6 @@ class DockerServiceManager():
                                                 new_service)
                         msg = 'Service updated'
                         rebuilt = False
-                        changes = changes
                 else:
                     if force_update and not module.check_mode:
                         self.update_service(module.params['name'],
@@ -1094,7 +1091,6 @@ class DockerServiceManager():
                         msg = 'Service forcefully updated'
                         rebuilt = False
                         changed = True
-                        changes = changes
                     else:
                         msg = 'Service unchanged'
                 facts = new_service.get_facts()
