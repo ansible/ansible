@@ -58,7 +58,7 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             finally:
                 raise_from(TaskError(error_msg), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
-            sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
+            sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
             time.sleep(sleep_time)
             failure_counter += 1
 
