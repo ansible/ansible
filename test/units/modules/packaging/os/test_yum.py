@@ -128,13 +128,19 @@ glibc.x86_64            2.17-157.el7_3.1  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 unwrapped_output_rhel7_obsoletes = unwrapped_output_rhel7 + wrapped_output_rhel7_obsoletes_postfix
-unwrapped_output_rhel7_expected_new_obsoletes_pkgs = ["ddashboard", "python-bugzilla", "python2-futures", "python2-pip",
-                                         "python2-pyxdg", "python2-simplejson"]
-unwrapped_output_rhel7_expected_old_obsoletes_pkgs = ["developerdashboard", "python-bugzilla-develdashboardfixes",
-                                                      "python-futures", "python-pip", "pyxdg", "python-simplejson"]
-unwrapped_output_rhel7_expected_updated_pkgs = ["NetworkManager-openvpn", "NetworkManager-openvpn-gnome", "cabal-install",
-                                        "cgit", "python34-libs", "python34-test", "python34-tkinter",
-                                        "python34-tools", "qgit", "rdiff-backup", "stoken-libs", "xlockmore"]
+unwrapped_output_rhel7_expected_new_obsoletes_pkgs = [
+    "ddashboard", "python-bugzilla", "python2-futures", "python2-pip",
+    "python2-pyxdg", "python2-simplejson"
+]
+unwrapped_output_rhel7_expected_old_obsoletes_pkgs = [
+    "developerdashboard", "python-bugzilla-develdashboardfixes",
+    "python-futures", "python-pip", "pyxdg", "python-simplejson"
+]
+unwrapped_output_rhel7_expected_updated_pkgs = [
+    "NetworkManager-openvpn", "NetworkManager-openvpn-gnome", "cabal-install",
+    "cgit", "python34-libs", "python34-test", "python34-tkinter",
+    "python34-tools", "qgit", "rdiff-backup", "stoken-libs", "xlockmore"
+]
 
 
 class TestYumUpdateCheckParse(unittest.TestCase):
@@ -197,7 +203,7 @@ class TestYumUpdateCheckParse(unittest.TestCase):
         q.q(res)
         q.q(obs)
         self._assert_expected(
-            unwrapped_output_rhel7_expected_updated_pkgs+unwrapped_output_rhel7_expected_new_obsoletes_pkgs,
+            unwrapped_output_rhel7_expected_updated_pkgs + unwrapped_output_rhel7_expected_new_obsoletes_pkgs,
             res
         )
         self._assert_expected(unwrapped_output_rhel7_expected_old_obsoletes_pkgs, obs)
