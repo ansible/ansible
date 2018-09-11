@@ -85,7 +85,7 @@
     name: mysqlsrv{{ rpfx }}second
     sku:
       name: B_Gen5_1
-      tier: GeneralPurpose
+      tier: Basic
     location: westus2
     storage_mb: 51200
     version: 5.6
