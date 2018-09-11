@@ -30,6 +30,7 @@ options:
       - Path to the file containing the key pair used on the instance, conflicts with key_data.
     required: false
   key_data:
+    version_added: "2.8"
     description:
       - Variable that references the private key (usually stored in vault), conflicts with key_file.
     required: false
