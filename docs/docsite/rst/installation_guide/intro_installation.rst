@@ -204,15 +204,33 @@ To install the newest version, you may need to unmask the ansible package prior 
 Latest Releases via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
 
+Though Ansible works with both Python 2 and 3 versions, FreeBSD has different packages for each Python version.
+So to install you can use:
+
 .. code-block:: bash
 
-    $ sudo pkg install ansible
+    $ sudo pkg install py27-ansible
+
+or:
+
+.. code-block:: bash
+
+    $ sudo pkg install py36-ansible
+
 
 You may also wish to install from ports, run:
 
 .. code-block:: bash
 
     $ sudo make -C /usr/ports/sysutils/ansible install
+
+You can also choose a specific version, i.e  ``ansible25``.
+
+Older versions of FreeBSD worked with something like this (substitute for your choice of package manager):
+
+.. code-block:: bash
+
+    $ sudo pkg install ansible
 
 .. _on_macos:
 
