@@ -1327,8 +1327,7 @@ def interfaceLevel2Config(module, cmd, prompt, answer):
     return retVal
 # EOM
 
-# Method Method for enter enable mode
-#
+
 def enterEnableModeForDevice(enablePassword, timeout, obj):
     command = "enable\n"
     pwdPrompt = "password:"
@@ -1381,8 +1380,7 @@ def enterEnableModeForDevice(enablePassword, timeout, obj):
     return retVal
 # EOM
 
-# Method for device response than time delay
-#
+
 def waitForDeviceResponse(command, prompt, timeout, obj):
     obj.settimeout(int(timeout))
     obj.send(command)
