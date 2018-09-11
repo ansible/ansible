@@ -18,11 +18,10 @@ author: Allen Sanabria (@linuxdynasty)
 module: include_vars
 short_description: Load variables from files, dynamically within a task
 description:
-  - Loads YAML/JSON variables dynamically from a file or from all files in a directory, recursively, during task runtime.
+  - Loads YAML/JSON variables dynamically from a file or directory, recursively, during task runtime.
   - If loading a directory, the files are sorted alphabetically before being loaded.
   - This module is also supported for Windows targets.
-  - Please note that the use of L(delegate_facts,../user_guide/playbooks_delegate.html#delegated-facts) may be required,
-    depending on your use case, when delegating the include.
+  - To assign included variables to a different host than ``inventory_hostname``, you must use ``delegate_to`` and also set ``delegate_facts: True``. See also L(delegate_facts,../user_guide/playbooks_delegate.html#delegated-facts).
 version_added: "1.4"
 options:
   file:
