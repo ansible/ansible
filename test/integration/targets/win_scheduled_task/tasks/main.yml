@@ -7,7 +7,7 @@
     include_tasks: failures.yml
 
   - name: Test normal scenarios
-    include_tasks: new_tests.yml
+    include_tasks: tests.yml
 
   - include_tasks: clean.yml
   
