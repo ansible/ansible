@@ -63,7 +63,7 @@ pull request to backport the change to a previous stable branch.
 
        git cherry-pick -x [SHA_FROM_DEVEL]
 
-#. Add a changelog entry for the change, and commit it.
+#. Add a :ref:`changelog fragment <changelogs_how_to>` for the change, and commit it.
 
 #. Push your feature branch to your fork on GitHub:
 
