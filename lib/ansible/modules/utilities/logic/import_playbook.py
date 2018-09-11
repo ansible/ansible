@@ -29,6 +29,7 @@ options:
       - The name of the imported playbook is specified directly without any other option.
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
+  - Note that including an empty playbook in a master playbook, will result in an error.
 '''
 
 EXAMPLES = """
