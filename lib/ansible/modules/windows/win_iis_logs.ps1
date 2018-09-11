@@ -53,63 +53,85 @@ Set-StrictMode -Version 2
             $ExtFileFlags,
             [bool]$WhatIf = $false
         )
-        #if (($ExtFileFlags -is [array])) {
-            
-            $LogProperties = Get-WebConfigurationProperty -Filter $ConfigurationPath  -Name logfile
-            $loggedFields = $LogProperties.logExtFileFlags -split ','
-            $allowedFields = @("Date","Time","ClientIP","UserName","SiteName","ComputerName","ServerIP","Method","UriStem","UriQuery","HttpStatus","Win32Status","BytesSent","BytesRecv","TimeTaken","ServerPort","UserAgent","Cookie","Referer","ProtocolVersion","Host","HttpSubStatus")
 
-            $fieldsToAdd = @()
-            $fieldsToRemove = @()
-            $changed = $false
-            
-            foreach ($ExtFileFlag in $ExtFileFlags) {
-                # First ensure this list member has the properties we expect
-                if (-not ([bool]($ExtFileFlag.PSobject.Properties.name -match "field_name") -and
-                [bool]($ExtFileFlag.PSobject.Properties.name -match "state"))){
-                    Fail-Json $result "Ojects in log_ext_file_flags must have 'field_name' and 'state' property"
-                }
+        $allowedFields = @("Date","Time","ClientIP","UserName","SiteName","ComputerName","ServerIP","Method","UriStem","UriQuery","HttpStatus","Win32Status","BytesSent","BytesRecv","TimeTaken","ServerPort","UserAgent","Cookie","Referer","ProtocolVersion","Host","HttpSubStatus")
 
-                # Check if the field exists and shouldn't
-                if ($ExtFileFlag.state -eq 'present' -and -not ($loggedFields -contains $ExtFileFlag.field_name))
-                {
-                    $changed=$true
-                    if ($allowedFields -notcontains ($ExtFileFlag.field_name)) {
-                        Fail-Json $result "Cannot add field $($ExtFileFlag.field_name) because it is not recogized by IIS"
+
+        if (-not ($ExtFileFlags -is [array])) {
+            if ($ExtFileFlags -eq "all" ) {
+                $ExtFileFlags = $allowedFields | ForEach-Object {
+                    [PSCustomObject]@{
+                        field_name=$_;
+                        state="present"
                     }
-                    $fieldsToAdd += ($ExtFileFlag.field_name)
-                }
-                elseif ($ExtFileFlag.state -eq 'absent' -and ($loggedFields -contains $ExtFileFlag.field_name)) {
-                    $changed=$true
-                    $fieldsToRemove += ($ExtFileFlag.field_name)
                 }
             }
-
-            if ($changed)
-            {
-                if ($WhatIf)
-                {
-                   return $true
+            elseif ($ExtFileFlags -eq "none") {
+                $ExtFileFlags = $allowedFields | ForEach-Object {
+                    [PSCustomObject]@{
+                        field_name=$_;
+                        state="absent"
+                    }
                 }
-               
-                else {
-                    $newLoggedFields = @()
-                    $loggedFields |
-                        Where-Object { $fieldsToRemove -notcontains $_ } | 
-                        Foreach-Object { 
-                            $newLoggedFields += $_
-                        }
-                    $fieldsToAdd | Foreach-Object {
+            }
+            else {
+                Fail-Json $result "invalid value supplied for log_ext_file_flags: $log_ext_file_flags"
+            }
+        }
+            
+        $LogProperties = Get-WebConfigurationProperty -Filter $ConfigurationPath  -Name logfile
+        $loggedFields = $LogProperties.logExtFileFlags -split ','
+        
+
+        $fieldsToAdd = @()
+        $fieldsToRemove = @()
+        $changed = $false
+        
+        foreach ($ExtFileFlag in $ExtFileFlags) {
+            # First ensure this list member has the properties we expect
+            if (-not ([bool]($ExtFileFlag.PSobject.Properties.name -match "field_name") -and
+            [bool]($ExtFileFlag.PSobject.Properties.name -match "state"))){
+                Fail-Json $result "Ojects in log_ext_file_flags must have 'field_name' and 'state' property"
+            }
+
+            # Check if the field exists and shouldn't
+            if ($ExtFileFlag.state -eq 'present' -and -not ($loggedFields -contains $ExtFileFlag.field_name))
+            {
+                $changed=$true
+                if ($allowedFields -notcontains ($ExtFileFlag.field_name)) {
+                    Fail-Json $result "Cannot add field $($ExtFileFlag.field_name) because it is not recogized by IIS"
+                }
+                $fieldsToAdd += ($ExtFileFlag.field_name)
+            }
+            elseif ($ExtFileFlag.state -eq 'absent' -and ($loggedFields -contains $ExtFileFlag.field_name)) {
+                $changed=$true
+                $fieldsToRemove += ($ExtFileFlag.field_name)
+            }
+        }
+
+        if ($changed)
+        {
+            if ($WhatIf)
+            {
+                return $true
+            }
+            
+            else {
+                $newLoggedFields = @()
+                $loggedFields |
+                    Where-Object { $fieldsToRemove -notcontains $_ } | 
+                    Foreach-Object { 
                         $newLoggedFields += $_
                     }
-                    
-                    $newString = $newLoggedFields -join ','
-                    Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name  logfile.logExtFileFlags -Value $newString
-                    return $true
+                $fieldsToAdd | Foreach-Object {
+                    $newLoggedFields += $_
                 }
+            
+                $newString = $( $newLoggedFields | Where-Object {$_}) -join ','
+                Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name  logfile.logExtFileFlags -Value $newString
+                return $true
             }
-
-       # }
+        }
     }
 
     function Confirm-CustomFields {
