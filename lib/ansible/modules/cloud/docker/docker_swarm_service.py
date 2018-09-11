@@ -1084,10 +1084,11 @@ class DockerServiceManager():
                         msg = 'Service updated'
                         rebuilt = False
                 else:
-                    if force_update and not module.check_mode:
-                        self.update_service(module.params['name'],
-                                            current_service,
-                                            new_service)
+                    if force_update:
+                        if not module.check_mode:
+                            self.update_service(module.params['name'],
+                                                current_service,
+                                                new_service)
                         msg = 'Service forcefully updated'
                         rebuilt = False
                         changed = True
