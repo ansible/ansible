@@ -298,11 +298,13 @@ class MavenDownloader:
         if artifact.version == "latest":
             artifact.version = self.find_latest_version_available(artifact)
 
-        if artifact.is_snapshot():
+        metadata_path = "/%s/%s" % (artifact.path(), self.metadata_file_name)
+
+        if artifact.is_snapshot() and self._url_exists(self.base + metadata_path):
             if self.local:
                 return self._uri_for_artifact(artifact, artifact.version)
-            path = "/%s/%s" % (artifact.path(), self.metadata_file_name)
-            content = self._getContent(self.base + path, "Failed to retrieve the maven metadata file: " + path)
+
+            content = self._getContent(self.base + metadata_path, "Failed to retrieve the maven metadata file: " + metadata_path)
             xml = etree.fromstring(content)
 
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
@@ -312,6 +314,7 @@ class MavenDownloader:
                 artifact_extension = extension[0] if extension else ''
                 if artifact_classifier == artifact.classifier and artifact_extension == artifact.extension:
                     return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
+
             timestamp_xmlpath = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")
             if timestamp_xmlpath:
                 timestamp = timestamp_xmlpath[0]
@@ -370,6 +373,14 @@ class MavenDownloader:
         if force:
             raise ValueError(failmsg + " because of " + info['msg'] + "for URL " + url_to_use)
         return None
+
+    def _url_exists(self, url):
+        req_timeout = self.module.params.get('timeout')
+        response, info = fetch_url(self.module, url, timeout=req_timeout)
+
+        if info['status'] == 200:
+            return True
+        return False
 
     def download(self, tmpdir, artifact, verify_download, filename=None):
         if not artifact.version or artifact.version == "latest":
