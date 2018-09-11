@@ -60,11 +60,13 @@ all: # keys must be unique, i.e. only one 'hosts' per group
 
 import os
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseFileInventoryPlugin
+
+NoneType = type(None)
 
 
 class InventoryModule(BaseFileInventoryPlugin):
@@ -112,9 +114,12 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_group(self, group, group_data):
 
-        if isinstance(group_data, (MutableMapping, type(None))):
+        if isinstance(group_data, (MutableMapping, NoneType)):
 
-            self.inventory.add_group(group)
+            try:
+                self.inventory.add_group(group)
+            except AnsibleError as e:
+                raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
 
             if group_data is not None:
                 # make sure they are dicts
@@ -124,24 +129,24 @@ class InventoryModule(BaseFileInventoryPlugin):
                         if isinstance(group_data[section], string_types):
                             group_data[section] = {group_data[section]: None}
 
-                        if not isinstance(group_data[section], (MutableMapping, type(None))):
+                        if not isinstance(group_data[section], (MutableMapping, NoneType)):
                             raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
                                                      (section, group, type(group_data[section])))
 
                 for key in group_data:
-                    if key == 'vars':
-                        for var in group_data['vars']:
-                            self.inventory.set_variable(group, var, group_data['vars'][var])
 
+                    if key == 'vars':
+                        for var in group_data[key]:
+                            self.inventory.set_variable(group, var, group_data[key][var])
                     elif key == 'children':
-                        for subgroup in group_data['children']:
-                            self._parse_group(subgroup, group_data['children'][subgroup])
+                        for subgroup in group_data[key]:
+                            self._parse_group(subgroup, group_data[key][subgroup])
                             self.inventory.add_child(group, subgroup)
 
                     elif key == 'hosts':
-                        for host_pattern in group_data['hosts']:
+                        for host_pattern in group_data[key]:
                             hosts, port = self._parse_host(host_pattern)
-                            self._populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
+                            self._populate_host_vars(hosts, group_data[key][host_pattern] or {}, group, port)
                     else:
                         self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
 
