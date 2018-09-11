@@ -33,58 +33,58 @@ Meraki modules provide a user-friendly interface to manage your Meraki environme
 
 .. code-block:: yaml
 
-	- name: Query SNMP settings
-	  meraki_snmp:
-	  	api_key: abc123
-	  	org_name: AcmeCorp
-	  	state: query
-	  delegate_to: localhost
+    - name: Query SNMP settings
+      meraki_snmp:
+        api_key: abc123
+        org_name: AcmeCorp
+        state: query
+      delegate_to: localhost
 
 Information about a particular object can be queried. For example, the `meraki_admin <meraki_admin_module>` module supports
 
 .. code-block:: yaml
 
-	- name: Gather information about Jane Doe
-	  meraki_admin:
-	  	api_key: abc123
-	  	org_name: AcmeCorp
-	  	state: query
-	  	email: janedoe@email.com
-	  delegate_to: localhost
+    - name: Gather information about Jane Doe
+      meraki_admin:
+        api_key: abc123
+        org_name: AcmeCorp
+        state: query
+        email: janedoe@email.com
+      delegate_to: localhost
 
 Common Parameters
 .................
 
 All Ansible Meraki modules support the following parameters which affect communication with the Meraki Dashboard API. Most of these should only be used by Meraki developers and not the general public.
 
-	host
-		Hostname or IP of Meraki Dashboard.
+    host
+        Hostname or IP of Meraki Dashboard.
 
-	use_https
-		Specifies whether communication should be over HTTPS. (Defaults to ``yes``)
+    use_https
+        Specifies whether communication should be over HTTPS. (Defaults to ``yes``)
 
-	use_proxy
-		Whether to use a proxy for any communication.
+    use_proxy
+        Whether to use a proxy for any communication.
 
-	validate_certs
-		Determine whether certificates should be validated or trusted. (Defaults to ``yes``)
+    validate_certs
+        Determine whether certificates should be validated or trusted. (Defaults to ``yes``)
 
 These are the common parameters which are used for most every module.
 
-	org_name
-		Name of organization to perform actions in.
+    org_name
+        Name of organization to perform actions in.
 
-	org_id
-		ID of organization to perform actions in.
+    org_id
+        ID of organization to perform actions in.
 
-	net_name
-		Name of network to perform actions in.
+    net_name
+        Name of network to perform actions in.
 
-	net_id
-		ID of network to perform actions in.
+    net_id
+        ID of network to perform actions in.
 
-	state
-		General specification of what action to take. ``query`` does lookups. ``present`` creates or edits. ``absent`` deletes.
+    state
+        General specification of what action to take. ``query`` does lookups. ``present`` creates or edits. ``absent`` deletes.
 
 .. hint:: Use the ``org_id`` and ``net_id`` parameters when possible. ``org_name`` and ``net_name`` require additional behind-the-scenes API calls to learn the ID values. ``org_id`` and ``net_id`` will perform faster. 
 
@@ -102,18 +102,18 @@ Returned Data Structures
 
 Meraki and its related Ansible modules return most information in the form of a list. For example, this is returned information by ``meraki_admin`` querying administrators. It returns a list even though there's only one.
 
-.. code-block:: yaml
+.. code-block:: json
 
-	[
-		{
-			'orgAccess': 'full', 
-			'name': 'John Doe',
-			'tags': [],
-			'networks': [],
-			'email': 'john@doe.com',
-			'id': '12345677890'
-		}
-	]
+    [
+        {
+            'orgAccess': 'full', 
+            'name': 'John Doe',
+            'tags': [],
+            'networks': [],
+            'email': 'john@doe.com',
+            'id': '12345677890'
+        }
+    ]
 
 Handling Returned Data
 ......................
