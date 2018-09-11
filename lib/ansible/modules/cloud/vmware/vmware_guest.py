@@ -29,7 +29,7 @@ requirements:
 - python >= 2.6
 - PyVmomi
 notes:
-    - Please make sure the user used for vmware_guest should have correct level of privileges.
+    - Please make sure that the user used for vmware_guest has the correct level of privileges.
     - For example, following is the list of minimum privileges required by users to create virtual machines.
     - "   DataStore > Allocate Space"
     - "   Virtual Machine > Configuration > Add New Disk"
@@ -38,12 +38,13 @@ notes:
     - "   Network > Assign Network"
     - "   Resource > Assign Virtual Machine to Resource Pool"
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
-    - Tested on vSphere 5.5, 6.0 and 6.5
+    - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
+    - Use SCSI disks instead of IDE when you want to resize online disks by specifing a SCSI controller
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
     description:
-    - Specify state of the virtual machine be in.
+    - Specify the state the virtual machine should be in.
     - 'If C(state) is set to C(present) and virtual machine exists, ensure the virtual machine
        configurations conforms to task arguments.'
     - 'If C(state) is set to C(absent) and virtual machine exists, then the specified virtual machine
