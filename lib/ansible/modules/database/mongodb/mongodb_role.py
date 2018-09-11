@@ -189,16 +189,16 @@ def check_compatibility(module, client):
         module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
 
 
-def load_mongocnf():
+def load_mongocnf(config_file):
     config = configparser.RawConfigParser()
-    mongo_client_configuration_file = os.path.expanduser('~/.mongodb.cnf')
 
     try:
-        config.readfp(open(mongo_client_configuration_file))
-        creds = dict(
-            user=config.get('client', 'user'),
-            password=config.get('client', 'pass')
-        )
+        with open(config_file) as f:
+            config.readfp(f)
+            creds = dict(
+                user=config.get('client', 'user'),
+                password=config.get('client', 'pass')
+            )
     except (configparser.NoOptionError, IOError):
         return False
 
@@ -313,6 +313,7 @@ def main():
             login_port=dict(default='27017'),
             login_database=dict(default=None),
             replica_set=dict(default=None),
+            config_file=dict(default="~/.mongodb.cnf", type='path'),
 
             database=dict(required=True, aliases=['db']),
             name=dict(required=True, aliases=['role']),
@@ -343,6 +344,7 @@ def main():
     login_port = module.params['login_port']
     login_database = module.params['login_database']
     replica_set = module.params['replica_set']
+    config_file = module.params['config_file']
 
     db_name = module.params['database']
     role = module.params['name']
@@ -378,7 +380,7 @@ def main():
             module.fail_json(msg='Authentication Restrictions are supported from MongoDB 3.6, but not reporter properly up to 4.0')
 
         if login_user is None and login_password is None:
-            mongo_configuration_credentials = load_mongocnf()
+            mongo_configuration_credentials = load_mongocnf(config_file)
             if mongo_configuration_credentials is not False:
                 login_user = mongo_configuration_credentials['user']
                 login_password = mongo_configuration_credentials['password']
