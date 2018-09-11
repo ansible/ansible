@@ -49,6 +49,7 @@ options:
         description:
             - The name of the database to add/remove the role from
         required: true
+        aliases: [ 'db' ]
     name:
         description:
             - The name of the role to add or remove
@@ -60,6 +61,8 @@ options:
     ssl:
         description:
             - Whether to use an SSL connection when connecting to the database
+        type: bool
+        default: 'no'
     ssl_cert_reqs:
         description:
             - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided
