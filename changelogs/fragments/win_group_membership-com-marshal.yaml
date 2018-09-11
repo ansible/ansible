@@ -1,0 +1,2 @@
+bugfixes:
+- win_group_membership - fix intermittent issue where it failed to convert the ADSI object to the .NET object after using it once
