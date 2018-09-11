@@ -309,6 +309,13 @@ if($gather_subset.Contains('platform')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
     $ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
 
+    try {
+        $ansible_reboot_pending = Get-PendingRebootStatus
+    } catch {
+        # fails for non-admin users, set to null in this case
+        $ansible_reboot_pending = $null
+    }
+
     $ansible_facts += @{
         ansible_architecture = $win32_os.OSArchitecture
         ansible_domain = $ip_props.DomainName
@@ -320,7 +327,7 @@ if($gather_subset.Contains('platform')) {
         ansible_owner_contact = ([string] $win32_cs.PrimaryOwnerContact)
         ansible_owner_name = ([string] $win32_cs.PrimaryOwnerName)
         # FUTURE: should this live in its own subset?
-        ansible_reboot_pending = (Get-PendingRebootStatus)
+        ansible_reboot_pending = $ansible_reboot_pending
         ansible_system = $osversion.Platform.ToString()
         ansible_system_description = ([string] $win32_os.Description)
         ansible_system_vendor = $win32_cs.Manufacturer
