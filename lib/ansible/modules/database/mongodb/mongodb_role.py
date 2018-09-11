@@ -243,7 +243,7 @@ def role_compare(privileges, roles, authentication_restrictions, current, authen
         current_restrictions = current['authenticationRestrictions'][0] if len(current['authenticationRestrictions']) > 0 else []
         return sorted(current['roles']) == sorted(roles) and \
                sorted(current['privileges']) == sorted(privileges) and \
-               sorted(current_restrictions) == sorted(authentication_restrictions) # yes, it does return single element list of lists
+               sorted(current_restrictions) == sorted(authentication_restrictions)  # yes, it does return single element list of lists
     else:
         return sorted(current['roles']) == sorted(roles) and \
                sorted(current['privileges']) == sorted(privileges)
@@ -358,20 +358,20 @@ def main():
                     result = role_update(client, db_name, role, privileges, roles, authentication_restrictions, authentication_restrictions_supported)
                     if not result:
                         module.fail_json(msg='updateRole failed', exception=traceback.format_exc())
-                changed=True
+                changed = True
         else:
             if not module.check_mode:
                 result = role_add(client, db_name, role, privileges, roles, authentication_restrictions, authentication_restrictions_supported)
                 if not result:
                     module.fail_json(msg='createRole failed', exception=traceback.format_exc())
-            changed=True
+            changed = True
     elif state == 'absent':
         if current:
             if not module.check_mode:
                 result = role_remove(client, db_name, role)
                 if not result:
                     module.fail_json(msg='dropRole failed', exception=traceback.format_exc())
-            changed=True
+            changed = True
 
     module.exit_json(changed=changed, role=role)
 
