@@ -18,9 +18,14 @@ author: Allen Sanabria (@linuxdynasty)
 module: include_vars
 short_description: Load variables from files, dynamically within a task
 description:
+<<<<<<< HEAD
   - Loads variables from a YAML/JSON files dynamically from within a file or from a directory recursively during task
     runtime. If loading a directory, the files are sorted alphabetically before being loaded.
   - This module is also supported for Windows targets.
+=======
+    - Loads variables from a YAML/JSON files dynamically from within a file or from a directory recursively during task runtime. If loading a directory,
+      the files are sorted alphabetically before being loaded.
+>>>>>>> shortens line
     - Please note that the use of :doc:`delegated facts </playbooks_delegation#delegated-facts>` may be required,
     depending on your use case, when delegating the include.
 version_added: "1.4"
