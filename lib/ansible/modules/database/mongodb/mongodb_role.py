@@ -23,6 +23,7 @@ module: mongodb_role
 short_description: Adds or removes a role from a MongoDB database.
 description:
     - Adds or removes a role from a MongoDB database.
+version_added: "2.8"
 options:
     login_user:
         description:
