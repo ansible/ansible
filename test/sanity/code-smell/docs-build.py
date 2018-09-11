@@ -38,7 +38,6 @@ def main():
 
     ignore_codes = [
         'reference-target-not-found',
-        'not-in-toc-tree',
     ]
 
     used_ignore_codes = set()

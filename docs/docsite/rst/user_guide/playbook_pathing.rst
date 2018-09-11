@@ -1,6 +1,8 @@
-=======================
+:orphan:
+
+***********************
 Search paths in Ansible
-=======================
+***********************
 
 Absolute paths are not an issue as they always have a known start, but relative paths ... well, they are relative.
 
@@ -32,7 +34,7 @@ i.e ::
 
 The current working directory (cwd) is not searched. If you see it, it just happens to coincide with one of the paths above.
 If you `include` a task file from a role, it  will NOT trigger role behavior, this only happens when running as a role, `include_role` will work.
-A new variable `ansible_search_path` var will have the search path used, in order (but without the appended subdirs). Using 5 "v"s (`-vvvvv`) should show the detail of the search as it happens. 
+A new variable `ansible_search_path` var will have the search path used, in order (but without the appended subdirs). Using 5 "v"s (`-vvvvv`) should show the detail of the search as it happens.
 
 As for includes, they try the path of the included file first and fall back to the play/role that includes them.
 

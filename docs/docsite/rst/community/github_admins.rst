@@ -1,22 +1,23 @@
+*************
 GitHub Admins
-=============
+*************
 
 .. contents:: Topics
 
-GitHub Admins have more permissions on GitHub than normal contributors.  There are
+GitHub Admins have more permissions on GitHub than normal contributors or even committers.  There are
 a few responsibilities that come with that increased power.
 
 
-Add and Remove Committers
--------------------------
+Adding and removing committers
+==============================
 
 The Ansible Team will periodically review who is actively contributing to Ansible to grant or revoke
 contributors' ability to commit on their own.  GitHub Admins are the people who have the power to
 actually manage the GitHub permissions.
 
 
-Change Branch Permissions for Release
--------------------------------------
+Changing branch permissions for releases
+========================================
 
 When we make releases we make people go through a :ref:`release_managers` to push commits to that
 branch.  The GitHub admins are responsible for setting the branch so only the Release Manager can

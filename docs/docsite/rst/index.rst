@@ -47,20 +47,10 @@ Ansible releases a new major release of Ansible approximately every two months. 
 
 .. toctree::
    :maxdepth: 2
+   :glob:
    :caption: Scenario Guides
 
-   scenario_guides/guide_aci
-   scenario_guides/guide_aws
-   scenario_guides/guide_azure
-   scenario_guides/guide_cloudstack
-   scenario_guides/guide_docker
-   scenario_guides/guide_gce
-   scenario_guides/guide_meraki
-   scenario_guides/guide_packet
-   scenario_guides/guide_rax
-   scenario_guides/guide_rolling_upgrade
-   scenario_guides/guide_vagrant
-   scenario_guides/guide_vultr
+   scenario_guides/guide_*
 
 .. toctree::
    :maxdepth: 2
@@ -75,7 +65,7 @@ Ansible releases a new major release of Ansible approximately every two months. 
    network/index
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Reference & Appendices
 
    ../modules/modules_by_category
@@ -90,6 +80,8 @@ Ansible releases a new major release of Ansible approximately every two months. 
    dev_guide/testing/sanity/index
    reference_appendices/faq
    reference_appendices/glossary
+   reference_appendices/module_utils
+   reference_appendices/special_variables
    reference_appendices/tower
 
 

@@ -11,7 +11,7 @@ Code of Conduct
 
 Please read and understand the :ref:`code_of_conduct`.
 
-Mailing List Information
+Mailing list information
 ========================
 
 Ansible has several mailing lists.  Your first post to the mailing list will be moderated (to reduce spam), so please allow up to a day or so for your first post to appear.
@@ -28,12 +28,12 @@ Ansible has several mailing lists.  Your first post to the mailing list will be 
 
 To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: `ansible-devel+subscribe@googlegroups.com`
 
-IRC Channel
-===========
+IRC channels
+============
 
 Ansible has several IRC channels on Freenode (irc.freenode.net).
 
-General Channels
+General channels
 ----------------
 
 - ``#ansible`` - For general use questions and support.
@@ -41,8 +41,8 @@ General Channels
 - ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 - ``#ansible-notices`` - Mostly bot output from things like GitHub, etc.
 
-Working Group
--------------
+Working groups
+--------------
 
 - ``#ansible-aws`` - For discussions on Amazon Web Services.
 - ``#ansible-community`` - Channel for discussing Ansible Community related things.
@@ -54,20 +54,20 @@ Working Group
 - ``#ansible-windows`` - For discussions on Ansible & Windows.
 
 
-Language specific channels
+Language-specific channels
 --------------------------
 
 - ``#ansible-es`` - Channel for Spanish speaking Ansible community.
 - ``#ansible-fr`` - Channel for French speaking Ansible community.
 
 
-IRC Meetings
+IRC meetings
 ------------
 
 The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to
 participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
-Tower Support Questions
+Tower support questions
 ========================
 
 Ansible `Tower <https://www.ansible.com/products/tower>`_ is a UI, Server, and REST endpoint for Ansible.
