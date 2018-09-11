@@ -154,7 +154,6 @@ $url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 10
 $headers = Get-AnsibleParam -obj $params -name "headers" -type "dict" -default @{}
-$skip_certificate_validation = Get-AnsibleParam -obj $params -name "skip_certificate_validation" -type "bool"
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $url_username = Get-AnsibleParam -obj $params -name "url_username" -type "str" -aliases "username"
 $url_password = Get-AnsibleParam -obj $params -name "url_password" -type "str" -aliases "password"
@@ -170,11 +169,6 @@ $result = @{
     dest = $dest
     elapsed = 0
     url = $url
-    # This is deprecated as of v2.4, remove in v2.8
-    win_get_url = @{
-        dest = $dest
-        url = $url
-    }
 }
 
 if (-not $use_proxy -and ($proxy_url -or $proxy_username -or $proxy_password)) {
@@ -195,15 +189,9 @@ if ($url_username) {
     if ($force_basic_auth) {
         $credentials = [convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($url_username+":"+$url_password))
     } else {
-        $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password) 
+        $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password)
     }
 
-}
-
-# If skip_certificate_validation was specified, use validate_certs
-if ($skip_certificate_validation -ne $null) {
-    Add-DeprecationWarning -obj $result -message "The parameter 'skip_certificate_validation' is being replaced with 'validate_certs'" -version 2.8
-    $validate_certs = -not $skip_certificate_validation
 }
 
 if (-not $validate_certs) {
@@ -225,7 +213,6 @@ if (Test-Path -LiteralPath $dest -PathType Container) {
     Fail-Json -obj $result -message "The destination path '$dest' does not exist, or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs."
 }
 $result.dest = $dest
-$result.win_get_url.dest = $dest
 
 # Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
 $security_protocols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
