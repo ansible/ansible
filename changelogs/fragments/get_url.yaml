@@ -3,3 +3,4 @@ minor_changes:
 
 bugfixes:
 - get_url - fix the bug that get_url does not change mode when checksum matches (https://github.com/ansible/ansible/issues/29614)
+- get_url - support remote checksum files with paths specified with leading dots (`./path/to/file`)
