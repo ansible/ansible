@@ -30,7 +30,7 @@ options:
   port:
     type: int
     description:
-      - Specifies the port on the remote device to listening for connections
+      - Specifies the port on the remote device that listens for connections
         when establishing the SSH connection.
     default: 830
     ini:
@@ -52,7 +52,7 @@ options:
       - The username used to authenticate to the remote device when the SSH
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
-      - Can be configured form the CLI via the C(--user) or C(-u) options
+      - Can be configured from the CLI via the C(--user) or C(-u) options.
     ini:
       - section: defaults
         key: remote_user
@@ -69,7 +69,7 @@ options:
       - name: ansible_ssh_pass
   private_key_file:
     description:
-      - The private SSH key or certificate file used to to authenticate to the
+      - The private SSH key or certificate file used to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
       - section: defaults
@@ -81,20 +81,20 @@ options:
   timeout:
     type: int
     description:
-      - Sets the connection time for the communicating with the remote device.
-        This timeout is used as the default timeout value when awaiting a
-        response after issuing a call to a RPC.  If the RPC does not return in
-        timeout seconds, an error is generated.
+      - Sets the connection time, in seconds, for communicating with the
+        remote device.  This timeout is used as the default timeout value when
+        awaiting a response after issuing a call to a RPC.  If the RPC
+        does not return in timeout seconds, an error is generated.
     default: 120
   host_key_auto_add:
-    type: bool
+    type: boolean
     description:
       - By default, Ansible will prompt the user before adding SSH keys to the
-        known hosts file.  Enabling this option, unknown host keys will
+        known hosts file. By enabling this option, unknown host keys will
         automatically be added to the known hosts file.
       - Be sure to fully understand the security implications of enabling this
         option on production systems as it could create a security vulnerability.
-    default: 'no'
+    default: False
     ini:
       - section: paramiko_connection
         key: host_key_auto_add
@@ -103,7 +103,7 @@ options:
   look_for_keys:
     default: True
     description:
-      -  enables looking for ssh keys in the usual locations for ssh keys (e.g. :file:`~/.ssh/id_*`)
+      -  Enables looking for ssh keys in the usual locations for ssh keys (e.g. :file:`~/.ssh/id_*`).
     env:
       - name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS
     ini:
@@ -133,7 +133,7 @@ options:
       - Configures, in seconds, the amount of time to wait when trying to
         initially establish a persistent connection.  If this value expires
         before the connection to the remote device is completed, the connection
-        will fail
+        will fail.
     default: 30
     ini:
       - section: persistent_connection
@@ -146,7 +146,7 @@ options:
       - Configures, in seconds, the amount of time to wait for a command to
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
-        close
+        close.
     default: 10
     ini:
       - section: persistent_connection

@@ -26,7 +26,7 @@ options:
   port:
     type: int
     description:
-      - Specifies the port on the remote device to listening for connections
+      - Specifies the port on the remote device that listens for connections
         when establishing the SSH connection.
     default: 22
     ini:
@@ -40,7 +40,7 @@ options:
     description:
       - Configures the device platform network operating system.  This value is
         used to load the correct terminal and cliconf plugins to communicate
-        with the remote device
+        with the remote device.
     vars:
       - name: ansible_network_os
   remote_user:
@@ -48,7 +48,7 @@ options:
       - The username used to authenticate to the remote device when the SSH
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
-      - Can be configured form the CLI via the C(--user) or C(-u) options
+      - Can be configured from the CLI via the C(--user) or C(-u) options.
     ini:
       - section: defaults
         key: remote_user
@@ -65,7 +65,7 @@ options:
       - name: ansible_ssh_pass
   private_key_file:
     description:
-      - The private SSH key or certificate file used to to authenticate to the
+      - The private SSH key or certificate file used to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
       - section: defaults
@@ -77,10 +77,10 @@ options:
   timeout:
     type: int
     description:
-      - Sets the connection time, in seconds, for the communicating with the
+      - Sets the connection time, in seconds, for communicating with the
         remote device.  This timeout is used as the default timeout value for
         commands when issuing a command to the network CLI.  If the command
-        does not return in timeout seconds, the an error is generated.
+        does not return in timeout seconds, an error is generated.
     default: 120
   become:
     type: boolean
@@ -90,8 +90,8 @@ options:
         transitioning from user mode to C(enable) mode in the CLI session.
         If become is set to True and the remote device does not support
         privilege escalation or the privilege has already been elevated, then
-        this option is silently ignored
-      - Can be configured form the CLI via the C(--become) or C(-b) options
+        this option is silently ignored.
+      - Can be configured form the CLI via the C(--become) or C(-b) options.
     default: False
     ini:
       - section: privilege_escalation
@@ -135,7 +135,7 @@ options:
       - Configures, in seconds, the amount of time to wait when trying to
         initially establish a persistent connection.  If this value expires
         before the connection to the remote device is completed, the connection
-        will fail
+        will fail.
     default: 30
     ini:
       - section: persistent_connection
@@ -148,7 +148,7 @@ options:
       - Configures, in seconds, the amount of time to wait for a command to
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
-        close
+        close.
     default: 10
     ini:
       - section: persistent_connection
