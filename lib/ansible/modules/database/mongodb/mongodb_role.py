@@ -130,7 +130,12 @@ import os
 import ssl as ssl_lib
 import traceback
 from distutils.version import LooseVersion
-import yaml
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 try:
     from pymongo.errors import ConnectionFailure
@@ -141,11 +146,11 @@ except ImportError:
     try:  # for older PyMongo 2.2
         from pymongo import Connection as MongoClient
     except ImportError:
-        pymongo_found = False
+        HAS_PYMONGO = False
     else:
-        pymongo_found = True
+        HAS_PYMONGO = True
 else:
-    pymongo_found = True
+    HAS_PYMONGO = True
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
@@ -316,8 +321,11 @@ def main():
         supports_check_mode=True
     )
 
-    if not pymongo_found:
-        module.fail_json(msg='the python pymongo module is required')
+    if not HAS_YAML:
+        module.fail_json(msg="This module requires PyYAML. Try `pip install PyYAML`")
+
+    if not HAS_PYMONGO:
+        module.fail_json(msg="This module requires pymongo. Try `pip install pymongo`")
 
     ssl = module.params['ssl']
 
