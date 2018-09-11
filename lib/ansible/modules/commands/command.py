@@ -39,10 +39,10 @@ options:
     version_added: "2.6"
   creates:
     description:
-      - A filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.
+      - A filename or (since 2.0) glob pattern. If it already exists, this step B(won't) be run.
   removes:
     description:
-      - A filename or (since 2.0) glob pattern, when it does not exist, this step will B(not) be run.
+      - A filename or (since 2.0) glob pattern. If it already exists, this step B(will) be run.
     version_added: "0.8"
   chdir:
     description:
