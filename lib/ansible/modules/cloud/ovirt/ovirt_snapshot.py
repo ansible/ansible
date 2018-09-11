@@ -59,6 +59,10 @@ options:
             - "restore_memory"
             - "save_memory"
         type: bool
+    delete_after_x_days:
+        description:
+            - "Number of days after which should snapshot be deleted."
+            - "It will check all snapshots for vm and delte them if they are older."
 notes:
     - "Note that without a guest agent the data on the created snapshot may be
        inconsistent."
@@ -98,6 +102,11 @@ EXAMPLES = '''
     state: absent
     vm_name: rhel7
     snapshot_id: "{{ snapshot.id }}"
+
+# Delete snapshot after x days:
+- ovirt_snapshot:
+    vm_name: test
+    delete_after_x_days: 1
 '''
 
 
@@ -231,6 +240,7 @@ def main():
         vm_name=dict(required=True),
         snapshot_id=dict(default=None),
         description=dict(default=None),
+        delete_after_x_days=dict(default=None,type='int'),
         use_memory=dict(
             default=None,
             type='bool',
@@ -263,6 +273,15 @@ def main():
 
     vm_service = vms_service.vm_service(vm.id)
     snapshots_service = vms_service.vm_service(vm.id).snapshots_service()
+    if module.params.get('delete_after_x_days') is not None: 
+        from datetime import datetime
+        date_now = datetime.now()
+        for snapshot in snapshots_service.list():
+            if snapshot.vm and snapshot.vm.name == module.params.get('vm_name'):
+                diff = date_now - snapshot.date.replace(tzinfo=None)
+                if diff.days  >= module.params.get('delete_after_x_days'):
+                    snapshots_service.snapshot_service(snapshot.id).remove()
+
     try:
         state = module.params['state']
         if state == 'present':
