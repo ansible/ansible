@@ -141,6 +141,7 @@ files:
   $modules/crypto/: Spredzy
   $modules/crypto/acme/: resmo felixfontein
   $modules/database/influxdb/: kamsz
+  $modules/database/mongodb/mongodb_role.py: jkramarz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/postgresql/: matburt
   $modules/database/postgresql/postgresql_db.py: $team_ansible
