@@ -75,12 +75,12 @@
     tags:
       aaa: bbb
 
-- name: Create second instance of PostgreSQL Server
+- name: Create second instance of PostgreSQL Server -- add tags
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}second
     sku:
-      name: GP_Gen4_2
+      name: B_Gen5_1
       tier: GeneralPurpose
     location: westus
     storage_mb: 51200
