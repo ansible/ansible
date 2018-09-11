@@ -295,7 +295,7 @@ class OnePasswordFacts(object):
     def assert_logged_in(self):
         try:
             rc, out, err = self._run(['get', 'account'], ignore_errors=True)
-            if rc != 1:
+            if rc == 0:
                 self.logged_in = True
             if not self.logged_in:
                 self.get_token()
