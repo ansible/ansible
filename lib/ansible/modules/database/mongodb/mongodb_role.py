@@ -42,6 +42,11 @@ options:
     login_database:
         description:
             - The database where login credentials are stored
+    config_file:
+        description:
+            - A config file from which user and password are to be read
+        type: path
+        default: '~/.mongodb.cnf'
     replica_set:
         description:
             - Replica set to connect to (automatically connects to primary for writes)
