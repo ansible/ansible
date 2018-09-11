@@ -8,6 +8,26 @@
 Set-StrictMode -Version 2
 
 #region functions
+
+    function Confirm-LocalTime {
+        param(
+            $ConfigurationPath,
+            [Nullable[boolean]]$UseLocalTime,
+            [bool]$WhatIf = $false
+        )
+        
+        if (-not [String]::IsNullOrEmpty($UseLocalTime)) {
+            $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile'
+            $LogProperties = $(Get-WebConfiguration -Filter $ConfigurationPath)
+            
+            if($LogProperties.localTimeRollover -ne $UseLocalTime){
+                if(-not $WhatIf) {
+                    Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name logfile.localTimeRollover -Value $UseLocalTime
+                }
+                return $true
+            }
+        }
+    }
     function Confirm-LogDirectory {
         param(
             $ConfigurationPath,
@@ -184,7 +204,8 @@ $site_name = Get-AnsibleParam $params "site_name" -type "str" -default "System" 
 $log_directory = Get-AnsibleParam $params "log_directory" -type "path" -default $null
 $log_format = Get-AnsibleParam $params "log_format" -type "path" -default "W3C"
 $log_ext_file_flags = Get-AnsibleParam $params "log_ext_file_flags" -type "list" 
-$log_custom_fields = Get-AnsibleParam $params "log_custom_fields" -type "list" 
+$log_custom_fields = Get-AnsibleParam $params "log_custom_fields" -type "list"
+$use_local_time =  Get-AnsibleParam $params "use_local_time" -type "bool"  -default $null
 
 $result = @{
     changed = $false
@@ -217,6 +238,11 @@ if ($site_name -eq "System") {
     {
         $changed = $true
         $messages += "Custom Fields"
+    }
+
+    if($(Confirm-LocalTime -UseLocalTime $use_local_time @shared_params)){
+        $changed = $true
+        $messages += "Use Local Time"
     }
 
     if ($check_mode) {
