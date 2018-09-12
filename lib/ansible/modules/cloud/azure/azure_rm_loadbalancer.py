@@ -845,7 +845,7 @@ def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
     )
 
 
-def compare_arrays(old, new, param_name):
+def compare_arrays(old, new):
     old = old or []
     new = new or []
 
