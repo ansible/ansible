@@ -823,8 +823,7 @@ class ElbManager(object):
             result = result and (str(actual['instance_protocol'].upper()) == str(expected['instance_protocol'].upper()))
 
         if 'ssl_certificate_id' in expected:
-            result = result and (
-                    str(actual['ssl_certificate_id'].upper()) == str(expected['ssl_certificate_id'].upper()))
+            result = result and (str(actual['ssl_certificate_id']) == str(expected['ssl_certificate_id']))
 
         return result
 
