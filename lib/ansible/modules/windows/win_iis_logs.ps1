@@ -9,6 +9,44 @@ Set-StrictMode -Version 2
 
 #region functions
 
+
+    function Confirm-RotationPeriod {
+        param(
+            $ConfigurationPath,
+            $RotationPeriod,
+            $TruncateSize,
+            [bool]$WhatIf = $false
+        )
+
+        $validValues = @("Hourly","Daily","Weekly","Monthly","MaxSize","Disabled")
+        
+        if (-not [String]::IsNullOrEmpty($RotationPeriod)) {
+            if ($RotationPeriod -eq "Disabled"){
+                $RotationPeriod = "MaxSize"
+                $TruncateSize = 4294967295
+            }
+            $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile'
+            $LogProperties = $(Get-WebConfiguration -Filter $ConfigurationPath)
+            
+            $changed = $false
+            if($LogProperties.period -ne $RotationPeriod ){
+                if(-not $WhatIf) {
+                    Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name logfile.period -Value $RotationPeriod
+                }
+                $changed =  $true
+            }
+            if($RotationPeriod -eq "MaxSize" -and $LogProperties.truncateSize -ne $TruncateSize){
+                if(-not $WhatIf) {
+                    Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name logfile.truncateSize -Value $TruncateSize
+                }
+                $changed =  $true
+            }
+            return  $changed
+        }
+
+    }
+
+
     function Confirm-LocalTime {
         param(
             $ConfigurationPath,
@@ -228,6 +266,8 @@ $log_format = Get-AnsibleParam $params "log_format" -type "path" -default "W3C"
 $log_ext_file_flags = Get-AnsibleParam $params "log_ext_file_flags" -type "list" 
 $log_custom_fields = Get-AnsibleParam $params "log_custom_fields" -type "list"
 $use_local_time =  Get-AnsibleParam $params "use_local_time" -type "bool"  -default $null
+$rotation_period = Get-AnsibleParam $params "rotation_period" -type "str" -default $null
+$truncate_size = Get-AnsibleParam $params "truncate_size" -type "str" -default $null
 
 $result = @{
     changed = $false
@@ -235,6 +275,12 @@ $result = @{
 [bool]$changed = $false
 $messages = @()
 $shared_params = @()
+
+if ($rotation_period -ne "MaxSize" -and $truncate_size -ne $null)
+{
+    Add-Warning -obj $result -message "truncate_size is of no effect when rotation_period is not 'MaxSize'"
+}
+
 
 if ($site_name -eq "System") {
     
@@ -265,6 +311,11 @@ if ($site_name -eq "System") {
     if($(Confirm-LocalTime -UseLocalTime $use_local_time @shared_params)){
         $changed = $true
         $messages += "Use Local Time"
+    }
+
+    if($(Confirm-RotationPeriod -RotationPeriod $rotation_period -TruncateSize $truncate_size @shared_params)){
+        $changed = $true
+        $messages += "Rotation Period"
     }
 
     if ($check_mode) {
