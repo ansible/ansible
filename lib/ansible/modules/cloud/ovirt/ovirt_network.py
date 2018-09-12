@@ -61,7 +61,7 @@ options:
     external_provider:
         description:
             - "Name of external network provider."
-        version_added: 2.7
+        version_added: 2.8
     vm_network:
         description:
             - "If I(True) network will be marked as network for VM."
@@ -152,11 +152,11 @@ from ansible.module_utils.ovirt import (
 class NetworksModule(BaseModule):
     def import_external_network(self):
         ons_service = self._connection.system_service().openstack_network_providers_service()
-        on_service = ons_service.provider_service(get_id_by_name(ons_service,self.param('external_provider')))
+        on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
         networks_service = on_service.networks_service()
-        network_service = networks_service.network_service(get_id_by_name(networks_service,self.param('name')))
+        network_service = networks_service.network_service(get_id_by_name(networks_service, self.param('name')))
         network_service.import_(data_center=otypes.DataCenter(name=self._module.params['data_center']))
-        return { "network":get_dict_of_struct(network_service.get()),"changed":True}
+        return {"network": get_dict_of_struct(network_service.get()), "changed": True}
 
     def build_entity(self):
         return otypes.Network(
