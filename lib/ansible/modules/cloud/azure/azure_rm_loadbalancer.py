@@ -668,8 +668,17 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                     enable_floating_ip=False
                 )] if self.protocol else None
             if load_balancer:
-                # check update, NIE
-                changed = False
+                if (self.location != load_balancer['location'] or
+                        self.sku != load_balancer['sku']['name'] or
+                        not compare_arrays(self.backend_address_pools, load_balancer['backend_address_pools']) or
+                        not compare_arrays(self.frontend_ip_configurations, load_balancer['frontend_ip_configurations']) or
+                        not compare_arrays(self.inbound_nat_pools, load_balancer['inbound_nat_pools']) or
+                        not compare_arrays(self.inbound_nat_rules, load_balancer['inbound_nat_rules']) or
+                        not compare_arrays(self.load_balancing_rules, load_balancer['load_balancing_rules']) or
+                        not compare_arrays(self.probes, load_balancer['probes']):
+                    changed = True
+                else:
+                    changed = False
             else:
                 changed = True
         elif self.state == 'absent' and load_balancer:
@@ -834,6 +843,23 @@ def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
         load_balancer_name,
         name
     )
+
+
+def compare_arrays(old, new, param_name):
+    old = old or []
+    new = new or []
+
+    oldd = {}
+    for item in old:
+        name = item['name']
+        oldd[name] = item
+    newd = {}
+    for item in new:
+        name = item['name']
+        newd[name] = item
+
+    newd = dict_merge(oldd, newd)
+    return newd == oldd
 
 
 def main():
