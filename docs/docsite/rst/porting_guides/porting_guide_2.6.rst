@@ -50,10 +50,10 @@ Noteworthy module changes
 -------------------------
 
 * The ``upgrade`` module option for ``win_chocolatey`` has been removed; use ``state: latest`` instead.
-* The ``reboot`` module option for ``win_feature`` has been removed; use the ``win_reboot`` action plugin instead
-* The ``win_iis_webapppool`` module no longer accepts a string for the ``attributes`` module option; use the free form dictionary value instead
-* The ``name`` module option for ``win_package`` has been removed; this is not used anywhere and should just be removed from your playbooks
-* The ``win_regedit`` module no longer automatically corrects the hive path ``HCCC`` to ``HKCC``; use ``HKCC`` because this is the correct hive path
+* The ``reboot`` module option for ``win_feature`` has been removed; use the ``win_reboot`` action plugin instead.
+* The ``win_iis_webapppool`` module no longer accepts a string for the ``attributes`` module option; use the free form dictionary value instead.
+* The ``name`` module option for ``win_package`` has been removed; this is not used anywhere and should just be removed from your playbooks.
+* The ``win_regedit`` module no longer automatically corrects the hive path ``HCCC`` to ``HKCC``; use ``HKCC`` because this is the correct hive path.
 * The :ref:`file_module` now emits a deprecation warning when ``src`` is specified with a state
   other than ``hard`` or ``link`` as it is only supposed to be useful with those.  This could have
   an effect on people who were depending on a buggy interaction between src and other state's to
@@ -65,6 +65,7 @@ Noteworthy module changes
   destination path like this::
 
     $ ansible localhost -m file -a 'path=/tmp/lib state=directory'
+
 * The ``k8s_raw`` and ``openshift_raw`` modules have been aliased to the new ``k8s`` module.
 * The ``k8s`` module supports all Kubernetes resources including those from Custom Resource Definitions and aggregated API servers. This includes all OpenShift resources.
 * The ``k8s`` module will not accept resources where subkeys have been snake_cased. This was a workaround that was suggested with the ``k8s_raw`` and ``openshift_raw`` modules.
@@ -77,8 +78,7 @@ Noteworthy module changes
   Since an empty regexp matches every line in a file, it will replace the last line in a file rather
   than inserting. If this is the desired behavior, use ``'^'`` which will match every line and
   will not trigger the warning.
-
-
+* Openstack modules are no longer using the ``shade`` library. Instead ``openstacksdk`` is used. Since ``openstacksdk`` should be already present as a dependency to ``shade`` no additional actions are required.
 
 Plugins
 =======
@@ -108,3 +108,8 @@ Networking
 ==========
 
 No notable changes.
+
+Dynamic inventory scripts
+=========================
+
+* ``contrib/inventory/openstack.py`` has been renamed to ``contrib/inventory/openstack_inventory.py``. If you have used ``openstack.py`` as a name for your OpenStack dynamic inventory file, change it to ``openstack_inventory.py``. Otherwise the file name will conflict with imports from ``openstacksdk``.
