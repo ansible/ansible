@@ -56,6 +56,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
+from ansible.utils._build_helpers import update_file_if_different
 
 
 #####################################################################################
@@ -183,8 +184,8 @@ def write_data(text, output_dir, outputname, module=None):
             os.makedirs(output_dir)
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
-        with open(fname, 'wb') as f:
-            f.write(to_bytes(text))
+
+        update_file_if_different(fname, to_bytes(text))
     else:
         print(text)
 
