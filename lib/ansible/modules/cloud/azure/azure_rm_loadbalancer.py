@@ -675,7 +675,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         elif self.state == 'absent' and load_balancer:
             changed = True
 
-        self.results['state'] = load_balancer.as_dict() if load_balancer else None
+        self.results['state'] = load_balancer.as_dict() if load_balancer else {}
         if 'tags' in self.results['state']:
             update_tags, self.results['state']['tags'] = self.update_tags(self.results['state']['tags'])
             if update_tags:
