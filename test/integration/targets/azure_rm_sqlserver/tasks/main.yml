@@ -251,7 +251,7 @@
   assert:
     that:
       - output.changed == False
-      - output.rules[].id != None
+      - output.rules[0].id != None
       - output.rules[0].id != None
       - output.rules[0].resource_group != None
       - output.rules[0].server_name != None

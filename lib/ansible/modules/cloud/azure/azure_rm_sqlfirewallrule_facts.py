@@ -201,6 +201,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         }
         return d
 
+
 def main():
     AzureRMFirewallRulesFacts()
 
