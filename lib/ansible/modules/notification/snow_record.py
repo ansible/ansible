@@ -33,12 +33,14 @@ options:
         required: false
         default: false
         type: bool
+        version_added: "2.8"
     validate_certs:
         description:
             - If True we validate certificates when using a unique service now address
         required: false
         default: true
         type: bool
+        version_added: "2.8"
     username:
         description:
             - User to connect to ServiceNow as
@@ -59,7 +61,7 @@ options:
               the supplied data.  If no such record exists, a new one will
               be created.  C(absent) will delete a record.
         choices: [ present, absent ]
-        required: false
+        required: True
     data:
         description:
             - key, value pairs of data to load into the record.
@@ -193,6 +195,7 @@ try:
 except ImportError:
     pass
 
+
 def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
@@ -204,7 +207,7 @@ def run_module():
         validate_certs=dict(type='bool', required=False, default=True),
         table=dict(type='str', required=False, default='incident'),
         state=dict(choices=['present', 'absent'],
-                   type='str', required=False, default=None),
+                   type='str', required=True),
         number=dict(default=None, required=False, type='str'),
         data=dict(default=None, required=False, type='dict'),
         lookup_field=dict(default='number', required=False, type='str'),
