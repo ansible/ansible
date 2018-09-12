@@ -20,6 +20,28 @@ Playbook
 No notable changes.
 
 
+Command Line
+============
+
+Become Prompting
+----------------
+
+In Ansible 2.5 a config value was introduced to change the become password prompts to not include the become method. When this was introduced, the default was set to ``False``.
+
+In the Ansible 2.8 release, this configuration value has been changed to ``True`` to no longer display the become method in the prompt by default.
+
+**OLD** In Ansible 2.7::
+
+    ansible-playbook --become --ask-become-pass site.yml
+    SUDO password:
+
+**NEW** In Ansible 2.8::
+
+    ansible-playbook --become --ask-become-pass site.yml
+    BECOME password:
+
+For more information about this configuration please see :ref:`AGNOSTIC_BECOME_PROMPT`
+
 Deprecated
 ==========
 
