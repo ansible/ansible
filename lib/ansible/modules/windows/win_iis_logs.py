@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: win_iis_logs
+module: win_xml
 version_added: "2.8"
 short_description: Manages IIS Log configuration
 description:
@@ -63,6 +63,16 @@ EXAMPLES = r'''
           source_type: 'RequestHeader'
           source_name:  'X-Forwarded-For'
           state: present
+
+# Rotate logs at truncation intervals
+  - name: Ensure IIS Logging is configured
+    win_iis_logs:
+        site_name: "System"
+        log_directory: '%SystemDrive%\inetpub\logs\LogFiles'
+        use_local_time: false
+        log_ext_file_flags: all
+        rotation_period: MaxSize
+        truncate_size: 8675309
           
 '''
 
