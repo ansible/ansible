@@ -344,7 +344,7 @@ Also see dynamic_variables_.
 How do I access a group variable?
 +++++++++++++++++++++++++++++++++
 
-Techinically, you don't, Ansible does not really use groups directly. Groups are label for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
+Technically, you don't, Ansible does not really use groups directly. Groups are label for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
 
 That said, you could just access the variable by selecting a host that is part of that group, see first_host_in_a_group_ below for an example.
 
@@ -580,7 +580,7 @@ The above DOES NOT WORK as you expect, if you need to use a dynamic variable use
 
     {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 
-For 'non host vars' you can use the vars lookup plugin:
+For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 
 .. code-block:: jinja
 
