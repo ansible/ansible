@@ -6,7 +6,6 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-
 from ansible.module_utils.utm_utils import lookup_entry, clean_result, is_object_changed
 
 __metaclass__ = type
@@ -117,6 +116,7 @@ EXAMPLES = """
     state: absent
 """
 
+
 class UTMBackendEntry:
 
     def __init__(self, url):
@@ -201,7 +201,7 @@ def main():
             comment=dict(type='str', required=False, default=""),
             keepalive=dict(type='bool', required=False, default=False),
             path=dict(type='str', required=False, default="/"),
-            port=dict(type='int', required=False,default=80),
+            port=dict(type='int', required=False, default=80),
             ssl=dict(type='bool', required=False, default=False),
             status=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', required=False, default=300),
