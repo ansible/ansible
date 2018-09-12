@@ -64,7 +64,6 @@ options:
     hostname:
         description:
           - The hostname for the dns host object
-        required: True
     interface:
         description:
           - The reference name of the interface to use. If not provided the default interface will be used
@@ -94,6 +93,24 @@ options:
         default: True
 """
 
+EXAMPLES = """
+# Create a dns_host entry
+- name: utm dns_host
+  utm_dns_entry:
+    utm_host: sophos.host.name
+    utm_token: abcdefghijklmno1234
+    name: TestDNSEntry
+    hostname: testentry.some.tld
+    state: present
+
+# remove a dns_host entry
+- name: utm dns_host
+  utm_dns_entry:
+    utm_host: sophos.host.name
+    utm_token: abcdefghijklmno1234
+    name: TestDNSEntry
+    state: absent
+"""
 
 class UTMDnsEntry:
 
@@ -176,7 +193,7 @@ def main():
             address=dict(type='str', required=False, default='0.0.0.0'),
             address6=dict(type='str', required=False, default='::'),
             comment=dict(type='str', required=False, default=""),
-            hostname=dict(type='str', required=True),
+            hostname=dict(type='str', required=False),
             interface=dict(type='str', required=False, default=""),
             resolved=dict(type='bool', required=False, default=False),
             resolved6=dict(type='bool', required=False, default=False),
