@@ -229,7 +229,7 @@
   azure_rm_sqlfirewallrule_facts:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
-    firewall_rule_name: firewallrule{{ random_postfix }}
+    name: firewallrule{{ random_postfix }}
   register: output
 - name: Assert that facts are returned
   assert:
@@ -278,7 +278,7 @@
   azure_rm_sqlfirewallrule_facts:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
-    firewall_rule_name: firewallrule{{ random_postfix }}
+    name: firewallrule{{ random_postfix }}
   register: output
 - name: Assert that empty dictionary was returned
   assert:
