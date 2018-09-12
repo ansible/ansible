@@ -27,6 +27,11 @@ options:
         description:
             - The service now instance name
         required: true
+    host:
+        description:
+            - The instance is an address to the on premise endpoint
+        required: false
+	default: false
     username:
         description:
             - User to connect to ServiceNow as
@@ -47,7 +52,7 @@ options:
               the supplied data.  If no such record exists, a new one will
               be created.  C(absent) will delete a record.
         choices: [ present, absent ]
-        required: true
+        required: false
     data:
         description:
             - key, value pairs of data to load into the record.
@@ -68,6 +73,7 @@ options:
 
 requirements:
     - python pysnow (pysnow)
+    - python requests
 
 author:
     - Tim Rightnour (@garbled1)
@@ -132,6 +138,18 @@ EXAMPLES = '''
     number: INC0000055
     attachment: README.md
   tags: attach
+
+- name: Attach a file to an incident on a unique Service Now URL
+  snow_record:
+    username: ansible_test
+    password: my_password
+    instance: dev99999.snow.example.org
+    host: yes
+    state: present
+    number: INC0000055
+    attachment: README.md
+  tags: attach
+
 '''
 
 RETURN = '''
@@ -159,6 +177,14 @@ try:
 except ImportError:
     pass
 
+# Pull in requests
+HAS_REQUESTS = False
+try:
+    import requests
+    HAS_REQUESTS = True
+
+except ImportError:
+    pass
 
 def run_module():
     # define the available arguments/parameters that a user can pass to
@@ -167,9 +193,11 @@ def run_module():
         instance=dict(default=None, type='str', required=True),
         username=dict(default=None, type='str', required=True, no_log=True),
         password=dict(default=None, type='str', required=True, no_log=True),
+        host=dict(type='bool', required=False, default=False),
+        validate_certs=dict(type='bool', required=False, default=False),
         table=dict(type='str', required=False, default='incident'),
         state=dict(choices=['present', 'absent'],
-                   type='str', required=True),
+                   type='str', required=False, default=None),
         number=dict(default=None, required=False, type='str'),
         data=dict(default=None, required=False, type='dict'),
         lookup_field=dict(default='number', required=False, type='str'),
@@ -189,10 +217,16 @@ def run_module():
     if not HAS_PYSNOW:
         module.fail_json(msg='pysnow module required')
 
+    # check for requests
+    if not HAS_REQUESTS:
+        module.fail_json(msg='requests module required')
+
     params = module.params
     instance = params['instance']
     username = params['username']
     password = params['password']
+    host = params['host']
+    validate_certs = params['validate_certs']
     table = params['table']
     state = params['state']
     number = params['number']
@@ -219,8 +253,19 @@ def run_module():
 
     # Connect to ServiceNow
     try:
-        conn = pysnow.Client(instance=instance, user=username,
-                             password=password)
+        if host:
+            if validate_certs:
+                conn = pysnow.Client(host=instance, user=username,
+                                     password=password)
+            else:
+                sessi = requests.Session()
+                sessi.verify = False
+                sessi.auth = requests.auth.HTTPBasicAuth(username, password)
+                conn = pysnow.Client(host=instance, session=sessi)
+
+        else:
+            conn = pysnow.Client(instance=instance, user=username,
+                                 password=password)
     except Exception as detail:
         module.fail_json(msg='Could not connect to ServiceNow: {0}'.format(str(detail)), **result)
 
