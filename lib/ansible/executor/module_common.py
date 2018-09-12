@@ -687,6 +687,7 @@ def _is_binary(b_module_data):
     start = b_module_data[:1024]
     return bool(start.translate(None, textchars))
 
+
 def _create_powershell_wrapper(b_module_data, module_args, environment,
                                async_timeout, become, become_method,
                                become_user, become_password, become_flags):
