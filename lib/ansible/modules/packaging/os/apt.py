@@ -694,7 +694,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         status = True
         data = dict(changed=False)
 
-    if not build_dep:
+    if not build_dep and not m.check_mode:
         mark_installed_manually(m, package_names)
 
     return (status, data)
