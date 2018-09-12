@@ -61,7 +61,7 @@ options:
               the supplied data.  If no such record exists, a new one will
               be created.  C(absent) will delete a record.
         choices: [ present, absent ]
-        required: True
+        required: true
     data:
         description:
             - key, value pairs of data to load into the record.
