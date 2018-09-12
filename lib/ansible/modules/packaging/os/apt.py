@@ -123,6 +123,7 @@ options:
   download_only:
     description:
       - Only download packages. Do not install them now.
+    type: bool
     default: 'no'
     version_added: "2.8"
 requirements:
