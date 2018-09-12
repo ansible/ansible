@@ -200,6 +200,10 @@ into::
     - key: Environment
       value: dev
 
+``dict2items`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
+
+    {{ tags | dict2items(key_name='key', value_name='value') }}
+
 items2dict filter
 `````````````````
 
