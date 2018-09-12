@@ -100,7 +100,7 @@ items:
             type: str
         private_key:
             description:
-                - The private key in PEM format.
+                - The write-only private key in PEM format.
             returned: success
             type: str
 '''

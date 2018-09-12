@@ -32,8 +32,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_ssl_certificate
 description:
-    - An SslCertificate resource. This resource provides a mechanism to upload an SSL
-      key and certificate to the load balancer to serve secure connections from the user.
+    - An SslCertificate resource, used for HTTPS load balancing. This resource provides
+      a mechanism to upload an SSL key and certificate to the load balancer to serve secure
+      connections from the user.
 short_description: Creates a GCP SslCertificate
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
@@ -52,7 +53,7 @@ options:
             - The certificate in PEM format.
             - The certificate chain must be no greater than 5 certs long.
             - The chain must include at least one intermediate cert.
-        required: false
+        required: true
     description:
         description:
             - An optional description of this resource.
@@ -68,9 +69,12 @@ options:
         required: false
     private_key:
         description:
-            - The private key in PEM format.
-        required: false
+            - The write-only private key in PEM format.
+        required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslCertificates)"
+    - "Official Documentation: U(https://cloud.google.com/load-balancing/docs/ssl-certificates)"
 '''
 
 EXAMPLES = '''
@@ -143,7 +147,7 @@ RETURN = '''
         type: str
     private_key:
         description:
-            - The private key in PEM format.
+            - The write-only private key in PEM format.
         returned: success
         type: str
 '''
@@ -167,10 +171,10 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            certificate=dict(type='str'),
+            certificate=dict(required=True, type='str'),
             description=dict(type='str'),
             name=dict(type='str'),
-            private_key=dict(type='str')
+            private_key=dict(required=True, type='str')
         )
     )
 
@@ -210,8 +214,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="SslCertificate cannot be edited")
 
 
 def delete(module, link, kind):
