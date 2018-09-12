@@ -13,7 +13,7 @@ from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
-from ansible.utils.plugin_docs import update_file_if_different
+from ansible.utils._build_helpers import update_file_if_different
 
 template_file = 'playbooks_keywords.rst.j2'
 oblist = {}

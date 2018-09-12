@@ -7,7 +7,7 @@ import sys
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.module_utils._text import to_bytes
-from ansible.utils.plugin_docss import update_file_if_different
+from ansible.utils._build_helpers import update_file_if_different
 
 
 def generate_parser():

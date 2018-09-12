@@ -56,7 +56,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import update_file_if_different
+from ansible.utils._build_helpers import update_file_if_different
 
 
 #####################################################################################

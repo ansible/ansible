@@ -4,8 +4,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 from collections import MutableMapping, MutableSet, MutableSequence
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
@@ -106,19 +104,3 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False)
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
-
-
-def update_file_if_different(filename, data):
-    '''
-    Replace file content only if content is different
-    '''
-
-    if os.path.exists(filename):
-        with open(filename, 'rb') as f:
-            data_old = f.read()
-        if data_old != data:
-            with open(filename, 'wb') as f:
-                f.write(data)
-    else:
-        with open(filename, 'wb') as f:
-            f.write(data)
