@@ -675,7 +675,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                         not compare_arrays(self.inbound_nat_pools, load_balancer['inbound_nat_pools']) or
                         not compare_arrays(self.inbound_nat_rules, load_balancer['inbound_nat_rules']) or
                         not compare_arrays(self.load_balancing_rules, load_balancer['load_balancing_rules']) or
-                        not compare_arrays(self.probes, load_balancer['probes']):
+                        not compare_arrays(self.probes, load_balancer['probes'])):
                     changed = True
                 else:
                     changed = False
