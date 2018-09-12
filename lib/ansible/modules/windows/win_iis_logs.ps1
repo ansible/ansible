@@ -18,9 +18,14 @@ Set-StrictMode -Version 2
             [bool]$WhatIf = $false
         )
 
-        $validValues = @("Hourly","Daily","Weekly","Monthly","MaxSize","Disabled")
+        
         
         if (-not [String]::IsNullOrEmpty($RotationPeriod)) {
+            $validValues = @("Hourly","Daily","Weekly","Monthly","MaxSize","Disabled")
+            if ($validValues -notcontains $RotationPeriod)
+            {
+                Fail-json $result "invalid value supplied for 'rotation_period': must be one of: $($validValues -join ',')"
+            }
             if ($RotationPeriod -eq "Disabled"){
                 $RotationPeriod = "MaxSize"
                 $TruncateSize = 4294967295
@@ -256,9 +261,6 @@ Set-StrictMode -Version 2
 
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-
-$debug_level = Get-AnsibleParam -obj $params -name "_ansible_verbosity" -type "int"
-$debug = $debug_level -gt 2
 
 $site_name = Get-AnsibleParam $params "site_name" -type "str" -default "System"
 $log_directory = Get-AnsibleParam $params "log_directory" -type "path" -default $null
