@@ -1,3 +1,0 @@
-minor_changes:
-- windows async - change default directory from ``$env:TEMP\.ansible_async`` to ``$env:USERPROFILE\.ansible_async`` to match the POSIX standard.
-- windows async - async directory is now controlled by the ``async_dir`` shell option and not ``remote_tmp`` to match the POSIX standard.

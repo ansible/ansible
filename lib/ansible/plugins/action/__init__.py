@@ -681,13 +681,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
             module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
 
-        # make sure async_dir is sent through, powershell uses this for it's async implementation
-        try:
-            module_args['_ansible_async_dir'] = self._connection._shell.get_option('async_dir')
-        except KeyError:
-            # here for 3rd party shell plugin compatibility in case they do not define the async_dir option
-            module_args['_ansible_async_dir'] = '~/.ansible_async'
-
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
         update = {}
@@ -741,6 +734,30 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._update_module_args(module_name, module_args, task_vars)
 
+        # FIXME: convert async_wrapper.py to not rely on environment variables
+        # make sure we get the right async_dir variable, backwards compatibility
+        # means we need to lookup the env value ANSIBLE_ASYNC_DIR first
+        remove_async_dir = None
+        if wrap_async or self._task.async_val:
+            env_async_dir = [e for e in self._task.environment if
+                             "ANSIBLE_ASYNC_DIR" in e]
+            if len(env_async_dir) > 0:
+                msg = "Setting the async dir from the environment keyword " \
+                      "ANSIBLE_ASYNC_DIR is deprecated. Set the async_dir " \
+                      "shell option instead"
+                self._display.deprecated(msg, "2.12")
+            else:
+                # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
+                # from the shell option and temporarily add to the environment
+                # list for async_wrapper to pick up
+                try:
+                    async_dir = self._connection._shell.get_option('async_dir')
+                except KeyError:
+                    # in case 3rd party plugin has not set this, use the default
+                    async_dir = "~/.ansible_async"
+                remove_async_dir = len(self._task.environment)
+                self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
+
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
@@ -782,6 +799,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
+
+        # remove the ANSIBLE_ASYNC_DIR env entry if we added a temporary one for
+        # the async_wrapper task - this is so the async_status plugin doesn't
+        # fire a deprecation warning when it runs after this task
+        if remove_async_dir is not None:
+            del self._task.environment[remove_async_dir]
 
         remote_files = []
         if tmpdir and remote_module_path:

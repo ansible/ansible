@@ -9,13 +9,15 @@ $results = @{changed=$false}
 $parsed_args = Parse-Args $args
 $jid = Get-AnsibleParam $parsed_args "jid" -failifempty $true -resultobj $results
 $mode = Get-AnsibleParam $parsed_args "mode" -Default "status" -ValidateSet "status","cleanup"
-$_async_dir = Get-AnsibleParam $parsed_args "_ansible_async_dir" -type "path" -default "$($env:USERPROFILE)\.ansible_async"
 
-$log_path = [System.IO.Path]::Combine($_async_dir, $jid)
+# parsed in from the async_status action plugin
+$async_dir = Get-AnsibleParam $parsed_args "_async_dir" -type "path" -failifempty $true
+
+$log_path = [System.IO.Path]::Combine($async_dir, $jid)
 
 If(-not $(Test-Path $log_path))
 {
-    Fail-Json @{ansible_job_id=$jid; started=1; finished=1} "could not find job"
+    Fail-Json @{ansible_job_id=$jid; started=1; finished=1} "could not find job at '$async_dir'"
 }
 
 If($mode -eq "cleanup") {

@@ -166,9 +166,9 @@
     - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
     - nonascii_output.stderr == ''
 
-- name: test async with custom remote_tmp
+- name: test async with custom async dir
   win_shell: echo hi
-  register: async_custom_tmp
+  register: async_custom_dir
   async: 5
   vars:
     ansible_async_dir: '{{win_output_dir}}'
@@ -176,7 +176,36 @@
 - name: assert results file is in the remote tmp specified
   assert:
     that:
-    - async_custom_tmp.results_file == win_output_dir + '\\' + async_custom_tmp.ansible_job_id
+    - async_custom_dir.results_file == win_output_dir + '\\' + async_custom_dir.ansible_job_id
+
+- name: test async fire and forget with custom async dir
+  win_shell: echo hi
+  register: async_custom_dir_poll
+  async: 5
+  poll: 0
+  vars:
+    ansible_async_dir: '{{win_output_dir}}'
+
+- name: poll with different dir - fail
+  async_status:
+    jid: '{{ async_custom_dir_poll.ansible_job_id }}'
+  register: fail_async_custom_dir_poll
+  ignore_errors: yes
+
+- name: poll with different dir - success
+  async_status:
+    jid: '{{ async_custom_dir_poll.ansible_job_id }}'
+  register: success_async_custom_dir_poll
+  vars:
+    ansible_async_dir: '{{win_output_dir}}'
+
+- name: assert test async fire and forget with custom async dir
+  assert:
+    that:
+    - fail_async_custom_dir_poll.failed
+    - '"could not find job at ''" + nonascii_output.results_file|win_dirname + "''" in fail_async_custom_dir_poll.msg'
+    - not success_async_custom_dir_poll.failed
+    - success_async_custom_dir_poll.results_file == win_output_dir + '\\' + async_custom_dir_poll.ansible_job_id
 
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success

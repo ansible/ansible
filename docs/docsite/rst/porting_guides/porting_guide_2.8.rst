@@ -23,7 +23,15 @@ No notable changes.
 Deprecated
 ==========
 
-No notable changes.
+* Setting the async directory using ``ANSIBLE_ASYNC_DIR`` as an task/play environment key is deprecated and will be
+  removed in Ansible 2.12. You can achieve the same result by setting ``ansible_async_dir`` as a variable like::
+
+      - name: run task with custom async directory
+        command: sleep 5
+        async: 10
+        vars:
+          ansible_aync_dir: /tmp/.ansible_async
+
 
 Modules
 =======

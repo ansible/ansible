@@ -1224,7 +1224,11 @@ $exec_wrapper = {
 
 
 Function Run($payload) {
-    $async_dir = $payload["module_args"]["_ansible_async_dir"]
+    if ($payload.environment.ContainsKey("ANSIBLE_ASYNC_DIR")) {
+        $async_dir = $payload.environment.ANSIBLE_ASYNC_DIR
+    } else {
+        $async_dir = "%USERPROFILE%\.ansible_async"
+    }
     $async_dir = [System.Environment]::ExpandEnvironmentVariables($async_dir)
 
     # calculate the result path so we can include it in the worker payload
