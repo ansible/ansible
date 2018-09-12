@@ -671,12 +671,12 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             if load_balancer:
                 if (self.location != load_balancer['location'] or
                         self.sku != load_balancer['sku']['name'] or
-                        not compare_arrays(self.backend_address_pools, load_balancer['backend_address_pools']) or
-                        not compare_arrays(self.frontend_ip_configurations, load_balancer['frontend_ip_configurations']) or
-                        not compare_arrays(self.inbound_nat_pools, load_balancer['inbound_nat_pools']) or
-                        #not compare_arrays(self.inbound_nat_rules, load_balancer['inbound_nat_rules']) or
-                        not compare_arrays(self.load_balancing_rules, load_balancer['load_balancing_rules']) or
-                        not compare_arrays(self.probes, load_balancer['probes'])):
+                        not self.compare_arrays(self.backend_address_pools, load_balancer['backend_address_pools']) or
+                        not self.compare_arrays(self.frontend_ip_configurations, load_balancer['frontend_ip_configurations']) or
+                        not self.compare_arrays(self.inbound_nat_pools, load_balancer['inbound_nat_pools']) or
+                        # not compare_arrays(self.inbound_nat_rules, load_balancer['inbound_nat_rules']) or
+                        not self.compare_arrays(self.load_balancing_rules, load_balancer['load_balancing_rules']) or
+                        not self.compare_arrays(self.probes, load_balancer['probes'])):
                     changed = True
                 else:
                     changed = False
@@ -815,6 +815,27 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         except CloudError as exc:
             self.fail("Error creating or updating load balancer {0} - {1}".format(self.name, str(exc)))
 
+    def compare_arrays(old, new):
+        old = old or []
+        new = new or []
+
+        oldd = {}
+        for item in old:
+            name = item['name']
+            oldd[name] = item
+        newd = {}
+        for item in new:
+            name = item['name']
+            newd[name] = item
+
+        newd = dict_merge(oldd, newd)
+
+        if newd == oldd:
+            return True
+        else:
+            self.results['compare_new'] = newd
+            self.results['compare_old'] = oldd
+            return False
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a frontend ip configuration"""
@@ -844,23 +865,6 @@ def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
         load_balancer_name,
         name
     )
-
-
-def compare_arrays(old, new):
-    old = old or []
-    new = new or []
-
-    oldd = {}
-    for item in old:
-        name = item['name']
-        oldd[name] = item
-    newd = {}
-    for item in new:
-        name = item['name']
-        newd[name] = item
-
-    newd = dict_merge(oldd, newd)
-    return newd == oldd
 
 
 def main():
