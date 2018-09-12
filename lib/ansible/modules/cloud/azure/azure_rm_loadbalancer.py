@@ -671,12 +671,12 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             if load_balancer:
                 if (self.location != load_balancer['location'] or
                         self.sku != load_balancer['sku']['name'] or
-                        not self.compare_arrays(self.frontend_ip_configurations, load_balancer['frontend_ip_configurations']) or
-                        not self.compare_arrays(self.inbound_nat_pools, load_balancer['inbound_nat_pools']) or
+                        not self.compare_arrays(load_balancer['frontend_ip_configurations'], self.frontend_ip_configurations) or
+                        not self.compare_arrays(load_balancer['inbound_nat_pools'], self.inbound_nat_pools) or
                         # not compare_arrays(self.inbound_nat_rules, load_balancer['inbound_nat_rules']) or
-                        not self.compare_arrays(self.load_balancing_rules, load_balancer['load_balancing_rules']) or
-                        not self.compare_arrays(self.backend_address_pools, load_balancer['backend_address_pools']) or
-                        not self.compare_arrays(self.probes, load_balancer['probes'])):
+                        not self.compare_arrays(load_balancer['load_balancing_rules'], self.load_balancing_rules) or
+                        not self.compare_arrays(load_balancer['backend_address_pools'], self.backend_address_pools) or
+                        not self.compare_arrays(load_balancer['probes'], self.probes)):
                     changed = True
                 else:
                     changed = False
