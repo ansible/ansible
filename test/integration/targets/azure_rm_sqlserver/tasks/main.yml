@@ -235,11 +235,12 @@
   assert:
     that:
       - output.changed == False
-      - output.firewall_rules.firewallrule{{ random_postfix }}.id != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}.name != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}.type != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}.kind != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}.location != None
+      - output.firewall_rules[0].id != None
+      - output.firewall_rules[0].resource_group != None
+      - output.firewall_rules[0].server_name != None
+      - output.firewall_rules[0].name != None
+      - output.firewall_rules[0].start_ip_address != None
+      - output.firewall_rules[0].end_ip_address != None
 
 - name: Gather facts SQL Firewall Rule
   azure_rm_sqlfirewallrule_facts:
@@ -250,16 +251,19 @@
   assert:
     that:
       - output.changed == False
-      - output.firewall_rules.firewallrule{{ random_postfix }}.id != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}.name != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}.type != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}.kind != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}.location != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}second.id != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}second.name != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}second.type != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}second.kind != None
-      - output.firewall_rules.firewallrule{{ random_postfix }}second.location != None
+      - output.firewall_rules[].id != None
+      - output.firewall_rules[0].id != None
+      - output.firewall_rules[0].resource_group != None
+      - output.firewall_rules[0].server_name != None
+      - output.firewall_rules[0].name != None
+      - output.firewall_rules[0].start_ip_address != None
+      - output.firewall_rules[0].end_ip_address != None
+      - output.firewall_rules[1].id != None
+      - output.firewall_rules[1].resource_group != None
+      - output.firewall_rules[1].server_name != None
+      - output.firewall_rules[1].name != None
+      - output.firewall_rules[1].start_ip_address != None
+      - output.firewall_rules[1].end_ip_address != None
 
 - name: Delete instance of Firewall Rule
   azure_rm_sqlfirewallrule:
@@ -284,21 +288,7 @@
   assert:
     that:
       - output.changed == False
-      - "'firewallrule{{ random_postfix }}' not in output.firewall_rules"
-      - "'firewallrule{{ random_postfix }}second' not in output.firewall_rules"
-
-- name: Gather facts SQL Firewall Rule
-  azure_rm_sqlfirewallrule_facts:
-    resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ random_postfix }}
-  register: output
-- name: Assert that empty dictionary was returned
-  assert:
-    that:
-      - output.changed == False
-      - "'firewallrule{{ random_postfix }}' not in output.firewall_rules"
-      - "'firewallrule{{ random_postfix }}second' not in output.firewall_rules"
-
+      - output.firewall_rules | lenght == 0
 
 # finalise & clean up azure_rm_sqlserver test
 

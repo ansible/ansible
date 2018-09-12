@@ -51,7 +51,7 @@ EXAMPLES = '''
 
   - name: List instances of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group:testgroup
+      resource_group: testgroup
       server_name: testserver
 '''
 
@@ -192,7 +192,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
     def format_item(self, item):
         d = item.as_dict()
         d = {
-            'id': d['id'], 
+            'id': d['id'],
             'resource_group': self.resource_group,
             'server_name': self.server_name,
             'name': d['name'],
