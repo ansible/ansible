@@ -89,8 +89,8 @@ Jinja2 provides a useful 'default' filter that is often a better approach to fai
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
-If the variable evaluates to an empty string, the second parameter of the filter should be set to
-`true`::
+If you want to use the default value when variables evaluate to false or an empty string you have to set the second parameter to
+``true``::
 
     {{ lookup('env', 'MY_USER') | default('admin', true) }}
 
