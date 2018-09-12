@@ -72,7 +72,7 @@ Function Remove-Repository{
     [bool]$CheckMode
     )
 
-    $Repo = (Get-PSRepository).SourceLocation
+    $Repo = (Get-PSRepository).Name
 
     # Try to remove the repository
     if ($Repo -contains $Name){
