@@ -59,7 +59,7 @@ options:
             - "restore_memory"
             - "save_memory"
         type: bool
-    delete_after_x_days:
+    keep_days_old:
         description:
             - "Number of days after which should snapshot be deleted."
             - "It will check all snapshots for vm and delte them if they are older."
@@ -106,7 +106,7 @@ EXAMPLES = '''
 # Delete snapshot after x days:
 - ovirt_snapshot:
     vm_name: test
-    delete_after_x_days: 1
+    keep_days_old: 2
 '''
 
 
@@ -240,7 +240,7 @@ def main():
         vm_name=dict(required=True),
         snapshot_id=dict(default=None),
         description=dict(default=None),
-        delete_after_x_days=dict(default=None,type='int'),
+        keep_days_old=dict(default=None,type='int'),
         use_memory=dict(
             default=None,
             type='bool',
@@ -273,28 +273,33 @@ def main():
 
     vm_service = vms_service.vm_service(vm.id)
     snapshots_service = vms_service.vm_service(vm.id).snapshots_service()
-    if module.params.get('delete_after_x_days') is not None: 
+    if module.params.get('keep_days_old') is not None:
+        delete_snapshot=[]
         from datetime import datetime
         date_now = datetime.now()
         for snapshot in snapshots_service.list():
             if snapshot.vm and snapshot.vm.name == module.params.get('vm_name'):
                 diff = date_now - snapshot.date.replace(tzinfo=None)
-                if diff.days  >= module.params.get('delete_after_x_days'):
+                if diff.days  >= module.params.get('keep_days_old'):
                     snapshots_service.snapshot_service(snapshot.id).remove()
-
-    try:
-        state = module.params['state']
-        if state == 'present':
-            ret = create_snapshot(module, vm_service, snapshots_service)
-        elif state == 'restore':
-            ret = restore_snapshot(module, vm_service, snapshots_service)
-        elif state == 'absent':
-            ret = remove_snapshot(module, vm_service, snapshots_service)
-        module.exit_json(**ret)
-    except Exception as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
-    finally:
+                    delete_snapshot.append(get_dict_of_struct(snapshot))
+                    changed=True
+        module.exit_json(snapshots=delete_snapshot, changed=changed)
         connection.close(logout=auth.get('token') is None)
+    else:
+        try:
+            state = module.params['state']
+            if state == 'present':
+                ret = create_snapshot(module, vm_service, snapshots_service)
+            elif state == 'restore':
+                ret = restore_snapshot(module, vm_service, snapshots_service)
+            elif state == 'absent':
+                ret = remove_snapshot(module, vm_service, snapshots_service)
+            module.exit_json(**ret)
+        except Exception as e:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+        finally:
+            connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":
