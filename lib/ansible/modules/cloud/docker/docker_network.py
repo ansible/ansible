@@ -70,6 +70,15 @@ options:
     description:
       - Dictionary of IPAM options.
 
+  scope:
+    description:
+      - Specify the network scope.
+    default: local
+    choices:
+      - local
+      - swarm
+      - global
+
   state:
     description:
       - I(absent) deletes the network. If a network has connected containers, it
@@ -147,6 +156,11 @@ EXAMPLES = '''
     name: network_one
     state: absent
     force: yes
+
+- name: Create a network with global scope
+  docker_network:
+    name: network_global
+    scope: global
 '''
 
 RETURN = '''
@@ -180,6 +194,7 @@ class TaskParameters(DockerBaseClass):
         self.ipam_driver = None
         self.ipam_options = None
         self.appends = None
+        self.scope = None
         self.force = None
         self.debug = None
 
@@ -269,6 +284,11 @@ class DockerNetworkManager(object):
                         # key has different value
                         different = True
                         differences.append('ipam_options.%s' % key)
+        if self.parameters.scope:
+            if (not net.get('Scope') or net['Scope'] != self.parameters.scope):
+                different = True
+                differences.append('scope')
+
         return different, differences
 
     def create_network(self):
@@ -291,6 +311,7 @@ class DockerNetworkManager(object):
                 resp = self.client.create_network(self.parameters.network_name,
                                                   driver=self.parameters.driver,
                                                   options=self.parameters.driver_options,
+                                                  scope=self.parameters.scope,
                                                   ipam=ipam_config)
 
                 self.existing_network = self.client.inspect_network(resp['Id'])
@@ -375,6 +396,7 @@ def main():
         driver=dict(type='str', default='bridge'),
         driver_options=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
+        scope=dict(type='str', default='local', choices=['local', 'swarm', 'global']),
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str', default=None),
         ipam_options=dict(type='dict', default={}),
