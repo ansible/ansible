@@ -282,4 +282,3 @@
     file:
       path: '{{ custom_async_tmp }}'
       state: absent
-
