@@ -21,7 +21,7 @@ options:
     id:
         description:
             - "ID of the mac pool to manage."
-        version_added: "2.7"
+        version_added: "2.8"
     name:
         description:
             - "Name of the MAC pool to manage."

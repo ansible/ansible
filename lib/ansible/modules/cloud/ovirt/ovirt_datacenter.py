@@ -21,7 +21,7 @@ options:
     id:
         description:
             - "ID of the datacenter to manage."
-        version_added: "2.7"
+        version_added: "2.8"
     name:
         description:
             - "Name of the data center to manage."

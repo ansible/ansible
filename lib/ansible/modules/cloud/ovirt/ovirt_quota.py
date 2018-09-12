@@ -21,7 +21,7 @@ options:
     id:
         description:
             - "ID of the quota to manage."
-        version_added: "2.7"
+        version_added: "2.8"
     name:
         description:
             - "Name of the quota to manage."

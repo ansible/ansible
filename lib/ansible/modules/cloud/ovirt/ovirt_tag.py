@@ -37,7 +37,7 @@ options:
     id:
         description:
             - "ID of the tag to manage."
-        version_added: "2.7"
+        version_added: "2.8"
     name:
         description:
             - "Name of the tag to manage."
