@@ -1,0 +1,2 @@
+bugfixes:
+  - get_url - improve code that parses checksums from a file so it is not fragile and reports a helpful error when no matching checksum is found
