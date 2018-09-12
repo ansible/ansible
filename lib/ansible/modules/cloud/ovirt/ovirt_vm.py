@@ -365,7 +365,7 @@ options:
         aliases: [ 'sysprep_persist' ]
     kernel_params_persist:
         description:
-            - "If I(true) ."
+            - "If I(true) kernel_params, initrd_path and kernel_path will be set to Linux Boot Options."
         type: bool
         version_added: "2.8"
     kernel_path:
