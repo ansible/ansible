@@ -102,16 +102,16 @@ Returned Data Structures
 
 Meraki and its related Ansible modules return most information in the form of a list. For example, this is returned information by ``meraki_admin`` querying administrators. It returns a list even though there's only one.
 
-.. code-block::
+.. code-block:: json
 
 	[
 		{
-			'orgAccess': 'full', 
-			'name': 'John Doe',
-			'tags': [],
-			'networks': [],
-			'email': 'john@doe.com',
-			'id': '12345677890'
+			"orgAccess": "full", 
+			"name": "John Doe",
+			"tags": [],
+			"networks": [],
+			"email": "john@doe.com",
+			"id": "12345677890"
 		}
 	]
 
