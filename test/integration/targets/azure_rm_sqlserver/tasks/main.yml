@@ -288,7 +288,7 @@
   assert:
     that:
       - output.changed == False
-      - output.rules | lenght == 0
+      - output.rules | length == 0
 
 # finalise & clean up azure_rm_sqlserver test
 
