@@ -379,6 +379,7 @@ from ansible.module_utils.ec2 import (
     ec2_argument_spec,
     get_aws_connection_info,
     camel_dict_to_snake_dict,
+    snake_dict_to_camel_dict,
     boto3_tag_list_to_ansible_dict,
     ansible_dict_to_boto3_filter_list,
     ansible_dict_to_boto3_tag_list,
@@ -929,12 +930,15 @@ class ElbManager(object):
             # The health_check attribute is *not* set on newly created
             # ELBs! So we have to create our own.
             for attr, desired_value in health_check_config.items():
-                if getattr(self.elb['health_check'], attr) != desired_value:
+                if getattr(self.elb['health_check'], attr, None) != desired_value:
                     setattr(new_health_check_config, attr, desired_value)
                     update_health_check = True
 
             if update_health_check:
-                self.elb.configure_health_check(LoadBalancerName=self.name, HealthCheck=new_health_check_config)
+                self.elb.configure_health_check(
+                    LoadBalancerName=self.name,
+                    HealthCheck=snake_dict_to_camel_dict(new_health_check_config)
+                )
                 self.elb['health_check'] = new_health_check_config
                 self.changed = True
                 self._register_changes('health_check', comment='Apply new {0}'.format(new_health_check_config))
