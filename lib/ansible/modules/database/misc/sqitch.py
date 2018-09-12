@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Dawid Wolski <dawidtomaszwolski@gmail.com>
+# (c) 2018, Dawid Wolski <dawidtomaszwolski@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -70,7 +70,7 @@ options:
   verify:
     description:
       - Run verify scripts after each change. Set to false to disable verification.
-        There is no default, if not set it depends on the content od the conf file.
+        There is no default, if not set it depends on the content of the conf file.
     required: no
     type: bool
   mode:
@@ -83,7 +83,6 @@ options:
       - Attach a list of a variables name and value for use by the database engine client, if it supports variables.
         The format must be name=value, e.g., defuser='Homer Simpson'. Overrides any values loaded from the deploy.variables configuration.
     required: no
-    default: []
   log_only:
     description:
       - Log the changes as if they were deployed, but without actually running the deploy scripts.
@@ -105,14 +104,12 @@ options:
         The format must be name=value, e.g., defuser='Homer Simpson'.
         Overrides any values from set or loaded from the deploy.variables and revert.variables configurations. (rebase)
     required: no
-    default: []
   set_deploy:
     description:
       - Attach a list of a variables name and value for use by the database engine client when deploying, if it supports variables.
         The format must be name=value, e.g., defuser='Homer Simpson'.
         Overrides any values from set or loaded from the deploy.variables configuration. (rebase)
     required: no
-    default: []
 '''
 
 EXAMPLES = '''
