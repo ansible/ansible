@@ -188,7 +188,7 @@ class ModuleParameters(Parameters):
         image = self.read_image_from_device(type='image')
         if image:
             return image
-        image = self.read_hotfix_from_device(type='hotfix')
+        image = self.read_image_from_device(type='hotfix')
         if image:
             return image
         return None
@@ -206,11 +206,8 @@ class ModuleParameters(Parameters):
         except ValueError:
             return None
 
-        if 'code' in response and response['code'] == 400:
-            if 'message' in response:
-                return None
-            else:
-                return None
+        if 'code' in response and response['code'] in [400, 404]:
+            return None
         return response
 
 
