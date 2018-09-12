@@ -139,7 +139,6 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-import re
 import time
 
 from ansible.module_utils._text import to_text
@@ -221,7 +220,7 @@ def main():
 
     result.update({
         'stdout': responses,
-        'stdout_lines': to_lines(responses),
+        'stdout_lines': list(to_lines(responses)),
     })
 
     module.exit_json(**result)

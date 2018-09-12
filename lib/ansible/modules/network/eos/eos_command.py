@@ -241,7 +241,7 @@ def main():
 
     result.update({
         'stdout': responses,
-        'stdout_lines': to_lines(responses),
+        'stdout_lines': list(to_lines(responses)),
     })
 
     module.exit_json(**result)
