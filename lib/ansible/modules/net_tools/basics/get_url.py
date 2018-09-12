@@ -476,10 +476,10 @@ def main():
             module.params['path'] = dest
             file_args = module.load_file_common_arguments(module.params)
             file_args['path'] = dest
-            result['changed'] = module.set_fs_attributes_if_different(file_args, False)
-            if result['changed']:
-                module.exit_json(msg="file already exists but file attributes changed", **result)
-            module.exit_json(msg="file already exists", **result)
+            changed = module.set_fs_attributes_if_different(file_args, False)
+            if changed:
+                module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
+            module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
         # If the file already exists, prepare the last modified time for the
         # request.
