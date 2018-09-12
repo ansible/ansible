@@ -20,8 +20,7 @@ description:
     - Manages the IIS log configuration either per-site, or server wide
 options:
     site_name:
-        description:
-        -  The name of the site for which logging should be configured.  Also accepted is "System" for system-wide logging.
+        description: The name of the site for which logging should be configured.  Also accepted is "System" for system-wide logging.
         required: false
         default: 'System'
     log_directory:
@@ -31,18 +30,15 @@ options:
         default: null
         type: string
     log_ext_file_flags:
-        description:
-        - Built-In IIS Log fields to be included. This must be a list of objects with the following properties: field_name, state.
+        description: Built-In IIS Log fields to be included. This must be a list of objects with the following properties: field_name, state.
         type: list
         required: false
     log_custom_fields:
-        description:
-        - Custom log fileds to be included.  This must be a list of objects with the following properties: field_name, source_type, source_name, state
+        description: Custom log fileds to be included.  This must be a list of objects with the following properties: field_name, source_type, source_name, state
         type: list
         required: false
     use_local_time:
-        description:
-        - Whether or not to use local time for IIS log rotation.
+        description: Whether or not to use local time for IIS log rotation.
         required: false
         type: bool
 
