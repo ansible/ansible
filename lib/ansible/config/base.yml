@@ -343,7 +343,7 @@ LOCALHOST_WARNING:
   version_added: "2.6"
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
-  default: ~/.ansible/content/*/*/plugins/actions:~/.ansible/plugins/action:/usr/share/ansible/plugins/action
+  default: ~/.ansible/content/*/*/plugins/actions:~/.ansible/plugins/action:/usr/share/ansible/content/*/*/plugins/action:/usr/share/ansible/plugins/action
   description: Colon separated paths in which Ansible will search for Action Plugins.
   env: [{name: ANSIBLE_ACTION_PLUGINS}]
   ini:
@@ -475,7 +475,7 @@ DEFAULT_CALLABLE_WHITELIST:
   type: list
 DEFAULT_CALLBACK_PLUGIN_PATH:
   name: Callback Plugins Path
-  default: ~/.ansible/content/*/*/plugins/callback:~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback
+  default: ~/.ansible/content/*/*/plugins/callback:~/.ansible/plugins/callback:/usr/share/ansible/content/*/*/plugins/callback:/usr/share/ansible/plugins/callback
   description: Colon separated paths in which Ansible will search for Callback Plugins.
   env: [{name: ANSIBLE_CALLBACK_PLUGINS}]
   ini:
@@ -503,7 +503,7 @@ DEFAULT_CLICONF_PLUGIN_PATH:
   type: pathspec
 DEFAULT_CONNECTION_PLUGIN_PATH:
   name: Connection Plugins Path
-  default: ~/.ansible/content/*/*/plugins/connection:~/.ansible/plugins/connection:/usr/share/ansible/plugins/connection
+  default: ~/.ansible/content/*/*/plugins/connection:~/.ansible/plugins/connection:/usr/share/ansible/content/*/*/plugins/connection:/usr/share/ansible/plugins/connection
   description: Colon separated paths in which Ansible will search for Connection Plugins.
   env: [{name: ANSIBLE_CONNECTION_PLUGINS}]
   ini:
@@ -553,7 +553,7 @@ DEFAULT_FACT_PATH:
   yaml: {key: facts.gathering.fact_path}
 DEFAULT_FILTER_PLUGIN_PATH:
   name: Jinja2 Filter Plugins Path
-  default: ~/.ansible/content/*/*/plugins/filter:~/.ansible/plugins/filter:/usr/share/ansible/plugins/filter
+  default: ~/.ansible/content/*/*/plugins/filter:~/.ansible/plugins/filter:/usr/share/ansible/content/*/*/plugins/action:/usr/share/ansible/plugins/filter
   description: Colon separated paths in which Ansible will search for Jinja2 Filter Plugins.
   env: [{name: ANSIBLE_FILTER_PLUGINS}]
   ini:
@@ -695,7 +695,7 @@ DEFAULT_INTERNAL_POLL_INTERVAL:
     - "The default corresponds to the value hardcoded in Ansible <= 2.1"
 DEFAULT_INVENTORY_PLUGIN_PATH:
   name: Inventory Plugins Path
-  default: ~/.ansible/content/*/*/plugins/inventory:~/.ansible/plugins/inventory:/usr/share/ansible/plugins/inventory
+  default: ~/.ansible/content/*/*/plugins/inventory:~/.ansible/plugins/inventory:/usr/share/ansible/content/*/*/plugins/inventory:/usr/share/ansible/plugins/inventory
   description: Colon separated paths in which Ansible will search for Inventory Plugins.
   env: [{name: ANSIBLE_INVENTORY_PLUGINS}]
   ini:
@@ -779,7 +779,7 @@ DEFAULT_LOG_FILTER:
 DEFAULT_LOOKUP_PLUGIN_PATH:
   name: Lookup Plugins Path
   description: Colon separated paths in which Ansible will search for Lookup Plugins.
-  default: ~/.ansible/content/*/*/plugins/lookup:~/.ansible/plugins/lookup:/usr/share/ansible/plugins/lookup
+  default: ~/.ansible/content/*/*/plugins/lookup:~/.ansible/plugins/lookup:/usr/share/ansible/content/*/*/plugins/lookup:/usr/share/ansible/plugins/lookup
   env: [{name: ANSIBLE_LOOKUP_PLUGINS}]
   ini:
   - {key: lookup_plugins, section: defaults}
@@ -833,7 +833,7 @@ DEFAULT_MODULE_NAME:
 DEFAULT_MODULE_PATH:
   name: Modules Path
   description: Colon separated paths in which Ansible will search for Modules.
-  default: ~/.ansible/content/*/*/modules:~/.ansible/plugins/modules:/usr/share/ansible/plugins/modules
+  default: ~/.ansible/content/*/*/modules:~/.ansible/plugins/modules:/usr/share/ansible/content/*/*/modules:/usr/share/ansible/plugins/modules
   env: [{name: ANSIBLE_LIBRARY}]
   ini:
   - {key: library, section: defaults}
@@ -853,14 +853,14 @@ DEFAULT_MODULE_SET_LOCALE:
 DEFAULT_MODULE_UTILS_PATH:
   name: Module Utils Path
   description: Colon separated paths in which Ansible will search for Module utils files, which are shared by modules.
-  default: ~/.ansible/content/*/*/module_utils:~/.ansible/plugins/module_utils:/usr/share/ansible/plugins/module_utils
+  default: ~/.ansible/content/*/*/module_utils:~/.ansible/plugins/module_utils:/usr/share/ansible/content/*/*/module_utils:/usr/share/ansible/plugins/module_utils
   env: [{name: ANSIBLE_MODULE_UTILS}]
   ini:
   - {key: module_utils, section: defaults}
   type: pathspec
 DEFAULT_NETCONF_PLUGIN_PATH:
   name: Netconf Plugins Path
-  default: ~/.ansible/content/*/*/netconf_plugins:~/.ansible/plugins/netconf:/usr/share/ansible/plugins/netconf
+  default: ~/.ansible/content/*/*/netconf_plugins:~/.ansible/plugins/netconf:/usr/share/ansible/content/*/*/plugins/netconf:/usr/share/ansible/plugins/netconf
   description: Colon separated paths in which Ansible will search for Netconf Plugins.
   env: [{name: ANSIBLE_NETCONF_PLUGINS}]
   ini:
@@ -945,7 +945,7 @@ DEFAULT_REMOTE_USER:
   - {key: remote_user, section: defaults}
 DEFAULT_ROLES_PATH:
   name: Roles path
-  default: ~/ansible/content/*/*/roles:~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles
+  default: ~/ansible/content/*/*/roles:~/.ansible/roles:/usr/share/ansible/content/*/*/roles:/usr/share/ansible/roles:/etc/ansible/roles
   description: Colon separated paths in which Ansible will search for Roles.
   env: [{name: ANSIBLE_ROLES_PATH}]
   expand_relative_paths: True
@@ -1054,7 +1054,7 @@ DEFAULT_STRATEGY:
 DEFAULT_STRATEGY_PLUGIN_PATH:
   name: Strategy Plugins Path
   description: Colon separated paths in which Ansible will search for Strategy Plugins.
-  default: ~/.ansible/content/*/*/strategy_plugins:~/.ansible/plugins/strategy:/usr/share/ansible/plugins/strategy
+  default: ~/.ansible/content/*/*/plugins/strategy:~/.ansible/plugins/strategy:/usr/share/ansible/content/*/*/plugins/strategy:/usr/share/ansible/plugins/strategy
   env: [{name: ANSIBLE_STRATEGY_PLUGINS}]
   ini:
   - {key: strategy_plugins, section: defaults}
@@ -1167,7 +1167,7 @@ DEFAULT_TASK_INCLUDES_STATIC:
     alternatives: None, as its already built into the decision between include_tasks and import_tasks
 DEFAULT_TERMINAL_PLUGIN_PATH:
   name: Terminal Plugins Path
-  default: ~/.ansible/content/*/*/terminal_plugins:~/.ansible/plugins/terminal:/usr/share/ansible/plugins/terminal
+  default: ~/.ansible/content/*/*/plugins/terminal:~/.ansible/plugins/terminal:/usr/share/ansible/content/*/*/plugins/terminal:/usr/share/ansible/plugins/terminal
   description: Colon separated paths in which Ansible will search for Terminal Plugins.
   env: [{name: ANSIBLE_TERMINAL_PLUGINS}]
   ini:
@@ -1176,7 +1176,7 @@ DEFAULT_TERMINAL_PLUGIN_PATH:
 DEFAULT_TEST_PLUGIN_PATH:
   name: Jinja2 Test Plugins Path
   description: Colon separated paths in which Ansible will search for Jinja2 Test Plugins.
-  default: ~/.ansible/content/*/*/test_plugins:~/.ansible/plugins/test:/usr/share/ansible/plugins/test
+  default: ~/.ansible/content/*/*/plugins/test:~/.ansible/plugins/test:/usr/share/ansible/content/*/*/plugins/test:/usr/share/ansible/plugins/test
   env: [{name: ANSIBLE_TEST_PLUGINS}]
   ini:
   - {key: test_plugins, section: defaults}
@@ -1209,7 +1209,7 @@ DEFAULT_UNDEFINED_VAR_BEHAVIOR:
   type: boolean
 DEFAULT_VARS_PLUGIN_PATH:
   name: Vars Plugins Path
-  default: ~/.ansible/content/*/*/plugins/vars:~/.ansible/plugins/vars:/usr/share/ansible/plugins/vars
+  default: ~/.ansible/content/*/*/plugins/vars:~/.ansible/plugins/vars:/usr/share/ansible/content/*/*/plugins/vars:/usr/share/ansible/plugins/vars
   description: Colon separated paths in which Ansible will search for Vars Plugins.
   env: [{name: ANSIBLE_VARS_PLUGINS}]
   ini:
