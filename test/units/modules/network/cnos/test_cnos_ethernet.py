@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import os
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.cnos import cnos_interface
 from units.modules.utils import set_module_args
@@ -21,6 +22,7 @@ class TestCnosEthernetModule(TestCnosModule):
     def tearDown(self):
         super(TestCnosEthernetModule, self).tearDown()
         self.mock_run_cnos_commands.stop()
+        os.remove('test.log')
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.run_cnos_commands.return_value = [load_fixture('cnos_ethernet_config.cfg')]
@@ -31,9 +33,6 @@ class TestCnosEthernetModule(TestCnosModule):
                          'outputfile': 'test.log', 'interfaceOption': 'ethernet', 'interfaceRange': '33',
                          'interfaceArg1': 'channel-group', 'interfaceArg2': '33', 'interfaceArg3': 'on'})
         result = self.execute_module(changed=True)
-        file = open('Anil.txt', "a")
-        file.write(str(result))
-        file.close()
         expected_result = 'Interface Configuration is Accomplished'
         self.assertEqual(result['msg'], expected_result)
 
