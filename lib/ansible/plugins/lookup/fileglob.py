@@ -38,7 +38,7 @@ EXAMPLES = """
 RETURN = """
   _raw:
     description:
-      - content of file(s)
+      - list of files
 """
 
 import os
