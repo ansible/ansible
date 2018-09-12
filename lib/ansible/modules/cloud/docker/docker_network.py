@@ -78,6 +78,7 @@ options:
       - local
       - swarm
       - global
+    version_added: "2.8"
 
   state:
     description:
