@@ -17,7 +17,7 @@ To contribute a module to Ansible, you must:
 * support Python 2.7 and Python 3.5 - if your module cannot support Python 2.7, explain the required minimum Python version and rationale in the requirements section in ``DOCUMENTATION``
 * use proper :ref:`Python 3 syntax <developing_python_3>`
 * follow `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ Python style conventions - see :ref:`testing_pep8` for more information
-* license your module with GPL 3
+* license your module under the GPL license (GPLv3 or later)
 * conform to Ansible's :ref:`formatting and documentation <developing_modules_documenting>` standards
 * include comprehensive :ref:`tests <developing_testing>` for your module
 * minimize module dependencies
