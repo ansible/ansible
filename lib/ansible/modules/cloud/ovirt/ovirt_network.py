@@ -144,20 +144,19 @@ from ansible.module_utils.ovirt import (
     equal,
     ovirt_full_argument_spec,
     search_by_name,
+    get_id_by_name,
+    get_dict_of_struct,
 )
 
 
 class NetworksModule(BaseModule):
-    def _get_external_provider_id(self):
-        ons_service = self._connection.system_service().openstack_network_providers_service()
-        res = [e for e in ons_service.list() if e.name == self._module.params['external_provider']]
-        return res[0].id
-
     def import_external_network(self):
         ons_service = self._connection.system_service().openstack_network_providers_service()
-        on_service = ons_service.provider_service(self._get_external_provider_id())
-        network = on_service.networks_service().network_service(self.build_entity().id)
-        network.import_(data_center=otypes.DataCenter(name=self._module.params['data_center']))
+        on_service = ons_service.provider_service(get_id_by_name(ons_service,self.param('external_provider')))
+        networks_service = on_service.networks_service()
+        network_service = networks_service.network_service(get_id_by_name(networks_service,self.param('name')))
+        network_service.import_(data_center=otypes.DataCenter(name=self._module.params['data_center']))
+        return { "network":get_dict_of_struct(network_service.get()),"changed":True}
 
     def build_entity(self):
         return otypes.Network(
@@ -168,8 +167,6 @@ class NetworksModule(BaseModule):
             data_center=otypes.DataCenter(
                 name=self._module.params['data_center'],
             ) if self._module.params['data_center'] else None,
-            external_provider=otypes.OpenStackNetworkProvider(id=self._get_external_provider_id())
-            if self._module.params['external_provider'] else None,
             vlan=otypes.Vlan(
                 self._module.params['vlan_tag'],
             ) if self._module.params['vlan_tag'] else None,
@@ -300,7 +297,7 @@ def main():
         }
         if state == 'present':
             if module.params.get('external_provider'):
-                networks_module.import_external_network()
+                ret = networks_module.import_external_network()
             else:
                 ret = networks_module.create(search_params=search_params)
             # Update clusters networks:
