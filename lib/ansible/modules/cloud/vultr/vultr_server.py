@@ -53,11 +53,13 @@ options:
   private_network_enabled:
     description:
       - Whether to enable private networking or not.
+      - Cannot be used with "networks"
     type: bool
   networks:
     description:
-      - Specifiy an array of private networks to attach to the server.
+      - Specifiy a single private network or an array of private networks to attach to the server.
       - If specified, private_network_enabled is ignored.
+    aliases: [ network ]
     version_added: "2.8"
 
   auto_backup_enabled:
@@ -865,7 +867,7 @@ def main():
         force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
         private_network_enabled=dict(type='bool'),
-        networks=dict(type='list'),
+        networks=dict(type='list', aliases=['network']),
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
         tag=dict(),
@@ -880,6 +882,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=[
+            ['networks', 'enable_private_network'],
+        ],
         supports_check_mode=True,
     )
 
