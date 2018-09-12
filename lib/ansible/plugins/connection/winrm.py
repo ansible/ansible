@@ -119,7 +119,6 @@ from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
-from ansible.plugins.shell.powershell import leaf_exec
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -487,21 +486,6 @@ class Connection(ConnectionBase):
         self.protocol = None
         self.shell_id = None
         self._connect()
-
-    def _create_raw_wrapper_payload(self, cmd, environment=None):
-        environment = {} if environment is None else environment
-
-        payload = {
-            'module_entry': to_text(base64.b64encode(to_bytes(cmd))),
-            'powershell_modules': {},
-            'actions': ['exec'],
-            'exec': to_text(base64.b64encode(to_bytes(leaf_exec))),
-            'environment': environment,
-            'min_ps_version': None,
-            'min_os_version': None
-        }
-
-        return json.dumps(payload)
 
     def _wrapper_payload_stream(self, payload, buffer_size=200000):
         payload_bytes = to_bytes(payload)
