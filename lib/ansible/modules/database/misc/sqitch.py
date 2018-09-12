@@ -30,7 +30,7 @@ module: sqitch
 short_description: Manage databases using sqitch
 description:
   - Manage PostgreSQL, SQLite, Oracle, MySQL, Firebird and Vertica database changes using sqitch
-version_added: "2.7"
+version_added: "2.8"
 author: "Dawid Wolski, @merito"
 requirements:
   - sqitch
