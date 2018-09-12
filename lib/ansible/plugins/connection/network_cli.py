@@ -426,7 +426,7 @@ class Connection(NetworkConnectionBase):
             single_prompt = True
         if not isinstance(answer, list):
             answer = [answer]
-        prompts_regex = [re.compile(r, re.I) for r in prompts]
+        prompts_regex = [re.compile(re.escape(r), re.I) for r in prompts]
         for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
