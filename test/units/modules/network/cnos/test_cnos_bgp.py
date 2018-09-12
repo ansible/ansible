@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import os
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.cnos import cnos_bgp
 from units.modules.utils import set_module_args
@@ -21,6 +22,7 @@ class TestCnosBgpModule(TestCnosModule):
     def tearDown(self):
         super(TestCnosBgpModule, self).tearDown()
         self.mock_run_cnos_commands.stop()
+        os.remove('test.log')
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.run_cnos_commands.return_value = [load_fixture('cnos_bgp_config.cfg')]
@@ -33,9 +35,6 @@ class TestCnosBgpModule(TestCnosModule):
                          'bgpArg3': '13', 'bgpArg4': 'address-family',
                          'bgpArg5': 'ipv4', 'bgpArg6': 'next-hop-self'})
         result = self.execute_module(changed=True)
-        file = open('Anil.txt', "a")
-        file.write(str(result))
-        file.close()
         expected_result = 'BGP configurations accomplished'
         self.assertEqual(result['msg'], expected_result)
 
