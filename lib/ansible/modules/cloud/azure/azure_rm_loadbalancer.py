@@ -910,7 +910,7 @@ def load_balancer_to_dict(load_balancer):
             frontend_port=_.frontend_port,
             backend_port=_.backend_port,
             idle_timeout_in_minutes=_.idle_timeout_in_minutes,
-            enable_floating_point_ip=_.'enable_floating_point_ip' if hasattr(_, 'enable_floating_point_ip') else False,
+            enable_floating_point_ip=_.enable_floating_point_ip if hasattr(_, 'enable_floating_point_ip') else False,
             provisioning_state=_.provisioning_state,
             etag=_.etag
         ) for _ in load_balancer.inbound_nat_rules]
