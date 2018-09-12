@@ -60,7 +60,7 @@ options:
             - "Specify VLAN tag."
     external_provider:
         description:
-            - "Type name of external network provider."
+            - "Name of external network provider."
         version_added: 2.7
     vm_network:
         description:
