@@ -36,7 +36,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-  _raw:
+  _list:
     description:
       - list of files
 """
