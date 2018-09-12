@@ -285,7 +285,7 @@ class ModuleManager(object):
             return self.create()
 
     def exists(self):
-        if self.image_exists() or self.image_exists():
+        if self.image_exists() or self.hotfix_exists():
             return True
         return False
 
@@ -408,7 +408,7 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] == 400:
+        if 'code' in response and response['code'] in [400, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
@@ -438,7 +438,7 @@ class ModuleManager(object):
         response = self.client.api.delete(uri)
         if response.status == 200:
             return True
-        if 'code' in response and response['code'] == 400:
+        if 'code' in response and response['code'] in [400, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
