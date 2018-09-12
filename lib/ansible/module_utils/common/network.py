@@ -105,3 +105,11 @@ def to_ipv6_network(addr):
     if not network_addr.endswith('::'):
         network_addr += str(':')
     return network_addr
+
+
+def to_bits(val):
+    """ converts a netmask to bits """
+    bits = ''
+    for octet in val.split('.'):
+        bits += bin(int(octet))[2:].zfill(8)
+    return str

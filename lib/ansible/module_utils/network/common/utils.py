@@ -41,7 +41,7 @@ from ansible.module_utils.basic import AnsibleFallbackNotFound
 
 # Backwards compatibility for 3rd party modules
 from ansible.module_utils.common.network import (
-    is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, VALID_MASKS
+    to_bits, is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, VALID_MASKS
 )
 
 try:
@@ -447,11 +447,3 @@ class Template:
                 if marker in data:
                     return True
         return False
-
-
-def to_bits(val):
-    """ converts a netmask to bits """
-    bits = ''
-    for octet in val.split('.'):
-        bits += bin(int(octet))[2:].zfill(8)
-    return str
