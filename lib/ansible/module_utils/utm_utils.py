@@ -1,6 +1,44 @@
+# Copyright: (c) 2018, Johannes Brunswicker <johannes.brunswicker@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 import json
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+
+
+class UTMModuleConfigurationError(Exception):
+
+    def __init__(self, msg, **args):
+        super(UTMModuleConfigurationError, self).__init__(self, msg)
+        self.msg = msg
+        self.module_fail_args = args
+
+    def do_fail(self, module):
+        module.fail_json(msg=self.msg, other=self.module_fail_args)
+
+
+class UTMModule(AnsibleModule):
+
+    def __init__(self, argument_spec, bypass_checks=False, no_log=False, check_invalid_arguments=None,
+                 mutually_exclusive=None, required_together=None, required_one_of=None, add_file_common_args=False,
+                 supports_check_mode=False, required_if=None):
+        default_specs = dict(
+            utm_host=dict(type='str', required=True),
+            utm_port=dict(type='int', default=4444),
+            utm_token=dict(type='str', required=True, no_log=True),
+            utm_protocol=dict(type='str', required=False, default="https", choices=["https", "http"]),
+            validate_certs=dict(type='bool', required=False, default=True),
+            state=dict(default='present', choices=['present', 'absent'])
+        )
+        super(UTMModule, self).__init__(self._merge_specs(default_specs, argument_spec), bypass_checks, no_log,
+                                        check_invalid_arguments, mutually_exclusive, required_together, required_one_of,
+                                        add_file_common_args, supports_check_mode, required_if)
+
+    def _merge_specs(self, default_specs, custom_sepcs):
+        result = default_specs.copy()
+        result.update(custom_sepcs)
+        return result
 
 
 class UTM:
@@ -23,7 +61,16 @@ class UTM:
         self.module.params['url_username'] = 'token'
         self.module.params['url_password'] = module.params.get('utm_token')
         if self.important_keys not in module.params.keys():
-            self.module.fail_json(msg="The keys to check don't match the modules keys")
+            raise UTMModuleConfigurationError("The keys to check don't match the modules keys")
+
+    def execute(self):
+        try:
+            if self.module.params.get('state') == 'present':
+                self.add()
+            else:
+                self.remove()
+        except Exception as e:
+            self.module.fail_json(result=str(e))
 
     def add(self):
         """
