@@ -465,17 +465,7 @@ def main():
                     lines = [line.rstrip('\n') for line in f]
                 lines = dict(s.split(None, 1) for s in lines)
                 filename = url_filename(url)
-
-                # Look through each line in the checksum file for a hash corresponding to
-                # the filename in the url, returning the first hash that is found.
-                for cksum in (s for (s, f) in lines.items() if f.strip('./') == filename):
-                    checksum = cksum
-                    break
-                else:
-                    checksum = None
-
-                if checksum is None:
-                    module.fail_json("Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
+                [checksum] = (k for (k, v) in lines.items() if v.strip('./') == filename)
             # Remove any non-alphanumeric characters, including the infamous
             # Unicode zero-width space
             checksum = re.sub(r'\W+', '', checksum).lower()
