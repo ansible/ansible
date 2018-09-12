@@ -450,18 +450,20 @@ def main():
         if not force and checksum != '':
             destination_checksum = module.digest_from_file(dest, algorithm)
 
-            if checksum == destination_checksum:
-                # Not forcing redownload, unless checksum does not match
-                # allow file attribute changes
-                module.params['path'] = dest
-                file_args = module.load_file_common_arguments(module.params)
-                file_args['path'] = dest
-                changed = module.set_fs_attributes_if_different(file_args, False)
-                if changed:
-                    module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
-                module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
+            if checksum != destination_checksum:
+                checksum_mismatch = True
 
-            checksum_mismatch = True
+        # Not forcing redownload, unless checksum does not match
+        if not force and not checksum_mismatch:
+            # Not forcing redownload, unless checksum does not match
+            # allow file attribute changes
+            module.params['path'] = dest
+            file_args = module.load_file_common_arguments(module.params)
+            file_args['path'] = dest
+            changed = module.set_fs_attributes_if_different(file_args, False)
+            if changed:
+                module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
+            module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
         # If the file already exists, prepare the last modified time for the
         # request.
