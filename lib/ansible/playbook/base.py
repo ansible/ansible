@@ -14,10 +14,10 @@ from functools import partial
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.module_utils.six import iteritems, string_types, with_metaclass
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -369,7 +369,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = to_text(value)
+                        # Values should have been converted from byte strings already.  This is
+                        # really for converting non-strings into strings (ints, floats, etc).
+                        value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':
@@ -430,6 +432,22 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     else:
                         msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
                     raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
+
+            # Passwords are special as (1) they are bytes and (2) The ones from the cli do not get
+            # templated.
+            if hasattr(self, 'password'):
+                self.password = to_bytes(self.password, errors='surrogate_or_strict')
+            elif hasattr(self, '_b_cli_password'):
+                # The password from the cli prompt is a fallback if it's not specified in inventory
+                # or a playbook block
+                self.password = self._b_cli_password
+
+            if hasattr(self, 'become_pass'):
+                self.become_pass = to_bytes(self.become_pass, errors='surrogate_or_strict')
+            elif hasattr(self, 'b_cli_become_pass'):
+                # The password from the cli prompt is a fallback if it's not specified in inventory
+                # or a playbook block
+                self.become_pass = self._b_cli_become_pass
 
         self._finalized = True
 

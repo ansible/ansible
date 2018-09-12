@@ -99,9 +99,9 @@ class LookupBase(AnsiblePlugin):
         Errors encountered during execution should be returned by raising
         AnsibleError() with a message describing the error.
 
-        Any strings returned by this method that could ever contain non-ascii
-        must be converted into python's unicode type as the strings will be run
-        through jinja2 which has this requirement.  You can use::
+        Any strings returned by this method must be text strings (unicode type on python2 and str
+        type on python3).  Jinja2 will traceback or mangle data if byte strings with non-ascii
+        characters are returned.  To meet this requirement you can use::
 
             from ansible.module_utils._text import to_text
             result_string = to_text(result_string)

@@ -31,7 +31,7 @@ def parser():
     return parser
 
 
-def test_play_context(mocker, parser):
+def test_play_context_defaults(mocker, parser):
     (options, args) = parser.parse_args(['-vv', '--check'])
     play_context = PlayContext(options=options)
 
@@ -46,6 +46,10 @@ def test_play_context(mocker, parser):
     assert play_context.verbosity == 2
     assert play_context.check_mode is True
     assert play_context.no_log is None
+
+
+def test_play_context_with_play(mocker, parser):
+    (options, args) = parser.parse_args(['-vv', '--check'])
 
     mock_play = mocker.MagicMock()
     mock_play.connection = 'mock'
@@ -65,6 +69,18 @@ def test_play_context(mocker, parser):
     assert play_context.become_method == "mock"
     assert play_context.become_user == "mockroot"
 
+
+def test_play_context_with_play_and_task(mocker, parser):
+    (options, args) = parser.parse_args(['-vv', '--check'])
+
+    mock_play = mocker.MagicMock()
+    mock_play.connection = 'mock'
+    mock_play.remote_user = 'mock'
+    mock_play.port = 1234
+    mock_play.become = True
+    mock_play.become_method = 'mock'
+    mock_play.become_user = 'mockroot'
+    mock_play.no_log = True
     mock_task = mocker.MagicMock()
     mock_task.connection = 'mocktask'
     mock_task.remote_user = 'mocktask'

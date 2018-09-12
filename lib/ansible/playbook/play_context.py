@@ -163,7 +163,7 @@ class PlayContext(Base):
     _become = FieldAttribute(isa='bool')
     _become_method = FieldAttribute(isa='string')
     _become_user = FieldAttribute(isa='string')
-    _become_pass = FieldAttribute(isa='string')
+    _b_become_pass = FieldAttribute(isa='string')
     _become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE)
     _become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
     _prompt = FieldAttribute(isa='string')
@@ -196,8 +196,10 @@ class PlayContext(Base):
         if passwords is None:
             passwords = {}
 
-        self.password = passwords.get('conn_pass', '')
-        self.become_pass = passwords.get('become_pass', '')
+        self.password = b''
+        self.b_become_pass = b''
+        self._b_cli_password = passwords.get('conn_pass', '')
+        self._b_cli_become_pass = passwords.get('become_pass', '')
 
         self.prompt = ''
         self.success_key = ''
@@ -379,11 +381,11 @@ class PlayContext(Base):
                 # no else, as no other vars should be considered
 
         # become legacy updates -- from commandline
-        if not new_info.become_pass:
+        if not new_info.b_become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
-                new_info.become_pass = new_info.sudo_pass
+                new_info.b_become_pass = to_bytes(new_info.sudo_pass, errors='surrogate_or_strict')
             elif new_info.become_method == 'su' and new_info.su_pass:
-                new_info.become_pass = new_info.su_pass
+                new_info.b_become_pass = to_bytes(new_info.su_pass, errors='surrogate_or_strict')
 
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)
@@ -394,12 +396,12 @@ class PlayContext(Base):
             if new_info.become_method == 'sudo':
                 for sudo_pass_name in C.MAGIC_VARIABLE_MAPPING.get('sudo_pass'):
                     if sudo_pass_name in variables:
-                        setattr(new_info, 'become_pass', variables[sudo_pass_name])
+                        new_info.b_become_pass = to_bytes(variables[sudo_pass_name], errors='surrogate_or_strict')
                         break
             elif new_info.become_method == 'su':
                 for su_pass_name in C.MAGIC_VARIABLE_MAPPING.get('su_pass'):
                     if su_pass_name in variables:
-                        setattr(new_info, 'become_pass', variables[su_pass_name])
+                        new_info.b_become_pass = to_bytes(variables[su_pass_name], errors='surrogate_or_strict')
                         break
 
         # make sure we get port defaults if needed
@@ -484,7 +486,7 @@ class PlayContext(Base):
                 # and pass the quoted string to the user's shell.
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
-                if self.become_pass:
+                if self.b_become_pass:
                     prompt = '[sudo via ansible, key=%s] password: ' % randbits
                     becomecmd = '%s %s -p "%s" -u %s %s' % (exe, flags.replace('-n', ''), prompt, self.become_user, command)
                 else:
@@ -532,7 +534,7 @@ class PlayContext(Base):
                 prompt = 'doas (%s@' % self.remote_user
                 exe = self.become_exe or 'doas'
 
-                if not self.become_pass:
+                if not self.b_become_pass:
                     flags += ' -n '
 
                 if self.become_user:
@@ -544,7 +546,7 @@ class PlayContext(Base):
             elif self.become_method == 'dzdo':
 
                 exe = self.become_exe or 'dzdo'
-                if self.become_pass:
+                if self.b_become_pass:
                     prompt = '[dzdo via ansible, key=%s] password: ' % randbits
                     becomecmd = '%s %s -p %s -u %s %s' % (exe, flags, shlex_quote(prompt), self.become_user, command)
                 else:
@@ -565,7 +567,7 @@ class PlayContext(Base):
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
-            if self.become_pass:
+            if self.b_become_pass:
                 self.prompt = prompt
             self.success_key = success_key
             return becomecmd
