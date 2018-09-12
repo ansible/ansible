@@ -100,7 +100,6 @@ def main():
     module = UTMModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-
             address=dict(type='str', required=False, default='0.0.0.0'),
             address6=dict(type='str', required=False, default='::'),
             comment=dict(type='str', required=False, default=""),
