@@ -1000,6 +1000,36 @@ def get_cache(module):
     return cache
 
 
+def update_cache_run(m, cache):
+    # Retry to update the cache up to 3 times
+    err = ''
+    for retry in range(3):
+        try:
+            cache.update()
+            break
+        except apt.cache.FetchFailedException as e:
+            err = to_native(e)
+    else:
+        m.fail_json(msg='Failed to update apt cache: %s' % err)
+
+
+def update_cache(m, cache, cache_valid_time):
+    mtimestamp, updated_cache_time = get_updated_cache_time()
+    # Cache valid time is default 0, which will update the cache if
+    #  needed and `update_cache` was set to true
+    updated_cache = False
+    now = datetime.datetime.now()
+    tdelta = datetime.timedelta(seconds=cache_valid_time)
+    if not mtimestamp + tdelta >= now:
+        update_cache_run(m, cache)
+        cache.open(progress=None)
+        mtimestamp, post_cache_update_time = get_updated_cache_time()
+        if updated_cache_time != post_cache_update_time:
+            updated_cache = True
+        updated_cache_time = post_cache_update_time
+        return updated_cache, updated_cache_time
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -1088,29 +1118,8 @@ def main():
             # reopen cache w/ modified config
             cache.open(progress=None)
 
-        mtimestamp, updated_cache_time = get_updated_cache_time()
-        # Cache valid time is default 0, which will update the cache if
-        #  needed and `update_cache` was set to true
-        updated_cache = False
         if p['update_cache'] or p['cache_valid_time']:
-            now = datetime.datetime.now()
-            tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
-            if not mtimestamp + tdelta >= now:
-                # Retry to update the cache up to 3 times
-                err = ''
-                for retry in range(3):
-                    try:
-                        cache.update()
-                        break
-                    except apt.cache.FetchFailedException as e:
-                        err = to_native(e)
-                else:
-                    module.fail_json(msg='Failed to update apt cache: %s' % err)
-                cache.open(progress=None)
-                mtimestamp, post_cache_update_time = get_updated_cache_time()
-                if updated_cache_time != post_cache_update_time:
-                    updated_cache = True
-                updated_cache_time = post_cache_update_time
+            updated_cache, updated_cache_time = update_cache(module, cache, p['cache_valid_time'])
 
             # If there is nothing else to do exit. This will set state as
             #  changed based on if the cache was updated.
