@@ -33,6 +33,10 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage VM pools in oVirt/RHV."
 options:
+    id:
+        description:
+            - "ID of the vmpool to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the VM pool to manage."
@@ -97,6 +101,11 @@ EXAMPLES = '''
 - ovirt_vmpool:
     state: absent
     name: myvmpool
+
+# Change Pool Name
+- ovirt_vmpool:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_pool_name"
 '''
 
 RETURN = '''
@@ -136,6 +145,7 @@ class VmPoolsModule(BaseModule):
 
     def build_entity(self):
         return otypes.VmPool(
+            id=self._module.params['id'],
             name=self._module.params['name'],
             description=self._module.params['description'],
             comment=self._module.params['comment'],
@@ -155,6 +165,7 @@ class VmPoolsModule(BaseModule):
 
     def update_check(self, entity):
         return (
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster)) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self._module.params.get('comment'), entity.comment) and
@@ -166,6 +177,7 @@ class VmPoolsModule(BaseModule):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
+        id=dict(default=None),
         state=dict(
             choices=['present', 'absent'],
             default='present',

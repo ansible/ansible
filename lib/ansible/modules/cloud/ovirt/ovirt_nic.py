@@ -18,6 +18,10 @@ author:
 description:
     - Module to manage network interfaces of Virtual Machines in oVirt/RHV.
 options:
+    id:
+        description:
+            - "ID of the nic to manage."
+        version_added: "2.8"
     name:
         description:
             - Name of the network interface to manage.
@@ -94,6 +98,12 @@ EXAMPLES = '''
     state: absent
     vm: myvm
     name: mynic
+
+# Change NIC Name
+- ovirt_nic:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_nic_name"
+    vm: myvm
 '''
 
 RETURN = '''
@@ -144,6 +154,7 @@ class EntityNicsModule(BaseModule):
 
     def build_entity(self):
         return otypes.Nic(
+            id=self._module.params.get('id'),
             name=self._module.params.get('name'),
             interface=otypes.NicInterface(
                 self._module.params.get('interface')
@@ -160,12 +171,14 @@ class EntityNicsModule(BaseModule):
         if self._module.params.get('vm'):
             return (
                 equal(self._module.params.get('interface'), str(entity.interface)) and
+                equal(self._module.params.get('name'), str(entity.name)) and
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile)) and
                 equal(self._module.params.get('mac_address'), entity.mac.address)
             )
         elif self._module.params.get('template'):
             return (
                 equal(self._module.params.get('interface'), str(entity.interface)) and
+                equal(self._module.params.get('name'), str(entity.name)) and
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile))
             )
 
@@ -174,6 +187,7 @@ def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(type='str', default='present', choices=['absent', 'plugged', 'present', 'unplugged']),
         vm=dict(type='str'),
+        id=dict(default=None),
         template=dict(type='str'),
         name=dict(type='str', required=True),
         interface=dict(type='str'),

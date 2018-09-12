@@ -185,7 +185,7 @@ EXAMPLES = '''
 - ovirt_disk:
     id: 00000000-0000-0000-0000-000000000000
     storage_domain: data
-    name: "new disk name"
+    name: "new_disk_name"
     vm_name: rhel7
 
 # Upload local image to disk and attach it to vm:

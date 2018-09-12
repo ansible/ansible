@@ -18,6 +18,10 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage datacenter quotas in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the quota to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the quota to manage."
@@ -106,6 +110,12 @@ EXAMPLES = '''
     state: absent
     data_center: dcX
     name: quota1
+
+# Change Quota Name
+- ovirt_quota:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_quota_name"
+    data_center: dcX
 '''
 
 RETURN = '''
@@ -146,6 +156,7 @@ class QuotasModule(BaseModule):
         return otypes.Quota(
             description=self._module.params['description'],
             name=self._module.params['name'],
+            id=self._module.params['id'],
             storage_hard_limit_pct=self._module.params.get('storage_grace'),
             storage_soft_limit_pct=self._module.params.get('storage_threshold'),
             cluster_hard_limit_pct=self._module.params.get('cluster_grace'),
@@ -202,6 +213,7 @@ class QuotasModule(BaseModule):
         return (
             self.update_storage_limits(entity) and
             self.update_cluster_limits(entity) and
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self._module.params.get('storage_grace'), entity.storage_hard_limit_pct) and
             equal(self._module.params.get('storage_threshold'), entity.storage_soft_limit_pct) and
@@ -216,6 +228,7 @@ def main():
             choices=['present', 'absent'],
             default='present',
         ),
+        id=dict(default=None),
         name=dict(required=True),
         data_center=dict(required=True),
         description=dict(default=None),
