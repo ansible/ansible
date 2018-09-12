@@ -227,7 +227,7 @@ vmss:
         tags:
             description: Tags assigned to the resource. Dictionary of string:string pairs.
             type: dict
-            sample: { tag1: abc }
+            sample: { "tag1": "abc" }
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
