@@ -18,6 +18,10 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage hosts in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the host to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the host to manage."
@@ -218,6 +222,11 @@ EXAMPLES = '''
     state: absent
     name: myhost
     force: True
+
+# Change host Name
+- ovirt_host:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new host name"
 '''
 
 RETURN = '''
@@ -263,6 +272,7 @@ class HostsModule(BaseModule):
 
     def build_entity(self):
         return otypes.Host(
+            id=self._module.params.get('id'),
             name=self.param('name'),
             cluster=otypes.Cluster(
                 name=self.param('cluster')
@@ -295,6 +305,7 @@ class HostsModule(BaseModule):
             equal(self.param('comment'), entity.comment) and
             equal(self.param('kdump_integration'), 'enabled' if entity.power_management.kdump_detection else 'disabled') and
             equal(self.param('spm_priority'), entity.spm.priority) and
+            equal(self.param('name'), entity.name) and
             equal(self.param('power_management_enabled'), entity.power_management.enabled) and
             equal(self.param('override_display'), getattr(entity.display, 'address', None)) and
             equal(
@@ -400,6 +411,7 @@ def main():
             default='present',
         ),
         name=dict(required=True),
+        id=dict(default=None),
         comment=dict(default=None),
         cluster=dict(default=None),
         address=dict(default=None),

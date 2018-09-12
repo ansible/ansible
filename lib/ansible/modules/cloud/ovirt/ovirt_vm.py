@@ -681,6 +681,11 @@ EXAMPLES = '''
     nics:
       - name: nic1
 
+# Change VM Name
+- ovirt_vm:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_vm_name"
+
 - name: Run VM with cloud init
   ovirt_vm:
     name: rhel7
@@ -1184,6 +1189,7 @@ class VmsModule(BaseModule):
             equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
             equal(self.param('cpu_mode'), str(cpu_mode) if cpu_mode else None) and
             equal(self.param('type'), str(entity.type)) and
+            equal(self.param('name'), str(entity.name)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
             equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
