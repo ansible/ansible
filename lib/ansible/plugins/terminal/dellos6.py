@@ -50,6 +50,12 @@ class TerminalModule(TerminalBase):
 
     ]
 
+    terminal_initial_prompt = br"\(y/n\)"
+
+    terminal_initial_answer = b"y"
+
+    terminal_inital_prompt_newline = False
+
     def on_become(self, passwd=None):
         if self._get_prompt().endswith('#'):
             return
