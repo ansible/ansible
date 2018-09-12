@@ -905,18 +905,6 @@ DEFAULT_PRIVATE_KEY_FILE:
   ini:
   - {key: private_key_file, section: defaults}
   type: path
-DEFAULT_PRIVATE_ROLE_VARS:
-  name: Private role variables
-  default: False
-  description:
-    - Makes role variables inaccessible from other roles.
-    - This was introduced as a way to reset role variables to default values if
-      a role is used more than once in a playbook.
-  env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
-  ini:
-  - {key: private_role_vars, section: defaults}
-  type: boolean
-  yaml: {key: defaults.private_role_vars}
 DEFAULT_REMOTE_PORT:
   name: Remote port
   default: ~
