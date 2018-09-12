@@ -63,6 +63,7 @@ options:
         description:
             - "Number of days after which should snapshot be deleted."
             - "It will check all snapshots of vm and delete them, if they are older."
+        version_added: "2.8"
 notes:
     - "Note that without a guest agent the data on the created snapshot may be
        inconsistent."
@@ -240,7 +241,7 @@ def main():
         vm_name=dict(required=True),
         snapshot_id=dict(default=None),
         description=dict(default=None),
-        keep_days_old=dict(default=None,type='int'),
+        keep_days_old=dict(default=None, type='int'),
         use_memory=dict(
             default=None,
             type='bool',
@@ -274,16 +275,16 @@ def main():
     vm_service = vms_service.vm_service(vm.id)
     snapshots_service = vms_service.vm_service(vm.id).snapshots_service()
     if module.params.get('keep_days_old') is not None:
-        deleted_snapshot=[]
+        deleted_snapshot = []
         from datetime import datetime
         date_now = datetime.now()
         for snapshot in snapshots_service.list():
             if snapshot.vm and snapshot.vm.name == module.params.get('vm_name'):
                 diff = date_now - snapshot.date.replace(tzinfo=None)
-                if diff.days  >= module.params.get('keep_days_old'):
+                if diff.days >= module.params.get('keep_days_old'):
                     snapshots_service.snapshot_service(snapshot.id).remove()
                     deleted_snapshot.append(get_dict_of_struct(snapshot))
-                    changed=True
+                    changed = True
         module.exit_json(snapshots=deleted_snapshot, changed=changed)
         connection.close(logout=auth.get('token') is None)
     else:
