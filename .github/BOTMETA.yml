@@ -355,6 +355,7 @@ files:
     - sophos
     maintainers:
     - matrixcrawler
+    - getjack
   $modules/web_infrastructure/django_manage.py: scottanderson42
   $modules/web_infrastructure/htpasswd.py: $team_ansible
   $modules/web_infrastructure/jboss/: $team_jboss
