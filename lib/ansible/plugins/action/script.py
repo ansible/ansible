@@ -132,7 +132,7 @@ class ActionModule(ActionBase):
                 exec_data = _create_powershell_wrapper(
                     to_bytes(script_cmd), {}, env_dict, self._task.async_val,
                     pc.become, pc.become_method, pc.become_user,
-                    pc.become_pass, pc.become_flags
+                    pc.become_pass, pc.become_flags, scan_dependencies=False
                 )
                 script_cmd = "-"
 

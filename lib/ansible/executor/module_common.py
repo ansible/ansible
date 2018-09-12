@@ -690,7 +690,8 @@ def _is_binary(b_module_data):
 
 def _create_powershell_wrapper(b_module_data, module_args, environment,
                                async_timeout, become, become_method,
-                               become_user, become_password, become_flags):
+                               become_user, become_password, become_flags,
+                               scan_dependencies=True):
     # creates the manifest/wrapper used in PowerShell modules to enable things
     # like become and async - this is also called in action/script.py
     exec_manifest = dict(
@@ -722,7 +723,11 @@ def _create_powershell_wrapper(b_module_data, module_args, environment,
             base64.b64encode(to_bytes(become_wrapper)))
 
     finder = PSModuleDepFinder()
-    finder.scan_module(b_module_data)
+
+    # we don't want to scan for any module_utils or other module related flags
+    # if scan_dependencies=False - action/script sets to False
+    if scan_dependencies:
+        finder.scan_module(b_module_data)
 
     for name, data in finder.modules.items():
         b64_data = to_text(base64.b64encode(data))
@@ -929,7 +934,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # bytes
         b_module_data = _create_powershell_wrapper(
             b_module_data, module_args, environment, async_timeout, become,
-            become_method, become_user, become_password, become_flags
+            become_method, become_user, become_password, become_flags,
+            scan_dependencies=True
         )
 
     elif module_substyle == 'jsonargs':
