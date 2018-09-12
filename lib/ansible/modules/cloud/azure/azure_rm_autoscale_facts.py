@@ -133,6 +133,9 @@ class AzureRMAutoScaleFacts(AzureRMModuleBase):
             ),
             name=dict(
                 type='str'
+            ),
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
