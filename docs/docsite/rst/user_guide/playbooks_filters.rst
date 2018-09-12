@@ -74,7 +74,7 @@ In the above example, if the variable 'some_variable' is not defined, the value 
 being raised.
 
 If you want to use the default value when variables evaluate to false or an empty string you have to set the second parameter to
-`true`::
+``true``::
 
     {{ lookup('env', 'MY_USER') | default('admin', true) }}
 
