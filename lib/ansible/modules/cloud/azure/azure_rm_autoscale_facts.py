@@ -29,10 +29,12 @@ options:
     name:
         description:
             - The name of the Auto Scale Setting.
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Yuwei Zhou (@yuwzho)"
@@ -51,7 +53,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-azure_autoscale:
+autoscales:
     description: List of Azure Scale Settings dicts.
     returned: always
     type: list
@@ -138,10 +140,10 @@ class AzureRMAutoScaleFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMAutoScaleFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMAutoScaleFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
-        for key in list(self.module_arg_spec) + ['tags']:
+        for key in list(self.module_arg_spec):
             setattr(self, key, kwargs[key])
 
         if self.resource_group and self.name:
