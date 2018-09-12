@@ -2,11 +2,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-import json
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.utm_utils import lookup_entry, clean_result, is_object_changed
+
+from lib.ansible.module_utils.utm_utils import UTM
 
 __metaclass__ = type
 
@@ -117,72 +115,18 @@ EXAMPLES = """
 """
 
 
-class UTMBackendEntry:
-
-    def __init__(self, url):
-        self.request_url = url
-        """
-        The important_keys will be checked for changes to determine whether the object needs to be updated
-        """
-        self.important_keys = ["comment", "disable_backend_connection_pooling", "host", "keepalive", "path",
-                               "port", "ssl", "status", "timeout"]
-
-    def add(self, module):
-        """
-    adds or updates a host object on utm
-        :param module:
-        """
-        is_changed = False
-        info, result = lookup_entry(module, self.request_url)
-        if info["status"] >= 400:
-            module.fail_json(result=json.loads(info))
-        else:
-            if result is None:
-                response, info = fetch_url(module, self.request_url, method="POST",
-                                           headers={"Accept": "application/json", "Content-type": "application/json"},
-                                           data=module.jsonify(module.params))
-                if info["status"] >= 400:
-                    module.fail_json(result=json.loads(info))
-                is_changed = True
-                result = clean_result(json.loads(response.read()))
-            else:
-                if is_object_changed(self.important_keys, module, result):
-                    response, info = fetch_url(module, self.request_url + result['_ref'], method="PUT",
-                                               headers={"Accept": "application/json",
-                                                        "Content-type": "application/json"},
-                                               data=module.jsonify(module.params))
-                    if info['status'] >= 400:
-                        module.fail_json(result=json.loads(info))
-                    is_changed = True
-                    result = clean_result(json.loads(response.read()))
-            module.exit_json(result=result, changed=is_changed)
-
-    def remove(self, module):
-        is_changed = False
-        info, result = lookup_entry(module, self.request_url)
-        if result is not None:
-            response, info = fetch_url(module, self.request_url + result['_ref'], method="DELETE",
-                                       headers={"Accept": "application/json", "X-Restd-Err-Ack": "all"},
-                                       data=module.jsonify(module.params))
-            if info["status"] >= 400:
-                module.fail_json(result=json.loads(info))
-            else:
-                is_changed = True
-        module.exit_json(changed=is_changed)
-
-
 def update_utm(module):
-    request_url = module.params.get('utm_protocol') + "://" + module.params.get('utm_host') + ":" + str(
-        module.params.get('utm_port')) + "/api/objects/reverse_proxy/backend/"
-    utm_dns_entry = UTMBackendEntry(request_url)
+    endpoint = "reverse_proxy/backend"
+    key_to_check_for_changes = ["comment", "disable_backend_connection_pooling", "host", "keepalive", "path", "port",
+                                "ssl", "status", "timeout"]
 
-    module.params['url_username'] = 'token'
-    module.params['url_password'] = module.params.get('utm_token')
+    utm = UTM(module, endpoint,
+              key_to_check_for_changes)
 
     if module.params.get('state') == 'present':
-        utm_dns_entry.add(module)
+        utm.add()
     else:
-        utm_dns_entry.remove(module)
+        utm.remove()
 
 
 def main():
