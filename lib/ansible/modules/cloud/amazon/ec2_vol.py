@@ -487,7 +487,7 @@ def get_volume_info(volume):
         'snapshot_id': volume.get('snapshot_id'),
         'status': volume.get('state'),
         'type': volume.get('volume_type'),
-        'zone': volume.get('zone'),
+        'zone': volume.get('availability_zone'),
         'attachment_set': {
             'attach_time': attachment_data.get('attach_time', None),
             'device': attachment_data.get('device', None),
