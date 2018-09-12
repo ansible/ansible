@@ -13,28 +13,26 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: win_xml
+module: win_iis_logs
 version_added: "2.8"
 short_description: Manages IIS Log configuration
-description:
-    - Manages the IIS log configuration either per-site, or server wide
+description: Manages the IIS log configuration either per-site, or server wide
 options:
     site_name:
         description: The name of the site for which logging should be configured.  Also accepted is "System" for system-wide logging.
         required: false
         default: 'System'
     log_directory:
-        description:
-        - The target directory for IIS Logs
+        description: The target directory for IIS Logs
         required: false
         default: null
         type: string
     log_ext_file_flags:
-        description: Built-In IIS Log fields to be included. This must be a list of objects with the following properties: field_name, state.
+        description: Built-In IIS Log fields to be included. This must be a list of objects with these properties: field_name, state.
         type: list
         required: false
     log_custom_fields:
-        description: Custom log fileds to be included.  This must be a list of objects with the following properties: field_name, source_type, source_name, state
+        description: Custom log fileds to be included.  This must be a list of objects with these properties: field_name, source_type, source_name, state
         type: list
         required: false
     use_local_time:
@@ -69,7 +67,7 @@ EXAMPLES = r'''
         log_ext_file_flags: all
         rotation_period: MaxSize
         truncate_size: 8675309
-          
+
 '''
 
 RETURN = r'''
