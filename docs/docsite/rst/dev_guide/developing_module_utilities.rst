@@ -19,6 +19,14 @@ constructed dynamically for each task invocation, by extracting imports and
 resolving those matching the namespace against a search path derived from the
 active configuration.
 
+Module utilities tree structure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A Python module utility must reuse same namespace/directories than related
+modules. For example, EMC modules belong to the ``storage/emc`` namespace,
+meaning they are located in ``lib/ansible/modules/storage/emc/``. Then common
+code to EMC modules must be located in the ``lib/ansible/modules/storage/emc/``
+directory.
 
 Search Path
 ~~~~~~~~~~~
