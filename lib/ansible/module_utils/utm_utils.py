@@ -17,6 +17,34 @@ class UTMModuleConfigurationError(Exception):
     def do_fail(self, module):
         module.fail_json(msg=self.msg, other=self.module_fail_args)
 
+    def add(self):
+        """
+        adds or updates a host object on utm
+        """
+        is_changed = False
+        info, result = self._lookup_entry(self.module, self.request_url)
+        if info["status"] >= 400:
+            self.module.fail_json(result=json.loads(info))
+        else:
+            if result is None:
+                response, info = fetch_url(self.module, self.request_url, method="POST",
+                                           headers={"Accept": "application/json", "Content-type": "application/json"},
+                                           data=self.module.jsonify(self.module.params))
+                if info["status"] >= 400:
+                    self.module.fail_json(result=json.loads(info))
+                is_changed = True
+                result = self._clean_result(json.loads(response.read()))
+            else:
+                if self._is_object_changed(self.important_keys, self.module, result):
+                    response, info = fetch_url(self.module, self.request_url + result['_ref'], method="PUT",
+                                               headers={"Accept": "application/json",
+                                                        "Content-type": "application/json"},
+                                               data=self.module.jsonify(self.module.params))
+                    if info['status'] >= 400:
+                        self.module.fail_json(result=json.loads(info))
+                    is_changed = True
+                    result = self._clean_result(json.loads(response.read()))
+            self.module.exit_json(result=result, changed=is_changed)
 
 class UTMModule(AnsibleModule):
 
