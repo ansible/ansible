@@ -235,12 +235,12 @@
   assert:
     that:
       - output.changed == False
-      - output.firewall_rules[0].id != None
-      - output.firewall_rules[0].resource_group != None
-      - output.firewall_rules[0].server_name != None
-      - output.firewall_rules[0].name != None
-      - output.firewall_rules[0].start_ip_address != None
-      - output.firewall_rules[0].end_ip_address != None
+      - output.rules[0].id != None
+      - output.rules[0].resource_group != None
+      - output.rules[0].server_name != None
+      - output.rules[0].name != None
+      - output.rules[0].start_ip_address != None
+      - output.rules[0].end_ip_address != None
 
 - name: Gather facts SQL Firewall Rule
   azure_rm_sqlfirewallrule_facts:
@@ -251,19 +251,19 @@
   assert:
     that:
       - output.changed == False
-      - output.firewall_rules[].id != None
-      - output.firewall_rules[0].id != None
-      - output.firewall_rules[0].resource_group != None
-      - output.firewall_rules[0].server_name != None
-      - output.firewall_rules[0].name != None
-      - output.firewall_rules[0].start_ip_address != None
-      - output.firewall_rules[0].end_ip_address != None
-      - output.firewall_rules[1].id != None
-      - output.firewall_rules[1].resource_group != None
-      - output.firewall_rules[1].server_name != None
-      - output.firewall_rules[1].name != None
-      - output.firewall_rules[1].start_ip_address != None
-      - output.firewall_rules[1].end_ip_address != None
+      - output.rules[].id != None
+      - output.rules[0].id != None
+      - output.rules[0].resource_group != None
+      - output.rules[0].server_name != None
+      - output.rules[0].name != None
+      - output.rules[0].start_ip_address != None
+      - output.rules[0].end_ip_address != None
+      - output.rules[1].id != None
+      - output.rules[1].resource_group != None
+      - output.rules[1].server_name != None
+      - output.rules[1].name != None
+      - output.rules[1].start_ip_address != None
+      - output.rules[1].end_ip_address != None
 
 - name: Delete instance of Firewall Rule
   azure_rm_sqlfirewallrule:
@@ -288,7 +288,7 @@
   assert:
     that:
       - output.changed == False
-      - output.firewall_rules | lenght == 0
+      - output.rules | lenght == 0
 
 # finalise & clean up azure_rm_sqlserver test
 
