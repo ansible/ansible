@@ -45,57 +45,59 @@ author:
 EXAMPLES = '''
   - name: Get instance of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group: resource_group_name
-      server_name: server_name
-      name: firewall_rule_name
+      resource_group: testgroup
+      server_name: testserver
+      name: testrule
 
   - name: List instances of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group: resource_group_name
-      server_name: server_name
+      resource_group:testgroup
+      server_name: testserver
 '''
 
 RETURN = '''
-firewall_rules:
-    description: A list of dict results where the key is the name of the SQL Firewall Rule and the values are the facts for that SQL Firewall Rule.
+rules:
+    description: A list of dict results containing the facts for matching SQL firewall rules.
     returned: always
     type: complex
     contains:
-        sqlfirewallrule_name:
-            description: The key is the name of the server that the values relate to.
-            type: complex
-            contains:
-                id:
-                    description:
-                        - Resource ID.
-                    returned: always
-                    type: str
-                    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/firewallrulecrudtest-12/providers/Microsoft.Sql/servers/firew
-                            allrulecrudtest-6285/firewallRules/firewallrulecrudtest-2304"
-                name:
-                    description:
-                        - Resource name.
-                    returned: always
-                    type: str
-                    sample: firewallrulecrudtest-2304
-                type:
-                    description:
-                        - Resource type.
-                    returned: always
-                    type: str
-                    sample: Microsoft.Sql/servers/firewallRules
-                kind:
-                    description:
-                        - Kind of server that contains this firewall rule.
-                    returned: always
-                    type: str
-                    sample: v12.0
-                location:
-                    description:
-                        - Location of the server that contains this firewall rule.
-                    returned: always
-                    type: str
-                    sample: Japan East
+        id:
+            description:
+                - Resource ID
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testgroup/providers/Microsoft.Sql/servers/testser
+                    ver/firewallRules/testrule"
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: testgroup
+        server_name:
+            description:
+                - SQL server name.
+            returned: always
+            type: str
+            sample: testserver
+        name:
+            description:
+                - Firewall rule name.
+            returned: always
+            type: str
+            sample: testrule
+        start_ip_address:
+            description:
+                - The start IP address of the firewall rule.
+            returned: always
+            type: str
+            sample: 10.0.0.1
+        end_ip_address:
+            description:
+                - The start IP address of the firewall rule.
+            returned: always
+            type: str
+            sample: 10.0.0.5
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -128,8 +130,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         )
         # store the results of the module operation
         self.results = dict(
-            changed=False,
-            ansible_facts=dict()
+            changed=False
         )
         self.resource_group = None
         self.server_name = None
@@ -140,13 +141,10 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        if (self.resource_group is not None and
-                self.server_name is not None and
-                self.name is not None):
-            self.results['firewall_rules'] = self.get()
-        elif (self.resource_group is not None and
-              self.server_name is not None):
-            self.results['firewall_rules'] = self.list_by_server()
+        if (self.name is not None):
+            self.results['rules'] = self.get()
+        else:
+            self.results['rules'] = self.list_by_server()
         return self.results
 
     def get(self):
@@ -156,7 +154,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         :return: deserialized SQL Firewall Ruleinstance state dictionary
         '''
         response = None
-        results = {}
+        results = []
         try:
             response = self.sql_client.firewall_rules.get(resource_group_name=self.resource_group,
                                                           server_name=self.server_name,
@@ -166,7 +164,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
             self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
-            results[response.name] = response.as_dict()
+            results.append(self.format_item(response))
 
         return results
 
@@ -177,7 +175,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         :return: deserialized SQL Firewall Ruleinstance state dictionary
         '''
         response = None
-        results = {}
+        results = []
         try:
             response = self.sql_client.firewall_rules.list_by_server(resource_group_name=self.resource_group,
                                                                      server_name=self.server_name)
@@ -187,10 +185,21 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = item.as_dict()
+                results.append(self.format_item(item))
 
         return results
 
+    def format_item(self, item):
+        d = item.as_dict()
+        d = {
+            'id': d['id'], 
+            'resource_group': self.resource_group,
+            'server_name': self.server_name,
+            'name': d['name'],
+            'start_ip_address': d['start_ip_address'],
+            'end_ip_address': d['end_ip_address']
+        }
+        return d
 
 def main():
     AzureRMFirewallRulesFacts()
