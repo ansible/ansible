@@ -13,7 +13,7 @@ With `pikaur`:
 
     pikaur -S ansible-git
 
-You can also use install the stable version of [ansible][3] as an AUR package.
+You can also install the stable version of [ansible][3] as an AUR package.
 
   [1]: https://aur.archlinux.org/packages/ansible-git/
   [2]: https://wiki.archlinux.org/index.php/AUR_helpers
