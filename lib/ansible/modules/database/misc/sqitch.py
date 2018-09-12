@@ -238,7 +238,8 @@ def main():
             upto=dict(),
             set_revert=dict(default=[], type='list'),
             set_deploy=dict(default=[], type='list')
-        )
+        ),
+        supports_check_mode=True
     )
 
     command = module.params['command']
@@ -312,7 +313,10 @@ def main():
         get_from_change(cmd, from_change)
         get_set(cmd, set)
 
-    (rc, out, err) = module.run_command(cmd, cwd=cwd)
+    if module.check_mode:
+        module.exit_json(changed=False, msg="%s will be run in %s directory" % (cmd, cwd))
+    else:
+        (rc, out, err) = module.run_command(cmd, cwd=cwd)
 
     if rc is not None and rc != 0:
         module.fail_json(msg=err, rc=rc)
