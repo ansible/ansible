@@ -1051,7 +1051,7 @@ def response_to_hash(module, response):
 def disk_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/{zone}/diskTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*/diskTypes/[a-z1-9\-]*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/diskTypes/%s".format(**params) % name
     return name
@@ -1060,7 +1060,7 @@ def disk_type_selflink(name, params):
 def machine_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/{zone}/machineTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*/machineTypes/[a-z1-9\-]*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/machineTypes/%s".format(**params) % name
     return name
