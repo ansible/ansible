@@ -685,7 +685,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         elif self.state == 'absent' and load_balancer:
             changed = True
 
-        self.results['state'] = load_balancer.as_dict() if load_balancer else {}
+        self.results['state'] = load_balancer if load_balancer else {}
         if 'tags' in self.results['state']:
             update_tags, self.results['state']['tags'] = self.update_tags(self.results['state']['tags'])
             if update_tags:
@@ -794,7 +794,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         """Get a load balancer"""
         self.log('Fetching loadbalancer {0}'.format(self.name))
         try:
-            return self.network_client.load_balancers.get(self.resource_group, self.name)
+            return self.network_client.load_balancers.get(self.resource_group, self.name).as_dict()
         except CloudError:
             return None
 
