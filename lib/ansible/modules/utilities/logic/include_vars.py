@@ -85,11 +85,12 @@ EXAMPLES = """
   when: x == 0
 
 - name: Load a variable file based on the OS type, or a default if not found. Using free-form to specify the file.
-  include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ ansible_distribution }}.yaml"
-    - "{{ ansible_os_family }}.yaml"
-    - default.yaml
+  include_vars: "{{ lookup('first_found', possible_files) }}"
+  vars:
+    possible_files:
+      - "{{ ansible_distribution }}.yaml"
+      - "{{ ansible_os_family }}.yaml"
+      - default.yaml
 
 - name: Bare include (free-form)
   include_vars: myvars.yaml
