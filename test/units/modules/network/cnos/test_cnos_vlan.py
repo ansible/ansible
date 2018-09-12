@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import os
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.cnos import cnos_vlan
 from units.modules.utils import set_module_args
@@ -21,6 +22,7 @@ class TestCnosVlanModule(TestCnosModule):
     def tearDown(self):
         super(TestCnosVlanModule, self).tearDown()
         self.mock_run_cnos_commands.stop()
+        os.remove('test.log')
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.run_cnos_commands.return_value = [load_fixture('cnos_vlan_config.cfg')]
@@ -31,9 +33,6 @@ class TestCnosVlanModule(TestCnosModule):
                          'outputfile': 'test.log', 'vlanArg1': '13',
                          'vlanArg2': 'name', 'vlanArg3': 'anil'})
         result = self.execute_module(changed=True)
-        file = open('Anil.txt', "a")
-        file.write(str(result))
-        file.close()
         expected_result = 'VLAN configuration is accomplished'
         self.assertEqual(result['msg'], expected_result)
 
