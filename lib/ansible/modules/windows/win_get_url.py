@@ -107,7 +107,8 @@ options:
 notes:
 - If your URL includes an escaped slash character (%2F) this module will convert it to a real slash.
   This is a result of the behaviour of the System.Uri class
-  L(as described in the documentation,https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/schemesettings-element-uri-settings#remarks).
+  L(as described in the documentation, 
+  https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/schemesettings-element-uri-settings#remarks).
 '''
 
 EXAMPLES = r'''
