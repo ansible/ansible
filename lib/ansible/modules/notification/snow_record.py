@@ -29,9 +29,16 @@ options:
         required: true
     host:
         description:
-            - The instance is an address to the on premise endpoint
+            - Instance parameter is now assumed to be an address to the on premise endpoint
         required: false
-	default: false
+        default: false
+        type: bool
+    validate_certs:
+        description:
+            - If True we validate certificates when using a unique service now address
+        required: false
+        default: true
+        type: bool
     username:
         description:
             - User to connect to ServiceNow as
@@ -44,7 +51,7 @@ options:
         description:
             - Table to query for records
         required: false
-        default: incident
+        default: "incident"
     state:
         description:
             - If C(present) is supplied with a C(number)
@@ -65,7 +72,7 @@ options:
         description:
             - Changes the field that C(number) uses to find records
         required: false
-        default: number
+        default: 'number'
     attachment:
         description:
             - Attach a file to the record
@@ -194,7 +201,7 @@ def run_module():
         username=dict(default=None, type='str', required=True, no_log=True),
         password=dict(default=None, type='str', required=True, no_log=True),
         host=dict(type='bool', required=False, default=False),
-        validate_certs=dict(type='bool', required=False, default=False),
+        validate_certs=dict(type='bool', required=False, default=True),
         table=dict(type='str', required=False, default='incident'),
         state=dict(choices=['present', 'absent'],
                    type='str', required=False, default=None),
