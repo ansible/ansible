@@ -66,7 +66,7 @@ options:
         description:
           - whether to disable the backend connection pooling
         default: False
-    backend_host:
+    host:
         description:
           - The reference name of the host object. Can be determined with utm_dns_entry
     comment:
@@ -80,10 +80,10 @@ options:
         description:
           - The path for the site path routing
         default: /
-    backend_port:
+    port:
         description:
           - The port of the backend service
-        required: True
+        default: 80
     ssl:
         description:
           - whether to enable ssl or not
@@ -98,6 +98,24 @@ options:
         default: 300
 """
 
+EXAMPLES = """
+# Create a proxy_backend entry
+- name: utm proxy_backend
+  utm_proxy_backend:
+    utm_host: sophos.host.name
+    utm_token: abcdefghijklmno1234
+    name: TestBackendEntry
+    host: REF_OBJECT_STRING
+    state: present
+
+# Remove a proxy_backend entry
+- name: utm proxy_backend
+  utm_proxy_backend:
+    utm_host: sophos.host.name
+    utm_token: abcdefghijklmno1234
+    name: TestBackendEntry
+    state: absent
+"""
 
 class UTMBackendEntry:
 
@@ -179,11 +197,11 @@ def main():
             name=dict(type='str', required=True),
 
             disable_backend_connection_pooling=dict(type='bool', required=False, default=False),
-            host=dict(type='str', required=True),
+            host=dict(type='str', required=False),
             comment=dict(type='str', required=False, default=""),
             keepalive=dict(type='bool', required=False, default=False),
             path=dict(type='str', required=False, default="/"),
-            port=dict(type='int', required=True),
+            port=dict(type='int', required=False,default=80),
             ssl=dict(type='bool', required=False, default=False),
             status=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', required=False, default=300),
