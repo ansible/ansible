@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright(c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -16,7 +19,7 @@ DOCUMENTATION = r'''
 module: launchd
 author:
     - "Martin Migasiewicz"
-version_added: "2.6"
+version_added: "2.8"
 short_description:  Manage macOS services.
 description:
     - This module can be used to control launchd services on target
@@ -42,7 +45,6 @@ options:
         job definition (plist) is used. Whether a service is started or
         stopped depends on the content of the definition file.
     enabled:
-      choices: [ True, False ]
       default: null
       type: 'bool'
       description:
@@ -51,6 +53,7 @@ options:
     force_stop:
       required: false
       default: false
+      type: 'bool'
       description:
         - Services might have the 'KeepAlive' attribute set to true in a
           launchd configuration. In case this is set to true, stopping a
@@ -149,7 +152,7 @@ class Plist:
         self.__changed = False
         self.__service = service
 
-        state, pid, _, _ = LaunchCtlList(module, service).run()
+        state, pid, dummy, dummy = LaunchCtlList(module, service).run()
 
         self.__file = self.__find_service_plist(service)
         if self.__file is None:
@@ -205,6 +208,8 @@ class Plist:
 
     def __handle_param_force_stop(self, module):
         if module.params['force_stop'] is not None:
+            service_plist = plistlib.readPlist(self.__file)
+
             # Set KeepAlive to false in case force_stop is defined to avoid
             # that the service gets restarted when stopping was requested.
             if module.params['force_stop'] is not None:
@@ -324,7 +329,7 @@ class LaunchCtlStart(LaunchCtlTask):
         super(LaunchCtlStart, self).__init__(module, service, plist)
 
     def runCommand(self):
-        state, _, _, _ = self.get_state()
+        state, dummy, dummy, dummy = self.get_state()
 
         if state == ServiceState.STOPPED or state == ServiceState.LOADED:
             self.reload()
@@ -351,7 +356,7 @@ class LaunchCtlStop(LaunchCtlTask):
         super(LaunchCtlStop, self).__init__(module, service, plist)
 
     def runCommand(self):
-        state, _, _, _ = self.get_state()
+        state, dummy, dummy, dummy = self.get_state()
 
         if state == ServiceState.STOPPED:
             # In case the service is stopped and we might later decide
@@ -378,7 +383,7 @@ class LaunchCtlReload(LaunchCtlTask):
         super(LaunchCtlReload, self).__init__(module, service, plist)
 
     def runCommand(self):
-        state, _, _, _ = self.get_state()
+        state, dummy, dummy, dummy = self.get_state()
 
         if state == ServiceState.UNLOADED:
             # launchd throws an error if we do an unload on an already
@@ -442,7 +447,7 @@ def main():
     result['changed'] = plist.is_changed()
 
     # Gather information about the service to be controlled.
-    state, pid, _, _ = LaunchCtlList(module, service).run()
+    state, pid, dummy, dummy = LaunchCtlList(module, service).run()
     result['status']['previous_state'] = ServiceState.to_string(state)
     result['status']['previous_pid'] = pid
 
@@ -465,10 +470,8 @@ def main():
     if (result['status']['current_state'] != result['status']['previous_state'] or
             result['status']['current_pid'] != result['status']['previous_pid']):
         result['changed'] = True
-
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-
