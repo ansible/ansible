@@ -38,7 +38,11 @@ from socket import inet_aton
 
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.common.network import is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, VALID_MASKS
+
+# Backwards compatibility for 3rd party modules
+from ansible.module_utils.common.network import (
+    is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, VALID_MASKS
+)
 
 try:
     from jinja2 import Environment, StrictUndefined
