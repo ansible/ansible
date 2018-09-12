@@ -1,10 +1,15 @@
 #!/usr/bin/python
+
+from __future__ import absolute_import, division, print_function
+
 import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 from lib.ansible.modules.web_infrastructure.sophos_utm.utm_utils import lookup_entry
+
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
