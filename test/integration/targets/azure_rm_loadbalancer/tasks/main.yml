@@ -139,7 +139,7 @@
     that:
     - output.changed
 
-    - name: delete load balancer
+- name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
     name: "{{ lbname_b }}"
