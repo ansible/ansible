@@ -6,7 +6,6 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-
 from ansible.module_utils.utm_utils import lookup_entry, clean_result, is_object_changed
 
 __metaclass__ = type
@@ -111,6 +110,7 @@ EXAMPLES = """
     name: TestDNSEntry
     state: absent
 """
+
 
 class UTMDnsEntry:
 
