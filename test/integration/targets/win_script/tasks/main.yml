@@ -210,14 +210,14 @@
 #      - "test_cmd_result is changed"
 
 - name: run test script that takes a boolean parameter
-  script: test_script_bool.ps1 $true
+  script: test_script_bool.ps1 $false  # use false as that can pick up more errors
   register: test_script_bool_result
 
 - name: check that the script ran and the parameter was treated as a boolean
   assert:
     that:
-      - "test_script_bool_result.stdout_lines[0] == 'System.Boolean'"
-      - "test_script_bool_result.stdout_lines[1] == 'True'"
+      - test_script_bool_result.stdout_lines[0] == 'System.Boolean'
+      - test_script_bool_result.stdout_lines[1] == 'False'
 
 - name: run test script that uses envvars
   script: test_script_with_env.ps1
@@ -272,3 +272,16 @@
     that:
       - test_script_removes_file_check_mode is changed
       - remove_file_stat.stat.exists
+
+- name: run test script with become that outputs 2 lines
+  script: test_script_whoami.ps1
+  register: test_script_result_become
+  become: yes
+  become_user: SYSTEM
+  become_method: runas
+
+- name: check that the script ran and we get both outputs on new lines
+  assert:
+    that:
+    - test_script_result_become.stdout_lines[0]|lower == 'nt authority\\system'
+    - test_script_result_become.stdout_lines[1] == 'finished'

@@ -22,9 +22,9 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail, AnsibleActionSkip
+from ansible.executor.module_common import _create_powershell_wrapper
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.plugins.shell.powershell import exec_wrapper
 
 
 class ActionModule(ActionBase):
@@ -124,13 +124,16 @@ class ActionModule(ActionBase):
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
             exec_data = None
-            # WinRM requires a special wrapper to work with environment variables
-            if self._connection.transport == "winrm":
-                pay = self._connection._create_raw_wrapper_payload(script_cmd,
-                                                                   env_dict)
-                exec_data = exec_wrapper.replace(b"$json_raw = ''",
-                                                 b"$json_raw = @'\r\n%s\r\n'@"
-                                                 % to_bytes(pay))
+            # PowerShell runs the script in a special wrapper to enable things
+            # like become and environment args
+            if self._connection._shell.SHELL_FAMILY == "powershell":
+                # FIXME: use a more public method to get the exec payload
+                pc = self._play_context
+                exec_data = _create_powershell_wrapper(
+                    to_bytes(script_cmd), {}, env_dict, self._task.async_val,
+                    pc.become, pc.become_method, pc.become_user,
+                    pc.become_pass, pc.become_flags, scan_dependencies=False
+                )
                 script_cmd = "-"
 
             result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
