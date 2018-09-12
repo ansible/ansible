@@ -271,10 +271,11 @@ def get_volume(module, ec2_conn, vol_id=None, fail_on_not_found=True):
     vols = []
     if vol_id:
         find_params['VolumeIds'] = [vol_id]
-    elif zone:
-            find_params['Filters'] = ansible_dict_to_boto3_filter_list({'availability-zone': zone})
     elif name:
             find_params['Filters'] = ansible_dict_to_boto3_filter_list({'tag:Name': name})
+    elif zone:
+            find_params['Filters'] = ansible_dict_to_boto3_filter_list({'availability-zone': zone})
+
     try:
         vols_response = ec2_conn.describe_volumes(**find_params)
         vols = vols_response.get('Volumes', [])
@@ -291,7 +292,10 @@ def get_volume(module, ec2_conn, vol_id=None, fail_on_not_found=True):
             return None
 
     if len(vols) > 1:
-        module.fail_json(msg="Found more than one volume in zone (if specified) with name: %s" % name)
+        module.fail_json(
+            msg="Found more than one volume in zone (if specified) with name: %s" % name,
+            found=[v['VolumeId'] for v in vols]
+        )
     vol = camel_dict_to_snake_dict(vols[0])
     return vol
 
@@ -443,7 +447,7 @@ def modify_dot_attribute(module, ec2_conn, instance_dict, device_name):
 
 
 def get_attachment_data(volume_dict, wanted_state=None):
-    attachment_data = None
+    attachment_data = {}
     if not volume_dict:
         return attachment_data
     for data in volume_dict.get('attachments', []):
