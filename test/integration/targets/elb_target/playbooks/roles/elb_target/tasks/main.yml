@@ -353,6 +353,29 @@
         <<: *aws_connection_info
       ignore_errors: true
 
+    - name: remove application load balancer
+      elb_application_lb:
+        name: "{{ lb_name }}"
+        security_groups:
+          - "{{ sg.group_id }}"
+        subnets:
+          - "{{ subnet_1.subnet.id }}"
+          - "{{ subnet_2.subnet.id }}"
+        listeners:
+          - Protocol: HTTP
+            Port: 80
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ tg_name }}-used"
+        state: absent
+        wait: true
+        wait_timeout: 200
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      ignore_errors: true
+
     - name: remove testing target groups
       elb_target_group:
         name: "{{ item }}"
@@ -394,29 +417,6 @@
       until: removed is not failed
       with_items:
         - "{{ tg_tcpudp_name }}"
-      ignore_errors: true
-
-    - name: remove application load balancer
-      elb_application_lb:
-        name: "{{ lb_name }}"
-        security_groups:
-          - "{{ sg.group_id }}"
-        subnets:
-          - "{{ subnet_1.subnet.id }}"
-          - "{{ subnet_2.subnet.id }}"
-        listeners:
-          - Protocol: HTTP
-            Port: 80
-            DefaultActions:
-              - Type: forward
-                TargetGroupName: "{{ tg_name }}-used"
-        state: absent
-        wait: true
-        wait_timeout: 200
-        <<: *aws_connection_info
-      register: removed
-      retries: 10
-      until: removed is not failed
       ignore_errors: true
 
     - name: remove testing security group
