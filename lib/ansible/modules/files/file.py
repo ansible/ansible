@@ -58,7 +58,7 @@ options:
         created (C(path)) which is how the UNIX command C(ln -s SRC DEST) treats relative paths.
   recurse:
     description:
-      - recursively set the specified file attributes (applies only to directories)
+      - recursively set the specified file attributes (applies only to C(state=directory))
     type: bool
     default: 'no'
     version_added: "1.1"
