@@ -668,35 +668,8 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                     idle_timeout=self.idle_timeout,
                     enable_floating_ip=False
                 )] if self.protocol else None
-            if load_balancer:
-                if (self.location != load_balancer['location'] or
-                        self.sku != load_balancer['sku']['name'] or
-                        not self.compare_arrays(load_balancer['frontend_ip_configurations'], self.frontend_ip_configurations) or
-                        not self.compare_arrays(load_balancer['inbound_nat_pools'], self.inbound_nat_pools) or
-                        # not compare_arrays(self.inbound_nat_rules, load_balancer['inbound_nat_rules']) or
-                        not self.compare_arrays(load_balancer['load_balancing_rules'], self.load_balancing_rules) or
-                        not self.compare_arrays(load_balancer['backend_address_pools'], self.backend_address_pools) or
-                        not self.compare_arrays(load_balancer['probes'], self.probes)):
-                    changed = True
-                else:
-                    changed = False
-            else:
-                changed = True
-        elif self.state == 'absent' and load_balancer:
-            changed = True
 
-        self.results['state'] = load_balancer if load_balancer else {}
-        if 'tags' in self.results['state']:
-            update_tags, self.results['state']['tags'] = self.update_tags(self.results['state']['tags'])
-            if update_tags:
-                changed = True
-        else:
-            if self.tags:
-                changed = True
-        self.results['changed'] = changed
-
-        if self.state == 'present' and changed:
-            # create or update
+            # create new load balancer structure early, so it can be easily compared
             frontend_ip_configurations_param = [self.network_models.FrontendIPConfiguration(
                 name=item.get('name'),
                 public_ip_address=self.get_public_ip_address_instance(item.get('public_ip_address')) if item.get('public_ip_address') else None,
@@ -766,7 +739,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 enable_floating_ip=item.get('enable_floating_ip')
             ) for item in self.load_balancing_rules] if self.load_balancing_rules else None
 
-            param = self.network_models.LoadBalancer(
+            self.new_load_balancer = self.network_models.LoadBalancer(
                 sku=self.network_models.LoadBalancerSku(self.sku) if self.sku else None,
                 location=self.location,
                 tags=self.tags,
@@ -777,7 +750,36 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 load_balancing_rules=load_balancing_rules_param
             )
 
-            self.results['state'] = self.create_or_update_load_balancer(param)
+            if load_balancer:
+                new_dict = self.new_load_balancer.as_dict()
+                if (self.location != load_balancer['location'] or
+                        self.sku != load_balancer['sku']['name'] or
+                        not self.compare_arrays(load_balancer['frontend_ip_configurations'], new_dict['frontend_ip_configurations']) or
+                        not self.compare_arrays(load_balancer['inbound_nat_pools'], new_dict['inbound_nat_pools']) or
+                        # not compare_arrays(self.inbound_nat_rules, load_balancer['inbound_nat_rules']) or
+                        not self.compare_arrays(load_balancer['load_balancing_rules'], new_dict['load_balancing_rules']) or
+                        not self.compare_arrays(load_balancer['backend_address_pools'], new_dict['backend_address_pools']) or
+                        not self.compare_arrays(load_balancer['probes'], new_dict['probes'])):
+                    changed = True
+                else:
+                    changed = False
+            else:
+                changed = True
+        elif self.state == 'absent' and load_balancer:
+            changed = True
+
+        self.results['state'] = load_balancer if load_balancer else {}
+        if 'tags' in self.results['state']:
+            update_tags, self.results['state']['tags'] = self.update_tags(self.results['state']['tags'])
+            if update_tags:
+                changed = True
+        else:
+            if self.tags:
+                changed = True
+        self.results['changed'] = changed
+
+        if self.state == 'present' and changed:
+            self.results['state'] = self.create_or_update_load_balancer(self.new_load_balancer)
         elif self.state == 'absent' and changed:
             self.delete_load_balancer()
             self.results['state'] = None
