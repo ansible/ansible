@@ -249,7 +249,7 @@ files:
   $modules/network/ovs/:
     ignored: stygstra
     maintainers: rcarrillocruz
-  $modules/network/panos/: ivanbojer jtschichold
+  $modules/network/panos/: ivanbojer jtschichold shinmog
   $modules/network/protocol/: $team_networking
   $modules/network/routeros/: heuels
   $modules/network/routing/: $team_networking
