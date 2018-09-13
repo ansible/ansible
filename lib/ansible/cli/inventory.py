@@ -329,6 +329,8 @@ class InventoryCLI(CLI):
                 results[group.name]['vars'] = self._get_group_variables(group)
 
             self._remove_empty(results[group.name])
+            if not results[group.name]:
+                del results[group.name]
 
             return results
 
