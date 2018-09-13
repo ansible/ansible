@@ -650,6 +650,7 @@ try:
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import mark_managed_by
     from library.module_utils.network.f5.common import only_has_managed_metadata
+    from library.module_utils.network.f5.compare import cmp_simple_list
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import ip_interface
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
@@ -667,6 +668,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import mark_managed_by
     from ansible.module_utils.network.f5.common import only_has_managed_metadata
+    from ansible.module_utils.network.f5.compare import cmp_simple_list
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import ip_interface
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
@@ -2754,16 +2756,8 @@ class Difference(object):
 
     @property
     def security_log_profiles(self):
-        if self.want.security_log_profiles is None:
-            return None
-        if self.have.security_log_profiles is None and self.want.security_log_profiles == '':
-            return None
-        if self.have.security_log_profiles is not None and self.want.security_log_profiles == '':
-            return []
-        if self.have.security_log_profiles is None:
-            return self.want.security_log_profiles
-        if set(self.want.security_log_profiles) != set(self.have.security_log_profiles):
-            return self.want.security_log_profiles
+        result = cmp_simple_list(self.want.security_log_profiles, self.have.security_log_profiles)
+        return result
 
     @property
     def security_nat_policy(self):

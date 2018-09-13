@@ -264,37 +264,32 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
-    from library.module_utils.network.f5.common import is_valid_hostname
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import is_valid_hostname
     from library.module_utils.network.f5.ipaddress import is_valid_ip
-    from library.module_utils.network.f5.ipaddress import validate_ip_address
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import is_valid_hostname
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
-    from ansible.module_utils.network.f5.ipaddress import validate_ip_address
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -306,17 +301,17 @@ class Parameters(AnsibleF5Parameters):
 
     api_attributes = [
         'rateLimit', 'connectionLimit', 'description', 'ratio', 'priorityGroup',
-        'address', 'fqdn', 'session', 'state'
+        'address', 'fqdn', 'session', 'state',
     ]
 
     returnables = [
         'rate_limit', 'connection_limit', 'description', 'ratio', 'priority_group',
-        'fqdn_auto_populate', 'session', 'state', 'fqdn', 'address'
+        'fqdn_auto_populate', 'session', 'state', 'fqdn', 'address',
     ]
 
     updatables = [
         'rate_limit', 'connection_limit', 'description', 'ratio', 'priority_group',
-        'fqdn_auto_populate', 'state'
+        'fqdn_auto_populate', 'state',
     ]
 
 
@@ -573,13 +568,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state in ['present', 'present', 'enabled', 'disabled', 'forced_offline']:
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state in ['present', 'present', 'enabled', 'disabled', 'forced_offline']:
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -603,25 +595,53 @@ class ModuleManager(object):
             return self.create()
 
     def exists(self):
-        try:
-            pool = self.client.api.tm.ltm.pools.pool.load(
-                name=self.want.pool,
-                partition=self.want.partition
-            )
-        except Exception as ex:
-            raise F5ModuleError('The specified pool does not exist')
-        result = pool.members_s.members.exists(
-            name=self.want.full_name,
-            partition=self.want.partition
+        if not self.pool_exist():
+            F5ModuleError('The specified pool does not exist')
+
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.pool),
+            transform_name(self.want.partition, self.want.full_name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def pool_exist(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.pool)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def node_exists(self):
-        resource = self.client.api.tm.ltm.nodes.node.exists(
-            name=self.want.node_name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.node_name)
         )
-        return resource
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -711,27 +731,47 @@ class ModuleManager(object):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        pool = self.client.api.tm.ltm.pools.pool.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        params['name'] = self.want.full_name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.pool),
+
         )
-        pool.members_s.members.create(
-            name=self.want.full_name,
-            partition=self.want.partition,
-            **params
-        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
-        pool = self.client.api.tm.ltm.pools.pool.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.pool),
+            transform_name(self.want.partition, self.want.full_name)
+
         )
-        resource = pool.members_s.members.load(
-            name=self.want.full_name,
-            partition=self.want.partition
-        )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def absent(self):
         if self.exists():
@@ -741,42 +781,68 @@ class ModuleManager(object):
         return False
 
     def remove_from_device(self):
-        pool = self.client.api.tm.ltm.pools.pool.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.pool),
+            transform_name(self.want.partition, self.want.full_name)
+
         )
-        resource = pool.members_s.members.load(
-            name=self.want.full_name,
-            partition=self.want.partition
-        )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def remove_node_from_device(self):
-        resource = self.client.api.tm.ltm.nodes.node.load(
-            name=self.want.node_name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.node_name)
         )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        pool = self.client.api.tm.ltm.pools.pool.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.pool),
+            transform_name(self.want.partition, self.want.full_name)
+
         )
-        resource = pool.members_s.members.load(
-            name=self.want.full_name,
-            partition=self.want.partition
-        )
-        return ApiParameters(params=resource.attrs)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def read_current_node_from_device(self, node):
-        resource = self.client.api.tm.ltm.nodes.node.load(
-            name=node,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, node)
         )
-        return NodeApiParameters(params=resource.attrs)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return NodeApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -823,20 +889,19 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

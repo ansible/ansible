@@ -344,7 +344,7 @@ class ModuleParameters(Parameters):
         return int(self._values['timeout'])
 
     @property
-    def ip(self):
+    def ip(self):  # lgtm [py/similar-function]
         if self._values['ip'] is None:
             return None
         if self._values['ip'] in ['*', '0.0.0.0']:

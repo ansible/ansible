@@ -378,7 +378,7 @@ class ModuleManager(object):
         if changed:
             self.changes = UsableChanges(params=changed)
 
-    def _update_changed_options(self):
+    def _update_changed_options(self):  # lgtm [py/similar-function]
         changed = {}
         for key in Parameters.updatables:
             if getattr(self.want, key) is not None:
