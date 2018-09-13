@@ -953,13 +953,16 @@ class Connection(ConnectionBase):
                     # we pass sudoable=False to disable pty allocation, which
                     # would end up mixing stdout/stderr and screwing with newlines
                     (returncode, stdout, stderr) = self.exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
-                    out_file = open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+')
-                    out_file.write(stdout)
-                    out_file.close()
+                    with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+') as out_file:
+                        out_file.write(stdout)
                 else:
-                    in_data = open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb').read()
-                    in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data, sudoable=False)
+                    with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as f:
+                        in_data = to_bytes(f.read(), nonstring='passthru')
+                    if not in_data:
+                        count = ' count=0'
+                    else:
+                        count = ''
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), in_data=in_data, sudoable=False)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
