@@ -26,7 +26,7 @@ Command Line
 Become Prompting
 ----------------
 
-Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges in *nix or ``enable mode`` in many network OSs):
+Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges on unix systems or ``enable`` mode on network devices):
 
 By default in Ansible 2.8::
 
