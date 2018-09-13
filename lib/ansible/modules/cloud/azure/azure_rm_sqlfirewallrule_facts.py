@@ -17,14 +17,14 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqlfirewallrule_facts
 version_added: "2.8"
-short_description: Get SQL Firewall Rule facts.
+short_description: Get Azure SQL Firewall Rule facts.
 description:
     - Get facts of SQL Firewall Rule.
 
 options:
     resource_group:
         description:
-            - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
+            - The name of the resource group that contains the server.
         required: True
     server_name:
         description:
