@@ -293,6 +293,7 @@ owner_id:
 import json
 import re
 import itertools
+from copy import deepcopy
 from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
@@ -952,6 +953,27 @@ def get_diff_final_resource(client, module, security_group):
         'vpc_id': security_group.get('vpc_id', module.params['vpc_id'])}
 
 
+def flatten_nested_targets(module, rules):
+    def _flatten(targets):
+        for target in targets:
+            if isinstance(target, list):
+                for t in _flatten(target):
+                    yield t
+            elif isinstance(target, string_types):
+                yield target
+
+    if rules is not None:
+        for rule in rules:
+            target_list_type = None
+            if isinstance(rule.get('cidr_ip'), list):
+                target_list_type = 'cidr_ip'
+            elif isinstance(rule.get('cidr_ipv6'), list):
+                target_list_type = 'cidr_ipv6'
+            if target_list_type is not None:
+                rule[target_list_type] = list(_flatten(rule[target_list_type]))
+    return rules
+
+
 def main():
     argument_spec = dict(
         name=dict(),
@@ -977,8 +999,10 @@ def main():
     group_id = module.params['group_id']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
-    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules'])))
-    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules_egress'])))
+    rules = flatten_nested_targets(module, deepcopy(module.params['rules']))
+    rules_egress = flatten_nested_targets(module, deepcopy(module.params['rules_egress']))
+    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(rules)))
+    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(rules_egress)))
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
