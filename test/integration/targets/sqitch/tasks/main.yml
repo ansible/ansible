@@ -26,7 +26,7 @@
     when: ansible_os_family == "RedHat"
   
   - name: Install sqitch
-    shell: "cpanm --sudo --quiet --notest App::Sqitch"
+    cpanm: name=Sqitch notest=true
     when: ansible_os_family == "RedHat"
   
   - name: Deploy in check mode with cwd
