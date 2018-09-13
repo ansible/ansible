@@ -54,7 +54,7 @@
     - include: ./rule_group_create.yml
     - include: ./egress_tests.yml
     - include: ./data_validation.yml
-    - include: ./multi_target.yml
+    - include: ./multi_nested_target.yml
 
     # ============================================================
     - name: test state=absent (CHECK MODE)

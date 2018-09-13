@@ -891,6 +891,7 @@ def get_diff_final_resource(client, module, security_group):
             final_rules = []
         else:
             final_rules = list(security_group_rules)
+        specified_rules = flatten_nested_targets(module, deepcopy(specified_rules))
         for rule in specified_rules:
             format_rule = {
                 'from_port': None, 'to_port': None, 'ip_protocol': rule.get('proto', 'tcp'),
@@ -901,7 +902,7 @@ def get_diff_final_resource(client, module, security_group):
                 format_rule.pop('from_port')
                 format_rule.pop('to_port')
             elif rule.get('ports'):
-                if rule.get('ports') and isinstance(rule.get('ports'), string_types):
+                if rule.get('ports') and (isinstance(rule['ports'], string_types) or isinstance(rule['ports'], int)):
                     rule['ports'] = [rule['ports']]
                 for port in rule.get('ports'):
                     if isinstance(port, string_types) and '-' in port:
@@ -917,7 +918,9 @@ def get_diff_final_resource(client, module, security_group):
                     if rule.get('rule_desc'):
                         format_rule[rule_key] = [{source_type: rule[source_type], 'description': rule['rule_desc']}]
                     else:
-                        format_rule[rule_key] = [{source_type: rule[source_type]}]
+                        if not isinstance(rule[source_type], list):
+                            rule[source_type] = [rule[source_type]]
+                        format_rule[rule_key] = [{source_type: target} for target in rule[source_type]]
             if rule.get('group_id') or rule.get('group_name'):
                 rule_sg = camel_dict_to_snake_dict(group_exists(client, module, module.params['vpc_id'], rule.get('group_id'), rule.get('group_name'))[0])
                 format_rule['user_id_group_pairs'] = [{
