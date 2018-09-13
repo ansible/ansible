@@ -239,13 +239,16 @@ class PyVmomiHelper(PyVmomi):
                                   " Please specify esxi_hostname.")
 
         if not self.is_dvs_switch:
-            self.port_group_obj = self.get_port_group_by_name(host_system=self.esxi_host_obj, portgroup_name=self.port_group_name)
+            self.port_group_obj = self.get_port_group_by_name(host_system=self.esxi_host_obj,
+                                                              portgroup_name=self.port_group_name,
+                                                              switch_name=self.switch_name)
+
         else:
             self.dv_switch = find_dvs_by_name(self.content, self.switch_name)
             self.port_group_obj = find_dvspg_by_name(self.dv_switch, self.port_group_name)
 
         if not self.port_group_obj:
-            module.fail_json(msg="Portgroup name %s not found" % self.port_group_name)
+            module.fail_json(msg="Portgroup name %s not found on %s" % (self.port_group_name, self.switch_name))
 
 
         if self.network_type == 'static':
@@ -254,20 +257,22 @@ class PyVmomiHelper(PyVmomi):
             if not self.subnet_mask:
                 module.fail_json(msg="network.subnet_mask is required parameter when network is set to 'static'.")
 
-    def get_port_group_by_name(self, host_system, portgroup_name):
+    def get_port_group_by_name(self, host_system, portgroup_name, switch_name):
         """
         Get specific port group by given name
         Args:
             host_system: Name of Host System
             portgroup_name: Name of Port Group
+            switch_name: Name of the vSwitch
 
         Returns: List of port groups by given specifications
 
         """
         pgs_list = self.get_all_port_groups_by_host(host_system=host_system)
         desired_pg = None
+        vswitch_key = "key-vim.host.VirtualSwitch-%s" % switch_name
         for pg in pgs_list:
-            if pg.spec.name == portgroup_name:
+            if pg.vswitch == vswitch_key and pg.spec.name == portgroup_name:
                 return pg
         return desired_pg
 
@@ -325,6 +330,11 @@ class PyVmomiHelper(PyVmomi):
         self.vnic = self.get_vmkernel(device_name=self.device_name)
         if self.vnic:
             state = 'present'
+            if not self.is_dvs_switch and self.vnic.portgroup != self.port_group_obj.spec.name:
+                state = 'update'
+            if self.is_dvs_switch and self.vnic.spec.distributedVirtualPort.switchUuid != self.dv_switch.uuid:
+                #self.module.fail_json(msg="on wrong dvs") # name %s not found on %s" % (self.port_group_name, self.switch_name))
+                state = 'update'
             if self.vnic.spec.mtu != self.mtu:
                 state = 'update'
             if self.vnic.spec.ip.dhcp:
@@ -417,6 +427,13 @@ class PyVmomiHelper(PyVmomi):
             ip_spec.dhcp = False
             ip_spec.ipAddress = self.ip_address
             ip_spec.subnetMask = self.subnet_mask
+
+        if not self.is_dvs_switch:
+            vnic_config.portgroup = self.port_group_obj.spec.name
+        else:
+            vnic_config.distributedVirtualPort = vim.dvs.PortConnection()
+            vnic_config.distributedVirtualPort.switchUuid = self.dv_switch.uuid
+            vnic_config.distributedVirtualPort.portgroupKey = self.port_group_obj.key
 
         vnic_config.ip = ip_spec
         vnic_config.mtu = self.mtu
