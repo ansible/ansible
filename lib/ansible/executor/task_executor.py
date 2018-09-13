@@ -842,16 +842,27 @@ class TaskExecutor:
             self._play_context.timeout = connection.get_option('persistent_command_timeout')
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
-            # We don't need to send the entire contents of variables to ansible-connection
-            filtered_vars = dict(
-                (key, value) for key, value in variables.items()
-                if key.startswith('ansible') and key != 'ansible_failed_task'
-            )
-            socket_path = self._start_connection(filtered_vars)
+
+            options = self._get_persistent_connection_options(connection, variables, templar)
+            socket_path = self._start_connection(options)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
         return connection
+
+    def _get_persistent_connection_options(self, connection, variables, templar):
+        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
+
+        option_vars = C.config.get_plugin_vars('connection', connection._load_name)
+        for plugin in iteritems(connection._sub_plugins):
+            option_vars.extend(C.config.get_plugin_vars(*plugin))
+
+        options = {}
+        for k in option_vars:
+            if k in final_vars:
+                options[k] = templar.template(final_vars[k])
+
+        return options
 
     def _set_connection_options(self, variables, templar):
 

@@ -292,6 +292,8 @@ class NetworkConnectionBase(ConnectionBase):
     # Do not use _remote_is_local in other connections
     _remote_is_local = True
 
+    _sub_plugins = {}
+
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
 
