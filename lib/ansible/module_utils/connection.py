@@ -142,6 +142,27 @@ class Connection(object):
 
         try:
             data = json.dumps(req)
+        except TypeError as exc:
+            data = req['params']
+
+            if isinstance(data, dict):
+                data = data.get('var_options', {})
+
+                for key, value in iteritems(data):
+                    try:
+                        dummy = json.dumps(value)
+                    except TypeError:
+                        raise ConnectionError(
+                            "Failed to encode some variables as JSON for communication with ansible-connection. "
+                            "Please open an issue and mention that the culprit is most likely '%s'" % key
+                        )
+
+            raise ConnectionError(
+                "Failed to encode some variables as JSON for communication with ansible-connection. "
+                "The original exception was: " % to_text(exc)
+            )
+
+        try:
             out = self.send(data)
             response = json.loads(out)
 
