@@ -48,6 +48,7 @@ options:
       - Whether or not C(switch_name) is a DVS.
       version_added: 2.8
       default: False
+      type: bool
     device_name:
       description:
       - The name of the vmkernel device.
@@ -250,7 +251,6 @@ class PyVmomiHelper(PyVmomi):
         if not self.port_group_obj:
             module.fail_json(msg="Portgroup name %s not found on %s" % (self.port_group_name, self.switch_name))
 
-
         if self.network_type == 'static':
             if not self.ip_address:
                 module.fail_json(msg="network.ip_address is required parameter when network is set to 'static'.")
@@ -314,7 +314,7 @@ class PyVmomiHelper(PyVmomi):
 
         """
         ret = False
-        vnics = [ vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.device == device_name]
+        vnics = [vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.device == device_name]
 
         if vnics:
             ret = vnics[0]
@@ -333,7 +333,6 @@ class PyVmomiHelper(PyVmomi):
             if not self.is_dvs_switch and self.vnic.portgroup != self.port_group_obj.spec.name:
                 state = 'update'
             if self.is_dvs_switch and self.vnic.spec.distributedVirtualPort.switchUuid != self.dv_switch.uuid:
-                #self.module.fail_json(msg="on wrong dvs") # name %s not found on %s" % (self.port_group_name, self.switch_name))
                 state = 'update'
             if self.vnic.spec.mtu != self.mtu:
                 state = 'update'
@@ -694,7 +693,7 @@ def main():
         enable_provisioning=dict(type='bool'),
         enable_replication=dict(type='bool'),
         enable_replication_nfc=dict(type='bool'),
-        vswitch_name=dict(required=False, type='str',  aliases=['switch_name']),
+        vswitch_name=dict(required=False, type='str', aliases=['switch_name']),
         state=dict(type='str',
                    choices=['present', 'absent'],
                    default='present'),
