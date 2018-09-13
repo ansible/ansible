@@ -178,20 +178,19 @@ class Connection(NetworkConnectionBase):
 
         if self._network_os:
 
-            httpapi = httpapi_loader.get(self._network_os, self)
-            if httpapi:
+            self.httpapi = httpapi_loader.get(self._network_os, self)
+            if self.httpapi:
                 self._sub_plugins['httpapi'] = self._network_os
-                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(httpapi)
+                display.vvvv('loaded API plugin for network_os %s' % self._network_os)
+                self._implementation_plugins.append(self.httpapi)
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 
-
-            cliconf = cliconf_loader.get(self._network_os, self)
-            if cliconf:
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
                 self._sub_plugins['cliconf'] = self._network_os
                 display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
-                self._implementation_plugins.append(cliconf)
+                self._implementation_plugins.append(self.cliconf)
             else:
                 display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
         else:
@@ -231,8 +230,8 @@ class Connection(NetworkConnectionBase):
 
             super(Connection, self)._connect()
 
-            httpapi.set_become(self._play_context)
-            httpapi.login(self.get_option('remote_user'), self.get_option('password'))
+            self.httpapi.set_become(self._play_context)
+            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
 
             self._connected = True
 
