@@ -307,7 +307,7 @@ Minor Changes
 - passwordstore - Add backup option when overwriting password (off by default)
 - puppet - Add support for --debug, --verbose, --summarize https://github.com/ansible/ansible/issues/37986
 - puppet - Add support for setting logdest to both stdout and syslog via 'all'
-- replace copy.deepcopy in high workload areas with a custom function to improve performance (https://github.com/ansible/ansible/pull/44337)
+- replace copy.deepcopy in high workload areas with a custom function to improve speed of fact-cache updates and reduce memory usage (https://github.com/ansible/ansible/pull/44337)
 - roles - removed deprecated functionality for non YAML role specs (https://github.com/ansible/ansible/pull/44320)
 - roles - removed deprecated special casing functionality of connection, port, and remote_user for role params (https://github.com/ansible/ansible/pull/44320)
 - service - removed deprecated state=running (https://github.com/ansible/ansible/pull/44320)
