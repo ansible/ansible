@@ -208,6 +208,22 @@ class Connection(NetworkConnectionBase):
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
+        if self._network_os:
+            self._sub_plugins['cliconf'] = self._network_os
+
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
+                self._implementation_plugins.append(self.cliconf)
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
+        else:
+            raise AnsibleConnectionFailure(
+                'Unable to automatically determine host network os. Please '
+                'manually configure ansible_network_os value for this host'
+            )
+        display.display('network_os is set to %s' % self._network_os, log_only=True)
+
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
         name += "paramiko [%s]" % self._play_context.remote_addr
@@ -270,13 +286,6 @@ class Connection(NetworkConnectionBase):
         Connects to the remote device and starts the terminal
         '''
         if not self.connected:
-            if not self._network_os:
-                raise AnsibleConnectionFailure(
-                    'Unable to automatically determine host network os. Please '
-                    'manually configure ansible_network_os value for this host'
-                )
-            display.display('network_os is set to %s' % self._network_os, log_only=True)
-
             self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
             self.paramiko_conn._set_log_channel(self._get_log_channel())
             self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
@@ -294,13 +303,6 @@ class Connection(NetworkConnectionBase):
                 raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
             display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
-
-            self.cliconf = cliconf_loader.get(self._network_os, self)
-            if self.cliconf:
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(self.cliconf)
-            else:
-                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 
             super(Connection, self)._connect()
 
