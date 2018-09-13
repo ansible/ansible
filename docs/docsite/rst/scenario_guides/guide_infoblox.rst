@@ -164,7 +164,7 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
 
 The output above shows the host record for ``leaf01`` and ``leaf02`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See `Ansible variables <http://docs.ansible.com/ansible/latest/playbooks_variables.html>`_ for more information on using Ansible variables.
 
-See the `nios lookup plugin examples <https://docs.ansible.com/ansible/latest/plugins/lookup/nios.html#examples>`_ for more data options that you can retreive.
+See the `nios lookup plugin examples <https://docs.ansible.com/ansible/latest/plugins/lookup/nios.html#examples>`_ for more data options that you can retrieve.
 
 You can access these playbooks at `Infoblox lookup playbooks <https://github.com/network-automation/infoblox_ansible/tree/master/lookup_playbooks>`_.
 
@@ -178,7 +178,7 @@ For these examples, you need to set up your NIOS credentials. See `Credentials a
 Configuring an IPv4 network
 ---------------------------
 
-The following example ``configure_network`` playbook uses the ``nios_network`` module to configure an IPv4 network:
+The following example playbook uses the ``nios_network`` module to configure an IPv4 network:
 
 .. code-block:: yaml
 
@@ -201,7 +201,7 @@ Notice the last parameter, ``provider``, uses the variable ``nios_provider`` def
 Creating a host record
 ----------------------
 
-This example ``host_record.yml`` playbook builds on the newly-created IPv4 network to create a host record named `leaf03.ansible.com`:
+This example playbook builds on the newly-created IPv4 network to create a host record named `leaf03.ansible.com`:
 
 .. code-block:: yaml
 
@@ -218,9 +218,10 @@ This example ``host_record.yml`` playbook builds on the newly-created IPv4 netwo
             state: present
     provider: "{{nios_provider}}"
 
-Notice the IPv4 address in this example uses the ``nios_next_ip`` lookup to find the next available IPv4 address on the network.
+Notice the IPv4 address in this example uses the ``nios_next_ip`` lookup to find the next available IPv4 address on the network. You can find complete details on the ``nios_network`` module at `nios_next_ip <https://docs.ansible.com/ansible/latest/plugins/lookup/nios_next_ip.html>`_.
 
-Creating a forward DNS zone
+
+Creating a Reversw DNS zone
 --------------------------------------
 
 The following example playbook uses the ``nios_zone`` module to configure a forward DNS zone:
@@ -231,10 +232,28 @@ The following example playbook uses the ``nios_zone`` module to configure a forw
     - hosts: nios
       connection: local
       tasks:
-        - name: "Create a forward DNS zone called {{ ansible.local }}"
+        - name: Create a forward DNS zone called ansible-test.com
           nios_zone:
-            name: "{{ ansible.local }}"
+            name: ansible-test.com
             comment: local DNS zone
+            state: present
+            provider: "{{ nios_provider }}"
+
+Creating a reverse DNS zone
+--------------------------------------
+
+The following example playbook uses the ``nios_zone`` module to configure a reverse DNS zone:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: nios
+      connection: local
+      tasks:
+        - name: configure a reverse mapping zone on the system using IPV6 zone format
+          nios_zone:
+            name: 100::1/128
+            zone_format: IPV6
             state: present
             provider: "{{ nios_provider }}"
 
