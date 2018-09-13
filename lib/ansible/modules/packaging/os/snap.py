@@ -112,13 +112,13 @@ def install_snaps(module, snap_names):
     if not snaps_not_installed:
         module.exit_json(classic=module.params['classic'], changed=False)
 
-    # Transform the list into a string with whitespace-separated snaps
-    snaps_to_install = ' '.join(snaps_not_installed)
-
     if module.check_mode:
         module.exit_json(classic=module.params['classic'], changed=True)
 
     classic = '--classic' if module.params['classic'] else ''
+
+    # Transform the list into a string with whitespace-separated snaps
+    snaps_to_install = ' '.join(snaps_not_installed)
 
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'install', snaps_to_install, classic]
@@ -142,11 +142,11 @@ def remove_snaps(module, snap_names):
     if not snaps_installed:
         module.exit_json(changed=False)
 
-    # Transform the list into a string with whitespace-separated snaps
-    snaps_to_remove = ' '.join(snaps_installed)
-
     if module.check_mode:
         module.exit_json(changed=True)
+
+    # Transform the list into a string with whitespace-separated snaps
+    snaps_to_remove = ' '.join(snaps_installed)
 
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'remove', snaps_to_remove]
