@@ -22,6 +22,7 @@ def main():
         '': b'#!/usr/bin/python',
         '.py': b'#!/usr/bin/python',
         '.ps1': b'#!powershell',
+        '.cs': b'#!csharp',
     }
 
     skip = set([

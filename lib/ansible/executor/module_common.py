@@ -26,6 +26,7 @@ import datetime
 import imp
 import json
 import os
+import pkgutil
 import shlex
 import zipfile
 import random
@@ -38,7 +39,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
-from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
@@ -356,13 +356,25 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
 '''
 
 
-def _strip_comments(source):
+def _strip_comments(source, powershell=False):
     # Strip comments and blank lines from the wrapper
     buf = []
+    start_block = False
     for line in source.splitlines():
         l = line.strip()
+        if powershell:
+            if start_block and l.endswith(u'#>'):
+                start_block = False
+                continue
+            elif start_block:
+                continue
+            elif l.startswith(u'<#'):
+                start_block = True
+                continue
+
         if not l or l.startswith(u'#'):
             continue
+
         buf.append(line)
     return u'\n'.join(buf)
 
@@ -433,27 +445,56 @@ class ModuleDepFinder(ast.NodeVisitor):
 class PSModuleDepFinder():
 
     def __init__(self):
-        self.modules = dict()
+        self.ps_modules = dict()
+        self.exec_scripts = dict()
+
+        # by defining an explicit dict of cs utils and where they are used, we
+        # can potentially save time by not adding the type multiple times if it
+        # isn't needed
+        self.cs_utils_wrapper = dict()
+        self.cs_utils_module = dict()
+
         self.ps_version = None
         self.os_version = None
         self.become = False
 
+        self._re_cs_module = re.compile(to_bytes(r'(?i)^using\s(Ansible\..+);$'))
+        self._re_cs_in_ps_module = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+(Ansible\..+)'))
         self._re_module = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
         self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
         self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
         self._re_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
 
-    def scan_module(self, module_data):
+    def scan_module(self, module_data, wrapper=False):
         lines = module_data.split(b'\n')
         module_utils = set()
+        if wrapper:
+            cs_utils = self.cs_utils_wrapper
+        else:
+            cs_utils = self.cs_utils_module
 
         for line in lines:
-            module_util_match = self._re_module.match(line)
-            if module_util_match:
+            # PS module contains '#Requires -Module Ansible.ModuleUtils.*'
+            ps_util_match = self._re_module.match(line)
+            if ps_util_match:
                 # tolerate windows line endings by stripping any remaining newline chars
-                module_util_name = to_text(module_util_match.group(1).rstrip())
-                if module_util_name not in self.modules.keys():
-                    module_utils.add(module_util_name)
+                module_util_name = to_text(ps_util_match.group(1).rstrip())
+                if module_util_name not in self.ps_modules.keys():
+                    module_utils.add((module_util_name, ".psm1"))
+
+            # PS module contains '#AnsibleRequires -CSharpUtil Ansible.*'
+            cs_in_ps_util_match = self._re_cs_in_ps_module.match(line)
+            if cs_in_ps_util_match:
+                module_util_name = to_text(cs_in_ps_util_match.group(1).rstrip())
+                if module_util_name not in cs_utils.keys():
+                    module_utils.add((module_util_name, ".cs"))
+
+            # CS module contains 'using Ansible.*;'
+            cs_util_match = self._re_cs_module.match(line)
+            if cs_util_match:
+                module_util_name = to_text(cs_util_match.group(1).rstrip())
+                if module_util_name not in cs_utils.keys():
+                    module_utils.add((module_util_name, ".cs"))
 
             ps_version_match = self._re_ps_version.match(line)
             if ps_version_match:
@@ -472,14 +513,42 @@ class PSModuleDepFinder():
         # recursively drill into each Requires to see if there are any more
         # requirements
         for m in set(module_utils):
-            m = to_text(m)
-            mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
-            if not mu_path:
-                raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
+            self._add_module(m, wrapper=wrapper)
 
-            module_util_data = to_bytes(_slurp(mu_path))
-            self.modules[m] = module_util_data
-            self.scan_module(module_util_data)
+    def scan_exec_script(self, name):
+        # scans lib/ansible/executor/powershell for scripts used in the module
+        # exec side. It also scans these scripts for any dependencies
+        if name in self.exec_scripts.keys():
+            return
+
+        data = pkgutil.get_data("ansible.executor.powershell", name + ".ps1")
+        if data is None:
+            raise AnsibleError("Could not find executor powershell script for '%s'" % name)
+
+        b_data = to_bytes(data)
+        # remove comments to reduce the payload size in the exec wrappers
+        if C.DEFAULT_KEEP_REMOTE_FILES:
+            self.exec_scripts[name] = b_data
+        else:
+            self.exec_scripts[name] = to_bytes(_strip_comments(to_text(b_data), powershell=True))
+        self.scan_module(b_data, wrapper=True)
+
+    def _add_module(self, name, wrapper=False):
+        m, ext = name
+        m = to_text(m)
+        mu_path = ps_module_utils_loader.find_plugin(m, ext)
+        if not mu_path:
+            raise AnsibleError('Could not find imported module support code for \'%s\'' % m)
+
+        module_util_data = to_bytes(_slurp(mu_path))
+        if ext == ".psm1":
+            self.ps_modules[m] = module_util_data
+        else:
+            if wrapper:
+                self.cs_utils_wrapper[m] = module_util_data
+            else:
+                self.cs_utils_module[m] = module_util_data
+        self.scan_module(module_util_data, wrapper=wrapper)
 
     def _parse_version_match(self, match, attribute):
         new_version = to_text(match.group(1)).rstrip()
@@ -691,57 +760,93 @@ def _is_binary(b_module_data):
 def _create_powershell_wrapper(b_module_data, module_args, environment,
                                async_timeout, become, become_method,
                                become_user, become_password, become_flags,
-                               scan_dependencies=True):
-    # creates the manifest/wrapper used in PowerShell modules to enable things
-    # like become and async - this is also called in action/script.py
+                               substyle):
+    # creates the manifest/wrapper used in PowerShell/C# modules to enable
+    # things like become and async - this is also called in action/script.py
+
+    # remove the shebang if we have a C# module as # is not a valid comment
+    # just replace with newline with an empty line to preserve the line numbers
+    if substyle == 'csharp':
+        b_module_data = b"\n" + b"\n".join(b_module_data.splitlines()[1:])
+
+    # FUTURE: add process_wrapper.ps1 to run module_wrapper in a new process
+    # if running under a persistent connection and substyle is C# so we
+    # don't have type conflicts
+    finder = PSModuleDepFinder()
+    if substyle != 'script':
+        # don't scan the module for util dependencies and other Ansible related
+        # flags if the substyle is script which is set by action/script
+        finder.scan_module(b_module_data)
+
     exec_manifest = dict(
         module_entry=to_text(base64.b64encode(b_module_data)),
         powershell_modules=dict(),
+        csharp_utils=dict(),
+        csharp_utils_module=list(),  # csharp_utils only required by a module
         module_args=module_args,
-        actions=['exec'],
-        environment=environment
+        actions=['module_wrapper'],
+        environment=environment,
+        substyle=substyle,
+        encoded_output=False
     )
-
-    exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
+    finder.scan_exec_script('module_wrapper')
 
     if async_timeout > 0:
+        finder.scan_exec_script('exec_wrapper')
+        finder.scan_exec_script('async_watchdog')
+        finder.scan_exec_script('async_wrapper')
+
         exec_manifest["actions"].insert(0, 'async_watchdog')
-        exec_manifest["async_watchdog"] = to_text(
-            base64.b64encode(to_bytes(async_watchdog)))
         exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_wrapper"] = to_text(
-            base64.b64encode(to_bytes(async_wrapper)))
         exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
         exec_manifest["async_timeout_sec"] = async_timeout
 
     if become and become_method == 'runas':
-        exec_manifest["actions"].insert(0, 'become')
+        finder.scan_exec_script('exec_wrapper')
+        finder.scan_exec_script('become_wrapper')
+
+        exec_manifest["actions"].insert(0, 'become_wrapper')
         exec_manifest["become_user"] = become_user
         exec_manifest["become_password"] = become_password
         exec_manifest['become_flags'] = become_flags
-        exec_manifest["become"] = to_text(
-            base64.b64encode(to_bytes(become_wrapper)))
-
-    finder = PSModuleDepFinder()
-
-    # we don't want to scan for any module_utils or other module related flags
-    # if scan_dependencies=False - action/script sets to False
-    if scan_dependencies:
-        finder.scan_module(b_module_data)
-
-    for name, data in finder.modules.items():
-        b64_data = to_text(base64.b64encode(data))
-        exec_manifest['powershell_modules'][name] = b64_data
 
     exec_manifest['min_ps_version'] = finder.ps_version
     exec_manifest['min_os_version'] = finder.os_version
-    if finder.become and 'become' not in exec_manifest['actions']:
-        exec_manifest['actions'].insert(0, 'become')
+    if finder.become and 'become_wrapper' not in exec_manifest['actions']:
+        finder.scan_exec_script('exec_wrapper')
+        finder.scan_exec_script('become_wrapper')
+
+        exec_manifest['actions'].insert(0, 'become_wrapper')
         exec_manifest['become_user'] = 'SYSTEM'
         exec_manifest['become_password'] = None
         exec_manifest['become_flags'] = None
-        exec_manifest['become'] = to_text(
-            base64.b64encode(to_bytes(become_wrapper)))
+
+    # exec_wrapper is only required to be part of the payload if using
+    # become or async, to save on payload space we check if exec_wrapper has
+    # already been added, and remove it manually if it hasn't later
+    exec_required = "exec_wrapper" in finder.exec_scripts.keys()
+    finder.scan_exec_script("exec_wrapper")
+    # must contain an empty newline so it runs the begin/process/end block
+    finder.exec_scripts["exec_wrapper"] += b"\n\n"
+
+    exec_wrapper = finder.exec_scripts["exec_wrapper"]
+    if not exec_required:
+        finder.exec_scripts.pop("exec_wrapper")
+
+    for name, data in finder.exec_scripts.items():
+        b64_data = to_text(base64.b64encode(data))
+        exec_manifest[name] = b64_data
+
+    for name, data in finder.ps_modules.items():
+        b64_data = to_text(base64.b64encode(data))
+        exec_manifest['powershell_modules'][name] = b64_data
+
+    cs_utils = finder.cs_utils_wrapper
+    cs_utils.update(finder.cs_utils_module)
+    for name, data in cs_utils.items():
+        b64_data = to_text(base64.b64encode(data))
+        exec_manifest['csharp_utils'][name] = b64_data
+    exec_manifest['csharp_utils_module'] = list(finder.cs_utils_module.keys())
 
     # FUTURE: smuggle this back as a dict instead of serializing here;
     # the connection plugin may need to modify it
@@ -785,6 +890,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
+    elif b_module_data.startswith((b"#!csharp\n")):
+        module_style = 'new'
+        module_substyle = 'csharp'
     elif REPLACER_JSONARGS in b_module_data:
         module_style = 'new'
         module_substyle = 'jsonargs'
@@ -924,7 +1032,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         )))
         b_module_data = output.getvalue()
 
-    elif module_substyle == 'powershell':
+    elif module_substyle in ['csharp', 'powershell']:
         # Powershell/winrm don't actually make use of shebang so we can
         # safely set this here.  If we let the fallback code handle this
         # it can fail in the presence of the UTF8 BOM commonly added by
@@ -935,7 +1043,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = _create_powershell_wrapper(
             b_module_data, module_args, environment, async_timeout, become,
             become_method, become_user, become_password, become_flags,
-            scan_dependencies=True
+            module_substyle
         )
 
     elif module_substyle == 'jsonargs':

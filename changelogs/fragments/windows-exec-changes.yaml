@@ -1,0 +1,3 @@
+minor_changes:
+- include better error handling for Windows errors to help with debugging module errors
+- added support for executing C# module from source code on Windows hosts

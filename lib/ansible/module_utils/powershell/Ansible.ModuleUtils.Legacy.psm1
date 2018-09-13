@@ -310,6 +310,36 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
             msg = "remote module does not support check mode"
         }
     }
+
+    # new exec changes has $complex_args as a [Dictionary`2[String], [Object]]
+    # for backwards compatibility we need to convert to a Hashtable here
+    Function ConvertTo-Hashtable {
+        param([Object]$Value)
+
+        if ($null -eq $Value) {
+            return $null
+        }
+        $value_type = $Value.GetType()
+        if ($value_type.IsGenericType) {
+            $value_type = $value_type.GetGenericTypeDefinition()
+        }
+        if ($value_type -eq [System.Collections.Generic.Dictionary`2]) {
+            $new_value = @{}
+            foreach ($kv in $Value.GetEnumerator()) {
+                $new_value.Add($kv.Key, (ConvertTo-Hashtable -Value $kv.Value))
+            }
+            return ,$new_value
+        } elseif ($value_type -eq [System.Collections.ArrayList]) {
+            for ($i = 0; $i -lt $Value.Count; $i++) {
+                $Value[$i] = ConvertTo-Hashtable -Value $Value[$i]
+            }
+            return ,$Value.ToArray()
+        } else {
+            return ,$Value
+        }
+    }
+    $params = ConvertTo-Hashtable -Value $params
+
     return $params
 }
 
