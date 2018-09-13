@@ -816,6 +816,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         except CloudError as exc:
             self.fail("Error creating or updating load balancer {0} - {1}".format(self.name, str(exc)))
 
+
 def compare_arrays(old, new):
     old = old or []
     new = new or []
