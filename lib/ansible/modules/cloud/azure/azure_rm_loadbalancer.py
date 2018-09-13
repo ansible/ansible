@@ -818,20 +818,17 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
 
 def compare_arrays(old, new):
-    old = old or []
-    new = new or []
-
-    oldd = {}
-    for item in old:
-        name = item['name']
-        oldd[name] = item
-    newd = {}
-    for item in new:
-        name = item['name']
-        newd[name] = item
-
+    oldd = array_to_dict(old or [])
+    newd = array_to_dict(new or [])
     newd = dict_merge(oldd, newd)
     return newd == oldd
+
+
+def array_to_dict(a):
+    d = {}
+    for item in a:
+        d[item['name']] = item
+    return d
 
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
