@@ -168,15 +168,14 @@ def main():
 
     if key_file is not None and key_data is None:
         try:
-            f = open(key_file, 'rb')
+            with open(key_file, 'rb') as f:
+                key = load_pem_private_key(f.read(), b_key_passphrase, default_backend())
         except IOError as e:
+            # Handle bad files
             module.fail_json(msg="I/O error (%d) opening key file: %s" % (e.errno, e.strerror))
-        else:
-            try:
-                with f:
-                    key = load_pem_private_key(f.read(), b_key_passphrase, default_backend())
-            except (ValueError, TypeError) as e:
-                module.fail_json(msg="unable to parse key file")
+        except (ValueError, TypeError) as e:
+            # Handle issues loading key
+            module.fail_json(msg="unable to parse key file")
     elif key_data is not None and key_file is None:
         try:
             key = load_pem_private_key(key_data, b_key_passphrase, default_backend())
