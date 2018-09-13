@@ -409,7 +409,10 @@ class VariableManager:
             all_vars = combine_vars(all_vars, task.get_include_params())
 
         # extra vars
-        all_vars = combine_vars(all_vars, self._extra_vars)
+        if host:
+            all_vars = combine_vars(self._extra_vars, all_vars)
+        else:
+            all_vars = combine_vars(all_vars, self._extra_vars)
 
         # magic variables
         all_vars = combine_vars(all_vars, magic_variables)
