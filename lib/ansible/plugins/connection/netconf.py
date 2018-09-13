@@ -217,6 +217,16 @@ class Connection(NetworkConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self._network_os = self._network_os or 'default'
+
+        netconf = netconf_loader.get(self._network_os, self)
+        if netconf:
+            self._sub_plugins['netconf'] = self._network_os
+            display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
+        else:
+            self._sub_plugins['netconf'] = 'default'
+            netconf = netconf_loader.get("default", self)
+            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
+        self._implementation_plugins.append(netconf)
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None
@@ -299,14 +309,6 @@ class Connection(NetworkConnectionBase):
         display.display('ncclient manager object created successfully', log_only=True)
 
         self._connected = True
-
-        netconf = netconf_loader.get(self._network_os, self)
-        if netconf:
-            display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
-        else:
-            netconf = netconf_loader.get("default", self)
-            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
-        self._implementation_plugins.append(netconf)
 
         super(Connection, self)._connect()
 

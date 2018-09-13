@@ -209,10 +209,10 @@ class Connection(NetworkConnectionBase):
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
         if self._network_os:
-            self._sub_plugins['cliconf'] = self._network_os
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
+                self._sub_plugins['cliconf'] = self._network_os
                 display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
                 self._implementation_plugins.append(self.cliconf)
             else:

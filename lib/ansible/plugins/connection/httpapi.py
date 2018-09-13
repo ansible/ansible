@@ -176,7 +176,25 @@ class Connection(NetworkConnectionBase):
         self._url = None
         self._auth = None
 
-        if not self._network_os:
+        if self._network_os:
+
+            httpapi = httpapi_loader.get(self._network_os, self)
+            if httpapi:
+                self._sub_plugins['httpapi'] = self._network_os
+                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=host)
+                self._implementation_plugins.append(httpapi)
+            else:
+                raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
+
+
+            cliconf = cliconf_loader.get(self._network_os, self)
+            if cliconf:
+                self._sub_plugins['cliconf'] = self._network_os
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
+                self._implementation_plugins.append(cliconf)
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
+        else:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
@@ -210,20 +228,6 @@ class Connection(NetworkConnectionBase):
             host = self.get_option('host')
             port = self.get_option('port') or (443 if protocol == 'https' else 80)
             self._url = '%s://%s:%s' % (protocol, host, port)
-
-            httpapi = httpapi_loader.get(self._network_os, self)
-            if httpapi:
-                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(httpapi)
-            else:
-                raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
-
-            cliconf = cliconf_loader.get(self._network_os, self)
-            if cliconf:
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(cliconf)
-            else:
-                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 
             super(Connection, self)._connect()
 
