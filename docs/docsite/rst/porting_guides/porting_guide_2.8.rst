@@ -26,21 +26,19 @@ Command Line
 Become Prompting
 ----------------
 
-In Ansible 2.5 a config value was introduced to change the become password prompts to not include the become method. When this was introduced, the default was set to ``False``.
+Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges in *nix or ``enable mode`` in many network OSs):
 
-In the Ansible 2.8 release, this configuration value has been changed to ``True`` to no longer display the become method in the prompt by default.
-
-**OLD** In Ansible 2.7::
-
-    ansible-playbook --become --ask-become-pass site.yml
-    SUDO password:
-
-**NEW** In Ansible 2.8::
+By default in Ansible 2.8::
 
     ansible-playbook --become --ask-become-pass site.yml
     BECOME password:
 
-For more information about this configuration please see :ref:`AGNOSTIC_BECOME_PROMPT`
+If you want the prompt to display the specific ``become_method`` you're using, instead of the agnostic value ``BECOME``, set :ref:`AGNOSTIC_BECOME_PROMPT` to ``False`` in your Ansible configuration.
+
+By default in Ansible 2.7, or with ``AGNOSTIC_BECOME_PROMPT=False`` in Ansible 2.7::
+
+    ansible-playbook --become --ask-become-pass site.yml
+    SUDO password:
 
 Deprecated
 ==========
