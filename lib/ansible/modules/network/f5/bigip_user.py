@@ -218,11 +218,6 @@ except ImportError:
     except ImportError:
         HAS_F5SDK = False
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
 
 class Parameters(AnsibleF5Parameters):
     api_map = {

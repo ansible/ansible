@@ -304,7 +304,7 @@ class ModuleParameters(Parameters):
         return result
 
     @property
-    def ip(self):
+    def ip(self):  # lgtm [py/similar-function]
         if self._values['ip'] is None:
             return None
         if self._values['ip'] in ['*', '0.0.0.0']:
@@ -424,7 +424,7 @@ class ModuleManager(object):
         if changed:
             self.changes = UsableChanges(params=changed)
 
-    def _update_changed_options(self):
+    def _update_changed_options(self):  # lgtm [py/similar-function]
         diff = Difference(self.want, self.have)
         updatables = Parameters.updatables
         changed = dict()
@@ -439,7 +439,7 @@ class ModuleManager(object):
             return True
         return False
 
-    def _announce_deprecations(self):
+    def _announce_deprecations(self):  # lgtm [py/similar-function]
         warnings = []
         if self.want:
             warnings += self.want._values.get('__warnings', [])
