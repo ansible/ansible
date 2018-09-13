@@ -134,7 +134,7 @@ def install_snaps(module, snap_names):
         m = re.match(r'^error: This revision of snap "(?P<package_name>\w+)" was published using classic confinement', err)
         if m is not None:
             err_pkg = m.group('package_name')
-            msg = "Couldn't install {name} because it uses classic confinement".format(name=err_pkg)
+            msg = "Couldn't install {name} because it requires classic confinement".format(name=err_pkg)
         else:
             # The error is not related to the confinement
             msg = "Something went wrong"
