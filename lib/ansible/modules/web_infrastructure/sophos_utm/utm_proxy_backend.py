@@ -114,8 +114,7 @@ def main():
             ssl=dict(type='bool', required=False, default=False),
             status=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', required=False, default=300),
-        ),
-        supports_check_mode=False
+        )
     )
     try:
         UTM(module, endpoint, key_to_check_for_changes).execute()
