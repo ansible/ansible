@@ -130,7 +130,7 @@ def install_snaps(module, snap_names):
     if rc == 0:
         module.exit_json(classic=module.params['classic'], changed=True, cmd=cmd, stdout=out, stderr=err)
     else:
-        module.fail_json(classic=module.params['classic'], cmd=cmd, stdout=out, stderr=err)
+        module.fail_json(msg="Something went wrong.", classic=module.params['classic'], cmd=cmd, stdout=out, stderr=err)
 
 
 def remove_snaps(module, snap_names):
@@ -158,7 +158,7 @@ def remove_snaps(module, snap_names):
     if rc == 0:
         module.exit_json(changed=True, cmd=cmd, stdout=out, stderr=err)
     else:
-        module.fail_json(cmd=cmd, stdout=out, stderr=err)
+        module.fail_json(msg="Something went wrong.", cmd=cmd, stdout=out, stderr=err)
 
 
 def main():
@@ -178,7 +178,7 @@ def main():
     # Check if snaps are valid
     for snap_name in snap_names:
         if not snap_exists(module, snap_name):
-            module.fail_json()
+            module.fail_json(msg="No snap matching '%s' available." % snap_name)
 
     # Apply changes to the snaps
     if state == 'present':
