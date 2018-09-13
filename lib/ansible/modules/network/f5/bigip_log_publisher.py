@@ -85,6 +85,7 @@ try:
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.compare import cmp_simple_list
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -97,6 +98,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.compare import cmp_simple_list
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -193,16 +195,8 @@ class Difference(object):
 
     @property
     def destinations(self):
-        if self.want.destinations is None:
-            return None
-        if self.have.destinations is None and self.want.destinations == '':
-            return None
-        if self.have.destinations is not None and self.want.destinations == '':
-            return []
-        if self.have.destinations is None:
-            return self.want.destinations
-        if set(self.want.destinations) != set(self.have.destinations):
-            return self.want.destinations
+        result = cmp_simple_list(self.want.destinations, self.have.destinations)
+        return result
 
 
 class ModuleManager(object):

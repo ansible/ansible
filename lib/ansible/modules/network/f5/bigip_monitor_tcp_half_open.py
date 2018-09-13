@@ -165,10 +165,8 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
@@ -177,10 +175,8 @@ except ImportError:
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
