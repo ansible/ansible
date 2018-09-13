@@ -115,7 +115,7 @@ result:
 
 
 def main():
-    endpoint = "reverse_proxy/backend"
+    endpoint = "reverse_proxy/location"
     key_to_check_for_changes = ["access_control", "allowed_networks", "auth_profile", "backend", "be_path", "comment",
                                 "denied_networks", "hot_standy", "path", "status", "stickysession_id",
                                 "stickysession_status", "websocket_passthrough"]
