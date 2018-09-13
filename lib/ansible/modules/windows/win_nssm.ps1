@@ -30,7 +30,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 
 $application = Get-AnsibleParam -obj $params -name "application" -type "path"
 $appParameters = Get-AnsibleParam -obj $params -name "app_parameters"
-$appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
+$appArguments = Get-AnsibleParam -obj $params -name "arguments" -aliases "app_parameters_free_form"
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
 
 $stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "path"
@@ -277,12 +277,32 @@ function Stop-NssmService {
     }
 }
 
-if (($appParameters -ne $null) -and ($appParametersFree -ne $null)) {
-    Fail-Json $result "Use either app_parameters or app_parameteres_free_form, but not both"
+if (($null -ne $appParameters) -and ($null -ne $appArguments)) {
+    Fail-Json $result "Use either 'app_parameters' or 'arguments', but not both."
 }
 
-if (($appParameters -ne $null) -and ($appParameters -isnot [string])) {
-    Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
+if ($null -ne $appParameters) {
+    Add-DeprecationWarning -obj $result -message "The parameter 'app_parameters' will be removed soon, use 'arguments' instead." -version 2.12
+
+	if ($appParameters -isnot [string]) {
+	    Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
+	}
+
+    # Convert dict-as-string form to list
+    $escapedAppParameters = $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n").Replace("\","\\")
+    $appParametersHash = ConvertFrom-StringData -StringData $escapedAppParameters
+
+    $appParamsArray = @()
+    $appParametersHash.GetEnumerator() | foreach {
+        if ($_.Name -ne "_") {
+            $appParamsArray += $_.Name
+        }
+        $appParamsArray += $_.Value
+    }
+    $appArguments = @($appParamsArray)
+
+    # The rest of the code should use only the new $appArguments variable
+    Remove-Variable -name 'appParameters'
 }
 
 if ($state -ne 'absent') {
@@ -337,42 +357,20 @@ if ($state -eq 'absent') {
 
     Update-NssmServiceParameter -service $name -parameter "AppDirectory" -value $applicationPath
 
-    $appParamKeys = @()
-    $appParamVals = @()
-    $singleLineParams = ""
 
-    if ($null -ne $appParameters) {
-        $escapedAppParameters = $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n").Replace("\","\\")
-        $appParametersHash = ConvertFrom-StringData -StringData $escapedAppParameters
-
-        $appParamsArray = @()
-        $appParametersHash.GetEnumerator() | foreach {
-            $key = $($_.Name)
-            $val = $($_.Value)
-
-            $appParamKeys += $key
-            $appParamVals += $val
-
-            if ($key -ne "_") {
-                $appParamsArray += $key
-            }
-
-            $appParamsArray += $val
+    if (($null -ne $appArguments)) {
+        $singleLineParams = ""
+        if ($appArguments -is [array]) {
+            $singleLineParams = Argv-ToString -arguments $appArguments
+        } else {
+            $singleLineParams = $appArguments.ToString()
         }
 
-        $result.nssm_app_parameters_keys = $appParamKeys
-        $result.nssm_app_parameters_vals = $appParamVals
+        $result.nssm_app_parameters = $appArguments
+        $result.nssm_single_line_app_parameters = $singleLineParams
 
-        $singleLineParams = Argv-ToString -arguments $appParamsArray
-    } elseif ($null -ne $appParametersFree) {
-        $result.nssm_app_parameters_free_form = $appParametersFree
-        $singleLineParams = $appParametersFree
+        Update-NssmServiceParameter -service $name -parameter "AppParameters" -value $singleLineParams
     }
-
-    $result.nssm_app_parameters = $appParameters
-    $result.nssm_single_line_app_parameters = $singleLineParams
-
-    Update-NssmServiceParameter -service $name -parameter "AppParameters" -value $singleLineParams
 
 
     Update-NssmServiceParameter -service $name -parameter "AppStdout" -value $stdoutFile

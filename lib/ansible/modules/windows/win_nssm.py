@@ -55,12 +55,15 @@ options:
   app_parameters:
     description:
       - A string representing a dictionary of parameters to be passed to the application when it starts.
-      - Use either this or C(app_parameters_free_form), not both.
+      - DEPRECATED since v2.8, please use C(arguments) instead.
+      - Use either this or C(arguments), not both.
     type: str
-  app_parameters_free_form:
+  arguments:
     description:
-      - Single string of parameters to be passed to the service.
+      - Parameters to be passed to the application when it starts.
+      - This can be either a simple string or a list.
       - Use either this or C(app_parameters), not both.
+    aliases: [ app_parameters_free_form ]
     type: str
     version_added: "2.3"
   dependencies:
@@ -99,36 +102,22 @@ EXAMPLES = r'''
     name: foo
     application: C:\windows\foo.exe
 
-# Install and start the foo service with a key-value pair argument
-# This will yield the following command: C:\windows\foo.exe -bar true
+# Install and start the consul service with a list of parameters
+# This will yield the following command: C:\windows\foo.exe bar "true"
 - win_nssm:
-    name: foo
-    application: C:\windows\foo.exe
-    app_parameters: -bar=true
+    name: consul
+    application: C:\consul\consul.exe
+    arguments:
+      - agent
+      - -config-dir=C:\consul\config
 
-# Install and start the foo service with a single parameter
-# This will yield the following command: C:\windows\\foo.exe bar
-- win_nssm:
-    name: foo
-    application: C:\windows\foo.exe
-    app_parameters: _=bar
-
-# Install and start the foo service with a mix of single params, and key value pairs
-# This will yield the following command: C:\windows\\foo.exe bar -file output.bat -foo false
-- win_nssm:
-    name: foo
-    application: C:\windows\foo.exe
-    app_parameters: _=bar; -file=output.bat; -foo=false
-
-# Use the single line parameters option to specify an arbitrary string of parameters
-# for the service executable
+# Install and start the consul service with an arbitrary string of parameters
+# This is strictly equivalent to the previous example
 - name: Make sure the Consul service runs
   win_nssm:
     name: consul
     application: C:\consul\consul.exe
-    app_parameters_free_form: agent -config-dir=C:\consul\config
-    stdout_file: C:\consul\log.txt
-    stderr_file: C:\consul\error.txt
+    arguments: agent -config-dir=C:\consul\config
 
 # Install and start the foo service, redirecting stdout and stderr to the same file
 - win_nssm:
