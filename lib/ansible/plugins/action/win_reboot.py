@@ -40,6 +40,17 @@ class ActionModule(RebootActionModule, ActionBase):
         'shutdown_timeout_sec': '2.5',
     }
 
+    BOOT_TIME_COMMANDS = {
+        'windows': DEFAULT_BOOT_TIME_COMMAND
+    }
+
+    def _get_platform(self):
+        return 'windows'
+
+    def _get_distribution(self):
+        version = self._low_level_execute_command('[System.Environment]::OSVersion.Version.Major')['stdout_lines'][0]
+        return version
+
     def construct_command(self):
         shutdown_command = self.DEFAULT_SHUTDOWN_COMMAND
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY)))

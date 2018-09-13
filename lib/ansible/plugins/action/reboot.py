@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import random
+import re
 import time
 
 from datetime import datetime, timedelta
@@ -35,7 +36,7 @@ class ActionModule(ActionBase):
     DEFAULT_PRE_REBOOT_DELAY = 0
     DEFAULT_POST_REBOOT_DELAY = 0
     DEFAULT_TEST_COMMAND = 'whoami'
-    DEFAULT_BOOT_TIME_COMMAND = 'who -b'
+    DEFAULT_BOOT_TIME_COMMAND = 'cat /proc/sys/kernel/random/boot_id'
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible'
     DEFAULT_SHUTDOWN_COMMAND = 'shutdown'
     DEFAULT_SUDOABLE = True
@@ -47,6 +48,7 @@ class ActionModule(ActionBase):
         'freebsd': DEFAULT_SHUTDOWN_COMMAND,
         'sunos': '/usr/sbin/shutdown',
         'darwin': '/sbin/shutdown',
+        'alpine': 'reboot'
     }
 
     SHUTDOWN_COMMAND_ARGS = {
@@ -54,6 +56,14 @@ class ActionModule(ActionBase):
         'freebsd': '-r +{delay_sec}s "{message}"',
         'sunos': '-y -g {delay_sec} -r "{message}"',
         'darwin': '-r +{delay_min_macos} "{message}"'
+        'alpine': '-d {delay_sec}',
+    }
+
+    BOOT_TIME_COMMANDS = {
+        'linux': DEFAULT_BOOT_TIME_COMMAND,
+        'freebsd': 'who -b',
+        'sunos': 'who -b',
+        'darwin': 'who -b',
     }
 
     def __init__(self, *args, **kwargs):
@@ -61,6 +71,24 @@ class ActionModule(ActionBase):
 
         self._original_connection_timeout = None
         self._previous_boot_time = None
+        self.platform = self._get_platform()
+        self.distribution = self._get_distribution()
+
+    def _get_platform(self):
+        uname_result = self._low_level_execute_command('uname')
+        return uname_result['stdout'].strip().lower()
+
+    def _get_distribution(self):
+        full_distribution = self._low_level_execute_command('cat /proc/version')
+        distre = re.compile(r'(alpine|debian|ubuntu|(red hat)|centos|solaris|sunos|(free|open)bsd)', re.IGNORECASE)
+        match = distre.search(full_distribution['stdout'])
+
+        if match:
+            dist = match.group().lower()
+        else:
+            dist = 'other'
+
+        return dist
 
     def deprecated_args(self):
         for arg, version in self.DEPRECATED_ARGS.items():
@@ -68,12 +96,12 @@ class ActionModule(ActionBase):
                 display.warning("Since Ansible %s, %s is no longer a valid option for %s" % (version, arg, self._task.action))
 
     def construct_command(self):
-        # Determine the system distribution in order to use the correct shutdown command arguments
-        uname_result = self._low_level_execute_command('uname')
-        distribution = uname_result['stdout'].strip().lower()
+        # First check for distribution specific commands and args, then platform
+        shutdown_command = self.SHUTDOWN_COMMANDS.get(self.distribution,
+                                                      self.SHUTDOWN_COMMANDS.get(self.platform, self.SHUTDOWN_COMMANDS['linux']))
 
-        shutdown_command = self.SHUTDOWN_COMMANDS.get(distribution, self.SHUTDOWN_COMMANDS['linux'])
-        shutdown_command_args = self.SHUTDOWN_COMMAND_ARGS.get(distribution, self.SHUTDOWN_COMMAND_ARGS['linux'])
+        shutdown_command_args = self.SHUTDOWN_COMMAND_ARGS.get(self.distribution,
+                                                               self.SHUTDOWN_COMMAND_ARGS.get(self.platform, self.SHUTDOWN_COMMAND_ARGS['linux']))
 
         pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self.DEFAULT_PRE_REBOOT_DELAY))
         if pre_reboot_delay < 0:
@@ -84,6 +112,7 @@ class ActionModule(ActionBase):
         # We could simplify this by setting them both to 1, but I think of all the time that
         # people will lose waiting for that extra 1 minute delay and want to give them their
         # lives back.
+        # FIXME: Needs to be 1 for Debian 9 also
         delay_min = pre_reboot_delay // 60
         delay_min_macos = delay_min | 1
         msg = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
@@ -94,14 +123,10 @@ class ActionModule(ActionBase):
         return reboot_command
 
     def get_system_boot_time(self):
-        command_result = self._low_level_execute_command(self.DEFAULT_BOOT_TIME_COMMAND, sudoable=self.DEFAULT_SUDOABLE)
-
-        # For single board computers, e.g., Raspberry Pi, that lack a real time clock and are using fake-hwclock
-        # launched by systemd, the update of utmp/wtmp is not done correctly.
-        # Fall back to using uptime -s for those systems.
-        # https://github.com/systemd/systemd/issues/6057
-        if '1970-01-01 00:00' in command_result['stdout']:
-            command_result = self._low_level_execute_command('uptime -s', sudoable=self.DEFAULT_SUDOABLE)
+        # First try to get distribution specific boot time command, then try platform command
+        command = self.BOOT_TIME_COMMANDS.get(self.distribution, self.BOOT_TIME_COMMANDS.get(self.platform, self.DEFAULT_BOOT_TIME_COMMAND))
+        display.debug("%s: getting boot time with command: '%s'" % (self._task.action, command))
+        command_result = self._low_level_execute_command(command, sudoable=self.DEFAULT_SUDOABLE)
 
         if command_result['rc'] != 0:
             raise AnsibleError("%s: failed to get host boot time info, rc: %d, stdout: %s, stderr: %s"
@@ -182,9 +207,8 @@ class ActionModule(ActionBase):
         raise TimedOutException('Timed out waiting for %s' % (action_desc))
 
     def perform_reboot(self):
-        display.debug("%s: rebooting server" % self._task.action)
-
         remote_command = self.construct_command()
+        display.debug("%s: rebooting server with command '%s'" % (self._task.action, remote_command))
         reboot_result = self._low_level_execute_command(remote_command, sudoable=self.DEFAULT_SUDOABLE)
         result = {}
         result['start'] = datetime.utcnow()
