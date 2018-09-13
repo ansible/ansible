@@ -71,30 +71,17 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg:
-    description: An informative message on the task's output
-    type: str
-    returned: Always
 classic:
     description: Whether or not the snaps were installed with the classic confinement
-    type: bool
+    type: boolean
     returned: When snaps are installed
-changed:
-    description: True if one or more snaps are installed/removed
-    type: bool
-    returned: on success
-err:
-    description: The stderr output
-    type: str
-    returned: on failure
+cmd:
+    description: The command that was executed on the host
+    type: string
+    returned: When changed is true
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
-
-def clean_err(err):
-    # Remove whitespaces and newlines that the snap CLI outputs.
-    return err.replace('\n', '').replace('      ', '').replace('"', '\'')
 
 
 def snap_exists(module, snap_name):
@@ -123,16 +110,13 @@ def install_snaps(module, snap_names):
         snaps_not_installed.append(snap_name)
 
     if not snaps_not_installed:
-        snaps_already_installed = ', '.join(snap_names)
-        module.exit_json(msg="Snap(s) already installed: %s" % snaps_already_installed, classic=module.params['classic'], changed=False)
+        module.exit_json(classic=module.params['classic'], changed=False)
 
     # Transform the list into a string with whitespace-separated snaps
     snaps_to_install = ' '.join(snaps_not_installed)
-    # Create a string with commas for the output
-    snaps_installed = ', '.join(snaps_not_installed)
 
     if module.check_mode:
-        module.exit_json(msg="Snap(s) that would have been installed: %s" % snaps_installed, classic=module.params['classic'], changed=True)
+        module.exit_json(classic=module.params['classic'], changed=True)
 
     classic = '--classic' if module.params['classic'] else ''
 
@@ -144,29 +128,25 @@ def install_snaps(module, snap_names):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        module.exit_json(msg="Snap(s) installed: %s" % snaps_installed, classic=module.params['classic'], changed=True)
+        module.exit_json(classic=module.params['classic'], changed=True, cmd=cmd, stdout=out, stderr=err)
     else:
-        err = clean_err(err)
-        module.fail_json(msg="Something went wrong.", classic=module.params['classic'], err=err)
+        module.fail_json(classic=module.params['classic'], cmd=cmd, stdout=out, stderr=err)
 
 
 def remove_snaps(module, snap_names):
     snaps_installed = list()
     for snap_name in snap_names:
-        if is_snap_installed(module, snap_name):
+        if not is_snap_installed(module, snap_name):
             continue
         snaps_installed.append(snap_name)
     if not snaps_installed:
-        snaps_not_installed = ', '.join(snap_names)
-        module.exit_json(msg="Snap(s) not installed: %s" % snaps_not_installed, changed=False)
+        module.exit_json(changed=False)
 
     # Transform the list into a string with whitespace-separated snaps
     snaps_to_remove = ' '.join(snaps_installed)
-    # Create a string with commas for the output
-    snaps_removed = ', '.join(snaps_installed)
 
     if module.check_mode:
-        module.exit_json(msg="Snap(s) that would have been removed: %s" % snaps_removed, changed=True)
+        module.exit_json(changed=True)
 
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'remove', snaps_to_remove]
@@ -176,10 +156,9 @@ def remove_snaps(module, snap_names):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        module.exit_json(msg="Snap(s) removed: %s" % snaps_removed, changed=True)
+        module.exit_json(changed=True, cmd=cmd, stdout=out, stderr=err)
     else:
-        err = clean_err(err)
-        module.fail_json(msg="Something went wrong.", err=err)
+        module.fail_json(cmd=cmd, stdout=out, stderr=err)
 
 
 def main():
@@ -199,7 +178,7 @@ def main():
     # Check if snaps are valid
     for snap_name in snap_names:
         if not snap_exists(module, snap_name):
-            module.fail_json(msg="No snap matching '%s' available." % snap_name)
+            module.fail_json()
 
     # Apply changes to the snaps
     if state == 'present':
