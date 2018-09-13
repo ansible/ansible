@@ -311,7 +311,8 @@ def main():
         get_set(cmd, set)
 
     if module.check_mode:
-        module.exit_json(changed=False, msg="%s will be run in %s directory" % (cmd, cwd))
+        module.exit_json(changed=False, msg="%s will be run in %s directory" % (' '.join(cmd),
+                                                                                cwd if cwd else 'current'))
     else:
         (rc, out, err) = module.run_command(cmd, cwd=cwd)
 

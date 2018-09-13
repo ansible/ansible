@@ -29,6 +29,14 @@
     shell: "cpanm --sudo --quiet --notest App::Sqitch"
     when: ansible_os_family == "RedHat"
   
+  - name: Deploy in check mode with cwd
+    sqitch: command=deploy cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest verify=true to_change=types
+    check_mode: yes
+
+  - name: Deploy in check mode without cwd
+    sqitch: command=deploy plan_file=sqitch.plan target=anstest verify=true to_change=types
+    check_mode: yes
+
   - name: Deploy to change
     sqitch: command=deploy cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest verify=true to_change=types
   
