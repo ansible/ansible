@@ -22,8 +22,12 @@
     when: ansible_os_family == "RedHat"
   
   - name: Install cpanminus
+    shell: "curl -L http://cpanmin.us | perl - --sudo App::cpanminus"
+    when: ansible_distribution == "CentOS" and ansible_distribution_major_version == '6'
+  
+  - name: Install cpanminus
     package: name=cpanminus state=present
-    when: ansible_os_family == "RedHat"
+    when: ansible_os_family == "RedHat" and not (ansible_distribution == "CentOS" and ansible_distribution_major_version == '6')
   
   - name: Install sqitch
     cpanm: name=App::Sqitch notest=true
