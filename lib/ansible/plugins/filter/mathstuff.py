@@ -27,21 +27,39 @@ import collections
 import itertools
 import math
 
-from jinja2.filters import environmentfilter, do_unique
+from jinja2.filters import environmentfilter
 
 from ansible import errors
 from ansible.module_utils import basic
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
+
+try:
+    from jinja2.filters import do_unique
+    HAS_UNIQUE = True
+except ImportError:
+    HAS_UNIQUE = False
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 @environmentfilter
 def unique(environment, a, case_sensitive=False, attribute=None):
 
+    error = False
     try:
-        c = set(do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute))
-    except Exception:
+        if HAS_UNIQUE:
+            c = set(do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute))
+    except Exception as e:
+        display.warning('Falling back to Ansible unique filter as Jinaj2 one failed: %s' % to_text(e))
+        error = True
+
+    if not HAS_UNIQUE or error:
         if isinstance(a, collections.Hashable):
             c = set(a)
         else:
