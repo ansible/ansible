@@ -22,7 +22,7 @@
     when: ansible_os_family == "RedHat"
   
   - name: Install cpanminus
-    dnf: name=cpanminus
+    package: name=cpanminus state=present
     when: ansible_os_family == "RedHat"
   
   - name: Install sqitch
