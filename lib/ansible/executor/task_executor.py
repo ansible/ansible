@@ -843,7 +843,10 @@ class TaskExecutor:
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
             # We don't need to send the entire contents of variables to ansible-connection
-            filtered_vars = dict((key, value) for key, value in variables.items() if key.startswith('ansible'))
+            filtered_vars = dict(
+                (key, value) for key, value in variables.items()
+                if key.startswith('ansible') and key != 'ansible_failed_task'
+            )
             socket_path = self._start_connection(filtered_vars)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
