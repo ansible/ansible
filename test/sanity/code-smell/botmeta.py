@@ -12,6 +12,7 @@ from voluptuous.humanize import humanize_error
 from ansible.module_utils.six import string_types
 list_string_types = list(string_types)
 
+
 def main():
     """Validate BOTMETA"""
     path = '.github/BOTMETA.yml'
@@ -40,7 +41,7 @@ def main():
         Required('macros'): dict,  # Any(*list_macros_schema),
     })
 
-   # Ensure schema is valid
+    # Ensure schema is valid
 
     try:
         schema(botmeta)

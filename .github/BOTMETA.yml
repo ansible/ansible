@@ -245,9 +245,6 @@ files:
   $modules/network/nxos/: $team_nxos
   $modules/network/nso/: $team_nso
   $modules/network/onyx/: $team_onyx
-  $modules/network/ovs/:
-    ignored: stygstra
-    maintainers: $team_networking
   $modules/network/ordnance/: alexanderturner djh00t
   $modules/network/ovs/:
     ignored: stygstra
