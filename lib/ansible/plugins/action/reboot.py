@@ -103,9 +103,14 @@ class ActionModule(ActionBase):
         if '1970-01-01 00:00' in command_result['stdout']:
             command_result = self._low_level_execute_command('uptime -s', sudoable=self.DEFAULT_SUDOABLE)
 
+        # This is a last resort for bare Linux systems (e.g. OpenELEC) where 'who -b' or 'uptime -s' are not supported.
+        # Other options like parsing /proc/uptime or default uptime output are less reliable than this
+        if command_result['rc'] != 0:
+            command_result = self._low_level_execute_command('cat /proc/sys/kernel/random/boot_id', sudoable=self.DEFAULT_SUDOABLE)
+
         if command_result['rc'] != 0:
             raise AnsibleError("%s: failed to get host boot time info, rc: %d, stdout: %s, stderr: %s"
-                               % (self._task.action, command_result.rc, to_native(command_result['stdout']), to_native(command_result['stderr'])))
+                               % (self._task.action, command_result['rc'], to_native(command_result['stdout']), to_native(command_result['stderr'])))
 
         return command_result['stdout'].strip()
 
