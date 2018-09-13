@@ -27,7 +27,8 @@
 #           ignored - these people should never be notified
 #           deprecated - this file is deprecated but probably not yet renamed
 #           keywords - used to identify this file based on the issue description
-#           support - used for files without internal metadata
+#           support - used for files without internal ANSIBLE_METADATA, see
+#                     https://github.com/ansible/ansible/labels?q=support for full list
 #           labels - list of GitHub labels to apply. Path components of 'file' parent key
 #                    which are valid GitHub labels are automatically added.
 #
@@ -151,7 +152,7 @@ files:
     ignored: astorije
     maintainers: $team_ansible
   $modules/files/assemble.py: $team_ansible
-  $modules/files/copy.py: $team_ansible ptux
+  $modules/files/copy.py: $team_ansible
   $modules/files/fetch.py: $team_ansible
   $modules/files/file.py: $team_ansible
   $modules/files/find.py: $team_ansible
@@ -210,7 +211,6 @@ files:
   $modules/network/asa/: ogenstad gdpak
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
-  $modules/network/citrix/netscaler.py: $team_ansible
   $modules/network/cloudengine/: QijunPan
   $modules/network/cnos/: dkasberg amuraleedhar
   $modules/network/cumulus/: $team_cumulus
@@ -245,16 +245,14 @@ files:
   $modules/network/nxos/: $team_nxos
   $modules/network/nso/: $team_nso
   $modules/network/onyx/: $team_onyx
-  $modules/network/openvswitch/:
+  $modules/network/ovs/:
     ignored: stygstra
     maintainers: $team_networking
   $modules/network/ordnance/: alexanderturner djh00t
-  $modules/network/opx/: $team_dell
   $modules/network/ovs/:
     ignored: stygstra
     maintainers: rcarrillocruz
   $modules/network/panos/: ivanbojer jtschichold
-  $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
   $modules/network/routeros/: heuels
   $modules/network/routing/: $team_networking
@@ -263,7 +261,7 @@ files:
   $modules/network/system/: $team_networking
   $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos samdoran
-  $modules/notification/osx_say.py: $team_ansible
+  $modules/notification/_osx_say.py: $team_ansible
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
     maintainers: Deepakkothandan
@@ -302,7 +300,7 @@ files:
   $modules/remote_management/imc/: dagwieers
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/manageiq/: $team_manageiq
-  $modules/remote_management/redfish/: $team_redfish
+  $modules/remote_management/redfish/: jose-delarosa
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/ucs/: $team_ucs
   $modules/source_control/git.py: $team_ansible
@@ -351,7 +349,7 @@ files:
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/django_manage.py: scottanderson42
   $modules/web_infrastructure/htpasswd.py: $team_ansible
-  $modules/web_infrastructure/jboss/: $team_jboss
+  $modules/web_infrastructure/jboss: $team_jboss
   $modules/web_infrastructure/jira.py: Slezhuk
   $modules/windows/:
     maintainers: $team_windows
@@ -359,160 +357,110 @@ files:
   $modules/windows/win_security_policy.py: defionscode
   bin/ansible-connection:
     keywords:
-    - persistent connection
-    labels:
-    - networking
-    maintainers: $team_networking
+      - persistent connection
+    labels: networking
+  contrib/:
+    support: community
   contrib/inventory:
     keywords:
-    - dynamic inventory script
-    - dynamic inventory
-    - inventory script
+      - dynamic inventory script
+      - dynamic inventory
+      - inventory script
     labels: c:inventory/contrib_script
     support: community
   contrib/inventory/digital_ocean.py:
     keywords:
-    - digital_ocean dynamic inventory script
+      - digital_ocean dynamic inventory script
     maintainers: BondAnthony
     labels:
-    - cloud
+      - cloud
     support: community
   contrib/inventory/linode.py:
     keywords:
-    - linode dynamic inventory script
+      - linode dynamic inventory script
     maintainers: intheclouddan lwm zbal
     labels: cloud
-  contrib/inventory/openstack.py:
+  contrib/inventory/openstack_inventory.py:
     keywords:
-    - openstack dynamic inventory script
+      - openstack dynamic inventory script
     maintainers: $team_openstack
     labels:
-    - cloud
+      - cloud
+  contrib/inventory/ovirt4.py:
+    maintainers: machacekondra
+    labels:
+      - ovirt
+      - cloud
   contrib/inventory/infoblox.py:
     keywords:
       - infoblox dynamic inventory script
     labels:
       - ipam
+      - nios
       - networking
     maintainers: $team_networking
   contrib/inventory/azure_rm.py:
     keywords:
-    - azure inventory
-    - azure rm inventory
-    - azure azure_rm dynamic inventory script
+      - azure inventory
+      - azure rm inventory
+      - azure azure_rm dynamic inventory script
     labels:
-    - cloud
-    - azure
+      - cloud
+      - azure
     maintainers: $team_azure
   contrib/inventory/ec2:
     keywords:
-    - aws dynamic inventory
-    - aws inventory
-    - ec2 inventory
-    - ec2 dynamic inventory
-    - ec2.py dynamic inventory script
-    - ec2.py inventory script
-    - ec2.py inventory
+      - aws dynamic inventory
+      - aws inventory
+      - ec2 inventory
+      - ec2 dynamic inventory
+      - ec2.py dynamic inventory script
+      - ec2.py inventory script
+      - ec2.py inventory
     labels:
-    - cloud
-    - aws
+      - cloud
+      - aws
     notified: ryansb s-hertel willthames
   contrib/inventory/vmware.py:
     keywords:
-    - vmware inventory
-    - vmware dynamic inventory script
+      - vmware inventory
+      - vmware dynamic inventory script
     labels:
-    - cloud
+      - cloud
     maintainers: $team_vmware
   contrib/inventory/vmware_inventory.py:
     keywords:
-    - vmware inventory
-    - vmware dynamic inventory script
+      - vmware inventory
+      - vmware dynamic inventory script
     labels:
-    - cloud
-    - vmware
+      - cloud
+      - vmware
     maintainers: $team_vmware
   lib/ansible/inventory:
     keywords:
-    - core inventory
-    - inventory
-    - inventory parsing
-  $module_utils/net_tools/nios/:
-    labels:
-      - networking
-      - infoblox
-    maintainers: $team_networking sganesh-infoblox
-  $module_utils/network/a10:
-    maintainers: ericchou1 mischapeters
-    labels: networking
-  $module_utils/network/aci:
-    maintainers: $team_aci
-    labels: networking
+      - core inventory
+      - inventory
+      - inventory parsing
+#############################################
+# MODULE_UTILS
+  $module_utils:
     support: community
-  $module_utils/acme.py:
-    maintainers: resmo felixfontein
-  $module_utils/ipa.py:
-    maintainers: $team_ipa
-  $module_utils/network/aireos:
-    maintainers: jmighion
-    labels: networking
-  $module_utils/network/aos:
-    maintainers: dgarros jeremyschulman
-    labels: networking
   $module_utils/azure_rm_common.py:
     maintainers: $team_azure
     labels:
       - azure
       - cloud
-  $module_utils/network/aruba:
-    maintainers: jmighion
-    labels: networking
-  $module_utils/network/asa:
-    maintainers: ogenstad gdpak
-    labels: networking
-  $module_utils/network/avi:
-    maintainers: $team_avi
-    labels: networking
-  $module_utils/network/bigswitch:
-    maintainers: jayakody tedelhourani vuile
-    labels: networking
-  $module_utils/network/cloudengine:
-    maintainers: QijunPan
-    labels: networking
+  $module_utils/acme.py:
+    maintainers: resmo felixfontein
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
-  $module_utils/network/cnos:
-    maintainers: dkasberg amuraleedhar
-    labels: networking
   $module_utils/crypto.py:
     maintainers: Spredzy
-  $module_utils/network/dellos6:
-    maintainers: skg-net
-    labels: networking
-  $module_utils/network/dellos9:
-    maintainers: skg-net
-    labels: networking
-  $module_utils/network/dellos10:
-    maintainers: skg-net
-    labels: networking
-  $module_utils/network/enos:
-    maintainers: amuraleedhar
-    labels: networking
-  $module_utils/network/exos:
-    maintainers: rdvencioneck
-    labels: networking
-  $module_utils/f5_utils.py:
-    maintainers: caphrim007
-    labels:
-    - f5
-    - networking
-  $module_utils/network/fortios:
-    maintainers: bjolivot
-    labels: networking
-  $module_utils/network/ironware:
-    maintainers: paulquack
-    labels: networking
+  $module_utils/docker_common.py:
+    maintainers: $team_ansible dariko felixfontein jwitko kassiansun tbouvet
+  $module_utils/ipa.py:
+    maintainers: $team_ipa
   $module_utils/k8s:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: clustering
@@ -520,96 +468,214 @@ files:
     maintainers: eikef
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
+  $module_utils/net_tools/nios/:
+    support: core
+    labels:
+      - networking
+      - infoblox
+    maintainers: $team_networking sganesh-infoblox
+  $module_utils/network:
+    labels: networking
+  $module_utils/network/a10:
+    maintainers: ericchou1 mischapeters
+  $module_utils/network/aci:
+    maintainers: $team_aci
+  $module_utils/network/aireos:
+    maintainers: jmighion
+  $module_utils/network/aos:
+    maintainers: dgarros jeremyschulman
+  $module_utils/network/aruba:
+    maintainers: jmighion
+  $module_utils/network/asa:
+    maintainers: ogenstad gdpak
+  $module_utils/network/avi:
+    maintainers: $team_avi
+  $module_utils/network/bigswitch:
+    maintainers: jayakody tedelhourani vuile
+  $module_utils/network/cloudengine:
+    maintainers: QijunPan
+  $module_utils/network/cnos:
+    maintainers: dkasberg amuraleedhar
+  $module_utils/network/common:
+    support: network
+    maintainers: $team_networking
+  $module_utils/network/dellos6:
+    maintainers: skg-net
+  $module_utils/network/dellos9:
+    maintainers: skg-net
+  $module_utils/network/dellos10:
+    maintainers: skg-net
+  $module_utils/network/enos:
+    maintainers: amuraleedhar
+  $module_utils/network/eos:
+    support: network
+    maintainers: $team_networking
+  $module_utils/network/exos:
+    maintainers: rdvencioneck
+  $module_utils/network/f5:
+    maintainers: caphrim007
+  $module_utils/f5_utils.py:
+    maintainers: caphrim007
+    labels:
+      - f5
+  $module_utils/network/fortios:
+    maintainers: bjolivot
+  $module_utils/network/ios:
+    support: network
+    maintainers: $team_networking
+  $module_utils/network/iosxr:
+    support: network
+    maintainers: $team_networking
+  $module_utils/network/ironware:
+    maintainers: paulquack
+  $module_utils/network/junos:
+    support: network
   $module_utils/network/meraki:
     maintainers: $team_meraki
-    labels: networking
-    support: community
   $module_utils/network/netconf:
+    support: network
     maintainers: $team_networking
-    labels: networking
   $module_utils/network/netscaler:
     maintainers: $team_netscaler
-    labels: networking
   $module_utils/network/nos:
     maintainers: $team_extreme
-    labels: networking
   $module_utils/network/nso:
     maintainers: $team_nso
-    labels: networking
+  $module_utils/network/nxos:
+    support: network
+    maintainers: $team_nxos
   $module_utils/network/onyx:
     maintainers: $team_onyx
-    labels: networking
+  $module_utils/network/ordnance:
+    maintainers: alexanderturner djh00t
   $module_utils/network/routeros:
     maintainers: heuels
-    labels: networking
   $module_utils/network/slxos:
     maintainers: $team_extreme
-    labels: networking
+  $module_utils/network/voss:
+    maintainers: $team_extreme
+  $module_utils/network/vyos:
+    support: network
+    maintainers: $team_networking
   $module_utils/openstack.py:
     maintainers: $team_openstack
     labels:
-    - cloud
-  $module_utils/network/ordnance:
-    maintainers: alexanderturner djh00t
-    labels: networking
+      - cloud
   $module_utils/ovirt.py:
     maintainers: joshainglis karmab machacekondra
     labels:
-    - cloud
+      - cloud
   $module_utils/powershell:
+    support: core
     maintainers: $team_windows_core
     labels:
-    - windows
+      - windows
   $module_utils/redfish_utils.py:
-    maintainers: $team_redfish
+    maintainers: jose-delarosa
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
-  $module_utils/netapp: $team_netapp
+  $module_utils/netapp:
+    maintainers: $team_netapp
   $module_utils/vultr.py: &vultr
     maintainers: $team_vultr
     labels:
-    - cloud
+      - cloud
   $module_utils/vmware:
+    support: core
     maintainers: $team_vmware
-    support: community
-  $module_utils/network/voss:
-    maintainers: $team_extreme
-    labels: networking
-  $module_utils/network:
-    maintainers: $team_networking
-    labels: networking
-  $module_utils/onepassword.py:
-    maintainers: samdoran
   $module_utils/memset.py:
     maintainers: analbeard
     labels: cloud
-  $module_utils/jboss/:
-    maintainers: $team_jboss
   $module_utils/scaleway.py: &scaleway
     maintainers: $team_scaleway
     labels:
       - cloud
-    support: community
   lib/ansible/playbook/handler.py:
     keywords:
-    - handlers
+      - handlers
   lib/ansible/playbook/role:
     keywords:
-    - roles path
-    - roles_path
-    - role
-    - role path
+      - roles path
+      - roles_path
+      - role
+      - role path
   lib/ansible/playbook/role/include.py:
     keywords:
-    - include role
-    - include_role
-    - role include
+      - include role
+      - include_role
+      - role include
   lib/ansible/playbook/role/requirement.py:
     keywords:
-    - role dependencies
-    - role dep
-    - role dependency
+      - role dependencies
+      - role dep
+      - role dependency
+###############################
+# plugins
+
+  lib/ansible/plugins:
+    support: community
+  lib/ansible/plugins/action/add_host.py:
+    support: core
+  lib/ansible/plugins/action/assemble.py:
+    support: core
+  lib/ansible/plugins/action/assert.py:
+    support: core
+  lib/ansible/plugins/action/aws_s3.py:
+    support: core
+  lib/ansible/plugins/action/command.py:
+    support: core
+  lib/ansible/plugins/action/cli:
+    support: network
+  lib/ansible/plugins/action/copy.py:
+    support: core
+  lib/ansible/plugins/action/debug.py:
+    support: core
+  lib/ansible/plugins/action/fail.py:
+    support: core
+  lib/ansible/plugins/action/fetch.py:
+    support: core
+  lib/ansible/plugins/action/group_by.py:
+    support: core
+  lib/ansible/plugins/action/include_vars.py:
+    support: core
+  lib/ansible/plugins/action/__init__.py:
+    support: core
+  lib/ansible/plugins/action/normal.py:
+    support: core
+  lib/ansible/plugins/action/package.py:
+    support: core
+  lib/ansible/plugins/action/patch.py:
+    support: core
+  lib/ansible/plugins/action/pause.py:
+    support: core
+  lib/ansible/plugins/action/raw.py:
+    support: core
+  lib/ansible/plugins/action/reboot.py:
+    support: core
+  lib/ansible/plugins/action/script.py:
+    support: core
+  lib/ansible/plugins/action/service.py:
+    support: core
+  lib/ansible/plugins/action/set_fact.py:
+    support: core
+  lib/ansible/plugins/action/shell.py:
+    support: core
+  lib/ansible/plugins/action/synchronize.py:
+    support: core
+  lib/ansible/plugins/action/telnet.py:
+    support: core
+  lib/ansible/plugins/action/template.py:
+    support: core
+  lib/ansible/plugins/action/uri.py:
+    support: core
+  lib/ansible/plugins/action/wait_for_connection.py:
+    support: core
+  lib/ansible/plugins/action/win:
+    support: core
+    labels: windows
+  lib/ansible/plugins/action/yum.py:
+    support: core
   lib/ansible/plugins/action/asa:
     maintainers: ogenstad gdpak
     labels: networking
@@ -623,25 +689,34 @@ files:
     maintainers: skg-net
     labels: networking
   lib/ansible/plugins/action/eos:
+    support: network
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/action/ios:
+    support: network
+    maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/action/iosxr:
+    support: network
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/action/ironware:
     maintainers: paulquack
     labels: networking
   lib/ansible/plugins/action/junos:
+    support: network
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/action/net:
+    support: network
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/action/nxos:
+    support: network
     maintainers: $team_networking
     labels:
-    - networking
-    - nxos
+      - networking
+      - nxos
   lib/ansible/plugins/action/onyx_config.py:
     maintainers: $team_onyx
     labels: networking
@@ -649,181 +724,267 @@ files:
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/action/vyos:
+    support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/callback/unixy.py:
-    support: community
-    maintainers: akatch
+###############################
+# plugins/cache
+  lib/ansible/plugins/cache/__init__.py:
+    support: core
+  lib/ansible/plugins/cache/base.py:
+    support: core
+###############################
+# plugins/callbacks
+  lib/ansible/plugins/callback/__init__.py:
+    support: core
+  lib/ansible/plugins/callback/debug:
+    support: core
+  lib/ansible/plugins/callback/default:
+    support: core
   lib/ansible/plugins/callback/grafana_annotations.py:
-    support: community
     maintainers: rrey
+  lib/ansible/plugins/callback/junit:
+    support: core
+  lib/ansible/plugins/callback/minimal:
+    support: core
+  lib/ansible/plugins/callback/oneline:
+    support: core
+  lib/ansible/plugins/callback/profile:
+    support: core
   lib/ansible/plugins/callback/sumologic.py:
-    support: community
     maintainers: ryancurrah
+  lib/ansible/plugins/callback/tree:
+    support: core
+  lib/ansible/plugins/callback/unixy.py:
+    maintainers: akatch
+###############################
+# plugins/cliconf
+
+
   lib/ansible/plugins/cliconf/:
-    maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/cliconf/eos.py:
+    support: network
+    maintainers: $team_networking
   lib/ansible/plugins/cliconf/exos.py:
     maintainers: rdvencioneck
-    labels: networking
+  lib/ansible/plugins/cliconf/ios.py:
+    support: network
+    maintainers: $team_networking
+  lib/ansible/plugins/cliconf/iosxr.py:
+    support: network
+    maintainers: $team_networking
   lib/ansible/plugins/cliconf/ironware.py:
     maintainers: paulquack
-    labels: networking
+  lib/ansible/plugins/cliconf/junos.py:
+    support: network
+    maintainers: $team_networking
   lib/ansible/plugins/cliconf/nos.py:
     maintainers: $team_extreme
-    labels: networking
   lib/ansible/plugins/cliconf/nxos.py:
+    support: network
     maintainers: $team_nxos
-    labels:
-    - networking
+    labels: nxos
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
-    labels: networking
   lib/ansible/plugins/cliconf/routeros.py:
     maintainers: heuels
-    labels: networking
   lib/ansible/plugins/cliconf/slxos.py:
     maintainers: $team_extreme
+  lib/ansible/plugins/cliconf/voss.py:
+    maintainers: $team_extreme
+    labels: networking
+  lib/ansible/plugins/cliconf/vyos.py:
+    support: network
+    maintainers: $team_networking
+###############################
+# plugins/connection
+  lib/ansible/plugins/connection/:
+    support: core
+  lib/ansible/plugins/connection/docker.py:
+    support: community
+    maintainers: $team_ansible dariko felixfontein jwitko kassiansun tbouvet
+  lib/ansible/plugins/connection/httpapi.py:
+    support: network
+    maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/connection/lxd.py:
     maintainers: mattclay
   lib/ansible/plugins/connection/netconf.py:
+    support: network
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/connection/oc.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
   lib/ansible/plugins/connection/network_cli.py:
+    support: network
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/httpapi/ftd.py:
-    maintainers: annikulin $team_networking
-    labels: networking
-  lib/ansible/plugins/inventory/openstack.py:
-    maintainers: $team_openstack
-    keywords:
-    - openstack
-    - inventory
-    labels:
-    - cloud
-  lib/ansible/plugins/cliconf/voss.py:
-    maintainers: $team_extreme
-    labels: networking
   lib/ansible/plugins/connection/winrm.py:
     maintainers: $team_windows_core
     labels:
-    - windows
-  lib/ansible/plugins/inventory/ovirt4.py:
-    maintainers: machacekondra
+      - windows
+###############################
+# plugins/filter
+  lib/ansible/plugins/filter/:
+    support: core
+  lib/ansible/plugins/filter/network.py:
+    support: network
+    maintainers: $team_networking
+    labels: networking
+###############################
+# plugins/httpapi
+  lib/ansible/plugins/httpapi:
+    support: network
+    maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/httpapi/ftd.py:
+    support: community
+    maintainers: annikulin $team_networking
+###############################
+# plugins/inventory
+  lib/ansible/plugins/inventory/__init__.py:
+    support: core
+  lib/ansible/plugins/inventory/ini.py:
+    support: core
+  lib/ansible/plugins/inventory/openstack.py:
+    maintainers: $team_openstack
+    keywords:
+      - openstack
+      - inventory
     labels:
-      - ovirt
       - cloud
   lib/ansible/plugins/inventory/vultr.py: *vultr
   lib/ansible/plugins/inventory/scaleway.py: *scaleway
-  lib/ansible/plugins/filter/network.py:
-    maintainers: $team_networking
-    labels: networking
-  lib/ansible/plugins/lookup/nios.py:
+  lib/ansible/plugins/inventory/yaml.py:
+    support: core
+###############################
+# plugins/loader
+  lib/ansible/plugins/loader:
+    support: core
+
+###############################
+# plugins/lookup
+  lib/ansible/plugins/lookup/__init__.py:
+    support: core
+  lib/ansible/plugins/lookup/conjur_variable.py:
+    maintainers: $team_cyberark_conjur
+    notified: cyberark-bizdev
+  lib/ansible/plugins/lookup/dig:
+    maintainers: jpmens
+    labels: community
+  lib/ansible/plugins/lookup/cyberarkpassword.py:
+    notified: cyberark-bizdev
+  lib/ansible/plugins/lookup/nios:
+    support: core
     maintainers: $team_networking sganesh-infoblox
     labels:
       - networking
       - infoblox
-  lib/ansible/plugins/lookup/nios_next_ip.py:
-    maintainers: $team_networking
-    labels: networking
-  lib/ansible/plugins/lookup/dig:
-    maintainers: jpmens
-    labels: community
-  lib/ansible/plugins/lookup/conjur_variable.py:
-    maintainers: $team_cyberark_conjur
-    notified: cyberark-bizdev
-  lib/ansible/plugins/lookup/cyberarkpassword.py:
-    notified: cyberark-bizdev
+  lib/ansible/plugins/lookup/onepassword:
+    maintainers: samdoran
+    ignored: azenk
+###############################
+# plugins/netconf
   lib/ansible/plugins/netconf/:
+    support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/lookup/onepassword.py:
-    maintainers: samdoran
-    ignored: azenk
-  lib/ansible/plugins/lookup/onepassword_raw.py:
-    maintainers: samdoran
-    ignored: azenk
   lib/ansible/plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
+###############################
+# plugins/shell
+  lib/ansible/plugins/shell/:
+    support: core
   lib/ansible/plugins/shell/powershell.py:
+    support: core
     maintainers: $team_windows_core
     labels:
-    - windows
-  lib/ansible/plugins/terminal/aireos.py:
-    maintainers: jmighion
+      - windows
+###############################
+# plugins/strategy
+  lib/ansible/plugins/strategy/:
+    support: core
+###############################
+# plugins/terminal
+  lib/ansible/plugins/terminal/:
     labels: networking
-  lib/ansible/plugins/terminal/aruba.py:
-    maintainers: jmighion
-    labels: networking
+  lib/ansible/plugins/terminal/__init__.py:
+    support: network
   lib/ansible/plugins/terminal/asa.py:
     maintainers: ogenstad gdpak
-    labels: networking
   lib/ansible/plugins/terminal/dellos10:
     maintainers: skg-net
-    labels: networking
   lib/ansible/plugins/terminal/edgeos.py:
     maintainers: samdoran
-    labels: networking
   lib/ansible/plugins/terminal/eos.py:
+    support: network
     maintainers: $team_networking
-    labels: networking
   lib/ansible/plugins/terminal/exos.py:
     maintainers: rdvencioneck
-    labels: networking
   lib/ansible/plugins/terminal/ios.py:
+    support: network
     maintainers: $team_networking
-    labels: networking
   lib/ansible/plugins/terminal/iosxr.py:
+    support: network
     maintainers: $team_networking
-    labels: networking
   lib/ansible/plugins/terminal/ironware.py:
     maintainers: paulquack
-    labels: networking
   lib/ansible/plugins/terminal/junos.py:
+    support: network
     maintainers: $team_networking
-    labels: networking
   lib/ansible/plugins/terminal/nos.py:
     maintainers: $team_extreme
-    labels: networking
   lib/ansible/plugins/terminal/nxos.py:
+    support: network
     maintainers: $team_networking
-    labels:
-    - networking
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
-    labels: networking
   lib/ansible/plugins/terminal/routeros.py:
     maintainers: heuels
-    labels: networking
   lib/ansible/plugins/terminal/slxos.py:
     maintainers: $team_extreme
-    labels: networking
   lib/ansible/plugins/terminal/sros.py:
     maintainers: $team_networking
-    labels: networking
   lib/ansible/plugins/terminal/voss.py:
     maintainers: $team_extreme
-    labels: networking
   lib/ansible/plugins/terminal/vyos.py:
+    support: network
     maintainers: $team_networking samdoran
-    labels: networking
+###############################
+# plugins/test
+  lib/ansible/plugins/test:
+    support: core
+###############################
+# plugins/test
+  lib/ansible/plugins/vars:
+    support: core
+###############################
+###############################
+###############################
   lib/ansible/release.py:
     notified: mattclay nitzmahone
+###############################
+# plugins/terminal
   lib/ansible/template:
     keywords:
-    - jinja
-    - jinja2
+      - jinja
+      - jinja2
   lib/ansible/utils/module_docs_fragments/acme.py:
+    support: community
     maintainers: resmo felixfontein
   test/sanity/validate-modules:
+    notified:
+      - gundalow
+      - mattclay
+      - sivel
     keywords:
-    - validate-modules
+      - validate-modules
   docs/:
     maintainers:
       - acozine
@@ -835,35 +996,28 @@ files:
   docs/docsite/rst/scenario_guides/guide_aci.rst:
     maintainers: $team_aci
     labels:
-    - aci
-    - networking
-  packaging/:
-  test/:
-    # 'test' is a component path, then 'test' label will be automatically added
+      - aci
+      - networking
+###############################
+# 'test' is a component path, then 'test' label will be automatically added
   test/runner/:
     notified: mattclay
   test/sanity/:
     notified: mattclay
   test/utils/shippable/:
     notified: mattclay
-  test/integration/group_vars/:
-    notified: mattclay
-  test/integration/host_vars/:
-    notified: mattclay
-  test/integration/roles/:
-    notified: mattclay
   test/integration/targets/aci:
     maintainers: $team_aci
     labels:
-    - networking
+      - networking
   test/integration/targets/meraki:
     maintainers: $team_meraki
     labels:
-    - networking
+      - networking
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
-    - networking
+      - networking
   test/integration/targets/setup_acme:
     maintainers: resmo felixfontein
   test/integration/targets/setup_zabbix:
@@ -871,20 +1025,21 @@ files:
   test/integration/targets/ucs:
     maintainers: $team_ucs
     labels:
-    - remote_management
+      - remote_management
+  test/legacy/:
+    notified: mattclay
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
   test/units/modules/network/nxos:
     maintainers: $team_nxos
     labels:
-    - networking
+      - networking
   test/sanity/pep8/legacy-files.txt:
+    notified: mattclay
   hacking/report.py:
     notified: mattclay
   shippable.yml:
-    notified: mattclay
-  .yamllint:
     notified: mattclay
   tox.ini:
     notified: mattclay
@@ -898,7 +1053,6 @@ macros:
   team_cloudstack: resmo dpassante
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
-  team_dell: skg-net manjuv1 dhivyap abirami-n
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
@@ -914,7 +1068,6 @@ macros:
   team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gdpak
   team_rabbitmq: chrishoffman manuel-sousa hyperized
-  team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt flossware vritant
   team_scaleway: sieben hekonsek Spredzy
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
