@@ -157,8 +157,6 @@ def signed_request(
     if method is "GET":
         body = ""
 
-    body = body
-
     # Derived data
 
     body_hash = hexdigest(body)
