@@ -28,7 +28,7 @@ import tempfile
 import traceback
 
 from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.urls import fetch_url as _fetch_url
+from ansible.module_utils.urls import fetch_url
 
 try:
     import cryptography
@@ -61,20 +61,6 @@ class ModuleFailException(Exception):
 
     def do_fail(self, module):
         module.fail_json(msg=self.msg, other=self.module_fail_args)
-
-
-def _lowercase_fetch_url(*args, **kwargs):
-    '''
-     Add lowercase representations of the header names as dict keys
-
-    '''
-    response, info = _fetch_url(*args, **kwargs)
-
-    info.update(dict((header.lower(), value) for (header, value) in info.items()))
-    return response, info
-
-
-fetch_url = _lowercase_fetch_url
 
 
 def nopad_b64(data):
