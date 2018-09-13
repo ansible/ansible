@@ -60,8 +60,10 @@ class UTM:
         self.important_keys = important_keys
         self.module.params['url_username'] = 'token'
         self.module.params['url_password'] = module.params.get('utm_token')
-        if self.important_keys not in module.params.keys():
-            raise UTMModuleConfigurationError("The keys to check don't match the modules keys")
+        if all(elem in self.important_keys for elem in module.params.keys()):
+            raise UTMModuleConfigurationError(
+                "The keys " + str(self.important_keys) + " to check are not in the modules keys:\n" + str(
+                    module.params.keys()))
 
     def execute(self):
         try:
