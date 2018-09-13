@@ -4,7 +4,7 @@
 # Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # Copyright: (c) 2017-18, Ansible Project
 # Copyright: (c) 2017-18, Abhijeet Kasurde <akasurde@redhat.com>
-# Copyright 2018 VMware, Inc.
+# Copyright: (c) 2018, VMware, Inc.
 # SPDX-License-Identifier: GPL-3.0-or-later
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -37,16 +37,18 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    switch_name:
+    vswitch_name:
         description:
             - The name of the switch where to add the VMKernel interface.
             - Required parameter only if C(state) is set to C(present).
             - Optional parameter from version 2.5 and onwards.
         required: False
+        version_added: 2.7
+        aliases: ['switch_name']
     is_dvs_switch:
         description:
-            - Whether or not C(switch_name) is a DVS
-        version_added: XXX
+            - Whether or not C(switch_name) is a DVS.
+        version_added: 2.8
         default: False
     device_name:
         description:
@@ -123,7 +125,8 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 -  name: Add Management vmkernel port using static network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
+      hostname: '{{ vcenter_hostname }}'
+      esxi_hostname: '{{ esxi_hostname }}'
       device_name: vmk1
       username: admin
       password: supersecret123
@@ -138,7 +141,8 @@ EXAMPLES = '''
 
 -  name: Add Management VMkernel port using DHCP network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
+      hostname: '{{ vcenter_hostname }}'
+      esxi_hostname: '{{ esxi_hostname }}'
       device_name: vmk1
       username: admin
       password: supersecret123
@@ -148,10 +152,12 @@ EXAMPLES = '''
       network:
         type: 'dhcp'
       enable_mgmt: True
+   delegate_to: localhost
 
 -  name: Add vSAN VMkernel device using DHCP network type to DVS portgroup
    vmware_vmkernel:
-      hostname: 192.168.127.9
+      hostname: '{{ vcenter_hostname }}'
+      esxi_hostname: '{{ esxi_hostname }}'
       device_name: vmk2
       username: admin
       password: supersecret123
@@ -162,16 +168,19 @@ EXAMPLES = '''
       network:
         type: 'dhcp'
       enable_vsan: True
+   delegate_to: localhost
 
 -  name: Delete VMkernel device
    vmware_vmkernel:
       device_name: vmk3
-      hostname: 192.168.127.9
+      hostname: '{{ vcenter_hostname }}'
+      esxi_hostname: '{{ esxi_hostname }}'
       username: admin
       password: supersecret123
       switch_name: vSwitch0
       portgroup_name: PG_0002
       state: absent
+   delegate_to: localhost
 
 '''
 
@@ -220,8 +229,6 @@ class PyVmomiHelper(PyVmomi):
 
         if not self.is_dvs_switch:
             self.port_group_obj = self.get_port_group_by_name(host_system=self.esxi_host_obj, portgroup_name=self.port_group_name)
-            if not self.port_group_obj:
-                module.fail_json(msg="Portgroup name %s not found" % self.port_group_name)
         else:
             self.dv_switch = find_dvs_by_name(self.content, self.switch_name)
             self.port_group_obj = find_dvspg_by_name(self.dv_switch, self.port_group_name)
