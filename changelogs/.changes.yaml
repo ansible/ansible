@@ -411,3 +411,22 @@ releases:
     modules:
     - online_user_facts
     release_date: '2018-09-06'
+  2.7.0rc2:
+    codename: In the Light
+    fragments:
+    - 45501-get_url-better_checksums.yaml
+    - aws_cloudfront_distribution_fix_nonexistent_method_name.yaml
+    - azure-storage-cloud-environment.yaml
+    - azure_autoscale.yaml
+    - get-url-fix-idempotency.yaml
+    - loop_undefined_delegate_to.yaml
+    - nxos_ambiguous_command_check.yaml
+    - script-module-no-file-path.yaml
+    - v2.7.0rc2_summary.yaml
+    - vmware_wait_for_task_fix.yaml
+    - win_group_membership-com-marshal.yaml
+    - win_say-fix.yaml
+    plugins:
+      strategy:
+      - host_pinned
+    release_date: '2018-09-13'

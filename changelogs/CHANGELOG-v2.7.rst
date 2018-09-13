@@ -5,6 +5,43 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.0rc2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-09-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Fix timer in exponential backoff algorithm in vmware.py.
+
+Bugfixes
+--------
+
+- Add ambiguous command check as the error message is not persistent on nexus devices (https://github.com/ansible/ansible/pull/45337).
+- cloudfront_distribution - replace call to nonexistent method 'validate_distribution_id_from_caller_reference' with 'validate_distribution_from_caller_reference' and set the distribution_id variable to the distribution's 'Id' key.
+- fix azure storage blob cannot create blob container in non-public azure cloud environment. (https://github.com/ansible/ansible/issues/35223)
+- fix azure_rm_autoscale module can use dict to identify target (https://github.com/ansible/ansible/pull/45477)
+- get_url - Don't re-download files unnecessarily when force=no (https://github.com/ansible/ansible/issues/45491)
+- get_url - support remote checksum files with paths specified with leading dots (`./path/to/file`)
+- loop - Ensure that a loop with a when condition that evaluates to false and delegate_to, will short circuit if the loop references an undefined variable. This matches the behavior in the same scenario without delegate_to (https://github.com/ansible/ansible/issues/45189)
+- script inventory plugin - Don't pass file_name to DataLoader.load, which will prevent misleading error messages (https://github.com/ansible/ansible/issues/34164)
+- win_group_membership - fix intermittent issue where it failed to convert the ADSI object to the .NET object after using it once
+- win_say - fix syntax error in module and get tests working
+
+New Plugins
+-----------
+
+Strategy
+~~~~~~~~
+
+- host_pinned - Executes tasks on each host without interruption
+
 v2.7.0rc1
 =========
 
@@ -307,7 +344,7 @@ Minor Changes
 - passwordstore - Add backup option when overwriting password (off by default)
 - puppet - Add support for --debug, --verbose, --summarize https://github.com/ansible/ansible/issues/37986
 - puppet - Add support for setting logdest to both stdout and syslog via 'all'
-- replace copy.deepcopy in high workload areas with a custom function to improve speed of fact-cache updates and reduce memory usage (https://github.com/ansible/ansible/pull/44337)
+- replace copy.deepcopy in high workload areas with a custom function to improve performance (https://github.com/ansible/ansible/pull/44337)
 - roles - removed deprecated functionality for non YAML role specs (https://github.com/ansible/ansible/pull/44320)
 - roles - removed deprecated special casing functionality of connection, port, and remote_user for role params (https://github.com/ansible/ansible/pull/44320)
 - service - removed deprecated state=running (https://github.com/ansible/ansible/pull/44320)
