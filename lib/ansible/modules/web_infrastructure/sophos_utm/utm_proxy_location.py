@@ -35,7 +35,11 @@ options:
     access_control:
         description:
           - whether to activate the access control for the location
-        default: False
+        default: 0
+        choices:
+          - 0 
+          - 1
+        type: string
     allowed_networks:
         description:
           - A list of allowed networks
@@ -47,7 +51,7 @@ options:
     backend:
         description:
           - A list of backends that are connected with this location declaration
-        required: true
+        default: []
     be_path:
         description:
           - The path of the backend
@@ -117,19 +121,19 @@ result:
 def main():
     endpoint = "reverse_proxy/location"
     key_to_check_for_changes = ["access_control", "allowed_networks", "auth_profile", "backend", "be_path", "comment",
-                                "denied_networks", "hot_standy", "path", "status", "stickysession_id",
+                                "denied_networks", "hot_standby", "path", "status", "stickysession_id",
                                 "stickysession_status", "websocket_passthrough"]
     module = UTMModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            access_control=dict(type='bool', required=False, default=False),
+            access_control=dict(type='str', required=False, default="0",choices=['0','1']),
             allowed_networks=dict(type='list', elements='str', required=False, default=['REF_NetworkAny']),
             auth_profile=dict(type='str', required=False, default=""),
-            backend=dict(type='list', elements='str', required=True),
+            backend=dict(type='list', elements='str', required=False,default=[]),
             be_path=dict(type='str', required=False, default=""),
             comment=dict(type='str', required=False, default=""),
             denied_networks=dict(type='list', elements='str', required=False, default=[]),
-            hot_standy=dict(type='bool', required=False, default=False),
+            hot_standby=dict(type='bool', required=False, default=False),
             path=dict(type='str', required=False, default="/"),
             status=dict(type='bool', required=False, default=True),
             stickysession_id=dict(type='str', required=False, default='ROUTEID'),
@@ -139,7 +143,6 @@ def main():
     )
     try:
         # This is needed because the bool value only accepts int values in the backend
-        module.params['access_control'] = int(module.params.get('access_control'))
         UTM(module, endpoint, key_to_check_for_changes).execute()
     except Exception as e:
         module.fail_json(msg=str(e))

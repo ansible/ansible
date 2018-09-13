@@ -100,7 +100,7 @@ class UTM:
             else:
                 self.remove()
         except Exception as e:
-            self.module.fail_json(result=str(e))
+            self.module.fail_json(msg=str(e))
 
     def add(self):
         """
@@ -111,12 +111,13 @@ class UTM:
         if info["status"] >= 400:
             self.module.fail_json(result=json.loads(info))
         else:
+            data_as_json_string = self.module.jsonify(self.module.params)
             if result is None:
                 response, info = fetch_url(self.module, self.request_url, method="POST",
                                            headers={"Accept": "application/json", "Content-type": "application/json"},
-                                           data=self.module.jsonify(self.module.params))
+                                           data=data_as_json_string)
                 if info["status"] >= 400:
-                    self.module.fail_json(result=json.loads(info))
+                    self.module.fail_json(msg=json.loads(info["body"]))
                 is_changed = True
                 result = self._clean_result(json.loads(response.read()))
             else:
@@ -124,9 +125,9 @@ class UTM:
                     response, info = fetch_url(self.module, self.request_url + result['_ref'], method="PUT",
                                                headers={"Accept": "application/json",
                                                         "Content-type": "application/json"},
-                                               data=self.module.jsonify(self.module.params))
+                                               data=data_as_json_string)
                     if info['status'] >= 400:
-                        self.module.fail_json(result=json.loads(info))
+                        self.module.fail_json(msg=json.loads(info["body"]))
                     is_changed = True
                     result = self._clean_result(json.loads(response.read()))
             self.module.exit_json(result=result, changed=is_changed)
@@ -142,7 +143,7 @@ removes an object from utm
                                        headers={"Accept": "application/json", "X-Restd-Err-Ack": "all"},
                                        data=self.module.jsonify(self.module.params))
             if info["status"] >= 400:
-                self.module.fail_json(result=json.loads(info))
+                self.module.fail_json(msg=json.loads(info["body"]))
             else:
                 is_changed = True
         self.module.exit_json(changed=is_changed)
