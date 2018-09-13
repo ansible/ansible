@@ -830,8 +830,7 @@ def compare_arrays(old, new):
         newd[name] = item
 
     newd = dict_merge(oldd, newd)
-
-    return newd == oldd:
+    return newd == oldd
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a frontend ip configuration"""
