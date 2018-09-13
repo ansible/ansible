@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.2',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -52,8 +52,8 @@ options:
         default: False
     device_name:
         description:
-            - The name of the vmkernel device
-        version_added: XXX
+            - The name of the vmkernel device.
+        version_added: 2.8
         required: True
     portgroup_name:
         description:
@@ -617,7 +617,7 @@ def main():
         enable_vmotion=dict(required=False, type='bool'),
         enable_mgmt=dict(required=False, type='bool'),
         enable_ft=dict(required=False, type='bool'),
-        switch_name=dict(required=False, type='str'),
+        vswitch_name=dict(required=False, type='str',  aliases=['switch_name']),
         state=dict(type='str',
                    choices=['present', 'absent'],
                    default='present'),
