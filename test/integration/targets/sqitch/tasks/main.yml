@@ -22,7 +22,7 @@
     when: ansible_os_family == "RedHat"
   
   - name: Install cpanminus
-    shell: "curl -L http://cpanmin.us | perl - --sudo App::cpanminus"
+    dnf: name=cpanminus
     when: ansible_os_family == "RedHat"
   
   - name: Install sqitch
