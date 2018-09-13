@@ -108,8 +108,7 @@ def main():
             resolved=dict(type='bool', required=False, default=False),
             resolved6=dict(type='bool', required=False, default=False),
             timeout=dict(type='int', required=False, default=0),
-        ),
-        supports_check_mode=False
+        )
     )
     try:
         UTM(module, endpoint, key_to_check_for_changes).execute()
