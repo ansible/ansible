@@ -90,6 +90,13 @@ EXAMPLES = """
     state: absent
 """
 
+RETURN = """
+result:
+    description: The utm object that was created
+    returned: success
+    type: complex
+"""
+
 
 def main():
     endpoint = "reverse_proxy/backend"
