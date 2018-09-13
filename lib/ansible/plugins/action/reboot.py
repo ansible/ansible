@@ -105,7 +105,7 @@ class ActionModule(ActionBase):
 
         if command_result['rc'] != 0:
             raise AnsibleError("%s: failed to get host boot time info, rc: %d, stdout: %s, stderr: %s"
-                               % (self._task.action, command_result.rc, to_native(command_result['stdout']), to_native(command_result['stderr'])))
+                               % (self._task.action, command_result['rc'], to_native(command_result['stdout']), to_native(command_result['stderr'])))
 
         return command_result['stdout'].strip()
 
