@@ -186,7 +186,8 @@ def create_update_parameter(client, module):
                 describe_existing_parameter = None
                 try:
                     describe_existing_parameter_paginator = client.get_paginator('describe_parameters')
-                    describe_existing_parameter = describe_existing_parameter_paginator.paginate(Filters=[{"Key": "Name", "Values": [args['Name']]}]).build_full_result()
+                    describe_existing_parameter = describe_existing_parameter_paginator.paginate(
+                        Filters=[{"Key": "Name", "Values": [args['Name']]}]).build_full_result()
 
                 except ClientError as e:
                     module.fail_json_aws(e, msg="getting description value")
