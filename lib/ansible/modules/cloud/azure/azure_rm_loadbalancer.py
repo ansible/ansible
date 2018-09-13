@@ -833,6 +833,7 @@ def compare_arrays(old, new):
     newd = dict_merge(oldd, newd)
     return newd == oldd
 
+
 def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a frontend ip configuration"""
     return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/frontendIPConfigurations/{}'.format(
