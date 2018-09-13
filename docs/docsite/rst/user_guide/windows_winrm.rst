@@ -4,6 +4,7 @@ Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
 configured with WinRM. This topic covers how to configure and use WinRM with Ansible.
 
 .. contents:: Topics
+   :local:
 
 What is WinRM?
 ``````````````
