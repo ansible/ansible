@@ -37,6 +37,11 @@ if PY3:
 else:
     BUILTINS_NAME = '__builtin__'
 
+EXPECTED_BASE_HEADERS = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+}
+
 
 class FakeFtdHttpApiPlugin(HttpApi):
     def __init__(self, conn):
@@ -67,6 +72,7 @@ class TestFtdHttpApi(unittest.TestCase):
 
         assert 'ACCESS_TOKEN' == self.ftd_plugin.access_token
         assert 'REFRESH_TOKEN' == self.ftd_plugin.refresh_token
+        assert {'Authorization': 'Bearer ACCESS_TOKEN'} == self.ftd_plugin.connection._auth
         expected_body = json.dumps({'grant_type': 'password', 'username': 'foo', 'password': 'bar'})
         self.connection_mock.send.assert_called_once_with(mock.ANY, expected_body, headers=mock.ANY, method=mock.ANY)
 
@@ -80,6 +86,7 @@ class TestFtdHttpApi(unittest.TestCase):
 
         assert 'NEW_ACCESS_TOKEN' == self.ftd_plugin.access_token
         assert 'NEW_REFRESH_TOKEN' == self.ftd_plugin.refresh_token
+        assert {'Authorization': 'Bearer NEW_ACCESS_TOKEN'} == self.ftd_plugin.connection._auth
         expected_body = json.dumps({'grant_type': 'refresh_token', 'refresh_token': 'REFRESH_TOKEN'})
         self.connection_mock.send.assert_called_once_with(mock.ANY, expected_body, headers=mock.ANY, method=mock.ANY)
 
@@ -92,7 +99,8 @@ class TestFtdHttpApi(unittest.TestCase):
 
         self.ftd_plugin.login('foo', 'bar')
 
-        self.connection_mock.send.assert_called_once_with('/testFakeLoginUrl', mock.ANY, headers=mock.ANY, method=mock.ANY)
+        self.connection_mock.send.assert_called_once_with('/testFakeLoginUrl', mock.ANY, headers=mock.ANY,
+                                                          method=mock.ANY)
         self.ftd_plugin.hostvars['token_path'] = temp_token_path
 
     def test_login_raises_exception_when_no_refresh_token_and_no_credentials(self):
@@ -135,7 +143,7 @@ class TestFtdHttpApi(unittest.TestCase):
         assert {ResponseParams.SUCCESS: True, ResponseParams.STATUS_CODE: 200,
                 ResponseParams.RESPONSE: exp_resp} == resp
         self.connection_mock.send.assert_called_once_with('/test/123?at=0', '{"name": "foo"}', method=HTTPMethod.PUT,
-                                                          headers=self._expected_headers())
+                                                          headers=EXPECTED_BASE_HEADERS)
 
     def test_send_request_should_return_empty_dict_when_no_response_data(self):
         self.connection_mock.send.return_value = self._connection_response(None)
@@ -144,7 +152,7 @@ class TestFtdHttpApi(unittest.TestCase):
 
         assert {ResponseParams.SUCCESS: True, ResponseParams.STATUS_CODE: 200, ResponseParams.RESPONSE: {}} == resp
         self.connection_mock.send.assert_called_once_with('/test', None, method=HTTPMethod.GET,
-                                                          headers=self._expected_headers())
+                                                          headers=EXPECTED_BASE_HEADERS)
 
     def test_send_request_should_return_error_info_when_http_error_raises(self):
         self.connection_mock.send.side_effect = HTTPError('http://testhost.com', 500, '', {},
@@ -215,7 +223,7 @@ class TestFtdHttpApi(unittest.TestCase):
             resp = self.ftd_plugin.upload_file('/tmp/test.txt', '/files')
 
         assert {'id': '123'} == resp
-        exp_headers = self._expected_headers()
+        exp_headers = dict(EXPECTED_BASE_HEADERS)
         exp_headers['Content-Length'] = len('--Encoded data--')
         exp_headers['Content-Type'] = 'multipart/form-data'
         self.connection_mock.send.assert_called_once_with('/files', data='--Encoded data--',
@@ -262,10 +270,3 @@ class TestFtdHttpApi(unittest.TestCase):
         response_text = json.dumps(response) if type(response) is dict else response
         response_data = BytesIO(response_text.encode() if response_text else ''.encode())
         return response_mock, response_data
-
-    def _expected_headers(self):
-        return {
-            'Accept': 'application/json',
-            'Authorization': 'Bearer %s' % self.ftd_plugin.access_token,
-            'Content-Type': 'application/json'
-        }
