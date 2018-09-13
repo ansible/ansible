@@ -5735,7 +5735,6 @@ try:
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False
@@ -5751,7 +5750,6 @@ except ImportError:
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False
