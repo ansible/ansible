@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright 2018 VMware, Inc.
+# SPDX-License-Identifier: GPL-3.0-or-later
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
+    'metadata_version': '1.2',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -22,8 +24,10 @@ description:
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
+- Joseph Andreatta (@vmwjoseph) <joseph () vmware.com>
+
 notes:
-- Tested on vSphere 6.5
+- Tested on vSphere 6.5, 6.7
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -48,7 +52,6 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
-  delegate_to: localhost
   register: cluster_host_vmks
 
 - name: Gather VMKernel facts about ESXi Host
@@ -57,7 +60,6 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
-  delegate_to: localhost
   register: host_vmks
 '''
 
@@ -158,7 +160,7 @@ class VmkernelFactsManager(PyVmomi):
             if host_network_system:
                 vmks_config = host.config.network.vnic
                 for vmk in vmks_config:
-                    host_vmk_facts.append(dict(
+                    vmk_facts = dict(
                         device=vmk.device,
                         key=vmk.key,
                         portgroup=vmk.portgroup,
@@ -173,7 +175,13 @@ class VmkernelFactsManager(PyVmomi):
                         enable_management=vmk.device in self.service_type_vmks[host.name]['management'],
                         enable_ft=vmk.device in self.service_type_vmks[host.name]['faultToleranceLogging'],
                     )
-                    )
+                    if vmk.spec.distributedVirtualPort:
+                        dvs = self.content.dvSwitchManager.QueryDvsByUuid(vmk.spec.distributedVirtualPort.switchUuid)
+                        pg = dvs.LookupDvPortGroup(vmk.spec.distributedVirtualPort.portgroupKey)
+                        vmk_facts['portgroup'] = pg.name
+                        vmk_facts['dvs_name'] = dvs.name
+                    host_vmk_facts.append(vmk_facts)
+
             hosts_facts[host.name] = host_vmk_facts
         return hosts_facts
 
