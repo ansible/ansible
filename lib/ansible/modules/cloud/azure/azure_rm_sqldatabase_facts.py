@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_sqldatabase_facts
-version_added: "2.7"
+version_added: "2.8"
 short_description: Get SQL Database facts.
 description:
     - Get facts of SQL Database.
@@ -30,12 +30,9 @@ options:
         description:
             - The name of the server.
         required: True
-    database_name:
+    name:
         description:
             - The name of the database to be retrieved.
-    expand:
-        description:
-            - "A comma separated list of child objects to expand in the response. Possible properties: serviceTierAdvisors, transparentDataEncryption."
     filter:
         description:
             - An OData filter expression that describes a subset of databases to return.
@@ -59,14 +56,12 @@ EXAMPLES = '''
     azure_rm_sqldatabase_facts:
       resource_group: resource_group_name
       server_name: server_name
-      database_name: database_name
-      expand: expand
+      name: database_name
 
   - name: List instances of SQL Database
     azure_rm_sqldatabase_facts:
       resource_group: resource_group_name
       server_name: server_name
-      expand: expand
       filter: filter
 
   - name: List instances of SQL Database
@@ -97,7 +92,7 @@ databases:
                         - Resource ID.
                     returned: always
                     type: str
-                    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-6852/providers/Microsoft.Sql/servers/sqlcrudtest-
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/sqlcrudtest-6852/providers/Microsoft.Sql/servers/sqlcrudtest-
                             2080/databases/sqlcrudtest-9187"
                 name:
                     description:
@@ -105,12 +100,6 @@ databases:
                     returned: always
                     type: str
                     sample: sqlcrudtest-9187
-                type:
-                    description:
-                        - Resource type.
-                    returned: always
-                    type: str
-                    sample: Microsoft.Sql/servers/databases
                 location:
                     description:
                         - Resource location.
@@ -170,10 +159,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            database_name=dict(
-                type='str'
-            ),
-            expand=dict(
+            name=dict(
                 type='str'
             ),
             filter=dict(
@@ -191,11 +177,9 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             changed=False,
             ansible_facts=dict()
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
-        self.database_name = None
-        self.expand = None
+        self.name = None
         self.filter = None
         self.elastic_pool_name = None
         self.recommended_elastic_pool_name = None
@@ -204,12 +188,10 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
                 self.server_name is not None and
-                self.database_name is not None):
+                self.name is not None):
             self.results['databases'] = self.get()
         elif (self.resource_group is not None and
               self.server_name is not None):
@@ -226,67 +208,67 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
     def get(self):
         response = None
-        results = {}
+        results = []
         try:
-            response = self.mgmt_client.databases.get(resource_group_name=self.resource_group,
-                                                      server_name=self.server_name,
-                                                      database_name=self.database_name)
+            response = self.sql_client.databases.get(resource_group_name=self.resource_group,
+                                                     server_name=self.server_name,
+                                                     database_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
 
         if response is not None:
-            results[response.name] = self.format_item(response)
+            results.append(self.format_item(response))
 
         return results
 
     def list_by_server(self):
         response = None
-        results = {}
+        results = []
         try:
-            response = self.mgmt_client.databases.list_by_server(resource_group_name=self.resource_group,
-                                                                 server_name=self.server_name)
+            response = self.sql_client.databases.list_by_server(resource_group_name=self.resource_group,
+                                                                server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:
-                results[item.name] = self.format_item(item)
+                results.append(self.format_item(item))
 
         return results
 
     def list_by_elastic_pool(self):
         response = None
-        results = {}
+        results = []
         try:
-            response = self.mgmt_client.databases.list_by_elastic_pool(resource_group_name=self.resource_group,
-                                                                       server_name=self.server_name,
-                                                                       elastic_pool_name=self.elastic_pool_name)
+            response = self.sql_client.databases.list_by_elastic_pool(resource_group_name=self.resource_group,
+                                                                      server_name=self.server_name,
+                                                                      elastic_pool_name=self.elastic_pool_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:
-                results[item.name] = self.format_item(item)
+                results.append(self.format_item(item))
 
         return results
 
     def list_by_recommended_elastic_pool(self):
         response = None
-        results = {}
+        results = []
         try:
-            response = self.mgmt_client.databases.list_by_recommended_elastic_pool(resource_group_name=self.resource_group,
-                                                                                   server_name=self.server_name,
-                                                                                   recommended_elastic_pool_name=self.recommended_elastic_pool_name)
+            response = self.sql_client.databases.list_by_recommended_elastic_pool(resource_group_name=self.resource_group,
+                                                                                  server_name=self.server_name,
+                                                                                  recommended_elastic_pool_name=self.recommended_elastic_pool_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:
-                results[item.name] = self.format_item(item)
+                results.append(self.format_item(item))
 
         return results
 
@@ -315,5 +297,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
 def main():
     AzureRMDatabasesFacts()
+
+
 if __name__ == '__main__':
     main()
