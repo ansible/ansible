@@ -9,46 +9,6 @@ Set-StrictMode -Version 2
 
 #region functions
 
-    function Confirm-CentralLogFileMode {
-        param(
-            $CentralLogFileMode,
-            [bool]$WhatIf = $false
-        )
-        if (-not [String]::IsNullOrEmpty($CentralLogFileMode)) {
-            $validValues =@("CentralBinary","CentralW3C", "Site")
-            if ($validValues -notcontains $CentralLogFileMode){
-                Fail-json $result "invalid value supplied for 'central_log_file_mode': must be one of: $($validValues -join ',')"
-            }
-
-            $ConfigurationPath = "/system.applicationHost/log"
-            $CentralConfig = Get-WebConfiguration -Filter $ConfigurationPath
-            if($CentralConfig.centralLogFileMode -ne $CentralLogFileMode){
-                if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name centralLogFileMode -Value $CentralLogFileMode
-                }
-                return $true
-            }
-        }
-    }
-
-    function Confirm-LogInUTF8 {
-        param(
-            $LogInUTF8,
-            [bool]$WhatIf = $false
-        )
-        if (-not [String]::IsNullOrEmpty($LogInUTF8)) {
-
-            $ConfigurationPath = "/system.applicationHost/log"
-            $CentralConfig = Get-WebConfiguration -Filter $ConfigurationPath
-            if($CentralConfig.logInUTF8 -ne $LogInUTF8){
-                if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name logInUTF8 -Value $LogInUTF8
-                }
-                return $true
-            }
-        }
-    }
-
 
     function Confirm-RotationPeriod {
         param(
@@ -114,15 +74,16 @@ Set-StrictMode -Version 2
 
     function Confirm-SiteLogFormat {
         param(
-            $LogFormat,
+            $ConfigurationPath,
+            $SiteLogFormat,
             [bool]$WhatIf = $false
         )
-        if (-not [String]::IsNullOrEmpty($LogDirectory)) {
+        if (-not [String]::IsNullOrEmpty($SiteLogFormat)) {
             $ConfigurationPath = "$ConfigurationPath/logFile"
             $LogProperties = Get-WebConfiguration -Filter $ConfigurationPath
-            if($LogProperties.logFormat -ne $LogFormat){
+            if($LogProperties.logFormat -ne $SiteLogFormat){
                 if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name logFormat -Value $LogFormat
+                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name logFormat -Value $SiteLogFormat
                 }
                 return $true
             }
@@ -248,7 +209,7 @@ Set-StrictMode -Version 2
         if ($CustomFields.count -gt 0 ) {
             $LogFileMode = $(Get-WebConfiguration -Filter "/system.applicationHost/log").centralLogFileMode
             if ($LogFileMode -ne "Site"){
-                Fail-Json $result "Custom Fields are not availabe when configured to one log per server"
+                Fail-Json $result "Custom Fields are not availabe when configured to one log per server. Hint: set central_log_file_mode to 'Site'"
             }
         }
         $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile/customFields'
@@ -326,9 +287,40 @@ Set-StrictMode -Version 2
             }
     }
 
-    Function Test-Site {
-
+    Function Validate-ParameterSet {
+        Param(
+            $ValidParameters,
+            $Parameters
+        )
+        $str = ''
+        $Parameters.Keys | Foreach-Object {
+            
+            if ($_ -notlike "_ansible*"){
+                if ($ValidParameters -notcontains $_) {
+                    Fail-Json $result "Unexpected parameter: $_ not valid for this configuration context"
+                }
+            }
+        }   
     }
+
+    Function Confirm-WebConfigurationProperty {
+        Param(
+            $Filter,
+            $Name,
+            $Value,
+            [bool]$WhatIf = $false
+        )
+        if (-not [String]::IsNullOrEmpty($Value)) {
+            $CurrentValue = $(Get-WebConfigurationProperty -Filter $Filter -Name $Name)
+            if($CurrentValue -ne $Value){
+                if(-not $WhatIf) {
+                    Set-WebConfigurationProperty -Filter $Filter -Name $Name -Value $Value
+                }
+                return $true
+            }
+        }
+    }
+
 
 #end region
 
@@ -337,9 +329,10 @@ Set-StrictMode -Version 2
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
+$configuration = Get-AnsibleParam $params "configuration" -type "str" -default "server"
 $site_name = Get-AnsibleParam $params "site_name" -type "str" -default "System"
 $log_directory = Get-AnsibleParam $params "log_directory" -type "path" -default $null
-$site_log_format = Get-AnsibleParam $params "site_log_format" -type "path" -default "W3C"
+$site_log_format = Get-AnsibleParam $params "site_log_format" -type "str" -default $null
 $log_ext_file_flags = Get-AnsibleParam $params "log_ext_file_flags" -type "list" 
 $log_custom_fields = Get-AnsibleParam $params "log_custom_fields" -type "list"
 $use_local_time =  Get-AnsibleParam $params "use_local_time" -type "bool"  -default $null
@@ -355,71 +348,138 @@ $result = @{
 $messages = @()
 $shared_params = @()
 
+if ($check_mode)
+{
+    $shared_params = @{'WhatIf'=$true}
+}
+
 if ($rotation_period -ne "MaxSize" -and $truncate_size -ne $null)
 {
     Add-Warning -obj $result -message "truncate_size is of no effect when rotation_period is not 'MaxSize'"
 }
 
 
-if ($site_name -eq "siteDefaults") {
+if ($configuration -eq "server")
+{   
     
+    $validParameters = @("configuration","central_log_file_mode","log_in_utf8","log_directory","log_ext_file_flags","use_local_time","rotation_period","truncate_size")
+    Validate-ParameterSet -ValidParameters $validParameters -Parameters $params
+    $ConfigurationPath ="/system.applicationHost/log"
+    If ($central_log_file_mode -eq "CentralBinary") {
+        $LogConfigurationPath = "/system.applicationHost/log/centralBinaryLogFile"
+    }
+    elseif ($central_log_file_mode -eq "CentralW3C") {
+        $LogConfigurationPath = "/system.applicationHost/log/centralW3CLogFile"
+    }
+    $PropertiesToConfirm = @(
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = "logInUTF8";
+            Value = $log_in_utf8
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = "centralLogFileMode";
+            Value = $central_log_file_mode
+        })
+    if (-not [String]::IsNullOrEmpty($LogConfigurationPath)) {
+        $PropertiesToConfirm += @(
+            [PSCustomObject]@{
+                Filter = $LogConfigurationPath;
+                Name = "localTimeRollover";
+                Value = $use_local_time
+            },
+            
+            [PSCustomObject]@{
+                Filter = $LogConfigurationPath;
+                Name = "directory";
+                Value = $log_directory
+            },
+            [PSCustomObject]@{
+                Filter = $LogConfigurationPath;
+                Name = "period";
+                Value = $rotation_period
+            },
+            [PSCustomObject]@{
+                Filter = $LogConfigurationPath;
+                Name = "truncateSize";
+                Value = $truncate_size
+            })
+    }
+
+    
+    $PropertiesToConfirm | Foreach-Object {
+        $FilterProperty = $_
+        
+        if ($(Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value))
+        {
+            $changed = $true
+            $messages += $FilterProperty.Name
+        }
+    }
+}
+elseif ( $configuration -eq "siteDefaults"){
+    $validParameters = @("configuration","site_log_format","log_directory","log_ext_file_flags","log_custom_fields","use_local_time","rotation_period","truncate_size")
+    Validate-ParameterSet -ValidParameters $validParameters -Parmaeters $params
     $ConfigurationPath = '/system.applicationHost/sites/siteDefaults'
-   
+    $PropertiesToConfirm =@(
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = site_log_format;
+            Value = $site_log_format
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = log_directory;
+            Value = $log_directory
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = log_ext_file_flags;
+            Value = $log_ext_file_flags
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = log_custom_fields;
+            Value = $log_custom_fields
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = use_local_time;
+            Value = $use_local_time
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = rotation_period;
+            Value = $rotation_period
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = truncate_size;
+            Value = $truncate_size
+        })
+
+        $PropertiesToConfirm | Foreach-Object {
+            $FilterProperty = $_
+            if (Confirm-WebConfigurationProperty @FilterProperty)
+            {
+                $changed = $true
+                $messages += $FilterProperty.Name
+            }
+        }  
+    
+}
+elseif ($configuration -eq "site")
+{
+    $validParameters = @("configuration","site_name","site_log_format","log_directory","log_ext_file_flags","log_custom_fields","use_local_time","rotation_period","truncate_size")
+    Validate-ParameterSet -ValidParameters $validParameters -Parmaeters $params
+    $ConfigurationPath = "/system.applicationHost/sites/site[@name='$site_name']"
 }
 else {
-    $ConfigurationPath = '/system.applicationHost/sites/site[@name="$site_name"]'
+    Fail-Json $result "Invalid value specified for configuration.  Must be server, siteDefaults, or site"
 }
 
-if ($check_mode)
-{
-    $shared_params = @{'WhatIf'=$true}
-}
 
-if($(Confirm-LogInUTF8 -LogInUTF8 $log_in_utf8 @shared_params))
-{
-    $changed = $true
-    $messages += "UTF8 Mode"
-}
-
-if($(Confirm-CentralLogFileMode -CentralLogFileMode $central_log_file_mode @shared_params))
-{
-    $changed = $true
-    $messages += "CentralLogFileMode"
-}
-
-if($(Confirm-SiteLogFormat -ConfigurationPath $ConfigurationPath -SiteLogFormat $site_log_format @shared_params))
-{
-    $changed = $true
-    $messages += "LogFormat"
-}
-
-if($(Confirm-LogDirectory -ConfigurationPath $ConfigurationPath -LogDirectory $log_directory @shared_params))
-{
-    $changed = $true
-    $messages += "LogDirectory"
-}
-
-if($(Confirm-ExtFileFlags -ConfigurationPath $ConfigurationPath -ExtFileFlags $log_ext_file_flags @shared_params))
-{
-    $changed = $true
-    $messages += "Log Fields"
-}
-
-if($(Confirm-CustomFields -ConfigurationPath $ConfigurationPath -CustomFields $log_custom_fields @shared_params))
-{
-    $changed = $true
-    $messages += "Custom Fields"
-}
-
-if($(Confirm-LocalTime -ConfigurationPath $ConfigurationPath -UseLocalTime $use_local_time @shared_params)){
-    $changed = $true
-    $messages += "Use Local Time"
-}
-
-if($(Confirm-RotationPeriod -ConfigurationPath $ConfigurationPath -RotationPeriod $rotation_period -TruncateSize $truncate_size @shared_params)){
-    $changed = $true
-    $messages += "Rotation Period"
-}
 
 if ($check_mode) {
     $result.msg = "check mode: "
