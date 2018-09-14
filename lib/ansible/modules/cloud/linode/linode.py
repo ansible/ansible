@@ -156,6 +156,16 @@ notes:
 '''
 
 EXAMPLES = '''
+
+- name: Create a new Linode
+  linode:
+    name: linode-test1
+    plan: 1
+    datacenter: 7
+    distribution: 129
+    state: present
+  register: linode_creation
+
 - name: Create a server with a private IP Address
   linode:
      module: linode
@@ -172,6 +182,7 @@ EXAMPLES = '''
      wait_timeout: 600
      state: present
   delegate_to: localhost
+  register: linode_creation
 
 - name: Fully configure new server
   linode:
@@ -206,6 +217,7 @@ EXAMPLES = '''
       - {Label: 'newdisk', Size: 2000}
      watchdog: True
   delegate_to: localhost
+  register: linode_creation
 
 - name: Ensure a running server (create if missing)
   linode:
@@ -221,12 +233,13 @@ EXAMPLES = '''
      wait_timeout: 600
      state: present
   delegate_to: localhost
+  register: linode_creation
 
 - name: Delete a server
   linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
-     linode_id: 12345678
+     linode_id: "{{ linode_creation.instance.id }}"
      state: absent
   delegate_to: localhost
 
@@ -234,7 +247,7 @@ EXAMPLES = '''
   linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
-     linode_id: 12345678
+     linode_id: "{{ linode_creation.instance.id }}"
      state: stopped
   delegate_to: localhost
 
@@ -242,7 +255,7 @@ EXAMPLES = '''
   linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
-     linode_id: 12345678
+     linode_id: "{{ linode_creation.instance.id }}"
      state: restarted
   delegate_to: localhost
 '''
