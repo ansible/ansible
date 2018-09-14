@@ -38,19 +38,19 @@ def fail_json(*args, **kwargs):
     kwargs['failed'] = True
     raise AnsibleFailJson(kwargs)
 
+
 def fake_conn(*arg, **kwargs):
     return "Fake connection"
+
 
 class TestMyModule(unittest.TestCase):
 
     def setUp(self):
         self.mock_module_helper = patch.multiple(basic.AnsibleModule,
                                                  exit_json=exit_json,
-                                                 fail_json=fail_json,
-                                                )
+                                                 fail_json=fail_json)
         self.mock_module_helper.start()
         self.addCleanup(self.mock_module_helper.stop)
-
 
     def test__required_args_missing(self):
         with self.assertRaises(AnsibleFailJson):
@@ -59,7 +59,6 @@ class TestMyModule(unittest.TestCase):
                 "login_user": "USERID",
             })
             lxca_configpatterns.main()
-
 
     @mock.patch("ansible.modules.remote_management.lxca.lxca_configpatterns.setup_conn", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_configpatterns.execute_module", autospec=True)
@@ -116,21 +115,3 @@ class TestMyModule(unittest.TestCase):
         ret_configpatterns = _get_configpatterns(mod_obj, args)
         assert mock.call(mod_obj, mod_obj.params) == _get_configpatterns.call_args
         assert _get_configpatterns.return_value == ret_configpatterns
-
-    '''
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_configpatterns._configpatterns", autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.pylxca_module.AnsibleModule", autospec=True)
-    def test__nodes_throw_exception(self, ansible_mod_cls, _get_configpatterns):
-        mod_obj = ansible_mod_cls.return_value
-        args = {
-            "auth_url": "https://10.243.30.195",
-            "login_user": "USERID",
-            "login_password": "password",
-            "command_options": "configpatterns",
-        }
-        mod_obj.params = args
-        _get_configpatterns.side_effect = "failed to get configpatterns"
-        with self.assertRaises(AnsibleFailJson):
-            lxca_configpatterns.main()
-
-    '''
