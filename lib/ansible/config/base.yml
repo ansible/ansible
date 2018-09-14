@@ -160,9 +160,8 @@ BECOME_ALLOW_SAME_USER:
   type: boolean
   yaml: {key: privilege_escalation.become_allow_same_user}
 AGNOSTIC_BECOME_PROMPT:
-  # TODO: Switch the default to True in either the Ansible 2.6 release or the 2.7 release, whichever happens after the Tower 3.3 release
   name: Display an agnostic become prompt
-  default: False
+  default: True
   type: boolean
   description: Display an agnostic become prompt instead of displaying a prompt containing the command line supplied become method
   env: [{name: ANSIBLE_AGNOSTIC_BECOME_PROMPT}]
