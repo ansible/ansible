@@ -23,4 +23,3 @@
         that:
             - qq2 is undefined
             - "'qq2' in hostvars['localhost']"
-
