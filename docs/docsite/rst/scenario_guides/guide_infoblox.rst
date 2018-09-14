@@ -54,13 +54,13 @@ Ansible includes the following lookup plugins for NIOS:
 - :ref:`nios_next_ip <nios_next_ip_lookup>` Provides the next available IP address from a network. You'll see an example of this in `Creating a host record`_.
 - :ref:`nios_next_network <nios_next_network_lookup>` - Returns the next available network range for a network-container.
 
-.. note:: You must run these lookups locally by specifying ``connection: local``.
+.. note:: You must run these lookup plugins locally by specifying ``connection: local``.
 
 
 Retrieving all network views
 ----------------------------
 
-This example playbook uses the ``set_fact`` module with the ``nios`` lookup to retrieve all the network views, which are then saved in the ``networkviews`` variable:
+This example playbook uses the ``set_fact`` module with the ``nios`` lookup plugin to retrieve all the network views, which are then saved in the ``networkviews`` variable:
 
 .. code-block:: yaml
 
@@ -80,7 +80,7 @@ This example playbook uses the ``set_fact`` module with the ``nios`` lookup to r
 Retrieving a host record
 ------------------------
 
-This example playbook uses the ``set_fact`` module with the ``nios`` lookup to retrieve the host records, and filters the result for a host called ``leaf01``, which is then saved in the ``host`` variable:
+This example playbook uses the ``set_fact`` module with the ``nios`` lookup plugin to retrieve the host records, and filters the result for a host called ``leaf01.ansible.com``, which is then saved in the ``host`` variable:
 
 .. code-block:: yaml
 
@@ -160,7 +160,7 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
     PLAY RECAP ******************************************************************************************
     localhost                  : ok=5    changed=0    unreachable=0    failed=0
 
-The output above shows the host record for ``leaf01`` and ``leaf02`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See :ref:`playbooks_variables` for more information on using Ansible variables.
+The output above shows the host record for ``leaf01.ansible.com`` and ``leaf02.ansible.com`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables which you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See :ref:`playbooks_variables` for more information on using Ansible variables.
 
 See the :ref:`nios <nios_lookup>` examples for more data options that you can retrieve.
 
@@ -217,7 +217,7 @@ This example playbook builds on the newly-created IPv4 network to create a host 
             state: present
     provider: "{{nios_provider}}"
 
-Notice the IPv4 address in this example uses the ``nios_next_ip`` lookup to find the next available IPv4 address on the network. You can find complete details on the ``nios_next_ip`` lookup plugin at :ref:`nios_next_ip <nios_next_ip_lookup>`.
+Notice the IPv4 address in this example uses the ``nios_next_ip`` lookup plugin to find the next available IPv4 address on the network. You can find complete details on the ``nios_next_ip`` lookup plugin at :ref:`nios_next_ip <nios_next_ip_lookup>`.
 
 
 Creating a forward DNS zone
