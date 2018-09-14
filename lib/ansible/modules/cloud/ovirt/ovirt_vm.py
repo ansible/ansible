@@ -365,7 +365,7 @@ options:
         aliases: [ 'sysprep_persist' ]
     kernel_params_persist:
         description:
-            - "If I(true) kernel_params, initrd_path and kernel_path will be set to Linux Boot Options."
+            - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration, if I(False) it will be used for run once."
         type: bool
         version_added: "2.8"
     kernel_path:
@@ -1081,11 +1081,11 @@ class VmsModule(BaseModule):
                         otypes.BootDevice(dev) for dev in self.param('boot_devices')
                     ],
                 ) if self.param('boot_devices') else None,
-                cmdline=self.param('kernel_params') if self.param('kernel_params_persist') else None,
+                cmdline=self.param('kernel_params'),
                 initrd=self.param('initrd_path') if self.param('kernel_params_persist') else None,
                 kernel=self.param('kernel_path') if self.param('kernel_params_persist') else None,
             ) if (
-                self.param('operating_system') or self.param('boot_devices')
+                self.param('operating_system') or self.param('boot_devices') or self.param('kernel_params_persist')
             ) else None,
             type=otypes.VmType(
                 self.param('type')
@@ -2066,7 +2066,9 @@ def main():
                         module.params.get('initrd_path') or
                         module.params.get('kernel_path') or
                         module.params.get('host') or
-                        initialization is not None and not module.params.get('cloud_init_persist')
+                        initialization is not None
+                        and not module.params.get('cloud_init_persist')
+                        and not module.params.get('kernel_params_persist')
                     ) else None,
                 )
 
