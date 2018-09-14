@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Make sure the data in BOTMETA.yml is valid"""
 
-import os
 import glob
+import os
+import re
+import sys
 import yaml
 
 from voluptuous import Any, MultipleInvalid, Required, Schema
@@ -17,8 +19,15 @@ def main():
     """Validate BOTMETA"""
     path = '.github/BOTMETA.yml'
 
-    with open(path, 'r') as f_path:
-        botmeta = yaml.safe_load(f_path)
+    try:
+        with open(path, 'r') as f_path:
+            botmeta = yaml.safe_load(f_path)
+    except yaml.error.MarkedYAMLError as ex:
+        print('%s:%d:%d: YAML load failed: %s' % (path, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
+        sys.exit()
+    except Exception as ex:
+        print('%s:%d:%d: YAML load failed: %s' % (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
+        sys.exit()
 
     files_schema = Any(
         Schema(*string_types),
@@ -48,17 +57,17 @@ def main():
     except MultipleInvalid as ex:
         for error in ex.errors:
             # No way to get line numbers
-            print('%s: %s' % (path, humanize_error(botmeta, error)))
+            print('%s:%d:%d: %s' % (path, 0, 0, humanize_error(botmeta, error)))
 
     # We have two macros to define locations, ensure they haven't been removed
     module_utils_path = botmeta.get('macros', {}).get('module_utils', '')
     modules_path = botmeta.get('macros', {}).get('modules', '')
 
     if module_utils_path != 'lib/ansible/module_utils':
-        print('%s: [macros][module_utils] has been changed or removed' % path)
+        print('%s:%d:%d: [macros][module_utils] has been changed or removed' % (path, 0, 0))
 
     if modules_path != 'lib/ansible/modules':
-        print('%s: [macros][modules] has been changed or removed' % path)
+        print('%s:%d:%d: [macros][modules] has been changed or removed' % (path, 0, 0))
 
     # See if all `files:` are valid
     for file in botmeta['files']:
@@ -68,7 +77,7 @@ def main():
             # Not a file or directory, though maybe the prefix to one?
             # https://github.com/ansible/ansibullbot/pull/1023
             if not glob.glob('%s*' % file):
-                print("%s: Can't find '%s.*' in this branch" % (path, file))
+                print("%s:%d:%d: Can't find '%s.*' in this branch" % (path, 0, 0, file))
 
 
 if __name__ == '__main__':
