@@ -210,14 +210,10 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/nos_config.2018-02-12@18:26:34
 """
-import re
-import time
 
 from ansible.module_utils.network.nos.nos import run_commands, get_config, load_config
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems
 
 __metaclass__ = type
 
@@ -314,7 +310,6 @@ def main():
 
         if match != 'none':
             config = get_running_config(module, config)
-            path = module.params['parents']
             configobjs = candidate.difference(config, path=path, match=match, replace=replace)
         else:
             configobjs = candidate.items
