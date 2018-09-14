@@ -146,6 +146,13 @@ options:
                your playbook accordingly to not export the disk all the time.
                This option is valid only for template disks."
         version_added: "2.4"
+    host:
+        description:
+            - "When the hypervisor name is specified the newly created disk or
+               an existing disk will refresh its information about the
+               underlying storage. This oprion is only valid for passthrough
+               disks. This option require at least the logical_unit.id to be
+               specified"
 extends_documentation_fragment: ovirt
 '''
 
@@ -578,11 +585,22 @@ def main():
         sparsify=dict(default=None, type='bool'),
         openstack_volume_type=dict(default=None),
         image_provider=dict(default=None),
+        host=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    lun = module.params.get('logical_unit')
+    host = module.params['host']
+    # Fail when host is specified with the LUN id. Lun id is needed to identify
+    # an existing disk if already available inthe environment.
+    if host and  lun.get("id") is None:
+        module.fail_json(
+                    msg="Can not use parameter host ({}) without pecifying"\
+                    "the logical_unit id".format(host)
+                )
 
     if module._name == 'ovirt_disks':
         module.deprecate("The 'ovirt_disks' module is being renamed 'ovirt_disk'", version=2.8)
@@ -602,8 +620,9 @@ def main():
             service=disks_service,
         )
 
-        lun = module.params.get('logical_unit')
         if lun:
+            if lun.get("port"):
+                lun["port"] = int(lun.get("port"))
             disk = _search_by_lun(disks_service, lun.get('id'))
 
         ret = None
@@ -692,6 +711,14 @@ def main():
                     )
             elif state == 'detached':
                 ret = disk_attachments_module.remove()
+
+        # When host is specified and the disk is not being removed refresh the
+        # information abou thte LUN.
+        host = module.params.get('host')
+        if state != 'absent' and host:
+            hosts_service = connection.system_service().hosts_service()
+            host = hosts_service.list(search='name={}'.format(host))[0]
+            disks_service.disk_service(disk.id).refresh_lun(host) 
 
         module.exit_json(**ret)
     except Exception as e:
