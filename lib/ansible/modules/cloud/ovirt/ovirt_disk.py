@@ -604,6 +604,8 @@ def main():
 
         lun = module.params.get('logical_unit')
         if lun:
+            if lun.get("port"):
+                lun["port"] = int(lun.get("port"))
             disk = _search_by_lun(disks_service, lun.get('id'))
 
         ret = None
