@@ -27,7 +27,7 @@ Before using Ansible ``nios`` modules with Infoblox, you must install the ``info
 Credentials and authenticating
 ==============================
 
-To use Infoblox ``nios`` modules in playbooks, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/group_vars/all``.
+To use Infoblox ``nios`` modules in playbooks, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/group_vars/nios.yml``.
 
 This is an example of this ``group_vars/nios.yml`` file. Replace these values with your Infoblox credentials:
 
@@ -35,28 +35,26 @@ This is an example of this ``group_vars/nios.yml`` file. Replace these values wi
 
     ---
     nios_provider:
-      host: 192.0.2.2
+      host: 192.0.0.2
       username: admin
       password: ansible
 
 Module list
 ============
-Ansible supports the following modules for NIOS:
 
-- `nios_host_record <http://docs.ansible.com/ansible/latest/modules/nios_host_record_module.html>`_ - configure host records
-- `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_ - configure networking objects
-- `nios_network_view <http://docs.ansible.com/ansible/latest/modules/nios_network_view_module.html>`_ - configure networking views
-- `nios_dns_view <http://docs.ansible.com/ansible/latest/modules/nios_dns_view_module.html>`_ - configure DNS views
-- `nios_zone <http://docs.ansible.com/ansible/latest/modules/nios_zone_module.html>`_ - configure DNS zones
+See :ref:`nios_net tools_modules` for a full list of NIOS modules for this release.
+Each module includes simple documented example tasks for how to use them. `Use cases with modules`_ expands on some of these example tasks.
 
-Each module includes simple documented example tasks for how to use them.
+NIOS lookup plugins
+===================
 
-NIOS lookup plugin
-==================
+Ansible includes the following lookup plugins for NIOS:
 
-The `nios <https://docs.ansible.com/ansible/devel/plugins/lookup/nios.html>`_ lookup plugin uses the Infoblox WAPI API to fetch NIOS specified objects, for example network views, DNS views, and host records.
+- :ref:`nios <nios_lookup>` Uses the Infoblox WAPI API to fetch NIOS specified objects, for example network views, DNS views, and host records.
+- :ref:`nios_next_ip <nios_next_ip_lookup>` Provides the next available IP address from a network. You'll see an example of this in `Creating a host record`_.
+- :ref:`nios_next_network <nios_next_network_lookup>` - Returns the next available network range for a network-container.
 
-.. note:: You must run this lookup locally by specifying ``connection: local``.
+.. note:: You must run these lookups locally by specifying ``connection: local``.
 
 
 Retrieving all network views
@@ -162,9 +160,9 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
     PLAY RECAP ******************************************************************************************
     localhost                  : ok=5    changed=0    unreachable=0    failed=0
 
-The output above shows the host record for ``leaf01`` and ``leaf02`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See `Ansible variables <http://docs.ansible.com/ansible/latest/playbooks_variables.html>`_ for more information on using Ansible variables.
+The output above shows the host record for ``leaf01`` and ``leaf02`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables that you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See :ref:`playbooks_variables` for more information on using Ansible variables.
 
-See the `nios lookup plugin examples <https://docs.ansible.com/ansible/latest/plugins/lookup/nios.html#examples>`_ for more data options that you can retrieve.
+See the :ref:`nios <nios_lookup>` examples for more data options that you can retrieve.
 
 You can access these playbooks at `Infoblox lookup playbooks <https://github.com/network-automation/infoblox_ansible/tree/master/lookup_playbooks>`_.
 
@@ -196,7 +194,8 @@ The following example playbook uses the ``nios_network`` module to configure an 
             state: present
             provider: "{{nios_provider}}"
 
-Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``group_vars/`` directory. You can find complete details on the ``nios_network`` module at `nios_network <http://docs.ansible.com/ansible/latest/modules/nios_network_module.html>`_.
+Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``group_vars/`` directory. You can find complete details on the ``nios_network`` module at :ref:`nios_network <nios_network_module>`.
+
 
 Creating a host record
 ----------------------
@@ -218,11 +217,11 @@ This example playbook builds on the newly-created IPv4 network to create a host 
             state: present
     provider: "{{nios_provider}}"
 
-Notice the IPv4 address in this example uses the ``nios_next_ip`` lookup to find the next available IPv4 address on the network. You can find complete details on the ``nios_network`` module at `nios_next_ip <https://docs.ansible.com/ansible/latest/plugins/lookup/nios_next_ip.html>`_.
+Notice the IPv4 address in this example uses the ``nios_next_ip`` lookup to find the next available IPv4 address on the network. You can find complete details on the ``nios_next_ip`` lookup plugin at :ref:`nios_next_ip <nios_next_ip_lookup>`.
 
 
-Creating a Reversw DNS zone
---------------------------------------
+Creating a forward DNS zone
+---------------------------
 
 The following example playbook uses the ``nios_zone`` module to configure a forward DNS zone:
 
@@ -240,7 +239,7 @@ The following example playbook uses the ``nios_zone`` module to configure a forw
             provider: "{{ nios_provider }}"
 
 Creating a reverse DNS zone
---------------------------------------
+---------------------------
 
 The following example playbook uses the ``nios_zone`` module to configure a reverse DNS zone:
 
@@ -296,7 +295,7 @@ You can explicitly use the Infoblox dynamic inventory script as follows:
 
 You can also implicitly use the Infoblox dynamic inventory script by including it in your inventory directory (``etc/ansible/hosts`` by default).
 
-See `Working with Dynamic Inventory <https://docs.ansible.com/ansible/devel/user_guide/intro_dynamic_inventory.html>`_ for more details.
+See :ref:`dynamic_inventory` for more details.
 
 .. seealso::
 
@@ -306,7 +305,7 @@ See `Working with Dynamic Inventory <https://docs.ansible.com/ansible/devel/user
       The deployment guide for Ansible integration provided by Infoblox.
   `Infoblox Integration in Ansible 2.5 <https://www.ansible.com/blog/infoblox-integration-in-ansible-2.5>`_
       Ansible blog post about Infoblox.
-  `Ansible NIOS modules <https://docs.ansible.com/ansible/latest/modules/list_of_net_tools_modules.html>`_
+  :ref:`Ansible NIOS modules <nios_net tools_modules>`
       The list of supported NIOS modules, with examples.
   `Infoblox Ansible Examples <https://github.com/network-automation/infoblox_ansible>`_
       Infoblox example playbooks.
