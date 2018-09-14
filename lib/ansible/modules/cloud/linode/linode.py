@@ -37,7 +37,10 @@ options:
     version_added: "2.3"
   linode_id:
     description:
-     - Unique ID of a linode server
+     - Unique ID of a linode server. This value is read-only in the sense that
+       if you specify it on creation of a Linode it will not be used. The
+       Linode API generates these IDs and we can those generated value here to
+       reference a Linode more specifically. This is useful for idempotence.
     aliases: [ lid ]
   additional_disks:
     description:
@@ -208,7 +211,6 @@ EXAMPLES = '''
   linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
-     linode_id: 12345678
      plan: 1
      datacenter: 2
      distribution: 99
