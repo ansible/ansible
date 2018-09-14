@@ -441,9 +441,6 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
-global warnings
-warnings = list()
-
 
 def main():
     """main entry point for module execution
@@ -504,6 +501,7 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
+    warnings = list()
     check_args(module, warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
