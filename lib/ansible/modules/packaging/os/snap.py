@@ -162,11 +162,11 @@ def remove_snaps(module, snap_names):
 
 
 def main():
-    module_args = dict(
-        name=dict(type='list', required=True),
-        state=dict(type='str', required=False, default='present', choices=['absent', 'present']),
-        classic=dict(type='bool', required=False, default=False)
-    )
+    module_args = {
+        'name': dict(type='list', required=True),
+        'state': dict(type='str', required=False, default='present', choices=['absent', 'present']),
+        'classic': dict(type='bool', required=False, default=False),
+    }
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True,
