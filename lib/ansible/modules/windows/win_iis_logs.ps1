@@ -9,6 +9,46 @@ Set-StrictMode -Version 2
 
 #region functions
 
+    function Confirm-CentralLogFileMode {
+        param(
+            $CentralLogFileMode,
+            [bool]$WhatIf = $false
+        )
+        if (-not [String]::IsNullOrEmpty($CentralLogFileMode)) {
+            $validValues =@("CentralBinary","CentralW3C", "Site")
+            if ($validValues -notcontains $CentralLogFileMode){
+                Fail-json $result "invalid value supplied for 'central_log_file_mode': must be one of: $($validValues -join ',')"
+            }
+
+            $ConfigurationPath = "/system.applicationHost/log"
+            $CentralConfig = Get-WebConfiguration -Filter $ConfigurationPath
+            if($CentralConfig.centralLogFileMode -ne $CentralLogFileMode){
+                if(-not $WhatIf) {
+                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name centralLogFileMode -Value $CentralLogFileMode
+                }
+                return $true
+            }
+        }
+    }
+
+    function Confirm-LogInUTF8 {
+        param(
+            $LogInUTF8,
+            [bool]$WhatIf = $false
+        )
+        if (-not [String]::IsNullOrEmpty($LogInUTF8)) {
+
+            $ConfigurationPath = "/system.applicationHost/log"
+            $CentralConfig = Get-WebConfiguration -Filter $ConfigurationPath
+            if($CentralConfig.logInUTF8 -ne $LogInUTF8){
+                if(-not $WhatIf) {
+                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name logInUTF8 -Value $LogInUTF8
+                }
+                return $true
+            }
+        }
+    }
+
 
     function Confirm-RotationPeriod {
         param(
@@ -71,6 +111,24 @@ Set-StrictMode -Version 2
             }
         }
     }
+
+    function Confirm-SiteLogFormat {
+        param(
+            $LogFormat,
+            [bool]$WhatIf = $false
+        )
+        if (-not [String]::IsNullOrEmpty($LogDirectory)) {
+            $ConfigurationPath = "$ConfigurationPath/logFile"
+            $LogProperties = Get-WebConfiguration -Filter $ConfigurationPath
+            if($LogProperties.logFormat -ne $LogFormat){
+                if(-not $WhatIf) {
+                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name logFormat -Value $LogFormat
+                }
+                return $true
+            }
+        }
+    }
+
     function Confirm-LogDirectory {
         param(
             $ConfigurationPath,
@@ -104,6 +162,7 @@ Set-StrictMode -Version 2
                 $ExtFileFlags = $allowedFields | ForEach-Object {
                     [PSCustomObject]@{
                         field_name=$_;
+                        level="server";
                         state="present"
                     }
                 }
@@ -112,6 +171,7 @@ Set-StrictMode -Version 2
                 $ExtFileFlags = $allowedFields | ForEach-Object {
                     [PSCustomObject]@{
                         field_name=$_;
+                        level="server";
                         state="absent"
                     }
                 }
@@ -131,9 +191,12 @@ Set-StrictMode -Version 2
         
         foreach ($ExtFileFlag in $ExtFileFlags) {
             # First ensure this list member has the properties we expect
-            if (-not ([bool]($ExtFileFlag.PSobject.Properties.name -match "field_name") -and
-            [bool]($ExtFileFlag.PSobject.Properties.name -match "state"))){
-                Fail-Json $result "Ojects in log_ext_file_flags must have 'field_name' and 'state' property"
+            if (-not (
+                [bool]($ExtFileFlag.PSobject.Properties.name -match "field_name") -and
+                [bool]($ExtFileFlag.PSobject.Properties.name -match "level") -and
+                [bool]($ExtFileFlag.PSobject.Properties.name -match "state"))
+                ){
+                Fail-Json $result "Ojects in log_ext_file_flags must have 'field_name', 'level', and 'state' property"
             }
 
             # Check if the field exists and shouldn't
@@ -181,6 +244,13 @@ Set-StrictMode -Version 2
             $CustomFields,
             [bool]$WhatIf = $false
         )
+
+        if ($CustomFields.count -gt 0 ) {
+            $LogFileMode = $(Get-WebConfiguration -Filter "/system.applicationHost/log").centralLogFileMode
+            if ($LogFileMode -ne "Site"){
+                Fail-Json $result "Custom Fields are not availabe when configured to one log per server"
+            }
+        }
         $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile/customFields'
         $CurrentCustomFields = $(Get-WebConfiguration -Filter $ConfigurationPath).Collection
 
@@ -195,11 +265,12 @@ Set-StrictMode -Version 2
                     [bool]($CustomField.PSobject.Properties.name -match "field_name") -and
                     [bool]($CustomField.PSobject.Properties.name -match "source_type") -and
                     [bool]($CustomField.PSobject.Properties.name -match "source_name") -and
+                    [bool]($CustomField.PSobject.Properties.name -match "level") -and
                     [bool]($CustomField.PSobject.Properties.name -match "state"))
 
                 )
             {
-                Fail-Json $result "Ojects in log_custom_fields must have 'field_name', 'source_type', 'source_name', and 'state' properties"
+                Fail-Json $result "Ojects in log_custom_fields must have 'field_name', 'source_type', 'source_name', 'level', and 'state' properties"
             }
 
             if ($CustomField.state -eq 'absent' -and ($CurrentCustomFields | Where-Object {$_.logFieldName -eq $CustomField.field_name})) {
@@ -252,8 +323,13 @@ Set-StrictMode -Version 2
                     
                     return $true
                 }
-            } 
+            }
     }
+
+    Function Test-Site {
+
+    }
+
 #end region
 
 
@@ -263,12 +339,14 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $site_name = Get-AnsibleParam $params "site_name" -type "str" -default "System"
 $log_directory = Get-AnsibleParam $params "log_directory" -type "path" -default $null
-$log_format = Get-AnsibleParam $params "log_format" -type "path" -default "W3C"
+$site_log_format = Get-AnsibleParam $params "site_log_format" -type "path" -default "W3C"
 $log_ext_file_flags = Get-AnsibleParam $params "log_ext_file_flags" -type "list" 
 $log_custom_fields = Get-AnsibleParam $params "log_custom_fields" -type "list"
 $use_local_time =  Get-AnsibleParam $params "use_local_time" -type "bool"  -default $null
 $rotation_period = Get-AnsibleParam $params "rotation_period" -type "str" -default $null
 $truncate_size = Get-AnsibleParam $params "truncate_size" -type "str" -default $null
+$central_log_file_mode = Get-AnsibleParam $params "central_log_file_mode" -type "str" -default $null
+$log_in_utf8 = Get-AnsibleParam $params "log_in_utf8" -type "bool" -default $null
 
 $result = @{
     changed = $false
@@ -283,18 +361,36 @@ if ($rotation_period -ne "MaxSize" -and $truncate_size -ne $null)
 }
 
 
-if ($site_name -eq "System") {
+if ($site_name -eq "siteDefaults") {
     
     $ConfigurationPath = '/system.applicationHost/sites/siteDefaults'
    
 }
 else {
-    Fail-Json $result "Site does not exist"
+    $ConfigurationPath = '/system.applicationHost/sites/site[@name="$site_name"]'
 }
 
 if ($check_mode)
 {
     $shared_params = @{'WhatIf'=$true}
+}
+
+if($(Confirm-LogInUTF8 -LogInUTF8 $log_in_utf8 @shared_params))
+{
+    $changed = $true
+    $messages += "UTF8 Mode"
+}
+
+if($(Confirm-CentralLogFileMode -CentralLogFileMode $central_log_file_mode @shared_params))
+{
+    $changed = $true
+    $messages += "CentralLogFileMode"
+}
+
+if($(Confirm-SiteLogFormat -ConfigurationPath $ConfigurationPath -SiteLogFormat $site_log_format @shared_params))
+{
+    $changed = $true
+    $messages += "LogFormat"
 }
 
 if($(Confirm-LogDirectory -ConfigurationPath $ConfigurationPath -LogDirectory $log_directory @shared_params))
