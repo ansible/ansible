@@ -122,15 +122,17 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
 
     TASK [check the leaf01 return variable] *************************************************************
     ok: [localhost] => {
-      ..output shortened...
         "host": {
+            "_ref": "record:host/ZG5zLmhvc3QkLl9kZWZhdWx0LmNvbS5hbnNpYmxlLmxlYWYwMQ:leaf01.ansible.com/default",
             "ipv4addrs": [
                 {
+                    "_ref": "record:host_ipv4addr/ZG5zLmhvc3RfYWRkcmVzcyQuX2RlZmF1bHQuY29tLmFuc2libGUubGVhZjAxLjE5Mi4xNjguMTAwLjIu:192.168.100.2/leaf01.ansible.com/default",
                     "configure_for_dhcp": false,
-                    "host": "leaf01.example.com",
-                    "ipv4addr": "192.168.1.11"
+                    "host": "leaf01.ansible.com",
                 }
             ],
+            "name": "leaf01.ansible.com",
+            "view": "default"
         }
     }
 
@@ -143,19 +145,10 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
     ok: [localhost]
 
     TASK [check the leaf02 return variable] *************************************************************
-    ok: [localhost] => {
-    <SNIPPET, REST OF OUTPUT REMOVED FOR BREVITY>
-
-        "host": {
-            "ipv4addrs": [
-                {
-                    "configure_for_dhcp": false,
-                    "host": "leaf02.example.com",
-                    "ipv4addr": "192.168.1.12"
-                }
-            ],
-        }
+    ok: [test] => {
+        "host": []
     }
+
 
     PLAY RECAP ******************************************************************************************
     localhost                  : ok=5    changed=0    unreachable=0    failed=0
