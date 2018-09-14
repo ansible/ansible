@@ -122,7 +122,7 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
 
     TASK [check the leaf01 return variable] *************************************************************
     ok: [localhost] => {
-    <...output omitted...>
+      ..output shortened...
         "host": {
             "ipv4addrs": [
                 {
