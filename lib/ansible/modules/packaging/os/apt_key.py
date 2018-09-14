@@ -25,7 +25,8 @@ description:
 notes:
     - Doesn't download the key unless it really needs it.
     - As a sanity check, downloaded key id must match the one specified.
-    - "Use full fingerprint (40 characters) key ids to avoid key collisions. To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
+    - "Use full fingerprint (40 characters) key ids to avoid key collisions.
+      To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
     - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
     - Adding a new key requires an apt cache update (e.g. using the apt module's update_cache option)
 options:
