@@ -4,7 +4,7 @@
 CNOS Platform Options
 ***************************************
 
-CNOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on CNOS in Ansible 2.7. 
+CNOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on CNOS in Ansible. 
 
 .. contents:: Topics
 
@@ -34,7 +34,7 @@ Connections Available
 
 For legacy playbooks, CNOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
 
-Using CLI in Ansible 2.7
+Using CLI in Ansible
 ================================================================================
 
 Example CLI ``group_vars/cnos.yml``
