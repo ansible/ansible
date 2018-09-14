@@ -2681,7 +2681,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_shell=True):
+                    expand_user_and_vars=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2719,8 +2719,8 @@ class AnsibleModule(object):
             python3 versions we support) otherwise a UnicodeError traceback
             will be raised.  This does not affect transformations of strings
             given as args.
-        :kw expand_shell: When ``use_unsafe_shell=False`` this argument
-            dictates whether shellisms such as environment variables and paths
+        :kw expand_user_and_vars: When ``use_unsafe_shell=False`` this argument
+            dictates whether ``~`` is expanded in paths and environment variables
             are expanded before running the command. When ``True`` a string such as
             ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
             ``use_unsafe_shell=False`` no path or variable expansion will be done.
@@ -2762,8 +2762,8 @@ class AnsibleModule(object):
                     args = to_text(args, errors='surrogateescape')
                 args = shlex.split(args)
 
-            # expand shellisms
-            if expand_shell:
+            # expand ``~`` in paths, and all environment vars
+            if expand_user_and_vars:
                 args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
             else:
                 args = [x for x in args if x is not None]
