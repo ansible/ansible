@@ -224,7 +224,7 @@ def main():
             plan_file=dict(),
             target=dict(),
             engine=dict(),
-            working_directory=dict(),
+            working_directory=dict(type='path'),
             to_change=dict(),
             from_change=dict(),
             verify=dict(type='bool'),
