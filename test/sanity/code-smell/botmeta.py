@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 """Make sure the data in BOTMETA.yml is valid"""
 
-import os.path
+import os
 import glob
-import sys
 import yaml
 
 from voluptuous import Any, MultipleInvalid, Required, Schema
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import string_types
+
 list_string_types = list(string_types)
 
 
 def main():
     """Validate BOTMETA"""
     path = '.github/BOTMETA.yml'
+
     with open(path, 'r') as f_path:
         botmeta = yaml.safe_load(f_path)
-    f_path.close()
 
     files_schema = Any(
         Schema(*string_types),
@@ -51,16 +51,19 @@ def main():
             print('%s: %s' % (path, humanize_error(botmeta, error)))
 
     # We have two macros to define locations, ensure they haven't been removed
-    if botmeta['macros']['module_utils'] != 'lib/ansible/module_utils':
-        print('%s: [macros][module_utils] has been removed' % path)
+    module_utils_path = botmeta.get('macros', {}).get('module_utils', '')
+    modules_path = botmeta.get('macros', {}).get('modules', '')
 
-    if botmeta['macros']['modules'] != 'lib/ansible/modules':
-        print('%s: [macros][modules] has been removed' % path)
+    if module_utils_path != 'lib/ansible/module_utils':
+        print('%s: [macros][module_utils] has been changed or removed' % path)
+
+    if modules_path != 'lib/ansible/modules':
+        print('%s: [macros][modules] has been changed or removed' % path)
 
     # See if all `files:` are valid
     for file in botmeta['files']:
-        file = file.replace('$module_utils', botmeta['macros']['module_utils'])
-        file = file.replace('$modules', botmeta['macros']['modules'])
+        file = file.replace('$module_utils', module_utils_path)
+        file = file.replace('$modules', modules_path)
         if not os.path.exists(file):
             # Not a file or directory, though maybe the prefix to one?
             # https://github.com/ansible/ansibullbot/pull/1023
