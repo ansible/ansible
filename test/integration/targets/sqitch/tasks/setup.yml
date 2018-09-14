@@ -1,0 +1,33 @@
+---
+- name: Create dir for resources
+  file: path={{ output_dir }} state=directory mode=0755
+
+- name: Copy resources to tmp dir
+  copy: src=files/ dest={{ output_dir }}
+
+- name: Create DB for tests
+  postgresql_db: name=anstest encoding='UTF-8' state=present template=template0
+
+- name: Install sqitch
+  package: name=sqitch state=present
+  when: ansible_os_family == "Debian"
+
+- name: Install CPAN
+  package: name={{ item }} state=present
+  with_items:
+    - perl-devel
+    - perl-CPAN
+    - perl-DBD-Pg
+  when: ansible_os_family == "RedHat"
+
+- name: Install cpanminus
+  shell: "curl -L https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/sqitch/cpanminus.pl | perl - --sudo App::cpanminus"
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == '6'
+
+- name: Install cpanminus
+  package: name=cpanminus state=present
+  when: ansible_os_family == "RedHat" and not (ansible_distribution == "CentOS" and ansible_distribution_major_version == '6')
+
+- name: Install sqitch
+  cpanm: name=App::Sqitch notest=true
+  when: ansible_os_family == "RedHat"

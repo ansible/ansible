@@ -1,0 +1,40 @@
+---
+- name: Deploy in check mode with cwd
+  sqitch: command=deploy cwd={{ output_dir }} plan_file=sqitch.plan target=anstest verify=true to_change=types
+  check_mode: yes
+
+- name: Deploy in check mode without cwd
+  sqitch: command=deploy plan_file=sqitch.plan target=anstest verify=true to_change=types
+  check_mode: yes
+
+- name: Deploy to change
+  sqitch: command=deploy cwd={{ output_dir}} plan_file=sqitch.plan target=anstest verify=true to_change=types
+
+- name: Rebase
+  sqitch:
+    command: rebase
+    cwd: {{ output_dir }}
+    plan_file: sqitch.plan
+    target: anstest
+    verify: true
+
+- name: Revert to change
+  sqitch: command=revert cwd={{ output_dir }} plan_file=sqitch.plan target=anstest to_change=schemas
+
+- name: Deploy whole plan
+  sqitch: command=deploy cwd={{ output_dir }} plan_file=sqitch.plan target=anstest
+
+- name: Verify
+  sqitch: command=verify cwd={{ output_dir }} plan_file=sqitch.plan target=anstest from_change=types to_change=tests
+
+- name: Check status
+  sqitch: command=status cwd={{ output_dir }} plan_file=sqitch.plan target=anstest
+
+- name: Revert whole plan to change
+  sqitch: command=revert cwd={{ output_dir }} plan_file=sqitch.plan target=anstest to_change=schemas
+
+- name: Destroy DB
+  postgresql_db: name=anstest state=absent
+
+- name: Remove resources
+  file: path={{ output_dir }} state=absent
