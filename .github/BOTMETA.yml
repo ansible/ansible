@@ -356,6 +356,8 @@ files:
     keywords:
       - persistent connection
     labels: networking
+  changelogs/fragments/:
+    support: community
   contrib/:
     support: community
   contrib/inventory:
