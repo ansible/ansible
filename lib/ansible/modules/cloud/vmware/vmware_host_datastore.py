@@ -189,13 +189,14 @@ class VMwareHostDatastore(PyVmomi):
         ds = find_datastore_by_name(self.content, self.datastore_name)
         if not ds:
             self.module.fail_json(msg="No datastore found with name %s" % self.datastore_name)
-        error_message_umount = "Cannot umount datastore %s from host %s" % (self.datastore_name, self.esxi_hostname)
-        try:
-            self.esxi.configManager.datastoreSystem.RemoveDatastore(ds)
-        except (vim.fault.NotFound, vim.fault.HostConfigFault, vim.fault.ResourceInUse) as fault:
-            self.module.fail_json(msg="%s: %s" % (error_message_umount, to_native(fault.msg)))
-        except Exception as e:
-            self.module.fail_json(msg="%s: %s" % (error_message_umount, to_native(e)))
+        if self.module.check_mode is False:
+            error_message_umount = "Cannot umount datastore %s from host %s" % (self.datastore_name, self.esxi_hostname)
+            try:
+                self.esxi.configManager.datastoreSystem.RemoveDatastore(ds)
+            except (vim.fault.NotFound, vim.fault.HostConfigFault, vim.fault.ResourceInUse) as fault:
+                self.module.fail_json(msg="%s: %s" % (error_message_umount, to_native(fault.msg)))
+            except Exception as e:
+                self.module.fail_json(msg="%s: %s" % (error_message_umount, to_native(e)))
         self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
 
     def mount_datastore_host(self):
@@ -205,45 +206,47 @@ class VMwareHostDatastore(PyVmomi):
             self.mount_vmfs_datastore_host()
 
     def mount_nfs_datastore_host(self):
-        mnt_specs = vim.host.NasVolume.Specification()
-        mnt_specs.remoteHost = self.nfs_server
-        mnt_specs.remotePath = self.nfs_path
-        mnt_specs.localPath = self.datastore_name
-        if self.nfs_ro:
-            mnt_specs.accessMode = "readOnly"
-        else:
-            mnt_specs.accessMode = "readWrite"
-        error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi_hostname)
-        try:
-            ds = self.esxi.configManager.datastoreSystem.CreateNasDatastore(mnt_specs)
-            if not ds:
-                self.module.fail_json(msg=error_message_mount)
-        except (vim.fault.NotFound, vim.fault.DuplicateName,
-                vim.fault.AlreadyExists, vim.fault.HostConfigFault,
-                vmodl.fault.InvalidArgument, vim.fault.NoVirtualNic,
-                vim.fault.NoGateway) as fault:
-            self.module.fail_json(msg="%s: %s" % (error_message_mount, to_native(fault.msg)))
-        except Exception as e:
-            self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(e)))
+        if self.module.check_mode is False:
+            mnt_specs = vim.host.NasVolume.Specification()
+            mnt_specs.remoteHost = self.nfs_server
+            mnt_specs.remotePath = self.nfs_path
+            mnt_specs.localPath = self.datastore_name
+            if self.nfs_ro:
+                mnt_specs.accessMode = "readOnly"
+            else:
+                mnt_specs.accessMode = "readWrite"
+            error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi_hostname)
+            try:
+                ds = self.esxi.configManager.datastoreSystem.CreateNasDatastore(mnt_specs)
+                if not ds:
+                    self.module.fail_json(msg=error_message_mount)
+            except (vim.fault.NotFound, vim.fault.DuplicateName,
+                    vim.fault.AlreadyExists, vim.fault.HostConfigFault,
+                    vmodl.fault.InvalidArgument, vim.fault.NoVirtualNic,
+                    vim.fault.NoGateway) as fault:
+                self.module.fail_json(msg="%s: %s" % (error_message_mount, to_native(fault.msg)))
+            except Exception as e:
+                self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(e)))
         self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
 
     def mount_vmfs_datastore_host(self):
-        ds_path = "/vmfs/devices/disks/" + str(self.vmfs_device_name)
-        host_ds_system = self.esxi.configManager.datastoreSystem
-        ds_system = vim.host.DatastoreSystem
-        error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi_hostname)
-        try:
-            vmfs_ds_options = ds_system.QueryVmfsDatastoreCreateOptions(host_ds_system,
-                                                                        ds_path,
-                                                                        self.vmfs_version)
-            vmfs_ds_options[0].spec.vmfs.volumeName = self.datastore_name
-            ds = ds_system.CreateVmfsDatastore(host_ds_system,
-                                               vmfs_ds_options[0].spec)
-        except (vim.fault.NotFound, vim.fault.DuplicateName,
-                vim.fault.HostConfigFault, vmodl.fault.InvalidArgument) as fault:
-            self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(fault.msg)))
-        except Exception as e:
-            self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(e)))
+        if self.module.check_mode is False:
+            ds_path = "/vmfs/devices/disks/" + str(self.vmfs_device_name)
+            host_ds_system = self.esxi.configManager.datastoreSystem
+            ds_system = vim.host.DatastoreSystem
+            error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi_hostname)
+            try:
+                vmfs_ds_options = ds_system.QueryVmfsDatastoreCreateOptions(host_ds_system,
+                                                                            ds_path,
+                                                                            self.vmfs_version)
+                vmfs_ds_options[0].spec.vmfs.volumeName = self.datastore_name
+                ds = ds_system.CreateVmfsDatastore(host_ds_system,
+                                                   vmfs_ds_options[0].spec)
+            except (vim.fault.NotFound, vim.fault.DuplicateName,
+                    vim.fault.HostConfigFault, vmodl.fault.InvalidArgument) as fault:
+                self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(fault.msg)))
+            except Exception as e:
+                self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(e)))
         self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
 
 
