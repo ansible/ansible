@@ -1,4 +1,4 @@
 {
     "always": true,
-    "output": "path-message"
+    "output": "path-line-column-message"
 }
