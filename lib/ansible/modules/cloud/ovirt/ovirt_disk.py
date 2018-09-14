@@ -153,6 +153,7 @@ options:
                underlying storage. This oprion is only valid for passthrough
                disks. This option require at least the logical_unit.id to be
                specified"
+        version_added: "2.8"
 extends_documentation_fragment: ovirt
 '''
 
@@ -596,11 +597,11 @@ def main():
     host = module.params['host']
     # Fail when host is specified with the LUN id. Lun id is needed to identify
     # an existing disk if already available inthe environment.
-    if host and  lun.get("id") is None:
+    if host and lun.get("id") is None:
         module.fail_json(
-                    msg="Can not use parameter host ({}) without pecifying"\
-                    "the logical_unit id".format(host)
-                )
+                         msg="Can not use parameter host ({0!s}) withouti "
+                         "pecifying the logical_unit id".format(host)
+                        )
 
     if module._name == 'ovirt_disks':
         module.deprecate("The 'ovirt_disks' module is being renamed 'ovirt_disk'", version=2.8)
@@ -717,8 +718,13 @@ def main():
         host = module.params.get('host')
         if state != 'absent' and host:
             hosts_service = connection.system_service().hosts_service()
-            host = hosts_service.list(search='name={}'.format(host))[0]
-            disks_service.disk_service(disk.id).refresh_lun(host) 
+            hosts = hosts_service.list(search='name={0!s}'.format(host))
+            if len(hosts) > 0:
+                host_service = hosts[0]
+            else:
+                module.fail_json(msg='Host "{0!s}" does not exist'.format(host))
+
+            disks_service.disk_service(disk.id).refresh_lun(host_service)
 
         module.exit_json(**ret)
     except Exception as e:
