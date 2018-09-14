@@ -296,6 +296,7 @@ class TaskExecutor:
             loop_var = templar.template(self._task.loop_control.loop_var)
             index_var = templar.template(self._task.loop_control.index_var)
             loop_pause = templar.template(self._task.loop_control.pause)
+            extended = templar.template(self._task.loop_control.extended)
 
             # This may be 'None',so it is tempalted below after we ensure a value and an item is assigned
             label = self._task.loop_control.label
@@ -358,22 +359,23 @@ class TaskExecutor:
             res[loop_var] = item
             if index_var:
                 res[index_var] = item_index
-            res['ansible_loop'] = {
-                'items': items,
-                'index': item_index + 1,
-                'index0': item_index,
-                'first': item_index == 0,
-                'last': item_index + 1 == items_len,
-                'length': items_len,
-            }
-            try:
-                res['ansible_loop']['nextitem'] = items[item_index + 1]
-            except IndexError:
-                pass
-            try:
-                res['ansible_loop']['previtem'] = items[item_index - 1]
-            except IndexError:
-                pass
+            if extended:
+                res['ansible_loop'] = {
+                    'items': items,
+                    'index': item_index + 1,
+                    'index0': item_index,
+                    'first': item_index == 0,
+                    'last': item_index + 1 == items_len,
+                    'length': items_len,
+                }
+                try:
+                    res['ansible_loop']['nextitem'] = items[item_index + 1]
+                except IndexError:
+                    pass
+                try:
+                    res['ansible_loop']['previtem'] = items[item_index - 1]
+                except IndexError:
+                    pass
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
