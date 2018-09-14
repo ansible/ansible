@@ -52,10 +52,12 @@ author:
 '''
 
 EXAMPLES = '''
-# Install "foo" snap
+# Install "foo" and "bar" snap
 - name: Install foo
   snap:
-    name: foo
+    name:
+      - foo
+      - bar
 
 # Remove "foo" snap
 - name: Remove foo
