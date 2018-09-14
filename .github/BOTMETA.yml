@@ -37,12 +37,8 @@ automerge: True
 files:
   .github/BOTMETA.yml:
     labels: botmeta
-    # Changes to BOTMETA MUST always be reviewed by Core Team
-    support: core
-  changelogs/fragments/:
-    support: community
   $modules/cloud/amazon/:
-    ignored: erydo seiffert simplesteph nadirollo
+    ignored: erydo seiffert simplesteph
   $modules/cloud/amazon/aws_api_gateway.py: willthames
   $modules/cloud/amazon/aws_kms.py: willthames
   $modules/cloud/amazon/cloudformation.py: ryansb tedder
@@ -103,13 +99,16 @@ files:
   $modules/cloud/dimensiondata/dimensiondata_network.py: tintoy
   $modules/cloud/docker/:
     ignored: ThomasSteinbach
-    maintainers: $team_docker
+  $modules/cloud/docker/docker_container.py: $team_ansible felixfontein
+  $modules/cloud/docker/docker_image.py: $team_ansible
+  $modules/cloud/docker/docker_image_facts.py: $team_ansible
   $modules/cloud/docker/docker_network.py: olsaki
+  $modules/cloud/docker/docker_service.py: $team_ansible
   $modules/cloud/google/:
     maintainers: rambleraptor erjohnso
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
-  $modules/cloud/linode/: $team_linode
+  $modules/cloud/linode/linode.py: intheclouddan lwm
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: analbeard
   $modules/cloud/misc/ovirt.py:
@@ -133,18 +132,14 @@ files:
   $modules/cloud/vmware/_vsphere_guest.py: dagwieers
   $modules/cloud/vultr/: $team_vultr
   $modules/cloud/webfaction/: quentinsf
-  $modules/clustering/k8s/:
-    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-    labels: k8s
+  $modules/clustering/k8s/: chouseknecht maxamillion fabianvf flaper87 willthames
   $modules/clustering/k8s/_kubernetes.py: supertom
   $modules/clustering/openshift/: chouseknecht maxamillion fabianvf flaper87
   $modules/commands/command.py: $team_ansible
   $modules/commands/raw.py: $team_ansible
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
-  $modules/crypto/:
-    maintainers: Spredzy
-    notified: felixfontein
+  $modules/crypto/: Spredzy
   $modules/crypto/acme/: resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
@@ -157,7 +152,7 @@ files:
     ignored: astorije
     maintainers: $team_ansible
   $modules/files/assemble.py: $team_ansible
-  $modules/files/copy.py: $team_ansible ptux
+  $modules/files/copy.py: $team_ansible
   $modules/files/fetch.py: $team_ansible
   $modules/files/file.py: $team_ansible
   $modules/files/find.py: $team_ansible
@@ -179,7 +174,16 @@ files:
   $modules/identity/keycloak/: eikef
   $modules/inventory/add_host.py: $team_ansible
   $modules/inventory/group_by.py: $team_ansible
-  $modules/messaging/rabbitmq/: $team_rabbitmq
+  $modules/messaging/rabbitmq_binding.py: $team_rabbitmq
+  $modules/messaging/rabbitmq_exchange.py: $team_rabbitmq
+  $modules/messaging/rabbitmq_parameter.py: $team_rabbitmq
+  $modules/messaging/rabbitmq_plugin.py: $team_rabbitmq
+  $modules/messaging/rabbitmq_policy.py: retr0h
+  $modules/messaging/rabbitmq_queue.py: $team_rabbitmq
+  $modules/messaging/rabbitmq_user.py: $team_rabbitmq
+  $modules/messaging/rabbitmq_vhost.py:
+    ignored: choffman
+    maintainers: $team_rabbitmq
   $modules/monitoring/datadog_event.py:
     ignored: arturaz
   $modules/monitoring/logentries.py:
@@ -222,7 +226,6 @@ files:
     maintainers: caphrim007
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
-  $modules/network/fortimanager/: $team_fortimanager
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
   $modules/network/ios/: rcarrillocruz
@@ -254,7 +257,7 @@ files:
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
   $modules/network/voss/: $team_extreme
-  $modules/network/vyos/: Qalthos samdoran NilashishC
+  $modules/network/vyos/: Qalthos samdoran
   $modules/notification/_osx_say.py: $team_ansible
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
@@ -266,7 +269,7 @@ files:
   $modules/packaging/language/npm.py:
     ignored: chrishoffman
     maintainers: shane-walker xcambar
-  $modules/packaging/language/pip.py: lujeni webknjaz
+  $modules/packaging/language/pip.py: lujeni robinro
   $modules/packaging/os/apk.py:
     ignored: kbrebanov
     maintainers: tdtrask
@@ -285,7 +288,6 @@ files:
   $modules/packaging/os/redhat_subscription.py: alikins kahowell
   $modules/packaging/os/rhn_channel.py: alikins
   $modules/packaging/os/rhn_register.py: $team_rhn
-  $modules/packaging/os/snap.py: angristan
   $modules/packaging/os/yum.py: $team_ansible kustodian
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
@@ -295,7 +297,7 @@ files:
   $modules/remote_management/imc/: dagwieers
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/manageiq/: $team_manageiq
-  $modules/remote_management/redfish/: $team_redfish
+  $modules/remote_management/redfish/: jose-delarosa
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/ucs/: $team_ucs
   $modules/source_control/git.py: $team_ansible
@@ -303,11 +305,7 @@ files:
     ignored: erydo
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
-  $modules/storage/purestorage/:
-    maintainers: $team_purestorage
-    labels: pure_storage
-  $modules/storage/glusterfs/: devyanikota
-  $modules/storage/ibm/: tzurE
+  $modules/storage/purestorage/: sdodsley
   $modules/system/at.py: $team_ansible
   $modules/system/authorized_key.py: $team_ansible
   $modules/system/facter.py: $team_ansible
@@ -346,11 +344,6 @@ files:
   $modules/utilities/logic/pause.py: samdoran
   $modules/utilities/logic/wait_for.py: gregswift
   $modules/web_infrastructure/ansible_tower/: $team_tower
-  $modules/web_infrastructure/sophos_utm/:
-    maintainers: $team_e_spirit
-    keywords:
-      - utm
-      - sophos
   $modules/web_infrastructure/django_manage.py: scottanderson42
   $modules/web_infrastructure/htpasswd.py: $team_ansible
   $modules/web_infrastructure/jboss: $team_jboss
@@ -379,14 +372,11 @@ files:
     labels:
       - cloud
     support: community
-  contrib/inventory/docker: $team_docker
-  contrib/inventory/linode:
+  contrib/inventory/linode.py:
     keywords:
       - linode dynamic inventory script
-    maintainers: $team_linode
-    labels:
-      - cloud
-      - linode
+    maintainers: intheclouddan lwm zbal
+    labels: cloud
   contrib/inventory/openstack_inventory.py:
     keywords:
       - openstack dynamic inventory script
@@ -459,23 +449,18 @@ files:
       - cloud
   $module_utils/acme.py:
     maintainers: resmo felixfontein
-  $module_utils/basic.py:
-    support: core
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
   $module_utils/crypto.py:
     maintainers: Spredzy
-    notified: felixfontein
   $module_utils/docker_common.py:
-    maintainers: $team_docker
+    maintainers: $team_ansible dariko felixfontein jwitko kassiansun tbouvet
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-    labels:
-      - clustering
-      - k8s
+    labels: clustering
   $module_utils/keycloak.py:
     maintainers: eikef
   $module_utils/manageiq.py:
@@ -490,11 +475,8 @@ files:
     labels: networking
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
-  $module_utils/network/aci: &aci
+  $module_utils/network/aci:
     maintainers: $team_aci
-    labels:
-    - aci
-    - networking
   $module_utils/network/aireos:
     maintainers: jmighion
   $module_utils/network/aos:
@@ -535,12 +517,6 @@ files:
       - f5
   $module_utils/network/fortios:
     maintainers: bjolivot
-    labels: networking
-  $module_utils/network/fortimanager/:
-    labels:
-      - networking
-      - fortimanager
-    maintainers: $team_fortimanager
   $module_utils/network/ios:
     support: network
     maintainers: $team_networking
@@ -551,11 +527,8 @@ files:
     maintainers: paulquack
   $module_utils/network/junos:
     support: network
-  $module_utils/network/meraki: &meraki
+  $module_utils/network/meraki:
     maintainers: $team_meraki
-    labels:
-      - meraki
-      - networking
   $module_utils/network/netconf:
     support: network
     maintainers: $team_networking
@@ -572,8 +545,6 @@ files:
     maintainers: $team_onyx
   $module_utils/network/ordnance:
     maintainers: alexanderturner djh00t
-  $module_utils/network/panos:
-    maintainers: ivanbojer jtschichold shinmog
   $module_utils/network/routeros:
     maintainers: heuels
   $module_utils/network/slxos:
@@ -597,21 +568,16 @@ files:
     labels:
       - windows
   $module_utils/redfish_utils.py:
-    maintainers: $team_redfish
+    maintainers: jose-delarosa
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
-  $module_utils/pure.py:
-    maintainers: $team_purestorage
-    labels: pure_storage
   $module_utils/netapp:
     maintainers: $team_netapp
   $module_utils/vultr.py: &vultr
     maintainers: $team_vultr
     labels:
       - cloud
-  $module_utils/utm_utils.py:
-    maintainers: $team_e_spirit
   $module_utils/vmware:
     support: core
     maintainers: $team_vmware
@@ -716,12 +682,6 @@ files:
   lib/ansible/plugins/action/aruba:
     maintainers: jmighion
     labels: networking
-  lib/ansible/plugins/action/bigip:
-    maintainers: caphrim007
-    labels: networking
-  lib/ansible/plugins/action/bigiq:
-    maintainers: caphrim007
-    labels: networking
   lib/ansible/plugins/action/dellos:
     maintainers: skg-net
     labels: networking
@@ -780,7 +740,6 @@ files:
     support: core
   lib/ansible/plugins/callback/grafana_annotations.py:
     maintainers: rrey
-    support: community
   lib/ansible/plugins/callback/junit:
     support: core
   lib/ansible/plugins/callback/minimal:
@@ -789,17 +748,12 @@ files:
     support: core
   lib/ansible/plugins/callback/profile:
     support: core
-  lib/ansible/plugins/callback/stderr.py:
-    maintainers: ysn2233
-    support: community
   lib/ansible/plugins/callback/sumologic.py:
     maintainers: ryancurrah
-    support: community
   lib/ansible/plugins/callback/tree:
     support: core
   lib/ansible/plugins/callback/unixy.py:
     maintainers: akatch
-    support: community
 ###############################
 # plugins/cliconf
 
@@ -846,7 +800,7 @@ files:
     support: core
   lib/ansible/plugins/connection/docker.py:
     support: community
-    maintainers: $team_docker
+    maintainers: $team_ansible dariko felixfontein jwitko kassiansun tbouvet
   lib/ansible/plugins/connection/httpapi.py:
     support: network
     maintainers: $team_networking
@@ -894,23 +848,6 @@ files:
     support: core
   lib/ansible/plugins/inventory/ini.py:
     support: core
-  lib/ansible/plugins/inventory/k8s.py:
-    support: community
-    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-    labels: k8s
-  lib/ansible/plugins/inventory/linode.py:
-    keywords:
-      - linode dynamic inventory script
-    maintainers: $team_linode
-    labels:
-      - cloud
-      - linode
-  lib/ansible/plugins/inventory/netbox.py:
-    support: community
-    maintainers: $team_netbox
-  lib/ansible/plugins/inventory/openshift.py:
-    support: community
-    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
   lib/ansible/plugins/inventory/openstack.py:
     maintainers: $team_openstack
     keywords:
@@ -918,8 +855,8 @@ files:
       - inventory
     labels:
       - cloud
-  lib/ansible/plugins/inventory/scaleway.py: *scaleway
   lib/ansible/plugins/inventory/vultr.py: *vultr
+  lib/ansible/plugins/inventory/scaleway.py: *scaleway
   lib/ansible/plugins/inventory/yaml.py:
     support: core
 ###############################
@@ -939,10 +876,6 @@ files:
     labels: community
   lib/ansible/plugins/lookup/cyberarkpassword.py:
     notified: cyberark-bizdev
-  lib/ansible/plugins/lookup/k8s.py:
-    support: community
-    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-    labels: k8s
   lib/ansible/plugins/lookup/nios:
     support: core
     maintainers: $team_networking sganesh-infoblox
@@ -958,9 +891,6 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/lookup/rabbitmq.py:
-    maintainers: Im0
-    support: community
   lib/ansible/plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
@@ -1047,17 +977,11 @@ files:
     maintainers: resmo felixfontein
   test/sanity/validate-modules:
     notified:
+      - gundalow
       - mattclay
+      - sivel
     keywords:
       - validate-modules
-  test/sanity/validate-modules/schema.py:
-    notified:
-      - gundalow
-      - sivel
-  test/sanity/validate-modules/main.py:
-    notified:
-      - gundalow
-      - sivel
   docs/:
     maintainers:
       - acozine
@@ -1066,8 +990,11 @@ files:
     maintainers:
       - samccann
       - gundalow
-  docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
-  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
+  docs/docsite/rst/scenario_guides/guide_aci.rst:
+    maintainers: $team_aci
+    labels:
+      - aci
+      - networking
 ###############################
 # 'test' is a component path, then 'test' label will be automatically added
   test/runner/:
@@ -1076,9 +1003,14 @@ files:
     notified: mattclay
   test/utils/shippable/:
     notified: mattclay
-  test/integration/targets/aci: *aci
-  test/integration/targets/meraki: *meraki
-  test/integration/targets/docker: $team_docker
+  test/integration/targets/aci:
+    maintainers: $team_aci
+    labels:
+      - networking
+  test/integration/targets/meraki:
+    maintainers: $team_meraki
+    labels:
+      - networking
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
@@ -1093,10 +1025,6 @@ files:
       - remote_management
   test/legacy/:
     notified: mattclay
-  test/legacy/scaleway:
-    <<: *scaleway
-    support: community
-  test/units/modules/cloud/docker: $team_docker
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
@@ -1119,37 +1047,29 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
-  team_cloudstack: resmo dpassante rhtyd
+  team_cloudstack: resmo dpassante
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
-  team_docker: akshay196 danihodovic dariko felixfontein jwitko kassiansun tbouvet
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
-  team_linode: intheclouddan lwm displague rmcintosh
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
-  team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
-  team_netbox: sieben anthony25 fragmentedpacket nikkytub pilou-
+  team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi
-  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
+  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha tstoner
-  team_onyx: anasbadaha samerd
-  team_openstack: emonty juliakreger rcarrillocruz shrews dagnello mnaser odyssey4me evrardjp cloudnull
+  team_onyx: samerd
+  team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gdpak
-  team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
-  team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt flossware vritant
-  team_scaleway: sieben hekonsek Spredzy abarbare anthony25 pilou-
+  team_scaleway: sieben hekonsek Spredzy
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
-  team_e_spirit: MatrixCrawler getjack
   team_vmware: Akasurde dav1x warthog9
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
-  team_fortimanager: lweighall Ghilli3 p4r4n0y1ng ftntcorecse
-
