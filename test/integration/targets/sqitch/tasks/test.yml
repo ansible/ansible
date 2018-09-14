@@ -13,7 +13,7 @@
 - name: Rebase
   sqitch:
     command: rebase
-    cwd: {{ output_dir }}
+    cwd: "{{ output_dir }}"
     plan_file: sqitch.plan
     target: anstest
     verify: true
