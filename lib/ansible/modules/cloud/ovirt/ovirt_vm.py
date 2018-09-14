@@ -365,7 +365,8 @@ options:
         aliases: [ 'sysprep_persist' ]
     kernel_params_persist:
         description:
-            - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration, if I(False) it will be used for run once."
+            - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
+               if I(False) it will be used for run once."
         type: bool
         version_added: "2.8"
     kernel_path:
