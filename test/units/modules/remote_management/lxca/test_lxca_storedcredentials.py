@@ -7,7 +7,6 @@ from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 from ansible.modules.remote_management.lxca import lxca_storedcredentials
 
-import pylxca
 import mock
 
 

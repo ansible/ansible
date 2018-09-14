@@ -1,13 +1,12 @@
 import json
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from ansible.compat.tests.mock import patch, Mock
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 from ansible.modules.remote_management.lxca import lxca_nodes
 
-import pylxca
-import mock
+#import mock
 
 
 def set_module_args(args):
@@ -61,9 +60,9 @@ class TestMyModule(unittest.TestCase):
             lxca_nodes.main()
 
 
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.setup_conn", autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.execute_module", autospec=True)
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.AnsibleModule", autospec=True)
+    @Mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.setup_conn", autospec=True)
+    @Mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.execute_module", autospec=True)
+    @Mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.AnsibleModule", autospec=True)
     def test__argument_spec(self, ansible_mod_cls, _execute_module, _setup_conn):
         expected_arguments_spec = dict(
             login_user=dict(required=True),
@@ -111,7 +110,7 @@ class TestMyModule(unittest.TestCase):
         assert mock.call(mod_obj, mod_obj.params) == _get_nodes.call_args
         assert _get_nodes.return_value == ret_nodes
 
-    '''
+
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes._nodes", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.AnsibleModule", autospec=True)
     def test__nodes_throw_exception(self, ansible_mod_cls, _get_nodes):
@@ -123,7 +122,6 @@ class TestMyModule(unittest.TestCase):
             "command_options": "nodes",
         }
         mod_obj.params = args
-        _get_nodes.side_effect = {'msg': "Failed", 'result': "throw exception"}
-        with self.assertRaises(AnsibleFailJson):
+        _get_nodes.side_effect = Exception('Failed')
+        with self.assertRaises(Exception):
             lxca_nodes.main()
-    '''
