@@ -37,6 +37,7 @@ options:
             - startslave
             - resetslave
             - resetslaveall
+            - resetmaster
         default: getslave
     master_host:
         description:
@@ -160,6 +161,15 @@ def reset_slave(cursor):
     return reset
 
 
+def reset_master(cursor):
+    try:
+        cursor.execute("RESET MASTER")
+        reset = True
+    except:
+        reset = False
+    return reset
+
+
 def reset_slave_all(cursor):
     try:
         cursor.execute("RESET SLAVE ALL")
@@ -192,7 +202,7 @@ def main():
             login_host=dict(default="localhost"),
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
-            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave", "resetslave", "resetslaveall"]),
+            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave", "resetslave", "resetslaveall", "resetmaster"]),
             master_auto_position=dict(default=False, type='bool'),
             master_host=dict(default=None),
             master_user=dict(default=None),
@@ -349,6 +359,12 @@ def main():
             module.exit_json(msg="Slave reset", changed=True)
         else:
             module.exit_json(msg="Slave already reset", changed=False)
+    elif mode in "resetmaster":
+        reset = reset_master(cursor)
+        if reset is True:
+            module.exit_json(msg="Master reset", changed=True)
+        else:
+            module.exit_json(msg="Master already reset", changed=False)
     elif mode in "resetslaveall":
         reset = reset_slave_all(cursor)
         if reset is True:
