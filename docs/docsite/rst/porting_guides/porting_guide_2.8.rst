@@ -20,6 +20,26 @@ Playbook
 No notable changes.
 
 
+Command Line
+============
+
+Become Prompting
+----------------
+
+Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges on unix systems or ``enable`` mode on network devices):
+
+By default in Ansible 2.8::
+
+    ansible-playbook --become --ask-become-pass site.yml
+    BECOME password:
+
+If you want the prompt to display the specific ``become_method`` you're using, instead of the agnostic value ``BECOME``, set :ref:`AGNOSTIC_BECOME_PROMPT` to ``False`` in your Ansible configuration.
+
+By default in Ansible 2.7, or with ``AGNOSTIC_BECOME_PROMPT=False`` in Ansible 2.8::
+
+    ansible-playbook --become --ask-become-pass site.yml
+    SUDO password:
+
 Deprecated
 ==========
 
