@@ -313,8 +313,7 @@ def main():
     if module.check_mode:
         module.exit_json(changed=False,
                          msg="%s will be run in %s directory" % (' '.join(cmd),
-                                                                 working_directory if working_directory \
-                                                                                   else 'current'))
+                                                                 working_directory if working_directory else 'current'))
     else:
         (rc, out, err) = module.run_command(cmd, cwd=working_directory)
 
