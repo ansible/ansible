@@ -599,9 +599,9 @@ def main():
     # an existing disk if already available inthe environment.
     if host and lun.get("id") is None:
         module.fail_json(
-                         msg="Can not use parameter host ({0!s}) withouti "
-                         "pecifying the logical_unit id".format(host)
-                        )
+            msg="Can not use parameter host ({0!s}) withouti "
+            "pecifying the logical_unit id".format(host)
+        )
 
     if module._name == 'ovirt_disks':
         module.deprecate("The 'ovirt_disks' module is being renamed 'ovirt_disk'", version=2.8)
