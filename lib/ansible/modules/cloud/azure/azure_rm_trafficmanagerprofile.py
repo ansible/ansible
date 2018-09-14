@@ -111,7 +111,7 @@ author:
 
 EXAMPLES = '''
     - name: Create a Traffic Manager Profile
-      azure_rm_trafficmanager:
+      azure_rm_trafficmanagerprofile:
         name: tmtest
         resource_group: tmt
         location: global
@@ -128,7 +128,7 @@ EXAMPLES = '''
           Environment: Test
 
     - name: Delete a Traffic Manager Profile
-      azure_rm_trafficmanager:
+      azure_rm_trafficmanagerprofile:
         state: absent
         name: tmtest
         resource_group: tmt
