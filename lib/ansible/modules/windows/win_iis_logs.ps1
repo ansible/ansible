@@ -30,19 +30,19 @@ Set-StrictMode -Version 2
                 $RotationPeriod = "MaxSize"
                 $TruncateSize = 4294967295
             }
-            $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile'
+            $ConfigurationPath = "$ConfigurationPath/logFile"
             $LogProperties = $(Get-WebConfiguration -Filter $ConfigurationPath)
             
             $changed = $false
             if($LogProperties.period -ne $RotationPeriod ){
                 if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name logfile.period -Value $RotationPeriod
+                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name period -Value $RotationPeriod
                 }
                 $changed =  $true
             }
             if($RotationPeriod -eq "MaxSize" -and $LogProperties.truncateSize -ne $TruncateSize){
                 if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name logfile.truncateSize -Value $TruncateSize
+                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name truncateSize -Value $TruncateSize
                 }
                 $changed =  $true
             }
@@ -60,12 +60,12 @@ Set-StrictMode -Version 2
         )
         
         if (-not [String]::IsNullOrEmpty($UseLocalTime)) {
-            $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile'
+            $ConfigurationPath = "$ConfigurationPath/logFile"
             $LogProperties = $(Get-WebConfiguration -Filter $ConfigurationPath)
             
             if($LogProperties.localTimeRollover -ne $UseLocalTime){
                 if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name logfile.localTimeRollover -Value $UseLocalTime
+                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name localTimeRollover -Value $UseLocalTime
                 }
                 return $true
             }
@@ -78,12 +78,11 @@ Set-StrictMode -Version 2
             [bool]$WhatIf = $false
         )
         if (-not [String]::IsNullOrEmpty($LogDirectory)) {
-            
-            $LogProperties = Get-WebConfigurationProperty -Filter $ConfigurationPath  -Name logfile
-            
+            $ConfigurationPath = "$ConfigurationPath/logFile"
+            $LogProperties = Get-WebConfiguration -Filter $ConfigurationPath
             if($LogProperties.directory -ne $LogDirectory){
                 if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name logfile.directory -Value $LogDirectory
+                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name directory -Value $LogDirectory
                 }
                 return $true
             }
@@ -287,50 +286,52 @@ if ($rotation_period -ne "MaxSize" -and $truncate_size -ne $null)
 if ($site_name -eq "System") {
     
     $ConfigurationPath = '/system.applicationHost/sites/siteDefaults'
-    if ($check_mode)
-    {
-        $shared_params = @{'WhatIf'=$true}
-    }
-    
-    if($(Confirm-LogDirectory -ConfigurationPath $ConfigurationPath -LogDirectory $log_directory @shared_params))
-    {
-        $changed = $true
-        $messages += "LogDirectory"
-    }
-
-    if($(Confirm-ExtFileFlags -ConfigurationPath $ConfigurationPath -ExtFileFlags $log_ext_file_flags @shared_params))
-    {
-        $changed = $true
-        $messages += "Log Fields"
-    }
-
-    if($(Confirm-CustomFields -CustomFields $log_custom_fields @shared_params))
-    {
-        $changed = $true
-        $messages += "Custom Fields"
-    }
-
-    if($(Confirm-LocalTime -UseLocalTime $use_local_time @shared_params)){
-        $changed = $true
-        $messages += "Use Local Time"
-    }
-
-    if($(Confirm-RotationPeriod -RotationPeriod $rotation_period -TruncateSize $truncate_size @shared_params)){
-        $changed = $true
-        $messages += "Rotation Period"
-    }
-
-    if ($check_mode) {
-        $result.msg = "check mode: "
-    }
-    
-    if ($changed) {
-        $result.msg = "$($result.msg)$($messages -join ';') changed"
-        $result.changed = $true
-    }
+   
 }
 else {
     Fail-Json $result "Site does not exist"
+}
+
+if ($check_mode)
+{
+    $shared_params = @{'WhatIf'=$true}
+}
+
+if($(Confirm-LogDirectory -ConfigurationPath $ConfigurationPath -LogDirectory $log_directory @shared_params))
+{
+    $changed = $true
+    $messages += "LogDirectory"
+}
+
+if($(Confirm-ExtFileFlags -ConfigurationPath $ConfigurationPath -ExtFileFlags $log_ext_file_flags @shared_params))
+{
+    $changed = $true
+    $messages += "Log Fields"
+}
+
+if($(Confirm-CustomFields -ConfigurationPath $ConfigurationPath -CustomFields $log_custom_fields @shared_params))
+{
+    $changed = $true
+    $messages += "Custom Fields"
+}
+
+if($(Confirm-LocalTime -ConfigurationPath $ConfigurationPath -UseLocalTime $use_local_time @shared_params)){
+    $changed = $true
+    $messages += "Use Local Time"
+}
+
+if($(Confirm-RotationPeriod -ConfigurationPath $ConfigurationPath -RotationPeriod $rotation_period -TruncateSize $truncate_size @shared_params)){
+    $changed = $true
+    $messages += "Rotation Period"
+}
+
+if ($check_mode) {
+    $result.msg = "check mode: "
+}
+
+if ($changed) {
+    $result.msg = "$($result.msg)$($messages -join ';') changed"
+    $result.changed = $true
 }
 
 Exit-Json $result
