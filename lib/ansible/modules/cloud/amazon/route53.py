@@ -131,6 +131,9 @@ author:
   - "Bruce Pennypacker (@bpennypacker)"
   - "Mike Buzzetti <mike.buzzetti@gmail.com>"
 extends_documentation_fragment: aws
+requirements:
+  - boto3
+  - botocore
 '''
 
 RETURN = '''
@@ -362,17 +365,11 @@ import time
 import distutils.version
 
 try:
-    import boto
-    import boto.ec2
-    from boto.route53 import Route53Connection
-    from boto.route53.record import Record, ResourceRecordSets
-    from boto.route53.status import Status
-    HAS_BOTO = True
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    HAS_BOTO = False
+    pass    # Handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 
 MINIMUM_BOTO_VERSION = '2.28.0'
