@@ -1,19 +1,32 @@
 ---
 - name: Create dir for resources
-  file: path={{ output_dir }} state=directory mode=0755
+  file:
+    path: "{{ output_dir }}"
+    state: directory
+    mode: 0755
 
 - name: Copy resources to tmp dir
-  copy: src=files/ dest={{ output_dir }}
+  copy:
+    src: files/
+    dest: "{{ output_dir }}"
 
 - name: Create DB for tests
-  postgresql_db: name=anstest encoding='UTF-8' state=present template=template0
+  postgresql_db:
+    name: anstest
+    encoding: 'UTF-8'
+    state: present
+    template: template0
 
 - name: Install sqitch
-  package: name=sqitch state=present
+  package:
+    name: sqitch
+    state: present
   when: ansible_os_family == "Debian"
 
 - name: Install CPAN
-  package: name={{ item }} state=present
+  package:
+    name: {{ item }}
+    state: present
   with_items:
     - perl-devel
     - perl-CPAN
@@ -25,9 +38,13 @@
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == '6'
 
 - name: Install cpanminus
-  package: name=cpanminus state=present
+  package:
+    name: cpanminus
+    state: present
   when: ansible_os_family == "RedHat" and not (ansible_distribution == "CentOS" and ansible_distribution_major_version == '6')
 
 - name: Install sqitch
-  cpanm: name=App::Sqitch notest=true
+  cpanm:
+    name: App::Sqitch
+    notest: true
   when: ansible_os_family == "RedHat"

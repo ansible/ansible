@@ -56,7 +56,7 @@ options:
     description:
       - Database engine.
     required: no
-  cwd:
+  working_directory:
     description:
       - Path to directory with config file.
     required: no
@@ -117,7 +117,7 @@ EXAMPLES = '''
   sqitch:
     command: deploy
     plan_file: sqitch.plan
-    top_dir: /opt/sqitch
+    working_directory: /opt/sqitch
     target: test_db
 
 - name: Revert all changes in test_db database
@@ -135,7 +135,7 @@ EXAMPLES = '''
   sqitch:
     command: rebase
     plan_file: sqitch.plan
-    top_dir: /opt/sqitch
+    working_directory: /opt/sqitch
     target: test_db
     set:
       - defuser='Homer Simpson'
@@ -224,7 +224,7 @@ def main():
             plan_file=dict(),
             target=dict(),
             engine=dict(),
-            cwd=dict(),
+            working_directory=dict(),
             to_change=dict(),
             from_change=dict(),
             verify=dict(type='bool'),
@@ -243,7 +243,7 @@ def main():
     plan_file = module.params['plan_file']
     target = module.params['target']
     engine = module.params['engine']
-    cwd = module.params['cwd']
+    working_directory = module.params['working_directory']
     to_change = module.params['to_change']
     from_change = module.params['from_change']
     verify = module.params['verify']
@@ -311,10 +311,12 @@ def main():
         get_set(cmd, set)
 
     if module.check_mode:
-        module.exit_json(changed=False, msg="%s will be run in %s directory" % (' '.join(cmd),
-                                                                                cwd if cwd else 'current'))
+        module.exit_json(changed=False,
+                         msg="%s will be run in %s directory" % (' '.join(cmd),
+                                                                 working_directory if working_directory \
+                                                                                   else 'current'))
     else:
-        (rc, out, err) = module.run_command(cmd, cwd=cwd)
+        (rc, out, err) = module.run_command(cmd, cwd=working_directory)
 
     if rc is not None and rc != 0:
         module.fail_json(msg=err, rc=rc)
