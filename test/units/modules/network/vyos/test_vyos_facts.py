@@ -63,7 +63,7 @@ class TestVyosFactsModule(TestVyosModule):
         facts = result.get('ansible_facts')
         self.assertEqual(len(facts), 5)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
-        self.assertEqual(facts['ansible_net_version'], 'VyOS')
+        self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
     def test_vyos_facts_not_all(self):
         set_module_args(dict(gather_subset='!all'))
@@ -71,7 +71,7 @@ class TestVyosFactsModule(TestVyosModule):
         facts = result.get('ansible_facts')
         self.assertEqual(len(facts), 5)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
-        self.assertEqual(facts['ansible_net_version'], 'VyOS')
+        self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
     def test_vyos_facts_exclude_most(self):
         set_module_args(dict(gather_subset=['!neighbors', '!config']))
@@ -79,7 +79,7 @@ class TestVyosFactsModule(TestVyosModule):
         facts = result.get('ansible_facts')
         self.assertEqual(len(facts), 5)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
-        self.assertEqual(facts['ansible_net_version'], 'VyOS')
+        self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
     def test_vyos_facts_invalid_subset(self):
         set_module_args(dict(gather_subset='cereal'))
