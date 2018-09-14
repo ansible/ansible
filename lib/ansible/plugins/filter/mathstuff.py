@@ -56,20 +56,19 @@ def unique(environment, a, case_sensitive=False, attribute=None):
         if HAS_UNIQUE:
             c = set(do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute))
     except Exception as e:
-        if not (case_sensitive or attribute):
+        if case_sensitive or attribute:
+            raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
+                                     "as it does not support the parameters supplied", orig_exc=e)
+        else:
             display.warning('Falling back to Ansible unique filter as Jinaj2 one failed: %s' % to_text(e))
-        error = e
+            error = e
 
     if not HAS_UNIQUE or error:
 
-        # handle jinja2 specific attributes when using ansible's version
+        # handle Jinja2 specific attributes when using Ansible's version
         if case_sensitive or attribute:
-            if error:
-                raise AnsibleFilterError("Jinja2's unique filter failed and cannot fall back to Ansible's version "
-                                         "as it does not suport the parameters supplied", orig_exc=e)
-            else:
-                raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
-                                         "you need a newer version of Jinja2 that provides their version of the filter.")
+            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
+                                     "you need a newer version of Jinja2 that provides their version of the filter.")
 
         if isinstance(a, collections.Hashable):
             c = set(a)
