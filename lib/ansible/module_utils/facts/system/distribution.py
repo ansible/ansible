@@ -32,6 +32,11 @@ def get_uname_version(module):
         return out
     return None
 
+def get_uname_release(module):
+    rc, out, err = module.run_command(['uname', '-r'])
+    if rc == 0:
+        return out
+    return None
 
 def _file_exists(path, allow_empty=False):
     # not finding the file, exit early
@@ -591,7 +596,7 @@ class Distribution(object):
             # For solaris 10 it will return 5.10, for solaris 11 it will be 5.11
             # but I can't pass ansible test unit test_distribution_version.py with it,
             # since I've no idea how to mock `uname -r` on CI (github/shippable) run.
-            # rc, uname_r, err = self.module.run_command('uname -r')
+            uname_r = get_uname_release(self.module)
             ora_prefix = ''
             if 'Oracle Solaris' in data:
                 data = data.replace('Oracle ', '')
@@ -599,8 +604,8 @@ class Distribution(object):
             sunos_facts['distribution'] = data.split()[0]
             sunos_facts['distribution_version'] = data.split()[1]
             sunos_facts['distribution_release'] = ora_prefix + data
-            # sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
-            sunos_facts['distribution_major_version'] = sunos_facts['distribution_version'].split('.')[0]
+            sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
+            # sunos_facts['distribution_major_version'] = sunos_facts['distribution_version'].split('.')[0]
             return sunos_facts
 
         uname_v = get_uname_version(self.module)

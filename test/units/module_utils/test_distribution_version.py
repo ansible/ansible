@@ -844,6 +844,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 10",
         "uname_v": "Generic_141445-09",
+        "uname_v": "5.10",
         "result": {
             "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
             "distribution": "Solaris",
@@ -866,6 +867,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 11",
         "uname_v": "11.0",
+        "uname_r": "5.11",
         "result": {
             "distribution_release": "Oracle Solaris 11 11/11 X86",
             "distribution": "Solaris",
@@ -886,6 +888,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
     {
         "name": "Solaris 11.3",
+        "uname_r": "5.11",
         "platform.dist": [
             "",
             "",
@@ -908,6 +911,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
     {
         "name": "Solaris 10",
+        "uname_r": "5.10",
         "platform.dist": [
             "",
             "",
@@ -1116,6 +1120,9 @@ def test_distribution_version(am, mocker, testcase):
     def mock_get_uname_version(am):
         return testcase.get('uname_v', None)
 
+    def mock_get_uname_release(am):
+        return testcase.get('uname_r', None)
+
     def mock_file_exists(fname, allow_empty=False):
         if fname not in testcase['input']:
             return False
@@ -1157,6 +1164,7 @@ def test_distribution_version(am, mocker, testcase):
 
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
     mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_release', mock_get_uname_release)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
     mocker.patch('ansible.module_utils.distro.id', mock_distro_name)
