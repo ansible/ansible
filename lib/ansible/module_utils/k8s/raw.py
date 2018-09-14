@@ -31,7 +31,7 @@ from ansible.module_utils.common.dict_transformations import dict_merge
 
 try:
     import yaml
-    from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError, ForbiddenError
+    from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError, ForbiddenError, KubernetesValidateMissing
 except ImportError:
     # Exceptions handled in common
     pass
@@ -140,21 +140,15 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         })
 
     def validate(self, resource):
-        errors = list()
-        if not HAS_KUBERNETES_VALIDATE:
-            self.fail_json("kubernetes-validate python library is required to validate resources")
         try:
-            version = self.params['validate'].get('version')
-            if version is None:
-                version = self.client.version['kubernetes']['gitVersion']
-            kubernetes_validate.validate(resource, version, self.params['validate'].get('strict'))
-        except kubernetes_validate.ValidationError as e:
-            errors.append("resource validation error at %s: %s" % ('.'.join([str(item) for item in e.path]), e.message))
+            warnings, errors = self.client.validate(resource, self.params['validate'].get('version'), self.params['validate'].get('strict'))
+        except KubernetesValidateMissing:
+            self.fail_json(msg="kubernetes-validate python library is required to validate resources")
 
         if errors and self.params['validate']['fail_on_error']:
             self.fail_json(msg="\n".join(errors))
         else:
-            return errors
+            return warnings + errors
 
     def set_defaults(self, resource, definition):
         definition['kind'] = resource.kind
