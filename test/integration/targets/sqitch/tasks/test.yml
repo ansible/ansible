@@ -1,7 +1,4 @@
 ---
-- name: Include vars
-  include_vars: dir=vars
-
 - name: Deploy in check mode with cwd
   sqitch: command=deploy cwd={{ output_dir }} plan_file=sqitch.plan target=anstest verify=true to_change=types
   check_mode: yes
@@ -11,7 +8,7 @@
   check_mode: yes
 
 - name: Deploy to change
-  sqitch: command=deploy cwd={{ output_dir}} plan_file=sqitch.plan target=anstest verify=true to_change=types
+  sqitch: command=deploy cwd={{ output_dir }} plan_file=sqitch.plan target=anstest verify=true to_change=types
 
 - name: Rebase
   sqitch:

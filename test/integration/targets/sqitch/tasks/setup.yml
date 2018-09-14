@@ -1,7 +1,4 @@
 ---
-- name: Include vars
-  include_vars: dir=vars
-
 - name: Create dir for resources
   file: path={{ output_dir }} state=directory mode=0755
 
