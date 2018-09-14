@@ -19,7 +19,7 @@ module: vmware_host_datastore
 short_description: Manage a datastore on ESXi host
 description:
 - This module can be used to mount/umount datastore on ESXi host.
-- This module only support NFS/VMFS type of datastores.
+- This module only supports NFS (NFS v3 or NFS v4.1) and VMFS datastores.
 - For VMFS datastore, available device must already be connected on ESXi host.
 - All parameters and VMware object names are case sensitive.
 version_added: '2.5'
@@ -27,6 +27,8 @@ author:
 - Ludovic Rivallain (@lrivallain) <ludovic.rivallain@gmail.com>
 notes:
 - Tested on vSphere 6.0 and 6.5
+- NFS v4.1 tested on vSphere 6.5
+- Kerberos authentication with NFS v4.1 isn't implemented
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -41,21 +43,22 @@ options:
     required: true
   datastore_type:
     description:
-    - Type of the datastore to configure (nfs/vmfs).
+    - Type of the datastore to configure (nfs/nfs41/vmfs).
     required: true
-    choices: [ 'nfs', 'vmfs' ]
+    choices: [ 'nfs', 'nfs41', 'vmfs' ]
   nfs_server:
     description:
     - NFS host serving nfs datastore.
-    - Required if datastore type is set to C(nfs) and state is set to C(present), else unused.
+    - Required if datastore type is set to C(nfs)/C(nfs41) and state is set to C(present), else unused.
+    - Two or more servers can be defined if datastore type is set to C(nfs41)
   nfs_path:
     description:
     - Resource path on NFS host.
-    - Required if datastore type is set to C(nfs) and state is set to C(present), else unused.
+    - Required if datastore type is set to C(nfs)/C(nfs41) and state is set to C(present), else unused.
   nfs_ro:
     description:
     - ReadOnly or ReadWrite mount.
-    - Unused if datastore type is not set to C(nfs) and state is not set to C(present).
+    - Unused if datastore type is not set to C(nfs)/C(nfs41) and state is not set to C(present).
     default: False
     type: bool
   vmfs_device_name:
@@ -111,6 +114,24 @@ EXAMPLES = r'''
   with_items:
       - { 'name': 'NasDS_vol01', 'server': 'nas01', 'path': '/mnt/vol01', 'type': 'nfs'}
       - { 'name': 'NasDS_vol02', 'server': 'nas01', 'path': '/mnt/vol02', 'type': 'nfs'}
+
+- name: Mount NFS v4.1 datastores to ESXi
+  vmware_host_datastore:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      datacenter_name: '{{ datacenter }}'
+      datastore_name: '{{ item.name }}'
+      datastore_type: '{{ item.type }}'
+      nfs_server: '{{ item.server }}'
+      nfs_path: '{{ item.path }}'
+      nfs_ro: no
+      esxi_hostname: '{{ inventory_hostname }}'
+      state: present
+  delegate_to: localhost
+  with_items:
+      - { 'name': 'NasDS_vol03', 'server': 'nas01,nas02', 'path': '/mnt/vol01', 'type': 'nfs41'}
+      - { 'name': 'NasDS_vol04', 'server': 'nas01,nas02', 'path': '/mnt/vol02', 'type': 'nfs41'}
 
 - name: Remove/Umount Datastores from ESXi
   vmware_host_datastore:
@@ -200,7 +221,7 @@ class VMwareHostDatastore(PyVmomi):
         self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
 
     def mount_datastore_host(self):
-        if self.datastore_type == 'nfs':
+        if self.datastore_type == 'nfs' or self.datastore_type == 'nfs41':
             self.mount_nfs_datastore_host()
         if self.datastore_type == 'vmfs':
             self.mount_vmfs_datastore_host()
@@ -208,7 +229,16 @@ class VMwareHostDatastore(PyVmomi):
     def mount_nfs_datastore_host(self):
         if self.module.check_mode is False:
             mnt_specs = vim.host.NasVolume.Specification()
-            mnt_specs.remoteHost = self.nfs_server
+            # NFS v3
+            if self.datastore_type == 'nfs':
+                mnt_specs.type = "NFS"
+                mnt_specs.remoteHost = self.nfs_server
+            # NFS v4.1
+            if self.datastore_type == 'nfs41':
+                mnt_specs.type = "NFS41"
+                # remoteHost needs to be set to a non-empty string, but the value is not used
+                mnt_specs.remoteHost = "something"
+                mnt_specs.remoteHostNames = [self.nfs_server]
             mnt_specs.remotePath = self.nfs_path
             mnt_specs.localPath = self.datastore_name
             if self.nfs_ro:
@@ -255,7 +285,7 @@ def main():
     argument_spec.update(
         datacenter_name=dict(type='str', required=True),
         datastore_name=dict(type='str', required=True),
-        datastore_type=dict(type='str', choices=['nfs', 'vmfs']),
+        datastore_type=dict(type='str', choices=['nfs', 'nfs41', 'vmfs']),
         nfs_server=dict(type='str'),
         nfs_path=dict(type='str'),
         nfs_ro=dict(type='bool', default=False),
@@ -277,6 +307,10 @@ def main():
     if module.params['state'] == 'present':
         if module.params['datastore_type'] == 'nfs' and not module.params['nfs_server']:
             msg = "Missing nfs_server with datastore_type = nfs"
+            module.fail_json(msg=msg)
+
+        if module.params['datastore_type'] == 'nfs41' and not module.params['nfs_server']:
+            msg = "Missing nfs_server with datastore_type = nfs41"
             module.fail_json(msg=msg)
 
         if module.params['datastore_type'] == 'vmfs' and not module.params['vmfs_device_name']:
