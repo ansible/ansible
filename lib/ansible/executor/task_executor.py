@@ -289,6 +289,7 @@ class TaskExecutor:
         index_var = None
         label = None
         loop_pause = 0
+        extended = False
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
 
         # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
