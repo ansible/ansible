@@ -25,14 +25,13 @@ description:
 notes:
     - Doesn't download the key unless it really needs it.
     - As a sanity check, downloaded key id must match the one specified.
-    - Best practice is to specify the key id and the URL.
+    - "Use full fingerprint (40 characters) key ids to avoid key collisions. To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
+    - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
     - Adding a new key requires an apt cache update (e.g. using the apt module's update_cache option)
 options:
     id:
         description:
             - The identifier of the key.
-            - "Best practice is to use the full fingerprint (40 characters).
-              This command shows it for an imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)"
             - Including this allows check mode to correctly report the changed state.
             - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
             - This parameter is required when C(state) is set to C(absent).
