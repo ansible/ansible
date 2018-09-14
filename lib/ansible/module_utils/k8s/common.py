@@ -22,6 +22,7 @@ import copy
 
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.six import iteritems, string_types
 
 try:
@@ -38,12 +39,6 @@ try:
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
-
-try:
-    import dictdiffer
-    HAS_DICTDIFFER = True
-except ImportError:
-    HAS_DICTDIFFER = False
 
 try:
     import urllib3
@@ -225,12 +220,12 @@ class K8sAnsibleMixin(object):
 
     @staticmethod
     def diff_objects(existing, new):
-        if not HAS_DICTDIFFER:
-            return False, []
-
-        diffs = list(dictdiffer.diff(new, existing))
-        match = len(diffs) == 0
-        return match, diffs
+        result = dict()
+        diff = recursive_diff(existing, new)
+        if diff:
+            result['before'] = diff[0]
+            result['after'] = diff[1]
+        return not diff, result
 
 
 class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
