@@ -188,6 +188,9 @@ class Conditional:
             except Exception as e:
                 raise AnsibleError("Invalid conditional detected: %s" % to_native(e))
 
+            if not disable_lookups:
+                conditional = templar.template('{{ %s }}' % conditional, disable_lookups=disable_lookups)
+
             # and finally we generate and template the presented string and look at the resulting string
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
             val = templar.template(presented, disable_lookups=disable_lookups).strip()
