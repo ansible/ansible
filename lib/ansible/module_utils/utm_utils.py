@@ -47,6 +47,12 @@ class UTMModuleConfigurationError(Exception):
             self.module.exit_json(result=result, changed=is_changed)
 
 class UTMModule(AnsibleModule):
+    """
+    This is a helper class to construct any UTM Module. This will automatically add the utm host, port, token,
+    protocol, validate_certs and state field to the module. If you want to implement your own sophos utm module
+    just initialize this UTMModule class and define the Payload fields that are needed for your module.
+    See the other modules like utm_aaa_group for example.
+    """
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False, check_invalid_arguments=None,
                  mutually_exclusive=None, required_together=None, required_one_of=None, add_file_common_args=False,
@@ -71,26 +77,26 @@ class UTMModule(AnsibleModule):
 
 class UTM:
 
-    def __init__(self, module, endpoint, important_keys):
+    def __init__(self, module, endpoint, change_relevant_keys):
         """
         Initialize UTM Class
         :param module: The ansible module
         :param endpoint: The corresponing endpoint to the module
-        :param important_keys: The keys of the object to check for changes
+        :param change_relevant_keys: The keys of the object to check for changes
         """
         self.module = module
         self.request_url = module.params.get('utm_protocol') + "://" + module.params.get('utm_host') + ":" + str(
             module.params.get('utm_port')) + "/api/objects/" + endpoint + "/"
 
         """
-        The important_keys will be checked for changes to determine whether the object needs to be updated
+        The change_relevant_keys will be checked for changes to determine whether the object needs to be updated
         """
-        self.important_keys = important_keys
+        self.change_relevant_keys = change_relevant_keys
         self.module.params['url_username'] = 'token'
         self.module.params['url_password'] = module.params.get('utm_token')
-        if all(elem in self.important_keys for elem in module.params.keys()):
+        if all(elem in self.change_relevant_keys for elem in module.params.keys()):
             raise UTMModuleConfigurationError(
-                "The keys " + str(self.important_keys) + " to check are not in the modules keys:\n" + str(
+                "The keys " + str(self.change_relevant_keys) + " to check are not in the modules keys:\n" + str(
                     module.params.keys()))
 
     def execute(self):
@@ -121,7 +127,7 @@ class UTM:
                 is_changed = True
                 result = self._clean_result(json.loads(response.read()))
             else:
-                if self._is_object_changed(self.important_keys, self.module, result):
+                if self._is_object_changed(self.change_relevant_keys, self.module, result):
                     response, info = fetch_url(self.module, self.request_url + result['_ref'], method="PUT",
                                                headers={"Accept": "application/json",
                                                         "Content-type": "application/json"},
@@ -134,7 +140,7 @@ class UTM:
 
     def remove(self):
         """
-removes an object from utm
+        removes an object from utm
         """
         is_changed = False
         info, result = self._lookup_entry(self.module, self.request_url)
@@ -150,7 +156,7 @@ removes an object from utm
 
     def _lookup_entry(self, module, request_url):
         """
-    Lookup for existing entry
+        Lookup for existing entry
         :param module:
         :param request_url:
         :return:
@@ -164,9 +170,9 @@ removes an object from utm
 
     def _clean_result(self, result):
         """
-    Will clean the result from irrelevant fields
-        :param result:
-        :return:
+        Will clean the result from irrelevant fields
+        :param result: The result from the query
+        :return: The modified result
         """
         del result['utm_host']
         del result['utm_port']
@@ -180,10 +186,10 @@ removes an object from utm
 
     def _is_object_changed(self, keys, module, result):
         """
-    Check if my object is changed
-        :param keys:
-        :param module:
-        :param result:
+        Check if my object is changed
+        :param keys: The keys that will determine if an object is changed
+        :param module: The module
+        :param result: The result from the query
         :return:
         """
         for key in keys:

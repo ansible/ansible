@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# Copyright: (c) 2018, Johannes Brunswicker <johannes.brunswicker@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 
 from lib.ansible.module_utils.utm_utils import UTM, UTMModule
@@ -126,10 +129,10 @@ def main():
     module = UTMModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            access_control=dict(type='str', required=False, default="0",choices=['0','1']),
+            access_control=dict(type='str', required=False, default="0", choices=['0', '1']),
             allowed_networks=dict(type='list', elements='str', required=False, default=['REF_NetworkAny']),
             auth_profile=dict(type='str', required=False, default=""),
-            backend=dict(type='list', elements='str', required=False,default=[]),
+            backend=dict(type='list', elements='str', required=False, default=[]),
             be_path=dict(type='str', required=False, default=""),
             comment=dict(type='str', required=False, default=""),
             denied_networks=dict(type='list', elements='str', required=False, default=[]),
@@ -142,7 +145,6 @@ def main():
         )
     )
     try:
-        # This is needed because the bool value only accepts int values in the backend
         UTM(module, endpoint, key_to_check_for_changes).execute()
     except Exception as e:
         module.fail_json(msg=str(e))
