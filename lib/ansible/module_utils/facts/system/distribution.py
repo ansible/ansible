@@ -32,11 +32,13 @@ def get_uname_version(module):
         return out
     return None
 
+
 def get_uname_release(module):
     rc, out, err = module.run_command(['uname', '-r'])
     if rc == 0:
         return out
     return None
+
 
 def _file_exists(path, allow_empty=False):
     # not finding the file, exit early
