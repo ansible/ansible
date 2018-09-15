@@ -592,28 +592,8 @@ class Distribution(object):
         data = get_file_content('/etc/release').splitlines()[0]
 
         if 'Solaris' in data:
-<<<<<<< HEAD
-<<<<<<< HEAD
-            # FIXME: the proper way would be to exec 'uname -r' and parse it.
-            # For solaris 10 it will return 5.10, for solaris 11 it will be 5.11
-            # but I can't pass ansible test unit test_distribution_version.py with it,
-            # since I've no idea how to mock `uname -r` on CI (github/shippable) run.
-            uname_r = get_uname_release(self.module)
-=======
-            rc, uname_r, err = self.module.run_command('uname -r')
             # for solaris 10 uname_r will contain 5.10, for solaris 11 it will have 5.11
->>>>>>> facts: solaris: introduce distribution_major version detection for Solaris
-=======
-            # FIXME: the proper way would be to exec 'uname -r' and parse it.
-            # For solaris 10 it will return 5.10, for solaris 11 it will be 5.11
-            # but I can't pass ansible test unit test_distribution_version.py with it,
-            # since I've no idea how to mock `uname -r` on CI (github/shippable) run.
-<<<<<<< HEAD
-            # rc, uname_r, err = self.module.run_command('uname -r')
->>>>>>> should work now...
-=======
             uname_r = get_uname_release(self.module)
->>>>>>> mock uname_release for solaris 10 and solaris 11
             ora_prefix = ''
             if 'Oracle Solaris' in data:
                 data = data.replace('Oracle ', '')
@@ -621,25 +601,7 @@ class Distribution(object):
             sunos_facts['distribution'] = data.split()[0]
             sunos_facts['distribution_version'] = data.split()[1]
             sunos_facts['distribution_release'] = ora_prefix + data
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
             sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
-<<<<<<< HEAD
-            # sunos_facts['distribution_major_version'] = sunos_facts['distribution_version'].split('.')[0]
-=======
->>>>>>> facts: solaris: introduce distribution_major version detection for Solaris
-=======
-            #sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
-=======
-            # sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
->>>>>>> fixes for W291 (trailing whitespace) and E265 (block comment)
-            sunos_facts['distribution_major_version'] = sunos_facts['distribution_version'].split('.')[0]
->>>>>>> should work now...
-=======
-            sunos_facts['distribution_major_version'] = int(uname_r.split('.')[1])
-            # sunos_facts['distribution_major_version'] = sunos_facts['distribution_version'].split('.')[0]
->>>>>>> mock uname_release for solaris 10 and solaris 11
             return sunos_facts
 
         uname_v = get_uname_version(self.module)
