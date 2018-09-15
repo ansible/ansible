@@ -80,36 +80,40 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     return c
 
 
-def intersect(a, b):
+@environmentfilter
+def intersect(environment, a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) & set(b)
     else:
-        c = unique([x for x in a if x in b])
+        c = unique(environment, [x for x in a if x in b])
     return c
 
 
-def difference(a, b):
+@environmentfilter
+def difference(environment, a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) - set(b)
     else:
-        c = unique([x for x in a if x not in b])
+        c = unique(environment, [x for x in a if x not in b])
     return c
 
 
-def symmetric_difference(a, b):
+@environmentfilter
+def symmetric_difference(environment, a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) ^ set(b)
     else:
-        isect = intersect(a, b)
-        c = [x for x in union(a, b) if x not in isect]
+        isect = intersect(environment, a, b)
+        c = [x for x in union(environment, a, b) if x not in isect]
     return c
 
 
-def union(a, b):
+@environmentfilter
+def union(environment, a, b):
     if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
         c = set(a) | set(b)
     else:
-        c = unique(a + b)
+        c = unique(environment, a + b)
     return c
 
 
