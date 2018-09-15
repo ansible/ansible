@@ -532,7 +532,7 @@ class DockerService(DockerBaseClass):
             'env': self.env,
             'force_update': self.force_update,
             'log_driver': self.log_driver,
-            'log_driver_options ': self.log_driver_options,
+            'log_driver_options': self.log_driver_options,
             'publish': self.publish,
             'constraints': self.constraints,
             'labels': self.labels,
