@@ -36,8 +36,8 @@ if (($appParameters -ne $null) -and ($appParametersFree -ne $null))
 {
     Fail-Json $result "Use either app_parameters or app_parameteres_free_form, but not both"
 }
-if (($appParameters -ne $null) -and ($appParameters -isnot [System.Collections.Hashtable])) {
-    Fail-Json -obj $result -message "The app_parameters parameter must be a dict"
+if (($appParameters -ne $null) -and ($appParameters -isnot [string])) {
+    Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
 }
 
 Function Nssm-Invoke
@@ -171,6 +171,20 @@ Function Nssm-Install
      }
 }
 
+Function ParseAppParameters()
+{
+   [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$appParameters
+    )
+
+    $escapedAppParameters = $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n").Replace("\","\\")
+
+    return ConvertFrom-StringData -StringData $escapedAppParameters
+}
+
 Function Nssm-Update-AppParameters
 {
     [CmdletBinding()]
@@ -197,21 +211,21 @@ Function Nssm-Update-AppParameters
 
     if ($null -ne $appParameters)
     {
+        $appParametersHash = ParseAppParameters -appParameters $appParameters
         $appParamsArray = @()
-        $appParameters.GetEnumerator() |
-            % {
-                $key = $($_.Name)
-                $val = $($_.Value)
+        $appParametersHash.GetEnumerator() | foreach {
+            $key = $($_.Name)
+            $val = $($_.Value)
 
-                $appParamKeys += $key
-                $appParamVals += $val
+            $appParamKeys += $key
+            $appParamVals += $val
 
-                if ($key -ne "_") {
-                    $appParamsArray += $key
-                }
-
-                $appParamsArray += $val
+            if ($key -ne "_") {
+                $appParamsArray += $key
             }
+
+            $appParamsArray += $val
+        }
 
         $result.nssm_app_parameters_keys = $appParamKeys
         $result.nssm_app_parameters_vals = $appParamVals
