@@ -79,10 +79,13 @@ class Playbook:
         except UnicodeDecodeError as e:
             raise AnsibleParserError("Could not read playbook (%s) due to encoding issues: %s" % (file_name, to_native(e)))
 
-        if not isinstance(ds, list):
-            # restore the basedir in case this error is caught and handled
+        # check for errors and restore the basedir in case this error is caught and handled
+        if not ds:
             self._loader.set_basedir(cur_basedir)
-            raise AnsibleParserError("playbooks must be a list of plays", obj=ds)
+            raise AnsibleParserError("Empty playbook, nothing to do", obj=ds)
+        elif not isinstance(ds, list):
+            self._loader.set_basedir(cur_basedir)
+            raise AnsibleParserError("A playbook must be a list of plays, got a %s instead" % type(ds), obj=ds)
 
         # Parse the playbook entries. For plays, we simply parse them
         # using the Play() object, and includes are parsed using the
