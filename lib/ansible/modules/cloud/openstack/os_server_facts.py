@@ -31,10 +31,20 @@ options:
      description:
        - restrict results to servers with names or UUID matching
          this glob expression (e.g., <web*>).
+   host:
+     description:
+       - restrict results to servers host on a specific host.
    detailed:
+    version_added: "2.8"
      description:
         - when true, return additional detail about servers at the expense
           of additional API calls.
+     type: bool
+     default: 'no'
+   all_tenants:
+     version_added: "2.8"
+     description:
+        - when true, return VMs from all projects
      type: bool
      default: 'no'
    availability_zone:
@@ -50,6 +60,14 @@ EXAMPLES = '''
     server: web*
 - debug:
     var: openstack_servers
+
+# Gather facts of servers on a specific compute node
+- os_server_facts:
+    cloud: sjc1
+    all_tenants: true
+    host: kvm482
+- debug:
+    var: openstack_servers
 '''
 
 import fnmatch
@@ -62,15 +80,22 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         server=dict(required=False),
+        host=dict(required=False),
         detailed=dict(required=False, type='bool'),
+        all_tenants=dict(required=False, type='bool'),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-        openstack_servers = cloud.list_servers(
-            detailed=module.params['detailed'])
+        query = {'details': module.params['detailed']}
+        if module.params['host']:
+            query['host'] = module.params['host']
+        if module.params['all_tenants']:
+            query['all_tenants'] = module.params['all_tenants']
+
+        openstack_servers = cloud.compute.servers(**query)
 
         if module.params['server']:
             # filter servers by name
@@ -78,6 +103,10 @@ def main():
             # TODO(mordred) This is handled by sdk now
             openstack_servers = [server for server in openstack_servers
                                  if fnmatch.fnmatch(server['name'], pattern) or fnmatch.fnmatch(server['id'], pattern)]
+
+        # Normalize to dicts
+        openstack_servers = [s.to_dict() for s in openstack_servers]
+
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_servers=openstack_servers))
 
