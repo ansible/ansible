@@ -9,11 +9,11 @@
   scaleway_security_group_rule:
     state: present
     region: '{{ scaleway_region }}'
-    protocol: TCP
-    dest_port_from: 80
-    ip_range: 0.0.0.0/0
-    direction: inbound
-    action: accept
+    protocol: '{{ protocol }}'
+    port: '{{ port }}'
+    ip_range: '{{ ip_range }}'
+    direction: '{{ direction }}'
+    action: '{{ action }}'
     security_group: '{{ security_group }}'
   register: security_group_rule_creation_task
 
@@ -29,11 +29,11 @@
     scaleway_security_group_rule:
       state: present
       region: '{{ scaleway_region }}'
-      protocol: TCP
-      dest_port_from: 80
-      ip_range: 0.0.0.0/0
-      direction: inbound
-      action: accept
+      protocol: '{{ protocol }}'
+      port: '{{ port }}'
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
       security_group: '{{ security_group }}'
     register: security_group_rule_creation_task
 
@@ -48,11 +48,11 @@
     scaleway_security_group_rule:
       state: present
       region: '{{ scaleway_region }}'
-      protocol: TCP
-      dest_port_from: 80
-      ip_range: 0.0.0.0/0
-      direction: inbound
-      action: accept
+      protocol: '{{ protocol }}'
+      port: '{{ port }}'
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
       security_group: '{{ security_group }}'
     register: security_group_rule_creation_task
 
@@ -62,17 +62,17 @@
       that:
         - security_group_rule_creation_task is success
         - security_group_rule_creation_task is not changed
-  
+
   - name: Delete security_group_rule check
     check_mode: true
     scaleway_security_group_rule:
       state: absent
       region: '{{ scaleway_region }}'
-      protocol: TCP
-      dest_port_from: 80
-      ip_range: 0.0.0.0/0
-      direction: inbound
-      action: accept
+      protocol: '{{ protocol }}'
+      port: '{{ port }}'
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
       security_group: '{{ security_group }}'
     register: security_group_rule_deletion_task
 
@@ -88,11 +88,11 @@
     scaleway_security_group_rule:
       state: absent
       region: '{{ scaleway_region }}'
-      protocol: TCP
-      dest_port_from: 80
-      ip_range: 0.0.0.0/0
-      direction: inbound
-      action: accept
+      protocol: '{{ protocol }}'
+      port: '{{ port }}'
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
       security_group: '{{ security_group }}'
     register: security_group_rule_deletion_task
 
@@ -107,11 +107,11 @@
   scaleway_security_group_rule:
     state: absent
     region: '{{ scaleway_region }}'
-    protocol: TCP
-    dest_port_from: 80
-    ip_range: 0.0.0.0/0
-    direction: inbound
-    action: accept
+    protocol: '{{ protocol }}'
+    port: '{{ port }}'
+    ip_range: '{{ ip_range }}'
+    direction: '{{ direction }}'
+    action: '{{ action }}'
     security_group: '{{ security_group }}'
   register: security_group_rule_deletion_task
 

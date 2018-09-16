@@ -39,7 +39,7 @@ options:
 
   region:
     description:
-      - Scaleway region to use (for example par1).
+      - Scaleway region to use (for example C(par1)).
     required: true
     choices:
       - ams1
@@ -56,15 +56,15 @@ options:
       - ICMP
     required: true
 
-  dest_port_from:
+  port:
     description:
       - Port related to the rule
     required: true
 
   ip_range:
     description:
-      - CIDR notation related to the rule
-    required: true
+      - IPV4 CIDR notation to apply to the rule
+    default: 0.0.0.0/0
 
   direction:
     description:
@@ -94,7 +94,7 @@ EXAMPLES = '''
       state: present
       region: par1
       protocol: TCP
-      dest_port_from: 80
+      port: 80
       ip_range: 0.0.0.0/0
       direction: inbound
       action: accept
@@ -131,14 +131,13 @@ def get_sgr_from_api(security_group_rules, security_group_rule):
         Return None if no rules match the specs
         Return the rule if found
     """
-    existing_rule = None
     for sgr in security_group_rules:
         if (sgr['ip_range'] == security_group_rule['ip_range'] and str(sgr['dest_port_from']) == str(security_group_rule['dest_port_from']) and
             sgr['direction'] == security_group_rule['direction'] and sgr['action'] == security_group_rule['action'] and
                 sgr['protocol'] == security_group_rule['protocol']):
-            existing_rule = sgr
+            return sgr
 
-    return existing_rule
+    return None
 
 
 def present_strategy(api, security_group_id, security_group_rule):
@@ -207,7 +206,7 @@ def absent_strategy(api, security_group_id, security_group_rule):
 def core(module):
     security_group_rule = {
         'protocol': module.params['protocol'],
-        'dest_port_from': module.params['dest_port_from'],
+        'dest_port_from': module.params['port'],
         'ip_range': module.params['ip_range'],
         'direction': module.params['direction'],
         'action': module.params['action'],
@@ -236,8 +235,8 @@ def main():
         state=dict(default='present', choices=['absent', 'present']),
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
         protocol=dict(required=True, choices=['TCP', 'UDP', 'ICMP']),
-        dest_port_from=dict(required=True),
-        ip_range=dict(required=True),
+        port=dict(required=True),
+        ip_range=dict(default='0.0.0.0/0'),
         direction=dict(required=True, choices=['inbound', 'outbound']),
         action=dict(required=True, choices=['accept', 'drop']),
         security_group=dict(required=True),
