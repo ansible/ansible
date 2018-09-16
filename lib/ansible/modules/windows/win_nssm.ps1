@@ -327,6 +327,10 @@ if ($state -ne 'absent') {
     if($null -eq $appDirectory) {
         $appDirectory = (Get-Item $application).DirectoryName
     }
+
+    if ($user -and -not $password) {
+        Fail-Json -obj $result -message "User without password is informed for service ""$name"""
+    }
 }
 
 
@@ -422,16 +426,10 @@ if ($state -eq 'absent') {
         Update-NssmServiceParameter -parameter "AppRotateBytes" -value 104858 @common_params
 
 
-        if($null -ne $dependencies) {
-            Update-NssmServiceParameter -parameter "DependOnService" -arguments $dependencies @common_params
-        }
+        Update-NssmServiceParameter -parameter "DependOnService" -arguments $dependencies @common_params
 
         if ($user) {
             $fullUser = $user
-            if (!$password) {
-                Fail-Json -obj $result -message "User without password is informed for service ""$name"""
-            }
-
             if (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
                 $fullUser = ".\" + $user
             }
