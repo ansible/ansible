@@ -19,11 +19,8 @@ $start_modes_map = @{
     "disabled" = "SERVICE_DISABLED"
 }
 
-$params = Parse-Args $args
-
-$result = @{
-    changed = $false
-}
+$params = Parse-Args -arguments $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","started","stopped","restarted" -resultobj $result
@@ -39,6 +36,10 @@ $dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "list"
 
 $user = Get-AnsibleParam -obj $params -name "user" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
+
+$result = @{
+    changed = $false
+}
 
 function Invoke-NssmCommand {
     [CmdletBinding()]
@@ -131,7 +132,7 @@ function Update-NssmServiceParameter {
     the current value is equal to the desired value. Usefull when 'nssm get' doesn't return
     the same value as 'nssm set' takes in argument, like for the ObjectName parameter.
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess=$true)]
     param(
         [Parameter(Mandatory=$true)]
         [string]$service,
@@ -163,17 +164,19 @@ function Update-NssmServiceParameter {
     $current_values = @($nssm_result.stdout.split("`n`r") | where { $_ -ne '' })
 
     if (-not $compare.Invoke($current_values,$arguments)) {
-        if($arguments.Count -gt 0) {
-            $nssm_result = Set-NssmServiceParameter -service $service -parameter $parameter -arguments $arguments
-        }
-        else {
-            $nssm_result = Reset-NssmServiceParameter -service $service -parameter $parameter
-        }
+        if ($PSCmdlet.ShouldProcess($service, "Update '$parameter' parameter")) {
+            if($arguments.Count -gt 0) {
+                $nssm_result = Set-NssmServiceParameter -service $service -parameter $parameter -arguments $arguments
+            }
+            else {
+                $nssm_result = Reset-NssmServiceParameter -service $service -parameter $parameter
+            }
 
-        if ($nssm_result.rc -ne 0) {
-            $result.nssm_error_cmd = $nssm_result.arguments
-            $result.nssm_error_log = $nssm_result.stderr
-            Fail-Json -obj $result -message "Error setting $parameter for service ""$service"""
+            if ($nssm_result.rc -ne 0) {
+                $result.nssm_error_cmd = $nssm_result.arguments
+                $result.nssm_error_log = $nssm_result.stderr
+                Fail-Json -obj $result -message "Error setting $parameter for service ""$service"""
+            }
         }
 
         $result.changed_by = $parameter
@@ -205,9 +208,6 @@ function Invoke-NssmStart {
         $result.nssm_error_log = $nssm_result.stderr
         Fail-Json -obj $result -message "Error starting service ""$service"""
     }
-
-    $result.changed_by = "start_service"
-    $result.changed = $true
 }
 
 function Invoke-NssmStop {
@@ -224,13 +224,10 @@ function Invoke-NssmStop {
         $result.nssm_error_log = $nssm_result.stderr
         Fail-Json -obj $result -message "Error stopping service ""$service"""
     }
-
-    $result.changed_by = "stop_service_command"
-    $result.changed = $true
 }
 
 function Start-NssmService {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess=$true)]
     param(
         [Parameter(Mandatory=$true)]
         [string]$service
@@ -244,20 +241,26 @@ function Start-NssmService {
         Fail-Json -obj $result -message "Error starting service ""$service"""
     }
 
-    switch -wildcard ($currentStatus.stdout) {
-        "*SERVICE_RUNNING*" { <# Nothing to do #> }
-        "*SERVICE_STOPPED*" { Invoke-NssmStart -service $service }
+    if ($currentStatus.stdout -notlike "*SERVICE_RUNNING*") {
+        if ($PSCmdlet.ShouldProcess($service, "Start service")) {
+            switch -wildcard ($currentStatus.stdout) {
+                "*SERVICE_STOPPED*" { Invoke-NssmStart -service $service }
 
-        "*SERVICE_CONTINUE_PENDING*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
-        "*SERVICE_PAUSE_PENDING*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
-        "*SERVICE_PAUSED*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
-        "*SERVICE_START_PENDING*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
-        "*SERVICE_STOP_PENDING*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
+                "*SERVICE_CONTINUE_PENDING*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
+                "*SERVICE_PAUSE_PENDING*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
+                "*SERVICE_PAUSED*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
+                "*SERVICE_START_PENDING*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
+                "*SERVICE_STOP_PENDING*" { Invoke-NssmStop -service $service; Invoke-NssmStart -service $service }
+            }
+        }
+
+        $result.changed_by = "start_service"
+        $result.changed = $true
     }
 }
 
 function Stop-NssmService {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess=$true)]
     param(
         [Parameter(Mandatory=$true)]
         [string]$service
@@ -272,8 +275,12 @@ function Stop-NssmService {
     }
 
     if ($currentStatus.stdout -notlike "*SERVICE_STOPPED*") {
-        Invoke-NssmStop -service $service
+        if ($PSCmdlet.ShouldProcess($service, "Stop service")) {
+            Invoke-NssmStop -service $service
+        }
+
         $result.changed_by = "stop_service"
+        $result.changed = $true
     }
 }
 
@@ -323,16 +330,18 @@ $service_exists = Test-NssmServiceExists -service $name
 
 if ($state -eq 'absent') {
     if ($service_exists) {
-        if ((Get-Service -Name $name).Status -ne "Stopped") {
-            $nssm_result = Invoke-NssmStop -service $name
-        }
+        if(-not $check_mode) {
+            if ((Get-Service -Name $name).Status -ne "Stopped") {
+                $nssm_result = Invoke-NssmStop -service $name
+            }
 
-        $nssm_result = Invoke-NssmCommand -arguments @("remove", $name, "confirm")
+            $nssm_result = Invoke-NssmCommand -arguments @("remove", $name, "confirm")
 
-        if ($nssm_result.rc -ne 0) {
-            $result.nssm_error_cmd = $nssm_result.arguments
-            $result.nssm_error_log = $nssm_result.stderr
-            Fail-Json -obj $result -message "Error removing service ""$name"""
+            if ($nssm_result.rc -ne 0) {
+                $result.nssm_error_cmd = $nssm_result.arguments
+                $result.nssm_error_log = $nssm_result.stderr
+                Fail-Json -obj $result -message "Error removing service ""$name"""
+            }
         }
 
         $result.changed_by = "remove_service"
@@ -340,91 +349,101 @@ if ($state -eq 'absent') {
     }
 } else {
     if (-not $service_exists) {
-        $nssm_result = Invoke-NssmCommand -arguments @("install", $name, $application)
+        if(-not $check_mode) {
+            $nssm_result = Invoke-NssmCommand -arguments @("install", $name, $application)
 
-        if ($nssm_result.rc -ne 0) {
-            $result.nssm_error_cmd = $nssm_result.arguments
-            $result.nssm_error_log = $nssm_result.stderr
-            Fail-Json -obj $result -message "Error installing service ""$name"""
+            if ($nssm_result.rc -ne 0) {
+                $result.nssm_error_cmd = $nssm_result.arguments
+                $result.nssm_error_log = $nssm_result.stderr
+                Fail-Json -obj $result -message "Error installing service ""$name"""
+            }
+            $service_exists = $true
         }
 
         $result.changed_by = "install_service"
         $result.changed = $true
-
-    } else {
-        Update-NssmServiceParameter -service $name -parameter "Application" -value $application
     }
 
-    Update-NssmServiceParameter -service $name -parameter "AppDirectory" -value $applicationPath
-
-
-    if (($null -ne $appArguments)) {
-        $singleLineParams = ""
-        if ($appArguments -is [array]) {
-            $singleLineParams = Argv-ToString -arguments $appArguments
-        } else {
-            $singleLineParams = $appArguments.ToString()
+    # We cannot configure a service that was created above in check mode as it won't actually exist
+    if ($service_exists) {
+        $common_params = @{
+            service = $name
+            WhatIf = $check_mode
         }
 
-        $result.nssm_app_parameters = $appArguments
-        $result.nssm_single_line_app_parameters = $singleLineParams
+        Update-NssmServiceParameter -parameter "Application" -value $application @common_params
 
-        Update-NssmServiceParameter -service $name -parameter "AppParameters" -value $singleLineParams
-    }
+        Update-NssmServiceParameter -parameter "AppDirectory" -value $applicationPath @common_params
 
 
-    Update-NssmServiceParameter -service $name -parameter "AppStdout" -value $stdoutFile
-    Update-NssmServiceParameter -service $name -parameter "AppStderr" -value $stderrFile
+        if (($null -ne $appArguments)) {
+            $singleLineParams = ""
+            if ($appArguments -is [array]) {
+                $singleLineParams = Argv-ToString -arguments $appArguments
+            } else {
+                $singleLineParams = $appArguments.ToString()
+            }
 
-    ###
-    # Setup file rotation so we don't accidentally consume too much disk
-    ###
+            $result.nssm_app_parameters = $appArguments
+            $result.nssm_single_line_app_parameters = $singleLineParams
 
-    #set files to overwrite
-    Update-NssmServiceParameter -service $name -parameter "AppStdoutCreationDisposition" -value 2
-    Update-NssmServiceParameter -service $name -parameter "AppStderrCreationDisposition" -value 2
-
-    #enable file rotation
-    Update-NssmServiceParameter -service $name -parameter "AppRotateFiles" -value 1
-
-    #don't rotate until the service restarts
-    Update-NssmServiceParameter -service $name -parameter "AppRotateOnline" -value 0
-
-    #both of the below conditions must be met before rotation will happen
-    #minimum age before rotating
-    Update-NssmServiceParameter -service $name -parameter "AppRotateSeconds" -value 86400
-
-    #minimum size before rotating
-    Update-NssmServiceParameter -service $name -parameter "AppRotateBytes" -value 104858
-
-
-    if($null -ne $dependencies) {
-        Update-NssmServiceParameter -service $name -parameter "DependOnService" -arguments $dependencies
-    }
-
-    if ($user) {
-        $fullUser = $user
-        if (!$password) {
-            Fail-Json -obj $result -message "User without password is informed for service ""$name"""
+            Update-NssmServiceParameter -parameter "AppParameters" -value $singleLineParams @common_params
         }
 
-        if (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
-            $fullUser = ".\" + $user
+
+        Update-NssmServiceParameter -parameter "AppStdout" -value $stdoutFile @common_params
+        Update-NssmServiceParameter -parameter "AppStderr" -value $stderrFile @common_params
+
+        ###
+        # Setup file rotation so we don't accidentally consume too much disk
+        ###
+
+        #set files to overwrite
+        Update-NssmServiceParameter -parameter "AppStdoutCreationDisposition" -value 2 @common_params
+        Update-NssmServiceParameter -parameter "AppStderrCreationDisposition" -value 2 @common_params
+
+        #enable file rotation
+        Update-NssmServiceParameter -parameter "AppRotateFiles" -value 1 @common_params
+
+        #don't rotate until the service restarts
+        Update-NssmServiceParameter -parameter "AppRotateOnline" -value 0 @common_params
+
+        #both of the below conditions must be met before rotation will happen
+        #minimum age before rotating
+        Update-NssmServiceParameter -parameter "AppRotateSeconds" -value 86400 @common_params
+
+        #minimum size before rotating
+        Update-NssmServiceParameter -parameter "AppRotateBytes" -value 104858 @common_params
+
+
+        if($null -ne $dependencies) {
+            Update-NssmServiceParameter -parameter "DependOnService" -arguments $dependencies @common_params
         }
 
-        # Use custom compare callback to test only the username (and not the password)
-        Update-NssmServiceParameter -service $name -parameter "ObjectName" -arguments @($fullUser, $password) -compare {param($actual,$expected) $actual[0] -eq $expected[0]}
-    }
+        if ($user) {
+            $fullUser = $user
+            if (!$password) {
+                Fail-Json -obj $result -message "User without password is informed for service ""$name"""
+            }
 
-    $mappedMode = $start_modes_map.$startMode
-    Update-NssmServiceParameter -service $name -parameter "Start" -value $mappedMode
+            if (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
+                $fullUser = ".\" + $user
+            }
 
-    if ($state -in "stopped","restarted") {
-        Stop-NssmService -service $name
-    }
+            # Use custom compare callback to test only the username (and not the password)
+            Update-NssmServiceParameter -parameter "ObjectName" -arguments @($fullUser, $password) -compare {param($actual,$expected) $actual[0] -eq $expected[0]} @common_params
+        }
 
-    if($state -in "started","restarted") {
-        Start-NssmService -service $name
+        $mappedMode = $start_modes_map.$startMode
+        Update-NssmServiceParameter -parameter "Start" -value $mappedMode @common_params
+
+        if ($state -in "stopped","restarted") {
+            Stop-NssmService @common_params
+        }
+
+        if($state -in "started","restarted") {
+            Start-NssmService @common_params
+        }
     }
 }
 
