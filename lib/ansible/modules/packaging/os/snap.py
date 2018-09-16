@@ -29,7 +29,7 @@ description:
 options:
     name:
         description:
-            - Name of the snap to install or remove.
+            - Name of the snap to install or remove. Can be a list of snaps.
         required: true
     state:
         description:
