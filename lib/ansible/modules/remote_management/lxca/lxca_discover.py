@@ -97,8 +97,14 @@ def has_pylxca(module):
 
 
 def _discover(module, lxca_con):
-    return discover(lxca_con, ip=module.params['ip'])
-    #                job=module.params['jobid'])
+    result = None
+    if module.params.get('ip', None):
+        reuslt = discover(lxca_con, ip=module.params['ip'])
+    elif module.params.get('jobid', None):
+        reuslt = discover(lxca_con, job=module.params['jobid'])
+    else:
+        reuslt = discover(lxca_con)
+    return result
 
 
 def setup_module_object():
@@ -108,7 +114,9 @@ def setup_module_object():
     """
     args_spec = dict(LXCA_COMMON_ARGS)
     args_spec.update(INPUT_ARG_SPEC)
-    module = AnsibleModule(argument_spec=args_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=args_spec,
+                           mutually_exclusive=[['ip', 'jobid']],
+                           supports_check_mode=False)
 
     return module
 

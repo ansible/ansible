@@ -60,6 +60,18 @@ class TestMyModule(unittest.TestCase):
             })
             lxca_discover.main()
 
+    def test__mutually_exclusive_args(self):
+        with self.assertRaises(AnsibleFailJson):
+            set_module_args({
+                "auth_url": "https://10.240.14.195",
+                "login_user": "USERID",
+                "login_password": "Password",
+                "noverify": "True",
+                "ip": "10.233.30.210",
+                "jobid": "12"
+            })
+            lxca_discover.main()
+
     @mock.patch("ansible.modules.remote_management.lxca.lxca_discover.setup_conn", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_discover.execute_module", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_discover.AnsibleModule", autospec=True)
@@ -85,6 +97,7 @@ class TestMyModule(unittest.TestCase):
         mod_obj.params = args
         lxca_discover.main()
         assert mock.call(argument_spec=expected_arguments_spec,
+                         mutually_exclusive=[['ip', 'jobid']],
                          supports_check_mode=False) == ansible_mod_cls.call_args
 
     @mock.patch("ansible.modules.remote_management.lxca.lxca_discover._discover",
