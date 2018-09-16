@@ -106,6 +106,11 @@ def is_snap_installed(module, snap_name):
 
 
 def install_snaps(module, snap_names):
+    exit_kwargs = {
+        'classic': module.params['classic'],
+        'changed': False,
+    }
+
     snaps_not_installed = list()
     for snap_name in snap_names:
         if is_snap_installed(module, snap_name):
@@ -113,10 +118,11 @@ def install_snaps(module, snap_names):
         snaps_not_installed.append(snap_name)
 
     if not snaps_not_installed:
-        module.exit_json(classic=module.params['classic'], changed=False)
+        module.exit_json(**exit_kwargs)
 
     if module.check_mode:
-        module.exit_json(classic=module.params['classic'], changed=True)
+        exit_kwargs['changed'] = True
+        module.exit_json(**exit_kwargs)
 
     classic = '--classic' if module.params['classic'] else ''
 
@@ -128,14 +134,15 @@ def install_snaps(module, snap_names):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        module.exit_json(classic=module.params['classic'], changed=True, cmd=cmd, stdout=out, stderr=err)
+        exit_kwargs['changed'] = True
+        module.exit_json(cmd=cmd, stdout=out, stderr=err, **exit_kwargs)
     else:
         msg = "Something went wrong"
         m = re.match(r'^error: This revision of snap "(?P<package_name>\w+)" was published using classic confinement', err)
         if m is not None:
             err_pkg = m.group('package_name')
             msg = "Couldn't install {name} because it requires classic confinement".format(name=err_pkg)
-        module.fail_json(msg=msg, classic=module.params['classic'], cmd=cmd, stdout=out, stderr=err)
+        module.fail_json(msg=msg, cmd=cmd, stdout=out, stderr=err, **exit_kwargs)
 
 
 def remove_snaps(module, snap_names):
