@@ -24,6 +24,8 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","started","stopped","restarted" -resultobj $result
+$display_name = Get-AnsibleParam -obj $params -name 'display_name' -type 'str'
+$description = Get-AnsibleParam -obj $params -name 'description' -type 'str'
 
 $application = Get-AnsibleParam -obj $params -name "application" -type "path"
 $appDirectory  = Get-AnsibleParam -obj $params -name "working_directory" -aliases "app_directory","chdir" -type "path"
@@ -374,6 +376,8 @@ if ($state -eq 'absent') {
         }
 
         Update-NssmServiceParameter -parameter "Application" -value $application @common_params
+        Update-NssmServiceParameter -parameter "DisplayName" -value $display_name @common_params
+        Update-NssmServiceParameter -parameter "Description" -value $description @common_params
 
         Update-NssmServiceParameter -parameter "AppDirectory" -value $appDirectory @common_params
 

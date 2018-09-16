@@ -44,6 +44,14 @@ options:
         See commit 0b386fc1984ab74ee59b7bed14b7e8f57212c22b in the nssm.git project for more info:
         U(https://git.nssm.cc/?p=nssm.git;a=commit;h=0b386fc1984ab74ee59b7bed14b7e8f57212c22b)
     type: path
+  description:
+    description:
+      - The description to set for the service.
+    version_added: "2.8.0"
+  display_name:
+    description:
+      - The display name to set for the service.
+    version_added: "2.8.0"
   working_directory:
     version_added: "2.8.0"
     description:
