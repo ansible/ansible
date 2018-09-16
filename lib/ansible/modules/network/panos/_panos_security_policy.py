@@ -40,8 +40,8 @@ deprecated:
     removed_in: '2.9'
     why: This module depended on outdated and old SDK. In 2.4 use M(panos_security_rule) instead.
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
-    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
+    - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is not supported.
     - Panorama is supported
