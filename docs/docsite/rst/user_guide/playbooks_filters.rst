@@ -794,6 +794,7 @@ When`Passlib <https://passlib.readthedocs.io/en/stable/>`_ is installed
 
     {{ 'secretpassword'|password_hash('sha256_crypt', 'mysecretsalt', rounds=5000) }}
     {{ 'secretpassword'|password_hash('bcrypt', ident='2b', rounds=14) }}
+    {{ 'secretpassword'|password_hash('msdcc', user='SomeUser') }}
 
 .. _combine_filter:
 

@@ -100,6 +100,8 @@ def test_password_hash_filter_passlib():
     # Try algorithm that uses a raw salt
     assert get_encrypted_password("123", "pbkdf2_sha256")
 
+    assert get_encrypted_password("123", "bcrypt", ident="2b", rounds=14)
+
 
 def test_do_encrypt_no_passlib():
     with passlib_off():
@@ -131,3 +133,11 @@ def test_random_salt():
     assert len(res) == 8
     for res_char in res:
         assert res_char in expected_salt_candidate_chars
+
+
+def test_msdcc():
+    if not encrypt.PASSLIB_AVAILABLE:
+        pytest.skip("passlib not available")
+
+    assert encrypt.do_encrypt("123", "msdcc", user="SomeUser") == "58900987b4bdbe152a61a7f133847faa"
+    assert encrypt.do_encrypt("123", "msdcc2", user="SomeUser") == "0d96b1069d61c901f21c1dadff724725"

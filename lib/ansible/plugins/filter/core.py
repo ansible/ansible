@@ -247,7 +247,7 @@ def get_hash(data, hashtype='sha1'):
     return h.hexdigest()
 
 
-def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=None, rounds=None):
+def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=None, rounds=None, **kwargs):
     passlib_mapping = {
         'md5': 'md5_crypt',
         'blowfish': 'bcrypt',
@@ -257,7 +257,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
 
     hashtype = passlib_mapping.get(hashtype, hashtype)
     try:
-        return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds)
+        return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, **kwargs)
     except AnsibleError as e:
         reraise(AnsibleFilterError, AnsibleFilterError(str(e), orig_exc=e), sys.exc_info()[2])
 
