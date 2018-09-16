@@ -41,8 +41,6 @@ import socket
 import sys
 import tempfile
 import traceback
-import base64
-import shutil
 
 try:
     import httplib
@@ -1348,19 +1346,18 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     '''
     # download file
     bufsize = 65536
-    tempdir = tempfile.mkdtemp()
-    filepath = os.path.join(tempdir, to_native(url.rsplit('/', 1)[1], errors='surrogate_or_strict'))
+    file_name, file_ext = os.path.splitext(str(url.rsplit('/', 1)[1]))
+    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix='.{0}'.format(file_ext), delete=False)
+    module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout)
         if not rsp:
             module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
-        f = open(filepath, 'wb')
         data = rsp.read(bufsize)
         while data:
-            f.write(data)
+            fetch_temp_file.write(data)
             data = rsp.read(bufsize)
-        f.close()
+        fetch_temp_file.close()
     except Exception as e:
-        shutil.rmtree(tempdir)
-        module.fail_json(msg="Failure downloading %s, %s" % (url, e))
-    return filepath
+        module.fail_json(msg="Failure downloading %s, %s" % (url, to_native(e)))
+    return fetch_temp_file.name
