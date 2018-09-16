@@ -137,13 +137,13 @@ performance_mode:
     type: str
     sample: "generalPurpose"
 throughput_mode:
-    description: mode of throughput for the file system (requires boto3 >= 1.7.57)
+    description: mode of throughput for the file system (requires botocore >= 1.10.57)
     returned: always
     type: str
     sample: "bursting"
     version_added: 2.7
 provisioned_throughput_in_mibps:
-    description: throughput provisioned in Mibps (requires boto3 >= 1.7.57)
+    description: throughput provisioned in Mibps (requires botocore >= 1.10.57)
     returned: when throughput_mode is set to "provisioned"
     type: float
     sample: 15.0

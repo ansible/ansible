@@ -120,7 +120,7 @@
             - subnet_id: "{{testing_subnet_a.subnet.id}}"
             - subnet_id: "{{testing_subnet_b.subnet.id}}"
         throughput_mode: 'provisioned'
-        throughput_provisioned: 5.0
+        provisioned_throughput_in_mibps: 5.0
 
     - pause: seconds=3
     # ============================================================
@@ -133,8 +133,8 @@
     - set_fact:
         efs_result_assertions:
           - efs_result is not changed
-          - efs_result.ansible_facts.efs[0].throughput_mode  == "bursting"
-          - efs_result.ansible_facts.efs[0].throughput_provisioned == "5.0"
+          - efs_result.ansible_facts.efs[0].throughput_mode  == "provisioned"
+          - efs_result.ansible_facts.efs[0].provisioned_throughput_in_mibps == 5.0
 
     - assert:
         that: "{{efs_result_assertions}}"

@@ -73,13 +73,15 @@ options:
     throughput_mode:
         description:
             - The throughput_mode for the file system to be created.
+            - Requires botocore >= 1.10.57
         choices: ['bursting', 'provisioned']
-        version_added: 2.7
+        version_added: 2.8
     provisioned_throughput_in_mibps:
         description:
             - If the throughput_mode is provisioned, select the amount of throughput to provisioned in Mibps.
+            - Requires botocore >= 1.10.57
         type: float
-        version_added: 2.7
+        version_added: 2.8
     wait:
         description:
             - "In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted')
@@ -398,12 +400,12 @@ class EFSConnection(object):
             if self.supports_provisioned_mode():
                 params['ThroughputMode'] = throughput_mode
             else:
-                self.module.fail_json(msg="throughput_mode parameter requires boto3 version 1.7.57 or higher")
+                self.module.fail_json(msg="throughput_mode parameter requires botocore >= 1.10.57")
         if provisioned_throughput_in_mibps:
             if self.supports_provisioned_mode():
                 params['ProvisionedThroughputInMibps'] = provisioned_throughput_in_mibps
             else:
-                self.module.fail_json(msg="provisioned_throughput_in_mibps parameter requires boto3 version 1.7.57 or higher")
+                self.module.fail_json(msg="provisioned_throughput_in_mibps parameter requires botocore >= 1.10.57")
 
         if state in [self.STATE_DELETING, self.STATE_DELETED]:
             wait_for(
