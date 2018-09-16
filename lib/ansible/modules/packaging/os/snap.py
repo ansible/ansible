@@ -137,7 +137,7 @@ def install_snaps(module, snap_names):
         exit_kwargs['changed'] = True
         module.exit_json(cmd=cmd, stdout=out, stderr=err, **exit_kwargs)
     else:
-        msg = "Something went wrong"
+        msg = "Ooops! Snap installation failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
         m = re.match(r'^error: This revision of snap "(?P<package_name>\w+)" was published using classic confinement', err)
         if m is not None:
             err_pkg = m.group('package_name')
@@ -167,7 +167,8 @@ def remove_snaps(module, snap_names):
     if rc == 0:
         module.exit_json(changed=True, cmd=cmd, stdout=out, stderr=err)
     else:
-        module.fail_json(msg="Something went wrong.", cmd=cmd, stdout=out, stderr=err)
+        msg = "Ooops! Snap removal failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
+        module.fail_json(msg=msg, cmd=cmd, stdout=out, stderr=err)
 
 
 def main():
