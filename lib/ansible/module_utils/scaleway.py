@@ -14,12 +14,14 @@ def scaleway_argument_spec():
         validate_certs=dict(default=True, type='bool'),
     )
 
+
 def payload_from_object(scw_object):
     return dict(
         (k, v)
         for k, v in scw_object.items()
         if k != 'id' and v is not None
     )
+
 
 class ScalewayException(Exception):
 
