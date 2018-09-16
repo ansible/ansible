@@ -20,7 +20,7 @@ prepend_path()
 # Default values for shell variables we use
 PYTHONPATH=${PYTHONPATH-""}
 PATH=${PATH-""}
-MANPATH=${MANPATH-""}
+MANPATH=${MANPATH-$(manpath)}
 PYTHON=$(which python 2>/dev/null || which python3 2>/dev/null)
 PYTHON_BIN=${PYTHON_BIN-$PYTHON}
 
