@@ -104,7 +104,10 @@ class CryptHash(BaseHash):
         else:
             return rounds
 
-    def _hash(self, secret, salt, rounds):
+    def _hash(self, secret, salt, rounds, **kwargs):
+        if kwargs:
+            raise AnsibleError("crypt.crypt does not support paramters '%s'" % str(kwargs))
+
         if rounds is None:
             saltstring = "$%s$%s" % (self.algo_data.crypt_id, salt)
         else:
@@ -132,10 +135,10 @@ class PasslibHash(BaseHash):
         except:
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
 
-    def hash(self, secret, salt=None, salt_size=None, rounds=None):
+    def hash(self, secret, salt=None, salt_size=None, rounds=None, **kwargs):
         salt = self._clean_salt(salt)
         rounds = self._clean_rounds(rounds)
-        return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
+        return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, **kwargs)
 
     def _clean_salt(self, salt):
         if not salt:
@@ -157,10 +160,11 @@ class PasslibHash(BaseHash):
         else:
             return None
 
-    def _hash(self, secret, salt, salt_size, rounds):
+    def _hash(self, secret, salt, salt_size, rounds, **kwargs):
         # Not every hash algorithm supports every paramter.
         # Thus create the settings dict only with set parameters.
-        settings = {}
+        settings = dict(kwargs)
+
         if salt:
             settings['salt'] = salt
         if salt_size:
@@ -170,7 +174,10 @@ class PasslibHash(BaseHash):
 
         # starting with passlib 1.7 'using' and 'hash' should be used instead of 'encrypt'
         if hasattr(self.crypt_algo, 'hash'):
-            result = self.crypt_algo.using(**settings).hash(secret)
+            if self.algorithm in ('msdcc', 'msdcc2'):
+                result = self.crypt_algo.hash(secret, **settings)
+            else:
+                result = self.crypt_algo.using(**settings).hash(secret)
         elif hasattr(self.crypt_algo, 'encrypt'):
             result = self.crypt_algo.encrypt(secret, **settings)
         else:
@@ -189,12 +196,12 @@ class PasslibHash(BaseHash):
         return to_text(result, errors='strict')
 
 
-def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None):
+def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, **kwargs):
     if PASSLIB_AVAILABLE:
-        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
+        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, **kwargs)
     else:
-        return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
+        return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, **kwargs)
 
 
-def do_encrypt(result, encrypt, salt_size=None, salt=None):
-    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt)
+def do_encrypt(result, encrypt, salt_size=None, salt=None, **kwargs):
+    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt, **kwargs)
