@@ -44,6 +44,11 @@ options:
         See commit 0b386fc1984ab74ee59b7bed14b7e8f57212c22b in the nssm.git project for more info:
         U(https://git.nssm.cc/?p=nssm.git;a=commit;h=0b386fc1984ab74ee59b7bed14b7e8f57212c22b)
     type: path
+  working_directory:
+    version_added: "2.8.0"
+    description:
+      - The working directory to run the service executable from (defaults to the directory containing the application binary)
+    aliases: [ app_directory, chdir ]
   stdout_file:
     description:
       - Path to receive output.
@@ -94,6 +99,7 @@ author:
   - George Frank (@georgefrank)
   - Hans-Joachim Kliemeck (@h0nIg)
   - Michael Wild (@themiwi)
+  - Kevin Subileau (@ksubileau)
 '''
 
 EXAMPLES = r'''

@@ -53,6 +53,7 @@
     - (install_service_actual.stdout|from_json).State == 'Stopped'
     - (install_service_actual.stdout|from_json).StartMode == 'Auto'
     - (install_service_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    - (install_service_actual.stdout|from_json).Parameters.AppDirectory == "C:\Windows\System32"
 
 - name: test install service (idempotent)
   win_nssm:
@@ -73,6 +74,7 @@
     - (install_service_again_actual.stdout|from_json).State == 'Stopped'
     - (install_service_again_actual.stdout|from_json).StartMode == 'Auto'
     - (install_service_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    - (install_service_again_actual.stdout|from_json).Parameters.AppDirectory == "C:\Windows\System32"
 
 - name: install and start service
   win_nssm:
@@ -93,6 +95,7 @@
     - (install_start_service_actual.stdout|from_json).State == 'Running'
     - (install_start_service_actual.stdout|from_json).StartMode == 'Auto'
     - (install_start_service_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    - (install_start_service_actual.stdout|from_json).Parameters.AppDirectory == "C:\Windows\System32"
 
 - name: install and start service with more parameters (check mode)
   win_nssm:
@@ -131,6 +134,7 @@
     name: '{{ test_service_name }}'
     application: C:\Windows\System32\cmd.exe
     start_mode: manual
+    working_directory: '{{ test_win_nssm_path }}'
     dependencies: 'tcpip,dnscache'
     user: '{{ test_win_nssm_username }}'
     password: '{{ test_win_nssm_password }}'
@@ -152,6 +156,7 @@
     - (install_service_complex_actual.stdout|from_json).StartMode == 'Manual'
     - (install_service_complex_actual.stdout|from_json).StartName == '.\\' + test_win_nssm_username
     - (install_service_complex_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    - (install_service_complex_actual.stdout|from_json).Parameters.AppDirectory == test_win_nssm_path
     - (install_service_complex_actual.stdout|from_json).Parameters.AppStdout == test_win_nssm_path + '\\log.txt'
     - (install_service_complex_actual.stdout|from_json).Parameters.AppStderr == test_win_nssm_path + '\\error.txt'
     - (install_service_complex_actual.stdout|from_json).Dependencies|length == 2
@@ -163,6 +168,7 @@
     name: '{{ test_service_name }}'
     application: C:\Windows\System32\cmd.exe
     start_mode: manual
+    working_directory: '{{ test_win_nssm_path }}'
     # Dependencies order should not trigger a change
     dependencies: 'dnscache,tcpip'
     user: '{{ test_win_nssm_username }}'
@@ -185,6 +191,7 @@
     - (install_service_complex_again_actual.stdout|from_json).StartMode == 'Manual'
     - (install_service_complex_again_actual.stdout|from_json).StartName == '.\\' + test_win_nssm_username
     - (install_service_complex_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    - (install_service_complex_again_actual.stdout|from_json).Parameters.AppDirectory == test_win_nssm_path
     - (install_service_complex_again_actual.stdout|from_json).Parameters.AppStdout == test_win_nssm_path + '\\log.txt'
     - (install_service_complex_again_actual.stdout|from_json).Parameters.AppStderr == test_win_nssm_path + '\\error.txt'
     - (install_service_complex_again_actual.stdout|from_json).Dependencies|length == 2

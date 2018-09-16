@@ -26,6 +26,7 @@ $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $tru
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","started","stopped","restarted" -resultobj $result
 
 $application = Get-AnsibleParam -obj $params -name "application" -type "path"
+$appDirectory  = Get-AnsibleParam -obj $params -name "working_directory" -aliases "app_directory","chdir" -type "path"
 $appParameters = Get-AnsibleParam -obj $params -name "app_parameters"
 $appArguments = Get-AnsibleParam -obj $params -name "arguments" -aliases "app_parameters_free_form"
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
@@ -321,8 +322,9 @@ if ($state -ne 'absent') {
         Fail-Json -obj $result -message "The application specified ""$application"" does not exist on the host."
     }
 
-    #TODO Add module parameter
-    $applicationPath = (Get-Item $application).DirectoryName
+    if($null -eq $appDirectory) {
+        $appDirectory = (Get-Item $application).DirectoryName
+    }
 }
 
 
@@ -373,7 +375,7 @@ if ($state -eq 'absent') {
 
         Update-NssmServiceParameter -parameter "Application" -value $application @common_params
 
-        Update-NssmServiceParameter -parameter "AppDirectory" -value $applicationPath @common_params
+        Update-NssmServiceParameter -parameter "AppDirectory" -value $appDirectory @common_params
 
 
         if (($null -ne $appArguments)) {
