@@ -73,7 +73,7 @@
     - install_start_service.changed == true
     - (install_start_service_actual.stdout|from_json).Exists == true
     - (install_start_service_actual.stdout|from_json).State == 'Running'
-    - (install_service_actual.stdout|from_json).StartMode == 'Auto'
+    - (install_start_service_actual.stdout|from_json).StartMode == 'Auto'
     - (install_start_service_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
 
 - name: install and start service with more parameters
