@@ -100,6 +100,12 @@ def test_password_hash_filter_passlib():
     # Try algorithm that uses a raw salt
     assert get_encrypted_password("123", "pbkdf2_sha256")
 
+    assert get_encrypted_password("123", "bcrypt", rounds=14).startswith("$2")
+    assert get_encrypted_password("123", "bcrypt", ident="2", rounds=14).startswith("$2$14$")
+    assert get_encrypted_password("123", "bcrypt", ident="2a", rounds=14).startswith("$2a$14$")
+    assert get_encrypted_password("123", "bcrypt", ident="2b", rounds=14).startswith("$2b$14$")
+    assert get_encrypted_password("123", "bcrypt", ident="2y", rounds=14).startswith("$2y$14$")
+
 
 def test_do_encrypt_no_passlib():
     with passlib_off():

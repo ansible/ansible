@@ -129,10 +129,10 @@ class PasslibHash(BaseHash):
         except Exception:
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
 
-    def hash(self, secret, salt=None, salt_size=None, rounds=None):
+    def hash(self, secret, salt=None, salt_size=None, rounds=None, ident=None):
         salt = self._clean_salt(salt)
         rounds = self._clean_rounds(rounds)
-        return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
+        return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
 
     def _clean_salt(self, salt):
         if not salt:
@@ -154,16 +154,19 @@ class PasslibHash(BaseHash):
         else:
             return None
 
-    def _hash(self, secret, salt, salt_size, rounds):
+    def _hash(self, secret, salt, salt_size, rounds, ident):
         # Not every hash algorithm supports every parameter.
         # Thus create the settings dict only with set parameters.
         settings = {}
+
         if salt:
             settings['salt'] = salt
         if salt_size:
             settings['salt_size'] = salt_size
         if rounds:
             settings['rounds'] = rounds
+        if ident:
+            settings['ident'] = ident
 
         # starting with passlib 1.7 'using' and 'hash' should be used instead of 'encrypt'
         if hasattr(self.crypt_algo, 'hash'):
@@ -186,12 +189,14 @@ class PasslibHash(BaseHash):
         return to_text(result, errors='strict')
 
 
-def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None):
+def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, ident=None):
     if PASSLIB_AVAILABLE:
-        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
+        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     else:
+        if ident:
+            raise AnsibleError("crypt.crypt does not support an 'ident' parameter")
         return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
 
 
-def do_encrypt(result, encrypt, salt_size=None, salt=None):
-    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt)
+def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None):
+    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt, ident=ident)
