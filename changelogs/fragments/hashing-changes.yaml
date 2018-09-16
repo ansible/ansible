@@ -16,3 +16,6 @@ minor_changes:
   (https://github.com/ansible/ansible/issues/15326)
 - password_hash is not restricted to the subset provided by crypt.crypt
   (https://github.com/ansible/ansible/issues/17266)
+- password_hash supports the msdcc and msdcc2 algorithms using passlib.
+  The user name has to be provided as the 'user' paramter for salting.
+  (https://github.com/ansible/ansible/issues/45392)
