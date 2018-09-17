@@ -1,0 +1,22 @@
+---
+
+- name: Test launchd module
+  block:
+    - name: Expect that launchctl exists
+      stat:
+        path: /bin/launchctl
+      register: launchctl_check
+      failed_when:
+        - not launchctl_check.stat.exists
+
+    - name: Run tests
+      include_tasks: test.yml
+      with_items:
+        - test_unknown
+        - test_start_stop
+        - test_restart
+        - test_unload
+        - test_reload
+        - test_runatload
+
+  when: ansible_os_family == 'Darwin'

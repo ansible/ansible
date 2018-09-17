@@ -1,0 +1,11 @@
+---
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}] Expect that an error occurs when an unknown service is used."
+  launchd:
+    name: com.acme.unknownservice
+    state: started
+  register: result
+  failed_when:
+    - not '"Unable to infer the path of com.acme.unknownservice service plist file and it was not found among active services" in result.msg'

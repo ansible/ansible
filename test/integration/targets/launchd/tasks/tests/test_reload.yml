@@ -1,0 +1,44 @@
+---
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}] Given a started service..."
+  include_tasks: actions/start_service.yml
+  vars:
+    - action_prefix: test_1
+
+- name: "[{{ item }}] The started service should run on port 21212"
+  wait_for:
+    port: 21212
+    delay: 5
+    timeout: 10
+
+- name: "[{{ item }}] Deploy a new test service configuration with a new port 21213"
+  template:
+    src: "modified.{{ launchd_service_name }}.plist.j2"
+    dest: "{{ launchd_plist_location }}"
+  become: yes
+
+- name: "[{{ item }}] When reloading the service..."
+  include_tasks: actions/reload_service.yml
+  vars:
+    - action_prefix: test_1
+
+- name: "[{{ item }}] Validate that service was reloaded"
+  assert:
+    that:
+      - test_1_launchd_reload_result is success
+      - test_1_launchd_reload_result.changed
+      - test_1_launchd_reload_result.status.previous_pid == test_1_launchd_start_result.status.current_pid
+      - test_1_launchd_reload_result.status.previous_state == test_1_launchd_start_result.status.current_state
+      - test_1_launchd_reload_result.status.current_state == 'stopped'
+      - test_1_launchd_reload_result.status.current_pid == '-'
+
+- name: "[{{ item }}] Start the service with the new configuration..."
+  include_tasks: actions/start_service.yml
+
+- name: "[{{ item }}] The started service should run on port 21212"
+  wait_for:
+    port: 21213
+    delay: 5
+    timeout: 10

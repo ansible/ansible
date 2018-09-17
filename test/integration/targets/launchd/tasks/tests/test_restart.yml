@@ -1,0 +1,24 @@
+---
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}] Given a started service..."
+  include_tasks: actions/start_service.yml
+  vars:
+    action_prefix: test_1
+
+- name: "[{{ item }}] When restarting the service..."
+  include_tasks: actions/restart_service.yml
+  vars:
+    action_prefix: test_1
+
+- name: "[{{ item }}] Validate that service was restarted"
+  assert:
+    that:
+      - test_1_launchd_restart_result is success
+      - test_1_launchd_restart_result.changed
+      - test_1_launchd_restart_result.status.previous_pid == test_1_launchd_start_result.status.current_pid
+      - test_1_launchd_restart_result.status.previous_state == test_1_launchd_start_result.status.current_state
+      - test_1_launchd_restart_result.status.current_state == 'started'
+      - test_1_launchd_restart_result.status.current_pid != '-'
+      - test_1_launchd_restart_result.status.status_code == '0'

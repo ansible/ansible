@@ -1,0 +1,8 @@
+---
+
+- name: "Running {{ item }}"
+  block:
+    - include_tasks: setup.yml
+    - include_tasks: "tests/{{ item }}.yml"
+  always:
+    - include_tasks: teardown.yml

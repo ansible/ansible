@@ -1,0 +1,10 @@
+---
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}][action] unload service"
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: unloaded
+  become: yes
+  register: "{{ action_prefix | default('test') }}_launchd_unloaded_result"

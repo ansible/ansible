@@ -1,0 +1,10 @@
+---
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}][action] restart service"
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: restarted
+  become: yes
+  register: "{{ action_prefix | default('test') }}_launchd_restart_result"

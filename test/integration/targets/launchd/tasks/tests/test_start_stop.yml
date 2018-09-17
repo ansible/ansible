@@ -1,0 +1,85 @@
+---
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}] Given a started service..."
+  include_tasks: actions/start_service.yml
+  vars:
+    action_prefix: test_1
+
+- name: "[{{ item }}] Validate that service was started"
+  assert:
+    that:
+      - test_1_launchd_start_result is success
+      - test_1_launchd_start_result.changed
+      - test_1_launchd_start_result.status.previous_pid == '-'
+      - test_1_launchd_start_result.status.previous_state == 'unloaded'
+      - test_1_launchd_start_result.status.current_state == 'started'
+      - test_1_launchd_start_result.status.current_pid != '-'
+      - test_1_launchd_start_result.status.status_code == '0'
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}] Given a stopped service..."
+  include_tasks: actions/stop_service.yml
+  vars:
+    action_prefix: test_2
+
+- name: "[{{ item }}] Validate that service was stopped after it was started"
+  assert:
+    that:
+      - test_2_launchd_stop_result is success
+      - test_2_launchd_stop_result.changed
+      - test_2_launchd_stop_result.status.previous_pid == test_1_launchd_start_result.status.current_pid
+      - test_2_launchd_stop_result.status.previous_state == test_1_launchd_start_result.status.current_state
+      - test_2_launchd_stop_result.status.current_state == 'stopped'
+      - test_2_launchd_stop_result.status.current_pid == '-'
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}] Given a stopped service..."
+  include_tasks: actions/stop_service.yml
+  vars:
+    action_prefix: test_3
+
+- name: "[{{ item }}] Validate that service can be stopped after being already stopped"
+  assert:
+    that:
+      - test_3_launchd_stop_result is success
+      - not test_3_launchd_stop_result.changed
+      - test_3_launchd_stop_result.status.previous_pid == '-'
+      - test_3_launchd_stop_result.status.previous_state == 'stopped'
+      - test_3_launchd_stop_result.status.current_state == 'stopped'
+      - test_3_launchd_stop_result.status.current_pid == '-'
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}] Given a started service..."
+  include_tasks: actions/start_service.yml
+  vars:
+     action_prefix: test_4
+
+- name: "[{{ item }}] Validate that service was started..."
+  assert:
+    that:
+      - test_4_launchd_start_result is success
+      - test_4_launchd_start_result.changed
+      - test_4_launchd_start_result.status.previous_pid == '-'
+      - test_4_launchd_start_result.status.previous_state == 'stopped'
+      - test_4_launchd_start_result.status.current_state == 'started'
+      - test_4_launchd_start_result.status.current_pid != '-'
+      - test_4_launchd_start_result.status.status_code == '0'
+
+- name: "[{{ item }}] And when service is started again..."
+  include_tasks: actions/start_service.yml
+  vars:
+     action_prefix: test_5
+
+- name: "[{{ item }}] Validate that service is still in the same state as before"
+  assert:
+    that:
+      - test_5_launchd_start_result is success
+      - not test_5_launchd_start_result.changed
+      - test_5_launchd_start_result.status.previous_pid == test_4_launchd_start_result.status.current_pid
+      - test_5_launchd_start_result.status.previous_state == test_4_launchd_start_result.status.current_state
+      - test_5_launchd_start_result.status.status_code == '0'

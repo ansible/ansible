@@ -1,0 +1,4 @@
+---
+
+launchd_service_name: launchd.test.service
+launchd_plist_location: /Library/LaunchDaemons/{{ launchd_service_name }}.plist

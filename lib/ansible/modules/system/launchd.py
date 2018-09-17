@@ -277,7 +277,7 @@ class LaunchCtlTask(object):
                     # negative of the signal which killed the job.  Thus,
                     # "-15" would indicate that the job was terminated with
                     # SIGTERM.
-                    if last_exit_code not in ['0', '-2', '-3', '-9', '-15' ]:
+                    if last_exit_code not in ['0', '-2', '-3', '-9', '-15']:
                         # Something strange happened and we have no clue in
                         # which state the service is now. Therefore we mark
                         # the service state as UNKNOWN.

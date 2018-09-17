@@ -1,0 +1,21 @@
+---
+
+- name: "[{{ item }}] Unload service"
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: unloaded
+  become: yes
+  register: launchd_unloaded_result
+
+- name: "[{{ item }}] Validation"
+  assert:
+    that:
+      - launchd_unloaded_result is success
+      - launchd_unloaded_result.status.current_state == 'unloaded'
+      - launchd_unloaded_result.status.current_pid == '-'
+
+- name: "[{{ item }}] Remove test service configuration"
+  file:
+    path: "{{ launchd_plist_location }}"
+    state: absent
+  become: yes

@@ -1,0 +1,33 @@
+---
+
+# -----------------------------------------------------------
+
+- name: "[{{ item }}] Given a started service with RunAtLoad set to true..."
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: started
+    enabled: yes
+  become: yes
+  register: test_1_launchd_start_result
+
+- name: "[{{ item }}] Validate that service was started"
+  assert:
+    that:
+      - test_1_launchd_start_result is success
+      - test_1_launchd_start_result.changed
+      - test_1_launchd_start_result.status.previous_pid == '-'
+      - test_1_launchd_start_result.status.previous_state == 'unloaded'
+      - test_1_launchd_start_result.status.current_state == 'started'
+      - test_1_launchd_start_result.status.current_pid != '-'
+      - test_1_launchd_start_result.status.status_code == '0'
+
+- name: "[{{ item }}] Validate that RunAtLoad is set to true"
+  replace:
+    path: "{{ launchd_plist_location }}"
+    regexp: |
+      \s+<key>RunAtLoad</key>
+      \s+<true/>
+    replace: found_run_at_load
+  check_mode: yes
+  register: contents_would_have
+  failed_when: not contents_would_have is changed

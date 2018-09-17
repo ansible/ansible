@@ -1,0 +1,7 @@
+---
+
+- name: "[{{ item }}] Deploy test service configuration"
+  template:
+    src: "{{ launchd_service_name }}.plist.j2"
+    dest: "{{ launchd_plist_location }}"
+  become: yes
