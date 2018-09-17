@@ -275,6 +275,29 @@ def delegate_docker(args, exclude, require, integration_targets):
             if isinstance(args, UnitsConfig) and not args.python:
                 cmd += ['--python', 'default']
 
+            # run unit tests unprivileged to prevent stray writes to the source tree
+            if isinstance(args, UnitsConfig):
+                writable_dirs = [
+                    '/root/ansible/lib/ansible.egg-info',
+                    '/root/ansible/.pytest_cache',
+                ]
+
+                docker_exec(args, test_id, ['mkdir', '-p'] + writable_dirs)
+                docker_exec(args, test_id, ['chmod', '777'] + writable_dirs)
+
+                docker_exec(args, test_id, ['find', '/root/ansible/test/results/', '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
+
+                docker_exec(args, test_id, ['chmod', '755', '/root'])
+                docker_exec(args, test_id, ['chmod', '644', '/root/ansible/%s' % args.metadata_path])
+
+                docker_exec(args, test_id, ['useradd', 'pytest', '--create-home'])
+
+                docker_exec(args, test_id, cmd + ['--requirements-mode', 'only'], options=cmd_options)
+
+                cmd += ['--requirements-mode', 'skip']
+
+                cmd_options += ['--user', 'pytest']
+
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
             finally:

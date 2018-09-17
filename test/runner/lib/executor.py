@@ -12,6 +12,7 @@ import time
 import textwrap
 import functools
 import pipes
+import sys
 import hashlib
 
 import lib.pytar
@@ -1146,7 +1147,8 @@ def command_units(args):
         if args.python and version != args.python_version:
             continue
 
-        install_command_requirements(args, version)
+        if args.requirements_mode != 'skip':
+            install_command_requirements(args, version)
 
         env = ansible_environment(args)
 
@@ -1172,6 +1174,9 @@ def command_units(args):
         cmd += [target.path for target in include]
 
         version_commands.append((version, cmd, env))
+
+    if args.requirements_mode == 'only':
+        sys.exit()
 
     for version, command, env in version_commands:
         display.info('Unit test with Python %s' % version)
