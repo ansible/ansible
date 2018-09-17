@@ -42,7 +42,7 @@ options:
   be_name:
     description:
       - creates a new boot environment with the given name
-    version_added: "2.7"
+    version_added: "2.8"
     type: str
 '''
 EXAMPLES = '''
