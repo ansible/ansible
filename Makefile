@@ -47,13 +47,13 @@ CODENAME := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py 
 RELEASE ?= 1
 
 # Get the branch information from git
-ifneq ($(shell which git),)
+ifneq ($(shell git log),)
 GIT_DATE := $(shell git log -n 1 --format="%ai")
 GIT_HASH := $(shell git log -n 1 --format="%h")
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.\/]//g')
 GITINFO = .$(GIT_HASH).$(GIT_BRANCH)
 else
-GITINFO = ""
+GITINFO =
 endif
 
 ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
