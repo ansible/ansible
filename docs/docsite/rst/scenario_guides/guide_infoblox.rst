@@ -48,7 +48,7 @@ See :ref:`lookup plugins <lookup_plugins>` for more details. You must run these 
 Retrieving all network views
 ----------------------------
 
-To retrieve all network views and save them in a variable, use the :ref:`set_fact <set_fact>` module with the :ref:`nios <nios_lookup>` lookup plugin:
+To retrieve all network views and save them in a variable, use the :ref:`set_fact <set_fact_module>` module with the :ref:`nios <nios_lookup>` lookup plugin:
 
 .. code-block:: yaml
 
