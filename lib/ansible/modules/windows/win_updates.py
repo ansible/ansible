@@ -49,6 +49,13 @@ options:
         - Tools
         - UpdateRollups
         - Updates
+    post_category_names:
+        description:
+        - A list of categories to check an update is in. This can be used to
+        confirm which product categories are applied. Category names here may
+        overlap with the 'category_names' option.
+        - Note: These categories are filtered after searching for updates, while
+        the list in 'category_names' is applied during the search for updates.
     reboot:
         description:
         - Ansible will automatically reboot the remote host if it is required

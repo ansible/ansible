@@ -12,6 +12,7 @@ $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $category_names = Get-AnsibleParam -obj $params -name "category_names" -type "list" -default @("CriticalUpdates", "SecurityUpdates", "UpdateRollups")
+$post_categories = Get-AnsibleParam -obj $params -name "post_category_names" -type "list" -default @()
 $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched"
 $blacklist = Get-AnsibleParam -obj $params -name "blacklist" -type "list"
@@ -60,6 +61,7 @@ $update_script_block = {
     Function Start-Updates {
         Param(
             $category_guids,
+            [string[]]$post_categories=@(),
             $log_path,
             $state,
             $blacklist,
@@ -184,11 +186,27 @@ $update_script_block = {
                 Write-DebugLog -msg "Skipping hidden update $($update_info.title)"
                 continue
             }
-        
-            Write-DebugLog -msg "Adding update $($update_info.id) - $($update_info.title)"
-            $updates_to_install.Add($update) > $null
-        
-            $result.updates[$update_info.id] = $update_info
+
+            $post_cat_matched = $False
+            If ($post_categories.Count -eq 0) {
+                # There are no additional categories to check
+                $post_cat_matched = $True
+            }
+
+            ForEach ($update_cat in $update.Categories) {
+                ForEach ($match_cat in $post_categories) {
+                    If ($update_cat.Name -Match $match_cat) {
+                        $post_cat_matched = $True
+                    }
+                }
+            }
+
+            If ($post_cat_matched) {
+                Write-DebugLog -msg "Adding update $($update_info.id) - $($update_info.title)"
+                $updates_to_install.Add($update) > $null
+
+                $result.updates[$update_info.id] = $update_info
+            }
         }
         
         Write-DebugLog -msg "Calculating pre-install reboot requirement..."
@@ -390,6 +408,7 @@ Function Start-Natively($common_functions, $script) {
         $ps_pipeline.AddStatement().AddScript($script) > $null
         $ps_pipeline.AddParameter("arguments", @{
             category_guids = $category_guids
+            post_categories = $post_categories
             log_path = $log_path
             state = $state
             blacklist = $blacklist
@@ -451,6 +470,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
         ArgumentList = @(
             @{
                 category_guids = $category_guids
+                post_categories = $post_categories
                 log_path = $log_path
                 state = $state
                 blacklist = $blacklist
