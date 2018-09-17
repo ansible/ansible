@@ -143,7 +143,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils._text import to_native
-from ansible.module_utils.profitbricks import uuid_match, wait_for_completion
+from ansible.module_utils.cloud.profitbricks.profitbricks import uuid_match, wait_for_completion
 
 
 def create_nic(module, profitbricks):

@@ -102,7 +102,7 @@ except ImportError:
     HAS_PB_SDK = False
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.profitbricks import uuid_match, wait_for_completion
+from ansible.module_utils.cloud.profitbricks.profitbricks import uuid_match, wait_for_completion
 
 
 def attach_volume(module, profitbricks):
