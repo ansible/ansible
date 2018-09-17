@@ -116,7 +116,6 @@ class InventoryModule(BaseInventoryPlugin):
     NAME = 'netbox'
 
     def _fetch_information(self, url):
-
         response = open_url(url, headers=self.headers, timeout=self.timeout)
 
         try:
@@ -129,22 +128,15 @@ class InventoryModule(BaseInventoryPlugin):
         except ValueError:
             raise AnsibleError("Incorrect JSON payload: %s" % raw_data)
 
-    def get_resource_list(self, api_url, api_token=None, specific_host=None):
+    def get_resource_list(self, api_url):
         """Retrieves resource list from netbox API.
          Returns:
             A list of all resource from netbox API.
         """
         if not api_url:
             raise AnsibleError("Please check API URL in script configuration file.")
-        api_url_headers = {}
-        api_url_params = {}
-        if api_token:
-            api_url_headers.update({"Authorization": "Token %s" % api_token})
-        if specific_host:
-            api_url_params.update({"name": specific_host})
 
         hosts_list = []
-
         # Pagination.
         while api_url:
             self.display.v("Fetching: " + api_url)
@@ -342,7 +334,7 @@ class InventoryModule(BaseInventoryPlugin):
         self.api_endpoint = self.get_option("api_endpoint")
         self.timeout = self.get_option("timeout")
         self.headers = {
-            'Authorization': "Bearer %s" % token,
+            'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
             'Content-type': 'application/json'
         }
