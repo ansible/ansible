@@ -384,7 +384,7 @@ if ($configuration -eq "server")
 
     
     $PropertiesToConfirm | Foreach-Object {
-        if ($(Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value))
+        if ($(Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value @shared_params))
         {
             $changed = $true
             $messages += $_.Name
@@ -423,19 +423,19 @@ elseif ( $configuration -eq "siteDefaults"){
         })
 
         $PropertiesToConfirm | Foreach-Object {
-            if (Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value)
+            if (Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value  @shared_params)
             {
                 $changed = $true
                 $messages += $_.Name
             }
         }
 
-        if ($(Confirm-CustomFields -CustomFields $log_custom_fields -ConfigurationPath $ConfigurationPath)) {
+        if ($(Confirm-CustomFields -CustomFields $log_custom_fields -ConfigurationPath $ConfigurationPath @shared_params)) {
             $changed = $true
             $messages += "Custom Fields"
         }
 
-        if ($(Confirm-ExtFileFlags -ExtFileFlags $log_ext_file_flags -ConfigurationPath $ConfigurationPath)) {
+        if ($(Confirm-ExtFileFlags -ExtFileFlags $log_ext_file_flags -ConfigurationPath $ConfigurationPath @shared_params)) {
             $changed = $true
             $messages += "Built-In Fields"
         }
@@ -476,19 +476,19 @@ elseif ($configuration -eq "site")
         })
 
         $PropertiesToConfirm | Foreach-Object {
-            if (Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value)
+            if (Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value  @shared_params)
             {
                 $changed = $true
                 $messages += $_.Name
             }
         }
 
-        if ($(Confirm-CustomFields -CustomFields $log_custom_fields -ConfigurationPath $ConfigurationPath)) {
+        if ($(Confirm-CustomFields -CustomFields $log_custom_fields -ConfigurationPath $ConfigurationPath @shared_params)) {
             $changed = $true
             $messages += "Custom Fields"
         }
 
-        if ($(Confirm-ExtFileFlags -ExtFileFlags $log_ext_file_flags -ConfigurationPath $ConfigurationPath)) {
+        if ($(Confirm-ExtFileFlags -ExtFileFlags $log_ext_file_flags -ConfigurationPath $ConfigurationPath @shared_params)) {
             $changed = $true
             $messages += "Built-In Fields"
         }
