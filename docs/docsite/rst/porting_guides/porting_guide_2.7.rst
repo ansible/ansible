@@ -156,8 +156,6 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.11. Please update your playbooks accordingly.
 
-* ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
-* ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``na_cdot_aggregate`` use :ref:`na_ontap_aggregate <na_ontap_aggregate_module>` instead.
 * ``na_cdot_license`` use :ref:`na_ontap_license <na_ontap_license_module>` instead.
 * ``na_cdot_lun`` use :ref:`na_ontap_lun <na_ontap_lun_module>` instead.
@@ -194,10 +192,6 @@ Noteworthy module changes
   * ``days_of_week``, use ``monthlydow`` in a triggers entry instead
   * ``frequency``, use ``type``, in a triggers entry instead
   * ``time``, use ``start_boundary`` in a triggers entry instead
-
-* The ``foreman`` and ``katello`` modules have been deprecated in favor of a set of modules that are broken out per entity with better idempotency in mind.
-
-* The ``foreman`` and ``katello`` modules replacement is officially part of the Foreman Community and supported there.
 
 * The ``interface_name`` module option for ``na_ontap_net_vlan`` has been removed and should be removed from your playbooks
 
