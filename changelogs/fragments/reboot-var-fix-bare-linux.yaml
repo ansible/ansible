@@ -1,0 +1,2 @@
+bugfixes:
+  - reboot - use correct syntax for fetching a value from a dict and account for bare Linux systems (https://github.com/ansible/ansible/pull/45607#issuecomment-422403177)
