@@ -28,6 +28,7 @@
 
 import ssl
 import json
+import shlex
 
 from ast import literal_eval
 from ansible.module_utils._text import to_text
@@ -160,7 +161,7 @@ def to_api(command):
         'uninstall', 'unschedule', 'upgrade'
     ])
 
-    split_command = command.split()
+    split_command = shlex.split(command)
 
     verb_index = -1
     for i, word in enumerate(split_command):
