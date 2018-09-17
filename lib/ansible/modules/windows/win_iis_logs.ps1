@@ -298,7 +298,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $configuration = Get-AnsibleParam $params "configuration" -type "str" -default "server"
 $site_name = Get-AnsibleParam $params "site_name" -type "str" -default $null
-$log_directory = Get-AnsibleParam $params "log_directory" -type "path" -default $null
+$log_directory = Get-AnsibleParam $params "log_directory" -type "str" -default $null
 $site_log_format = Get-AnsibleParam $params "site_log_format" -type "str" -default $null
 $log_ext_file_flags = Get-AnsibleParam $params "log_ext_file_flags" -type "list" 
 $log_custom_fields = Get-AnsibleParam $params "log_custom_fields" -type "list"
@@ -323,6 +323,14 @@ if ($check_mode)
 if ($rotation_period -ne "MaxSize" -and $truncate_size -ne $null)
 {
     Add-Warning -obj $result -message "truncate_size is of no effect when rotation_period is not 'MaxSize'"
+}
+if ($null -ne $log_directory)
+{   
+    $ld = Get-AnsibleParam $params "log_directory" -type "path"
+    if (-not $(Test-Path $ld)) {
+        Add-Warning -obj $result -message "supplied path for log_directory ($log_directory) does not exist: $ld"
+    }
+    
 }
 
 
