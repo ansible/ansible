@@ -1,6 +1,5 @@
 main:
-  name: "test1_argspec"
-  description: "Argument spec for the 'test1' role"
+  description: "EXPECTED FAILURE Validate the argument spec for the 'test1' role"
   argument_spec:
     test1_choices:
       required: false

@@ -5,6 +5,8 @@
   vars:
     category: "Misc"
     argument_spec_data:
+      name: "the_arg_spec_data_for_validate_arg_specs_as_a_task"
+      description: "EXPECTED FAILURE Validating the arg spec"
       argument_spec:
         some_int:
           type: "int"
@@ -24,16 +26,22 @@
       some_str: "hunter42"
       some_choice: "medium"
   tasks:
-    - name: "test validate_arg_spec"
-      block:
-        - validate_arg_spec:
-            argument_spec: "{{ argument_spec_data }}"
-            provided_arguments: "{{ provided_arguments }}"
-            validate_args_context:
-              type: "standalone task"
-              name: "test stuff"
-              category: "{{ category }}"
-      rescue:
-        - name: show failed task result
-          debug:
-            var: ansible_failed_result
+    - name: "EXPECTED FAILURE test validate_arg_spec"
+      ignore_errors: true
+      validate_arg_spec:
+        argument_spec: "{{ argument_spec_data }}"
+        provided_arguments: "{{ provided_arguments }}"
+        validate_args_context:
+          type: "standalone task"
+          name: "test stuff"
+          category: "{{ category }}"
+      register: test_validate_arg_spec_result
+
+    - name: show failed task result
+      debug:
+        var: test_validate_arg_spec_result
+
+    - name: assert some_choice failed to decide
+      assert:
+        that:
+          - "'value of some_choice must be one of: large, gigantic, extra gigantic, got: medium' in test_validate_arg_spec_result.argument_errors"

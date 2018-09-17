@@ -43,7 +43,6 @@
         msg: "Jinja version: {{ jinja2_version.stdout }}"
 
     - name: include_role test1 since it has a arg_spec.yml
-      ignore_errors: true
       block:
         - include_role:
             name: test1
@@ -88,7 +87,7 @@
             force: -31.37
             selevel: ["blip", {}]
             group:
-          register: results_include_role_test1
+
       rescue:
 
         - name: replace py version specific types with generic names so tests work on py2 and py3
