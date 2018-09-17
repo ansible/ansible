@@ -293,6 +293,7 @@ owner_id:
 import json
 import re
 import itertools
+from copy import deepcopy
 from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
@@ -890,6 +891,7 @@ def get_diff_final_resource(client, module, security_group):
             final_rules = []
         else:
             final_rules = list(security_group_rules)
+        specified_rules = flatten_nested_targets(module, deepcopy(specified_rules))
         for rule in specified_rules:
             format_rule = {
                 'from_port': None, 'to_port': None, 'ip_protocol': rule.get('proto', 'tcp'),
@@ -900,7 +902,7 @@ def get_diff_final_resource(client, module, security_group):
                 format_rule.pop('from_port')
                 format_rule.pop('to_port')
             elif rule.get('ports'):
-                if rule.get('ports') and isinstance(rule.get('ports'), string_types):
+                if rule.get('ports') and (isinstance(rule['ports'], string_types) or isinstance(rule['ports'], int)):
                     rule['ports'] = [rule['ports']]
                 for port in rule.get('ports'):
                     if isinstance(port, string_types) and '-' in port:
@@ -916,7 +918,9 @@ def get_diff_final_resource(client, module, security_group):
                     if rule.get('rule_desc'):
                         format_rule[rule_key] = [{source_type: rule[source_type], 'description': rule['rule_desc']}]
                     else:
-                        format_rule[rule_key] = [{source_type: rule[source_type]}]
+                        if not isinstance(rule[source_type], list):
+                            rule[source_type] = [rule[source_type]]
+                        format_rule[rule_key] = [{source_type: target} for target in rule[source_type]]
             if rule.get('group_id') or rule.get('group_name'):
                 rule_sg = camel_dict_to_snake_dict(group_exists(client, module, module.params['vpc_id'], rule.get('group_id'), rule.get('group_name'))[0])
                 format_rule['user_id_group_pairs'] = [{
@@ -952,6 +956,27 @@ def get_diff_final_resource(client, module, security_group):
         'vpc_id': security_group.get('vpc_id', module.params['vpc_id'])}
 
 
+def flatten_nested_targets(module, rules):
+    def _flatten(targets):
+        for target in targets:
+            if isinstance(target, list):
+                for t in _flatten(target):
+                    yield t
+            elif isinstance(target, string_types):
+                yield target
+
+    if rules is not None:
+        for rule in rules:
+            target_list_type = None
+            if isinstance(rule.get('cidr_ip'), list):
+                target_list_type = 'cidr_ip'
+            elif isinstance(rule.get('cidr_ipv6'), list):
+                target_list_type = 'cidr_ipv6'
+            if target_list_type is not None:
+                rule[target_list_type] = list(_flatten(rule[target_list_type]))
+    return rules
+
+
 def main():
     argument_spec = dict(
         name=dict(),
@@ -977,8 +1002,10 @@ def main():
     group_id = module.params['group_id']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
-    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules'])))
-    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules_egress'])))
+    rules = flatten_nested_targets(module, deepcopy(module.params['rules']))
+    rules_egress = flatten_nested_targets(module, deepcopy(module.params['rules_egress']))
+    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(rules)))
+    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(rules_egress)))
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
