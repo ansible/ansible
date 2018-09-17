@@ -30,8 +30,6 @@ notes:
   - Tested with manager and above account privilege level
   - C(provision) facts were added in 2.2
   - This module is deprecated. Use the C(bigip_device_facts) module instead.
-requirements:
-  - bigsuds
 deprecated:
   removed_in: '2.11'
   alternative: bigip_device_facts
@@ -39,6 +37,8 @@ deprecated:
     The bigip_facts module relies on SOAP to communicate with the BIG-IP,
     and has a large amount of code that does not conform to existing F5 standards.
     The M(bigip_device_facts) module is easier to maintain and use.
+requirements:
+  - bigsuds
 options:
   session:
     description:
@@ -95,7 +95,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
-from ansible.module_utils.six.moves import map, zip
+from ansible.module_utils.six.moves import zip
 
 try:
     from library.module_utils.network.f5.legacy import bigip_api, bigsuds_found

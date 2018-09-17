@@ -71,26 +71,23 @@ RETURN = r'''
 '''
 
 import time
+import ssl
 
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
@@ -188,7 +185,7 @@ class ModuleParameters(Parameters):
         image = self.read_image_from_device(type='image')
         if image:
             return image
-        image = self.read_hotfix_from_device(type='hotfix')
+        image = self.read_image_from_device(type='hotfix')
         if image:
             return image
         return None
@@ -206,11 +203,8 @@ class ModuleParameters(Parameters):
         except ValueError:
             return None
 
-        if 'code' in response and response['code'] == 400:
-            if 'message' in response:
-                return None
-            else:
-                return None
+        if 'code' in response and response['code'] in [400, 404]:
+            return None
         return response
 
 
@@ -419,6 +413,8 @@ class ModuleManager(object):
             try:
                 self.client.reconnect()
                 volume = self.read_volume_from_device()
+                if volume is None:
+                    continue
                 if 'active' in volume and volume['active'] is True:
                     break
             except F5ModuleError:
@@ -440,6 +436,9 @@ class ModuleManager(object):
         while True:
             time.sleep(10)
             volume = self.read_volume_from_device()
+            if volume is None or 'status' not in volume:
+                self.client.reconnect()
+                continue
             if volume['status'] == 'complete':
                 break
             elif volume['status'] == 'failed':
@@ -451,11 +450,15 @@ class ModuleManager(object):
             self.client.provider['server_port'],
             self.want.volume
         )
-        resp = self.client.api.get(uri)
         try:
+            resp = self.client.api.get(uri)
             response = resp.json()
         except ValueError as ex:
             raise F5ModuleError(str(ex))
+        except ssl.SSLError:
+            # Suggests BIG-IP is still in the middle of restarting itself or
+            # restjavad is restarting.
+            return None
 
         if 'code' in response and response['code'] == 400:
             if 'message' in response:
@@ -493,8 +496,10 @@ def main():
         client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         exit_json(module, results, client)
     except F5ModuleError as ex:
+        cleanup_tokens(client)
         fail_json(module, ex, client)
 
 

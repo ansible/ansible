@@ -461,11 +461,21 @@ def main():
                 checksum_url = checksum
                 # download checksum file to checksum_tmpsrc
                 checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
-                lines = [line.rstrip('\n') for line in open(checksum_tmpsrc)]
-                os.remove(checksum_tmpsrc)
+                with open(checksum_tmpsrc) as f:
+                    lines = [line.rstrip('\n') for line in f]
                 lines = dict(s.split(None, 1) for s in lines)
                 filename = url_filename(url)
-                [checksum] = (k for (k, v) in lines.items() if v == filename)
+
+                # Look through each line in the checksum file for a hash corresponding to
+                # the filename in the url, returning the first hash that is found.
+                for cksum in (s for (s, f) in lines.items() if f.strip('./') == filename):
+                    checksum = cksum
+                    break
+                else:
+                    checksum = None
+
+                if checksum is None:
+                    module.fail_json("Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
             # Remove any non-alphanumeric characters, including the infamous
             # Unicode zero-width space
             checksum = re.sub(r'\W+', '', checksum).lower()
@@ -482,18 +492,20 @@ def main():
         if not force and checksum != '':
             destination_checksum = module.digest_from_file(dest, algorithm)
 
-            if checksum == destination_checksum:
-                # Not forcing redownload, unless checksum does not match
-                # allow file attribute changes
-                module.params['path'] = dest
-                file_args = module.load_file_common_arguments(module.params)
-                file_args['path'] = dest
-                result['changed'] = module.set_fs_attributes_if_different(file_args, False)
-                if result['changed']:
-                    module.exit_json(msg="file already exists but file attributes changed", **result)
-                module.exit_json(msg="file already exists", **result)
+            if checksum != destination_checksum:
+                checksum_mismatch = True
 
-            checksum_mismatch = True
+        # Not forcing redownload, unless checksum does not match
+        if not force and not checksum_mismatch:
+            # Not forcing redownload, unless checksum does not match
+            # allow file attribute changes
+            module.params['path'] = dest
+            file_args = module.load_file_common_arguments(module.params)
+            file_args['path'] = dest
+            result['changed'] = module.set_fs_attributes_if_different(file_args, False)
+            if result['changed']:
+                module.exit_json(msg="file already exists but file attributes changed", **result)
+            module.exit_json(msg="file already exists", **result)
 
         # If the file already exists, prepare the last modified time for the
         # request.

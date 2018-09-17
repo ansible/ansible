@@ -1,8 +1,8 @@
 .. _developing_modules_general_windows:
 
-**********************************************
-Windows Ansible module development walkthrough
-**********************************************
+**************************************
+Windows module development walkthrough
+**************************************
 
 In this section, we will walk through developing, testing, and debugging an
 Ansible Windows module.
@@ -12,7 +12,8 @@ Windows host, this guide differs from the usual development walkthrough guide.
 
 What's covered in this section:
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 
 Windows environment setup

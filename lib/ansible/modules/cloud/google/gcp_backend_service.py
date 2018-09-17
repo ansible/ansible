@@ -86,7 +86,7 @@ EXAMPLES = '''
     backends:
     - instance_group: managed_instance_group_1
     healthchecks:
-    - name: healthcheck_name_for_backend_service
+    - healthcheck_name_for_backend_service
     port_name: myhttpport
     state: present
 
@@ -104,7 +104,7 @@ EXAMPLES = '''
       max_utilization: 0.5
       max_rate: 4
     healthchecks:
-    - name: healthcheck_name_for_backend_service
+    - healthcheck_name_for_backend_service
     port_name: myhttpport
     state: present
     timeout: 60

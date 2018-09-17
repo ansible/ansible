@@ -53,8 +53,8 @@ ILLEGAL_END_CHARS = [
 ]
 
 
-def check_path(path, dir=False):
-    type_name = 'directory' if dir else 'file'
+def check_path(path, is_dir=False):
+    type_name = 'directory' if is_dir else 'file'
     parent, file_name = os.path.split(path)
     name, ext = os.path.splitext(file_name)
 
@@ -85,10 +85,10 @@ def main():
             continue
 
         for dir_name in dirs:
-            check_path(os.path.join(root, dir_name), dir=True)
+            check_path(os.path.join(root, dir_name), is_dir=True)
 
         for file_name in files:
-            check_path(os.path.join(root, file_name), dir=False)
+            check_path(os.path.join(root, file_name), is_dir=False)
 
 
 if __name__ == '__main__':

@@ -165,7 +165,6 @@ try:
     from library.module_utils.compat.ipaddress import ip_interface
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import is_valid_ip_interface
-    from library.module_utils.network.f5.ipaddress import is_valid_ip_network
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -182,7 +181,6 @@ except ImportError:
     from ansible.module_utils.compat.ipaddress import ip_interface
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip_interface
-    from ansible.module_utils.network.f5.ipaddress import is_valid_ip_network
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:

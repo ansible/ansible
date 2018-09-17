@@ -3,6 +3,7 @@ Setting up a Windows Host
 This document discusses the setup that is required before Ansible can communicate with a Microsoft Windows host.
 
 .. contents:: Topics
+   :local:
 
 Host Requirements
 `````````````````

@@ -987,7 +987,7 @@ $exec_wrapper = {
 
     $output = $entrypoint.Run($payload)
     # base64 encode the output so the non-ascii characters are preserved
-    Write-Output ([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Write-Output $output))))
+    Write-Output ([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Write-Output ($output | Out-String)))))
 } # end exec_wrapper
 
 Function Dump-Error ($excep, $msg=$null) {

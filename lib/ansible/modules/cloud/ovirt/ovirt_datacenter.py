@@ -18,6 +18,10 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage data centers in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the datacenter to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the data center to manage."
@@ -77,6 +81,11 @@ EXAMPLES = '''
 - ovirt_datacenter:
     state: absent
     name: mydatacenter
+
+# Change Datacenter Name
+- ovirt_datacenter:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_datacenter_name"
 '''
 
 RETURN = '''
@@ -140,6 +149,7 @@ class DatacentersModule(BaseModule):
     def build_entity(self):
         return otypes.DataCenter(
             name=self._module.params['name'],
+            id=self._module.params['id'],
             comment=self._module.params['comment'],
             description=self._module.params['description'],
             mac_pool=otypes.MacPool(
@@ -162,6 +172,7 @@ class DatacentersModule(BaseModule):
             equal(getattr(self._get_mac_pool(), 'id', None), getattr(entity.mac_pool, 'id', None)) and
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('description'), entity.description) and
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('quota_mode'), str(entity.quota_mode)) and
             equal(self._module.params.get('local'), entity.local) and
             equal(minor, self.__get_minor(entity.version)) and
@@ -178,6 +189,7 @@ def main():
         name=dict(default=None, required=True),
         description=dict(default=None),
         local=dict(type='bool'),
+        id=dict(default=None),
         compatibility_version=dict(default=None),
         quota_mode=dict(choices=['disabled', 'audit', 'enabled']),
         comment=dict(default=None),

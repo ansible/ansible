@@ -184,7 +184,6 @@ qinq_ethertype:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 
 try:
     from library.module_utils.network.f5.bigip import HAS_F5SDK
@@ -192,8 +191,8 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.compare import cmp_simple_list
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -204,8 +203,8 @@ except ImportError:
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.compare import cmp_simple_list
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -364,16 +363,8 @@ class Difference(object):
 
     @property
     def interfaces(self):
-        if self.want.interfaces is None:
-            return None
-        if self.have.interfaces is None and self.want.interfaces == '':
-            return None
-        if self.have.interfaces is not None and self.want.interfaces == '':
-            return []
-        if self.have.interfaces is None:
-            return self.want.interfaces
-        if set(self.want.interfaces) != set(self.have.interfaces):
-            return self.want.interfaces
+        result = cmp_simple_list(self.want.interfaces, self.have.interfaces)
+        return result
 
 
 class ModuleManager(object):

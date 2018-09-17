@@ -24,9 +24,9 @@ options:
   port:
     type: int
     description:
-      - Specifies the port on the remote device to listening for connections
+      - Specifies the port on the remote device that listens for connections
         when establishing the HTTP(S) connection.
-        When unspecified, will pick 80 or 443 based on the value of use_ssl
+      - When unspecified, will pick 80 or 443 based on the value of use_ssl.
     ini:
       - section: defaults
         key: remote_port
@@ -46,7 +46,7 @@ options:
       - The username used to authenticate to the remote device when the API
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
-      - Can be configured form the CLI via the C(--user) or C(-u) options
+      - Can be configured from the CLI via the C(--user) or C(-u) options.
     ini:
       - section: defaults
         key: remote_user
@@ -56,13 +56,15 @@ options:
       - name: ansible_user
   password:
     description:
-      - Secret used to authenticate
+      - Configures the user password used to authenticate to the remote device
+        when needed for the device API.
     vars:
       - name: ansible_password
       - name: ansible_httpapi_pass
   use_ssl:
+    type: boolean
     description:
-      - Whether to connect using SSL (HTTPS) or not (HTTP)
+      - Whether to connect using SSL (HTTPS) or not (HTTP).
     default: False
     vars:
       - name: ansible_httpapi_use_ssl
@@ -76,10 +78,10 @@ options:
   timeout:
     type: int
     description:
-      - Sets the connection time, in seconds, for the communicating with the
+      - Sets the connection time, in seconds, for communicating with the
         remote device.  This timeout is used as the default timeout value for
         commands when issuing a command to the network CLI.  If the command
-        does not return in timeout seconds, the an error is generated.
+        does not return in timeout seconds, an error is generated.
     default: 120
   become:
     type: boolean
@@ -89,12 +91,12 @@ options:
         transitioning from user mode to C(enable) mode in the CLI session.
         If become is set to True and the remote device does not support
         privilege escalation or the privilege has already been elevated, then
-        this option is silently ignored
-      - Can be configured form the CLI via the C(--become) or C(-b) options
+        this option is silently ignored.
+      - Can be configured from the CLI via the C(--become) or C(-b) options.
     default: False
     ini:
-      section: privilege_escalation
-      key: become
+      - section: privilege_escalation
+        key: become
     env:
       - name: ANSIBLE_BECOME
     vars:
@@ -106,8 +108,8 @@ options:
         C(enable) but could be defined as other values.
     default: sudo
     ini:
-      section: privilege_escalation
-      key: become_method
+      - section: privilege_escalation
+        key: become_method
     env:
       - name: ANSIBLE_BECOME_METHOD
     vars:
@@ -118,7 +120,7 @@ options:
       - Configures, in seconds, the amount of time to wait when trying to
         initially establish a persistent connection.  If this value expires
         before the connection to the remote device is completed, the connection
-        will fail
+        will fail.
     default: 30
     ini:
       - section: persistent_connection
@@ -131,13 +133,15 @@ options:
       - Configures, in seconds, the amount of time to wait for a command to
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
-        close
+        close.
     default: 10
     ini:
       - section: persistent_connection
         key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 
 from io import BytesIO
