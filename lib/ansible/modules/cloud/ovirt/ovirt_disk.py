@@ -150,7 +150,9 @@ options:
         description:
             - "When the hypervisor name is specified the newly created disk or
                an existing disk will refresh its information about the
-               underlying storage. This oprion is only valid for passthrough
+               underlying storage( Disk size, Serial, Product ID, Vendor ID ...)
+               The specified host will be used for garherting the storage
+               related information. This option is only valid for passthrough
                disks. This option require at least the logical_unit.id to be
                specified"
         version_added: "2.8"
@@ -599,8 +601,8 @@ def main():
     # an existing disk if already available inthe environment.
     if host and lun.get("id") is None:
         module.fail_json(
-            msg="Can not use parameter host ({0!s}) withouti "
-            "pecifying the logical_unit id".format(host)
+            msg="Can not use parameter host ({0!s}) without "
+            "specifying the logical_unit id".format(host)
         )
 
     if module._name == 'ovirt_disks':
@@ -713,9 +715,8 @@ def main():
             elif state == 'detached':
                 ret = disk_attachments_module.remove()
 
-        # When host is specified and the disk is not being removed refresh the
-        # information abou thte LUN.
-        host = module.params.get('host')
+        # When the host parameter is specified and the disk is not being
+        # removed, refresh the information about the LUN.
         if state != 'absent' and host:
             hosts_service = connection.system_service().hosts_service()
             hosts = hosts_service.list(search='name={0!s}'.format(host))
