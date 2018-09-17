@@ -47,7 +47,7 @@ options:
       - The storage availability zone assigned to the volume.
     default: null
     choices: [ "AUTO", "ZONE_1", "ZONE_2", "ZONE_3" ]
-    version_added: "2.6"
+    version_added: "2.8"
   datacenter:
     description:
       - The datacenter to provision this virtual machine.
@@ -76,7 +76,7 @@ options:
     required: false
     default: AUTO
     choices: [ "AUTO", "ZONE_1", "ZONE_2" ]
-    version_added: "2.6"
+    version_added: "2.8"
   volume_size:
     description:
       - The size in GB of the boot volume.
@@ -120,12 +120,12 @@ options:
     type: bool
     required: false
     default: false
-    version_added: "2.6"
+    version_added: "2.8"
   api_url:
     description:
       - The ProfitBricks API base URL.
     default: null
-    version_added: "2.6"
+    version_added: "2.8"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
@@ -171,9 +171,8 @@ author:
 
 EXAMPLES = '''
 
-# Provisioning example. This will create three servers and enumerate their names.
-
-- profitbricks:
+- name: Create three servers and enumerate their names.
+  profitbricks:
     datacenter: Tardis One
     name: web%02d.stackpointcloud.com
     cores: 4
@@ -185,9 +184,8 @@ EXAMPLES = '''
     count: 3
     assign_public_ip: true
 
-# Update Virtual machines
-
-- profitbricks:
+- name: Update Virtual machines
+  profitbricks:
     datacenter: Tardis One
     instance_ids:
       - web001.stackpointcloud.com
@@ -198,9 +196,8 @@ EXAMPLES = '''
     availability_zone: ZONE_1
     state: update
 
-# Removing Virtual machines
-
-- profitbricks:
+- name: Removing Virtual machines
+  profitbricks:
     datacenter: Tardis One
     instance_ids:
       - 'web001.stackpointcloud.com'
@@ -209,9 +206,8 @@ EXAMPLES = '''
     wait_timeout: 500
     state: absent
 
-# Starting Virtual Machines.
-
-- profitbricks:
+- name: Starting Virtual Machines.
+  profitbricks:
     datacenter: Tardis One
     instance_ids:
       - 'web001.stackpointcloud.com'
@@ -220,9 +216,8 @@ EXAMPLES = '''
     wait_timeout: 500
     state: running
 
-# Stopping Virtual Machines
-
-- profitbricks:
+- name: Stopping Virtual Machines
+  profitbricks:
     datacenter: Tardis One
     instance_ids:
       - 'web001.stackpointcloud.com'

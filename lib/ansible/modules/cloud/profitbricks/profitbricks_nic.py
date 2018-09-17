@@ -39,29 +39,29 @@ options:
       - Boolean value indicating if the private IP address has outbound access to the public internet.
     type: bool
     default: null
-    version_added: "2.6"
+    version_added: "2.8"
   dhcp:
     description:
       - Boolean value indicating if the NIC is using DHCP or not.
     type: bool
     default: null
-    version_added: "2.6"
+    version_added: "2.8"
   firewall_active:
     description:
       - Boolean value indicating if the firewall is active.
     type: bool
     default: null
-    version_added: "2.6"
+    version_added: "2.8"
   ips:
     description:
       - A list of IPs to be assigned to the NIC.
     default: null
-    version_added: "2.6"
+    version_added: "2.8"
   api_url:
     description:
       - The ProfitBricks API base URL.
     default: null
-    version_added: "2.6"
+    version_added: "2.8"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
@@ -101,16 +101,16 @@ author:
 
 EXAMPLES = '''
 
-# Create a NIC
-- profitbricks_nic:
+- name: Create a NIC
+  profitbricks_nic:
     datacenter: Tardis One
     server: node002
     lan: 2
     wait_timeout: 500
     state: present
 
-# Update a NIC
-- profitbricks_nic:
+- name: Update a NIC
+  profitbricks_nic:
     datacenter: Tardis One
     server: node002
     name: 7341c2454f
@@ -121,8 +121,8 @@ EXAMPLES = '''
     dhcp: false
     state: update
 
-# Remove a NIC
-- profitbricks_nic:
+- name: Remove a NIC
+  profitbricks_nic:
     datacenter: Tardis One
     server: node002
     name: 7341c2454f

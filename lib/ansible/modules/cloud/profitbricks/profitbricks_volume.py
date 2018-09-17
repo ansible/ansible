@@ -68,7 +68,7 @@ options:
       - The storage availability zone assigned to the volume.
     default: null
     choices: [ "AUTO", "ZONE_1", "ZONE_2", "ZONE_3" ]
-    version_added: "2.6"
+    version_added: "2.8"
   count:
     description:
       - The number of volumes you wish to create.
@@ -87,7 +87,7 @@ options:
     description:
       - The ProfitBricks API base URL.
     default: null
-    version_added: "2.6"
+    version_added: "2.8"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
@@ -127,9 +127,8 @@ author:
 
 EXAMPLES = '''
 
-# Create Multiple Volumes
-
-- profitbricks_volume:
+- name: Create Multiple Volumes
+  profitbricks_volume:
     datacenter: Tardis One
     name: vol%02d
     count: 5
@@ -137,9 +136,8 @@ EXAMPLES = '''
     wait_timeout: 500
     state: present
 
-# Update Volumes
-
-- profitbricks_volume:
+- name: Update Volumes
+  profitbricks_volume:
     datacenter: Tardis One
     instance_ids:
       - 'vol01'
@@ -149,9 +147,8 @@ EXAMPLES = '''
     wait_timeout: 500
     state: update
 
-# Remove Volumes
-
-- profitbricks_volume:
+- name: Remove Volumes
+  profitbricks_volume:
     datacenter: Tardis One
     instance_ids:
       - 'vol01'

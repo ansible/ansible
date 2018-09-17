@@ -19,7 +19,7 @@ description:
      - Allows you to attach or detach a volume from a ProfitBricks server. This module has a dependency on profitbricks >= 1.0.0
 version_added: "2.0"
 deprecated:
-    removed_in: "2.10"
+    removed_in: "2.12"
     alternative: Use M(profitbricks) instead.
     why: The module is redundant.
 options:
@@ -39,7 +39,7 @@ options:
     description:
       - The ProfitBricks API base URL.
     default: null
-    version_added: "2.6"
+    version_added: "2.8"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
