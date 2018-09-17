@@ -18,7 +18,7 @@ description:
   - Returns information about the load balancer.
   - Will be marked changed when called only if state is changed.
 short_description: Creates or destroys Amazon ELB.
-version_added: "1.5"
+version_added: "2.4"
 author:
   - "Jim Dalton (@jsdalton)"
 options:
