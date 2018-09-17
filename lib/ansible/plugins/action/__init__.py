@@ -1023,7 +1023,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         diff['src_binary'] = 1
                     else:
                         diff['after_header'] = source
-                        diff['after'] = src_contents
+                        diff['after'] = to_text(src_contents)
             else:
                 display.debug("source of file passed in")
                 diff['after_header'] = 'dynamically generated'
