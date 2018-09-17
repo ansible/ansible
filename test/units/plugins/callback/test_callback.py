@@ -175,9 +175,6 @@ class TestCallbackDumpResults(unittest.TestCase):
         self.assertTrue('LEFTIN' in json_out)
 
 
-# TODO: triggr the 'except UnicodeError' around _get_diff
-#       that try except orig appeared in 61d01f549f2143fd9adfa4ffae42f09d24649c26
-#       in 2013 so maybe a < py2.6 issue
 class TestCallbackDiff(unittest.TestCase):
 
     def setUp(self):
