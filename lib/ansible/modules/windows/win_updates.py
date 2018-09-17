@@ -56,6 +56,7 @@ options:
         overlap with the 'category_names' option.
         - Note: These categories are filtered after searching for updates, while
         the list in 'category_names' is applied during the search for updates.
+        version_added: '2.8'
     reboot:
         description:
         - Ansible will automatically reboot the remote host if it is required
@@ -198,6 +199,11 @@ updates:
             returned: always
             type: boolean
             sample: True
+        categories:
+            description: A list of category strings for this update
+            returned: always
+            type: list of strings
+            sameple: [ 'CriticalUpdate', 'Update', 'Windows' ]
         failure_hresult_code:
             description: The HRESULT code from a failed update
             returned: on install failure
