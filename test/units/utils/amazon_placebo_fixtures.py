@@ -63,7 +63,7 @@ def placeboify(request, monkeypatch):
 
     if not os.getenv('PLACEBO_RECORD'):
         if not os.path.isdir(recordings_path):
-            raise NotImplementedError
+            raise NotImplementedError('Missing Placebo recordings in directory: %s' % recordings_path)
     else:
         try:
             # make sure the directory for placebo test recordings is available
