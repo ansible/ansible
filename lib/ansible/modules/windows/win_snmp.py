@@ -1,7 +1,13 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2018, Ansible, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'michael@cassaniti.id.au'
+    'supported_by': 'community'
 }
 
 DOCUMENTATION = '''
@@ -9,6 +15,8 @@ DOCUMENTATION = '''
 module: win_snmp
 version_added: '2.8'
 short_description: Configures the Windows SNMP service
+author:
+    - Michael Cassaniti (@mcassaniti)
 description:
     - This module configures the Windows SNMP service.
 options:
@@ -27,7 +35,7 @@ options:
         - Whether this module should replace all existing values. The list of
           managers and communities will be maintained if C(replace=true) but no
           list is provided to replace the existing managers or communities.
-        type: boolean
+        type: bool
         default: false
 '''
 
@@ -42,4 +50,7 @@ EXAMPLES = '''
           managers:
             - 192.168.1.2
           replace: True
+'''
+
+RETURN = r'''
 '''
