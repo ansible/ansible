@@ -131,14 +131,10 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     - src: https://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
 
-    # from GitLab or other git-based scm
+    # from GitLab or other git-based scm, using git+ssh
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
-
-    # using git+ssh:// URI scheme
-    - src: git+ssh://git@github.com:vmindru/ansible.git
-      version: 0.1
 
 Installing multiple roles from multiple files
 =============================================
