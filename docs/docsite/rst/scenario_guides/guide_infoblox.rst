@@ -6,18 +6,14 @@
 
 .. contents:: Topics
 
-This guide describes how to use Ansible with the Infoblox Network Identity Operating System (NIOS).
+This guide describes how to use Ansible with the Infoblox Network Identity Operating System (NIOS). With Ansible integration, you can use Ansible playbooks to automate Infoblox Core Network Services for IP address management (IPAM), DNS, and inventory tracking.
 
-Introduction
-=============
-With Ansible integration, you can use Ansible playbooks to automate Infoblox Core Network Services for IP address management (IPAM), DNS, and inventory tracking.
+You can review simple example tasks in the documentation for any of the :ref:`NIOS modules <nios_net tools_modules>` or look at the `Use cases with modules`_ section for more elaborate examples. See the `Infoblox <https://www.infoblox.com/>`_ website for more information on the Infoblox product.
 
-See the `Infoblox <https://www.infoblox.com/>`_ website for more information on the Infoblox product.
-
-NOTE: You can retrieve most of the example playbooks used in this guide from the  `network-automation/infoblox_ansible <https://github.com/network-automation/infoblox_ansible>`_ GitHub repository.
+.. note:: You can retrieve most of the example playbooks used in this guide from the  `network-automation/infoblox_ansible <https://github.com/network-automation/infoblox_ansible>`_ GitHub repository.
 
 Prerequisites
--------------
+=============
 Before using Ansible ``nios`` modules with Infoblox, you must install the ``infoblox-client`` on your Ansible control node:
 
 .. code-block:: bash
@@ -27,9 +23,7 @@ Before using Ansible ``nios`` modules with Infoblox, you must install the ``info
 Credentials and authenticating
 ==============================
 
-To use Infoblox ``nios`` modules in playbooks, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/group_vars/nios.yml``.
-
-This is an example of this ``group_vars/nios.yml`` file. Replace these values with your Infoblox credentials:
+To use Infoblox ``nios`` modules in playbooks, you need to configure the credentials to access your Infoblox system.  The examples in this guide use credentials stored in ``<playbookdir>/group_vars/nios.yml``. Replace these values with your Infoblox credentials:
 
 .. code-block:: yaml
 
@@ -38,12 +32,6 @@ This is an example of this ``group_vars/nios.yml`` file. Replace these values wi
       host: 192.0.0.2
       username: admin
       password: ansible
-
-Module list
-============
-
-See :ref:`nios_net tools_modules` for a full list of NIOS modules for this release.
-Each module includes simple documented example tasks for how to use them. `Use cases with modules`_ expands on some of these example tasks.
 
 NIOS lookup plugins
 ===================
@@ -54,13 +42,13 @@ Ansible includes the following lookup plugins for NIOS:
 - :ref:`nios_next_ip <nios_next_ip_lookup>` Provides the next available IP address from a network. You'll see an example of this in `Creating a host record`_.
 - :ref:`nios_next_network <nios_next_network_lookup>` - Returns the next available network range for a network-container.
 
-.. note:: You must run these lookup plugins locally by specifying ``connection: local``.
+See :ref:`lookup plugins <lookup_plugins>` for more details. You must run these lookup plugins locally by specifying ``connection: local``.
 
 
 Retrieving all network views
 ----------------------------
 
-This example playbook uses the ``set_fact`` module with the ``nios`` lookup plugin to retrieve all the network views, which are then saved in the ``networkviews`` variable:
+To retrieve all network views and save them in a variable, use the :ref:`set_fact <set_fact>` module with the :ref:`nios <nios_lookup>` lookup plugin:
 
 .. code-block:: yaml
 
@@ -80,7 +68,7 @@ This example playbook uses the ``set_fact`` module with the ``nios`` lookup plug
 Retrieving a host record
 ------------------------
 
-This example playbook uses the ``set_fact`` module with the ``nios`` lookup plugin to retrieve the host records, and filters the result for a host called ``leaf01.ansible.com``, which is then saved in the ``host`` variable:
+To retrieve a set of host records, use the ``set_fact`` module with the ``nios`` lookup plugin and include a filter for the specific hosts you want to retrieve:
 
 .. code-block:: yaml
 
@@ -160,23 +148,19 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
     PLAY RECAP ******************************************************************************************
     localhost                  : ok=5    changed=0    unreachable=0    failed=0
 
-The output above shows the host record for ``leaf01.ansible.com`` and ``leaf02.ansible.com`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables which you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See :ref:`playbooks_variables` for more information on using Ansible variables.
-
-See the :ref:`nios <nios_lookup>` examples for more data options that you can retrieve.
+The output above shows the host record for ``leaf01.ansible.com`` and ``leaf02.ansible.com`` that were retrieved by the ``nios`` lookup plugin. This playbook saves the information in variables which you can use in other playbooks. This allows you to use Infoblox as a single source of truth to gather and use information that changes dynamically. See :ref:`playbooks_variables` for more information on using Ansible variables. See the :ref:`nios <nios_lookup>` examples for more data options that you can retrieve.
 
 You can access these playbooks at `Infoblox lookup playbooks <https://github.com/network-automation/infoblox_ansible/tree/master/lookup_playbooks>`_.
 
 Use cases with modules
 ======================
 
-You can use ``nios`` modules in tasks to simplify common Infoblox workflows.
-
-For these examples, you need to set up your NIOS credentials. See `Credentials and authenticating`_.
+You can use the ``nios`` modules in tasks to simplify common Infoblox workflows. Be sure to set up your `NIOS credentials <nios_credentials>`_ before following these examples.
 
 Configuring an IPv4 network
 ---------------------------
 
-The following example playbook uses the ``nios_network`` module to configure an IPv4 network:
+To configure an IPv4 network, use the :ref:`nios_network <nios_network_module>` module:
 
 .. code-block:: yaml
 
@@ -194,13 +178,12 @@ The following example playbook uses the ``nios_network`` module to configure an 
             state: present
             provider: "{{nios_provider}}"
 
-Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``group_vars/`` directory. You can find complete details on the ``nios_network`` module at :ref:`nios_network <nios_network_module>`.
-
+Notice the last parameter, ``provider``, uses the variable ``nios_provider`` defined in the ``group_vars/`` directory.
 
 Creating a host record
 ----------------------
 
-This example playbook builds on the newly-created IPv4 network to create a host record named `leaf03.ansible.com`:
+To create a host record named `leaf03.ansible.com` on the newly-created IPv4 network:
 
 .. code-block:: yaml
 
@@ -217,13 +200,12 @@ This example playbook builds on the newly-created IPv4 network to create a host 
             state: present
     provider: "{{nios_provider}}"
 
-Notice the IPv4 address in this example uses the ``nios_next_ip`` lookup plugin to find the next available IPv4 address on the network. You can find complete details on the ``nios_next_ip`` lookup plugin at :ref:`nios_next_ip <nios_next_ip_lookup>`.
-
+Notice the IPv4 address in this example uses the :ref:`nios_next_ip <nios_next_ip_lookup>` lookup plugin to find the next available IPv4 address on the network.
 
 Creating a forward DNS zone
 ---------------------------
 
-The following example playbook uses the ``nios_zone`` module to configure a forward DNS zone:
+To configure a forward DNS zone use, the ``nios_zone`` module:
 
 .. code-block:: yaml
 
@@ -241,7 +223,7 @@ The following example playbook uses the ``nios_zone`` module to configure a forw
 Creating a reverse DNS zone
 ---------------------------
 
-The following example playbook uses the ``nios_zone`` module to configure a reverse DNS zone:
+To configure a reverse DNS zone:
 
 .. code-block:: yaml
 
@@ -267,35 +249,25 @@ You can use the Infoblox dynamic inventory script to import your network node in
 
 To use the Infoblox dynamic inventory script:
 
-1. Download the ``infoblox.yaml`` file and save it in the ``/etc/ansible`` directory.
+#. Download the ``infoblox.yaml`` file and save it in the ``/etc/ansible`` directory.
 
-2. Modify the ``infoblox.yaml`` file with your NIOS credentials.
+#. Modify the ``infoblox.yaml`` file with your NIOS credentials.
 
-3. Download the ``infoblox.py`` file and save it in the ``/etc/ansible/hosts`` directory.
+#. Download the ``infoblox.py`` file and save it in the ``/etc/ansible/hosts`` directory.
 
-4. Change the permissions on the ``infoblox.py`` file to make the file an executable:
+#. Change the permissions on the ``infoblox.py`` file to make the file an executable:
 
 .. code-block:: bash
 
     $ sudo chmod +x /etc/ansible/hosts/infoblox.py
 
-5. Optionally, test the script:
-
-.. code-block:: bash
-
-   $  ./infoblox.py --list
-
-After a few minutes, you should see your Infoblox inventory in JSON format.
-
-You can explicitly use the Infoblox dynamic inventory script as follows:
+You can optionally use ``./infoblox.py --list`` to test the script. After a few minutes, you should see your Infoblox inventory in JSON format. You can explicitly use the Infoblox dynamic inventory script as follows:
 
 .. code-block:: bash
 
     $ ansible -i infoblox.py all -m ping
 
-You can also implicitly use the Infoblox dynamic inventory script by including it in your inventory directory (``etc/ansible/hosts`` by default).
-
-See :ref:`dynamic_inventory` for more details.
+You can also implicitly use the Infoblox dynamic inventory script by including it in your inventory directory (``etc/ansible/hosts`` by default). See :ref:`dynamic_inventory` for more details.
 
 .. seealso::
 
