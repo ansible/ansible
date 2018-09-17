@@ -213,8 +213,9 @@ def main():
             if not pool:
                 loadbalancer_id = None
                 if not (loadbalancer or listener):
-                    module.fail_json("either loadbalancer or listener must "
-                                     "be provided")
+                    module.fail_json(
+                        msg="either loadbalancer or listener must be provided"
+                    )
 
                 if loadbalancer:
                     lb = cloud.load_balancer.find_load_balancer(loadbalancer)
