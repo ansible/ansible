@@ -52,6 +52,24 @@ options:
       - Command to execute when the container starts.
         A command may be either a string or a list.
         Prior to version 2.4, strings were split on commas.
+  comparisons:
+    type: dict
+    description:
+      - Allows to specify how properties of existing containers are compared with
+        module options to decide whether the container should be recreated / updated
+        or not.
+      - Must be a dictionary specifying for an option one of the keys C(strict), C(ignore)
+        and C(allow_more_present).
+      - If C(strict) is specified, values are tested for equality, and changes always
+        result in updating or restarting. If C(ignore) is specified, changes are ignored.
+      - C(allow_more_present) is allowed only for lists, sets and dicts. If it is
+        specified for lists or sets, the container will only be updated or restarted if
+        the module option contains a value which is not present in the container's
+        options. If the option is specified for a dict, the container will only be updated
+        or restarted if the module option contains a key which isn't present in the
+        container's option, or if the value of a key present differs.
+      - See the examples for details.
+    version_added: "2.8"
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
@@ -587,6 +605,20 @@ EXAMPLES = '''
       - sys_time
     cap_drop:
       - all
+
+- name: Finer container restart/update control
+  docker_container:
+    name: test
+    image: ubuntu:18.04
+    env:
+      - arg1: true
+      - arg2: whatever
+    volumes:
+      - /tmp:/tmp
+    comparisons:
+      image: ignore   # don't restart containers with older versions of the image
+      env: strict   # we want precisely this environment
+      volumes: allow_more_present   # if there are more volumes, that's ok, as long as `/tmp:/tmp` is there
 '''
 
 RETURN = '''
@@ -2125,7 +2157,7 @@ class ContainerManager(DockerBaseClass):
 
 class AnsibleDockerClientContainer(AnsibleDockerClient):
 
-    def _setup_comparisons(self):
+    def _parse_comparisons(self):
         comparisons = {}
         comp_aliases = {}
         # Put in defaults
@@ -2168,6 +2200,26 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Process legacy ignore options
         if self.module.params['ignore_image']:
             comparisons['image']['comparison'] = 'ignore'
+        # Process options
+        if self.module.params.get('comparisons'):
+            comp_aliases_used = {}
+            for key, value in self.module.params.get('comparisons').items():
+                # Find main key
+                key_main = comp_aliases.get(key)
+                if key_main is None:
+                    self.fail("Unknown or invalid module option '%s' in comparisons dict!" % key)
+                if key_main in comp_aliases_used:
+                    self.fail("Both '%s' and '%s' (aliases of %s) are specified in comparisons dict!" % (key, comp_aliases_used[key_main], key_main))
+                comp_aliases_used[key_main] = key
+                # Check value and update accordingly
+                if value in ('strict', 'ignore'):
+                    comparisons[key_main]['comparison'] = value
+                elif value == 'allow_more_present':
+                    if comparisons[key_main]['type'] == 'value':
+                        self.fail("Option '%s' is a value and not a set/list/dict, so its comparison cannot be %s" % (key, value))
+                    comparisons[key_main]['comparison'] = value
+                else:
+                    self.fail("Unknown comparison mode '%s'!" % value)
         self.comparisons = comparisons
 
     def __init__(self, **kwargs):
@@ -2205,7 +2257,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
             self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
-        self._setup_comparisons()
+        self._parse_comparisons()
 
 
 def main():
@@ -2216,6 +2268,7 @@ def main():
         cap_drop=dict(type='list'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
+        comparisons=dict(type='dict'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
