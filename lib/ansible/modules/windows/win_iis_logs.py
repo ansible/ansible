@@ -29,7 +29,7 @@ options:
     description: The target directory for IIS Logs
     required: false
     default: null
-    type: string
+    type: str
   log_ext_file_flags:
     description:
       - "Built-In IIS Log fields to be included."

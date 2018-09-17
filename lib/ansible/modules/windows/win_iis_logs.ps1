@@ -266,7 +266,6 @@ if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
             $ValidParameters,
             $Parameters
         )
-        $str = ''
         $Parameters.Keys | Foreach-Object {
             if ($_ -notlike "_ansible*"){
                 if ($ValidParameters -notcontains $_) {
@@ -394,7 +393,7 @@ if ($configuration -eq "server")
     $PropertiesToConfirm | Foreach-Object {
         if ($(Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value @shared_params))
         {
-            $changed = $true
+            $script:changed = $true
             $messages += $_.Name
         }
     }
@@ -433,7 +432,7 @@ elseif ( $configuration -eq "siteDefaults"){
         $PropertiesToConfirm | Foreach-Object {
             if (Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value  @shared_params)
             {
-                $changed = $true
+                $script:changed = $true
                 $messages += $_.Name
             }
         }
@@ -486,7 +485,7 @@ elseif ($configuration -eq "site")
         $PropertiesToConfirm | Foreach-Object {
             if (Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value  @shared_params)
             {
-                $changed = $true
+                $script:changed = $true
                 $messages += $_.Name
             }
         }
