@@ -51,9 +51,6 @@ options:
         description:
             - A message to include with notifications for this monitor. Email notifications can be sent to specific users by using the same
               '@username' notation as events. Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'.
-    silenced:
-        description: ["Dictionary of scopes to timestamps or None. Each scope will be muted until the given POSIX timestamp or forever if the value is None. "]
-        default: ""
     notify_no_data:
         description: ["A boolean indicating whether this monitor will notify when data stops reporting.."]
         type: bool
@@ -105,6 +102,13 @@ options:
     id:
         description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]
         version_added: "2.3"
+    scope:
+        description: ["String of monitor's scope. The defined scope will be muted, or, if not defined, or defined as '*', all scopes will be muted."]
+        version_added: "2.7"
+    end:
+        description: ["String of POSIX timestamp. The defined scope/all scopes will be muted until the given POSIX, or forever if the value is not defined."]
+        version_added: "2.7"
+
 '''
 
 EXAMPLES = '''
@@ -125,11 +129,20 @@ EXAMPLES = '''
     api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
     app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
 
-# Mutes a monitor
+# Mutes a monitor on all the scopes
 - datadog_monitor:
     name: "Test monitor"
     state: "mute"
-    silenced: '{"*":None}'
+    scope: '*'
+    api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
+    app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
+
+# Mutes a monitor on a choosen scope until Friday, September 14, 2018 12:38:59 PM GMT+01:00
+- datadog_monitor:
+    name: "Test monitor"
+    state: "mute"
+    scope: 'healthcheckid:1aaf9740-aff8-4565-9980-703c8602e60c'
+    end: '1536925139'
     api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
     app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
 
@@ -163,7 +176,8 @@ def main():
             name=dict(required=True),
             query=dict(required=False),
             message=dict(required=False, default=None),
-            silenced=dict(required=False, default=None, type='dict'),
+            scope=dict(required=False, default="*"),
+            end=dict(required=False, default=None),
             notify_no_data=dict(required=False, default=False, type='bool'),
             no_data_timeframe=dict(required=False, default=None),
             timeout_h=dict(required=False, default=None),
@@ -272,7 +286,8 @@ def _update_monitor(module, monitor, options):
 
 def install_monitor(module):
     options = {
-        "silenced": module.params['silenced'],
+        "scope": module.params['scope'],
+        "end": module.params['end'],
         "notify_no_data": module.boolean(module.params['notify_no_data']),
         "no_data_timeframe": module.params['no_data_timeframe'],
         "timeout_h": module.params['timeout_h'],
@@ -314,13 +329,10 @@ def mute_monitor(module):
         module.fail_json(msg="Monitor %s not found!" % module.params['name'])
     elif monitor['options']['silenced']:
         module.fail_json(msg="Monitor is already muted. Datadog does not allow to modify muted alerts, consider unmuting it first.")
-    elif (module.params['silenced'] is not None and len(set(monitor['options']['silenced']) ^ set(module.params['silenced'])) == 0):
+    elif (module.params['scope'] is not None and len(set(monitor['options']['silenced']) ^ set(module.params['scope'])) == 0):
         module.exit_json(changed=False)
     try:
-        if module.params['silenced'] is None or module.params['silenced'] == "":
-            msg = api.Monitor.mute(id=monitor['id'])
-        else:
-            msg = api.Monitor.mute(id=monitor['id'], silenced=module.params['silenced'])
+        msg = api.Monitor.mute(id=monitor['id'], scope=module.params['scope'], end=module.params['end'])
         module.exit_json(changed=True, msg=msg)
     except Exception as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
@@ -333,7 +345,7 @@ def unmute_monitor(module):
     elif not monitor['options']['silenced']:
         module.exit_json(changed=False)
     try:
-        msg = api.Monitor.unmute(monitor['id'])
+        msg = api.Monitor.unmute(id=monitor['id'], scope=module.params['scope'])
         module.exit_json(changed=True, msg=msg)
     except Exception as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
