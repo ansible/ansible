@@ -265,8 +265,8 @@ class InventoryModule(BaseInventoryPlugin):
             self.display.warning("Warning query parameters %s not a dict with a single key." % x)
             return
 
-        k = x.keys()[0]
-        v = x.values()[0]
+        k = tuple(x.keys())[0]
+        v = tuple(x.values())[0]
 
         if not (k in ALLOWED_DEVICE_QUERY_PARAMETERS or k.startswith("cf_")):
             self.display.warning("Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS))
