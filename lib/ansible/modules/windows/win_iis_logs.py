@@ -46,27 +46,32 @@ author:
 
 EXAMPLES = r'''
 # Ensure IIS logs to E:\Logs, with all built-in properties, and also including the RequestHeader 'X-Forwarded-For' as a log property.
-  - name: Ensure IIS Logging is configured
+  - name: Ensure IIS Site defaults are correct
     win_iis_logs:
-      site_name: "System"
-      log_directory: "E:\\Logs"
+      configuration: siteDefaults # not available when central_log_file_mode is _not_ "Site"
+      site_log_format: "W3C"
+      log_directory: '%SystemDrive%\\inetpub\\logs\\LogFiles'
       use_local_time: true
-      log_ext_file_flags: all
-      log_custom_fields:
+      log_ext_file_flags: all # Only available if format is W3C
+      rotation_period: MaxSize
+      truncate_size: 8675309
+      log_custom_fields: # Only available if format is W3C
         - field_name: 'x-forwarded-for'
           source_type: 'RequestHeader'
           source_name:  'X-Forwarded-For'
           state: present
 
-# Rotate logs at truncation intervals
+# Configure server-wide parameters.
   - name: Ensure IIS Logging is configured
     win_iis_logs:
-        site_name: "System"
-        log_directory: '%SystemDrive%\inetpub\logs\LogFiles'
-        use_local_time: false
-        log_ext_file_flags: all
-        rotation_period: MaxSize
-        truncate_size: 8675309
+      configuration: server
+      central_log_file_mode: "Site" #Site, CentralBinary or CentralW3C are available
+      log_in_utf8: false # true / false.  Only available for configuration: server
+      log_directory: '%SystemDrive%\\inetpub\\logs\\LogFiles'
+      use_local_time: true
+      log_ext_file_flags: all # Only available if format is CentralW3C
+      rotation_period: MaxSize
+      truncate_size: 8675309
 
 '''
 
