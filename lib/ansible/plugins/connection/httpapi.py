@@ -69,6 +69,7 @@ options:
     vars:
       - name: ansible_httpapi_use_ssl
   validate_certs:
+    type: boolean
     version_added: '2.7'
     description:
       - Whether to validate SSL certificates
