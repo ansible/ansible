@@ -19,17 +19,26 @@ short_description: Manages IIS Log configuration
 description:
   - "Manages the IIS log configuration either per-site, or server wide"
 options:
+  configuration:
+    description:
+      - "This module supports configuring logging for the C(server), C(siteDefaults), or one C(site)"
+    required: true
+    default: server
   site_name:
     description:
       - "The name of the site for which logging should be configured."
-      - "Also accepted is 'System' for system-wide logging."
+      - "Only applies when C(configuration) is set to C(site).
     required: false
     default: 'System'
   log_directory:
-    description: The target directory for IIS Logs
+    description: The target directory for IIS Logs.
     required: false
     default: null
     type: str
+  site_log_format:
+    description:  Log file format.  Only applies when C(configuration) is C(site) or C(siteDefaults)
+    required: false
+    default: null
   log_ext_file_flags:
     description:
       - "Built-In IIS Log fields to be included."
@@ -38,7 +47,7 @@ options:
     required: false
   log_custom_fields:
     description:
-      - "Custom log fileds to be included."
+      - "Custom log fileds to be included.  Only applies when C(configuration) is C(site) or C(siteDefaults)"
       - "Objects in this list must have these properties:"
       - "field_name, source_type, source_name, state"
     type: list
@@ -47,6 +56,26 @@ options:
     description: Whether or not to use local time for IIS log rotation.
     required: false
     type: bool
+  rotation_period:
+    description: 
+      - "specifies log rotation period."
+      - "valid values include C(Hourly),C(Daily),C(Weekly),C(Monthly),C(MaxSize),C(Disabled)
+    required: false
+    default: null
+  truncate_size:
+    description: when C(rotation_period) is C(MaxSize), this specifies the size in bytes at which logs are rotated
+    required: false
+    default: null
+  central_log_file_mode:
+    description: 
+      - "when C(configuration) is C(server), this specifies the global logging configuration mechanism."
+      - "C(CentralBinary), C(CentralW3C), 
+    required: false
+    default: null
+  log_in_utf8:
+    description: specifies whether to log in UTF-8 mode C(true) or ANSI mode C(false)
+    required: false
+    default: null
 
 author:
   - Charles Crossan (@crossan007)
