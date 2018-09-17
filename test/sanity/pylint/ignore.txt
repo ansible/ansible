@@ -51,8 +51,8 @@ lib/ansible/modules/network/nxos/nxos_snapshot.py ansible-format-automatic-speci
 lib/ansible/modules/network/vyos/vyos_vlan.py ansible-format-automatic-specification
 lib/ansible/modules/notification/cisco_spark.py ansible-format-automatic-specification
 lib/ansible/modules/notification/logentries_msg.py ansible-format-automatic-specification
-lib/ansible/modules/remote_management/foreman/foreman.py ansible-format-automatic-specification
-lib/ansible/modules/remote_management/foreman/katello.py ansible-format-automatic-specification
+lib/ansible/modules/remote_management/foreman/_foreman.py ansible-format-automatic-specification
+lib/ansible/modules/remote_management/foreman/_katello.py ansible-format-automatic-specification
 lib/ansible/modules/source_control/github_deploy_key.py ansible-format-automatic-specification
 lib/ansible/modules/source_control/github_key.py ansible-format-automatic-specification
 lib/ansible/modules/storage/infinidat/infini_export.py ansible-format-automatic-specification
