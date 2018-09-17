@@ -113,10 +113,17 @@ class Conditional:
         if isinstance(conditional, bool):
             return conditional
 
+        # utility dict for interpolation
+        t = {'cond': conditional,
+             'start': templar.environment.block_start_string,
+             'end': templar.environment.block_end_string,
+             'var_start': templar.environment.variable_start_string,
+             'var_end': templar.environment.variable_end_string}
+
         if templar.is_template(conditional):
             display.warning('when statements should not include jinja2 '
-                            'templating delimiters such as {{ }} or {%% %%}. '
-                            'Found: %s' % conditional)
+                            'templating delimiters such as %(var_start)s %(var_end)s or %(start)s %(end)s. '
+                            'Found: %(cond)s' % t)
 
         # pull the "bare" var out, which allows for nested conditionals
         # and things like:
@@ -185,7 +192,7 @@ class Conditional:
                 raise AnsibleError("Invalid conditional detected: %s" % to_native(e))
 
             # and finally we generate and template the presented string and look at the resulting string
-            presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+            presented = "%(start)s if %(cond)s %(end)s True %(start)s else %(end)s False %(start)s endif %(end)s" % (t)
             val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
@@ -219,5 +226,5 @@ class Conditional:
                 # as nothing above matched the failed var name, re-raise here to
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
-            except Exception as new_e:
+            except Exception as e:
                 raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
