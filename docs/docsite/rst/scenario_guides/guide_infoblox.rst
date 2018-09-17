@@ -42,7 +42,7 @@ Ansible includes the following lookup plugins for NIOS:
 - :ref:`nios_next_ip <nios_next_ip_lookup>` Provides the next available IP address from a network. You'll see an example of this in `Creating a host record`_.
 - :ref:`nios_next_network <nios_next_network_lookup>` - Returns the next available network range for a network-container.
 
-See :ref:`lookup plugins <lookup_plugins>` for more details. You must run these lookup plugins locally by specifying ``connection: local``.
+You must run the NIOS lookup plugins locally by specifying ``connection: local``. See :ref:`lookup plugins <lookup_plugins>` for more detail. 
 
 
 Retrieving all network views
