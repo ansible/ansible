@@ -120,12 +120,16 @@ Set-StrictMode -Version 2
                 $fieldsToAdd += ($ExtFileFlag.field_name)
                 
             }
-            elseif ($ExtFileFlag.state -eq 'absent' -and ($loggedFields -contains $ExtFileFlag.field_name)) {
+            elseif ($ExtFileFlag.state -eq 'absent') {
                 if ($allowedFields -notcontains ($ExtFileFlag.field_name)) {
-                    Fail-Json $result "Cannot remove field $($ExtFileFlag.field_name) because it is not recogized by IIS"
+                    Add-Warning -obj $result -message "Field $($ExtFileFlag.field_name) selected for removal, but is not recognized by IIS"
+                    #Fail-Json $result "Cannot remove field $($ExtFileFlag.field_name) because it is not recogized by IIS"
                 }
-                $changed=$true
-                $fieldsToRemove += ($ExtFileFlag.field_name)
+                elseif ($loggedFields -contains $ExtFileFlag.field_name) {
+                   
+                    $changed=$true
+                    $fieldsToRemove += ($ExtFileFlag.field_name)
+                }
             }
         }
       
