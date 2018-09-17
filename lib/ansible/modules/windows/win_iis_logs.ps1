@@ -58,6 +58,10 @@ Set-StrictMode -Version 2
             $ExtFileFlags,
             [bool]$WhatIf = $false
         )
+        if ($null -eq $ExtFileFlags) 
+        {
+            return $false
+        }
 
         $allowedFields = @("Date","Time","ClientIP","UserName","SiteName","ComputerName","ServerIP","Method","UriStem","UriQuery","HttpStatus","Win32Status","BytesSent","BytesRecv","TimeTaken","ServerPort","UserAgent","Cookie","Referer","ProtocolVersion","Host","HttpSubStatus")
 
@@ -293,7 +297,7 @@ $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $configuration = Get-AnsibleParam $params "configuration" -type "str" -default "server"
-$site_name = Get-AnsibleParam $params "site_name" -type "str" -default "System"
+$site_name = Get-AnsibleParam $params "site_name" -type "str" -default $null
 $log_directory = Get-AnsibleParam $params "log_directory" -type "path" -default $null
 $site_log_format = Get-AnsibleParam $params "site_log_format" -type "str" -default $null
 $log_ext_file_flags = Get-AnsibleParam $params "log_ext_file_flags" -type "list" 
@@ -427,16 +431,59 @@ elseif ( $configuration -eq "siteDefaults"){
             $changed = $true
             $messages += "Built-In Fields"
         }
-
-        
-
-    
 }
 elseif ($configuration -eq "site")
 {
     $validParameters = @("configuration","site_name","site_log_format","log_directory","log_ext_file_flags","log_custom_fields","use_local_time","rotation_period","truncate_size")
     Test-ParameterSet -ValidParameters $validParameters -Parmaeters $params
-    $ConfigurationPath = "/system.applicationHost/sites/site[@name='$site_name']"
+    if ($null -eq $site_name) {
+         Fail-JSON $result "site_name required for configuration:site"
+    }
+    $ConfigurationPath = "/system.applicationHost/sites/site[@name='$site_name']/logFile"
+    $PropertiesToConfirm =@(
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = "logFormat";
+            Value = $site_log_format
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = "directory";
+            Value = $log_directory
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = "localTimeRollover";
+            Value = $use_local_time
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = "period";
+            Value = $rotation_period
+        },
+        [PSCustomObject]@{
+            Filter = $ConfigurationPath;
+            Name = "truncateSize";
+            Value = $truncate_size
+        })
+
+        $PropertiesToConfirm | Foreach-Object {
+            if (Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value)
+            {
+                $changed = $true
+                $messages += $_.Name
+            }
+        }
+
+        if ($(Confirm-CustomFields -CustomFields $log_custom_fields -ConfigurationPath $ConfigurationPath)) {
+            $changed = $true
+            $messages += "Custom Fields"
+        }
+
+        if ($(Confirm-ExtFileFlags -ExtFileFlags $log_ext_file_flags -ConfigurationPath $ConfigurationPath)) {
+            $changed = $true
+            $messages += "Built-In Fields"
+        }
 }
 else {
     Fail-Json $result "Invalid value specified for configuration.  Must be server, siteDefaults, or site"
