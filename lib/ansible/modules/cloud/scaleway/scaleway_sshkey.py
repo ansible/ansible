@@ -51,7 +51,7 @@ EXAMPLES = '''
 - name: "Add SSH key"
   scaleway_sshkey:
     ssh_pub_key: "ssh-rsa AAAA..."
-    state: "Present"
+    state: "present"
 
 - name: "Delete SSH key"
   scaleway_sshkey:
