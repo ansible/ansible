@@ -129,10 +129,10 @@ class PasslibHash(BaseHash):
         except Exception:
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
 
-    def hash(self, secret, salt=None, salt_size=None, rounds=None, ident=None):
+    def hash(self, secret, salt=None, salt_size=None, rounds=None, ident=None, user=None):
         salt = self._clean_salt(salt)
         rounds = self._clean_rounds(rounds)
-        return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+        return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident, user=user)
 
     def _clean_salt(self, salt):
         if not salt:
@@ -154,7 +154,7 @@ class PasslibHash(BaseHash):
         else:
             return None
 
-    def _hash(self, secret, salt, salt_size, rounds, ident):
+    def _hash(self, secret, salt, salt_size, rounds, ident, user):
         # Not every hash algorithm supports every parameter.
         # Thus create the settings dict only with set parameters.
         settings = {}
@@ -167,10 +167,15 @@ class PasslibHash(BaseHash):
             settings['rounds'] = rounds
         if ident:
             settings['ident'] = ident
+        if user:
+            settings['user'] = user
 
         # starting with passlib 1.7 'using' and 'hash' should be used instead of 'encrypt'
         if hasattr(self.crypt_algo, 'hash'):
-            result = self.crypt_algo.using(**settings).hash(secret)
+            if self.algorithm in ('msdcc', 'msdcc2'):
+                result = self.crypt_algo.hash(secret, **settings)
+            else:
+                result = self.crypt_algo.using(**settings).hash(secret)
         elif hasattr(self.crypt_algo, 'encrypt'):
             result = self.crypt_algo.encrypt(secret, **settings)
         else:
@@ -189,14 +194,16 @@ class PasslibHash(BaseHash):
         return to_text(result, errors='strict')
 
 
-def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, ident=None):
+def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, ident=None, user=None):
     if PASSLIB_AVAILABLE:
-        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident, user=user)
     else:
         if ident:
             raise AnsibleError("crypt.crypt does not support an 'ident' parameter")
+        if user:
+            raise AnsibleError("crypt.crypt does not support a 'user' parameter")
         return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
 
 
-def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None):
-    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt, ident=ident)
+def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None, user=None):
+    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt, ident=ident, user=user)

@@ -848,6 +848,13 @@ Some hash types allow providing a rounds parameter::
 
     {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt', rounds=10000) }}
 
+When`Passlib <https://passlib.readthedocs.io/en/stable/>`_ is installed
+`password_hash` supports more crypt schematas::
+
+    {{ 'secretpassword' | password_hash('sha256_crypt', 'mysecretsalt', rounds=5000) }}
+    {{ 'secretpassword' | password_hash('bcrypt', ident='2b', rounds=14) }}
+    {{ 'secretpassword' | password_hash('msdcc', user='SomeUser') }}
+
 .. _combine_filter:
 
 Combining hashes/dictionaries
