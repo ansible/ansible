@@ -14,7 +14,7 @@ __metaclass__ = type
 try:
     """Python 3.3+ branch."""
     from collections.abc import (
-        deque, KeysView,
+        KeysView,
         Mapping, MutableMapping,
         Sequence, MutableSequence,
         Set, MutableSet,
@@ -22,7 +22,7 @@ try:
 except ImportError:
     """Use old lib location under 2.6-3.2."""
     from collections import (
-        deque, KeysView,
+        KeysView,
         Mapping, MutableMapping,
         Sequence, MutableSequence,
         Set, MutableSet,
