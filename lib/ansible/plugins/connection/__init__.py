@@ -360,8 +360,10 @@ class NetworkConnectionBase(ConnectionBase):
         initialize implementation plugin options
         '''
         for plugin in self._implementation_plugins:
-            if hasattr(plugin, 'set_options'):
+            try:
                 plugin.set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+            except AttributeError:
+                pass
 
     def _update_connection_state(self):
         '''
