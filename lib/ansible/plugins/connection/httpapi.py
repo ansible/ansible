@@ -61,6 +61,7 @@ options:
       - name: ansible_password
       - name: ansible_httpapi_pass
   use_ssl:
+    type: boolean
     description:
       - Whether to connect using SSL (HTTPS) or not (HTTP)
     default: False
