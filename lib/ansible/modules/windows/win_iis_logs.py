@@ -16,62 +16,65 @@ DOCUMENTATION = r'''
 module: win_iis_logs
 version_added: "2.8"
 short_description: Manages IIS Log configuration
-description: Manages the IIS log configuration either per-site, or server wide
+description:
+  - "Manages the IIS log configuration either per-site, or server wide"
 options:
-    site_name:
-        description: The name of the site for which logging should be configured.  Also accepted is "System" for system-wide logging.
-        required: false
-        default: 'System'
-    log_directory:
-        description: The target directory for IIS Logs
-        required: false
-        default: null
-        type: string
-    log_ext_file_flags:
-        description: Built-In IIS Log fields to be included. This must be a list of objects with these properties: field_name, state.
-        type: list
-        required: false
-    log_custom_fields:
-        description: Custom log fileds to be included.  This must be a list of objects with these properties: field_name, source_type, source_name, state
-        type: list
-        required: false
-    use_local_time:
-        description: Whether or not to use local time for IIS log rotation.
-        required: false
-        type: bool
+  site_name:
+    description:
+      - "The name of the site for which logging should be configured."
+      - "Also accepted is 'System' for system-wide logging."
+    required: false
+    default: 'System'
+  log_directory:
+    description: The target directory for IIS Logs
+    required: false
+    default: null
+    type: string
+  log_ext_file_flags:
+    description:
+      - "Built-In IIS Log fields to be included."
+      - "Objects in this list must have these properties: field_name, state."
+    type: list
+    required: false
+  log_custom_fields:
+    description:
+      - "Custom log fileds to be included."
+      - "Objects in this list must have these properties:"
+      - "field_name, source_type, source_name, state"
+    type: list
+    required: false
+  use_local_time:
+    description: Whether or not to use local time for IIS log rotation.
+    required: false
+    type: bool
 
 author:
-    - Charles Crossan (@crossan007)
+  - Charles Crossan (@crossan007)
 '''
 
 EXAMPLES = r'''
 # Ensure IIS logs to E:\Logs, with all built-in properties, and also including the RequestHeader 'X-Forwarded-For' as a log property.
-  - name: Ensure IIS Site defaults are correct
+  - name: Ensure IIS Logging is configured
     win_iis_logs:
-      configuration: siteDefaults # not available when central_log_file_mode is _not_ "Site"
-      site_log_format: "W3C"
-      log_directory: '%SystemDrive%\\inetpub\\logs\\LogFiles'
+      site_name: "System"
+      log_directory: "E:\\Logs"
       use_local_time: true
-      log_ext_file_flags: all # Only available if format is W3C
-      rotation_period: MaxSize
-      truncate_size: 8675309
-      log_custom_fields: # Only available if format is W3C
+      log_ext_file_flags: all
+      log_custom_fields:
         - field_name: 'x-forwarded-for'
           source_type: 'RequestHeader'
           source_name:  'X-Forwarded-For'
           state: present
 
-# Configure server-wide parameters.
+# Rotate logs at truncation intervals
   - name: Ensure IIS Logging is configured
     win_iis_logs:
-      configuration: server
-      central_log_file_mode: "Site" #Site, CentralBinary or CentralW3C are available
-      log_in_utf8: false # true / false.  Only available for configuration: server
-      log_directory: '%SystemDrive%\\inetpub\\logs\\LogFiles'
-      use_local_time: true
-      log_ext_file_flags: all # Only available if format is CentralW3C
-      rotation_period: MaxSize
-      truncate_size: 8675309
+        site_name: "System"
+        log_directory: '%SystemDrive%\\inetpub\\logs\\LogFiles'
+        use_local_time: false
+        log_ext_file_flags: all
+        rotation_period: MaxSize
+        truncate_size: 8675309
 
 '''
 
