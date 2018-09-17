@@ -228,7 +228,7 @@
     that:
       - 'result.changed == true'
       - '"no logging logfile" in result.commands'
-      - '"no logging level daemon" in result.commands'
+      - '"no logging level daemon 4" in result.commands'
       - '"no logging monitor" in result.commands'
       - '"no logging module" in result.commands'
       - '"no logging server test-syslogserver.com" in result.commands'
@@ -239,5 +239,206 @@
   register: result
 
 - assert: *false
+
+- name: Configure Logging message
+  nxos_logging: &logm
+    message: add-interface-description
+    state: present
+    provider: "{{ connection }}"
+  register: result
+
+- assert: &true
+    that:
+      - 'result.changed == true'
+
+- name: Configure Logging message (idempotent)
+  nxos_logging: *logm
+  register: result
+
+- assert: *false
+
+- name: Remove Logging message
+  nxos_logging:
+    message: add-interface-description
+    state: absent
+    provider: "{{ connection }}"
+  register: result
+
+- assert: *true
+
+- name: Logfile logging with level and size
+  nxos_logging: &llogs
+    dest: logfile
+    name: test
+    dest_level: 1
+    file_size: 16384
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging logfile test 1 size 16384" in result.commands'
+
+- name: Logfile logging with level and size (idempotent)
+  nxos_logging: *llogs
+  register: result
+
+- assert: *false
+
+- name: Remove logfile logging with level and size
+  nxos_logging:
+    dest: logfile
+    name: test
+    dest_level: 1
+    file_size: 16384
+    provider: "{{ connection }}"
+    state: absent
+  register: result
+
+- assert: *true
+
+- name: Set up logging event link enable
+  nxos_logging: &logle
+    event: link-enable
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging event link-status enable" in result.commands'
+
+- name: Set up logging event link enable again (idempotent)
+  nxos_logging: *logle
+  register: result
+
+- assert: *false
+
+- name: Remove logging event link enable
+  nxos_logging: &rlogle
+    event: link-enable
+    state: absent
+  register: result
+
+- assert: *true
+
+- name: Remove logging event link enable again (idempotent)
+  nxos_logging: *rlogle
+  register: result
+
+- assert: *false
+
+- name: Set up logging event link default
+  nxos_logging: &logld
+    event: link-default
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging event link-status default" in result.commands'
+
+- name: Set up logging event link default again (idempotent)
+  nxos_logging: *logld
+  register: result
+
+- assert: *false
+
+- name: Remove logging event link default
+  nxos_logging: &rlogld
+    event: link-default
+    state: absent
+  register: result
+
+- assert: *true
+
+- name: Remove logging event link default again (idempotent)
+  nxos_logging: *rlogld
+  register: result
+
+- assert: *false
+
+- name: Set up logging event trunk enable
+  nxos_logging: &logte
+    event: trunk-enable
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging event trunk-status enable" in result.commands'
+
+- name: Set up logging event trunk enable again (idempotent)
+  nxos_logging: *logte
+  register: result
+
+- assert: *false
+
+- name: Remove logging event trunk enable
+  nxos_logging: &rlogte
+    event: trunk-enable
+    state: absent
+  register: result
+
+- assert: *true
+
+- name: Remove logging event trunk enable again (idempotent)
+  nxos_logging: *rlogte
+  register: result
+
+- assert: *false
+- name: Set up logging event trunk default
+  nxos_logging: &logtd
+    event: trunk-default
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging event trunk-status default" in result.commands'
+
+- name: Set up logging event trunk default again (idempotent)
+  nxos_logging: *logtd
+  register: result
+
+- assert: *false
+
+- name: Remove logging event trunk default
+  nxos_logging: &rlogtd
+    event: trunk-default
+    state: absent
+  register: result
+
+- assert: *true
+
+- name: Remove logging event trunk default again (idempotent)
+  nxos_logging: *rlogtd
+  register: result
+
+- assert: *false
+
+- name: Set up Logging Timestamp
+  nxos_logging: &ltms
+    timestamp: microseconds
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: *true
+
+- name: Set up Logging Timestamp (idempotent)
+  nxos_logging: *ltms
+  register: result
+
+- assert: *false
+
+- name: Remove Logging Timestamp
+  nxos_logging:
+    timestamp: microseconds
+    state: absent
+  register: result
+
+- assert: *true
 
 - debug: msg="END connection={{ ansible_connection }} nxos_logging basic test"

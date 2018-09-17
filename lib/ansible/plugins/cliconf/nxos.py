@@ -36,7 +36,20 @@ from ansible.plugins.connection.httpapi import Connection as HttpApi
 class Cliconf(CliconfBase):
 
     def __init__(self, *args, **kwargs):
+        self._module_context = {}
         super(Cliconf, self).__init__(*args, **kwargs)
+
+    def read_module_context(self, module_key):
+        #return [{'logging': 'this is a test'}]
+        if self._module_context.get(module_key):
+            return self._module_context[module_key]
+
+        return None
+
+    def save_module_context(self, module_key, module_context):
+        self._module_context[module_key] = module_context
+
+        return None
 
     def send_command(self, command, **kwargs):
         """Executes a cli command and returns the results

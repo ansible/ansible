@@ -224,6 +224,24 @@ class Cli:
         self._module._capabilities = json.loads(capabilities)
         return self._module._capabilities
 
+    def read_module_context(self, module_key):
+        connection = self._get_connection()
+        try:
+            module_context = connection.read_module_context(module_key)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+        return module_context
+
+    def save_module_context(self, module_key, module_context):
+        connection = self._get_connection()
+        try:
+            connection.save_module_context(module_key, module_context)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+        return None
+
 
 class Nxapi:
 
@@ -238,6 +256,7 @@ class Nxapi:
         self._module = module
         self._nxapi_auth = None
         self._device_configs = {}
+        self._module_context = {}
 
         self._module.params['url_username'] = self._module.params['username']
         self._module.params['url_password'] = self._module.params['password']
@@ -253,6 +272,7 @@ class Nxapi:
             port = port or 80
 
         self._url = '%s://%s:%s/ins' % (proto, host, port)
+
 
     def _error(self, msg, **kwargs):
         self._nxapi_auth = None
@@ -464,6 +484,18 @@ class Nxapi:
         result['network_api'] = 'nxapi'
         return result
 
+    def read_module_context(self, module_key):
+        Connection('')
+        if self._module_context.get(module_key):
+            return self._module_context[module_key]
+
+        return None
+
+    def save_module_context(self, module_key, module_context):
+        self._module_context[module_key] = module_context
+
+        return None
+
 
 def is_json(cmd):
     return str(cmd).endswith('| json')
@@ -587,3 +619,13 @@ def get_interface_type(interface):
         return 'nve'
     else:
         return 'unknown'
+
+
+def read_module_context(module):
+    conn = get_connection(module)
+    return conn.read_module_context(module._name)
+
+
+def save_module_context(module, module_context):
+    conn = get_connection(module)
+    return conn.save_module_context(module._name, module_context)

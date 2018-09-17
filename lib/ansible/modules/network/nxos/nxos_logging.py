@@ -69,6 +69,35 @@ options:
       - State of the logging configuration.
     default: present
     choices: ['present', 'absent']
+  event:
+    description:
+      - Link/trunk enable/default interface configuration logging
+    choices: ['link-enable', 'link-default', 'trunk-enable', 'trunk-default']
+    version_added: '2.8'
+  message:
+    description:
+      - Add interface description to interface syslogs [default: ethernet]
+    choices: ['add-interface-description']
+    version_added: '2.8'
+  file_size:
+    description:
+      - Set logfile size
+    version_added: '2.8'
+  facility_link_status:
+    description:
+      - Set logging facility ethpm link status.  Not idempotent with 6.0 images.
+    choices: ['link-down-notif', 'link-down-error', 'link-up-notif', 'link-up-error']
+    version_added: '2.8'
+  timestamp:
+    description:
+      - Set logging timestamp format
+    choices: ['microseconds', 'milliseconds', 'seconds']
+    version_added: '2.8'
+  purge:
+    description:
+      - Remove any switch logging configuration that does not match what has been configured
+    default: no
+    version_added: '2.8'
 extends_documentation_fragment: nxos
 """
 
@@ -89,6 +118,12 @@ EXAMPLES = """
     name: testfile
     dest_level: 3
     state: present
+- name: Configure logging logfile with size
+  nxos_logging:
+    dest: logfile
+    name: testfile
+    dest_level: 3
+    file_size: 16384
 - name: configure facility level logging
   nxos_logging:
     facility: daemon
@@ -111,7 +146,26 @@ EXAMPLES = """
   nxos_logging:
     interface: mgmt0
     state: present
-
+- name: Purge configuration not what was just configured
+  nxos_logging:
+    purge: true
+- name: Configure logging timestamp
+  nxos_logging:
+    timestamp: milliseconds
+    state: present
+- name: Configure logging facility ethpm link status
+  nxos_logging:
+    facility: ethpm
+    facility_link_status: link-up-notif
+    state: present
+- name: Configure logging message ethernet description
+  nxos_logging:
+    message: add-interface-description
+    state: present
+- name: Configure logging event link enable
+  nxos_logging:
+    event: link-enable
+    state: present
 - name: Configure logging using aggregate
   nxos_logging:
     aggregate:
@@ -133,11 +187,33 @@ commands:
 """
 
 import re
+import copy
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands, save_module_context, read_module_context
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args, normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 
+STATIC_CLI = {'link-enable': 'logging event link-status enable',
+              'link-default': 'logging event link-status default',
+              'trunk-enable': 'logging event trunk-status enable',
+              'trunk-default': 'logging event trunk-status default',
+              'microseconds': 'logging timestamp microseconds',
+              'milliseconds': 'logging timestamp milliseconds',
+              'seconds': 'logging timestamp seconds',
+              'link-up-error': 'link-up error',
+              'link-up-notif': 'link-up notif',
+              'link-down-error': 'link-down error',
+              'link-down-notif': 'link-down notif',
+              'add-interface-description': 'logging message interface type ethernet description'}
+
+DEFAULT_LOGGING_LEVEL = {0: [],
+                         1: [],
+                         2: [],
+                         3: ['adjmgr', 'arp', 'icmpv6', 'l2rib', 'netstack'],
+                         4: [],
+                         5: [],
+                         6: [],
+                         7: []}
 
 DEST_GROUP = ['console', 'logfile', 'module', 'monitor', 'server']
 
@@ -152,8 +228,11 @@ def map_obj_to_commands(updates):
 
         if state == 'absent' and w in have:
             if w['facility'] is not None:
-                if not w['dest']:
-                    commands.append('no logging level {}'.format(w['facility']))
+                if not w['dest'] and not w['facility_link_status'] and w['facility'] not in DEFAULT_LOGGING_LEVEL[int(w['facility_level'])]:
+                    commands.append('no logging level {} {}'.format(w['facility'], w['facility_level']))
+
+                if w['facility_link_status'] and w['facility'] in ('ethpm'):
+                    commands.append('no logging level {} {}'.format(w['facility'], STATIC_CLI[w['facility_link_status']]))
 
             if w['name'] is not None:
                 commands.append('no logging logfile')
@@ -167,6 +246,15 @@ def map_obj_to_commands(updates):
             if w['interface']:
                 commands.append('no logging source-interface')
 
+            if w['event'] and w['event'] in STATIC_CLI:
+                commands.append('no ' + STATIC_CLI[w['event']])
+
+            if w['message'] and w['message'] in STATIC_CLI:
+                commands.append('no ' + STATIC_CLI[w['message']])
+
+            if w['timestamp'] and w['timestamp'] in STATIC_CLI:
+                commands.append('no ' + STATIC_CLI[w['timestamp']])
+
         if state == 'present' and w not in have:
             if w['facility'] is None:
                 if w['dest']:
@@ -174,7 +262,12 @@ def map_obj_to_commands(updates):
                         commands.append('logging {} {}'.format(w['dest'], w['dest_level']))
 
                     elif w['dest'] == 'logfile':
-                        commands.append('logging logfile {} {}'.format(w['name'], w['dest_level']))
+                        if w['file_size']:
+                            commands.append('logging logfile {} {} size {}'.format(
+                                w['name'], w['dest_level'], w['file_size']))
+                        else:
+                            commands.append('logging logfile {} {}'.format(
+                                w['name'], w['dest_level']))
 
                     elif w['dest'] == 'server':
                         if w['facility_level']:
@@ -209,11 +302,24 @@ def map_obj_to_commands(updates):
                             commands.append('logging server {0} facility {1}'.format(w['remote_server'],
                                                                                      w['facility']))
                 else:
-                    commands.append('logging level {} {}'.format(w['facility'],
-                                                                 w['facility_level']))
+                    if w['facility_link_status']:
+                        commands.append('logging level {} {}'.format(
+                            w['facility'], STATIC_CLI[w['facility_link_status']]))
+                    else:
+                        commands.append('logging level {} {}'.format(w['facility'],
+                                                                     w['facility_level']))
 
             if w['interface']:
                 commands.append('logging source-interface {0} {1}'.format(*split_interface(w['interface'])))
+
+            if w['event'] and w['event'] in STATIC_CLI:
+                commands.append(STATIC_CLI[w['event']])
+
+            if w['message'] and w['message'] in STATIC_CLI:
+                commands.append(STATIC_CLI[w['message']])
+
+            if w['timestamp'] and w['timestamp'] in STATIC_CLI:
+                commands.append(STATIC_CLI[w['timestamp']])
 
     return commands
 
@@ -222,6 +328,74 @@ def split_interface(interface):
     match = re.search(r'(\D+)(\S*)', interface, re.M)
     if match:
         return match.group(1), match.group(2)
+
+
+def parse_facility_link_status(line, facility, status):
+    facility_link_status = None
+
+    if facility is not None:
+        match = re.search(r'logging level {} {} (\S+)'.format(facility, status), line, re.M)
+        if match:
+            facility_link_status = status + "-" + match.group(1)
+
+    return facility_link_status
+
+def parse_event_status(line, event):
+    status = None
+
+    match = re.search(r'logging event {} (\S+)'.format(event + '-status'), line, re.M)
+    if match:
+        state = match.group(1)
+        if state:
+            status = state
+
+    return status
+
+
+def parse_event(line):
+    event = None
+
+    match = re.search(r'logging event (\S+)', line, re.M)
+    if match:
+        state = match.group(1)
+        if state == 'link-status':
+            event = 'link'
+        elif state == 'trunk-status':
+            event = 'trunk'
+
+    return event
+
+
+def parse_message(line):
+    message = None
+
+    match = re.search(r'logging message interface type ethernet description', line, re.M)
+    if match:
+        message = 'add-interface-description'
+
+    return message
+
+
+def parse_file_size(line, name, level):
+    file_size = None
+
+    match = re.search(r'logging logfile {} {} size (\S+)'.format(name, level), line, re.M)
+    if match:
+        file_size = match.group(1)
+        if file_size == '8192':
+            file_size = None
+
+    return file_size
+
+
+def parse_timestamp(line):
+    timestamp = None
+
+    match = re.search(r'logging timestamp (\S+)', line, re.M)
+    if match:
+        timestamp = match.group(1)
+
+    return timestamp
 
 
 def parse_name(line, dest):
@@ -329,36 +503,76 @@ def parse_interface(line):
 def map_config_to_obj(module):
     obj = []
 
-    data = get_config(module, flags=['| section logging'])
+    data = get_config(module, flags=[' all | section logging'])
 
     for line in data.split('\n'):
-        match = re.search(r'logging (\S+)', line, re.M)
+        if re.search(r'no (\S+)', line, re.M):
+            state = 'absent'
+        else:
+            state = 'present'
 
-        if match:
+        match = re.search(r'logging (\S+)', line, re.M)
+        if state == 'present' and match:
+            event_status = None
+            name = None
+            dest_level = None
+            dest = None
+            facility = None
+            remote_server = None
+            facility_link_status = None
+            file_size = None
+            facility_level = None
+
             if match.group(1) in DEST_GROUP:
                 dest = match.group(1)
-                facility = None
+
+                name = parse_name(line, dest)
+                remote_server = parse_remote_server(line, dest)
+                dest_level = parse_dest_level(line, dest, name)
 
                 if dest == 'server':
                     facility = parse_facility(line)
+                
+                facility_level = parse_facility_level(line, facility, dest)
+
+                if dest == 'logfile':
+                    file_size = parse_file_size(line, name, dest_level)
 
             elif match.group(1) == 'level':
                 match_facility = re.search(r'logging level (\S+)', line, re.M)
                 facility = match_facility.group(1)
-                dest = None
+
+                level = parse_facility_level(line, facility, dest)
+                if level.isdigit():
+                    facility_level = level
+                else:
+                    facility_link_status = parse_facility_link_status(line, facility, level)
+
+            elif match.group(1) == 'event' and state == 'present':
+                event = parse_event(line)
+                if event:
+                    status = parse_event_status(line, event)
+                    if status:
+                        event_status = event + '-' + status
+                else:
+                    continue
 
             else:
-                dest = None
-                facility = None
+                pass
 
             obj.append({'dest': dest,
-                        'remote_server': parse_remote_server(line, dest),
+                        'remote_server': remote_server,
                         'use_vrf': parse_use_vrf(line, dest),
-                        'name': parse_name(line, dest),
+                        'name': name,
                         'facility': facility,
-                        'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
-                        'facility_level': parse_facility_level(line, facility, dest),
-                        'interface': parse_interface(line)})
+                        'dest_level': dest_level,
+                        'facility_level': facility_level,
+                        'interface': parse_interface(line),
+                        'facility_link_status': facility_link_status,
+                        'event': event_status,
+                        'file_size': file_size,
+                        'message': parse_message(line),
+                        'timestamp': parse_timestamp(line)})
 
     cmd = [{'command': 'show logging | section enabled | section console', 'output': 'text'},
            {'command': 'show logging | section enabled | section monitor', 'output': 'text'}]
@@ -383,7 +597,12 @@ def map_config_to_obj(module):
                         'dest_level': dest_level,
                         'facility_level': None,
                         'use_vrf': None,
-                        'interface': None})
+                        'interface': None,
+                        'facility_link_status': None,
+                        'event': None,
+                        'file_size': None,
+                        'message': None,
+                        'timestamp': None})
 
     return obj
 
@@ -399,7 +618,12 @@ def map_params_to_obj(module):
                 'facility': '',
                 'dest_level': '',
                 'facility_level': '',
-                'interface': ''}
+                'interface': '',
+                'facility_link_status': None,
+                'event': None,
+                'file_size': None,
+                'message': None,
+                'timestamp': None}
 
         for c in module.params['aggregate']:
             d = c.copy()
@@ -420,17 +644,24 @@ def map_params_to_obj(module):
             if 'state' not in d:
                 d['state'] = module.params['state']
 
+            if d['file_size']:
+                d['file_size'] = str(d['file_size'])
+
             obj.append(d)
 
     else:
         dest_level = None
         facility_level = None
+        file_size = None
 
         if module.params['dest_level'] is not None:
             dest_level = str(module.params['dest_level'])
 
         if module.params['facility_level'] is not None:
             facility_level = str(module.params['facility_level'])
+
+        if module.params['file_size'] is not None:
+            file_size = str(module.params['file_size'])
 
         obj.append({
             'dest': module.params['dest'],
@@ -441,9 +672,42 @@ def map_params_to_obj(module):
             'dest_level': dest_level,
             'facility_level': facility_level,
             'interface': normalize_interface(module.params['interface']),
-            'state': module.params['state']
+            'state': module.params['state'],
+            'facility_link_status': module.params['facility_link_status'],
+            'event': module.params['event'],
+            'message': module.params['message'],
+            'file_size': file_size,
+            'timestamp': module.params['timestamp']
         })
     return obj
+
+
+def merge_wants(wants, want):
+    if not wants:
+        wants = list()
+
+    for w in want:
+        w = copy.copy(w)
+        state = w['state']
+        del w['state']
+
+        if state == 'absent':
+            if w in wants:
+                wants.remove(w)
+        elif w not in wants:
+            wants.append(w)
+ 
+    return wants
+
+
+def absent(h):
+    h['state'] = 'absent'
+    return h
+
+
+def outliers(haves, wants): # outer-section between two lists
+    wants = list(wants)
+    return [absent(h) for h in haves if not (h in wants or wants.append(h))]
 
 
 def main():
@@ -458,8 +722,14 @@ def main():
         dest_level=dict(type='int', aliases=['level']),
         facility_level=dict(type='int'),
         interface=dict(),
+        facility_link_status=dict(choices=['link-down-notif', 'link-down-error', 'link-up-notif', 'link-up-error']),
+        event=dict(choices=['link-enable', 'link-default', 'trunk-enable', 'trunk-default']),
+        message=dict(choices=['add-interface-description']),
+        file_size=dict(type='int'),
+        timestamp=dict(choices=['microseconds', 'milliseconds', 'seconds']),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list')
+        aggregate=dict(type='list'),
+        purge=dict(default=False, type='bool')
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -479,15 +749,25 @@ def main():
         result['warnings'] = warnings
 
     want = map_params_to_obj(module)
+    merged_wants = merge_wants(read_module_context(module), want)
     have = map_config_to_obj(module)
 
     commands = map_obj_to_commands((want, have))
     result['commands'] = commands
-
     if commands:
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
+
+    save_module_context(module, merged_wants)
+
+    if module.params.get('purge'):
+        pcommands = map_obj_to_commands((outliers(have, merged_wants), have))
+        if pcommands:
+            if not module.check_mode:
+                load_config(module, pcommands)
+            result['changed'] = True
+        result['commands'] += pcommands
 
     module.exit_json(**result)
 
