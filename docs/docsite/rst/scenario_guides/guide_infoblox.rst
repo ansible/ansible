@@ -111,7 +111,7 @@ This example playbook uses the ``set_fact`` module with the ``nios`` lookup plug
 
 If you run this ``get_host_record.yml`` playbook, you should see results similar to the following:
 
-.. code-block:: bash
+.. code-block:: none
 
     $ ansible-playbook get_host_record.yml
 
@@ -122,11 +122,10 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
 
     TASK [check the leaf01 return variable] *************************************************************
     ok: [localhost] => {
+    < ...output shortened...>
         "host": {
-            "_ref": "record:host/ZG5zLmhvc3QkLl9kZWZhdWx0LmNvbS5hbnNpYmxlLmxlYWYwMQ:leaf01.ansible.com/default",
             "ipv4addrs": [
                 {
-                    "_ref": "record:host_ipv4addr/ZG5zLmhvc3RfYWRkcmVzcyQuX2RlZmF1bHQuY29tLmFuc2libGUubGVhZjAxLjE5Mi4xNjguMTAwLjIu:192.168.100.2/leaf01.ansible.com/default",
                     "configure_for_dhcp": false,
                     "host": "leaf01.ansible.com",
                 }
@@ -145,10 +144,18 @@ If you run this ``get_host_record.yml`` playbook, you should see results similar
     ok: [localhost]
 
     TASK [check the leaf02 return variable] *************************************************************
-    ok: [test] => {
-        "host": []
+    ok: [localhost] => {
+    < ...output shortened...>
+        "host": {
+            "ipv4addrs": [
+                {
+                    "configure_for_dhcp": false,
+                    "host": "leaf02.example.com",
+                    "ipv4addr": "192.168.1.12"
+                }
+            ],
+        }
     }
-
 
     PLAY RECAP ******************************************************************************************
     localhost                  : ok=5    changed=0    unreachable=0    failed=0
