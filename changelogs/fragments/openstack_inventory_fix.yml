@@ -1,0 +1,2 @@
+bugfixes:
+    - allow using openstack inventory plugin w/o a cache
