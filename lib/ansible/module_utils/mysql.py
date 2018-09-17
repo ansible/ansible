@@ -37,6 +37,8 @@ except ImportError:
     except ImportError:
         mysql_driver = None
 
+mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) module is required.'
+
 
 def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None,
                   connect_timeout=30):

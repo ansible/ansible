@@ -67,7 +67,8 @@ requirements:
    - mysql (command line binary)
    - mysqldump (command line binary)
 notes:
-   - Requires the PyMySQL package on the remote host, as well as mysql and mysqldump binaries.
+   - Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) package on the remote host,
+     as well as mysql and mysqldump binaries.
    - This module is B(not idempotent) when I(state) is C(import), and will import the dump file each time if run more than once.
 extends_documentation_fragment: mysql
 '''
@@ -107,17 +108,9 @@ import pipes
 import subprocess
 import traceback
 
-try:
-    import pymysql as mysql_driver
-except ImportError:
-    try:
-        import MySQLdb as mysql_driver
-    except ImportError:
-        mysql_driver = None
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import mysql_quote_identifier
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
 
 
@@ -281,7 +274,7 @@ def main():
     )
 
     if mysql_driver is None:
-        module.fail_json(msg="The PyMySQL or MySQL-python module is required.")
+        module.fail_json(msg=mysql_driver_fail_msg)
 
     db = module.params["name"]
     encoding = module.params["encoding"]

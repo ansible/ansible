@@ -50,17 +50,9 @@ import os
 import warnings
 from re import match
 
-try:
-    import pymysql as mysql_driver
-except ImportError:
-    try:
-        import MySQLdb as mysql_driver
-    except ImportError:
-        mysql_driver = None
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, mysql_quote_identifier
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
 
 
@@ -150,7 +142,7 @@ def main():
     if match('^[0-9a-z_]+$', mysqlvar) is None:
         module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
     if mysql_driver is None:
-        module.fail_json(msg="The PyMySQL or MySQL-python module is required.")
+        module.fail_json(msg=mysql_driver_fail_msg)
     else:
         warnings.filterwarnings('error', category=mysql_driver.Warning)
 

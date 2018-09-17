@@ -196,17 +196,9 @@ import re
 import string
 import traceback
 
-try:
-    import pymysql as mysql_driver
-except ImportError:
-    try:
-        import MySQLdb as mysql_driver
-    except ImportError:
-        mysql_driver = None
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -580,7 +572,7 @@ def main():
     sql_log_bin = module.params["sql_log_bin"]
 
     if mysql_driver is None:
-        module.fail_json(msg="The PyMySQL or MySQL-python module is required.")
+        module.fail_json(msg=mysql_driver_fail_msg)
 
     cursor = None
     try:

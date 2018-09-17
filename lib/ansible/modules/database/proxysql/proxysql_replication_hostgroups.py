@@ -95,16 +95,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
-
-try:
-    import pymysql as mysql_driver
-except ImportError:
-    try:
-        import MySQLdb as mysql_driver
-    except ImportError:
-        mysql_driver = None
 
 # ===========================================
 # proxysql module specific support methods.
@@ -136,7 +128,7 @@ def perform_checks(module):
         )
 
     if mysql_driver is None:
-        module.fail_json(msg="The PyMySQL or MySQLdb module is required.")
+        module.fail_json(msg=mysql_driver_fail_msg)
 
 
 def save_config_to_disk(cursor):

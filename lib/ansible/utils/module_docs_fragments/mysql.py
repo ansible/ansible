@@ -52,7 +52,8 @@ options:
   ssl_ca:
     version_added: "2.0"
     description:
-      - The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate as used by the server.
+      - The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate
+        as used by the server.
   ssl_cert:
     version_added: "2.0"
     description:
@@ -64,8 +65,8 @@ options:
 requirements:
    - PyMySQL
 notes:
-   - Requires the PyMySQL Python package on the remote host. For Ubuntu, this
-     is as easy as apt-get install python-pymysql. (See M(apt).) For CentOS/Fedora, this
+   - Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) Python package on the remote host.
+     For Ubuntu, this is as easy as apt-get install python-pymysql. (See M(apt).) For CentOS/Fedora, this
      is as easy as yum install python2-PyMySQL. (See M(yum).)
    - Both C(login_password) and C(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
