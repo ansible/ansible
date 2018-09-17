@@ -32,7 +32,7 @@ options:
       aliases: ['service']
     state:
       default: null
-      choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
+      choices: [ 'started', 'stopped', 'restarted', 'reloaded', 'unloaded' ]
       description:
       - C(started)/C(stopped) are idempotent actions that will not run
         commands unless necessary.
@@ -103,6 +103,12 @@ EXAMPLES = '''
   launchd:
     name: org.memcached
     state: restarted
+  become: yes
+
+- name: Unload memcached
+  launchd:
+    name: org.memcached
+    state: unloaded
   become: yes
 '''
 
@@ -257,7 +263,7 @@ class LaunchCtlTask(object):
                 msg='Failed to get status of %s' % (self._launch))
 
         state = ServiceState.UNLOADED
-        service_pid = None
+        service_pid = "-"
         status_code = None
         for line in out.splitlines():
             if line.strip():
@@ -265,10 +271,16 @@ class LaunchCtlTask(object):
                 if label.strip() == self._service:
                     service_pid = pid
                     status_code = last_exit_code
-                    if last_exit_code != '0':
+
+                    # From launchctl man page:
+                    # If the number [...] is negative, it represents  the
+                    # negative of the signal which killed the job.  Thus,
+                    # "-15" would indicate that the job was terminated with
+                    # SIGTERM.
+                    if last_exit_code not in ['0', '-2', '-3', '-9', '-15' ]:
                         # Something strange happened and we have no clue in
                         # which state the service is now. Therefore we mark
-                        # the service as UNKNOWN.
+                        # the service state as UNKNOWN.
                         state = ServiceState.UNKNOWN
                     elif pid != '-':
                         # PID seems to be an integer so we assume the service
@@ -393,6 +405,15 @@ class LaunchCtlReload(LaunchCtlTask):
             self.reload()
 
 
+class LaunchCtlUnload(LaunchCtlTask):
+    def __init__(self, module, service, plist):
+        super(LaunchCtlUnload, self).__init__(module, service, plist)
+
+    def runCommand(self):
+        state, dummy, dummy, dummy = self.get_state()
+        self.unload()
+
+
 class LaunchCtlRestart(LaunchCtlReload):
     def __init__(self, module, service, plist):
         super(LaunchCtlRestart, self).__init__(module, service, plist)
@@ -420,7 +441,7 @@ def main():
                 aliases=['service']
             ),
             state=dict(
-                choices=['started', 'stopped', 'restarted', 'reloaded'],
+                choices=['started', 'stopped', 'restarted', 'reloaded', 'unloaded'],
             ),
             enabled=dict(type='bool'),
             force_stop=dict(type='bool', required=False)
@@ -456,7 +477,8 @@ def main():
         'started': LaunchCtlStart(module, service, plist),
         'stopped': LaunchCtlStop(module, service, plist),
         'restarted': LaunchCtlRestart(module, service, plist),
-        'reloaded': LaunchCtlReload(module, service, plist)
+        'reloaded': LaunchCtlReload(module, service, plist),
+        'unloaded': LaunchCtlUnload(module, service, plist)
     }
 
     # Run the requested task
