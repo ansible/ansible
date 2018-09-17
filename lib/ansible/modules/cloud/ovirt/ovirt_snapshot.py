@@ -62,7 +62,7 @@ options:
     keep_days_old:
         description:
             - "Number of days after which should snapshot be deleted."
-            - "It will check all snapshots of vm and delete them, if they are older."
+            - "It will check all snapshots of virtual machine and delete them, if they are older."
         version_added: "2.8"
 notes:
     - "Note that without a guest agent the data on the created snapshot may be
