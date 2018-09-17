@@ -1,12 +1,15 @@
 #!powershell
 
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 # POWERSHELL_COMMON
 
 $params      = Parse-Args -arguments $args -supports_check_mode $true;
 $check_mode  = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$managers    = Get-AnsibleParam -obj $params -name "permitted_managers" -failifempty $true
-$communities = Get-AnsibleParam -obj $params -name "community_strings"  -failifempty $true
-$replace     = Get-AnsibleParam -obj $params -name "replace" -type "bool" -default $false
+$managers    = Get-AnsibleParam -obj $params -name "permitted_managers"  -type "list" -failifempty $true
+$communities = Get-AnsibleParam -obj $params -name "community_strings"   -type "list" -failifempty $true
+$replace     = Get-AnsibleParam -obj $params -name "replace"             -type "bool" -default $false
 
 $result = @{failed = $False; changed = $False;}
 
