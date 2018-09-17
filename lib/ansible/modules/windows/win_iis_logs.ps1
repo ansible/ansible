@@ -52,62 +52,6 @@ Set-StrictMode -Version 2
     }
 
 
-    function Confirm-LocalTime {
-        param(
-            $ConfigurationPath,
-            [Nullable[boolean]]$UseLocalTime,
-            [bool]$WhatIf = $false
-        )
-        
-        if (-not [String]::IsNullOrEmpty($UseLocalTime)) {
-            $ConfigurationPath = "$ConfigurationPath/logFile"
-            $LogProperties = $(Get-WebConfiguration -Filter $ConfigurationPath)
-            
-            if($LogProperties.localTimeRollover -ne $UseLocalTime){
-                if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name localTimeRollover -Value $UseLocalTime
-                }
-                return $true
-            }
-        }
-    }
-
-    function Confirm-SiteLogFormat {
-        param(
-            $ConfigurationPath,
-            $SiteLogFormat,
-            [bool]$WhatIf = $false
-        )
-        if (-not [String]::IsNullOrEmpty($SiteLogFormat)) {
-            $ConfigurationPath = "$ConfigurationPath/logFile"
-            $LogProperties = Get-WebConfiguration -Filter $ConfigurationPath
-            if($LogProperties.logFormat -ne $SiteLogFormat){
-                if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name logFormat -Value $SiteLogFormat
-                }
-                return $true
-            }
-        }
-    }
-
-    function Confirm-LogDirectory {
-        param(
-            $ConfigurationPath,
-            $LogDirectory,
-            [bool]$WhatIf = $false
-        )
-        if (-not [String]::IsNullOrEmpty($LogDirectory)) {
-            $ConfigurationPath = "$ConfigurationPath/logFile"
-            $LogProperties = Get-WebConfiguration -Filter $ConfigurationPath
-            if($LogProperties.directory -ne $LogDirectory){
-                if(-not $WhatIf) {
-                    Set-WebConfigurationProperty -Filter $ConfigurationPath -Name directory -Value $LogDirectory
-                }
-                return $true
-            }
-        }
-    }
-
     function Confirm-ExtFileFlags {
         param(
             $ConfigurationPath,
@@ -123,7 +67,6 @@ Set-StrictMode -Version 2
                 $ExtFileFlags = $allowedFields | ForEach-Object {
                     [PSCustomObject]@{
                         field_name=$_;
-                        level="server";
                         state="present"
                     }
                 }
@@ -132,7 +75,6 @@ Set-StrictMode -Version 2
                 $ExtFileFlags = $allowedFields | ForEach-Object {
                     [PSCustomObject]@{
                         field_name=$_;
-                        level="server";
                         state="absent"
                     }
                 }
@@ -141,10 +83,18 @@ Set-StrictMode -Version 2
                 Fail-Json $result "invalid value supplied for log_ext_file_flags: $log_ext_file_flags"
             }
         }
-            
-        $LogProperties = Get-WebConfigurationProperty -Filter $ConfigurationPath  -Name logfile
-        $loggedFields = $LogProperties.logExtFileFlags -split ','
-        
+
+       
+
+        $loggedFieldsProperty = $(Get-WebConfigurationProperty -Filter $ConfigurationPath  -Name logExtFileFlags)
+       
+        if ($loggedFieldsProperty -is [Microsoft.IIs.PowerShell.Framework.ConfigurationAttribute])
+        {
+            $loggedFields = @()
+        }
+        else {
+            $loggedFields =  $loggedFieldsProperty -split ','
+        }
 
         $fieldsToAdd = @()
         $fieldsToRemove = @()
@@ -154,29 +104,35 @@ Set-StrictMode -Version 2
             # First ensure this list member has the properties we expect
             if (-not (
                 [bool]($ExtFileFlag.PSobject.Properties.name -match "field_name") -and
-                [bool]($ExtFileFlag.PSobject.Properties.name -match "level") -and
                 [bool]($ExtFileFlag.PSobject.Properties.name -match "state"))
                 ){
-                Fail-Json $result "Ojects in log_ext_file_flags must have 'field_name', 'level', and 'state' property"
+                Fail-Json $result "Ojects in log_ext_file_flags must have 'field_name', and 'state' property"
             }
 
             # Check if the field exists and shouldn't
             if ($ExtFileFlag.state -eq 'present' -and -not ($loggedFields -contains $ExtFileFlag.field_name))
             {
-                $changed=$true
+               
                 if ($allowedFields -notcontains ($ExtFileFlag.field_name)) {
                     Fail-Json $result "Cannot add field $($ExtFileFlag.field_name) because it is not recogized by IIS"
                 }
+                $changed=$true
                 $fieldsToAdd += ($ExtFileFlag.field_name)
+                
             }
             elseif ($ExtFileFlag.state -eq 'absent' -and ($loggedFields -contains $ExtFileFlag.field_name)) {
+                if ($allowedFields -notcontains ($ExtFileFlag.field_name)) {
+                    Fail-Json $result "Cannot remove field $($ExtFileFlag.field_name) because it is not recogized by IIS"
+                }
                 $changed=$true
                 $fieldsToRemove += ($ExtFileFlag.field_name)
             }
         }
-
+      
+       
         if ($changed)
         {
+          
             if ($WhatIf)
             {
                 return $true
@@ -194,7 +150,8 @@ Set-StrictMode -Version 2
                 }
             
                 $newString = $( $newLoggedFields | Where-Object {$_}) -join ','
-                Set-WebConfigurationProperty -Filter '/system.applicationHost/sites/siteDefaults' -Name  logfile.logExtFileFlags -Value $newString
+                
+                Set-WebConfigurationProperty -Filter $ConfigurationPath -Name logExtFileFlags -Value $newString
                 return $true
             }
         }
@@ -202,6 +159,7 @@ Set-StrictMode -Version 2
 
     function Confirm-CustomFields {
         param(
+            $ConfigurationPath,
             $CustomFields,
             [bool]$WhatIf = $false
         )
@@ -212,13 +170,15 @@ Set-StrictMode -Version 2
                 Fail-Json $result "Custom Fields are not availabe when configured to one log per server. Hint: set central_log_file_mode to 'Site'"
             }
         }
-        $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile/customFields'
+        $ConfigurationPath = "$ConfigurationPath/customFields"
         $CurrentCustomFields = $(Get-WebConfiguration -Filter $ConfigurationPath).Collection
+
+       
 
         $fieldsToAdd = @()
         $fieldsToUpdate = @()
         $fieldsToRemove = @()
-        $changed = $false
+        $CustomFieldsChanged = $false
 
         foreach ($CustomField in $CustomFields) {
             # First ensure this list member has the properties we expect
@@ -226,21 +186,20 @@ Set-StrictMode -Version 2
                     [bool]($CustomField.PSobject.Properties.name -match "field_name") -and
                     [bool]($CustomField.PSobject.Properties.name -match "source_type") -and
                     [bool]($CustomField.PSobject.Properties.name -match "source_name") -and
-                    [bool]($CustomField.PSobject.Properties.name -match "level") -and
                     [bool]($CustomField.PSobject.Properties.name -match "state"))
 
                 )
             {
-                Fail-Json $result "Ojects in log_custom_fields must have 'field_name', 'source_type', 'source_name', 'level', and 'state' properties"
+                Fail-Json $result "Ojects in log_custom_fields must have 'field_name', 'source_type', 'source_name', and 'state' properties"
             }
 
             if ($CustomField.state -eq 'absent' -and ($CurrentCustomFields | Where-Object {$_.logFieldName -eq $CustomField.field_name})) {
-                $changed=$true
+                $CustomFieldsChanged=$true
                 $fieldsToRemove += ($CustomField)
             }
             elseif ($CustomField.state -eq 'present' -and -not ($CurrentCustomFields | Where-Object {$_.logFieldName -eq $CustomField.field_name}))
             {
-                $changed=$true
+                $CustomFieldsChanged=$true
                 $fieldsToAdd += ($CustomField)
             }
             elseif ($CustomField.state -eq 'present')
@@ -254,14 +213,14 @@ Set-StrictMode -Version 2
 
                 }
                 else {
-                    $changed=$true
+                    $CustomFieldsChanged=$true
                     $fieldsToUpdate += ($CustomField)
                 }
                 
             }
         }
 
-        if ($changed)
+        if ($CustomFieldsChanged)
             {
                 if ($WhatIf)
                 {
@@ -271,15 +230,15 @@ Set-StrictMode -Version 2
                 else {
 
                     $fieldsToAdd | Foreach-Object {
-                        Add-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST'  -filter "system.applicationHost/sites/siteDefaults/logFile/customFields" -name "." -value @{logFieldName=$_.field_name;sourceName=$_.source_name;sourceType=$_.source_type}
+                        Add-WebConfigurationProperty -filter  $ConfigurationPath -name "." -value @{logFieldName=$_.field_name;sourceName=$_.source_name;sourceType=$_.source_type}
                     }
 
                     $fieldsToUpdate | Foreach-Object {
-                        Set-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST' -filter "system.applicationHost/sites/siteDefaults/logFile/customFields" -name "."  -AtElement @{logFieldName=$_.field_name} -value @{sourceName=$_.source_name;sourceType=$_.source_type}
+                        Set-WebConfigurationProperty -filter  $ConfigurationPath -name "."  -AtElement @{logFieldName=$_.field_name} -value @{sourceName=$_.source_name;sourceType=$_.source_type}
                     }
 
                     $fieldsToRemove | Foreach-Object {
-                        Remove-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST' -filter "system.applicationHost/sites/siteDefaults/logFile/customFields" -name "."  -AtElement @{logFieldName=$_.field_name}
+                        Remove-WebConfigurationProperty  -filter $ConfigurationPath -name "."  -AtElement @{logFieldName=$_.field_name}
                     }
                     
                     return $true
@@ -287,7 +246,7 @@ Set-StrictMode -Version 2
             }
     }
 
-    Function Validate-ParameterSet {
+    Function Test-ParameterSet {
         Param(
             $ValidParameters,
             $Parameters
@@ -363,7 +322,7 @@ if ($configuration -eq "server")
 {   
     
     $validParameters = @("configuration","central_log_file_mode","log_in_utf8","log_directory","log_ext_file_flags","use_local_time","rotation_period","truncate_size")
-    Validate-ParameterSet -ValidParameters $validParameters -Parameters $params
+    Test-ParameterSet -ValidParameters $validParameters -Parameters $params
     $ConfigurationPath ="/system.applicationHost/log"
     If ($central_log_file_mode -eq "CentralBinary") {
         $LogConfigurationPath = "/system.applicationHost/log/centralBinaryLogFile"
@@ -409,70 +368,70 @@ if ($configuration -eq "server")
 
     
     $PropertiesToConfirm | Foreach-Object {
-        $FilterProperty = $_
-        
         if ($(Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value))
         {
             $changed = $true
-            $messages += $FilterProperty.Name
+            $messages += $_.Name
         }
     }
 }
 elseif ( $configuration -eq "siteDefaults"){
     $validParameters = @("configuration","site_log_format","log_directory","log_ext_file_flags","log_custom_fields","use_local_time","rotation_period","truncate_size")
-    Validate-ParameterSet -ValidParameters $validParameters -Parmaeters $params
-    $ConfigurationPath = '/system.applicationHost/sites/siteDefaults'
+    Test-ParameterSet -ValidParameters $validParameters -Parmaeters $params
+    $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile'
     $PropertiesToConfirm =@(
         [PSCustomObject]@{
             Filter = $ConfigurationPath;
-            Name = site_log_format;
+            Name = "logFormat";
             Value = $site_log_format
         },
         [PSCustomObject]@{
             Filter = $ConfigurationPath;
-            Name = log_directory;
+            Name = "directory";
             Value = $log_directory
         },
         [PSCustomObject]@{
             Filter = $ConfigurationPath;
-            Name = log_ext_file_flags;
-            Value = $log_ext_file_flags
-        },
-        [PSCustomObject]@{
-            Filter = $ConfigurationPath;
-            Name = log_custom_fields;
-            Value = $log_custom_fields
-        },
-        [PSCustomObject]@{
-            Filter = $ConfigurationPath;
-            Name = use_local_time;
+            Name = "localTimeRollover";
             Value = $use_local_time
         },
         [PSCustomObject]@{
             Filter = $ConfigurationPath;
-            Name = rotation_period;
+            Name = "period";
             Value = $rotation_period
         },
         [PSCustomObject]@{
             Filter = $ConfigurationPath;
-            Name = truncate_size;
+            Name = "truncateSize";
             Value = $truncate_size
         })
 
         $PropertiesToConfirm | Foreach-Object {
-            $FilterProperty = $_
-            if (Confirm-WebConfigurationProperty @FilterProperty)
+            if (Confirm-WebConfigurationProperty -Name $_.Name -Filter $_.Filter -Value $_.Value)
             {
                 $changed = $true
-                $messages += $FilterProperty.Name
+                $messages += $_.Name
             }
-        }  
+        }
+
+        if ($(Confirm-CustomFields -CustomFields $log_custom_fields -ConfigurationPath $ConfigurationPath)) {
+            $changed = $true
+            $messages += "Custom Fields"
+        }
+
+        if ($(Confirm-ExtFileFlags -ExtFileFlags $log_ext_file_flags -ConfigurationPath $ConfigurationPath)) {
+            $changed = $true
+            $messages += "Built-In Fields"
+        }
+
+        
+
     
 }
 elseif ($configuration -eq "site")
 {
     $validParameters = @("configuration","site_name","site_log_format","log_directory","log_ext_file_flags","log_custom_fields","use_local_time","rotation_period","truncate_size")
-    Validate-ParameterSet -ValidParameters $validParameters -Parmaeters $params
+    Test-ParameterSet -ValidParameters $validParameters -Parmaeters $params
     $ConfigurationPath = "/system.applicationHost/sites/site[@name='$site_name']"
 }
 else {
