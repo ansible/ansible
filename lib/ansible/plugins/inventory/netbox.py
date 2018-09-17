@@ -49,6 +49,7 @@ DOCUMENTATION = '''
                 - device_roles
                 - device_types
                 - manufacturers
+                - platforms
             default: []
         query_filters:
             description: List of parameters passed to the query string (Multiple values may be separated by commas)
@@ -194,6 +195,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "memory": self.extract_memory,
             "vcpus": self.extract_vcpus,
             "device_roles": self.extract_device_role,
+            "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
             "manufacturers": self.extract_manufacturer
         }
@@ -206,6 +208,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_memory(self, host):
         return host.get("memory")
+
+    def extract_platform(self, host):
+        try:
+            return self.platforms_lookup[host["platform"]["id"]]
+        except Exception:
+            return
 
     def extract_device_type(self, host):
         try:
@@ -266,6 +274,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_tags(self, host):
         return host["tags"]
+
+    def refresh_platforms_lookup(self):
+        url = urljoin(self.api_endpoint, "/api/dcim/platforms/?limit=0")
+        platforms = self.get_resource_list(api_url=url)
+        self.platforms_lookup = dict((platform["id"], platform["name"]) for platform in platforms)
 
     def refresh_sites_lookup(self):
         url = urljoin(self.api_endpoint, "/api/dcim/sites/?limit=0")
