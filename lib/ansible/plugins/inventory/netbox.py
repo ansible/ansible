@@ -10,6 +10,7 @@ DOCUMENTATION = '''
     plugin_type: inventory
     author:
         - Remy Leone (@sieben)
+        - Anthony Ruhier (@Anthony25)
     short_description: NetBox inventory source
     description:
         - Get inventory hosts from NetBox
