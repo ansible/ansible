@@ -22,7 +22,6 @@ class TestCnosPortchannelModule(TestCnosModule):
     def tearDown(self):
         super(TestCnosPortchannelModule, self).tearDown()
         self.mock_run_cnos_commands.stop()
-        os.remove('test.log')
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.run_cnos_commands.return_value = [load_fixture('cnos_portchannel_config.cfg')]
@@ -30,7 +29,7 @@ class TestCnosPortchannelModule(TestCnosModule):
     def test_portchannel_channelgroup(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'interfaceRange': '33',
+                         'outputfile': self.test_log, 'interfaceRange': '33',
                          'interfaceArg1': 'channel-group', 'interfaceArg2': '33', 'interfaceArg3': 'on'})
         result = self.execute_module(changed=True)
         expected_result = 'Port Channel Configuration is done'
@@ -39,7 +38,7 @@ class TestCnosPortchannelModule(TestCnosModule):
     def test_cnos_portchannel_lacp(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'interfaceRange': '33',
+                         'outputfile': self.test_log, 'interfaceRange': '33',
                          'interfaceArg1': 'lacp', 'interfaceArg2': 'port-priority', 'interfaceArg3': '33'})
         result = self.execute_module(changed=True)
         expected_result = 'Port Channel Configuration is done'
@@ -48,7 +47,7 @@ class TestCnosPortchannelModule(TestCnosModule):
     def test_cnos_portchannel_duplex(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'interfaceRange': '2',
+                         'outputfile': self.test_log, 'interfaceRange': '2',
                          'interfaceArg1': 'duplex', 'interfaceArg2': 'auto'})
         result = self.execute_module(changed=True)
         expected_result = 'Port Channel Configuration is done'
@@ -57,7 +56,7 @@ class TestCnosPortchannelModule(TestCnosModule):
     def test_cnos_portchannel_mtu(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'interfaceRange': '33',
+                         'outputfile': self.test_log, 'interfaceRange': '33',
                          'interfaceArg1': 'mtu', 'interfaceArg2': '1300'})
         result = self.execute_module(changed=True)
         expected_result = 'Port Channel Configuration is done'
@@ -66,7 +65,7 @@ class TestCnosPortchannelModule(TestCnosModule):
     def test_cnos_portchannel_spanningtree(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'interfaceRange': '33',
+                         'outputfile': self.test_log, 'interfaceRange': '33',
                          'interfaceArg1': 'spanning-tree', 'interfaceArg2': 'mst',
                          'interfaceArg3': '33-35', 'interfaceArg4': 'cost',
                          'interfaceArg5': '33'})
@@ -77,7 +76,7 @@ class TestCnosPortchannelModule(TestCnosModule):
     def test_cnos_portchannel_ip(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'interfaceRange': '33',
+                         'outputfile': self.test_log, 'interfaceRange': '33',
                          'interfaceArg1': 'ip', 'interfaceArg2': 'port',
                          'interfaceArg3': 'anil'})
         result = self.execute_module(changed=True)
