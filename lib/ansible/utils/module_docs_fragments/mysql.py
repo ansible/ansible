@@ -63,7 +63,8 @@ options:
     description:
       - The path to the client private key.
 requirements:
-   - PyMySQL
+   - PyMySQL (Python 2.7 and Python 3.X), or
+   - MySQLdb (Python 2.x)
 notes:
    - Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) Python package on the remote host.
      For Ubuntu, this is as easy as apt-get install python-pymysql. (See M(apt).) For CentOS/Fedora, this
