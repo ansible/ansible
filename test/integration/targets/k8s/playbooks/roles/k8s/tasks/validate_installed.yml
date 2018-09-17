@@ -44,7 +44,7 @@
         that:
           - extra_property is failed
 
-    - name: invalid type fails
+    - name: invalid type fails at validation stage
       k8s:
         src: "{{ role_path }}/files/kuard-invalid-type.yml"
         namespace: "{{ playbook_namespace }}"
@@ -58,6 +58,21 @@
       assert:
         that:
           - invalid_type is failed
+
+    - name: invalid type fails with warnings when fail_on_error is False
+      k8s:
+        src: "{{ role_path }}/files/kuard-invalid-type.yml"
+        namespace: "{{ playbook_namespace }}"
+        validate:
+          fail_on_error: no
+          strict: no
+      ignore_errors: yes
+      register: invalid_type_no_fail
+
+    - name: check that invalid type fails
+      assert:
+        that:
+          - invalid_type_no_fail is failed
 
     - name: setup custom resource definition
       k8s:

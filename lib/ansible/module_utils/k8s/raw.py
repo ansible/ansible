@@ -121,11 +121,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             api_version = definition.get('apiVersion', self.api_version)
             resource = self.find_resource(search_kind, api_version, fail=True)
             definition = self.set_defaults(resource, definition)
-            warnings = []
+            self.warnings = []
             if self.params['validate'] is not None:
-                warnings = self.validate(definition)
+                self.warnings = self.validate(definition)
             result = self.perform_action(resource, definition)
-            result['warnings'] = warnings
+            result['warnings'] = self.warnings
             changed = changed or result['changed']
             results.append(result)
 
@@ -233,8 +233,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                                   if the resource you are creating does not directly create a resource of the same kind.".format(name))
                         return result
                     except DynamicApiError as exc:
-                        self.fail_json(msg="Failed to create object: {0}".format(exc.body),
-                                       error=exc.status, status=exc.status, reason=exc.reason, definition=definition)
+                        msg = "Failed to create object: {0}".format(exc.body)
+                        if self.warnings:
+                            msg += "\n" + "\n    ".join(self.warnings)
+                        self.fail_json(msg=msg, error=exc.status, status=exc.status, reason=exc.reason)
                 success = True
                 result['result'] = k8s_obj
                 if wait:
@@ -255,8 +257,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     try:
                         k8s_obj = resource.replace(definition, name=name, namespace=namespace).to_dict()
                     except DynamicApiError as exc:
-                        self.fail_json(msg="Failed to replace object: {0}".format(exc.body),
-                                       error=exc.status, status=exc.status, reason=exc.reason)
+                        msg = "Failed to replace object: {0}".format(exc.body)
+                        if self.warnings:
+                            msg += "\n" + "\n    ".join(self.warnings)
+                        self.fail_json(msg=msg, error=exc.status, status=exc.status, reason=exc.reason)
+                match, diffs = self.diff_objects(existing.to_dict(), k8s_obj)
                 success = True
                 result['result'] = k8s_obj
                 if wait:
@@ -313,8 +318,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             error = {}
             return k8s_obj, {}
         except DynamicApiError as exc:
-            error = dict(msg="Failed to patch object: {0}".format(exc.body),
-                         error=exc.status, status=exc.status, reason=exc.reason)
+            msg = "Failed to patch object: {0}".format(exc.body)
+            if self.warnings:
+                msg += "\n" + "\n    ".join(self.warnings)
+            error = dict(msg=msg, error=exc.status, status=exc.status, reason=exc.reason, warnings=self.warnings)
             return None, error
 
     def create_project_request(self, definition):

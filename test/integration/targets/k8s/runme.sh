@@ -12,16 +12,16 @@ MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 # but for the python3 tests we need virtualenv to use python3
 PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 
-# Test graceful failure for missing kubernetes-validate
+# Test graceful failure for missing all_the_merges
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/openshift-validate-not-installed"
 source "${MYTMPDIR}/openshift-validate-not-installed/bin/activate"
-$PYTHON -m pip install git+https://github.com/willthames/openshift-restclient-python@kubernetes-validate
+$PYTHON -m pip install git+https://github.com/willthames/openshift-restclient-python@all_the_merges
 ansible-playbook -v playbooks/validate_not_installed.yml "$@"
 
-# Test graceful failure for missing kubernetes-validate
+# Test graceful failure for missing all_the_merges
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/openshift-validate-installed"
 source "${MYTMPDIR}/openshift-validate-installed/bin/activate"
-$PYTHON -m pip install git+https://github.com/willthames/openshift-restclient-python@kubernetes-validate 'kubernetes-validate>=1.11.5'
+$PYTHON -m pip install git+https://github.com/willthames/openshift-restclient-python@all_the_merges 'all_the_merges>=1.11.5'
 ansible-playbook -v playbooks/validate_installed.yml "$@"
 
 # Test graceful failure for older versions of openshift
