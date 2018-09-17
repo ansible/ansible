@@ -118,7 +118,7 @@ def test_get_nonexistent_stack(placeboify):
     assert cfn_module.get_stack_facts(connection, 'ansible-test-nonexist') is None
 
 
-def test_missing_template_body(placeboify):
+def test_missing_template_body():
     m = FakeModule()
     with pytest.raises(Exception, message='Expected module to fail with no template') as exc_info:
         cfn_module.create_stack(
