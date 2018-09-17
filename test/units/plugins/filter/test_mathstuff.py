@@ -25,6 +25,7 @@ TWO_SETS_DATA = (([1, 2], [3, 4], ([], sorted([1, 2]), sorted([1, 2, 3, 4]), sor
 
 env = Environment()
 
+
 @pytest.mark.parametrize('data, expected', UNIQUE_DATA)
 class TestUnique:
     def test_unhashable(self, data, expected):
