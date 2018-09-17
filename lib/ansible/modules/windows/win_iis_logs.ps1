@@ -7,6 +7,13 @@
 
 Set-StrictMode -Version 2
 
+$ErrorActionPreference = "Stop"
+
+# Ensure WebAdministration module is loaded
+if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
+    Import-Module WebAdministration
+}
+
 #region functions
 
 
@@ -261,7 +268,6 @@ Set-StrictMode -Version 2
         )
         $str = ''
         $Parameters.Keys | Foreach-Object {
-            
             if ($_ -notlike "_ansible*"){
                 if ($ValidParameters -notcontains $_) {
                     Fail-Json $result "Unexpected parameter: $_ not valid for this configuration context"
@@ -310,6 +316,7 @@ $log_in_utf8 = Get-AnsibleParam $params "log_in_utf8" -type "bool" -default $nul
 
 $result = @{
     changed = $false
+    msg = $null
 }
 [bool]$changed = $false
 $messages = @()
@@ -340,6 +347,7 @@ if ($configuration -eq "server")
     $validParameters = @("configuration","central_log_file_mode","log_in_utf8","log_directory","log_ext_file_flags","use_local_time","rotation_period","truncate_size")
     Test-ParameterSet -ValidParameters $validParameters -Parameters $params
     $ConfigurationPath ="/system.applicationHost/log"
+    $LogConfigurationPath = $null
     If ($central_log_file_mode -eq "CentralBinary") {
         $LogConfigurationPath = "/system.applicationHost/log/centralBinaryLogFile"
     }
@@ -393,7 +401,7 @@ if ($configuration -eq "server")
 }
 elseif ( $configuration -eq "siteDefaults"){
     $validParameters = @("configuration","site_log_format","log_directory","log_ext_file_flags","log_custom_fields","use_local_time","rotation_period","truncate_size")
-    Test-ParameterSet -ValidParameters $validParameters -Parmaeters $params
+    Test-ParameterSet -ValidParameters $validParameters -Parameters $params
     $ConfigurationPath = '/system.applicationHost/sites/siteDefaults/logFile'
     $PropertiesToConfirm =@(
         [PSCustomObject]@{
