@@ -494,7 +494,7 @@ def subelements(obj, subelements, skip_missing=False):
     return results
 
 
-def dict_to_list_of_dict_key_value_elements(mydict):
+def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='value'):
     ''' takes a dictionary and transforms it into a list of dictionaries,
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
@@ -503,7 +503,7 @@ def dict_to_list_of_dict_key_value_elements(mydict):
 
     ret = []
     for key in mydict:
-        ret.append({'key': key, 'value': mydict[key]})
+        ret.append({key_name: key, value_name: mydict[key]})
     return ret
 
 

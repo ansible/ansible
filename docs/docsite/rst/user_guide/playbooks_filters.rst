@@ -200,6 +200,25 @@ into::
     - key: Environment
       value: dev
 
+.. versionadded:: 2.8
+
+``dict2items`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
+
+    {{ files | dict2items(key_name='file', value_name='path') }}
+
+Which turns::
+
+    files:
+      users: /etc/passwd
+      groups: /etc/group
+
+into::
+
+    - file: users
+      path: /etc/passwd
+    - file: groups
+      path: /etc/group
+
 items2dict filter
 `````````````````
 
