@@ -65,8 +65,36 @@ EXAMPLES = '''
     state: enabled
     supported_services: [ Dns, Dhcp ]
     service_providers:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+      - {service: 'dns', provider: 'VpcVirtualRouter'}
+      - {service: 'dhcp', provider: 'VpcVirtualRouter'}
+
+# Create a vpc offering with redundant router
+- local_action:
+    module: cs_vpc_offering
+    name: "my_vpc_offering"
+    display_text: "vpc offering description"
+    supported_services: [ Dns, Dhcp, SourceNat ]
+    service_providers:
+      - {service: 'dns', provider: 'VpcVirtualRouter'}
+      - {service: 'dhcp', provider: 'VpcVirtualRouter'}
+      - {service: 'SourceNat', provider: 'VpcVirtualRouter'}
+    service_capabilities:
+      - {service: 'SourceNat', capabilitytype: 'RedundantRouter', capabilityvalue: true}
+
+# Create a region level vpc offering with distributed router
+- local_action:
+    module: cs_vpc_offering
+    name: "my_vpc_offering"
+    display_text: "vpc offering description"
+    state: present
+    supported_services: [ Dns, Dhcp, SourceNat ]
+    service_providers:
+      - {service: 'dns', provider: 'VpcVirtualRouter'}
+      - {service: 'dhcp', provider: 'VpcVirtualRouter'}
+      - {service: 'SourceNat', provider: 'VpcVirtualRouter'}
+    service_capabilities:
+      - {service: 'Connectivity', capabilitytype: 'DistributedRouter', capabilityvalue: true}
+      - {service: 'Connectivity', capabilitytype: 'RegionLevelVPC', capabilityvalue: true}
 
 # Remove a vpc offering
 - local_action:
@@ -189,6 +217,7 @@ class AnsibleCloudStackVPCOffering(AnsibleCloudStack):
             'supportedservices': self.module.params.get('supported_services'),
             'serviceproviderlist': self.module.params.get('service_providers'),
             'serviceofferingid': self.get_service_offering_id(),
+            'servicecapabilitylist': self.module.params.get('service_capabilities'),
         }
 
         required_params = [
