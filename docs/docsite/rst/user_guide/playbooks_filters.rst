@@ -206,6 +206,19 @@ into::
 
     {{ files | dict2items(key_name='file', value_name='path') }}
 
+Which turns::
+
+    files:
+      users: /etc/passwd
+      groups: /etc/group
+
+into::
+
+    - file: users
+      path: /etc/passwd
+    - file: groups
+      path: /etc/group
+
 items2dict filter
 `````````````````
 
