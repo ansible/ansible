@@ -52,10 +52,14 @@ options:
     post_category_names:
         description:
         - A list of categories to check an update is in. This can be used to
-        confirm which product categories are applied. Category names here may
-        overlap with the 'category_names' option.
-        - Note: These categories are filtered after searching for updates, while
-        the list in 'category_names' is applied during the search for updates.
+          confirm which product categories are applied. Category names here may
+          overlap with the C(category_names) option.
+        - Matches are a sub-string match. For example, Windows will match any
+          Windows OS update, while the category string may be Windows Server
+          2012 R2.
+        - These categories are filtered after searching for updates, while the
+          list in C(category_names) is applied during the search for updates.
+        type: list
         version_added: '2.8'
     reboot:
         description:
@@ -203,7 +207,7 @@ updates:
             description: A list of category strings for this update
             returned: always
             type: list of strings
-            sameple: [ 'CriticalUpdate', 'Update', 'Windows' ]
+            sample: [ 'Critical Updates', 'Windows Server 2012 R2' ]
         failure_hresult_code:
             description: The HRESULT code from a failed update
             returned: on install failure
