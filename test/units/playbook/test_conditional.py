@@ -44,6 +44,30 @@ class TestConditional(unittest.TestCase):
         ret = self._eval_con(when, variables)
         self.assertTrue(ret)
 
+    # Ensure full Jinja syntax expression and bare expression have same value
+    def test_expression_null(self):
+        when = [u"['0', '1']|min"]  # an expression, not a variable
+        ret = self._eval_con(when)
+        self.assertFalse(ret)
+
+    def test_expression_null_bare_expression(self):
+        when = [u"['0', '1']|min"]  # an expression, not a variable
+        ret = self._eval_con(when)
+        self.assertFalse(ret)
+
+    # Ensure full Jinja syntax variable and bare variable have same value
+    def test_expression_str(self):
+        variables = {"values": ['0', '1'], "expr": "values|min"}
+        when = ["{{ expr }}"]  # a variable
+        ret = self._eval_con(when, variables)
+        self.assertFalse(ret)
+
+    def test_expression_str_bare_expression(self):
+        variables = {"values": ['0', '1'], "expr": "values|min"}
+        when = ["expr"]  # a variable
+        ret = self._eval_con(when, variables)
+        self.assertFalse(ret)
+
     def test_dict_defined_values(self):
         variables = {'dict_value': 1,
                      'some_defined_dict': {'key1': 'value1',
