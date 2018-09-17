@@ -207,6 +207,13 @@ EXAMPLES = '''
     name: httpd
     state: latest
 
+- name: install the latest version of Apache and MariaDB
+  dnf:
+    name:
+      - httpd
+      - mariadb-server
+    state: latest
+
 - name: remove the Apache package
   dnf:
     name: httpd
