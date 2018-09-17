@@ -125,6 +125,7 @@ options:
     organisation:
         description:
             - Organisation
+        aliases: [ organization ]
     override_pw_history:
         type: bool
         default: 'no'
@@ -330,7 +331,8 @@ def main():
                                          type='list',
                                          aliases=['mobileTelephoneNumber']),
             organisation=dict(default=None,
-                              type='str'),
+                              type='str',
+                              aliases=['organization']),
             overridePWHistory=dict(default=False,
                                    type='bool',
                                    aliases=['override_pw_history']),
