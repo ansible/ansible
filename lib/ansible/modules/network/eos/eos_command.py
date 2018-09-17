@@ -158,7 +158,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import transform_commands, to_lines
 from ansible.module_utils.network.eos.eos import run_commands
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
@@ -205,7 +205,6 @@ def main():
 
     warnings = list()
     result = {'changed': False, 'warnings': warnings}
-    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     wait_for = module.params['wait_for'] or list()
 
