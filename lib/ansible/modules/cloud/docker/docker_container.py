@@ -730,6 +730,11 @@ class TaskParameters(DockerBaseClass):
         for key, value in client.module.params.items():
             setattr(self, key, value)
 
+        # If state is 'absent', parameters do not have to be parsed or interpreted.
+        # Only the container's name is needed.
+        if self.state == 'absent':
+            return
+
         for param_name in REQUIRES_CONVERSION_TO_BYTES:
             if client.module.params.get(param_name):
                 try:
