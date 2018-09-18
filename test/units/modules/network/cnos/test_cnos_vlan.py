@@ -22,7 +22,6 @@ class TestCnosVlanModule(TestCnosModule):
     def tearDown(self):
         super(TestCnosVlanModule, self).tearDown()
         self.mock_run_cnos_commands.stop()
-        os.remove('test.log')
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.run_cnos_commands.return_value = [load_fixture('cnos_vlan_config.cfg')]
@@ -30,7 +29,7 @@ class TestCnosVlanModule(TestCnosModule):
     def test_cnos_vlan_create(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'vlanArg1': '13',
+                         'outputfile': self.test_log, 'vlanArg1': '13',
                          'vlanArg2': 'name', 'vlanArg3': 'anil'})
         result = self.execute_module(changed=True)
         expected_result = 'VLAN configuration is accomplished'
@@ -39,7 +38,7 @@ class TestCnosVlanModule(TestCnosModule):
     def test_cnos_vlan_state(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'vlanArg1': '13',
+                         'outputfile': self.test_log, 'vlanArg1': '13',
                          'vlanArg2': 'state', 'vlanArg3': 'active'})
         result = self.execute_module(changed=True)
         expected_result = 'VLAN configuration is accomplished'
