@@ -855,7 +855,8 @@ class TaskExecutor:
 
         option_vars = C.config.get_plugin_vars('connection', connection._load_name)
         for plugin in connection._sub_plugins:
-            option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
+            if plugin['type'] != 'external':
+                option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
 
         options = {}
         for k in option_vars:
