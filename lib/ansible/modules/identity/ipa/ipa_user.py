@@ -69,6 +69,11 @@ options:
     description:
     - Posix Group ID
     version_added: 2.5
+  krbprincipalexpiration:
+    description:
+    - Date at which the Kerberos principal will expire
+    - In the same format as I(krbpasswordexpiration)
+    version_added: 2.8
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 requirements:
@@ -147,12 +152,15 @@ class UserIPAClient(IPAClient):
 
 def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, loginshell=None,
                   mail=None, nsaccountlock=False, sn=None, sshpubkey=None, telephonenumber=None,
-                  title=None, userpassword=None, gidnumber=None, uidnumber=None):
+                  title=None, userpassword=None, gidnumber=None, uidnumber=None,
+                  krbprincipalexpiration=None):
     user = {}
     if displayname is not None:
         user['displayname'] = displayname
     if krbpasswordexpiration is not None:
         user['krbpasswordexpiration'] = krbpasswordexpiration + "Z"
+    if krbprincipalexpiration is not None:
+        user['krbprincipalexpiration'] = krbprincipalexpiration + "Z"
     if givenname is not None:
         user['givenname'] = givenname
     if loginshell is not None:
@@ -243,7 +251,8 @@ def ensure(module, client):
                                 sshpubkey=module.params['sshpubkey'], nsaccountlock=nsaccountlock,
                                 telephonenumber=module.params['telephonenumber'], title=module.params['title'],
                                 userpassword=module.params['password'],
-                                gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'))
+                                gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'),
+                                krbprincipalexpiration=module.params.get('krbprincipalexpiration'))
 
     ipa_user = client.user_find(name=name)
 
@@ -284,7 +293,8 @@ def main():
                          state=dict(type='str', default='present',
                                     choices=['present', 'absent', 'enabled', 'disabled']),
                          telephonenumber=dict(type='list'),
-                         title=dict(type='str'))
+                         title=dict(type='str'),
+                         krbprincipalexpiration=dict(type='str'))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
