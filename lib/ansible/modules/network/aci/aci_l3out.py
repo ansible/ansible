@@ -66,6 +66,7 @@ options:
     description:
     - The AS number for the L3Out. Only applicable when using 'eigrp' as the l3protocol
     aliases: [ as_number ]
+    version_added: '2.8'
   description:
     description:
     - Description for the L3Out.
