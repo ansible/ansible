@@ -67,6 +67,17 @@ def get_docker_container_ip(args, container_id):
     return ipaddress
 
 
+def get_docker_networks(args, container_id):
+    """
+    :param args: EnvironmentConfig
+    :param container_id: str
+    :rtype: list[str]
+    """
+    results = docker_inspect(args, container_id)
+    networks = sorted(results[0]['NetworkSettings']['Networks'])
+    return networks
+
+
 def docker_pull(args, image):
     """
     :type args: EnvironmentConfig
@@ -163,6 +174,15 @@ def docker_inspect(args, container_id):
             return json.loads(ex.stdout)
         except:
             raise ex  # pylint: disable=locally-disabled, raising-bad-type
+
+
+def docker_network_disconnect(args, container_id, network):
+    """
+    :param args: EnvironmentConfig
+    :param container_id: str
+    :param network: str
+    """
+    docker_command(args, ['network', 'disconnect', network, container_id], capture=True)
 
 
 def docker_network_inspect(args, network):
