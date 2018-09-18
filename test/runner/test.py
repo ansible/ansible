@@ -335,6 +335,10 @@ def parse_args():
                        action='store_true',
                        help='collect tests but do not execute them')
 
+    units.add_argument('--requirements-mode',
+                       choices=('only', 'skip'),
+                       help=argparse.SUPPRESS)
+
     add_extra_docker_options(units, integration=False)
 
     sanity = subparsers.add_parser('sanity',
