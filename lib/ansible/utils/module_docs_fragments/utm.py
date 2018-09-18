@@ -20,13 +20,20 @@ options:
     utm_protocol:
         description:
           - The protocol of the REST Endpoint.
+        choices:
+          - https
+          - http
         default: https
     validate_certs:
         description:
           - whether the rest interface's ssl certificate should be verified or not
         default: True
+        type: bool
     state:
         description:
           - The desired state of the object
+        choices:
+          - present
+          - absent
         default: present
 """
