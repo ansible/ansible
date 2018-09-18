@@ -18,7 +18,7 @@ options:
         description:
           - The protocol of the REST Endpoint.
         default: https
-     validate_certs: 
+     validate_certs:
         description:
           - whether the rest interface's ssl certificate should be verified or not
         default: True

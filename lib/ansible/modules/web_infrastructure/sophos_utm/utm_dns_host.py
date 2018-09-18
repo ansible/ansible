@@ -2,10 +2,9 @@
 
 # Copyright: (c) 2018, Johannes Brunswicker <johannes.brunswicker@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import absolute_import, division, print_function
 
-from lib.ansible.module_utils.utm_utils import UTM, UTMModule
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -17,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: utm_dns_host
 
-author: 
+author:
     - Johannes Brunswicker (@MatrixCrawler)
 
 short_description: create, update or destroy dns entry in Sophos UTM
@@ -26,7 +25,7 @@ description:
     - Create, update or destroy a dns entry in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.8" 
+version_added: "2.8"
 
 options:
     name:
@@ -40,7 +39,7 @@ options:
     address6:
         description:
           - The IPV6 Address of the entry. Can be left empty for automatic resolving.
-        default: ::
+        default: "::"
     comment:
         description:
           - An optional comment to add to the dns host object
@@ -52,13 +51,13 @@ options:
           - The reference name of the interface to use. If not provided the default interface will be used
     resolved:
         description:
-          - whether the hostname' s ipv4 address is already resolved or not
+          - whether the hostname's ipv4 address is already resolved or not
         default: False
     resolved6:
         description:
-          - whether the hostname' s ipv6 address is already resolved or not
+          - whether the hostname's ipv6 address is already resolved or not
         default: False
-    timeout: 
+    timeout:
         description:
           - the timeout for the utm to resolve the ip address for the hostname again
         default: 0
@@ -91,7 +90,43 @@ result:
     description: The utm object that was created
     returned: success
     type: complex
+    contains:
+        _ref:
+            description: The reference name of the object
+            type: string
+        _locked:
+            description: Whether or not the object is currently locked
+            type: boolean
+        name:
+            description: The name of the object
+            type: string
+        address:
+            description: The ipv4 address of the object
+            type: string
+        address6:
+            description: The ipv6 adress of the object
+            type: string
+        comment:
+            description: The comment string
+            type: string
+        hostname:
+            description: The hostname of the object
+            type: string
+        interface:
+            description: The reference name of the interface the object is associated with
+            type: string
+        resolved:
+            description: Whether the ipv4 address is resolved or not
+            type: boolean
+        resolved6:
+            description: Whether the ipv6 address is resolved or not
+            type: boolean
+        timeout:
+            description: The timeout until a new resolving will be attempted
+            type: int
 """
+
+from ansible.module_utils.utm_utils import UTM, UTMModule
 
 
 def main():
