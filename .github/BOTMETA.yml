@@ -344,6 +344,13 @@ files:
   $modules/utilities/logic/pause.py: samdoran
   $modules/utilities/logic/wait_for.py: gregswift
   $modules/web_infrastructure/ansible_tower/: $team_tower
+  $modules/web_infrastructure/sophos_utm/:
+    keywords:
+    - utm
+    - sophos
+    maintainers:
+    - matrixcrawler
+    - getjack
   $modules/web_infrastructure/django_manage.py: scottanderson42
   $modules/web_infrastructure/htpasswd.py: $team_ansible
   $modules/web_infrastructure/jboss: $team_jboss
