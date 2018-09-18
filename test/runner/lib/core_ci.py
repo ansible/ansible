@@ -541,7 +541,7 @@ class SshKey(object):
                 make_dirs(base_dir)
 
             if not os.path.isfile(key) or not os.path.isfile(pub):
-                run_command(args, ['ssh-keygen', '-q', '-t', 'rsa', '-N', '', '-f', key])
+                run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
 
             if not args.explain:
                 shutil.copy2(key, self.key)
