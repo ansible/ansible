@@ -88,7 +88,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.scaleway import SCALEWAY_LOCATION
 from ansible.module_utils.urls import open_url
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 
 def _fetch_information(token, url):
@@ -100,7 +100,12 @@ def _fetch_information(token, url):
         raise AnsibleError("Error while fetching %s: %s" % (url, to_native(e)))
 
     try:
-        raw_json = json.loads(response.read())
+        raw_data = to_text(response.read(), errors='surrogate_or_strict')
+    except UnicodeError:
+        raise AnsibleError("Incorrect encoding of fetched payload from Scaleway servers")
+
+    try:
+        raw_json = json.loads(raw_data)
     except ValueError:
         raise AnsibleError("Incorrect JSON payload")
 
