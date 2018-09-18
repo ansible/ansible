@@ -32,7 +32,7 @@ from multiprocessing import Lock
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
@@ -846,10 +846,15 @@ class StrategyBase:
                 self._tqm._stats.increment('ok', host.name)
 
         except AnsibleError as e:
+            if isinstance(e, AnsibleFileNotFound):
+                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(included_file._filename)
+            else:
+                reason = to_text(e)
+
             # mark all of the hosts including this file as failed, send callbacks,
             # and increment the stats for this host
             for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=to_text(e)))
+                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
                 iterator.mark_host_failed(host)
                 self._tqm._failed_hosts[host.name] = True
                 self._tqm._stats.increment('failures', host.name)
