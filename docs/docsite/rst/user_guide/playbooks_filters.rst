@@ -1031,7 +1031,7 @@ To search a string with a regex, use the "regex_search" filter::
 
     # will return empty if it cannot find a match
     {{ 'ansible' | regex_search('(foobar)') }}
-    
+
     # case insensitive search in multiline mode
     {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
@@ -1055,7 +1055,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
-    
+
     # add "https://" prefix to each item in a list
     {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
 
@@ -1180,6 +1180,25 @@ To get date object from string use the `to_datetime` filter, (new in version in 
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
     {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).days  }}
 
+.. versionadded:: 2.4
+
+To format a date using a string (like with the shell date command), use the "strftime" filter::
+
+    # Display year-month-day
+    {{ '%Y-%m-%d' | strftime }}
+
+    # Display hour:min:sec
+    {{ '%H:%M:%S' | strftime }}
+
+    # Use ansible_date_time.epoch fact
+    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
+
+    # Use arbitrary epoch value
+    {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
+    {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
+
+.. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
+
 Combination Filters
 ````````````````````
 
@@ -1204,25 +1223,6 @@ Combinations always require a set size::
 
 
 Also see the :ref:`zip_filter`
-
-.. versionadded:: 2.4
-
-To format a date using a string (like with the shell date command), use the "strftime" filter::
-
-    # Display year-month-day
-    {{ '%Y-%m-%d' | strftime }}
-
-    # Display hour:min:sec
-    {{ '%H:%M:%S' | strftime }}
-
-    # Use ansible_date_time.epoch fact
-    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
-
-    # Use arbitrary epoch value
-    {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
-    {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
-
-.. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
 
 Debugging Filters
 `````````````````
