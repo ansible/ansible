@@ -1,6 +1,10 @@
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+import os
+import shutil
+import tempfile
+
 from ansible.modules.storage.netapp.netapp_e_ldap import Ldap
 from units.modules.utils import ModuleTestCase, set_module_args, AnsibleFailJson, AnsibleExitJson
 
@@ -15,10 +19,19 @@ class LdapTest(ModuleTestCase):
         'api_url': 'http://localhost',
         'ssid': '1',
         'state': 'absent',
-        'log_path': './debug.log'
-
     }
     REQ_FUNC = 'ansible.modules.storage.netapp.netapp_e_ldap.request'
+
+    def setUp(self):
+        super(LdapTest, self).setUp()
+
+        self.temp_dir = tempfile.mkdtemp('ansible-test_netapp_e_ldap-')
+        self.REQUIRED_PARAMS['log_path'] = os.path.join(self.temp_dir, 'debug.log')
+
+    def tearDown(self):
+        super(LdapTest, self).tearDown()
+
+        shutil.rmtree(self.temp_dir)
 
     def _make_ldap_instance(self):
         self._set_args()
