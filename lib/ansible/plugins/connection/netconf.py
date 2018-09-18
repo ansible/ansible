@@ -220,13 +220,12 @@ class Connection(NetworkConnectionBase):
 
         netconf = netconf_loader.get(self._network_os, self)
         if netconf:
-            self._sub_plugins['netconf'] = self._network_os
+            self._sub_plugins.append({'type': 'netconf', 'name': self._network_os, 'obj': netconf})
             display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
         else:
-            self._sub_plugins['netconf'] = 'default'
             netconf = netconf_loader.get("default", self)
+            self._sub_plugins.append({'type': 'netconf', 'name': 'default', 'obj': netconf})
             display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
-        self._implementation_plugins.append(netconf)
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None

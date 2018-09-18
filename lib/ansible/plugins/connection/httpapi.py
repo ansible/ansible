@@ -180,17 +180,15 @@ class Connection(NetworkConnectionBase):
 
             self.httpapi = httpapi_loader.get(self._network_os, self)
             if self.httpapi:
-                self._sub_plugins['httpapi'] = self._network_os
+                self._sub_plugins.append({'type': 'httpapi', 'name': self._network_os, 'obj': self.httpapi})
                 display.vvvv('loaded API plugin for network_os %s' % self._network_os)
-                self._implementation_plugins.append(self.httpapi)
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
-                self._sub_plugins['cliconf'] = self._network_os
+                self._sub_plugins.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
                 display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
-                self._implementation_plugins.append(self.cliconf)
             else:
                 display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
         else:

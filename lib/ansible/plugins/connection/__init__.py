@@ -292,8 +292,6 @@ class NetworkConnectionBase(ConnectionBase):
     # Do not use _remote_is_local in other connections
     _remote_is_local = True
 
-    _sub_plugins = {}
-
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
 
@@ -302,12 +300,16 @@ class NetworkConnectionBase(ConnectionBase):
         self._local = connection_loader.get('local', play_context, '/dev/null')
         self._local.set_options()
 
-        self._implementation_plugins = []
+        self._sub_plugins = []
         self._cached_variables = (None, None, None)
 
         # reconstruct the socket_path and set instance values accordingly
         self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
         self._update_connection_state()
+
+    @property
+    def _implementation_plugins(self):
+        return [plugin['obj'] for plugin in self._sub_plugins]
 
     def __getattr__(self, name):
         try:

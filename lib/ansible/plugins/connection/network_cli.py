@@ -212,9 +212,8 @@ class Connection(NetworkConnectionBase):
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
-                self._sub_plugins['cliconf'] = self._network_os
                 display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
-                self._implementation_plugins.append(self.cliconf)
+                self._sub_plugins.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
             else:
                 display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
         else:
