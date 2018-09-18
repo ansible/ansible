@@ -145,7 +145,7 @@ class LdapEntry(LdapGeneric):
                 attrs[name] = []
 
             if isinstance(value, list):
-                attrs[name] = [map(to_bytes, value)]
+                attrs[name] = [to_bytes(v) for v in value]
             else:
                 attrs[name].append(to_bytes(value))
 
