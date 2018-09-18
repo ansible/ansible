@@ -37,6 +37,11 @@ options:
         description:
             - Username on Foreman server.
         required: true
+    verify_ssl:
+        description:
+            - Whether to verify an SSL connection to Foreman server.
+        type: bool
+        default: False
     password:
         description:
             - Password for user accessing Foreman server.
