@@ -957,6 +957,7 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode',
             tmpfs='tmpfs',
+            blkio_weight='blkio_weight',
         )
 
         if self.client.HAS_AUTO_REMOVE_OPT:
@@ -1452,6 +1453,7 @@ class Container(DockerBaseClass):
         host_config = self.container['HostConfig']
 
         config_mapping = dict(
+            blkio_weight=host_config.get('BlkioWeight'),
             cpu_period=host_config.get('CpuPeriod'),
             cpu_quota=host_config.get('CpuQuota'),
             cpuset_cpus=host_config.get('CpusetCpus'),
