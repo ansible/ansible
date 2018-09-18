@@ -498,3 +498,6 @@
 
 - name: Test follow_redirects=all
   include_tasks: redirect-all.yml
+
+- name: Check unexpected failures
+  include_tasks: unexpected-failures.yml
