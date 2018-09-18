@@ -7,20 +7,32 @@
 - set_fact: testint2="{{ nxos_int2 }}"
 - set_fact: testint3="{{ nxos_int3 }}"
 
+- set_fact: ipv6_address=""
+- set_fact: ipv6_address="33:db::2/8"
+  when: ipv6_supported
+
 - name: Setup - Remove address from interfaces aggregate
   nxos_l3_interface:
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
-      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "33:db::2/8" }
-    provider: "{{ nxapi }}"
+      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
+    provider: "{{ connection }}"
     state: absent
   ignore_errors: yes
+
+- name: Setup - Ensure interfaces are layer3
+  nxos_interface:
+    aggregate:
+      - name: "{{ testint2 }}"
+      - name: "{{ testint3 }}"
+    mode: layer3
+    provider: "{{ connection }}"
 
 - name: Configure ipv4 address to interface
   nxos_l3_interface: &conf
     name: "{{ testint2 }}"
     ipv4: 192.168.22.1/24
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -39,7 +51,7 @@
   nxos_l3_interface: &rm
     name: "{{ testint2 }}"
     ipv4: 192.168.22.1/24
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -59,8 +71,8 @@
   nxos_l3_interface: &conf_agg
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
-      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "33:db::2/8" }
-    provider: "{{ nxapi }}"
+      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -79,8 +91,8 @@
   nxos_l3_interface: &rm_agg
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
-      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "33:db::2/8" }
-    provider: "{{ nxapi }}"
+      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
+    provider: "{{ connection }}"
     state: absent
   register: result
 

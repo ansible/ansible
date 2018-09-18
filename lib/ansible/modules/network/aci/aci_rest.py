@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,8 +17,17 @@ module: aci_rest
 short_description: Direct access to the Cisco APIC REST API
 description:
 - Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST API.
-- More information regarding the Cisco APIC REST API is available from
-  U(http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html).
+- Thanks to the idempotent nature of the APIC, this module is idempotent and reports changes.
+notes:
+- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
+  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- Certain payloads (and used paths) are known to report no changes happened when changes did happen.
+  This is a known APIC problem and has been reported to the vendor. A workaround for this issue exists.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
+- More information regarding the APIC REST API is available from
+  L(the Cisco APIC REST API Configuration Guide,http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html).  # NOQA
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -25,7 +35,6 @@ requirements:
 - lxml (when using XML payload)
 - xmljson >= 0.1.8 (when using XML payload)
 - python 2.7+ (when using xmljson)
-extends_documentation_fragment: aci
 options:
   method:
     description:
@@ -33,7 +42,6 @@ options:
     - Using C(delete) is typically used for deleting objects.
     - Using C(get) is typically used for querying objects.
     - Using C(post) is typically used for modifying objects.
-    required: yes
     default: get
     choices: [ delete, get, post ]
     aliases: [ action ]
@@ -46,37 +54,45 @@ options:
   content:
     description:
     - When used instead of C(src), sets the payload of the API request directly.
-    - This may be convenient to template simple requests, for anything complex use the M(template) module.
+    - This may be convenient to template simple requests.
+    - For anything complex use the C(template) lookup plugin (see examples)
+      or the M(template) module with parameter C(src).
   src:
     description:
     - Name of the absolute path of the filname that includes the body
-      of the http request being sent to the ACI fabric.
+      of the HTTP request being sent to the ACI fabric.
+    - If you require a templated payload, use the C(content) parameter
+      together with the C(template) lookup plugin, or use M(template).
+    type: path
     aliases: [ config_file ]
-notes:
-- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
-  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
-  More information at U(https://github.com/ansible/community/wiki/Network:-ACI-Documentation#known-issues)
-- Certain payloads (or used paths) are known to report no changes happened when changes did happen.
-  This is a known APIC problem and has been reported to the vendor.
-  More information at U(https://github.com/ansible/community/wiki/Network:-ACI-Documentation#known-issues)
-- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a tenant using certifcate authentication
+- name: Add a tenant using certificate authentication
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/aci_config.xml
   delegate_to: localhost
 
+- name: Add a tenant from a templated payload file from templates/
+  aci_rest:
+    host: apic
+    username: admin
+    private_key: pki/admin.key
+    method: post
+    path: /api/mo/uni.xml
+    content: "{{ lookup('template', 'aci/tenant.xml.j2') }}"
+  delegate_to: localhost
+
 - name: Add a tenant using inline YAML
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni.json
@@ -90,8 +106,8 @@ EXAMPLES = r'''
 
 - name: Add a tenant using a JSON string
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni.json
@@ -109,8 +125,8 @@ EXAMPLES = r'''
 
 - name: Add a tenant using an XML string
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/{{ aci_username}}.key
     validate_certs: no
     path: /api/mo/uni.xml
@@ -120,17 +136,18 @@ EXAMPLES = r'''
 
 - name: Get tenants using password authentication
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     method: get
     path: /api/node/class/fvTenant.json
   delegate_to: localhost
+  register: query_result
 
 - name: Configure contracts
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
@@ -139,8 +156,8 @@ EXAMPLES = r'''
 
 - name: Register leaves and spines
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     method: post
@@ -155,8 +172,8 @@ EXAMPLES = r'''
 
 - name: Wait for all controllers to become ready
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/node/class/topSystem.json?query-target-filter=eq(topSystem.role,"controller")
@@ -246,8 +263,8 @@ try:
 except:
     HAS_YAML = False
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec, aci_response_json, aci_response_xml
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_text
 
@@ -267,34 +284,35 @@ def update_qsl(url, params):
         return url + '?' + '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
 
 
-def aci_changed(d):
-    ''' Check ACI response for changes '''
+class ACIRESTModule(ACIModule):
 
-    if isinstance(d, dict):
-        for k, v in d.items():
-            if k == 'status' and v in ('created', 'modified', 'deleted'):
-                return True
-            elif aci_changed(v) is True:
-                return True
-    elif isinstance(d, list):
-        for i in d:
-            if aci_changed(i) is True:
-                return True
+    def changed(self, d):
+        ''' Check ACI response for changes '''
 
-    return False
+        if isinstance(d, dict):
+            for k, v in d.items():
+                if k == 'status' and v in ('created', 'modified', 'deleted'):
+                    return True
+                elif self.changed(v) is True:
+                    return True
+        elif isinstance(d, list):
+            for i in d:
+                if self.changed(i) is True:
+                    return True
 
+        return False
 
-def aci_response(result, rawoutput, rest_type='xml'):
-    ''' Handle APIC response output '''
+    def response_type(self, rawoutput, rest_type='xml'):
+        ''' Handle APIC response output '''
 
-    if rest_type == 'json':
-        aci_response_json(result, rawoutput)
-    else:
-        aci_response_xml(result, rawoutput)
+        if rest_type == 'json':
+            self.response_json(rawoutput)
+        else:
+            self.response_xml(rawoutput)
 
-    # Use APICs built-in idempotency
-    if HAS_URLPARSE:
-        result['changed'] = aci_changed(result)
+        # Use APICs built-in idempotency
+        if HAS_URLPARSE:
+            self.result['changed'] = self.changed(self.imdata)
 
 
 def main():
@@ -304,7 +322,6 @@ def main():
         method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
         src=dict(type='path', aliases=['config_file']),
         content=dict(type='raw'),
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -312,8 +329,8 @@ def main():
         mutually_exclusive=[['content', 'src']],
     )
 
-    path = module.params['path']
     content = module.params['content']
+    path = module.params['path']
     src = module.params['src']
 
     # Report missing file
@@ -336,7 +353,8 @@ def main():
     else:
         module.fail_json(msg='Failed to find REST API payload type (neither .xml nor .json).')
 
-    aci = ACIModule(module)
+    aci = ACIRESTModule(module)
+    aci.result['status'] = -1  # Ensure we always return a status
 
     # We include the payload as it may be templated
     payload = content
@@ -370,40 +388,45 @@ def main():
                 module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
     # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
-    aci.result['url'] = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
+    aci.url = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
     if aci.params['method'] != 'get':
         path += '?rsp-subtree=modified'
-        aci.result['url'] = update_qsl(aci.result['url'], {'rsp-subtree': 'modified'})
+        aci.url = update_qsl(aci.url, {'rsp-subtree': 'modified'})
 
     # Sign and encode request as to APIC's wishes
     if aci.params['private_key'] is not None:
         aci.cert_auth(path=path, payload=payload)
 
+    aci.method = aci.params['method'].upper()
+
     # Perform request
-    resp, info = fetch_url(module, aci.result['url'],
+    resp, info = fetch_url(module, aci.url,
                            data=payload,
                            headers=aci.headers,
-                           method=aci.params['method'].upper(),
+                           method=aci.method,
                            timeout=aci.params['timeout'],
                            use_proxy=aci.params['use_proxy'])
 
-    aci.result['response'] = info['msg']
-    aci.result['status'] = info['status']
+    aci.response = info['msg']
+    aci.status = info['status']
 
     # Report failure
     if info['status'] != 200:
         try:
             # APIC error
-            aci_response(aci.result, info['body'], rest_type)
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
+            aci.response_type(info['body'], rest_type)
+            aci.fail_json(msg='APIC Error %(code)s: %(text)s' % aci.error)
         except KeyError:
             # Connection error
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, **aci.result)
+            aci.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
 
-    aci_response(aci.result, resp.read(), rest_type)
+    aci.response_type(resp.read(), rest_type)
+
+    aci.result['imdata'] = aci.imdata
+    aci.result['totalCount'] = aci.totalCount
 
     # Report success
-    module.exit_json(**aci.result)
+    aci.exit_json(**aci.result)
 
 
 if __name__ == '__main__':

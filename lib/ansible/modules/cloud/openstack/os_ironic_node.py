@@ -33,26 +33,20 @@ options:
        - Indicates if the resource should be deployed. Allows for deployment
          logic to be disengaged and control of the node power or maintenance
          state to be changed.
-      choices: ['true', 'false']
-      default: true
+      type: bool
+      default: 'yes'
     uuid:
       description:
         - globally unique identifier (UUID) to be given to the resource.
-      required: false
-      default: None
     ironic_url:
       description:
         - If noauth mode is utilized, this is required to be set to the
           endpoint URL for the Ironic API.  Use with "auth" and "auth_type"
           settings set to None.
-      required: false
-      default: None
     config_drive:
       description:
         - A configdrive file or HTTP(S) URL that will be passed along to the
           node.
-      required: false
-      default: None
     instance_info:
       description:
         - Definition of the instance information which is used to deploy
@@ -79,20 +73,18 @@ options:
       description:
         - A setting to allow the direct control if a node is in
           maintenance mode.
-      required: false
-      default: false
+      type: bool
+      default: 'no'
     maintenance_reason:
       description:
         - A string expression regarding the reason a node is in a
           maintenance mode.
-      required: false
-      default: None
     wait:
       description:
         - A boolean value instructing the module to wait for node
           activation or deactivation to complete before returning.
-      required: false
-      default: False
+      type: bool
+      default: 'no'
       version_added: "2.1"
     timeout:
       description:
@@ -102,7 +94,6 @@ options:
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 '''
 
 EXAMPLES = '''
@@ -122,16 +113,8 @@ os_ironic_node:
   delegate_to: localhost
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _choose_id_value(module):
@@ -245,13 +228,6 @@ def main():
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
-    if (module.params['wait'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.4.0')):
-        module.fail_json(msg="To utilize wait, the installed version of"
-                             "the shade library MUST be >=1.4.0")
 
     if (module.params['auth_type'] in [None, 'None'] and
             module.params['ironic_url'] is None):
@@ -269,8 +245,8 @@ def main():
     if not node_id:
         module.fail_json(msg="A uuid or name value must be defined "
                              "to use this module.")
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
         node = cloud.get_machine(node_id)
 
         if node is None:
@@ -362,7 +338,7 @@ def main():
             module.fail_json(msg="State must be present, absent, "
                                  "maintenance, off")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

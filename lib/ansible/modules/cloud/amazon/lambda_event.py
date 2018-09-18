@@ -47,10 +47,12 @@ options:
     required: false
   event_source:
     description:
-      -  Source of the event that triggers the lambda function.
+      - Source of the event that triggers the lambda function.
+      - For DynamoDB and Kinesis events, select 'stream'
+      - For SQS queues, select 'sqs'
     required: false
     default: stream
-    choices: ['stream']
+    choices: ['stream', 'sqs']
   source_params:
     description:
       -  Sub-parameters required for event source.
@@ -61,6 +63,11 @@ options:
          time of invoking your function. Default is 100.
       -  C(starting_position) The position in the stream where AWS Lambda should start reading.
          Choices are TRIM_HORIZON or LATEST.
+      -  I(== sqs event source ==)
+      -  C(source_arn) The Amazon Resource Name (ARN) of the SQS queue to read events from.
+      -  C(enabled) Indicates whether AWS Lambda should begin reading from the event source. Default is True.
+      -  C(batch_size) The largest number of records that AWS Lambda will retrieve from your event source at the
+         time of invoking your function. Default is 100.
     required: true
 requirements:
     - boto3
@@ -321,6 +328,9 @@ def lambda_event_stream(module, aws):
             starting_position = source_params.get('starting_position')
             if starting_position:
                 api_params.update(StartingPosition=starting_position)
+            elif module.params.get('event_source') == 'sqs':
+                # starting position is not required for SQS
+                pass
             else:
                 module.fail_json(msg="Source parameter 'starting_position' is required for stream event notification.")
 
@@ -384,7 +394,7 @@ def lambda_event_stream(module, aws):
 def main():
     """Produce a list of function suffixes which handle lambda events."""
     this_module = sys.modules[__name__]
-    source_choices = ["stream"]
+    source_choices = ["stream", "sqs"]
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(
@@ -413,9 +423,10 @@ def main():
 
     validate_params(module, aws)
 
-    this_module_function = getattr(this_module, 'lambda_event_{0}'.format(module.params['event_source'].lower()))
-
-    results = this_module_function(module, aws)
+    if module.params['event_source'].lower() in ('stream', 'sqs'):
+        results = lambda_event_stream(module, aws)
+    else:
+        module.fail_json('Please select `stream` or `sqs` as the event type')
 
     module.exit_json(**results)
 

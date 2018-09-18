@@ -26,9 +26,9 @@ import os
 # sys.path.append(os.path.abspath('some/directory'))
 #
 sys.path.insert(0, os.path.join('ansible', 'lib'))
-sys.path.append(os.path.abspath('_themes'))
+sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 
-VERSION = '2.4'
+VERSION = '2.6'
 AUTHOR = 'Ansible, Inc'
 
 
@@ -38,7 +38,8 @@ AUTHOR = 'Ansible, Inc'
 # Add any Sphinx extension module names here, as strings.
 # They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx']
+# TEST: 'sphinxcontrib.fulltoc'
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'pygments_lexer']
 
 # Later on, add 'sphinx.ext.viewcode' to the list if you want to have
 # colorized code generated too for references.
@@ -55,7 +56,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible Documentation'
-copyright = "2013-2017 Ansible, Inc"
+copyright = "2013-2018 Ansible, Inc"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -80,7 +81,8 @@ today_fmt = '%B %d, %Y'
 
 # A list of glob-style patterns that should be excluded when looking
 # for source files.
-exclude_patterns = ['modules']
+# OBSOLETE - removing this - dharmabumstead 2018-02-06
+# exclude_patterns = ['modules']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -122,7 +124,7 @@ rst_epilog = """
 # -----------------------
 
 html_theme_path = ['../_themes']
-html_theme = 'srtd'
+html_theme = 'sphinx_rtd_theme'
 html_short_title = 'Ansible Documentation'
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
@@ -149,7 +151,7 @@ html_title = 'Ansible Documentation'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['.static']
+html_static_path = ['../_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -181,7 +183,7 @@ html_copy_source = False
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-# html_use_opensearch = ''
+html_use_opensearch = 'https://docs.ansible.com/ansible/latest'
 
 # If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
 # html_file_suffix = ''

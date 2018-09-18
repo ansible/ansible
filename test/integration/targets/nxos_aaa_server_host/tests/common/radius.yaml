@@ -7,8 +7,8 @@
   nxos_aaa_server_host: &remove
     server_type: radius
     address: 8.8.8.8
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   ignore_errors: yes
 
 - block:
@@ -16,8 +16,8 @@
     nxos_aaa_server_host: &configure_default_radius
       server_type: radius
       address: 8.8.8.8
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -43,7 +43,7 @@
     register: result
 
   - assert: *false
-  
+ 
   - name: "Configure radius server non defaults"
     nxos_aaa_server_host: &configure_radius_non_default
       server_type: radius
@@ -51,10 +51,10 @@
       host_timeout: 25
       auth_port: 2083
       acct_port: 2084
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
-  
+ 
   - assert: *true
 
   - name: "Check Idempotence"
@@ -63,25 +63,38 @@
 
   - assert: *false
 
-  - name: "Remove radius server configuration"
-    nxos_aaa_server_host: *remove
+  - name: "Configure some defaults on radius server"
+    nxos_aaa_server_host: &configure_some_radius_default
+      server_type: radius
+      address: 8.8.8.8
+      host_timeout: default
+      auth_port: 1000
+      acct_port: default
+      provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_some_radius_default
+    register: result
+
+  - assert: *false
 
   - name: "Configure radius server with clear text pwd"
     nxos_aaa_server_host: &configure_radius_clear_text
       server_type: radius
       address: 8.8.8.8
       host_timeout: 25
-      auth_port: 2083
+      auth_port: default
       acct_port: 2084
       encrypt_type: 0
       key: hello
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
-   
+
   - assert: *true
 
   - name: "Check NOT Idempotent"
@@ -105,8 +118,8 @@
       acct_port: 2084
       encrypt_type: 7
       key: hello
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -115,7 +128,48 @@
     nxos_aaa_server_host: *configure_radius_type7
     register: result
 
+  - assert: *false
+
+  - name: "Configure radius server with default key"
+    nxos_aaa_server_host: &configure_radius_defkey
+      server_type: radius
+      address: 8.8.8.8
+      host_timeout: default
+      auth_port: 1000
+      acct_port: default
+      encrypt_type: 7
+      key: default
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
   - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_radius_defkey
+    register: result
+
+  - assert: *false
+
+  - name: "Configure radius server with all def"
+    nxos_aaa_server_host: &configure_radius_alldef
+      server_type: radius
+      address: 8.8.8.8
+      host_timeout: default
+      auth_port: default
+      acct_port: default
+      key: default
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_radius_alldef
+    register: result
+
+  - assert: *false
 
   rescue:
 
@@ -127,4 +181,4 @@
     nxos_aaa_server_host: *remove
     register: result
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server_host radius.yaml sanity test"  
+  - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server_host radius.yaml sanity test"

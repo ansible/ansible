@@ -32,17 +32,13 @@ options:
         in the device running-config. Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser. This argument is mutually exclusive with I(src).
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -50,8 +46,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory. This argument is
         mutually exclusive with I(lines).
-    required: false
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -59,16 +53,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -79,7 +69,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -90,7 +79,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block']
   update:
@@ -102,7 +90,6 @@ options:
         device running configuration.  When you set this argument to I(check)
         the configuration updates are determined but not actually configured
         on the remote device.
-    required: false
     default: merge
     choices: ['merge', 'check']
   save:
@@ -110,9 +97,8 @@ options:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -122,8 +108,6 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -131,9 +115,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
     type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -279,7 +262,7 @@ def main():
             commands = dumps(configobjs, 'commands')
             if ((isinstance(module.params['lines'], list)) and
                     (isinstance(module.params['lines'][0], dict)) and
-                    ['prompt', 'answer'].issubset(module.params['lines'][0])):
+                    set(['prompt', 'answer']).issubset(module.params['lines'][0])):
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],
                        'answer': module.params['lines'][0]['answer']}
@@ -304,7 +287,7 @@ def main():
         result['changed'] = True
         if not module.check_mode:
                 cmd = {'command': 'copy running-config startup-config',
-                       'prompt': r'\(y/n\)$', 'answer': 'yes'}
+                       'prompt': r'\(y/n\)\s?$', 'answer': 'yes'}
                 run_commands(module, [cmd])
                 result['saved'] = True
         else:

@@ -29,8 +29,6 @@ options:
               manifest and 'published_date', 'published', 'source', 'clones',
               and 'size'. More informaton can be found at U(https://smartos.org/man/1m/imgadm)
               under 'imgadm list'.
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''
@@ -103,6 +101,7 @@ def main():
     data = dict(smartos_images=image_facts.return_all_installed_images())
 
     module.exit_json(ansible_facts=data)
+
 
 if __name__ == '__main__':
     main()

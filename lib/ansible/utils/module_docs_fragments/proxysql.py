@@ -10,11 +10,9 @@ options:
   login_user:
     description:
       - The username used to authenticate to ProxySQL admin interface.
-    default: None
   login_password:
     description:
       - The password used to authenticate to ProxySQL admin interface.
-    default: None
   login_host:
     description:
       - The host used to connect to ProxySQL admin interface.
@@ -39,10 +37,10 @@ options:
     description:
       - Save config to sqlite db on disk to persist the configuration.
     type: bool
-    default: True
+    default: 'yes'
   load_to_runtime:
     description:
       - Dynamically load config to runtime memory.
     type: bool
-    default: True
+    default: 'yes'
 '''

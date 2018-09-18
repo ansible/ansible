@@ -1,0 +1,241 @@
+---
+- block:
+
+    # ============================================================
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: true
+
+    - name: Create VPC for testing
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.22.32.0/23
+        tags:
+          Name: Ansible ec2_instance Testing VPC
+        tenancy: default
+        <<: *aws_connection_info
+      register: testing_vpc
+
+    - name: Create subnet in zone A for testing
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.22.32.0/24
+        az: "{{ aws_region }}a"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet-a"
+        <<: *aws_connection_info
+      register: testing_subnet_a
+
+    - name: Create subnet in zone B for testing
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.22.33.0/24
+        az: "{{ aws_region }}b"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet-b"
+        <<: *aws_connection_info
+      register: testing_subnet_b
+
+    - name: Get default security group id for vpc
+      ec2_group_facts:
+        <<: *aws_connection_info
+        filters:
+          vpc-id: "{{ testing_vpc.vpc.id }}"
+      register: sg_facts
+
+    - set_fact:
+        vpc_default_sg_id: "{{sg_facts.security_groups[0].group_id}}"
+
+
+    # ============================================================
+    - name: Create Efs for testing
+      efs:
+        <<: *aws_connection_info
+        state: present
+        name: "{{ resource_prefix }}-test-efs"
+        tags:
+            Name: "{{ resource_prefix }}-test-tag"
+            Purpose: file-storage
+        targets:
+            - subnet_id: "{{testing_subnet_a.subnet.id}}"
+            - subnet_id: "{{testing_subnet_b.subnet.id}}"
+      register: created_efs
+
+    # ============================================================
+    - name: Get all EFS Facts
+      efs_facts:
+        <<: *aws_connection_info
+      register: efs_result
+
+    - assert:
+        that:
+          - (efs_result.ansible_facts.efs | length) >= 1
+
+    # ============================================================
+    - name: Get EFS by creation token
+      efs_facts:
+        name: "{{ resource_prefix }}-test-efs"
+        <<: *aws_connection_info
+      register: efs_result
+
+    - set_fact:
+        efs_result_assertions:
+          - efs_result is not changed
+          - (efs_result.ansible_facts.efs | length) == 1
+          - efs_result.ansible_facts.efs[0].creation_token == "{{ resource_prefix }}-test-efs"
+          - efs_result.ansible_facts.efs[0].file_system_id == created_efs.efs.file_system_id
+          - efs_result.ansible_facts.efs[0].number_of_mount_targets == 2
+          - (efs_result.ansible_facts.efs[0].mount_targets | length) == 2
+          - efs_result.ansible_facts.efs[0].name == "{{ resource_prefix }}-test-tag"
+          - efs_result.ansible_facts.efs[0].tags.Name == "{{ resource_prefix }}-test-tag"
+          - efs_result.ansible_facts.efs[0].tags.Purpose == "file-storage"
+          - efs_result.ansible_facts.efs[0].encrypted == false
+          - efs_result.ansible_facts.efs[0].life_cycle_state == "available"
+          - efs_result.ansible_facts.efs[0].performance_mode == "generalPurpose"
+          - efs_result.ansible_facts.efs[0].mount_targets[0].security_groups[0] == vpc_default_sg_id
+          - efs_result.ansible_facts.efs[0].mount_targets[1].security_groups[0] == vpc_default_sg_id
+
+    - assert:
+        that: "{{efs_result_assertions}}"
+
+    # ============================================================
+    - name: Get EFS by id
+      efs_facts:
+        id: "{{created_efs.efs.file_system_id}}"
+        <<: *aws_connection_info
+      register: efs_result
+
+    - assert:
+        that: "{{efs_result_assertions}}"
+
+    # ============================================================
+    - name: Get EFS by tag
+      efs_facts:
+        tags:
+          Name: "{{ resource_prefix }}-test-tag"
+        <<: *aws_connection_info
+      register: efs_result
+
+    - assert:
+        that: "{{efs_result_assertions}}"
+
+    # ============================================================
+    - name: Get EFS by target (subnet_id)
+      efs_facts:
+        targets:
+          - "{{testing_subnet_a.subnet.id}}"
+        <<: *aws_connection_info
+      register: efs_result
+
+    - assert:
+        that: "{{efs_result_assertions}}"
+
+    # ============================================================
+    - name: Get EFS by target (security_group_id)
+      efs_facts:
+        targets:
+          - "{{vpc_default_sg_id}}"
+        <<: *aws_connection_info
+      register: efs_result
+
+    - assert:
+        that: "{{efs_result_assertions}}"
+
+    # ============================================================
+    - name: Get EFS by tag and target
+      efs_facts:
+        tags:
+          Name: "{{ resource_prefix }}-test-tag"
+        targets:
+          - "{{testing_subnet_a.subnet.id}}"
+        <<: *aws_connection_info
+      register: efs_result
+
+    - assert:
+        that: "{{efs_result_assertions}}"
+
+    # ============================================================
+    - name: Query unknown EFS by tag
+      efs_facts:
+        tags:
+          Name: "{{ resource_prefix }}-unknown"
+        <<: *aws_connection_info
+      register: efs_result
+
+    - assert:
+        that:
+          - efs_result is not changed
+          - (efs_result.ansible_facts.efs | length) == 0
+
+    - name: Query unknown EFS by target
+      efs_facts:
+        targets:
+          - sg-00000000000
+        <<: *aws_connection_info
+      register: efs_result
+
+    - assert:
+        that:
+          - efs_result is not changed
+          - (efs_result.ansible_facts.efs | length) == 0
+
+  # ============================================================
+  always:
+    - name: Delete EFS used for tests
+      efs:
+        <<: *aws_connection_info
+        state: absent
+        name: "{{ resource_prefix }}-test-efs"
+        tags:
+          Name: "{{ resource_prefix }}-test-tag"
+          Purpose: file-storage
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: Remove test subnet in zone A
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.22.32.0/24
+        az: "{{ aws_region }}a"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet-a"
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: Remove test subnet in zone B
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.22.33.0/24
+        az: "{{ aws_region }}b"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet-b"
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove the VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.22.32.0/23
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10

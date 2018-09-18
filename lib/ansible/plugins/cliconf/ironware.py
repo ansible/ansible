@@ -49,9 +49,9 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running', flags=None):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         if source == 'running':
             cmd = b'show running-config'
@@ -61,7 +61,7 @@ class Cliconf(CliconfBase):
         else:
             cmd = b'show configuration'
             if flags is not None:
-                return self.invalid_params("flags are only supported with running-config")
+                raise ValueError("flags are only supported with running-config")
 
         return self.send_command(cmd)
 

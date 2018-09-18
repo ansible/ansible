@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -21,7 +21,7 @@ description:
     has synchronization and failover connectivity information (IP addresses) that
     you define as part of HA pairing or clustering. This module allows you to configure
     that information.
-version_added: "2.5"
+version_added: 2.5
 options:
   config_sync_ip:
     description:
@@ -50,9 +50,7 @@ options:
         C(multicast_interface), C(multicast_address) and C(multicast_port) are
         the defaults specified in each option's description. When C(no), ensures
         that Failover Multicast configuration is disabled.
-    choices:
-      - yes
-      - no
+    type: bool
   multicast_interface:
     description:
       - Interface over which the system sends multicast messages associated
@@ -69,6 +67,16 @@ options:
         failover. When C(failover_multicast) is C(yes) and this option is not
         provided, a default of C(62960) will be used. This value must be between
         0 and 65535.
+  cluster_mirroring:
+    description:
+      - Specifies whether mirroring occurs within the same cluster or between
+        different clusters on a multi-bladed system.
+      - This parameter is only supported on platforms that have multiple blades,
+        such as Viprion hardware. It is not supported on VE.
+    choices:
+      - between-clusters
+      - within-cluster
+    version_added: 2.7
 notes:
   - This module is primarily used as a component of configuring HA pairs of
     BIG-IP devices.
@@ -136,46 +144,40 @@ multicast_port:
   returned: changed
   type: string
   sample: 1026
+cluster_mirroring:
+  description: The current cluster-mirroring setting.
+  returned: changed
+  type: string
+  sample: between-clusters
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    from netaddr import IPAddress, AddrFormatError
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -190,18 +192,35 @@ class Parameters(AnsibleF5Parameters):
         'managementIp': 'management_ip'
     }
     api_attributes = [
-        'configsyncIp', 'multicastInterface', 'multicastIp', 'multicastPort',
-        'mirrorIp', 'mirrorSecondaryIp', 'unicastAddress'
+        'configsyncIp',
+        'multicastInterface',
+        'multicastIp',
+        'multicastPort',
+        'mirrorIp',
+        'mirrorSecondaryIp',
+        'unicastAddress',
     ]
     returnables = [
-        'config_sync_ip', 'multicast_interface', 'multicast_address',
-        'multicast_port', 'mirror_primary_address', 'mirror_secondary_address',
-        'failover_multicast', 'unicast_failover'
+        'config_sync_ip',
+        'multicast_interface',
+        'multicast_address',
+        'multicast_port',
+        'mirror_primary_address',
+        'mirror_secondary_address',
+        'failover_multicast',
+        'unicast_failover',
+        'cluster_mirroring',
     ]
     updatables = [
-        'config_sync_ip', 'multicast_interface', 'multicast_address',
-        'multicast_port', 'mirror_primary_address', 'mirror_secondary_address',
-        'failover_multicast', 'unicast_failover'
+        'config_sync_ip',
+        'multicast_interface',
+        'multicast_address',
+        'multicast_port',
+        'mirror_primary_address',
+        'mirror_secondary_address',
+        'failover_multicast',
+        'unicast_failover',
+        'cluster_mirroring',
     ]
 
     @property
@@ -265,35 +284,32 @@ class Parameters(AnsibleF5Parameters):
         return result
 
     def _validate_unicast_failover_address(self, address):
-        try:
-            if address != 'management-ip':
-                result = IPAddress(address)
-                return str(result)
-            else:
+        if address != 'management-ip':
+            if is_valid_ip(address):
                 return address
-        except KeyError:
-            raise F5ModuleError(
-                "An 'address' must be supplied when configuring unicast failover"
-            )
-        except AddrFormatError:
-            raise F5ModuleError(
-                "'address' field in unicast failover is not a valid IP address"
-            )
+            else:
+                raise F5ModuleError(
+                    "'address' field in unicast failover is not a valid IP address"
+                )
+        else:
+            return address
 
     def _get_validated_ip_address(self, address):
-        try:
-            IPAddress(self._values[address])
+        if is_valid_ip(self._values[address]):
             return self._values[address]
-        except AddrFormatError:
-            raise F5ModuleError(
-                "The specified '{0}' is not a valid IP address".format(
-                    address
-                )
-            )
+        raise F5ModuleError(
+            "The specified '{0}' is not a valid IP address".format(address)
+        )
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def cluster_mirroring(self):
+        if self._values['cluster_mirroring'] is None:
+            return None
+        if self._values['cluster_mirroring'] == 'between':
+            return 'between-clusters'
+        return 'within-cluster'
 
 
 class ModuleParameters(Parameters):
@@ -390,6 +406,14 @@ class UsableChanges(Changes):
         elif self._values['unicast_failover']:
             return self._values['unicast_failover']
         return "none"
+
+    @property
+    def cluster_mirroring(self):
+        if self._values['cluster_mirroring'] is None:
+            return None
+        elif self._values['cluster_mirroring'] == 'between-clusters':
+            return 'between'
+        return 'within'
 
 
 class Difference(object):
@@ -512,10 +536,14 @@ class ModuleManager(object):
         if self.module.check_mode:
             return True
         self.update_on_device()
+        if self.changes.cluster_mirroring:
+            self.update_cluster_mirroring_on_device()
         return True
 
     def update_on_device(self):
         params = self.changes.api_params()
+        if not params:
+            return
         collection = self.client.api.tm.cm.devices.get_collection()
         for resource in collection:
             if resource.selfDevice == 'true':
@@ -525,15 +553,24 @@ class ModuleManager(object):
             "The host device was not found."
         )
 
+    def update_cluster_mirroring_on_device(self):
+        resource = self.client.api.tm.sys.dbs.db.load(name='statemirror.clustermirroring')
+        resource.update(value=self.changes.cluster_mirroring)
+
     def read_current_from_device(self):
         collection = self.client.api.tm.cm.devices.get_collection()
         for resource in collection:
             if resource.selfDevice == 'true':
                 result = resource.attrs
+                result['cluster_mirroring'] = self.read_cluster_mirroring_from_device()
                 return ApiParameters(params=result)
         raise F5ModuleError(
             "The host device was not found."
         )
+
+    def read_cluster_mirroring_from_device(self):
+        resource = self.client.api.tm.sys.dbs.db.load(name='statemirror.clustermirroring')
+        return resource.value
 
 
 class ArgumentSpec(object):
@@ -553,7 +590,10 @@ class ArgumentSpec(object):
             ),
             mirror_primary_address=dict(),
             mirror_secondary_address=dict(),
-            config_sync_ip=dict()
+            config_sync_ip=dict(),
+            cluster_mirroring=dict(
+                choices=['within-cluster', 'between-clusters']
+            )
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -573,9 +613,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

@@ -62,9 +62,7 @@ options:
   wait:
     required: false
     default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
     description:
       - Wait for the load balancer to become active before returning
   wait_timeout:

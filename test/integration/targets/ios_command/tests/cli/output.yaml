@@ -5,7 +5,7 @@
   ios_command:
     commands:
       - show version
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -18,7 +18,7 @@
     commands:
       - show version
       - show interfaces
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:

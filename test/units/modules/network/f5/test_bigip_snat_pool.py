@@ -20,9 +20,9 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_snat_pool import Parameters
-    from library.bigip_snat_pool import ModuleManager
-    from library.bigip_snat_pool import ArgumentSpec
+    from library.modules.bigip_snat_pool import Parameters
+    from library.modules.bigip_snat_pool import ModuleManager
+    from library.modules.bigip_snat_pool import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -94,7 +94,7 @@ class TestManager(unittest.TestCase):
             name='my-snat-pool',
             state='present',
             members=['10.10.10.10', '20.20.20.20'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -121,7 +121,7 @@ class TestManager(unittest.TestCase):
             name='asdasd',
             state='present',
             members=['1.1.1.1', '2.2.2.2'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -147,7 +147,7 @@ class TestManager(unittest.TestCase):
             name='asdasd',
             state='present',
             members=['30.30.30.30'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

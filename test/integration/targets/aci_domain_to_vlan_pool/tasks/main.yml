@@ -1,0 +1,216 @@
+# Test code for the ACI modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+# CLEAN ENVIRONMENT
+- name: Remove domain to VLAN pool binding
+  aci_domain_to_vlan_pool: &binding_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    domain: phys_dom
+    domain_type: phys
+    pool: test_pool
+    pool_allocation_mode: dynamic
+    state: absent
+
+- name: Remove physical domain
+  aci_domain:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    domain: phys_dom
+    domain_type: phys
+    state: absent
+
+- name: Create VLAN pool
+  aci_vlan_pool:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    pool: test_pool
+    pool_allocation_mode: dynamic
+    description: Test VLAN pool
+    state: present
+
+
+# ADD BINDING
+- name: Add domain to VLAN pool binding (check_mode)
+  aci_domain_to_vlan_pool: &binding_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    domain: phys_dom
+    domain_type: phys
+    pool: test_pool
+    pool_allocation_mode: dynamic
+    state: present
+  check_mode: yes
+  register: cm_add_binding
+
+- name: Add domain to VLAN pool binding (normal mode)
+  aci_domain_to_vlan_pool: *binding_present
+  register: nm_add_binding
+
+- name: Verify add_binding
+  assert:
+    that:
+    - cm_add_binding is changed
+    - nm_add_binding is changed
+    - 'cm_add_binding.sent == nm_add_binding.sent == {"physDomP": {"attributes": {"name": "phys_dom"}, "children": [{"infraRsVlanNs": {"attributes": {"tDn": "uni/infra/vlanns-[test_pool]-dynamic"}}}]}}'
+    - 'cm_add_binding.proposed == nm_add_binding.proposed == {"physDomP": {"attributes": {"name": "phys_dom"}, "children": [{"infraRsVlanNs": {"attributes": {"tDn": "uni/infra/vlanns-[test_pool]-dynamic"}}}]}}'
+    - cm_add_binding.current == cm_add_binding.previous == nm_add_binding.previous == []
+    - 'nm_add_binding.current == [{"physDomP": {"attributes": {"dn": "uni/phys-phys_dom", "name": "phys_dom", "nameAlias": "", "ownerKey": "", "ownerTag": ""}, "children": [{"infraRsVlanNs": {"attributes": {"tDn": "uni/infra/vlanns-[test_pool]-dynamic"}}}]}}]'
+
+- name: Add domain to VLAN pool binding again (check_mode)
+  aci_domain_to_vlan_pool: *binding_present
+  check_mode: yes
+  register: cm_add_binding_again
+
+- name: Add domain to VLAN pool binding again (normal mode)
+  aci_domain_to_vlan_pool: *binding_present
+  register: nm_add_binding_again
+
+- name: Verify add_binding_again
+  assert:
+    that:
+    - cm_add_binding_again is not changed
+    - nm_add_binding_again is not changed
+
+
+# QUERY ALL BINDINGS
+- name: Query all domain to VLAN pool bindings (check_mode)
+  aci_domain_to_vlan_pool: &binding_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    domain_type: phys
+    pool_allocation_mode: dynamic
+    state: query
+  check_mode: yes
+  register: cm_query_all_bindings
+
+- name: Query all domain to VLAN pool bindings (normal mode)
+  aci_domain_to_vlan_pool: *binding_query
+  register: nm_query_all_bindings
+
+- name: Verify query_all_bindings
+  assert:
+    that:
+    - cm_query_all_bindings is not changed
+    - nm_query_all_bindings is not changed
+    - cm_query_all_bindings == nm_query_all_bindings
+    - nm_query_all_bindings.current|length >= 1
+
+
+# QUERY A BINDING
+- name: Query our domain to VLAN pool binding (check_mode)
+  aci_domain_to_vlan_pool:
+    <<: *binding_query
+    domain: phys_dom
+    pool: test_pool
+    pool_allocation_mode: dynamic
+  check_mode: yes
+  register: cm_query_binding
+
+- name: Query our domain to VLAN pool binding (normal mode)
+  aci_domain_to_vlan_pool:
+    <<: *binding_query
+    domain: phys_dom
+    pool: test_pool
+    pool_allocation_mode: dynamic
+  register: nm_query_binding
+
+- name: Verify query_binding
+  assert:
+    that:
+    - cm_query_binding is not changed
+    - nm_query_binding is not changed
+    - cm_query_binding == nm_query_binding
+    - nm_query_binding.current.0.physDomP.attributes.dn == 'uni/phys-phys_dom'
+    - nm_query_binding.current.0.physDomP.attributes.name == 'phys_dom'
+    - nm_query_binding.current.0.physDomP.children.0.infraRsVlanNs.attributes.tCl == 'fvnsVlanInstP'
+    - nm_query_binding.current.0.physDomP.children.0.infraRsVlanNs.attributes.tDn == 'uni/infra/vlanns-[test_pool]-dynamic'
+
+
+# REMOVE BINDING
+- name: Remove domain to VLAN pool binding (check_mode)
+  aci_domain_to_vlan_pool: *binding_absent
+  check_mode: yes
+  register: cm_remove_binding
+
+- name: Remove domain to VLAN pool binding (normal mode)
+  aci_domain_to_vlan_pool: *binding_absent
+  register: nm_remove_binding
+
+- name: Verify remove_binding
+  assert:
+    that:
+    - cm_remove_binding is changed
+    - nm_remove_binding is changed
+    - 'cm_remove_binding.current == cm_remove_binding.previous == nm_remove_binding.previous == [{"physDomP": {"attributes": {"dn": "uni/phys-phys_dom", "name": "phys_dom", "nameAlias": "", "ownerKey": "", "ownerTag": ""}, "children": [{"infraRsVlanNs": {"attributes": {"tDn": "uni/infra/vlanns-[test_pool]-dynamic"}}}]}}]'
+    - nm_remove_binding.current == []
+
+- name: Remove domain to VLAN pool binding again (check_mode)
+  aci_domain_to_vlan_pool: *binding_absent
+  check_mode: yes
+  register: cm_remove_binding_again
+
+- name: Remove domain to VLAN pool binding again (normal mode)
+  aci_domain_to_vlan_pool: *binding_absent
+  register: nm_remove_binding_again
+
+- name: Verify remove_binding_again
+  assert:
+    that:
+    - cm_remove_binding_again is not changed
+    - nm_remove_binding_again is not changed
+
+
+# QUERY NON-EXISTING BINDING
+- name: Query non-existing domain to VLAN pool binding (check_mode)
+  aci_domain_to_vlan_pool:
+    <<: *binding_query
+    domain: phys_dom
+    pool: test_pool
+    pool_allocation_mode: dynamic
+  check_mode: yes
+  register: cm_query_non_binding
+
+- name: Query non-existing domain to VLAN pool binding (normal mode)
+  aci_domain_to_vlan_pool:
+    <<: *binding_query
+    domain: phys_dom
+    pool: test_pool
+    pool_allocation_mode: dynamic
+  register: nm_query_non_binding
+
+- name: Verify query_non_binding
+  assert:
+    that:
+    - cm_query_non_binding is not changed
+    - nm_query_non_binding is not changed
+    - cm_query_non_binding == nm_query_non_binding
+    - nm_query_non_binding.current == []

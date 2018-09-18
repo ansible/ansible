@@ -25,25 +25,17 @@ options:
     name:
         description:
             - Creation Token of Amazon EFS file system.
-        required: false
-        default: None
     id:
         description:
             - ID of Amazon EFS.
-        required: false
-        default: None
     tags:
         description:
             - List of tags of Amazon EFS. Should be defined as dictionary
-        required: false
-        default: None
     targets:
         description:
           - list of targets on which to filter the returned results
           - result must match all of the specified targets, each of which can be
             a security group ID, a subnet ID or an IP address
-        required: false
-        default: None
 extends_documentation_fragment:
   - aws
   - ec2
@@ -91,10 +83,15 @@ life_cycle_state:
     type: str
     sample: creating, available, deleting, deleted
 mount_point:
-    description: url of file system
+    description: url of file system with leading dot from the time AWS EFS required to add network suffix to EFS address
     returned: always
     type: str
     sample: .fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
+filesystem_address:
+    description: url of file system
+    returned: always
+    type: str
+    sample: fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
 mount_targets:
     description: list of mount targets
     returned: always
@@ -186,7 +183,7 @@ class EFSConnection(object):
 
         self.region = region
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def list_file_systems(self, **kwargs):
         """
          Returns generator of file systems including all attributes of FS
@@ -194,7 +191,7 @@ class EFSConnection(object):
         paginator = self.connection.get_paginator('describe_file_systems')
         return paginator.paginate(**kwargs).build_full_result()['FileSystems']
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_tags(self, file_system_id):
         """
          Returns tag list for selected instance of EFS
@@ -202,7 +199,7 @@ class EFSConnection(object):
         paginator = self.connection.get_paginator('describe_tags')
         return boto3_tag_list_to_ansible_dict(paginator.paginate(FileSystemId=file_system_id).build_full_result()['Tags'])
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_mount_targets(self, file_system_id):
         """
          Returns mount targets for selected instance of EFS
@@ -210,12 +207,39 @@ class EFSConnection(object):
         paginator = self.connection.get_paginator('describe_mount_targets')
         return paginator.paginate(FileSystemId=file_system_id).build_full_result()['MountTargets']
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.jittered_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_security_groups(self, mount_target_id):
         """
          Returns security groups for selected instance of EFS
         """
         return self.connection.describe_mount_target_security_groups(MountTargetId=mount_target_id)['SecurityGroups']
+
+    def get_mount_targets_data(self, file_systems):
+        for item in file_systems:
+            if item['life_cycle_state'] == self.STATE_AVAILABLE:
+                try:
+                    mount_targets = self.get_mount_targets(item['file_system_id'])
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Couldn't get EFS targets")
+                for mt in mount_targets:
+                    item['mount_targets'].append(camel_dict_to_snake_dict(mt))
+        return file_systems
+
+    def get_security_groups_data(self, file_systems):
+        for item in file_systems:
+            if item['life_cycle_state'] == self.STATE_AVAILABLE:
+                for target in item['mount_targets']:
+                    if target['life_cycle_state'] == self.STATE_AVAILABLE:
+                        try:
+                            target['security_groups'] = self.get_security_groups(target['mount_target_id'])
+                        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                            self.module.fail_json_aws(e, msg="Couldn't get EFS security groups")
+                    else:
+                        target['security_groups'] = []
+            else:
+                item['tags'] = {}
+                item['mount_targets'] = []
+        return file_systems
 
     def get_file_systems(self, file_system_id=None, creation_token=None):
         kwargs = dict()
@@ -232,29 +256,20 @@ class EFSConnection(object):
         for item in file_systems:
             item['CreationTime'] = str(item['CreationTime'])
             """
-            Suffix of network path to be used as NFS device for mount. More detail here:
+            In the time when MountPoint was introduced there was a need to add a suffix of network path before one could use it
+            AWS updated it and now there is no need to add a suffix. MountPoint is left for back-compatibility purpose
+            And new FilesystemAddress variable is introduced for direct use with other modules (e.g. mount)
+            AWS documentation is available here:
             http://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html
             """
             item['MountPoint'] = '.%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
+            item['FilesystemAddress'] = '%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
+
             if 'Timestamp' in item['SizeInBytes']:
                 item['SizeInBytes']['Timestamp'] = str(item['SizeInBytes']['Timestamp'])
-            if item['LifeCycleState'] == self.STATE_AVAILABLE:
-                try:
-                    item['MountTargets'] = self.get_mount_targets(item['FileSystemId'])
-                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                    self.module.fail_json_aws(e, msg="Couldn't get EFS targets")
-                for target in item['MountTargets']:
-                    if target['LifeCycleState'] == self.STATE_AVAILABLE:
-                        try:
-                            target['SecurityGroups'] = self.get_security_groups(target['MountTargetId'])
-                        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                            self.module.fail_json_aws(e, msg="Couldn't get EFS security groups")
-                    else:
-                        target['SecurityGroups'] = []
-            else:
-                item['tags'] = {}
-                item['mount_targets'] = []
             result = camel_dict_to_snake_dict(item)
+            result['tags'] = {}
+            result['mount_targets'] = []
             # Set tags *after* doing camel to snake
             if result['life_cycle_state'] == self.STATE_AVAILABLE:
                 try:
@@ -347,6 +362,9 @@ def main():
 
     if tags:
         file_systems_info = [item for item in file_systems_info if has_tags(item['tags'], tags)]
+
+    file_systems_info = connection.get_mount_targets_data(file_systems_info)
+    file_systems_info = connection.get_security_groups_data(file_systems_info)
 
     if targets:
         targets = [(item, prefix_to_attr(item)) for item in targets]

@@ -32,7 +32,6 @@ options:
   state:
     description:
       - register or deregister the instance
-    required: false
     choices: ['present', 'absent']
     default: present
   name:
@@ -41,16 +40,14 @@ options:
     required: true
   load_balancers:
     description:
-      - List of ELB names to use for the group
-    required: false
+      - List of ELB names to use for the group. Use for classic load balancers.
   target_group_arns:
     description:
-      - List of target group ARNs to use for the group
+      - List of target group ARNs to use for the group. Use for application load balancers.
     version_added: "2.4"
   availability_zones:
     description:
       - List of availability zone names in which to create the group.  Defaults to all the availability zones in the region if vpc_zone_identifier is not set.
-    required: false
   launch_config_name:
     description:
       - Name of the Launch configuration to use for the group. See the ec2_lc module for managing these.
@@ -59,27 +56,21 @@ options:
   min_size:
     description:
       - Minimum number of instances in group, if unspecified then the current group value will be used.
-    required: false
   max_size:
     description:
       - Maximum number of instances in group, if unspecified then the current group value will be used.
-    required: false
   placement_group:
     description:
       - Physical location of your cluster placement group created in Amazon EC2.
-    required: false
     version_added: "2.3"
-    default: None
   desired_capacity:
     description:
       - Desired number of instances in group, if unspecified then the current group value will be used.
-    required: false
   replace_all_instances:
     description:
       - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuration.
-    required: false
     version_added: "1.8"
-    default: False
+    default: 'no'
   replace_batch_size:
     description:
       - Number of instances you'd like to replace at a time.  Used with replace_all_instances.
@@ -90,25 +81,18 @@ options:
     description:
       - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch
         configuration.
-    required: false
     version_added: "1.8"
-    default: None
   lc_check:
     description:
       - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_config.
-    required: false
     version_added: "1.8"
-    default: True
+    default: 'yes'
   vpc_zone_identifier:
     description:
       - List of VPC subnets to use
-    required: false
-    default: None
   tags:
     description:
       - A list of tags to add to the Auto Scale Group. Optional key is 'propagate_at_launch', which defaults to true.
-    required: false
-    default: None
     version_added: "1.7"
   health_check_period:
     description:
@@ -126,12 +110,12 @@ options:
   default_cooldown:
     description:
       - The number of seconds after a scaling activity completes before another can begin.
-    required: false
     default: 300 seconds
     version_added: "2.0"
   wait_timeout:
     description:
-      - how long before wait instances to become viable when replaced.  Used in conjunction with instance_ids option.
+      - How long to wait for instances to become viable when replaced.  If you experience the error "Waited too long for ELB instances to be healthy",
+        try increasing this value.
     default: 300
     version_added: "1.8"
   wait_for_instances:
@@ -139,22 +123,18 @@ options:
       - Wait for the ASG instances to be in a ready state before exiting.  If instances are behind an ELB, it will wait until the ELB determines all
         instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
     version_added: "1.9"
-    default: yes
-    required: False
+    default: 'yes'
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
         - For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent autoscaling group, the
           current termination policies are maintained.
-    required: false
     default: Default
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
     version_added: "2.0"
   notification_topic:
     description:
       - A SNS topic ARN to send auto scaling notifications to.
-    default: None
-    required: false
     version_added: "2.2"
   notification_types:
     description:
@@ -169,10 +149,33 @@ options:
   suspend_processes:
     description:
       - A list of scaling processes to suspend.
-    required: False
     default: []
     choices: ['Launch', 'Terminate', 'HealthCheck', 'ReplaceUnhealthy', 'AZRebalance', 'AlarmNotification', 'ScheduledActions', 'AddToLoadBalancer']
     version_added: "2.3"
+  metrics_collection:
+    description:
+      - Enable ASG metrics collection
+    type: bool
+    default: 'no'
+    version_added: "2.6"
+  metrics_granularity:
+    description:
+      - When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
+    default: "1minute"
+    version_added: "2.6"
+  metrics_list:
+    description:
+      - List of autoscaling metrics to collect when enabling metrics_collection
+    default:
+        - 'GroupMinSize'
+        - 'GroupMaxSize'
+        - 'GroupDesiredCapacity'
+        - 'GroupInServiceInstances'
+        - 'GroupPendingInstances'
+        - 'GroupStandbyInstances'
+        - 'GroupTerminatingInstances'
+        - 'GroupTotalInstances'
+    version_added: "2.6"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -399,6 +402,16 @@ vpc_zone_identifier:
     returned: success
     type: str
     sample: "subnet-a31ef45f"
+metrics_collection:
+    description: List of enabled AutosSalingGroup metrics
+    returned: success
+    type: list
+    sample: [
+        {
+            "Granularity": "1Minute",
+            "Metric": "GroupInServiceInstances"
+        }
+    ]
 '''
 
 import time
@@ -583,6 +596,7 @@ def get_properties(autoscaling_group):
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
+    properties['metrics_collection'] = autoscaling_group.get('EnabledMetrics')
 
     if properties['target_group_arns']:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -807,6 +821,9 @@ def create_autoscaling_group(connection):
     termination_policies = module.params.get('termination_policies')
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
+    metrics_collection = module.params.get('metrics_collection')
+    metrics_granularity = module.params.get('metrics_granularity')
+    metrics_list = module.params.get('metrics_list')
     try:
         as_groups = describe_autoscaling_groups(connection, group_name)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -871,6 +888,8 @@ def create_autoscaling_group(connection):
 
         try:
             create_asg(connection, **ag)
+            if metrics_collection:
+                connection.enable_metrics_collection(AutoScalingGroupName=group_name, Granularity=metrics_granularity, Metrics=metrics_list)
 
             all_ag = describe_autoscaling_groups(connection, group_name)
             if len(all_ag) == 0:
@@ -1041,6 +1060,12 @@ def create_autoscaling_group(connection):
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
         try:
             update_asg(connection, **ag)
+
+            if metrics_collection:
+                connection.enable_metrics_collection(AutoScalingGroupName=group_name, Granularity=metrics_granularity, Metrics=metrics_list)
+            else:
+                connection.disable_metrics_collection(AutoScalingGroupName=group_name, Metrics=metrics_list)
+
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json(msg="Failed to update autoscaling group: %s" % to_native(e),
                              exception=traceback.format_exc())
@@ -1089,29 +1114,31 @@ def delete_autoscaling_group(connection):
         del_notification_config(connection, group_name, notification_topic)
     groups = describe_autoscaling_groups(connection, group_name)
     if groups:
+        wait_timeout = time.time() + wait_timeout
         if not wait_for_instances:
             delete_asg(connection, group_name, force_delete=True)
-            return True
+        else:
+            updated_params = dict(AutoScalingGroupName=group_name, MinSize=0, MaxSize=0, DesiredCapacity=0)
+            update_asg(connection, **updated_params)
+            instances = True
+            while instances and wait_for_instances and wait_timeout >= time.time():
+                tmp_groups = describe_autoscaling_groups(connection, group_name)
+                if tmp_groups:
+                    tmp_group = tmp_groups[0]
+                    if not tmp_group.get('Instances'):
+                        instances = False
+                time.sleep(10)
 
-        wait_timeout = time.time() + wait_timeout
-        updated_params = dict(AutoScalingGroupName=group_name, MinSize=0, MaxSize=0, DesiredCapacity=0)
-        update_asg(connection, **updated_params)
-        instances = True
-        while instances and wait_for_instances and wait_timeout >= time.time():
-            tmp_groups = describe_autoscaling_groups(connection, group_name)
-            if tmp_groups:
-                tmp_group = tmp_groups[0]
-                if not tmp_group.get('Instances'):
-                    instances = False
-            time.sleep(10)
+            if wait_timeout <= time.time():
+                # waiting took too long
+                module.fail_json(msg="Waited too long for old instances to terminate. %s" % time.asctime())
 
+            delete_asg(connection, group_name, force_delete=False)
+        while describe_autoscaling_groups(connection, group_name) and wait_timeout >= time.time():
+            time.sleep(5)
         if wait_timeout <= time.time():
             # waiting took too long
-            module.fail_json(msg="Waited too long for old instances to terminate. %s" % time.asctime())
-
-        delete_asg(connection, group_name, force_delete=False)
-        while describe_autoscaling_groups(connection, group_name):
-            time.sleep(5)
+            module.fail_json(msg="Waited too long for ASG to delete. %s" % time.asctime())
         return True
 
     return False
@@ -1143,6 +1170,7 @@ def replace(connection):
     desired_capacity = module.params.get('desired_capacity')
     lc_check = module.params.get('lc_check')
     replace_instances = module.params.get('replace_instances')
+    replace_all_instances = module.params.get('replace_all_instances')
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     if desired_capacity is None:
@@ -1151,6 +1179,10 @@ def replace(connection):
     wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
     props = get_properties(as_group)
     instances = props['instances']
+    if replace_all_instances:
+        # If replacing all instances, then set replace_instances to current set
+        # This allows replace_instances and replace_all_instances to behave same
+        replace_instances = instances
     if replace_instances:
         instances = replace_instances
     # check to see if instances are replaceable if checking launch configs
@@ -1187,7 +1219,7 @@ def replace(connection):
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     update_size(connection, as_group, max_size + batch_size, min_size + batch_size, desired_capacity + batch_size)
-    wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
+    wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'] + batch_size, 'viable_instances')
     wait_for_elb(connection, group_name)
     wait_for_target_group(connection, group_name)
     as_group = describe_autoscaling_groups(connection, group_name)[0]
@@ -1323,7 +1355,6 @@ def wait_for_term_inst(connection, term_instances):
     wait_timeout = module.params.get('wait_timeout')
     group_name = module.params.get('name')
     as_group = describe_autoscaling_groups(connection, group_name)[0]
-    props = get_properties(as_group)
     count = 1
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time() and count > 0:
@@ -1337,7 +1368,7 @@ def wait_for_term_inst(connection, term_instances):
             lifecycle = instance_facts[i]['lifecycle_state']
             health = instance_facts[i]['health_status']
             module.debug("Instance %s has state of %s,%s" % (i, lifecycle, health))
-            if lifecycle == 'Terminating' or health == 'Unhealthy':
+            if lifecycle.startswith('Terminating') or health == 'Unhealthy':
                 count += 1
         time.sleep(10)
 
@@ -1364,6 +1395,12 @@ def wait_for_new_inst(connection, group_name, wait_timeout, desired_size, prop):
         module.fail_json(msg="Waited too long for new instances to become viable. %s" % time.asctime())
     module.debug("Reached %s: %s" % (prop, desired_size))
     return props
+
+
+def asg_exists(connection):
+    group_name = module.params.get('name')
+    as_group = describe_autoscaling_groups(connection, group_name)
+    return bool(len(as_group))
 
 
 def main():
@@ -1399,7 +1436,19 @@ def main():
                 'autoscaling:EC2_INSTANCE_TERMINATE',
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
             ]),
-            suspend_processes=dict(type='list', default=[])
+            suspend_processes=dict(type='list', default=[]),
+            metrics_collection=dict(type='bool', default=False),
+            metrics_granularity=dict(type='str', default='1Minute'),
+            metrics_list=dict(type='list', default=[
+                'GroupMinSize',
+                'GroupMaxSize',
+                'GroupDesiredCapacity',
+                'GroupInServiceInstances',
+                'GroupPendingInstances',
+                'GroupStandbyInstances',
+                'GroupTerminatingInstances',
+                'GroupTotalInstances'
+            ])
         ),
     )
 
@@ -1423,13 +1472,16 @@ def main():
                             endpoint=ec2_url,
                             **aws_connect_params)
     changed = create_changed = replace_changed = False
+    exists = asg_exists(connection)
 
     if state == 'present':
         create_changed, asg_properties = create_autoscaling_group(connection)
     elif state == 'absent':
         changed = delete_autoscaling_group(connection)
         module.exit_json(changed=changed)
-    if replace_all_instances or replace_instances:
+
+    # Only replace instances if asg existed at start of call
+    if exists and (replace_all_instances or replace_instances):
         replace_changed, asg_properties = replace(connection)
     if create_changed or replace_changed:
         changed = True

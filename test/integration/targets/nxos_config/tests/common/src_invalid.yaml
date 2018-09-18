@@ -1,7 +1,5 @@
 ---
-- debug: msg="START connection={{ ansible_connection }}/src_invalid.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg="START common/src_invalid.yaml on connection={{ ansible_connection }}"
 
 
 # Defend https://github.com/ansible/ansible-modules-core/issues/4797
@@ -18,4 +16,4 @@
       - "result.failed == true"
       - "result.msg == 'path specified in src not found'"
 
-- debug: msg="END connection={{ ansible_connection }}/src_invalid.yaml"
+- debug: msg="END common/src_invalid.yaml on connection={{ ansible_connection }}"

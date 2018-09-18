@@ -28,7 +28,6 @@ options:
   state:
     description:
       - Create or delete the table
-    required: false
     choices: ['present', 'absent']
     default: 'present'
   name:
@@ -39,34 +38,26 @@ options:
     description:
       - Name of the hash key.
       - Required when C(state=present).
-    required: false
-    default: null
   hash_key_type:
     description:
       - Type of the hash key.
-    required: false
     choices: ['STRING', 'NUMBER', 'BINARY']
     default: 'STRING'
   range_key_name:
     description:
       - Name of the range key.
-    required: false
-    default: null
   range_key_type:
     description:
       - Type of the range key.
-    required: false
     choices: ['STRING', 'NUMBER', 'BINARY']
     default: 'STRING'
   read_capacity:
     description:
       - Read throughput capacity (units) to provision.
-    required: false
     default: 1
   write_capacity:
     description:
       - Write throughput capacity (units) to provision.
-    required: false
     default: 1
   indexes:
     description:
@@ -74,20 +65,16 @@ options:
       - "required options: ['name', 'type', 'hash_key_name']"
       - "valid types: ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']"
       - "other options: ['hash_key_type', 'range_key_name', 'range_key_type', 'includes', 'read_capacity', 'write_capacity']"
-    required: false
     default: []
     version_added: "2.1"
   tags:
     version_added: "2.4"
     description:
       - a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
   wait_for_active_timeout:
     version_added: "2.4"
     description:
       - how long before wait gives up, in seconds. only used when tags is set
-    required: false
     default: 60
 extends_documentation_fragment:
     - aws

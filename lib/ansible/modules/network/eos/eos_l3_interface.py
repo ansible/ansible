@@ -20,7 +20,7 @@ author: "Ganesh Nalawade (@ganeshrn)"
 short_description: Manage L3 interfaces on Arista EOS network devices.
 description:
   - This module provides declarative management of L3 interfaces
-    on Arist EOS network devices.
+    on Arista EOS network devices.
 notes:
   - Tested against EOS 4.15
 options:
@@ -66,6 +66,11 @@ EXAMPLES = """
   eos_l3_interface:
     name: ethernet1
     ipv6: "fd5d:12c9:2201:1::1/64"
+
+- name: Set interface Vlan1 (SVI) IPv4 address
+  eos_l3_interface:
+    name: Vlan1
+    ipv4: 192.168.0.5/24
 
 - name: Set IP addresses on aggregate
   eos_l3_interface:

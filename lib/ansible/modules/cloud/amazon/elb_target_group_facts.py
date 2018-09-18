@@ -247,7 +247,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=['load_balancer_arn', 'target_group_arns', 'names'],
+                           mutually_exclusive=[['load_balancer_arn', 'target_group_arns', 'names']],
                            supports_check_mode=True
                            )
 

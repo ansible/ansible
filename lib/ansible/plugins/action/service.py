@@ -37,8 +37,7 @@ class ActionModule(ActionBase):
         self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         module = self._task.args.get('use', 'auto').lower()
 
@@ -66,11 +65,6 @@ class ActionModule(ActionBase):
                 if 'use' in new_module_args:
                     del new_module_args['use']
 
-                # for backwards compatibility
-                if 'state' in new_module_args and new_module_args['state'] == 'running':
-                    self._display.deprecated(msg="state=running is deprecated. Please use state=started", version="2.7")
-                    new_module_args['state'] = 'started'
-
                 if module in self.UNUSED_PARAMS:
                     for unused in self.UNUSED_PARAMS[module]:
                         if unused in new_module_args:
@@ -86,6 +80,6 @@ class ActionModule(ActionBase):
             result.update(e.result)
         finally:
             if not self._task.async_val:
-                self._remove_tmp_path(tmp)
+                self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

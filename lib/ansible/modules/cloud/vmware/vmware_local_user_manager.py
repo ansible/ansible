@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright IBM Corp. 2016
+# Copyright: (c) 2016, IBM Corp
 # Author(s): Andreas Nafpliotis <nafpliot@de.ibm.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -24,7 +24,8 @@ short_description: Manage local users on an ESXi host
 description:
     - Manage local users on an ESXi host
 version_added: "2.2"
-author: Andreas Nafpliotis
+author:
+- Andreas Nafpliotis (@nafpliot-ibm)
 notes:
     - Tested on ESXi 6.0
     - Be sure that the ESXi user used for login, has the appropriate rights to create / delete / edit users
@@ -53,14 +54,13 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example vmware_local_user_manager command from Ansible Playbooks
 - name: Add local user to ESXi
-  local_action:
-      module: vmware_local_user_manager
-      hostname: esxi_hostname
-      username: root
-      password: vmware
-      local_user_name: foo
+  vmware_local_user_manager:
+    hostname: esxi_hostname
+    username: root
+    password: vmware
+    local_user_name: foo
+  delegate_to: localhost
 '''
 
 RETURN = '''# '''

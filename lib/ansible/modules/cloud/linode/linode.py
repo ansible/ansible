@@ -30,13 +30,17 @@ options:
     description:
      - Name to give the instance (alphanumeric, dashes, underscore).
      - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID_).
+    required: true
   displaygroup:
     description:
      - Add the instance to a Display Group in Linode Manager.
     version_added: "2.3"
   linode_id:
     description:
-     - Unique ID of a linode server
+     - Unique ID of a linode server. This value is read-only in the sense that
+       if you specify it on creation of a Linode it will not be used. The
+       Linode API generates these IDs and we can those generated value here to
+       reference a Linode more specifically. This is useful for idempotence.
     aliases: [ lid ]
   additional_disks:
     description:
@@ -148,9 +152,20 @@ author:
 - Vincent Viallet (@zbal)
 notes:
   - C(LINODE_API_KEY) env variable can be used instead.
+  - Please review U(https://www.linode.com/api/linode) for determining the required parameters.
 '''
 
 EXAMPLES = '''
+
+- name: Create a new Linode
+  linode:
+    name: linode-test1
+    plan: 1
+    datacenter: 7
+    distribution: 129
+    state: present
+  register: linode_creation
+
 - name: Create a server with a private IP Address
   linode:
      module: linode
@@ -167,6 +182,7 @@ EXAMPLES = '''
      wait_timeout: 600
      state: present
   delegate_to: localhost
+  register: linode_creation
 
 - name: Fully configure new server
   linode:
@@ -201,12 +217,12 @@ EXAMPLES = '''
       - {Label: 'newdisk', Size: 2000}
      watchdog: True
   delegate_to: localhost
+  register: linode_creation
 
 - name: Ensure a running server (create if missing)
   linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
-     linode_id: 12345678
      plan: 1
      datacenter: 2
      distribution: 99
@@ -217,12 +233,13 @@ EXAMPLES = '''
      wait_timeout: 600
      state: present
   delegate_to: localhost
+  register: linode_creation
 
 - name: Delete a server
   linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
-     linode_id: 12345678
+     linode_id: "{{ linode_creation.instance.id }}"
      state: absent
   delegate_to: localhost
 
@@ -230,7 +247,7 @@ EXAMPLES = '''
   linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
-     linode_id: 12345678
+     linode_id: "{{ linode_creation.instance.id }}"
      state: stopped
   delegate_to: localhost
 
@@ -238,7 +255,7 @@ EXAMPLES = '''
   linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
-     linode_id: 12345678
+     linode_id: "{{ linode_creation.instance.id }}"
      state: restarted
   delegate_to: localhost
 '''
@@ -556,7 +573,7 @@ def main():
             state=dict(type='str', default='present',
                        choices=['absent', 'active', 'deleted', 'present', 'restarted', 'started', 'stopped']),
             api_key=dict(type='str', no_log=True),
-            name=dict(type='str'),
+            name=dict(type='str', required=True),
             alert_bwin_enabled=dict(type='bool'),
             alert_bwin_threshold=dict(type='int'),
             alert_bwout_enabled=dict(type='bool'),

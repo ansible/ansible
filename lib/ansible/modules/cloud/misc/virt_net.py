@@ -49,9 +49,9 @@ options:
               Modify was added in version 2.1
     autostart:
         required: false
-        choices: ["yes", "no"]
+        type: bool
         description:
-            - Specify if a given storage pool should be started automatically on system boot.
+            - Specify if a given network should be started automatically on system boot.
     uri:
         required: false
         default: "qemu:///system"
@@ -129,6 +129,11 @@ EXAMPLES = '''
 - virt_net:
     autostart: no
     name: br_nat
+
+# Add a new host in the dhcp pool
+- virt_net:
+    name: br_nat
+    xml: "<host mac='FC:C2:33:00:6c:3c' name='my_vm' ip='192.168.122.30'/>"
 '''
 
 try:

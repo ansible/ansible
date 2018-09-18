@@ -9,10 +9,11 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
+---
 module: bigip_remote_syslog
 short_description: Manipulate remote syslog settings on a BIG-IP
 description:
@@ -44,12 +45,7 @@ options:
     choices:
       - absent
       - present
-notes:
-  - Requires the netaddr Python package on the host. This is as easy as pip
-    install netaddr.
 extends_documentation_fragment: f5
-requirements:
-  - netaddr
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -93,41 +89,30 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -152,17 +137,13 @@ class Parameters(AnsibleF5Parameters):
 
     @property
     def remote_host(self):
-        try:
-            # Check for valid IPv4 or IPv6 entries
-            netaddr.IPAddress(self._values['remote_host'])
+        if is_valid_ip(self._values['remote_host']):
             return self._values['remote_host']
-        except netaddr.core.AddrFormatError:
-            # else fallback to checking reasonably well formatted hostnames
-            if self.is_valid_hostname(self._values['remote_host']):
-                return str(self._values['remote_host'])
-            raise F5ModuleError(
-                "The provided 'remote_host' is not a valid IP or hostname"
-            )
+        elif self.is_valid_hostname(self._values['remote_host']):
+            return str(self._values['remote_host'])
+        raise F5ModuleError(
+            "The provided 'remote_host' is not a valid IP or hostname"
+        )
 
     def is_valid_hostname(self, host):
         """Reasonable attempt at validating a hostname
@@ -201,10 +182,9 @@ class Parameters(AnsibleF5Parameters):
     def local_ip(self):
         if self._values['local_ip'] in [None, 'none']:
             return None
-        try:
-            ip = netaddr.IPAddress(self._values['local_ip'])
-            return str(ip)
-        except netaddr.core.AddrFormatError:
+        if is_valid_ip(self._values['local_ip']):
+            return self._values['local_ip']
+        else:
             raise F5ModuleError(
                 "The provided 'local_ip' is not a valid IP address"
             )
@@ -428,7 +408,7 @@ class ModuleManager(object):
     def read_current_from_device(self):
         resource = self.client.api.tm.sys.syslog.load()
         attrs = resource.attrs
-        result = Parameters(attrs)
+        result = Parameters(params=attrs)
         return result
 
     def absent(self):
@@ -479,8 +459,6 @@ def main():
     )
     if not HAS_F5SDK:
         module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
         client = F5Client(**module.params)

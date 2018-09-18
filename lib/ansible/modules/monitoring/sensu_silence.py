@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: sensu_silence
 version_added: "2.4"
-author: Steven Bambling(@smbambling)
+author: Steven Bambling (@smbambling)
 short_description: Manage Sensu silence entries
 description:
   - Create and clear (delete) a silence entries via the Sensu API
@@ -95,11 +95,7 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url

@@ -20,17 +20,17 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_configsync_actions import Parameters
-    from library.bigip_configsync_actions import ModuleManager
-    from library.bigip_configsync_actions import ArgumentSpec
+    from library.modules.bigip_configsync_action import Parameters
+    from library.modules.bigip_configsync_action import ModuleManager
+    from library.modules.bigip_configsync_action import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_configsync_actions import Parameters
-        from ansible.modules.network.f5.bigip_configsync_actions import ModuleManager
-        from ansible.modules.network.f5.bigip_configsync_actions import ArgumentSpec
+        from ansible.modules.network.f5.bigip_configsync_action import Parameters
+        from ansible.modules.network.f5.bigip_configsync_action import ModuleManager
+        from ansible.modules.network.f5.bigip_configsync_action import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
@@ -91,12 +91,17 @@ class TestManager(unittest.TestCase):
 
     def setUp(self):
         self.spec = ArgumentSpec()
+        self.patcher1 = patch('time.sleep')
+        self.patcher1.start()
+
+    def tearDown(self):
+        self.patcher1.stop()
 
     def test_update_agent_status_traps(self, *args):
         set_module_args(dict(
             sync_device_to_group='yes',
             device_group="foo",
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

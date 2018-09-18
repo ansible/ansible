@@ -25,6 +25,8 @@ import yaml
 import yaml.reader
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import boolean
 
 
 class AnsibleTextIOWrapper(TextIOWrapper):
@@ -114,3 +116,28 @@ def parse_yaml(value, lineno, module, name, load_all=False):
         })
 
     return data, errors, traces
+
+
+def is_empty(value):
+    """Evaluate null like values excluding False"""
+    if value is False:
+        return False
+    return not bool(value)
+
+
+def compare_unordered_lists(a, b):
+    """Safe list comparisons
+
+    Supports:
+      - unordered lists
+      - unhashable elements
+    """
+    return len(a) == len(b) and all(x in b for x in a)
+
+
+class NoArgsAnsibleModule(AnsibleModule):
+    """AnsibleModule that does not actually load params. This is used to get access to the
+    methods within AnsibleModule without having to fake a bunch of data
+    """
+    def _load_params(self):
+        self.params = {'_ansible_selinux_special_fs': [], '_ansible_remote_tmp': '/tmp', '_ansible_keep_remote_files': False, '_ansible_check_mode': False}

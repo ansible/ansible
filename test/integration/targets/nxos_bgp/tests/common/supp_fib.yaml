@@ -3,18 +3,26 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
+- set_fact: bgp_best_path_limit="false"
+- set_fact: bgp_best_path_limit="true"
+  when: imagetag is not search("I2")
+
+- set_fact: bgp_suppress_fib_supported="false"
+- set_fact: bgp_suppress_fib_supported="true"
+  when: imagetag is not search("A8|D1|I2|I4")
+
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - block:
@@ -57,11 +65,13 @@
     nxos_bgp: *reset1
     with_items: "{{ vrfs }}"
     register: result
+    when: bgp_best_path_limit
 
   - assert: *false
+    when: bgp_best_path_limit
 
-  # this task will fail on n9k running I2 or I4
-  # due to no support
+  # Property does not nvgen on some images
+  # still try and set it but don't check idempotence
   - name: "set suppress fib"
     nxos_bgp: &set2
       asn: 65535
@@ -70,12 +80,15 @@
     register: result
 
   - assert: *true
+    when: bgp_suppress_fib_supported
 
   - name: "Check Idempotence"
     nxos_bgp: *set2
     register: result
+    when: bgp_suppress_fib_supported
 
   - assert: *false
+    when: bgp_suppress_fib_supported
 
   - name: "reset suppress fib"
     nxos_bgp: &reset2
@@ -85,12 +98,15 @@
     register: result
 
   - assert: *true
+    when: bgp_suppress_fib_supported
 
   - name: "Check Idempotence"
     nxos_bgp: *reset2
     register: result
+    when: bgp_suppress_fib_supported
 
   - assert: *false
+    when: bgp_suppress_fib_supported
 
   rescue:
   - debug: msg="Tests can fail on I2/I4/A8/Fretta or helsinki images"
@@ -99,8 +115,8 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"

@@ -50,17 +50,22 @@ options:
       - aws KMS key to decrypt the secrets.
     required: false
     default: aws/ssm (this key is automatically generated at the first parameter created).
-  overwrite:
+  overwrite_value:
     description:
-      - Overwrite the value when create or update parameter
-      - Boolean
+      - Option to overwrite an existing value if it already exists.
+      - String
     required: false
-    default: True
+    version_added: "2.6"
+    choices: ['never', 'changed', 'always']
+    default: changed
   region:
     description:
       - region.
     required: false
-author: Bill Wang (ozbillwang@gmail.com)
+author:
+  - Nathan Webster (@nathanwebsterdotme)
+  - Bill Wang (ozbillwang@gmail.com)
+  - Michael De La Rue (@mikedlr)
 extends_documentation_fragment: aws
 requirements: [ botocore, boto3 ]
 '''
@@ -92,8 +97,16 @@ EXAMPLES = '''
     key_id: "alias/demo"
     value: "World"
 
-- name: recommend to use with ssm lookup plugin
-  debug: msg="{{ lookup('ssm', 'hello') }}"
+- name: Always update a parameter store value and create a new version
+  aws_ssm_parameter_store:
+    name: "overwrite_example"
+    description: "This example will always overwrite the value"
+    string_type: "String"
+    value: "Test1234"
+    overwrite_value: "always"
+
+- name: recommend to use with aws_ssm lookup plugin
+  debug: msg="{{ lookup('aws_ssm', 'hello') }}"
 '''
 
 RETURN = '''
@@ -107,27 +120,43 @@ delete_parameter:
     type: dictionary
 '''
 
-import traceback
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 
 try:
-    from botocore.exceptions import ClientError, NoCredentialsError
+    from botocore.exceptions import ClientError
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
 
 
+def update_parameter(client, module, args):
+    changed = False
+    response = {}
+
+    try:
+        response = client.put_parameter(**args)
+        changed = True
+    except ClientError as e:
+        module.fail_json_aws(e, msg="setting parameter")
+
+    return changed, response
+
+
 def create_update_parameter(client, module):
     changed = False
+    existing_parameter = None
     response = {}
 
     args = dict(
         Name=module.params.get('name'),
         Value=module.params.get('value'),
-        Type=module.params.get('string_type'),
-        Overwrite=module.params.get('overwrite')
+        Type=module.params.get('string_type')
     )
+
+    if (module.params.get('overwrite_value') in ("always", "changed")):
+        args.update(Overwrite=True)
+    else:
+        args.update(Overwrite=False)
 
     if module.params.get('description'):
         args.update(Description=module.params.get('description'))
@@ -136,67 +165,84 @@ def create_update_parameter(client, module):
         args.update(KeyId=module.params.get('key_id'))
 
     try:
-        response = client.put_parameter(**args)
-        changed = True
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        existing_parameter = client.get_parameter(Name=args['Name'], WithDecryption=True)
+    except:
+        pass
+
+    if existing_parameter:
+        if (module.params.get('overwrite_value') == 'always'):
+
+            (changed, response) = update_parameter(client, module, args)
+
+        elif (module.params.get('overwrite_value') == 'changed'):
+            if existing_parameter['Parameter']['Type'] != args['Type']:
+                (changed, response) = update_parameter(client, module, args)
+
+            if existing_parameter['Parameter']['Value'] != args['Value']:
+                (changed, response) = update_parameter(client, module, args)
+
+            if args.get('Description'):
+                # Description field not available from get_parameter function so get it from describe_parameters
+                describe_existing_parameter = None
+                try:
+                    describe_existing_parameter_paginator = client.get_paginator('describe_parameters')
+                    describe_existing_parameter = describe_existing_parameter_paginator.paginate(
+                        Filters=[{"Key": "Name", "Values": [args['Name']]}]).build_full_result()
+
+                except ClientError as e:
+                    module.fail_json_aws(e, msg="getting description value")
+
+                if describe_existing_parameter['Parameters'][0]['Description'] != args['Description']:
+                    (changed, response) = update_parameter(client, module, args)
+    else:
+        (changed, response) = update_parameter(client, module, args)
 
     return changed, response
 
 
 def delete_parameter(client, module):
-    changed = False
     response = {}
 
     try:
-        get_response = client.get_parameters(
-            Names=[module.params.get('name')]
+        response = client.delete_parameter(
+            Name=module.params.get('name')
         )
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] == 'ParameterNotFound':
+            return False, {}
+        module.fail_json_aws(e, msg="deleting parameter")
 
-    if get_response['Parameters']:
-        try:
-            response = client.delete_parameter(
-                Name=module.params.get('name')
-            )
-            changed = True
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+    return True, response
 
-    return changed, response
+
+def setup_client(module):
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    connection = boto3_conn(module, conn_type='client', resource='ssm', region=region, endpoint=ec2_url, **aws_connect_params)
+    return connection
+
+
+def setup_module_object():
+    argument_spec = dict(
+        name=dict(required=True),
+        description=dict(),
+        value=dict(required=False, no_log=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        string_type=dict(default='String', choices=['String', 'StringList', 'SecureString']),
+        decryption=dict(default=True, type='bool'),
+        key_id=dict(default="alias/aws/ssm"),
+        overwrite_value=dict(default='changed', choices=['never', 'changed', 'always']),
+        region=dict(required=False),
+    )
+
+    return AnsibleAWSModule(
+        argument_spec=argument_spec,
+    )
 
 
 def main():
-
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            description=dict(),
-            value=dict(required=False),
-            state=dict(default='present', choices=['present', 'absent']),
-            string_type=dict(default='String', choices=['String', 'StringList', 'SecureString']),
-            decryption=dict(default=True, type='bool'),
-            key_id=dict(default="alias/aws/ssm"),
-            overwrite=dict(default=True, type='bool'),
-            region=dict(required=False),
-        )
-    )
-
-    module = AnsibleModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 are required.')
+    module = setup_module_object()
     state = module.params.get('state')
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='ssm', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - %s" % str(e))
+    client = setup_client(module)
 
     invocations = {
         "present": create_update_parameter,
@@ -204,6 +250,7 @@ def main():
     }
     (changed, response) = invocations[state](client, module)
     module.exit_json(changed=changed, response=response)
+
 
 if __name__ == '__main__':
     main()

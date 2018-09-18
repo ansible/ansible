@@ -13,23 +13,23 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_tenant_span_src_group
-short_description: Manage SPAN source groups on Cisco ACI fabrics (span:SrcGrp)
+short_description: Manage SPAN source groups (span:SrcGrp)
 description:
 - Manage SPAN source groups on Cisco ACI fabrics.
-- More information from the internal APIC class I(span:SrcGrp) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
+- More information about the internal APIC class B(span:SrcGrp) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   admin_state:
     description:
     - Enable or disable the span sources.
-    choices: [ enabled, disabled ]
-    default: enabled
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   description:
     description:
     - The description for Span source group.
@@ -56,18 +56,120 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_tenant_span_src_group:
-    host:"{{ inventory_hostname }}"
-    username:"{{ username }}"
-    password:"{{ password }}"
-    tenant:"{{ tenant }}"
-    src_group:"{{ src_group }}"
-    dst_group:"{{ dst_group }}"
-    admin_state:"{{ admin_state }}"
-    description:"{{ description }}"
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    src_group: "{{ src_group }}"
+    dst_group: "{{ dst_group }}"
+    admin_state: "{{ admin_state }}"
+    description: "{{ description }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -77,14 +179,12 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        admin_state=dict(type='str', choices=['enabled', 'disabled']),
+        admin_state=dict(type='raw'),  # Turn into a boolean in v2.9
         description=dict(type='str', aliases=['descr']),
         dst_group=dict(type='str'),
         src_group=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -96,26 +196,27 @@ def main():
         ],
     )
 
-    admin_state = module.params['admin_state']
+    aci = ACIModule(module)
+
+    admin_state = aci.boolean(module.params['admin_state'], 'enabled', 'disabled')
     description = module.params['description']
     dst_group = module.params['dst_group']
     src_group = module.params['src_group']
     state = module.params['state']
     tenant = module.params['tenant']
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='spanSrcGrp',
             aci_rn='srcgrp-{0}'.format(src_group),
-            filter_target='eq(spanSrcGrp.name, "{0}")'.format(src_group),
             module_object=src_group,
+            target_filter={'name': src_group},
         ),
         child_classes=['spanSpanLbl'],
     )
@@ -123,7 +224,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='spanSrcGrp',
             class_config=dict(
@@ -134,16 +234,14 @@ def main():
             child_configs=[{'spanSpanLbl': {'attributes': {'name': dst_group}}}],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='spanSrcGrp')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

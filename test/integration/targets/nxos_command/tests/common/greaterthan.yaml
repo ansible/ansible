@@ -1,0 +1,32 @@
+---
+- debug: msg="START common/greaterthan.yaml on connection={{ ansible_connection }}"
+
+- name: test gt operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.eth_ip_mask gt 0"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: test > operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.eth_ip_mask > 0"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END common/greaterthan.yaml on connection={{ ansible_connection }}"

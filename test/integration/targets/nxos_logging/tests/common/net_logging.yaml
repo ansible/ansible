@@ -10,16 +10,16 @@
   net_logging:
     dest: console
     dest_level: 0
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - name: Set up console logging using platform agnostic module
   net_logging:
     dest: console
     dest_level: 0
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
@@ -31,8 +31,8 @@
   net_logging:
     dest: console
     dest_level: 0
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 

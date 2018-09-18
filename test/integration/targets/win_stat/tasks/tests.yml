@@ -465,17 +465,34 @@
   failed_when: "win_stat_no_args.msg != 'Get-AnsibleParam: Missing required argument: path'"
 
 # https://github.com/ansible/ansible/issues/30258
+- name: get path of pagefile
+  win_shell: |
+    $pagefile = $null
+    $cs = Get-CimInstance -ClassName Win32_ComputerSystem
+    if ($cs.AutomaticManagedPagefile) {
+        $pagefile = "$($env:SystemRoot.Substring(0, 1)):\pagefile.sys"
+    } else {
+        $pf = Get-CimInstance -ClassName Win32_PageFileSetting
+        if ($pf -ne $null) {
+            $pagefile = $pf[0].Name
+        }
+    }
+    $pagefile
+  register: pagefile_path
+
 - name: get stat of pagefile
   win_stat:
-    path: C:\pagefile.sys
+    path: '{{pagefile_path.stdout_lines[0]}}'
     get_md5: no
     get_checksum: no
   register: pagefile_stat
+  when: pagefile_path.stdout_lines|count != 0
 
 - name: assert get stat of pagefile
   assert:
     that:
     - pagefile_stat.stat.exists == True
+  when: pagefile_path.stdout_lines|count != 0
 
 # Tests with normal user
 - set_fact:

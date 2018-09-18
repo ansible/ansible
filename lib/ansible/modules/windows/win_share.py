@@ -1,11 +1,12 @@
 #!/usr/bin/python
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -24,24 +25,23 @@ options:
   name:
     description:
       - Share name.
-    required: True
+    required: yes
   path:
     description:
       - Share directory.
-    required: True
+    required: yes
+    type: path
   state:
     description:
       - Specify whether to add C(present) or remove C(absent) the specified share.
-    choices:
-      - present
-      - absent
+    choices: [ absent, present ]
     default: present
   description:
     description:
-      - Share description
+      - Share description.
   list:
     description:
-      - Specify whether to allow or deny file listing, in case user got no permission on share.
+      - Specify whether to allow or deny file listing, in case user has no permission on share. Also known as Access-Based Enumeration.
     type: bool
     default: 'no'
   read:
@@ -66,7 +66,7 @@ options:
       - None
       - Programs
       - Unknown
-    default: "Manual"
+    default: Manual
     version_added: "2.3"
   encrypt:
     description: Sets whether to encrypt the traffic to the share or not.

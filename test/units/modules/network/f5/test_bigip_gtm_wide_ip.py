@@ -21,12 +21,12 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_gtm_wide_ip import ApiParameters
-    from library.bigip_gtm_wide_ip import ModuleParameters
-    from library.bigip_gtm_wide_ip import ModuleManager
-    from library.bigip_gtm_wide_ip import ArgumentSpec
-    from library.bigip_gtm_wide_ip import UntypedManager
-    from library.bigip_gtm_wide_ip import TypedManager
+    from library.modules.bigip_gtm_wide_ip import ApiParameters
+    from library.modules.bigip_gtm_wide_ip import ModuleParameters
+    from library.modules.bigip_gtm_wide_ip import ModuleManager
+    from library.modules.bigip_gtm_wide_ip import ArgumentSpec
+    from library.modules.bigip_gtm_wide_ip import UntypedManager
+    from library.modules.bigip_gtm_wide_ip import TypedManager
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -70,7 +70,7 @@ class TestParameters(unittest.TestCase):
     def test_module_parameters(self):
         args = dict(
             name='foo.baz.bar',
-            lb_method='round-robin',
+            pool_lb_method='round-robin',
         )
         p = ModuleParameters(params=args)
         assert p.name == 'foo.baz.bar'
@@ -108,12 +108,12 @@ class TestParameters(unittest.TestCase):
 
     def test_module_not_fqdn_name(self):
         args = dict(
-            name='foo.baz',
+            name='foo',
             lb_method='round-robin'
         )
         with pytest.raises(F5ModuleError) as excinfo:
             p = ModuleParameters(params=args)
-            assert p.name == 'foo.baz'
+            assert p.name == 'foo'
         assert 'The provided name must be a valid FQDN' in str(excinfo)
 
 
@@ -126,7 +126,7 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='foo.baz.bar',
             lb_method='round-robin',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -164,7 +164,7 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='round-robin',
             type='a',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -196,7 +196,7 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='round_robin',
             type='a',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -228,7 +228,7 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='global_availability',
             type='a',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -266,7 +266,7 @@ class TestTypedManager(unittest.TestCase):
                     ratio=10
                 )
             ],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -304,7 +304,7 @@ class TestTypedManager(unittest.TestCase):
                     ratio=10
                 )
             ],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -344,7 +344,7 @@ class TestTypedManager(unittest.TestCase):
                     ratio=100
                 )
             ],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

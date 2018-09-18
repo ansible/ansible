@@ -35,8 +35,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         src = self._task.args.get('src', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'), strict=False)
@@ -54,9 +53,9 @@ class ActionModule(ActionBase):
             except AnsibleError as e:
                 raise AnsibleActionFail(to_native(e))
 
-            tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, os.path.basename(src))
             self._transfer_file(src, tmp_src)
-            self._fixup_perms2((tmp_src,))
+            self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
 
             new_module_args = self._task.args.copy()
             new_module_args.update(
@@ -69,5 +68,5 @@ class ActionModule(ActionBase):
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(tmp)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
         return result

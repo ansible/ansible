@@ -21,10 +21,10 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigiq_regkey_license import ModuleParameters
-    from library.bigiq_regkey_license import ApiParameters
-    from library.bigiq_regkey_license import ModuleManager
-    from library.bigiq_regkey_license import ArgumentSpec
+    from library.modules.bigiq_regkey_license import ModuleParameters
+    from library.modules.bigiq_regkey_license import ApiParameters
+    from library.modules.bigiq_regkey_license import ModuleManager
+    from library.modules.bigiq_regkey_license import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -88,6 +88,11 @@ class TestManager(unittest.TestCase):
 
     def setUp(self):
         self.spec = ArgumentSpec()
+        self.patcher1 = patch('time.sleep')
+        self.patcher1.start()
+
+    def tearDown(self):
+        self.patcher1.stop()
 
     def test_create(self, *args):
         set_module_args(dict(
@@ -95,7 +100,7 @@ class TestManager(unittest.TestCase):
             license_key='XXXX-XXXX-XXXX-XXXX-XXXX',
             accept_eula=True,
             description='this is a description',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

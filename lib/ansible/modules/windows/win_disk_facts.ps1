@@ -5,31 +5,29 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #AnsibleRequires -OSVersion 6.2
+
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
+
+# Functions
+function Test-Admin {
+    $CurrentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
+    $IsAdmin = $CurrentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+
+    return $IsAdmin
+}
+
+# Check admin rights
+if (-not (Test-Admin)) {
+    Fail-Json -obj @{} -message "Module was not started with elevated rights"
+}
 
 # Create a new result object
 $result = @{
     changed = $false
     ansible_facts = @{
-        total_disks = 0
-        disks = @()
+        ansible_disks = @()
     }
-}
-
-# Functions 
-function Test-Admin {
-        $CurrentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
-        $IsAdmin = $CurrentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-
-        return $IsAdmin
-}
-
-# Check admin rights
-if (-not (Test-Admin)) {
-    $result.Remove("total_disks")
-    $result.Remove("disks")
-    Fail-Json -obj $result -message "Cmdlet was not started with elevated rights"
 }
 
 # Search disks
@@ -39,7 +37,6 @@ try {
     Fail-Json -obj $result -message "Failed to search the disks on the target: $($_.Exception.Message)"
 }
 [int32]$diskcount = $disks | Measure-Object | Select-Object  -ExpandProperty Count
-$result.ansible_facts.total_disks = $diskcount
 foreach ($disk in $disks) {
     $disk_info = @{}
     $pdisk = Get-PhysicalDisk -ErrorAction SilentlyContinue | Where-Object {
@@ -47,8 +44,8 @@ foreach ($disk in $disks) {
     }
     if ($pdisk) {
         $disk_info["physical_disk"] += @{
-            size = "$($pSize = "{0:N3}" -f ($pdisk.Size / 1GB))$($pSize)GiB"
-            allocated_size = "$($pAllocSize = "{0:N3}" -f ($pdisk.AllocatedSize / 1GB))$($pAllocSize)GiB"
+            size = $pdisk.Size
+            allocated_size = $pdisk.AllocatedSize
             device_id = $pdisk.DeviceId
             friendly_name = $pdisk.FriendlyName
             operational_status = $pdisk.OperationalStatus
@@ -56,7 +53,7 @@ foreach ($disk in $disks) {
             bus_type = $pdisk.BusType
             usage_type = $pdisk.Usage
             supported_usages = $pdisk.SupportedUsages
-            spindle_speed = "$($pdisk.SpindleSpeed)rpm"
+            spindle_speed = $pdisk.SpindleSpeed
             firmware_version = $pdisk.FirmwareVersion
             physical_location = $pdisk.PhysicalLocation
             manufacturer = $pdisk.Manufacturer
@@ -73,33 +70,33 @@ foreach ($disk in $disks) {
         }
         if (-not $pdisk.CanPool) {
             $disk_info.physical_disk.cannot_pool_reason = $pdisk.CannotPoolReason
-        }   
+        }
         $vdisk = Get-VirtualDisk -PhysicalDisk $pdisk -ErrorAction SilentlyContinue
         if ($vdisk) {
             $disk_info["virtual_disk"] += @{
-                size = "$($vDSize = "{0:N3}" -f ($vdisk.Size / 1GB))$($vDSize)GiB"
-                allocated_size = "$($vDAllocSize = "{0:N3}" -f ($vdisk.AllocatedSize / 1GB))$($vDAllocSize)GiB"
-                footprint_on_pool = "$($vDPrint = "{0:N3}" -f ($vdisk.FootprintOnPool / 1GB))$($vDPrint)GiB"
+                size = $vdisk.Size
+                allocated_size = $vdisk.AllocatedSize
+                footprint_on_pool = $vdisk.FootprintOnPool
                 name = $vdisk.name
                 friendly_name = $vdisk.FriendlyName
                 operational_status = $vdisk.OperationalStatus
                 health_status = $vdisk.HealthStatus
                 provisioning_type = $vdisk.ProvisioningType
-                allocation_unit_size = "$($vdisk.AllocationUnitSize / 1KB)KiB"
+                allocation_unit_size = $vdisk.AllocationUnitSize
                 media_type = $vdisk.MediaType
                 parity_layout = $vdisk.ParityLayout
                 access = $vdisk.Access
                 detached_reason = $vdisk.DetachedReason
-                write_cache_size = "$($vdisk.WriteCacheSize)s/byte/bytes/"
+                write_cache_size = $vdisk.WriteCacheSize
                 fault_domain_awareness = $vdisk.FaultDomainAwareness
-                inter_leave = "$($vDLeave = "{0:N3}" -f ($vdisk.InterLeave / 1KB))$($vDLeave)KiB"
+                inter_leave = $vdisk.InterLeave
                 deduplication_enabled = $vdisk.IsDeduplicationEnabled
                 enclosure_aware = $vdisk.IsEnclosureAware
                 manual_attach = $vdisk.IsManualAttach
                 snapshot = $vdisk.IsSnapshot
                 tiered = $vdisk.IsTiered
-                physical_sector_size = "$($vdisk.PhysicalSectorSize / 1KB)KiB"
-                logical_sector_size = "$($vdisk.LogicalSectorSize)s/byte/bytes/"
+                physical_sector_size = $vdisk.PhysicalSectorSize
+                logical_sector_size = $vdisk.LogicalSectorSize
                 available_copies = $vdisk.NumberOfAvailableCopies
                 columns = $vdisk.NumberOfColumns
                 groups = $vdisk.NumberOfGroups
@@ -114,13 +111,13 @@ foreach ($disk in $disks) {
         }
     }
     $disk_info.number = $disk.Number
-    $disk_info.size = "$($disk.Size / 1GB)GiB"
+    $disk_info.size = $disk.Size
     $disk_info.bus_type = $disk.BusType
     $disk_info.friendly_name = $disk.FriendlyName
     $disk_info.partition_style = $disk.PartitionStyle
     $disk_info.partition_count = $disk.NumberOfPartitions
     $disk_info.operational_status = $disk.OperationalStatus
-    $disk_info.sector_size = "$($disk.PhysicalSectorSize)s/byte/bytes/"
+    $disk_info.sector_size = $disk.PhysicalSectorSize
     $disk_info.read_only = $disk.IsReadOnly
     $disk_info.bootable = $disk.IsBoot
     $disk_info.system_disk = $disk.IsSystem
@@ -139,11 +136,11 @@ foreach ($disk in $disks) {
         foreach ($part in $parts) {
             $partition_info  = @{
                 number = $part.PartitionNumber
-                size = "$($pSize = "{0:N3}" -f ($part.Size /1GB))$($pSize)GiB"
+                size = $part.Size
                 type = $part.Type
                 drive_letter = $part.DriveLetter
                 transition_state = $part.TransitionState
-                offset = $part.Offset             
+                offset = $part.Offset
                 hidden = $part.IsHidden
                 shadow_copy = $part.IsShadowCopy
                 guid = $part.Guid
@@ -161,8 +158,8 @@ foreach ($disk in $disks) {
                 $partition_info["volumes"]  += @()
                 foreach ($vol in $vols) {
                     $volume_info  = @{
-                        size = "$($vSize = "{0:N3}" -f ($vol.Size / 1GB))$($vSize)GiB"
-                        size_remaining = "$($vSizeRe = "{0:N3}" -f ($vol.SizeRemaining / 1GB))$($vSizeRe)GiB"
+                        size = $vol.Size
+                        size_remaining = $vol.SizeRemaining
                         type = $vol.FileSystem
                         label = $vol.FileSystemLabel
                         health_status = $vol.HealthStatus
@@ -171,11 +168,11 @@ foreach ($disk in $disks) {
                         path = $vol.Path
                     }
                     if ([System.Environment]::OSVersion.Version.Major -ge 10) {
-                        $volume_info.allocation_unit_size = "$($vol.AllocationUnitSize /1KB)KiB"
+                        $volume_info.allocation_unit_size = $vol.AllocationUnitSize
                     } else {
                         $volPath = ($vol.Path.TrimStart("\\?\")).TrimEnd("\")
                         $BlockSize = (Get-CimInstance -Query "SELECT BlockSize FROM Win32_Volume WHERE DeviceID like '%$volPath%'" -ErrorAction SilentlyContinue | Select-Object BlockSize).BlockSize
-                        $volume_info.allocation_unit_size = "$($BlockSize / 1KB)KiB"
+                        $volume_info.allocation_unit_size = $BlockSize
                     }
                     $partition_info.volumes  += $volume_info
                 }
@@ -183,7 +180,7 @@ foreach ($disk in $disks) {
         $disk_info.partitions += $partition_info
         }
     }
-    $result.ansible_facts.disks += $disk_info
+    $result.ansible_facts.ansible_disks += $disk_info
 }
 
 # Return result

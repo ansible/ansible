@@ -1,0 +1,152 @@
+---
+# ios_command -> ComplexList
+# ios_interface -> conditional, remove_default_spec
+# ios_logging -> validate_ip_address
+# ios_l3_interface -> is_netmask, is_masklen, to_subnet, to_netmask, to_masklen
+
+#ComplexList already covered
+
+- debug: msg="START ios_smoke cli/common_utils.yaml on connection={{ ansible_connection }}"
+
+# hit is_netmask(), is_masklen(), to_netmask(), to_masklen()
+- name: Delete interface ipv4 and ipv6 address(setup)
+  ios_l3_interface:
+    name: "{{ test_interface }}"
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- name: Setup - Ensure interfaces are switchport
+  ios_config:
+    lines:
+      - no shutdown
+    parents:
+      - "interface {{ item }}"
+    provider: "{{ cli }}"
+  loop:
+    - "{{ test_interface }}"
+    - "{{ test_interface2 }}"
+
+- name: Configure interface ipv4 address
+  ios_l3_interface:
+    name: "{{ test_interface }}"
+    ipv4: 192.168.20.1/24
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"ip address 192.168.20.1 255.255.255.0" in result.commands'
+
+- name: test invalid subnet
+  ios_l3_interface:
+    name: "{{ test_interface }}"
+    ipv4: 192.168.20.1/45
+    state: present
+    provider: "{{ cli }}"
+  register: result
+  ignore_errors: yes
+
+- debug: var=result
+
+- assert:
+    that:
+      - 'result.failed == true'
+
+- name:  Change ipv4 and ipv6 address using aggregate
+  ios_l3_interface:
+    aggregate:
+    - { name: "{{ test_interface }}", ipv4: 193.167.1.1/8, ipv6: "fd5a:12c9:2201:4::4/32" }
+    - { name: "{{ test_interface2 }}", ipv4: 192.169.2.2/24, ipv6: "fd5b:12c9:2201:5::5/90" }
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"ip address 193.167.1.1 255.0.0.0" in result.commands'
+      - '"ipv6 address fd5a:12c9:2201:4::4/32" in result.commands'
+      - '"interface {{ test_interface2 }}" in result.commands'
+      - '"ip address 192.169.2.2 255.255.255.0" in result.commands'
+      - '"ipv6 address fd5b:12c9:2201:5::5/90" in result.commands'
+
+- name:  Delete ipv4 and ipv6 address using aggregate
+  ios_l3_interface:
+    aggregate:
+    - { name: "{{ test_interface }}" }
+    - { name: "{{ test_interface2 }}" }
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+# hit validate_ip_address()
+- name: Remove host logging - setup
+  net_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Remove host logging - teardown
+  net_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    provider: "{{ cli }}"
+
+# hit conditional(), remove_default_spec()
+- name: Check intent arguments
+  ios_interface:
+    name: "{{ test_interface }}"
+    state: up
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check intent arguments (failed condition)
+  ios_interface:
+    name: "{{ test_interface }}"
+    state: down
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(down)' in result.failed_conditions"
+
+- name: Config + intent
+  ios_interface:
+    name: "{{ test_interface }}"
+    enabled: False
+    state: down
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Config + intent (fail)
+  ios_interface:
+    name: "{{ test_interface }}"
+    enabled: False
+    provider: "{{ cli }}"
+    state: up
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(up)' in result.failed_conditions"
+
+- debug: msg="END ios_smoke cli/common_utils.yaml on connection={{ ansible_connection }}"

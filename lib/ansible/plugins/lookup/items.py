@@ -10,11 +10,11 @@ DOCUMENTATION = """
     version_added: historical
     short_description: list of items
     description:
-      - this looup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
+      - this lookup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
     notes:
       - this is the standard lookup used for loops in most examples
       - check out the 'flattened' lookup for recursive flattening
-      - if you dont want flattening nor any other tranformation look at the 'list' lookup.
+      - if you do not want flattening nor any other transformation look at the 'list' lookup.
     options:
       _terms:
         description: list of items
@@ -40,7 +40,8 @@ EXAMPLES = """
      - testuser2
 
 - name: "loop through list from a variable"
-  debug: msg="An item: {{item}}"
+  debug:
+    msg: "An item: {{item}}"
   with_items: "{{ somelist }}"
 
 - name: more complex items to add several users

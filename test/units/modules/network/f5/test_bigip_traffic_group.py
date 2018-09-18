@@ -21,15 +21,17 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_traffic_group import Parameters
-    from library.bigip_traffic_group import ModuleManager
-    from library.bigip_traffic_group import ArgumentSpec
+    from library.modules.bigip_traffic_group import ApiParameters
+    from library.modules.bigip_traffic_group import ModuleParameters
+    from library.modules.bigip_traffic_group import ModuleManager
+    from library.modules.bigip_traffic_group import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_traffic_group import Parameters
+        from ansible.modules.network.f5.bigip_traffic_group import ApiParameters
+        from ansible.modules.network.f5.bigip_traffic_group import ModuleParameters
         from ansible.modules.network.f5.bigip_traffic_group import ModuleManager
         from ansible.modules.network.f5.bigip_traffic_group import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
@@ -61,13 +63,35 @@ def load_fixture(name):
 
 
 class TestParameters(unittest.TestCase):
-    def test_module_parameters(self):
+    def test_module_parameters_1(self):
         args = dict(
-            name='foo'
+            name='foo',
+            mac_address=''
         )
 
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.name == 'foo'
+        assert p.mac_address == 'none'
+
+    def test_module_parameters_2(self):
+        args = dict(
+            mac_address='00:00:00:00:00:02'
+        )
+
+        p = ModuleParameters(params=args)
+        assert p.mac_address == '00:00:00:00:00:02'
+
+    def test_api_parameters_1(self):
+        args = load_fixture('load_tm_cm_traffic_group_1.json')
+
+        p = ApiParameters(params=args)
+        assert p.mac_address == 'none'
+
+    def test_api_parameters_2(self):
+        args = load_fixture('load_tm_cm_traffic_group_2.json')
+
+        p = ApiParameters(params=args)
+        assert p.mac_address == '00:00:00:00:00:02'
 
 
 class TestManager(unittest.TestCase):

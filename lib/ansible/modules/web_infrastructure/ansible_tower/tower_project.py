@@ -27,62 +27,47 @@ options:
       description:
         - Name to use for the project.
       required: True
-      default: null
     description:
       description:
         - Description to use for the project.
-      required: False
-      default: null
     scm_type:
       description:
-        - Type of scm resource.
-      required: False
-      default: "manual"
+        - Type of SCM resource.
       choices: ["manual", "git", "hg", "svn"]
+      default: "manual"
     scm_url:
       description:
-        - URL of scm resource.
-      required: False
-      default: null
+        - URL of SCM resource.
     local_path:
       description:
         - The server playbook directory for manual projects.
-      required: False
-      default: null
     scm_branch:
       description:
-        - The branch to use for the scm resource.
-      required: False
-      default: null
+        - The branch to use for the SCM resource.
     scm_credential:
       description:
-        - Name of the credential to use with this scm resource.
-      required: False
-      default: null
+        - Name of the credential to use with this SCM resource.
     scm_clean:
       description:
         - Remove local modifications before updating.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     scm_delete_on_update:
       description:
         - Remove the repository completely before updating.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     scm_update_on_launch:
       description:
         - Before an update to the local repository before launching a job with this project.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     organization:
       description:
         - Primary key of organization for project.
-      required: False
-      default: null
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower
@@ -99,7 +84,7 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
 '''
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
@@ -111,8 +96,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(),
         description=dict(),
         organization=dict(),
@@ -126,12 +110,9 @@ def main():
         local_path=dict(),
 
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     description = module.params.get('description')
@@ -161,16 +142,19 @@ def main():
                     org = org_res.get(name=organization)
                 except (exc.NotFound) as excinfo:
                     module.fail_json(msg='Failed to update project, organization not found: {0}'.format(organization), changed=False)
-                try:
-                    cred_res = tower_cli.get_resource('credential')
-                    cred = cred_res.get(name=scm_credential)
-                except (exc.NotFound) as excinfo:
-                    module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
+
+                if scm_credential:
+                    try:
+                        cred_res = tower_cli.get_resource('credential')
+                        cred = cred_res.get(name=scm_credential)
+                        scm_credential = cred['id']
+                    except (exc.NotFound) as excinfo:
+                        module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
-                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=cred['id'],
+                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=scm_credential,
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
                                         create_on_missing=True)
@@ -184,6 +168,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

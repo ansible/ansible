@@ -38,7 +38,7 @@ options:
         choices: [ killed, once, reloaded, restarted, started, stopped ]
     enabled:
         description:
-            - Wheater the service is enabled or not, if disabled it also implies stopped.
+            - Whether the service is enabled or not, if disabled it also implies stopped.
         type: bool
     service_dir:
         description:

@@ -31,77 +31,64 @@ options:
   object:
     description:
       - Keyname of the object inside the bucket. Can be also be used to create "virtual directories" (see examples).
-    required: false
-    default: null
   src:
     description:
       - The source file path when performing a PUT operation.
-    required: false
-    default: null
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
-    required: false
   force:
     description:
       - Forces an overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
     aliases: [ 'overwrite' ]
   permission:
     description:
       - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private',
         'public-read', 'authenticated-read'.
-    required: false
     default: private
   headers:
     version_added: "2.0"
     description:
       - Headers to attach to object.
-    required: false
-    default: '{}'
+    default: {}
   expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only
         available when public-read is the acl for the object.
-    required: false
-    default: null
   mode:
     description:
       - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and
         delete (bucket).
     required: true
-    default: null
     choices: [ 'get', 'put', 'get_url', 'get_str', 'delete', 'create' ]
   gs_secret_key:
     description:
       - GS secret key. If not set then the value of the GS_SECRET_ACCESS_KEY environment variable is used.
     required: true
-    default: null
   gs_access_key:
     description:
       - GS access key. If not set then the value of the GS_ACCESS_KEY_ID environment variable is used.
     required: true
-    default: null
   region:
     version_added: "2.4"
     description:
       - The gs region to use. If not defined then the value 'US' will be used. See U(https://cloud.google.com/storage/docs/bucket-locations)
-    required: false
     default: 'US'
   versioning:
     version_added: "2.4"
     description:
       - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
-    required: false
-    default: null
-    choices: [ 'yes', 'no' ]
+    type: bool
 
 requirements:
     - "python >= 2.6"
     - "boto >= 2.9"
 
-author: "Benno Joy (@bennojoy), extended by Lukas Beumer (@nitaco)"
+author:
+- Benno Joy (@bennojoy)
+- Lukas Beumer (@nitaco)
 
 '''
 
@@ -387,7 +374,7 @@ def handle_delete(module, gs, bucket, obj):
             if key_check(module, gs, bucket, obj):
                 module.exit_json(msg="Object has been deleted.", changed=delete_key(module, gs, bucket, obj))
             else:
-                module.exit_json(msg="Object does not exists.", changed=False)
+                module.exit_json(msg="Object does not exist.", changed=False)
         else:
             module.exit_json(msg="Bucket does not exist.", changed=False)
     else:
@@ -436,7 +423,7 @@ def main():
     )
 
     if not HAS_BOTO:
-        module.fail_json(msg='boto 2.9+ required for this module')
+        module.fail_json(msg='`boto` 2.9+ is required for this module. Try: pip install `boto` --upgrade')
 
     bucket = module.params.get('bucket')
     obj = module.params.get('object')

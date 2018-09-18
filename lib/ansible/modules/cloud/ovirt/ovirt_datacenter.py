@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -33,13 +18,17 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage data centers in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the datacenter to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the data center to manage."
         required: true
     state:
         description:
-            - "Should the data center be present or absent"
+            - "Should the data center be present or absent."
         choices: ['present', 'absent']
         default: present
     description:
@@ -92,6 +81,11 @@ EXAMPLES = '''
 - ovirt_datacenter:
     state: absent
     name: mydatacenter
+
+# Change Datacenter Name
+- ovirt_datacenter:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_datacenter_name"
 '''
 
 RETURN = '''
@@ -155,6 +149,7 @@ class DatacentersModule(BaseModule):
     def build_entity(self):
         return otypes.DataCenter(
             name=self._module.params['name'],
+            id=self._module.params['id'],
             comment=self._module.params['comment'],
             description=self._module.params['description'],
             mac_pool=otypes.MacPool(
@@ -177,6 +172,7 @@ class DatacentersModule(BaseModule):
             equal(getattr(self._get_mac_pool(), 'id', None), getattr(entity.mac_pool, 'id', None)) and
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('description'), entity.description) and
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('quota_mode'), str(entity.quota_mode)) and
             equal(self._module.params.get('local'), entity.local) and
             equal(minor, self.__get_minor(entity.version)) and
@@ -193,6 +189,7 @@ def main():
         name=dict(default=None, required=True),
         description=dict(default=None),
         local=dict(type='bool'),
+        id=dict(default=None),
         compatibility_version=dict(default=None),
         quota_mode=dict(choices=['disabled', 'audit', 'enabled']),
         comment=dict(default=None),

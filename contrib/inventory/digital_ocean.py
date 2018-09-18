@@ -40,6 +40,7 @@ is to use the output of the --env option with export:
 The following groups are generated from --list:
  - ID    (droplet ID)
  - NAME  (droplet NAME)
+ - digital_ocean
  - image_ID
  - image_NAME
  - distro_NAME  (distribution NAME from image)
@@ -148,10 +149,7 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 class DoManager:
@@ -312,7 +310,7 @@ class DigitalOceanInventory(object):
             self.write_to_cache()
 
         if self.args.pretty:
-            print(json.dumps(json_data, sort_keys=True, indent=2))
+            print(json.dumps(json_data, indent=2))
         else:
             print(json.dumps(json_data))
 
@@ -322,7 +320,7 @@ class DigitalOceanInventory(object):
 
     def read_settings(self):
         """ Reads the settings from the digital_ocean.ini file """
-        config = ConfigParser.SafeConfigParser()
+        config = ConfigParser.ConfigParser()
         config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'digital_ocean.ini')
         config.read(config_path)
 
@@ -428,6 +426,21 @@ class DigitalOceanInventory(object):
             self.data['tags'] = self.manager.all_tags()
             self.cache_refreshed = True
 
+    def add_inventory_group(self, key):
+        """ Method to create group dict """
+        host_dict = {'hosts': [], 'vars': {}}
+        self.inventory[key] = host_dict
+        return
+
+    def add_host(self, group, host):
+        """ Helper method to reduce host duplication """
+        if group not in self.inventory:
+            self.add_inventory_group(group)
+
+        if host not in self.inventory[group]['hosts']:
+            self.inventory[group]['hosts'].append(host)
+        return
+
     def build_inventory(self):
         """ Build Ansible inventory of droplets """
         self.inventory = {
@@ -448,33 +461,29 @@ class DigitalOceanInventory(object):
 
             self.inventory['all']['hosts'].append(dest)
 
-            self.inventory[droplet['id']] = [dest]
-            self.inventory[droplet['name']] = [dest]
+            self.add_host(droplet['id'], dest)
+
+            self.add_host(droplet['name'], dest)
 
             # groups that are always present
-            for group in ('region_' + droplet['region']['slug'],
+            for group in ('digital_ocean',
+                          'region_' + droplet['region']['slug'],
                           'image_' + str(droplet['image']['id']),
                           'size_' + droplet['size']['slug'],
                           'distro_' + DigitalOceanInventory.to_safe(droplet['image']['distribution']),
                           'status_' + droplet['status']):
-                if group not in self.inventory:
-                    self.inventory[group] = {'hosts': [], 'vars': {}}
-                self.inventory[group]['hosts'].append(dest)
+                self.add_host(group, dest)
 
             # groups that are not always present
             for group in (droplet['image']['slug'],
                           droplet['image']['name']):
                 if group:
                     image = 'image_' + DigitalOceanInventory.to_safe(group)
-                    if image not in self.inventory:
-                        self.inventory[image] = {'hosts': [], 'vars': {}}
-                    self.inventory[image]['hosts'].append(dest)
+                    self.add_host(image, dest)
 
             if droplet['tags']:
                 for tag in droplet['tags']:
-                    if tag not in self.inventory:
-                        self.inventory[tag] = {'hosts': [], 'vars': {}}
-                    self.inventory[tag]['hosts'].append(dest)
+                    self.add_host(tag, dest)
 
             # hostvars
             info = self.do_namespace(droplet)
@@ -515,7 +524,7 @@ class DigitalOceanInventory(object):
     def write_to_cache(self):
         """ Writes data in JSON format to a file """
         data = {'data': self.data, 'inventory': self.inventory}
-        json_data = json.dumps(data, sort_keys=True, indent=2)
+        json_data = json.dumps(data, indent=2)
 
         with open(self.cache_filename, 'w') as cache:
             cache.write(json_data)

@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -20,14 +20,16 @@ description:
   - Adds and/or removes instances of DNS view objects from
     Infoblox NIOS servers.  This module manages NIOS C(view) objects
     using the Infoblox WAPI interface over REST.
+  - Updates instances of DNS view object from Infoblox NIOS servers.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   name:
     description:
-      - Specifies the name of the DNS view to add and/or remove from the
-        system configuration based on the setting of the C(state) argument.
+      - Specifies the fully qualified hostname to add or remove from
+        the system. User can also update the hostname as it is possible
+        to pass a dict containing I(new_name), I(old_name). See examples.
     required: true
     aliases:
       - view
@@ -72,7 +74,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
-
+  connection: local
 - name: update the comment for dns view
   nios_dns_view:
     name: ansible-dns
@@ -82,7 +84,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
-
+  connection: local
 - name: remove the dns view instance
   nios_dns_view:
     name: ansible-dns
@@ -91,12 +93,23 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
+- name: update the dns view instance
+  nios_dns_view:
+    name: {new_name: ansible-dns-new, old_name: ansible-dns}
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.net_tools.nios.api import get_provider_spec, Wapi
+from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_DNS_VIEW
 
 
 def main():
@@ -116,13 +129,13 @@ def main():
     )
 
     argument_spec.update(ib_spec)
-    argument_spec.update(get_provider_spec())
+    argument_spec.update(WapiModule.provider_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    wapi = Wapi(module)
-    result = wapi.run('view', ib_spec)
+    wapi = WapiModule(module)
+    result = wapi.run(NIOS_DNS_VIEW, ib_spec)
 
     module.exit_json(**result)
 

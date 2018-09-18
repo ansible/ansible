@@ -17,6 +17,8 @@ from lib.util import (
     run_command,
     intercept_command,
     remove_tree,
+    display,
+    find_python,
 )
 
 from lib.ansible_util import (
@@ -39,7 +41,7 @@ class ImportTest(SanityMultipleVersion):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         with open('test/sanity/import/skip.txt', 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()
@@ -65,7 +67,9 @@ class ImportTest(SanityMultipleVersion):
 
         remove_tree(virtual_environment_path)
 
-        cmd = ['virtualenv', virtual_environment_path, '--python', 'python%s' % python_version, '--no-setuptools', '--no-wheel']
+        python = find_python(python_version)
+
+        cmd = [python, '-m', 'virtualenv', virtual_environment_path, '--python', python, '--no-setuptools', '--no-wheel']
 
         if not args.coverage:
             cmd.append('--no-pip')
@@ -75,23 +79,30 @@ class ImportTest(SanityMultipleVersion):
         # add the importer to our virtual environment so it can be accessed through the coverage injector
         importer_path = os.path.join(virtual_environment_bin, 'importer.py')
         if not args.explain:
-            os.symlink(os.path.abspath('test/runner/importer.py'), importer_path)
+            os.symlink(os.path.abspath('test/sanity/import/importer.py'), importer_path)
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
-        env['PYTHONPATH'] = os.path.abspath('test/runner/import/lib')
+        env['PYTHONPATH'] = os.path.abspath('test/sanity/import/lib')
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
-            run_command(args, generate_pip_install('pip', 'sanity.import', packages=['coverage']), env=env)
+            run_command(args, generate_pip_install(['pip'], 'sanity.import', packages=['setuptools']), env=env)
+            run_command(args, generate_pip_install(['pip'], 'sanity.import', packages=['coverage']), env=env)
+            run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env)
             run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env)
 
-        cmd = ['importer.py'] + paths
+        cmd = ['importer.py']
+
+        data = '\n'.join(paths)
+
+        display.info(data, verbosity=4)
 
         results = []
 
         try:
-            stdout, stderr = intercept_command(args, cmd, target_name=self.name, env=env, capture=True, python_version=python_version, path=env['PATH'])
+            stdout, stderr = intercept_command(args, cmd, data=data, target_name=self.name, env=env, capture=True, python_version=python_version,
+                                               path=env['PATH'])
 
             if stdout or stderr:
                 raise SubprocessError(cmd, stdout=stdout, stderr=stderr)

@@ -1,0 +1,594 @@
+version: '1.0'
+groupings:
+  aws_acm_facts:
+  - aws
+  aws_api_gateway:
+  - aws
+  aws_application_scaling_policy:
+  - aws
+  aws_az_facts:
+  - aws
+  aws_batch_compute_environment:
+  - aws
+  aws_batch_job_definition:
+  - aws
+  aws_batch_job_queue:
+  - aws
+  aws_caller_facts:
+  - aws
+  aws_config_aggregation_authorization:
+  - aws
+  aws_config_aggregator:
+  - aws
+  aws_config_delivery_channel:
+  - aws
+  aws_config_recorder:
+  - aws
+  aws_config_rule:
+  - aws
+  aws_direct_connect_connection:
+  - aws
+  aws_direct_connect_gateway:
+  - aws
+  aws_direct_connect_link_aggregation_group:
+  - aws
+  aws_direct_connect_virtual_interface:
+  - aws
+  aws_eks_cluster:
+  - aws
+  aws_elasticbeanstalk_app:
+  - aws
+  aws_glue_connection:
+  - aws
+  aws_glue_job:
+  - aws
+  aws_inspector_target:
+  - aws
+  aws_kms:
+  - aws
+  aws_kms_facts:
+  - aws
+  aws_region_facts:
+  - aws
+  aws_s3:
+  - aws
+  aws_s3_bucket_facts:
+  - aws
+  aws_s3_cors:
+  - aws
+  aws_ses_identity:
+  - aws
+  aws_ses_identity_policy:
+  - aws
+  aws_sgw_facts:
+  - aws
+  aws_ssm_parameter_store:
+  - aws
+  aws_waf_condition:
+  - aws
+  aws_waf_facts:
+  - aws
+  aws_waf_rule:
+  - aws
+  aws_waf_web_acl:
+  - aws
+  cloudformation:
+  - aws
+  cloudformation_facts:
+  - aws
+  cloudfront_distribution:
+  - aws
+  cloudfront_facts:
+  - aws
+  cloudfront_invalidation:
+  - aws
+  cloudfront_origin_access_identity:
+  - aws
+  cloudtrail:
+  - aws
+  cloudwatchevent_rule:
+  - aws
+  cloudwatchlogs_log_group:
+  - aws
+  cloudwatchlogs_log_group_facts:
+  - aws
+  data_pipeline:
+  - aws
+  dynamodb_table:
+  - aws
+  dynamodb_ttl:
+  - aws
+  ec2:
+  - aws
+  ec2_ami:
+  - aws
+  ec2_ami_copy:
+  - aws
+  ec2_ami_facts:
+  - aws
+  ec2_asg:
+  - aws
+  ec2_asg_facts:
+  - aws
+  ec2_asg_lifecycle_hook:
+  - aws
+  ec2_customer_gateway:
+  - aws
+  ec2_customer_gateway_facts:
+  - aws
+  ec2_eip:
+  - aws
+  ec2_eip_facts:
+  - aws
+  ec2_elb:
+  - aws
+  ec2_elb_facts:
+  - aws
+  ec2_elb_lb:
+  - aws
+  ec2_eni:
+  - aws
+  ec2_eni_facts:
+  - aws
+  ec2_group:
+  - aws
+  ec2_group_facts:
+  - aws
+  ec2_instance:
+  - aws
+  ec2_instance_facts:
+  - aws
+  ec2_key:
+  - aws
+  ec2_lc:
+  - aws
+  ec2_lc_facts:
+  - aws
+  ec2_lc_find:
+  - aws
+  ec2_metric_alarm:
+  - aws
+  ec2_placement_group:
+  - aws
+  ec2_placement_group_facts:
+  - aws
+  ec2_scaling_policy:
+  - aws
+  ec2_snapshot:
+  - aws
+  ec2_snapshot_copy:
+  - aws
+  ec2_snapshot_facts:
+  - aws
+  ec2_tag:
+  - aws
+  ec2_vol:
+  - aws
+  ec2_vol_facts:
+  - aws
+  ec2_vpc_dhcp_option:
+  - aws
+  ec2_vpc_dhcp_option_facts:
+  - aws
+  ec2_vpc_egress_igw:
+  - aws
+  ec2_vpc_endpoint:
+  - aws
+  ec2_vpc_endpoint_facts:
+  - aws
+  ec2_vpc_igw:
+  - aws
+  ec2_vpc_igw_facts:
+  - aws
+  ec2_vpc_nacl:
+  - aws
+  ec2_vpc_nacl_facts:
+  - aws
+  ec2_vpc_nat_gateway:
+  - aws
+  ec2_vpc_nat_gateway_facts:
+  - aws
+  ec2_vpc_net:
+  - aws
+  ec2_vpc_net_facts:
+  - aws
+  ec2_vpc_peer:
+  - aws
+  ec2_vpc_peering_facts:
+  - aws
+  ec2_vpc_route_table:
+  - aws
+  ec2_vpc_route_table_facts:
+  - aws
+  ec2_vpc_subnet:
+  - aws
+  ec2_vpc_subnet_facts:
+  - aws
+  ec2_vpc_vgw:
+  - aws
+  ec2_vpc_vgw_facts:
+  - aws
+  ec2_vpc_vpn:
+  - aws
+  ec2_vpc_vpn_facts:
+  - aws
+  ec2_win_password:
+  - aws
+  ecs_attribute:
+  - aws
+  ecs_cluster:
+  - aws
+  ecs_ecr:
+  - aws
+  ecs_service:
+  - aws
+  ecs_service_facts:
+  - aws
+  ecs_task:
+  - aws
+  ecs_taskdefinition:
+  - aws
+  ecs_taskdefinition_facts:
+  - aws
+  efs:
+  - aws
+  efs_facts:
+  - aws
+  elasticache:
+  - aws
+  elasticache_facts:
+  - aws
+  elasticache_parameter_group:
+  - aws
+  elasticache_snapshot:
+  - aws
+  elasticache_subnet_group:
+  - aws
+  elb_application_lb:
+  - aws
+  elb_application_lb_facts:
+  - aws
+  elb_classic_lb:
+  - aws
+  elb_classic_lb_facts:
+  - aws
+  elb_instance:
+  - aws
+  elb_network_lb:
+  - aws
+  elb_target:
+  - aws
+  elb_target_group:
+  - aws
+  elb_target_group_facts:
+  - aws
+  execute_lambda:
+  - aws
+  iam:
+  - aws
+  iam_cert:
+  - aws
+  iam_group:
+  - aws
+  iam_managed_policy:
+  - aws
+  iam_mfa_device_facts:
+  - aws
+  iam_policy:
+  - aws
+  iam_role:
+  - aws
+  iam_role_facts:
+  - aws
+  iam_server_certificate_facts:
+  - aws
+  iam_user:
+  - aws
+  kinesis_stream:
+  - aws
+  lambda:
+  - aws
+  lambda_alias:
+  - aws
+  lambda_event:
+  - aws
+  lambda_facts:
+  - aws
+  lambda_policy:
+  - aws
+  lightsail:
+  - aws
+  rds:
+  - aws
+  rds_instance:
+  - aws
+  rds_instance_facts:
+  - aws
+  rds_param_group:
+  - aws
+  rds_snapshot_facts:
+  - aws
+  rds_subnet_group:
+  - aws
+  redshift:
+  - aws
+  redshift_facts:
+  - aws
+  redshift_subnet_group:
+  - aws
+  route53:
+  - aws
+  route53_facts:
+  - aws
+  route53_health_check:
+  - aws
+  route53_zone:
+  - aws
+  s3_bucket:
+  - aws
+  s3_lifecycle:
+  - aws
+  s3_logging:
+  - aws
+  s3_sync:
+  - aws
+  s3_website:
+  - aws
+  sns:
+  - aws
+  sns_topic:
+  - aws
+  sqs_queue:
+  - aws
+  sts_assume_role:
+  - aws
+  sts_session_token:
+  - aws
+  gcp_compute_address:
+  - gcp
+  gcp_compute_address_facts:
+  - gcp
+  gcp_compute_backend_bucket:
+  - gcp
+  gcp_compute_backend_bucket_facts:
+  - gcp
+  gcp_compute_backend_service:
+  - gcp
+  gcp_compute_backend_service_facts:
+  - gcp
+  gcp_compute_disk:
+  - gcp
+  gcp_compute_disk_facts:
+  - gcp
+  gcp_compute_firewall:
+  - gcp
+  gcp_compute_firewall_facts:
+  - gcp
+  gcp_compute_forwarding_rule:
+  - gcp
+  gcp_compute_forwarding_rule_facts:
+  - gcp
+  gcp_compute_global_address:
+  - gcp
+  gcp_compute_global_address_facts:
+  - gcp
+  gcp_compute_global_forwarding_rule:
+  - gcp
+  gcp_compute_global_forwarding_rule_facts:
+  - gcp
+  gcp_compute_health_check:
+  - gcp
+  gcp_compute_health_check_facts:
+  - gcp
+  gcp_compute_http_health_check:
+  - gcp
+  gcp_compute_http_health_check_facts:
+  - gcp
+  gcp_compute_https_health_check:
+  - gcp
+  gcp_compute_https_health_check_facts:
+  - gcp
+  gcp_compute_image:
+  - gcp
+  gcp_compute_image_facts:
+  - gcp
+  gcp_compute_instance:
+  - gcp
+  gcp_compute_instance_facts:
+  - gcp
+  gcp_compute_instance_group:
+  - gcp
+  gcp_compute_instance_group_facts:
+  - gcp
+  gcp_compute_instance_group_manager:
+  - gcp
+  gcp_compute_instance_group_manager_facts:
+  - gcp
+  gcp_compute_instance_template:
+  - gcp
+  gcp_compute_instance_template_facts:
+  - gcp
+  gcp_compute_network:
+  - gcp
+  gcp_compute_network_facts:
+  - gcp
+  gcp_compute_route:
+  - gcp
+  gcp_compute_route_facts:
+  - gcp
+  gcp_compute_router_facts:
+  - gcp
+  gcp_compute_ssl_certificate:
+  - gcp
+  gcp_compute_ssl_certificate_facts:
+  - gcp
+  gcp_compute_ssl_policy:
+  - gcp
+  gcp_compute_ssl_policy_facts:
+  - gcp
+  gcp_compute_subnetwork:
+  - gcp
+  gcp_compute_subnetwork_facts:
+  - gcp
+  gcp_compute_target_http_proxy:
+  - gcp
+  gcp_compute_target_http_proxy_facts:
+  - gcp
+  gcp_compute_target_https_proxy:
+  - gcp
+  gcp_compute_target_https_proxy_facts:
+  - gcp
+  gcp_compute_target_pool:
+  - gcp
+  gcp_compute_target_pool_facts:
+  - gcp
+  gcp_compute_target_ssl_proxy:
+  - gcp
+  gcp_compute_target_ssl_proxy_facts:
+  - gcp
+  gcp_compute_target_tcp_proxy:
+  - gcp
+  gcp_compute_target_tcp_proxy_facts:
+  - gcp
+  gcp_compute_target_vpn_gateway:
+  - gcp
+  gcp_compute_target_vpn_gateway_facts:
+  - gcp
+  gcp_compute_url_map:
+  - gcp
+  gcp_compute_url_map_facts:
+  - gcp
+  gcp_compute_vpn_tunnel:
+  - gcp
+  gcp_compute_vpn_tunnel_facts:
+  - gcp
+  gcp_container_cluster:
+  - gcp
+  gcp_container_node_pool:
+  - gcp
+  gcp_dns_managed_zone:
+  - gcp
+  gcp_dns_resource_record_set:
+  - gcp
+  gcp_pubsub_subscription:
+  - gcp
+  gcp_pubsub_topic:
+  - gcp
+  gcp_storage_bucket:
+  - gcp
+  gcp_storage_bucket_access_control:
+  - gcp
+  azure_rm_acs:
+  - azure
+  azure_rm_aks:
+  - azure
+  azure_rm_aks_facts:
+  - azure
+  azure_rm_appserviceplan:
+  - azure
+  azure_rm_appserviceplan_facts:
+  - azure
+  azure_rm_availabilityset:
+  - azure
+  azure_rm_availabilityset_facts:
+  - azure
+  azure_rm_containerinstance:
+  - azure
+  azure_rm_containerregistry:
+  - azure
+  azure_rm_deployment:
+  - azure
+  azure_rm_dnsrecordset:
+  - azure
+  azure_rm_dnsrecordset_facts:
+  - azure
+  azure_rm_dnszone:
+  - azure
+  azure_rm_dnszone_facts:
+  - azure
+  azure_rm_functionapp:
+  - azure
+  azure_rm_functionapp_facts:
+  - azure
+  azure_rm_image:
+  - azure
+  azure_rm_keyvault:
+  - azure
+  azure_rm_keyvaultkey:
+  - azure
+  azure_rm_keyvaultsecret:
+  - azure
+  azure_rm_loadbalancer:
+  - azure
+  azure_rm_loadbalancer_facts:
+  - azure
+  azure_rm_managed_disk:
+  - azure
+  azure_rm_managed_disk_facts:
+  - azure
+  azure_rm_mysqldatabase:
+  - azure
+  azure_rm_mysqldatabase_facts:
+  - azure
+  azure_rm_mysqlserver:
+  - azure
+  azure_rm_mysqlserver_facts:
+  - azure
+  azure_rm_networkinterface:
+  - azure
+  azure_rm_networkinterface_facts:
+  - azure
+  azure_rm_postgresqldatabase:
+  - azure
+  azure_rm_postgresqldatabase_facts:
+  - azure
+  azure_rm_postgresqlserver:
+  - azure
+  azure_rm_publicipaddress:
+  - azure
+  azure_rm_publicipaddress_facts:
+  - azure
+  azure_rm_resource:
+  - azure
+  azure_rm_resource_facts:
+  - azure
+  azure_rm_resourcegroup:
+  - azure
+  azure_rm_resourcegroup_facts:
+  - azure
+  azure_rm_securitygroup:
+  - azure
+  azure_rm_securitygroup_facts:
+  - azure
+  azure_rm_sqldatabase:
+  - azure
+  azure_rm_sqlserver:
+  - azure
+  azure_rm_sqlserver_facts:
+  - azure
+  azure_rm_storageaccount:
+  - azure
+  azure_rm_storageaccount_facts:
+  - azure
+  azure_rm_storageblob:
+  - azure
+  azure_rm_subnet:
+  - azure
+  azure_rm_virtualmachine:
+  - azure
+  azure_rm_virtualmachine_extension:
+  - azure
+  azure_rm_virtualmachine_facts:
+  - azure
+  azure_rm_virtualmachineimage_facts:
+  - azure
+  azure_rm_virtualmachine_scaleset:
+  - azure
+  azure_rm_virtualmachine_scaleset_facts:
+  - azure
+  azure_rm_virtualnetwork:
+  - azure
+  azure_rm_virtualnetwork_facts:
+  - azure
+  azure_rm_webapp:
+  - azure

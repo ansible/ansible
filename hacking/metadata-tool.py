@@ -177,7 +177,7 @@ def parse_assigned_metadata(csvfile):
         :4: deprecated
         :5: removed
 
-        http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#ansible-metadata-block
+        https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#ansible-metadata-block
     """
     with open(csvfile, 'rb') as f:
         for record in csv.reader(f):

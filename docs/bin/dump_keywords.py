@@ -8,10 +8,12 @@ import jinja2
 import yaml
 from jinja2 import Environment, FileSystemLoader
 
+from ansible.module_utils._text import to_bytes
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible.utils._build_helpers import update_file_if_different
 
 template_file = 'playbooks_keywords.rst.j2'
 oblist = {}
@@ -48,19 +50,24 @@ for aclass in class_list:
         if a in docs:
             oblist[name][a] = docs[a]
         else:
-            oblist[name][a] = ' UNDOCUMENTED!! '
+            # check if there is an alias, otherwise undocumented
+            alias = getattr(getattr(aobj, '_%s' % a), 'alias', None)
+            if alias and alias in docs:
+                oblist[name][alias] = docs[alias]
+                del oblist[name][a]
+            else:
+                oblist[name][a] = ' UNDOCUMENTED!! '
 
     # loop is really with_ for users
     if name == 'Task':
-        oblist[name]['with_<lookup_plugin>'] = 'DEPRECATED: use ``loop`` instead, ``with_`` used to be how loops were defined, '
-        'it can use any available lookup plugin to generate the item list'
+        oblist[name]['with_<lookup_plugin>'] = 'The same as ``loop`` but magically adds the output of any lookup plugin to generate the item list.'
 
     # local_action is implicit with action
     if 'action' in oblist[name]:
         oblist[name]['local_action'] = 'Same as action but also implies ``delegate_to: localhost``'
 
     # remove unusable (used to be private?)
-    for nouse in ('loop_args'):
+    for nouse in ('loop_args', 'loop_with'):
         if nouse in oblist[name]:
             del oblist[name][nouse]
 
@@ -74,5 +81,4 @@ if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
     # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
     keyword_page = re.sub(' +\n', '\n', keyword_page)
 
-with open(outputname, 'w') as f:
-    f.write(keyword_page)
+update_file_if_different(outputname, to_bytes(keyword_page))

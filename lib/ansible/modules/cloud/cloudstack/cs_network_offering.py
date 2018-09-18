@@ -50,7 +50,7 @@ options:
   conserve_mode:
     description:
       - Whether the network offering has IP conserve mode enabled.
-    choices: [ yes, no ]
+    type: bool
   details:
     description:
       - Network offering details in key/value pairs.
@@ -69,7 +69,7 @@ options:
       - If true keepalive will be turned on in the loadbalancer.
       - At the time of writing this has only an effect on haproxy.
       - the mode http and httpclose options are unset in the haproxy conf file.
-    choices: [ yes, no ]
+    type: bool
   max_connections:
     description:
       - Maximum number of concurrent connections supported by the network offering.
@@ -92,11 +92,11 @@ options:
     description:
       - Wheter the network offering supports specifying IP ranges.
       - Defaulted to C(no) by the API if not specified.
-    choices: [ yes, no ]
+    type: bool
   specify_vlan:
     description:
       - Whether the network offering supports vlans or not.
-    choices: [ yes, no ]
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 

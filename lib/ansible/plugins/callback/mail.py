@@ -13,6 +13,8 @@ short_description: Sends failure events via email
 description:
 - This callback will report failures via email
 version_added: '2.0'
+author:
+- Dag Wieers (@dagwieers)
 requirements:
 - whitelisting in configuration
 options:
@@ -25,6 +27,13 @@ options:
           key: smtphost
           version_added: '2.5'
     default: localhost
+  mtaport:
+    description: Mail Transfer Agent Port, port at which server SMTP
+    ini:
+        - section: callback_mail
+          key: smtpport
+          version_added: '2.5'
+    default: 25
   to:
     description: Mail recipient
     ini:
@@ -76,6 +85,7 @@ class CallbackModule(CallbackBase):
         self.sender = None
         self.to = 'root'
         self.smtphost = os.getenv('SMTPHOST', 'localhost')
+        self.smtpport = 25
         self.cc = None
         self.bcc = None
 
@@ -86,6 +96,7 @@ class CallbackModule(CallbackBase):
         self.sender = self.get_option('sender')
         self.to = self.get_option('to')
         self.smtphost = self.get_option('mta')
+        self.smtpport = int(self.get_option('mtaport'))
         self.cc = self.get_option('cc')
         self.bcc = self.get_option('bcc')
 
@@ -93,7 +104,7 @@ class CallbackModule(CallbackBase):
         if body is None:
             body = subject
 
-        smtp = smtplib.SMTP(self.smtphost)
+        smtp = smtplib.SMTP(self.smtphost, port=self.smtpport)
 
         b_sender = to_bytes(self.sender)
         b_to = to_bytes(self.to)
@@ -144,14 +155,14 @@ class CallbackModule(CallbackBase):
             subject = self.itemsubject
         elif result._result.get('failed_when_result') is True:
             subject = "Failed due to 'failed_when' condition"
-        elif result._result.get('exception'):
-            subject = self.subject_msg(result._result['exception'], failtype, -1)
         elif result._result.get('msg'):
             subject = self.subject_msg(result._result['msg'], failtype, 0)
         elif result._result.get('stderr'):
             subject = self.subject_msg(result._result['stderr'], failtype, -1)
         elif result._result.get('stdout'):
             subject = self.subject_msg(result._result['stdout'], failtype, -1)
+        elif result._result.get('exception'):  # Unrelated exceptions are added to output :-/
+            subject = self.subject_msg(result._result['exception'], failtype, -1)
         else:
             subject = '%s: %s' % (failtype, result._task.name or result._task.action)
 
@@ -182,18 +193,18 @@ class CallbackModule(CallbackBase):
             body += self.body_blob(result._result['msg'], 'message')
 
         # Add stdout / stderr / exception / warnings / deprecations
-        if result._result.get('exception'):
-            body += self.body_blob(result._result['exception'], 'exception')
         if result._result.get('stdout'):
             body += self.body_blob(result._result['stdout'], 'standard output')
         if result._result.get('stderr'):
             body += self.body_blob(result._result['stderr'], 'error output')
+        if result._result.get('exception'):  # Unrelated exceptions are added to output :-/
+            body += self.body_blob(result._result['exception'], 'exception')
         if result._result.get('warnings'):
             for i in range(len(result._result.get('warnings'))):
-                body += self.body_blob(result._result['warnings'][i], 'exception %d' % i + 1)
+                body += self.body_blob(result._result['warnings'][i], 'exception %d' % (i + 1))
         if result._result.get('deprecations'):
             for i in range(len(result._result.get('deprecations'))):
-                body += self.body_blob(result._result['deprecations'][i], 'exception %d' % i + 1)
+                body += self.body_blob(result._result['deprecations'][i], 'exception %d' % (i + 1))
 
         body += 'and a complete dump of the error:\n\n'
         body += self.indent('%s: %s' % (failtype, json.dumps(result._result, indent=4)))
@@ -220,4 +231,3 @@ class CallbackModule(CallbackBase):
         # Pass item information to task failure
         self.itemsubject = result._result['msg']
         self.itembody += self.body_blob(json.dumps(result._result, indent=4), "failed item dump '%(item)s'" % result._result)
-#        self.itembody += self.body_blob(json.dumps(dir(result), indent=4), "failed full dump '%(item)s'" % result._result)

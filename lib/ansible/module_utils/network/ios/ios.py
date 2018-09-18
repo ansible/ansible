@@ -26,10 +26,11 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 
@@ -81,8 +82,10 @@ def get_connection(module):
 def get_capabilities(module):
     if hasattr(module, '_ios_capabilities'):
         return module._ios_capabilities
-
-    capabilities = Connection(module._socket_path).get_capabilities()
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._ios_capabilities = json.loads(capabilities)
     return module._ios_capabilities
 
@@ -93,30 +96,26 @@ def check_args(module, warnings):
 
 def get_defaults_flag(module):
     connection = get_connection(module)
-    out = connection.get('show running-config ?')
-    out = to_text(out, errors='surrogate_then_replace')
-
-    commands = set()
-    for line in out.splitlines():
-        if line.strip():
-            commands.add(line.strip().split()[0])
-
-    if 'all' in commands:
-        return ['all']
-    else:
-        return ['full']
+    try:
+        out = connection.get_defaults_flag()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return to_text(out, errors='surrogate_then_replace').strip()
 
 
 def get_config(module, flags=None):
-    global _DEVICE_CONFIGS
+    flag_str = ' '.join(to_list(flags))
 
-    if _DEVICE_CONFIGS != {}:
-        return _DEVICE_CONFIGS
-    else:
+    try:
+        return _DEVICE_CONFIGS[flag_str]
+    except KeyError:
         connection = get_connection(module)
-        out = connection.get_config()
+        try:
+            out = connection.get_config(flags=flags)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
-        _DEVICE_CONFIGS = cfg
+        _DEVICE_CONFIGS[flag_str] = cfg
         return cfg
 
 
@@ -131,32 +130,66 @@ def to_commands(module, commands):
 
 
 def run_commands(module, commands, check_rc=True):
-    responses = list()
     connection = get_connection(module)
-
-    for cmd in to_list(commands):
-        if isinstance(cmd, dict):
-            command = cmd['command']
-            prompt = cmd['prompt']
-            answer = cmd['answer']
-        else:
-            command = cmd
-            prompt = None
-            answer = None
-
-        out = connection.get(command, prompt, answer)
-
-        try:
-            out = to_text(out, errors='surrogate_or_strict')
-        except UnicodeError:
-            module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
-
-        responses.append(out)
-
-    return responses
+    try:
+        return connection.run_commands(commands=commands, check_rc=check_rc)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
 
 
 def load_config(module, commands):
     connection = get_connection(module)
 
-    out = connection.edit_config(commands)
+    try:
+        resp = connection.edit_config(commands)
+        return resp.get('response')
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
+
+
+def normalize_interface(name):
+    """Return the normalized interface name
+    """
+    if not name:
+        return
+
+    def _get_number(name):
+        digits = ''
+        for char in name:
+            if char.isdigit() or char in '/.':
+                digits += char
+        return digits
+
+    if name.lower().startswith('gi'):
+        if_type = 'GigabitEthernet'
+    elif name.lower().startswith('te'):
+        if_type = 'TenGigabitEthernet'
+    elif name.lower().startswith('fa'):
+        if_type = 'FastEthernet'
+    elif name.lower().startswith('fo'):
+        if_type = 'FortyGigabitEthernet'
+    elif name.lower().startswith('et'):
+        if_type = 'Ethernet'
+    elif name.lower().startswith('vl'):
+        if_type = 'Vlan'
+    elif name.lower().startswith('lo'):
+        if_type = 'loopback'
+    elif name.lower().startswith('po'):
+        if_type = 'port-channel'
+    elif name.lower().startswith('nv'):
+        if_type = 'nve'
+    else:
+        if_type = None
+
+    number_list = name.split(' ')
+    if len(number_list) == 2:
+        if_number = number_list[-1].strip()
+    else:
+        if_number = _get_number(name)
+
+    if if_type:
+        proper_interface = if_type + if_number
+    else:
+        proper_interface = name
+
+    return proper_interface

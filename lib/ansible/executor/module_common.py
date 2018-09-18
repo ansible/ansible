@@ -30,12 +30,13 @@ import shlex
 import zipfile
 import random
 import re
+from distutils.version import LooseVersion
 from io import BytesIO
 
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
 from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
@@ -60,6 +61,7 @@ REPLACER_SELINUX = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
 ENCODING_STRING = u'# -*- coding: utf-8 -*-'
+b_ENCODING_STRING = b'# -*- coding: utf-8 -*-'
 
 # module_common is relative to module_utils, so fix the path
 _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
@@ -68,7 +70,7 @@ _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils
 
 ANSIBALLZ_TEMPLATE = u'''%(shebang)s
 %(coding)s
-ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_WRAPPER
+_ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_WRAPPER
 # This code is part of Ansible, but is an independent component.
 # The code in this particular templatable string, and this templatable string
 # only, is BSD licensed.  Modules which end up using this snippet, which is
@@ -96,207 +98,203 @@ ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_WR
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
-import os.path
-import sys
-import __main__
+def _ansiballz_main():
+    import os
+    import os.path
+    import sys
+    import __main__
 
-# For some distros and python versions we pick up this script in the temporary
-# directory.  This leads to problems when the ansible module masks a python
-# library that another import needs.  We have not figured out what about the
-# specific distros and python versions causes this to behave differently.
-#
-# Tested distros:
-# Fedora23 with python3.4  Works
-# Ubuntu15.10 with python2.7  Works
-# Ubuntu15.10 with python3.4  Fails without this
-# Ubuntu16.04.1 with python3.5  Fails without this
-# To test on another platform:
-# * use the copy module (since this shadows the stdlib copy module)
-# * Turn off pipelining
-# * Make sure that the destination file does not exist
-# * ansible ubuntu16-test -m copy -a 'src=/etc/motd dest=/var/tmp/m'
-# This will traceback in shutil.  Looking at the complete traceback will show
-# that shutil is importing copy which finds the ansible module instead of the
-# stdlib module
-scriptdir = None
-try:
-    scriptdir = os.path.dirname(os.path.realpath(__main__.__file__))
-except (AttributeError, OSError):
-    # Some platforms don't set __file__ when reading from stdin
-    # OSX raises OSError if using abspath() in a directory we don't have
-    # permission to read (realpath calls abspath)
-    pass
-if scriptdir is not None:
-    sys.path = [p for p in sys.path if p != scriptdir]
+    # For some distros and python versions we pick up this script in the temporary
+    # directory.  This leads to problems when the ansible module masks a python
+    # library that another import needs.  We have not figured out what about the
+    # specific distros and python versions causes this to behave differently.
+    #
+    # Tested distros:
+    # Fedora23 with python3.4  Works
+    # Ubuntu15.10 with python2.7  Works
+    # Ubuntu15.10 with python3.4  Fails without this
+    # Ubuntu16.04.1 with python3.5  Fails without this
+    # To test on another platform:
+    # * use the copy module (since this shadows the stdlib copy module)
+    # * Turn off pipelining
+    # * Make sure that the destination file does not exist
+    # * ansible ubuntu16-test -m copy -a 'src=/etc/motd dest=/var/tmp/m'
+    # This will traceback in shutil.  Looking at the complete traceback will show
+    # that shutil is importing copy which finds the ansible module instead of the
+    # stdlib module
+    scriptdir = None
+    try:
+        scriptdir = os.path.dirname(os.path.realpath(__main__.__file__))
+    except (AttributeError, OSError):
+        # Some platforms don't set __file__ when reading from stdin
+        # OSX raises OSError if using abspath() in a directory we don't have
+        # permission to read (realpath calls abspath)
+        pass
+    if scriptdir is not None:
+        sys.path = [p for p in sys.path if p != scriptdir]
 
-import base64
-import shutil
-import zipfile
-import tempfile
-import subprocess
+    import base64
+    import imp
+    import shutil
+    import tempfile
+    import zipfile
 
-if sys.version_info < (3,):
-    bytes = str
-    PY3 = False
-else:
-    unicode = str
-    PY3 = True
-try:
-    # Python-2.6+
-    from io import BytesIO as IOStream
-except ImportError:
-    # Python < 2.6
-    from StringIO import StringIO as IOStream
-
-ZIPDATA = """%(zipdata)s"""
-
-def invoke_module(module, modlib_path, json_params):
-    pythonpath = os.environ.get('PYTHONPATH')
-    if pythonpath:
-        os.environ['PYTHONPATH'] = ':'.join((modlib_path, pythonpath))
+    if sys.version_info < (3,):
+        bytes = str
+        MOD_DESC = ('.py', 'U', imp.PY_SOURCE)
+        PY3 = False
     else:
-        os.environ['PYTHONPATH'] = modlib_path
+        unicode = str
+        MOD_DESC = ('.py', 'r', imp.PY_SOURCE)
+        PY3 = True
 
-    p = subprocess.Popen([%(interpreter)s, module], env=os.environ, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    (stdout, stderr) = p.communicate(json_params)
+    ZIPDATA = """%(zipdata)s"""
 
-    if not isinstance(stderr, (bytes, unicode)):
-        stderr = stderr.read()
-    if not isinstance(stdout, (bytes, unicode)):
-        stdout = stdout.read()
-    if PY3:
-        sys.stderr.buffer.write(stderr)
-        sys.stdout.buffer.write(stdout)
-    else:
-        sys.stderr.write(stderr)
-        sys.stdout.write(stdout)
-    return p.returncode
+    # Note: temp_path isn't needed once we switch to zipimport
+    def invoke_module(modlib_path, temp_path, json_params):
+        # When installed via setuptools (including python setup.py install),
+        # ansible may be installed with an easy-install.pth file.  That file
+        # may load the system-wide install of ansible rather than the one in
+        # the module.  sitecustomize is the only way to override that setting.
+        z = zipfile.ZipFile(modlib_path, mode='a')
 
-def debug(command, zipped_mod, json_params):
-    # The code here normally doesn't run.  It's only used for debugging on the
-    # remote machine.
-    #
-    # The subcommands in this function make it easier to debug ansiballz
-    # modules.  Here's the basic steps:
-    #
-    # Run ansible with the environment variable: ANSIBLE_KEEP_REMOTE_FILES=1 and -vvv
-    # to save the module file remotely::
-    #   $ ANSIBLE_KEEP_REMOTE_FILES=1 ansible host1 -m ping -a 'data=october' -vvv
-    #
-    # Part of the verbose output will tell you where on the remote machine the
-    # module was written to::
-    #   [...]
-    #   <host1> SSH: EXEC ssh -C -q -o ControlMaster=auto -o ControlPersist=60s -o KbdInteractiveAuthentication=no -o
-    #   PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey -o PasswordAuthentication=no -o ConnectTimeout=10 -o
-    #   ControlPath=/home/badger/.ansible/cp/ansible-ssh-%%h-%%p-%%r -tt rhel7 '/bin/sh -c '"'"'LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-    #   LC_MESSAGES=en_US.UTF-8 /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping'"'"''
-    #   [...]
-    #
-    # Login to the remote machine and run the module file via from the previous
-    # step with the explode subcommand to extract the module payload into
-    # source files::
-    #   $ ssh host1
-    #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping explode
-    #   Module expanded into:
-    #   /home/badger/.ansible/tmp/ansible-tmp-1461173408.08-279692652635227/ansible
-    #
-    # You can now edit the source files to instrument the code or experiment with
-    # different parameter values.  When you're ready to run the code you've modified
-    # (instead of the code from the actual zipped module), use the execute subcommand like this::
-    #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping execute
+        # py3: modlib_path will be text, py2: it's bytes.  Need bytes at the end
+        sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  modlib_path
+        sitecustomize = sitecustomize.encode('utf-8')
+        # Use a ZipInfo to work around zipfile limitation on hosts with
+        # clocks set to a pre-1980 year (for instance, Raspberry Pi)
+        zinfo = zipfile.ZipInfo()
+        zinfo.filename = 'sitecustomize.py'
+        zinfo.date_time = ( %(year)i, %(month)i, %(day)i, %(hour)i, %(minute)i, %(second)i)
+        z.writestr(zinfo, sitecustomize)
+        # Note: Remove the following section when we switch to zipimport
+        # Write the module to disk for imp.load_module
+        module = os.path.join(temp_path, '__main__.py')
+        with open(module, 'wb') as f:
+            f.write(z.read('__main__.py'))
+            f.close()
+        # End pre-zipimport section
+        z.close()
 
-    # Okay to use __file__ here because we're running from a kept file
-    basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
-    args_path = os.path.join(basedir, 'args')
-    script_path = os.path.join(basedir, 'ansible_module_%(ansible_module)s.py')
+        # Put the zipped up module_utils we got from the controller first in the python path so that we
+        # can monkeypatch the right basic
+        sys.path.insert(0, modlib_path)
 
-    if command == 'explode':
-        # transform the ZIPDATA into an exploded directory of code and then
-        # print the path to the code.  This is an easy way for people to look
-        # at the code on the remote machine for debugging it in that
-        # environment
-        z = zipfile.ZipFile(zipped_mod)
-        for filename in z.namelist():
-            if filename.startswith('/'):
-                raise Exception('Something wrong with this module zip file: should not contain absolute paths')
+        # Monkeypatch the parameters into basic
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = json_params
+%(coverage)s
+        # Run the module!  By importing it as '__main__', it thinks it is executing as a script
+        with open(module, 'rb') as mod:
+            imp.load_module('__main__', mod, module, MOD_DESC)
 
-            dest_filename = os.path.join(basedir, filename)
-            if dest_filename.endswith(os.path.sep) and not os.path.exists(dest_filename):
-                os.makedirs(dest_filename)
-            else:
-                directory = os.path.dirname(dest_filename)
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
-                f = open(dest_filename, 'wb')
-                f.write(z.read(filename))
-                f.close()
-
-        # write the args file
-        f = open(args_path, 'wb')
-        f.write(json_params)
-        f.close()
-
-        print('Module expanded into:')
-        print('%%s' %% basedir)
-        exitcode = 0
-
-    elif command == 'execute':
-        # Execute the exploded code instead of executing the module from the
-        # embedded ZIPDATA.  This allows people to easily run their modified
-        # code on the remote machine to see how changes will affect it.
-        # This differs slightly from default Ansible execution of Python modules
-        # as it passes the arguments to the module via a file instead of stdin.
-
-        # Set pythonpath to the debug dir
-        pythonpath = os.environ.get('PYTHONPATH')
-        if pythonpath:
-            os.environ['PYTHONPATH'] = ':'.join((basedir, pythonpath))
-        else:
-            os.environ['PYTHONPATH'] = basedir
-
-        p = subprocess.Popen([%(interpreter)s, script_path, args_path],
-                env=os.environ, shell=False, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-
-        if not isinstance(stderr, (bytes, unicode)):
-            stderr = stderr.read()
-        if not isinstance(stdout, (bytes, unicode)):
-            stdout = stdout.read()
-        if PY3:
-            sys.stderr.buffer.write(stderr)
-            sys.stdout.buffer.write(stdout)
-        else:
-            sys.stderr.write(stderr)
-            sys.stdout.write(stdout)
-        return p.returncode
-
-    elif command == 'excommunicate':
-        # This attempts to run the module in-process (by importing a main
-        # function and then calling it).  It is not the way ansible generally
-        # invokes the module so it won't work in every case.  It is here to
-        # aid certain debuggers which work better when the code doesn't change
-        # from one process to another but there may be problems that occur
-        # when using this that are only artifacts of how we're invoking here,
-        # not actual bugs (as they don't affect the real way that we invoke
-        # ansible modules)
-
-        # stub the args and python path
-        sys.argv = ['%(ansible_module)s', args_path]
-        sys.path.insert(0, basedir)
-
-        from ansible_module_%(ansible_module)s import main
-        main()
-        print('WARNING: Module returned to wrapper instead of exiting')
+        # Ansible modules must exit themselves
+        print('{"msg": "New-style module did not handle its own exit", "failed": true}')
         sys.exit(1)
-    else:
-        print('WARNING: Unknown debug command.  Doing nothing.')
-        exitcode = 0
 
-    return exitcode
+    def debug(command, zipped_mod, json_params):
+        # The code here normally doesn't run.  It's only used for debugging on the
+        # remote machine.
+        #
+        # The subcommands in this function make it easier to debug ansiballz
+        # modules.  Here's the basic steps:
+        #
+        # Run ansible with the environment variable: ANSIBLE_KEEP_REMOTE_FILES=1 and -vvv
+        # to save the module file remotely::
+        #   $ ANSIBLE_KEEP_REMOTE_FILES=1 ansible host1 -m ping -a 'data=october' -vvv
+        #
+        # Part of the verbose output will tell you where on the remote machine the
+        # module was written to::
+        #   [...]
+        #   <host1> SSH: EXEC ssh -C -q -o ControlMaster=auto -o ControlPersist=60s -o KbdInteractiveAuthentication=no -o
+        #   PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey -o PasswordAuthentication=no -o ConnectTimeout=10 -o
+        #   ControlPath=/home/badger/.ansible/cp/ansible-ssh-%%h-%%p-%%r -tt rhel7 '/bin/sh -c '"'"'LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+        #   LC_MESSAGES=en_US.UTF-8 /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping'"'"''
+        #   [...]
+        #
+        # Login to the remote machine and run the module file via from the previous
+        # step with the explode subcommand to extract the module payload into
+        # source files::
+        #   $ ssh host1
+        #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping explode
+        #   Module expanded into:
+        #   /home/badger/.ansible/tmp/ansible-tmp-1461173408.08-279692652635227/ansible
+        #
+        # You can now edit the source files to instrument the code or experiment with
+        # different parameter values.  When you're ready to run the code you've modified
+        # (instead of the code from the actual zipped module), use the execute subcommand like this::
+        #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping execute
 
-if __name__ == '__main__':
+        # Okay to use __file__ here because we're running from a kept file
+        basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
+        args_path = os.path.join(basedir, 'args')
+        script_path = os.path.join(basedir, '__main__.py')
+
+        if command == 'excommunicate':
+            print('The excommunicate debug command is deprecated and will be removed in 2.11.  Use execute instead.')
+            command = 'execute'
+
+        if command == 'explode':
+            # transform the ZIPDATA into an exploded directory of code and then
+            # print the path to the code.  This is an easy way for people to look
+            # at the code on the remote machine for debugging it in that
+            # environment
+            z = zipfile.ZipFile(zipped_mod)
+            for filename in z.namelist():
+                if filename.startswith('/'):
+                    raise Exception('Something wrong with this module zip file: should not contain absolute paths')
+
+                dest_filename = os.path.join(basedir, filename)
+                if dest_filename.endswith(os.path.sep) and not os.path.exists(dest_filename):
+                    os.makedirs(dest_filename)
+                else:
+                    directory = os.path.dirname(dest_filename)
+                    if not os.path.exists(directory):
+                        os.makedirs(directory)
+                    f = open(dest_filename, 'wb')
+                    f.write(z.read(filename))
+                    f.close()
+
+            # write the args file
+            f = open(args_path, 'wb')
+            f.write(json_params)
+            f.close()
+
+            print('Module expanded into:')
+            print('%%s' %% basedir)
+            exitcode = 0
+
+        elif command == 'execute':
+            # Execute the exploded code instead of executing the module from the
+            # embedded ZIPDATA.  This allows people to easily run their modified
+            # code on the remote machine to see how changes will affect it.
+
+            # Set pythonpath to the debug dir
+            sys.path.insert(0, basedir)
+
+            # read in the args file which the user may have modified
+            with open(args_path, 'rb') as f:
+                json_params = f.read()
+
+            # Monkeypatch the parameters into basic
+            from ansible.module_utils import basic
+            basic._ANSIBLE_ARGS = json_params
+
+            # Run the module!  By importing it as '__main__', it thinks it is executing as a script
+            import imp
+            with open(script_path, 'r') as f:
+                importer = imp.load_module('__main__', f, script_path, ('.py', 'r', imp.PY_SOURCE))
+
+            # Ansible modules must exit themselves
+            print('{"msg": "New-style module did not handle its own exit", "failed": true}')
+            sys.exit(1)
+
+        else:
+            print('WARNING: Unknown debug command.  Doing nothing.')
+            exitcode = 0
+
+        return exitcode
+
     #
     # See comments in the debug() method for information on debugging
     #
@@ -308,40 +306,19 @@ if __name__ == '__main__':
         # There's a race condition with the controller removing the
         # remote_tmpdir and this module executing under async.  So we cannot
         # store this in remote_tmpdir (use system tempdir instead)
-        temp_path = tempfile.mkdtemp(prefix='ansible_')
+        # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
+        # (this helps ansible-test produce coverage stats)
+        temp_path = tempfile.mkdtemp(prefix='ansible_%(ansible_module)s_payload_')
 
-        zipped_mod = os.path.join(temp_path, 'ansible_modlib.zip')
-        modlib = open(zipped_mod, 'wb')
-        modlib.write(base64.b64decode(ZIPDATA))
-        modlib.close()
+        zipped_mod = os.path.join(temp_path, 'ansible_%(ansible_module)s_payload.zip')
+        with open(zipped_mod, 'wb') as modlib:
+            modlib.write(base64.b64decode(ZIPDATA))
 
         if len(sys.argv) == 2:
             exitcode = debug(sys.argv[1], zipped_mod, ANSIBALLZ_PARAMS)
         else:
-            z = zipfile.ZipFile(zipped_mod, mode='r')
-            module = os.path.join(temp_path, 'ansible_module_%(ansible_module)s.py')
-            f = open(module, 'wb')
-            f.write(z.read('ansible_module_%(ansible_module)s.py'))
-            f.close()
-
-            # When installed via setuptools (including python setup.py install),
-            # ansible may be installed with an easy-install.pth file.  That file
-            # may load the system-wide install of ansible rather than the one in
-            # the module.  sitecustomize is the only way to override that setting.
-            z = zipfile.ZipFile(zipped_mod, mode='a')
-
-            # py3: zipped_mod will be text, py2: it's bytes.  Need bytes at the end
-            sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  zipped_mod
-            sitecustomize = sitecustomize.encode('utf-8')
-            # Use a ZipInfo to work around zipfile limitation on hosts with
-            # clocks set to a pre-1980 year (for instance, Raspberry Pi)
-            zinfo = zipfile.ZipInfo()
-            zinfo.filename = 'sitecustomize.py'
-            zinfo.date_time = ( %(year)i, %(month)i, %(day)i, %(hour)i, %(minute)i, %(second)i)
-            z.writestr(zinfo, sitecustomize)
-            z.close()
-
-            exitcode = invoke_module(module, zipped_mod, ANSIBALLZ_PARAMS)
+            # Note: temp_path isn't needed once we switch to zipimport
+            invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
     finally:
         try:
             shutil.rmtree(temp_path)
@@ -349,6 +326,33 @@ if __name__ == '__main__':
             # tempdir creation probably failed
             pass
     sys.exit(exitcode)
+
+if __name__ == '__main__':
+    _ansiballz_main()
+'''
+
+ANSIBALLZ_COVERAGE_TEMPLATE = '''
+        # Access to the working directory is required by coverage.
+        # Some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges.
+        try:
+            os.getcwd()
+        except OSError:
+            os.chdir('/')
+
+        os.environ['COVERAGE_FILE'] = '%(coverage_output)s'
+
+        import atexit
+        import coverage
+
+        cov = coverage.Coverage(config_file='%(coverage_config)s')
+
+        def atexit_coverage():
+            cov.stop()
+            cov.save()
+
+        atexit.register(atexit_coverage)
+
+        cov.start()
 '''
 
 
@@ -424,6 +428,74 @@ class ModuleDepFinder(ast.NodeVisitor):
                 for alias in node.names:
                     self.submodules.add((alias.name,))
         self.generic_visit(node)
+
+
+class PSModuleDepFinder():
+
+    def __init__(self):
+        self.modules = dict()
+        self.ps_version = None
+        self.os_version = None
+        self.become = False
+
+        self._re_module = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
+        self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
+        self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
+        self._re_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
+
+    def scan_module(self, module_data):
+        lines = module_data.split(b'\n')
+        module_utils = set()
+
+        for line in lines:
+            module_util_match = self._re_module.match(line)
+            if module_util_match:
+                # tolerate windows line endings by stripping any remaining newline chars
+                module_util_name = to_text(module_util_match.group(1).rstrip())
+                if module_util_name not in self.modules.keys():
+                    module_utils.add(module_util_name)
+
+            ps_version_match = self._re_ps_version.match(line)
+            if ps_version_match:
+                self._parse_version_match(ps_version_match, "ps_version")
+
+            os_version_match = self._re_os_version.match(line)
+            if os_version_match:
+                self._parse_version_match(os_version_match, "os_version")
+
+            # once become is set, no need to keep on checking recursively
+            if not self.become:
+                become_match = self._re_become.match(line)
+                if become_match:
+                    self.become = True
+
+        # recursively drill into each Requires to see if there are any more
+        # requirements
+        for m in set(module_utils):
+            m = to_text(m)
+            mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
+            if not mu_path:
+                raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
+
+            module_util_data = to_bytes(_slurp(mu_path))
+            self.modules[m] = module_util_data
+            self.scan_module(module_util_data)
+
+    def _parse_version_match(self, match, attribute):
+        new_version = to_text(match.group(1)).rstrip()
+
+        # PowerShell cannot cast a string of "1" to Version, it must have at
+        # least the major.minor for it to be valid so we append 0
+        if match.group(2) is None:
+            new_version = "%s.0" % new_version
+
+        existing_version = getattr(self, attribute, None)
+        if existing_version is None:
+            setattr(self, attribute, new_version)
+        else:
+            # determine which is the latest version and set that
+            if LooseVersion(new_version) > LooseVersion(existing_version):
+                setattr(self, attribute, new_version)
 
 
 def _slurp(path):
@@ -535,25 +607,27 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             py_module_name = py_module_name[:-1]
 
         # If not already processed then we've got work to do
-        if py_module_name not in py_module_names:
-            # If not in the cache, then read the file into the cache
-            # We already have a file handle for the module open so it makes
-            # sense to read it now
-            if py_module_name not in py_module_cache:
-                if module_info[2][2] == imp.PKG_DIRECTORY:
-                    # Read the __init__.py instead of the module file as this is
-                    # a python package
-                    normalized_name = py_module_name + ('__init__',)
+        # If not in the cache, then read the file into the cache
+        # We already have a file handle for the module open so it makes
+        # sense to read it now
+        if py_module_name not in py_module_cache:
+            if module_info[2][2] == imp.PKG_DIRECTORY:
+                # Read the __init__.py instead of the module file as this is
+                # a python package
+                normalized_name = py_module_name + ('__init__',)
+                if normalized_name not in py_module_names:
                     normalized_path = os.path.join(os.path.join(module_info[1], '__init__.py'))
                     normalized_data = _slurp(normalized_path)
-                else:
-                    normalized_name = py_module_name
+                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                    normalized_modules.add(normalized_name)
+            else:
+                normalized_name = py_module_name
+                if normalized_name not in py_module_names:
                     normalized_path = module_info[1]
                     normalized_data = module_info[0].read()
                     module_info[0].close()
-
-                py_module_cache[normalized_name] = (normalized_data, normalized_path)
-                normalized_modules.add(normalized_name)
+                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                    normalized_modules.add(normalized_name)
 
             # Make sure that all the packages that this module is a part of
             # are also added
@@ -564,6 +638,22 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                                                    [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
                     normalized_modules.add(py_pkg_name)
                     py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+
+    # FIXME: Currently the AnsiBallZ wrapper monkeypatches module args into a global
+    # variable in basic.py.  If a module doesn't import basic.py, then the AnsiBallZ wrapper will
+    # traceback when it tries to monkypatch.  So, for now, we have to unconditionally include
+    # basic.py.
+    #
+    # In the future we need to change the wrapper to monkeypatch the args into a global variable in
+    # their own, separate python module.  That way we won't require basic.py.  Modules which don't
+    # want basic.py can import that instead.  AnsibleModule will need to change to import the vars
+    # from the separate python module and mirror the args into its global variable for backwards
+    # compatibility.
+    if ('basic',) not in py_module_names:
+        pkg_dir_info = imp.find_module('basic', module_utils_paths)
+        normalized_modules.add(('basic',))
+        py_module_cache[('basic',)] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+    # End of AnsiballZ hack
 
     #
     # iterate through all of the ansible.module_utils* imports that we haven't
@@ -596,6 +686,69 @@ def _is_binary(b_module_data):
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
     start = b_module_data[:1024]
     return bool(start.translate(None, textchars))
+
+
+def _create_powershell_wrapper(b_module_data, module_args, environment,
+                               async_timeout, become, become_method,
+                               become_user, become_password, become_flags,
+                               scan_dependencies=True):
+    # creates the manifest/wrapper used in PowerShell modules to enable things
+    # like become and async - this is also called in action/script.py
+    exec_manifest = dict(
+        module_entry=to_text(base64.b64encode(b_module_data)),
+        powershell_modules=dict(),
+        module_args=module_args,
+        actions=['exec'],
+        environment=environment
+    )
+
+    exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
+
+    if async_timeout > 0:
+        exec_manifest["actions"].insert(0, 'async_watchdog')
+        exec_manifest["async_watchdog"] = to_text(
+            base64.b64encode(to_bytes(async_watchdog)))
+        exec_manifest["actions"].insert(0, 'async_wrapper')
+        exec_manifest["async_wrapper"] = to_text(
+            base64.b64encode(to_bytes(async_wrapper)))
+        exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
+        exec_manifest["async_timeout_sec"] = async_timeout
+
+    if become and become_method == 'runas':
+        exec_manifest["actions"].insert(0, 'become')
+        exec_manifest["become_user"] = become_user
+        exec_manifest["become_password"] = become_password
+        exec_manifest['become_flags'] = become_flags
+        exec_manifest["become"] = to_text(
+            base64.b64encode(to_bytes(become_wrapper)))
+
+    finder = PSModuleDepFinder()
+
+    # we don't want to scan for any module_utils or other module related flags
+    # if scan_dependencies=False - action/script sets to False
+    if scan_dependencies:
+        finder.scan_module(b_module_data)
+
+    for name, data in finder.modules.items():
+        b64_data = to_text(base64.b64encode(data))
+        exec_manifest['powershell_modules'][name] = b64_data
+
+    exec_manifest['min_ps_version'] = finder.ps_version
+    exec_manifest['min_os_version'] = finder.os_version
+    if finder.become and 'become' not in exec_manifest['actions']:
+        exec_manifest['actions'].insert(0, 'become')
+        exec_manifest['become_user'] = 'SYSTEM'
+        exec_manifest['become_password'] = None
+        exec_manifest['become_flags'] = None
+        exec_manifest['become'] = to_text(
+            base64.b64encode(to_bytes(become_wrapper)))
+
+    # FUTURE: smuggle this back as a dict instead of serializing here;
+    # the connection plugin may need to modify it
+    b_json = to_bytes(json.dumps(exec_manifest))
+    b_data = exec_wrapper.replace(b"$json_raw = ''",
+                                  b"$json_raw = @'\r\n%s\r\n'@" % b_json)
+    return b_data
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
@@ -695,7 +848,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                 to_bytes(__author__) + b'"\n')
                     zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
-                    zf.writestr('ansible_module_%s.py' % module_name, b_module_data)
+                    zf.writestr('__main__.py', b_module_data)
 
                     py_module_cache = {('__init__',): (b'', '[builtin]')}
                     recursive_finder(module_name, b_module_data, py_module_names, py_module_cache, zf)
@@ -741,6 +894,18 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         interpreter_parts = interpreter.split(u' ')
         interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
+        coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
+
+        if coverage_config:
+            # Enable code coverage analysis of the module.
+            # This feature is for internal testing and may change without notice.
+            coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
+                coverage_config=coverage_config,
+                coverage_output=os.environ['_ANSIBLE_COVERAGE_OUTPUT']
+            )
+        else:
+            coverage = ''
+
         now = datetime.datetime.utcnow()
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
@@ -755,6 +920,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             hour=now.hour,
             minute=now.minute,
             second=now.second,
+            coverage=coverage,
         )))
         b_module_data = output.getvalue()
 
@@ -764,92 +930,13 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # it can fail in the presence of the UTF8 BOM commonly added by
         # Windows text editors
         shebang = u'#!powershell'
-
-        exec_manifest = dict(
-            module_entry=to_text(base64.b64encode(b_module_data)),
-            powershell_modules=dict(),
-            module_args=module_args,
-            actions=['exec'],
-            environment=environment
+        # create the common exec wrapper payload and set that as the module_data
+        # bytes
+        b_module_data = _create_powershell_wrapper(
+            b_module_data, module_args, environment, async_timeout, become,
+            become_method, become_user, become_password, become_flags,
+            scan_dependencies=True
         )
-
-        exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
-
-        if async_timeout > 0:
-            exec_manifest["actions"].insert(0, 'async_watchdog')
-            exec_manifest["async_watchdog"] = to_text(base64.b64encode(to_bytes(async_watchdog)))
-            exec_manifest["actions"].insert(0, 'async_wrapper')
-            exec_manifest["async_wrapper"] = to_text(base64.b64encode(to_bytes(async_wrapper)))
-            exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
-            exec_manifest["async_timeout_sec"] = async_timeout
-
-        if become and become_method == 'runas':
-            exec_manifest["actions"].insert(0, 'become')
-            exec_manifest["become_user"] = become_user
-            exec_manifest["become_password"] = become_password
-            exec_manifest['become_flags'] = become_flags
-            exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
-
-        lines = b_module_data.split(b'\n')
-        module_names = set()
-        become_required = False
-        min_os_version = None
-        min_ps_version = None
-
-        requires_module_list = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
-        requires_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
-        requires_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
-        requires_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
-
-        for line in lines:
-            module_util_line_match = requires_module_list.match(line)
-            if module_util_line_match:
-                module_names.add(module_util_line_match.group(1))
-
-            requires_ps_version_match = requires_ps_version.match(line)
-            if requires_ps_version_match:
-                min_ps_version = to_text(requires_ps_version_match.group(1))
-                # Powershell cannot cast a string of "1" to version, it must
-                # have at least the major.minor for it to work so we append 0
-                if requires_ps_version_match.group(2) is None:
-                    min_ps_version = "%s.0" % min_ps_version
-
-            requires_os_version_match = requires_os_version.match(line)
-            if requires_os_version_match:
-                min_os_version = to_text(requires_os_version_match.group(1))
-                if requires_os_version_match.group(2) is None:
-                    min_os_version = "%s.0" % min_os_version
-
-            requires_become_match = requires_become.match(line)
-            if requires_become_match:
-                become_required = True
-
-        for m in set(module_names):
-            m = to_text(m)
-            mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
-            if not mu_path:
-                raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
-            exec_manifest["powershell_modules"][m] = to_text(
-                base64.b64encode(
-                    to_bytes(
-                        _slurp(mu_path)
-                    )
-                )
-            )
-
-        exec_manifest['min_ps_version'] = min_ps_version
-        exec_manifest['min_os_version'] = min_os_version
-        if become_required and 'become' not in exec_manifest["actions"]:
-            exec_manifest["actions"].insert(0, 'become')
-            exec_manifest["become_user"] = "SYSTEM"
-            exec_manifest["become_password"] = None
-            exec_manifest['become_flags'] = None
-            exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
-
-        # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
-        module_json = json.dumps(exec_manifest)
-
-        b_module_data = exec_wrapper.replace(b"$json_raw = ''", b"$json_raw = @'\r\n%s\r\n'@" % to_bytes(module_json))
 
     elif module_substyle == 'jsonargs':
         module_args_json = to_bytes(json.dumps(module_args))
@@ -873,7 +960,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
-def modify_module(module_name, module_path, module_args, task_vars=None, templar=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
+def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
                   become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
     """
     Used to insert chunks of code into modules before transfer rather than
@@ -911,25 +998,29 @@ def modify_module(module_name, module_path, module_args, task_vars=None, templar
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
     elif shebang is None:
-        lines = b_module_data.split(b"\n", 1)
-        if lines[0].startswith(b"#!"):
-            shebang = lines[0].strip()
-            args = shlex.split(str(shebang[2:]))
+        b_lines = b_module_data.split(b"\n", 1)
+        if b_lines[0].startswith(b"#!"):
+            b_shebang = b_lines[0].strip()
+            # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
+            args = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
+
+            # _get_shebang() takes text strings
+            args = [to_text(a, errors='surrogate_or_strict') for a in args]
             interpreter = args[0]
-            interpreter = to_bytes(interpreter)
+            b_new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0],
+                                     errors='surrogate_or_strict', nonstring='passthru')
 
-            new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0], errors='surrogate_or_strict', nonstring='passthru')
-            if new_shebang:
-                lines[0] = shebang = new_shebang
+            if b_new_shebang:
+                b_lines[0] = b_shebang = b_new_shebang
 
-            if os.path.basename(interpreter).startswith(b'python'):
-                lines.insert(1, to_bytes(ENCODING_STRING))
+            if os.path.basename(interpreter).startswith(u'python'):
+                b_lines.insert(1, b_ENCODING_STRING)
+
+            shebang = to_text(b_shebang, nonstring='passthru', errors='surrogate_or_strict')
         else:
             # No shebang, assume a binary module?
             pass
 
-        b_module_data = b"\n".join(lines)
-    else:
-        shebang = to_bytes(shebang, errors='surrogate_or_strict')
+        b_module_data = b"\n".join(b_lines)
 
-    return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
+    return (b_module_data, module_style, shebang)

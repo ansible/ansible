@@ -3,7 +3,7 @@
 
 - ios_command:
     commands: show version
-    authorize: yes
+    provider: "{{ cli }}"
   register: show_version_result
 
 - set_fact: management_interface=GigabitEthernet0/0
@@ -16,7 +16,7 @@
   ios_command:
     commands:
       - "show ip interface {{ management_interface }} | include Internet address"
-    authorize: yes
+    provider: "{{ cli }}"
   register: show_ip_interface_result
 
 - name: Extract the IP address from registered output
@@ -25,14 +25,14 @@
 - name: expected successful ping
   ios_ping: &valid_ip
     dest: '{{ management_ip }}'
-    authorize: yes
+    provider: "{{ cli }}"
   register: esp
  
 - name: unexpected unsuccessful ping
   ios_ping: &invalid_ip
     dest: '10.255.255.250'
     timeout: 45
-    authorize: yes
+    provider: "{{ cli }}"
   register: uup
   ignore_errors: yes
 

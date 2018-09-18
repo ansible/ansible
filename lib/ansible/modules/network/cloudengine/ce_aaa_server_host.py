@@ -33,138 +33,95 @@ options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'absent']
     local_user_name:
         description:
             - Name of a local user.
               The value is a string of 1 to 253 characters.
-        required: false
-        default: null
     local_password:
         description:
             - Login password of a user. The password can contain letters, numbers, and special characters.
               The value is a string of 1 to 255 characters.
-        required: false
-        default: null
     local_service_type:
         description:
             - The type of local user login through, such as ftp ssh snmp telnet.
-        required: false
-        default: null
     local_ftp_dir:
         description:
             - FTP user directory.
               The value is a string of 1 to 255 characters.
-        required: false
-        default: null
     local_user_level:
         description:
             - Login level of a local user.
               The value is an integer ranging from 0 to 15.
-        required: false
-        default: null
     local_user_group:
         description:
             - Name of the user group where the user belongs. The user inherits all the rights of the user group.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     radius_group_name:
         description:
             - RADIUS server group's name.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
     radius_server_type:
         description:
             - Type of Radius Server.
-        required: false
-        default: null
         choices: ['Authentication', 'Accounting']
     radius_server_ip:
         description:
             - IPv4 address of configured server.
               The value is a string of 0 to 255 characters, in dotted decimal notation.
-        required: false
-        default: null
     radius_server_ipv6:
         description:
             - IPv6 address of configured server.
               The total length is 128 bits.
-        required: false
-        default: null
     radius_server_port:
         description:
             - Configured server port for a particular server.
               The value is an integer ranging from 1 to 65535.
-        required: false
-        default: null
     radius_server_mode:
         description:
             - Configured primary or secondary server for a particular server.
-        required: false
-        default: null
         choices: ['Secondary-server', 'Primary-server']
     radius_vpn_name:
         description:
             - Set VPN instance.
               The value is a string of 1 to 31 case-sensitive characters.
-        required: false
-        default: null
     radius_server_name:
         description:
             - Hostname of configured server.
               The value is a string of 0 to 255 case-sensitive characters.
-        required: false
-        default: null
     hwtacacs_template:
         description:
             - Name of a HWTACACS template.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
     hwtacacs_server_ip:
         description:
             - Server IPv4 address. Must be a valid unicast IP address.
               The value is a string of 0 to 255 characters, in dotted decimal notation.
-        required: false
-        default: null
     hwtacacs_server_ipv6:
         description:
             - Server IPv6 address. Must be a valid unicast IP address.
               The total length is 128 bits.
-        required: false
-        default: null
     hwtacacs_server_type:
         description:
             - Hwtacacs server type.
-        required: false
-        default: null
         choices: ['Authentication', 'Authorization', 'Accounting', 'Common']
     hwtacacs_is_secondary_server:
         description:
             - Whether the server is secondary.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        type: bool
+        default: 'no'
     hwtacacs_vpn_name:
         description:
             - VPN instance name.
-        required: false
-        default: null
     hwtacacs_is_public_net:
         description:
             - Set the public-net.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        type: bool
+        default: 'no'
     hwtacacs_server_host_name:
         description:
             - Hwtacacs server host name.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''

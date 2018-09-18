@@ -33,21 +33,15 @@ options:
               a new virtual network or using purge_address_prefixes.
         aliases:
             - address_prefixes
-        default: null
-        required: false
     dns_servers:
         description:
             - Custom list of DNS servers. Maximum length of two. The first server in the list will be treated
               as the Primary server. This is an explicit list. Existing DNS servers will be replaced with the
               specified list. Use the purge_dns_servers option to remove all custom DNS servers and revert to
               default Azure servers.
-        default: null
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
-        required: false
     name:
         description:
             - name of the virtual network.
@@ -55,13 +49,16 @@ options:
     purge_address_prefixes:
         description:
             - Use with state present to remove any existing address_prefixes.
-        default: false
+        type: bool
+        default: 'no'
+        aliases:
+          - purge
     purge_dns_servers:
         description:
             - Use with state present to remove existing DNS servers, reverting to default Azure servers. Mutually
               exclusive with dns_servers.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     state:
         description:
             - Assert the state of the virtual network. Use 'present' to create or update and
@@ -70,7 +67,6 @@ options:
         choices:
             - absent
             - present
-        required: false
 
 extends_documentation_fragment:
     - azure
@@ -261,7 +257,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                     changed = True
 
                 if self.dns_servers:
-                    existing_dns_set = set(vnet.dhcp_options.dns_servers)
+                    existing_dns_set = set(vnet.dhcp_options.dns_servers) if vnet.dhcp_options else set([])
                     requested_dns_set = set(self.dns_servers)
                     if existing_dns_set != requested_dns_set:
                         self.log('CHANGED: replacing DNS servers')
@@ -347,6 +343,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
 
 def main():
     AzureRMVirtualNetwork()
+
 
 if __name__ == '__main__':
     main()

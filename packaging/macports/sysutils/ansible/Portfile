@@ -45,7 +45,7 @@ patch {
 
 post-destroot {
   # documentation and examples
-  xinstall -m 644 -W ${worksrcpath} README.md CHANGELOG.md CONTRIBUTING.md COPYING  \
+  xinstall -m 644 -W ${worksrcpath} README.rst CHANGELOG.md CONTRIBUTING.md COPYING  \
     ${destroot}${prefix}/share/doc/${name}
 
   xinstall -m 755 -d ${destroot}${prefix}/share/doc/examples

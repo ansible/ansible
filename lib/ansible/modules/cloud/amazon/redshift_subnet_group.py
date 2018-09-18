@@ -35,14 +35,10 @@ options:
   group_description:
     description:
       - Database subnet group description.
-    required: false
-    default: null
     aliases: ['description']
   group_subnets:
     description:
       - List of subnet IDs that make up the cluster subnet group.
-    required: false
-    default: null
     aliases: ['subnets']
 requirements: [ 'boto' ]
 extends_documentation_fragment:

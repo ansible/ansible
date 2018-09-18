@@ -22,9 +22,9 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail, AnsibleActionSkip
+from ansible.executor.module_common import _create_powershell_wrapper
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.plugins.shell.powershell import exec_wrapper
 
 
 class ActionModule(ActionBase):
@@ -41,8 +41,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         try:
             creates = self._task.args.get('creates')
@@ -80,6 +79,9 @@ class ActionModule(ActionBase):
             parts = [to_text(s, errors='surrogate_or_strict') for s in shlex.split(raw_params.strip())]
             source = parts[0]
 
+            # Support executable paths and files with spaces in the name.
+            executable = to_native(self._task.args.get('executable', ''), errors='surrogate_or_strict')
+
             try:
                 source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
             except AnsibleError as e:
@@ -90,7 +92,8 @@ class ActionModule(ActionBase):
 
             if not self._play_context.check_mode:
                 # transfer the file to a remote tmp location
-                tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
+                tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir,
+                                                            os.path.basename(source))
 
                 # Convert raw_params to text for the purpose of replacing the script since
                 # parts and tmp_src are both unicode strings and raw_params will be different
@@ -104,12 +107,16 @@ class ActionModule(ActionBase):
                 self._transfer_file(source, tmp_src)
 
                 # set file permissions, more permissive when the copy is done as a different user
-                self._fixup_perms2((tmp_src,), execute=True)
+                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src), execute=True)
 
                 # add preparation steps to one ssh roundtrip executing the script
                 env_dict = dict()
                 env_string = self._compute_environment_string(env_dict)
-                script_cmd = ' '.join([env_string, target_command])
+
+                if executable:
+                    script_cmd = ' '.join([env_string, executable, target_command])
+                else:
+                    script_cmd = ' '.join([env_string, target_command])
 
             if self._play_context.check_mode:
                 raise _AnsibleActionDone()
@@ -117,13 +124,16 @@ class ActionModule(ActionBase):
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
             exec_data = None
-            # WinRM requires a special wrapper to work with environment variables
-            if self._connection.transport == "winrm":
-                pay = self._connection._create_raw_wrapper_payload(script_cmd,
-                                                                   env_dict)
-                exec_data = exec_wrapper.replace(b"$json_raw = ''",
-                                                 b"$json_raw = @'\r\n%s\r\n'@"
-                                                 % to_bytes(pay))
+            # PowerShell runs the script in a special wrapper to enable things
+            # like become and environment args
+            if self._connection._shell.SHELL_FAMILY == "powershell":
+                # FIXME: use a more public method to get the exec payload
+                pc = self._play_context
+                exec_data = _create_powershell_wrapper(
+                    to_bytes(script_cmd), {}, env_dict, self._task.async_val,
+                    pc.become, pc.become_method, pc.become_user,
+                    pc.become_pass, pc.become_flags, scan_dependencies=False
+                )
                 script_cmd = "-"
 
             result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
@@ -134,6 +144,6 @@ class ActionModule(ActionBase):
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(tmp)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

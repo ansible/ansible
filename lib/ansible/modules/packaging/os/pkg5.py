@@ -131,7 +131,10 @@ def ensure(module, state, packages, params):
         response['results'].append(out)
         response['msg'] += err
         response['changed'] = True
-        if rc != 0:
+        if rc == 4:
+            response['changed'] = False
+            response['failed'] = False
+        elif rc != 0:
             module.fail_json(**response)
 
     module.exit_json(**response)

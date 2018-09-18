@@ -23,6 +23,8 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
 
+import ansible.constants as C
+
 
 class ActionModule(ActionBase):
 
@@ -33,6 +35,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         facts = dict()
 
@@ -48,7 +51,7 @@ class ActionModule(ActionBase):
                                      "letters, numbers and underscores." % k)
                     return result
 
-                if isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
+                if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v, strict=False)
                 facts[k] = v
 

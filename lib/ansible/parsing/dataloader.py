@@ -12,6 +12,7 @@ import os.path
 import re
 import tempfile
 
+from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils.basic import is_executable
 from ansible.module_utils.six import binary_type, text_type
@@ -147,21 +148,20 @@ class DataLoader:
         :return: Returns a byte string of the file contents
         '''
         if not file_name or not isinstance(file_name, (binary_type, text_type)):
-            raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
+            raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_name))
 
         b_file_name = to_bytes(self.path_dwim(file_name))
         # This is what we really want but have to fix unittests to make it pass
         # if not os.path.exists(b_file_name) or not os.path.isfile(b_file_name):
-        if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
+        if not self.path_exists(b_file_name):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
         try:
             with open(b_file_name, 'rb') as f:
                 data = f.read()
                 return self._decrypt_if_vault_data(data, b_file_name)
-
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)), orig_exc=e)
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)), orig_exc=e)
 
     def get_basedir(self):
         ''' returns the current basedir '''
@@ -393,3 +393,53 @@ class DataLoader:
                 self.cleanup_tmp_file(f)
             except Exception as e:
                 display.warning("Unable to cleanup temp files: %s" % to_native(e))
+
+    def find_vars_files(self, path, name, extensions=None, allow_dir=True):
+        """
+        Find vars files in a given path with specified name. This will find
+        files in a dir named <name>/ or a file called <name> ending in known
+        extensions.
+        """
+
+        b_path = to_bytes(os.path.join(path, name))
+        found = []
+
+        if extensions is None:
+            # Look for file with no extension first to find dir before file
+            extensions = [''] + C.YAML_FILENAME_EXTENSIONS
+        # add valid extensions to name
+        for ext in extensions:
+
+            if '.' in ext:
+                full_path = b_path + to_bytes(ext)
+            elif ext:
+                full_path = b'.'.join([b_path, to_bytes(ext)])
+            else:
+                full_path = b_path
+
+            if self.path_exists(full_path):
+                if self.is_directory(full_path):
+                    if allow_dir:
+                        found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
+                    else:
+                        continue
+                else:
+                    found.append(full_path)
+                break
+        return found
+
+    def _get_dir_vars_files(self, path, extensions):
+        found = []
+        for spath in sorted(self.list_directory(path)):
+            if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
+
+                ext = os.path.splitext(spath)[-1]
+                full_spath = os.path.join(path, spath)
+
+                if self.is_directory(full_spath) and not ext:  # recursive search if dir
+                    found.extend(self._get_dir_vars_files(full_spath, extensions))
+                elif self.is_file(full_spath) and (not ext or to_text(ext) in extensions):
+                    # only consider files with valid extensions or no extension
+                    found.append(full_spath)
+
+        return found

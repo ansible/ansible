@@ -1,7 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
+# -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub, actual code lives in the .ps1
@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 ---
 module: win_mapped_drive
 version_added: '2.4'
-short_description: maps a network drive for a user
+short_description: Map network drives for users
 description:
 - Allows you to modify mapped network drives for individual users.
 notes:
@@ -43,10 +43,11 @@ options:
       drive regardless of the target.
     - If C(state=absent) and the path is set, the module will throw an error if
       path does not match the target of the mapped drive.
+    type: path
   state:
     description:
-    - If C(state=present) will ensure the mapped drive exists.
-    - If C(state=absent) will ensure the mapped drive does not exist.
+    - If C(present) will ensure the mapped drive exists.
+    - If C(absent) will ensure the mapped drive does not exist.
     choices: [ absent, present ]
     default: present
   username:
@@ -59,30 +60,30 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: create a mapped drive under Z
+- name: Create a mapped drive under Z
   win_mapped_drive:
     letter: Z
     path: \\domain\appdata\accounting
 
-- name: delete any mapped drives under Z
+- name: Delete any mapped drives under Z
   win_mapped_drive:
     letter: Z
     state: absent
 
-- name: only delete the mapped drive Z if the paths match (error is thrown otherwise)
+- name: Only delete the mapped drive Z if the paths match (error is thrown otherwise)
   win_mapped_drive:
     letter: Z
     path: \\domain\appdata\accounting
     state: absent
 
-- name: create mapped drive with local credentials
+- name: Create mapped drive with local credentials
   win_mapped_drive:
     letter: M
     path: \\SERVER\c$
     username: SERVER\Administrator
     password: Password
 
-- name: create mapped drive with domain credentials
+- name: Create mapped drive with domain credentials
   win_mapped_drive:
     letter: M
     path: \\domain\appdata\it

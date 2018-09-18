@@ -25,9 +25,12 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from functools import partial
 
+import os
+from functools import partial
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_text
 
 try:
     from infoblox_client.connector import Connector
@@ -36,38 +39,103 @@ try:
 except ImportError:
     HAS_INFOBLOX_CLIENT = False
 
+# defining nios constants
+NIOS_DNS_VIEW = 'view'
+NIOS_NETWORK_VIEW = 'networkview'
+NIOS_HOST_RECORD = 'record:host'
+NIOS_IPV4_NETWORK = 'network'
+NIOS_IPV6_NETWORK = 'ipv6network'
+NIOS_ZONE = 'zone_auth'
+NIOS_PTR_RECORD = 'record:ptr'
+NIOS_A_RECORD = 'record:a'
+NIOS_AAAA_RECORD = 'record:aaaa'
+NIOS_CNAME_RECORD = 'record:cname'
+NIOS_MX_RECORD = 'record:mx'
+NIOS_SRV_RECORD = 'record:srv'
+NIOS_NAPTR_RECORD = 'record:naptr'
+NIOS_TXT_RECORD = 'record:txt'
 
-nios_provider_spec = {
+
+NIOS_PROVIDER_SPEC = {
     'host': dict(),
     'username': dict(),
     'password': dict(no_log=True),
     'ssl_verify': dict(type='bool', default=False),
+    'silent_ssl_warnings': dict(type='bool', default=True),
     'http_request_timeout': dict(type='int', default=10),
     'http_pool_connections': dict(type='int', default=10),
     'http_pool_maxsize': dict(type='int', default=10),
     'max_retries': dict(type='int', default=3),
-    'wapi_version': dict(default='1.4'),
+    'wapi_version': dict(default='2.1'),
+    'max_results': dict(type='int', default=1000)
 }
 
 
-def get_provider_spec():
-    return {'provider': dict(type='dict', options=nios_provider_spec)}
-
-
-def get_connector(module):
+def get_connector(*args, **kwargs):
+    ''' Returns an instance of infoblox_client.connector.Connector
+    :params args: positional arguments are silently ignored
+    :params kwargs: dict that is passed to Connector init
+    :returns: Connector
+    '''
     if not HAS_INFOBLOX_CLIENT:
-        module.fail_json(msg='infoblox-client is required but does not appear '
-                             'to be installed.  It can be installed using the '
-                             'command `pip install infoblox-client`')
-    return Connector(module.params['provider'])
+        raise Exception('infoblox-client is required but does not appear '
+                        'to be installed.  It can be installed using the '
+                        'command `pip install infoblox-client`')
+
+    if not set(kwargs.keys()).issubset(NIOS_PROVIDER_SPEC.keys()):
+        raise Exception('invalid or unsupported keyword argument for connector')
+    for key, value in iteritems(NIOS_PROVIDER_SPEC):
+        if key not in kwargs:
+            # apply default values from NIOS_PROVIDER_SPEC since we cannot just
+            # assume the provider values are coming from AnsibleModule
+            if 'default' in value:
+                kwargs[key] = value['default']
+
+            # override any values with env variables unless they were
+            # explicitly set
+            env = ('INFOBLOX_%s' % key).upper()
+            if env in os.environ:
+                kwargs[key] = os.environ.get(env)
+
+    return Connector(kwargs)
+
+
+def normalize_extattrs(value):
+    ''' Normalize extattrs field to expected format
+    The module accepts extattrs as key/value pairs.  This method will
+    transform the key/value pairs into a structure suitable for
+    sending across WAPI in the format of:
+        extattrs: {
+            key: {
+                value: <value>
+            }
+        }
+    '''
+    return dict([(k, {'value': v}) for k, v in iteritems(value)])
+
+
+def flatten_extattrs(value):
+    ''' Flatten the key/value struct for extattrs
+    WAPI returns extattrs field as a dict in form of:
+        extattrs: {
+            key: {
+                value: <value>
+            }
+        }
+    This method will flatten the structure to:
+        extattrs: {
+            key: value
+        }
+    '''
+    return dict([(k, v['value']) for k, v in iteritems(value)])
 
 
 class WapiBase(object):
     ''' Base class for implementing Infoblox WAPI API '''
+    provider_spec = {'provider': dict(type='dict', options=NIOS_PROVIDER_SPEC)}
 
-    def __init__(self, module):
-        self.module = module
-        self.connector = get_connector(module)
+    def __init__(self, provider):
+        self.connector = get_connector(**provider)
 
     def __getattr__(self, name):
         try:
@@ -82,28 +150,61 @@ class WapiBase(object):
             method = getattr(self.connector, name)
             return method(*args, **kwargs)
         except InfobloxException as exc:
+            if hasattr(self, 'handle_exception'):
+                self.handle_exception(name, exc)
+            else:
+                raise
+
+
+class WapiLookup(WapiBase):
+    ''' Implements WapiBase for lookup plugins '''
+    def handle_exception(self, method_name, exc):
+        if ('text' in exc.response):
+            raise Exception(exc.response['text'])
+        else:
+            raise Exception(exc)
+
+
+class WapiInventory(WapiBase):
+    ''' Implements WapiBase for dynamic inventory script '''
+    pass
+
+
+class WapiModule(WapiBase):
+    ''' Implements WapiBase for executing a NIOS module '''
+    def __init__(self, module):
+        self.module = module
+        provider = module.params['provider']
+        try:
+            super(WapiModule, self).__init__(provider)
+        except Exception as exc:
+            self.module.fail_json(msg=to_text(exc))
+
+    def handle_exception(self, method_name, exc):
+        ''' Handles any exceptions raised
+        This method will be called if an InfobloxException is raised for
+        any call to the instance of Connector and also, in case of generic
+        exception. This method will then gracefully fail the module.
+        :args exc: instance of InfobloxException
+        '''
+        if ('text' in exc.response):
             self.module.fail_json(
                 msg=exc.response['text'],
                 type=exc.response['Error'].split(':')[0],
                 code=exc.response.get('code'),
-                action=name
+                operation=method_name
             )
-
-    def run(self, ib_obj_type, ib_spec):
-        raise NotImplementedError
-
-
-class Wapi(WapiBase):
-    ''' Implements WapiBase for executing a NIOS module '''
+        else:
+            self.module.fail_json(msg=to_native(exc))
 
     def run(self, ib_obj_type, ib_spec):
         ''' Runs the module and performans configuration tasks
-
         :args ib_obj_type: the WAPI object type to operate against
         :args ib_spec: the specification for the WAPI object as a dict
-
         :returns: a results dict
         '''
+
+        update = new_name = None
         state = self.module.params['state']
         if state not in ('present', 'absent'):
             self.module.fail_json(msg='state must be one of `present`, `absent`, got `%s`' % state)
@@ -111,12 +212,14 @@ class Wapi(WapiBase):
         result = {'changed': False}
 
         obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
-        ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
 
-        if ib_obj:
-            current_object = ib_obj[0]
+        # get object reference
+        ib_obj_ref, update, new_name = self.get_object_ref(self.module, ib_obj_type, obj_filter, ib_spec)
+
+        if ib_obj_ref:
+            current_object = ib_obj_ref[0]
             if 'extattrs' in current_object:
-                current_object['extattrs'] = self.flatten_extattrs(current_object['extattrs'])
+                current_object['extattrs'] = flatten_extattrs(current_object['extattrs'])
             ref = current_object.pop('_ref')
         else:
             current_object = obj_filter
@@ -130,24 +233,30 @@ class Wapi(WapiBase):
                 else:
                     proposed_object[key] = self.module.params[key]
 
+        # checks if the name's field has been updated
+        if update and new_name:
+            proposed_object['name'] = new_name
+
+        res = None
         modified = not self.compare_objects(current_object, proposed_object)
-
         if 'extattrs' in proposed_object:
-            proposed_object['extattrs'] = self.normalize_extattrs(proposed_object['extattrs'])
-
+            proposed_object['extattrs'] = normalize_extattrs(proposed_object['extattrs'])
         if state == 'present':
             if ref is None:
                 if not self.module.check_mode:
                     self.create_object(ib_obj_type, proposed_object)
                 result['changed'] = True
             elif modified:
-                if 'network_view' in proposed_object:
-                    self.check_if_network_view_exists(proposed_object['network_view'])
-                    proposed_object.pop('network_view')
-                elif 'view' in proposed_object:
-                    self.check_if_dns_view_exists(proposed_object['view'])
-                if not self.module.check_mode:
+                self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
+
+                if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
+                    proposed_object = self.on_update(proposed_object, ib_spec)
                     res = self.update_object(ref, proposed_object)
+                elif 'network_view' in proposed_object:
+                    proposed_object.pop('network_view')
+                if not self.module.check_mode and res is None:
+                    proposed_object = self.on_update(proposed_object, ib_spec)
+                    self.update_object(ref, proposed_object)
                 result['changed'] = True
 
         elif state == 'absent':
@@ -158,77 +267,27 @@ class Wapi(WapiBase):
 
         return result
 
-    def check_if_dns_view_exists(self, name, fail_on_missing=True):
-        ''' Checks if the specified DNS view is already configured
+    def check_if_recordname_exists(self, obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object):
+        ''' Send POST request if host record input name and retrieved ref name is same,
+            but input IP and retrieved IP is different'''
 
-        :args name: the name of the  DNS view to check
-        :args fail_on_missing: fail the module if the DNS view does not exist
+        if 'name' in (obj_filter and ib_obj_ref[0]) and ib_obj_type == NIOS_HOST_RECORD:
+            obj_host_name = obj_filter['name']
+            ref_host_name = ib_obj_ref[0]['name']
+            if 'ipv4addrs' in (current_object and proposed_object):
+                current_ip_addr = current_object['ipv4addrs'][0]['ipv4addr']
+                proposed_ip_addr = proposed_object['ipv4addrs'][0]['ipv4addr']
+            elif 'ipv6addrs' in (current_object and proposed_object):
+                current_ip_addr = current_object['ipv6addrs'][0]['ipv6addr']
+                proposed_ip_addr = proposed_object['ipv6addrs'][0]['ipv6addr']
 
-        :returns: True if the network_view exists and False if the  DNS view
-            does not exist and fail_on_missing is False
-        '''
-        res = self.get_object('view', {'name': name}) is not None
-        if not res and fail_on_missing:
-            self.module.fail_json(msg='DNS view %s does not exist, please create '
-                                      'it using nios_dns_view first' % name)
-        return res
-
-    def check_if_network_view_exists(self, name, fail_on_missing=True):
-        ''' Checks if the specified network_view is already configured
-
-        :args name: the name of the network view to check
-        :args fail_on_missing: fail the module if the network_view does not exist
-
-        :returns: True if the network_view exists and False if the network_view
-            does not exist and fail_on_missing is False
-        '''
-        res = self.get_object('networkview', {'name': name}) is not None
-        if not res and fail_on_missing:
-            self.module.fail_json(msg='Network view %s does not exist, please create '
-                                      'it using nios_network_view first' % name)
-        return res
-
-    def normalize_extattrs(self, value):
-        ''' Normalize extattrs field to expected format
-
-        The module accepts extattrs as key/value pairs.  This method will
-        transform the key/value pairs into a structure suitable for
-        sending across WAPI in the format of:
-
-            extattrs: {
-                key: {
-                    value: <value>
-                }
-            }
-        '''
-        return dict([(k, {'value': v}) for k, v in iteritems(value)])
-
-    def flatten_extattrs(self, value):
-        ''' Flatten the key/value struct for extattrs
-
-        WAPI returns extattrs field as a dict in form of:
-
-            extattrs: {
-                key: {
-                    value: <value>
-                }
-            }
-
-        This method will flatten the structure to:
-
-            extattrs: {
-                key: value
-            }
-
-        '''
-        return dict([(k, v['value']) for k, v in iteritems(value)])
+            if obj_host_name == ref_host_name and current_ip_addr != proposed_ip_addr:
+                self.create_object(ib_obj_type, proposed_object)
 
     def issubset(self, item, objects):
         ''' Checks if item is a subset of objects
-
         :args item: the subset item to validate
         :args objects: superset list of objects to validate against
-
         :returns: True if item is a subset of one entry in objects otherwise
             this method will return None
         '''
@@ -241,7 +300,6 @@ class Wapi(WapiBase):
                     return True
 
     def compare_objects(self, current_object, proposed_object):
-
         for key, proposed_item in iteritems(proposed_object):
             current_item = current_object.get(key)
 
@@ -263,3 +321,68 @@ class Wapi(WapiBase):
                     return False
 
         return True
+
+    def get_object_ref(self, module, ib_obj_type, obj_filter, ib_spec):
+        ''' this function gets the reference object of pre-existing nios objects '''
+
+        update = False
+        old_name = new_name = None
+        if ('name' in obj_filter):
+            # gets and returns the current object based on name/old_name passed
+            try:
+                name_obj = self.module._check_type_dict(obj_filter['name'])
+                old_name = name_obj['old_name']
+                new_name = name_obj['new_name']
+            except TypeError:
+                name = obj_filter['name']
+
+            if old_name and new_name:
+                if (ib_obj_type == NIOS_HOST_RECORD):
+                    test_obj_filter = dict([('name', old_name), ('view', obj_filter['view'])])
+                else:
+                    test_obj_filter = dict([('name', old_name)])
+                # get the object reference
+                ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
+                if ib_obj:
+                    obj_filter['name'] = new_name
+                else:
+                    test_obj_filter['name'] = new_name
+                    ib_obj = self.get_object(ib_obj_type, test_obj_filter, return_fields=ib_spec.keys())
+                update = True
+                return ib_obj, update, new_name
+            if (ib_obj_type == NIOS_HOST_RECORD):
+                # to check only by name if dns bypassing is set
+                if not obj_filter['configure_for_dns']:
+                    test_obj_filter = dict([('name', name)])
+                else:
+                    test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
+            else:
+                test_obj_filter = dict([('name', name)])
+            ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
+        elif (ib_obj_type == NIOS_ZONE):
+            # del key 'restart_if_needed' as nios_zone get_object fails with the key present
+            temp = ib_spec['restart_if_needed']
+            del ib_spec['restart_if_needed']
+            ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+            # reinstate restart_if_needed key if it's set to true in play
+            if module.params['restart_if_needed']:
+                ib_spec['restart_if_needed'] = temp
+        else:
+            ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+        return ib_obj, update, new_name
+
+    def on_update(self, proposed_object, ib_spec):
+        ''' Event called before the update is sent to the API endpoing
+        This method will allow the final proposed object to be changed
+        and/or keys filtered before it is sent to the API endpoint to
+        be processed.
+        :args proposed_object: A dict item that will be encoded and sent
+            the API endpoint with the updated data structure
+        :returns: updated object to be sent to API endpoint
+        '''
+        keys = set()
+        for key, value in iteritems(proposed_object):
+            update = ib_spec[key].get('update', True)
+            if not update:
+                keys.add(key)
+        return dict([(k, v) for k, v in iteritems(proposed_object) if k not in keys])

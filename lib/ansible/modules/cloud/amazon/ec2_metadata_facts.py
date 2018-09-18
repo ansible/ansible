@@ -26,8 +26,6 @@ description:
       The module must be called from within the EC2 instance itself.
 notes:
     - Parameters to filter on ec2_metadata_facts may be added later.
-extends_documentation_fragment:
-    - url
 '''
 
 EXAMPLES = '''
@@ -420,11 +418,12 @@ ansible_facts:
 import json
 import re
 import socket
+import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.urls import fetch_url, url_argument_spec
-
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import quote
 
 socket.setdefaulttimeout(5)
 
@@ -445,7 +444,17 @@ class Ec2Metadata(object):
         self._prefix = 'ansible_ec2_%s'
 
     def _fetch(self, url):
-        (response, info) = fetch_url(self.module, url, force=True)
+        encoded_url = quote(url, safe='%/:=&?~#+!$,;\'@()*[]')
+        response, info = fetch_url(self.module, encoded_url, force=True)
+
+        if info.get('status') not in (200, 404):
+            time.sleep(3)
+            # request went bad, retry once then raise
+            self.module.warn('Retrying query to metadata service. First attempt failed: {0}'.format(info['msg']))
+            response, info = fetch_url(self.module, encoded_url, force=True)
+            if info.get('status') not in (200, 404):
+                # fail out now
+                self.module.fail_json(msg='Failed to retrieve metadata from AWS: {0}'.format(info['msg']), response=info)
         if response:
             data = response.read()
         else:
@@ -458,7 +467,7 @@ class Ec2Metadata(object):
         new_fields = {}
         for key, value in fields.items():
             split_fields = key[len(uri):].split('/')
-            if len(split_fields) == 3 and split_fields[0:2] == ['iam', 'security-credentials'] and '_' not in split_fields[2]:
+            if len(split_fields) == 3 and split_fields[0:2] == ['iam', 'security-credentials']:
                 new_fields[self._prefix % "iam-instance-profile-role"] = split_fields[2]
             if len(split_fields) > 1 and split_fields[1]:
                 new_key = "-".join(split_fields)
@@ -528,15 +537,10 @@ class Ec2Metadata(object):
 
 
 def main():
-    argument_spec = url_argument_spec()
-
     module = AnsibleModule(
-        argument_spec=argument_spec,
+        argument_spec={},
         supports_check_mode=True,
     )
-
-    if module._name == 'ec2_facts':
-        module.deprecate("The 'ec2_facts' module is being renamed 'ec2_metadata_facts'", version=2.7)
 
     ec2_metadata_facts = Ec2Metadata(module).run()
     ec2_metadata_facts_result = dict(changed=False, ansible_facts=ec2_metadata_facts)

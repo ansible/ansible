@@ -1,0 +1,166 @@
+---
+  - block:
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: create a VPC
+        ec2_vpc_net:
+          name: "{{ resource_prefix }}-vpc"
+          state: present
+          cidr_block: "10.122.122.128/26"
+          tags:
+            Name: "{{ resource_prefix }}-vpc"
+            Description: "created by rds_instance integration tests"
+          <<: *aws_connection_info
+        register: vpc_result
+
+      - name: create subnets
+        ec2_vpc_subnet:
+          cidr: "{{ item.cidr }}"
+          az: "{{ item.zone }}"
+          vpc_id: "{{ vpc_result.vpc.id }}"
+          tags:
+            Name: "{{ resource_prefix }}-subnet"
+            Description: "created by rds_instance integration tests"
+          state: present
+          <<: *aws_connection_info
+        register: subnets_result
+        loop:
+          - {"cidr": "10.122.122.128/28", "zone": "{{ aws_region }}a"}
+          - {"cidr": "10.122.122.144/28", "zone": "{{ aws_region }}b"}
+          - {"cidr": "10.122.122.160/28", "zone": "{{ aws_region }}c"}
+          - {"cidr": "10.122.122.176/28", "zone": "{{ aws_region }}d"}
+
+      - name: Create security groups
+        ec2_group:
+          name: "{{ item }}"
+          description: "created by rds_instance integration tests"
+          state: present
+          <<: *aws_connection_info
+        register: sgs_result
+        loop:
+          - "{{ resource_prefix }}-sg-1"
+          - "{{ resource_prefix }}-sg-2"
+          - "{{ resource_prefix }}-sg-3"
+
+      - debug: var=sgs_result
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Create a DB instance in the VPC with two security groups
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: mariadb
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          vpc_security_group_ids:
+            - "{{ sgs_result.results.0.group_id }}"
+            - "{{ sgs_result.results.1.group_id }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - "result.db_instance_identifier == '{{ instance_id }}'"
+
+      - name: Add a new security group
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          vpc_security_group_ids:
+            - "{{ sgs_result.results.2.group_id }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+    always:
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+        ignore_errors: yes
+
+      - name: Remove security groups
+        ec2_group:
+          name: "{{ item }}"
+          description: "created by rds_instance integration tests"
+          state: absent
+          <<: *aws_connection_info
+        register: sgs_result
+        loop:
+          - "{{ resource_prefix }}-sg-1"
+          - "{{ resource_prefix }}-sg-2"
+          - "{{ resource_prefix }}-sg-3"
+
+      - name: remove subnets
+        ec2_vpc_subnet:
+          cidr: "{{ item.cidr }}"
+          az: "{{ item.zone }}"
+          vpc_id: "{{ vpc_result.vpc.id }}"
+          tags:
+            Name: "{{ resource_prefix }}-subnet"
+            Description: "created by rds_instance integration tests"
+          state: absent
+          <<: *aws_connection_info
+        register: subnets
+        ignore_errors: yes
+        retries: 30
+        until: subnets is not failed
+        delay: 10
+        loop:
+          - {"cidr": "10.122.122.128/28", "zone": "{{ aws_region }}a"}
+          - {"cidr": "10.122.122.144/28", "zone": "{{ aws_region }}b"}
+          - {"cidr": "10.122.122.160/28", "zone": "{{ aws_region }}c"}
+          - {"cidr": "10.122.122.176/28", "zone": "{{ aws_region }}d"}
+
+      - name: create a VPC
+        ec2_vpc_net:
+          name: "{{ resource_prefix }}-vpc"
+          state: absent
+          cidr_block: "10.122.122.128/26"
+          tags:
+            Name: "{{ resource_prefix }}-vpc"
+            Description: "created by rds_instance integration tests"
+          <<: *aws_connection_info
+        register: vpc_result
+        ignore_errors: yes
+        retries: 30
+        until: vpc_result is not failed
+        delay: 10
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+        ignore_errors: yes

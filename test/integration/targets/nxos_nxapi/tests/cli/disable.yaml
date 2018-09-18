@@ -4,14 +4,12 @@
 - name: Disable NXAPI
   nxos_nxapi:
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - name: Check NXAPI state
   nxos_command:
     commands:
       - show feature | grep nxapi
-    provider: "{{ cli }}"
   register: result
 
 - name: Assert NXAPI is disabled
@@ -23,7 +21,6 @@
   nxos_nxapi:
     state:
       absent
-    provider: "{{ cli }}"
   register: result
 
 - name: Assert idempotence

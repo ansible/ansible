@@ -13,16 +13,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_encap_pool_range
-short_description: Manage encap ranges assigned to pools on Cisco ACI fabrics (fvns:EncapBlk, fvns:VsanEncapBlk)
+short_description: Manage encap ranges assigned to pools (fvns:EncapBlk, fvns:VsanEncapBlk)
 description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
-- More information from the internal APIC class I(fvns:EncapBlk) and I(fvns:VsanEncapBlk) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+notes:
+- The C(pool) must exist in order to add or delete a range.
+- More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
-requirements:
-- The C(pool) must exist in order to add or delete a range.
 options:
   allocation_mode:
     description:
@@ -53,6 +53,7 @@ options:
   range_end:
     description:
     - The end of encap range.
+    type: int
     aliases: [ end ]
   range_name:
     description:
@@ -61,6 +62,7 @@ options:
   range_start:
     description:
     - The start of the encap range.
+    type: int
     aliases: [ start ]
   state:
     description:
@@ -72,7 +74,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a new vlan range
+- name: Add a new VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -82,8 +84,9 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: present
+  delegate_to: localhost
 
-- name: Remove a vlan range
+- name: Remove a VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -93,8 +96,9 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: absent
+  delegate_to: localhost
 
-- name: Query a vlan range
+- name: Query a VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -104,8 +108,10 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: query
+  delegate_to: localhost
+  register: query_result
 
-- name: Query a vlan pool for ranges
+- name: Query a VLAN pool for ranges
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -113,18 +119,123 @@ EXAMPLES = r'''
     pool: production
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 
-- name: Query all vlan ranges
+- name: Query all VLAN ranges
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -151,12 +262,12 @@ def main():
     argument_spec.update(
         allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'inherit', 'static']),
         description=dict(type='str', aliases=['descr']),
-        pool=dict(type='str', aliases=['pool_name']),
+        pool=dict(type='str', aliases=['pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['pool_mode'], choices=['dynamic', 'static']),
         pool_type=dict(type='str', aliases=['type'], choices=['vlan', 'vxlan', 'vsan'], required=True),
-        range_end=dict(type='int', aliases=['end']),
-        range_name=dict(type='str', aliases=["name", "range"]),
-        range_start=dict(type='int', aliases=["start"]),
+        range_end=dict(type='int', aliases=['end']),  # Not required for querying all objects
+        range_name=dict(type='str', aliases=["name", "range"]),  # Not required for querying all objects
+        range_start=dict(type='int', aliases=["start"]),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -224,33 +335,15 @@ def main():
                 if not 1 <= encap_id <= 4093:
                     module.fail_json(msg='vsan pools must have "range_start" and "range_end" values between 1 and 4093')
 
-    # Build proper proper filter_target based on range_start, range_end, and range_name
     if range_end is not None and range_start is not None:
         # Validate range_start is less than range_end
         if range_start > range_end:
             module.fail_json(msg='The "range_start" must be less than or equal to the "range_end"')
 
-        if range_name is None:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"))'.format(aci_range_class, encap_start, encap_end)
-        else:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"),eq({0}.name, "{3}"))'.format(aci_range_class, encap_start, encap_end, range_name)
     elif range_end is None and range_start is None:
         if range_name is None:
             # Reset range managed object to None for aci util to properly handle query
             aci_range_mo = None
-            range_filter_target = ''
-        else:
-            range_filter_target = 'eq({0}.name, "{1}")'.format(aci_range_class, range_name)
-    elif range_start is not None:
-        if range_name is None:
-            range_filter_target = 'eq({0}.from, "{1}")'.format(aci_range_class, encap_start)
-        else:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.name, "{2}"))'.format(aci_range_class, encap_start, range_name)
-    else:
-        if range_name is None:
-            range_filter_target = 'eq({0}.to, "{1}")'.format(aci_range_class, encap_end)
-        else:
-            range_filter_target = 'and(eq({0}.to, "{1}"),eq({0}.name, "{2}"))'.format(aci_range_class, encap_end, range_name)
 
     # Vxlan does not support setting the allocation mode
     if pool_type == 'vxlan' and allocation_mode is not None:
@@ -268,21 +361,20 @@ def main():
         root_class=dict(
             aci_class=aci_pool_class,
             aci_rn='{0}{1}'.format(aci_pool_mo, pool_name),
-            filter_target='eq({0}.name, "{1}")'.format(aci_pool_class, pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
         subclass_1=dict(
             aci_class=aci_range_class,
             aci_rn='{0}'.format(aci_range_mo),
-            filter_target=range_filter_target,
             module_object=aci_range_mo,
+            target_filter={'from': encap_start, 'to': encap_end, 'name': range_name},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class=aci_range_class,
             class_config={
@@ -291,19 +383,17 @@ def main():
                 "from": encap_start,
                 "name": range_name,
                 "to": encap_end,
-            }
+            },
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class=aci_range_class)
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

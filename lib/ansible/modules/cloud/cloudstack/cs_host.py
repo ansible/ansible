@@ -103,7 +103,7 @@ EXAMPLES = '''
     zone: ch-zrh-ix-01
     allocation_state: disabled
 
-- name: Ensure an existing host is disabled
+- name: Ensure an existing host is enabled
   local_action:
     module: cs_host
     name: ix-pod01-esx01.example.com
@@ -427,10 +427,11 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
         name = self.module.params.get('name')
         args = {
             'zoneid': self.get_zone(key='id'),
+            'fetch_list': True,
         }
         res = self.query_api('listHosts', **args)
         if res:
-            for h in res['host']:
+            for h in res:
                 if name in [h['ipaddress'], h['name']]:
                     self.host = h
         return self.host

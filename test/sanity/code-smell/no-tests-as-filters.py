@@ -19,11 +19,8 @@
 
 from __future__ import print_function
 
-import os
 import re
 import sys
-
-from collections import defaultdict
 
 from ansible.plugins.test import core, files, mathstuff
 
@@ -48,42 +45,37 @@ TEST_MAP = {
 }
 
 
-FILTER_RE = re.compile(r'((.+?)\s*([\w \.\'"]+)(\s*)\|(\s*)(\w+))')
+FILTER_RE = re.compile(r'((.+?)\s*(?P<left>[\w .\'"]+)(\s*)\|(\s*)(?P<filter>\w+))')
 
 
 def main():
-    all_matches = defaultdict(list)
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
+        with open(path) as f:
+            text = f.read()
 
-    for root, dirs, filenames in os.walk('.'):
-        for name in filenames:
-            if os.path.splitext(name)[1] not in ('.yml', '.yaml'):
+        lines = text.splitlines(True)
+        previous = 0
+        offset = 0
+        lineno = 0
+
+        for match in FILTER_RE.finditer(text):
+            filter_name = match.group('filter')
+            test_name = TEST_MAP.get(filter_name, filter_name)
+
+            if test_name not in TESTS:
                 continue
-            path = os.path.join(root, name)
 
-            with open(path) as f:
-                text = f.read()
+            left = match.group('left').strip()
+            start = match.start('left')
 
-            for match in FILTER_RE.findall(text):
-                filter_name = match[5]
+            while start >= offset:
+                previous = offset
+                offset += len(lines[lineno])
+                lineno += 1
 
-                try:
-                    test_name = TEST_MAP[filter_name]
-                except KeyError:
-                    test_name = filter_name
+            colno = start - previous + 1
 
-                if test_name not in TESTS:
-                    continue
-
-                all_matches[path].append(match[0])
-
-    if all_matches:
-        print('Use of Ansible provided Jinja2 tests as filters is deprecated.')
-        print('Please update to use `is` syntax such as `result is failed`.')
-
-        for path, matches in all_matches.items():
-            for match in matches:
-                print('%s: %s' % (path, match,))
-        sys.exit(1)
+            print('%s:%d:%d: use `%s is %s` instead of `%s | %s`' % (path, lineno, colno, left, test_name, left, filter_name))
 
 
 if __name__ == '__main__':

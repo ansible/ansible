@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -22,7 +22,7 @@ description:
 - User can specify an ESXi hostname or Cluster name. In case of cluster name, all ESXi hosts are updated.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -64,6 +64,7 @@ EXAMPLES = r'''
     ntp_servers:
         - 0.pool.ntp.org
         - 1.pool.ntp.org
+  delegate_to: localhost
 
 - name: Set NTP setting for an ESXi Host
   vmware_host_ntp:
@@ -75,6 +76,7 @@ EXAMPLES = r'''
     ntp_servers:
         - 0.pool.ntp.org
         - 1.pool.ntp.org
+  delegate_to: localhost
 
 - name: Remove NTP setting for an ESXi Host
   vmware_host_ntp:
@@ -85,13 +87,14 @@ EXAMPLES = r'''
     state: absent
     ntp_servers:
         - bad.server.ntp.org
+  delegate_to: localhost
 '''
 
 RETURN = r'''#
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
@@ -106,19 +109,7 @@ class VmwareNtpConfigManager(PyVmomi):
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.ntp_servers = self.params.get('ntp_servers', list())
-        self.hosts = []
-        if cluster_name:
-            cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
-            if cluster_obj:
-                self.hosts = [host for host in cluster_obj.host]
-            else:
-                module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
-        elif esxi_host_name:
-            esxi_host_obj = self.find_hostsystem_by_name(host_name=esxi_host_name)
-            if esxi_host_obj:
-                self.hosts = [esxi_host_obj]
-            else:
-                module.fail_json(changed=False, msg="ESXi '%s' not found" % esxi_host_name)
+        self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
         self.results = {}
         self.desired_state = module.params['state']
 
@@ -127,6 +118,7 @@ class VmwareNtpConfigManager(PyVmomi):
         host_date_time_manager = host.configManager.dateTimeSystem
         if host_date_time_manager:
             available_ntp_servers = host_date_time_manager.dateTimeInfo.ntpConfig.server
+            available_ntp_servers = list(filter(None, available_ntp_servers))
             if operation == 'add':
                 available_ntp_servers = available_ntp_servers + ntp_servers
             elif operation == 'delete':

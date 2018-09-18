@@ -17,7 +17,6 @@ from lib.util import (
     SubprocessError,
     display,
     run_command,
-    deepest_path,
 )
 
 from lib.ansible_util import (
@@ -43,25 +42,26 @@ class ValidateModulesTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
+        with open(VALIDATE_SKIP_PATH, 'r') as skip_fd:
+            skip_paths = skip_fd.read().splitlines()
+
+        skip_paths_set = set(skip_paths)
+
         env = ansible_environment(args, color=False)
 
-        paths = [deepest_path(i.path, 'lib/ansible/modules/') for i in targets.include_external]
-        paths = sorted(set(p for p in paths if p))
+        paths = sorted([i.path for i in targets.include if i.module and i.path not in skip_paths_set])
 
         if not paths:
             return SanitySkipped(self.name)
 
         cmd = [
-            'python%s' % args.python_version,
+            args.python_executable,
             'test/sanity/validate-modules/validate-modules',
             '--format', 'json',
             '--arg-spec',
         ] + paths
-
-        with open(VALIDATE_SKIP_PATH, 'r') as skip_fd:
-            skip_paths = skip_fd.read().splitlines()
 
         invalid_ignores = []
 
@@ -80,11 +80,6 @@ class ValidateModulesTest(SanitySingleVersion):
                 path, code = ignore_entry.split(' ', 1)
 
                 ignore[path][code] = line
-
-        skip_paths += [e.path for e in targets.exclude_external]
-
-        if skip_paths:
-            cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
 
         if args.base_branch:
             cmd.extend([

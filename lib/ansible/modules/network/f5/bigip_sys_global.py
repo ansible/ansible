@@ -18,7 +18,7 @@ module: bigip_sys_global
 short_description: Manage BIG-IP global settings
 description:
   - Manage BIG-IP global settings.
-version_added: "2.3"
+version_added: 2.3
 options:
   banner_text:
     description:
@@ -78,7 +78,7 @@ author:
 EXAMPLES = r'''
 - name: Disable the setup utility
   bigip_sys_global:
-    gui_setup: disabled
+    gui_setup: no
     password: secret
     server: lb.mydomain.com
     user: admin
@@ -93,9 +93,9 @@ banner_text:
   type: string
   sample: This is a corporate device. Do not touch.
 console_timeout:
-  description: >
-    The new number of seconds of inactivity before the system
-    logs off a user that is logged on.
+  description:
+    - The new number of seconds of inactivity before the system
+      logs off a user that is logged on.
   returned: changed
   type: int
   sample: 600
@@ -103,68 +103,62 @@ gui_setup:
   description: The new setting for the Setup utility.
   returned: changed
   type: string
-  sample: enabled
+  sample: yes
 lcd_display:
   description: The new setting for displaying the system menu on the LCD.
   returned: changed
   type: string
-  sample: enabled
+  sample: yes
 mgmt_dhcp:
   description: The new setting for whether the mgmt interface should DHCP or not.
   returned: changed
   type: string
-  sample: enabled
+  sample: yes
 net_reboot:
   description: The new setting for whether the system should boot to an ISO on the network or not.
   returned: changed
   type: string
-  sample: enabled
+  sample: yes
 quiet_boot:
-  description: >
-    The new setting for whether the system should suppress information to
-    the console during boot or not.
+  description:
+    - The new setting for whether the system should suppress information to
+      the console during boot or not.
   returned: changed
   type: string
-  sample: enabled
+  sample: yes
 security_banner:
-  description: >
-    The new setting for whether the system should display an advisory message
-    on the login screen or not.
+  description:
+    - The new setting for whether the system should display an advisory message
+      on the login screen or not.
   returned: changed
   type: string
-  sample: enabled
+  sample: yes
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.parsing.convert_bool import BOOLEANS
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
+
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -388,26 +382,25 @@ class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
         self.states = ['present']
-        self.on_off_choices = ['enabled', 'disabled', 'True', 'False'] + list(BOOLEANS)
         argument_spec = dict(
             security_banner=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             banner_text=dict(),
             gui_setup=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             lcd_display=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             mgmt_dhcp=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             net_reboot=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             quiet_boot=dict(
-                choices=self.on_off_choices
+                type='bool'
             ),
             console_timeout=dict(required=False, type='int', default=None),
             state=dict(default='present', choices=['present'])

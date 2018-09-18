@@ -1,0 +1,66 @@
+---
+- debug: msg="START cli/sublevel_strict_mul_parents.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  asa_config:
+    lines:
+      - class-map c1
+      - match default-inspection-traffic
+      - policy-map p1
+      - class c1
+    before: ['no policy-map p1', 'no class-map c1']
+    match: none
+
+- name: configure sub level command using strict match
+  asa_config:
+    lines:
+      - inspect ftp
+      - inspect tftp
+    parents: ['policy-map p1', 'class c1']
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'inspect ftp' in result.updates"
+      - "'inspect tftp' in result.updates"
+
+- name: change sub level command order and config with strict match
+  asa_config:
+    lines:
+      - inspect tftp
+      - inspect ftp
+    parents: ['policy-map p1', 'class c1']
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'inspect ftp' in result.updates"
+      - "'inspect tftp' in result.updates"
+
+- name: Config sub level command with strict match (Idempotency)
+  asa_config:
+    lines:
+#ASA does not change order of class action if reconfigured
+#so we have to use old order for Idempotency
+      - inspect ftp
+      - inspect tftp
+    parents: ['policy-map p1', 'class c1']
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  asa_config:
+    lines:
+      - no policy-map p1
+      - no class-map c1
+    match: strict
+
+- debug: msg="END cli/sublevel_strict_mul_parents.yaml on connection={{ ansible_connection }}"

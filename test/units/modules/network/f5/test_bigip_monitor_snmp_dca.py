@@ -21,9 +21,9 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_monitor_snmp_dca import Parameters
-    from library.bigip_monitor_snmp_dca import ModuleManager
-    from library.bigip_monitor_snmp_dca import ArgumentSpec
+    from library.modules.bigip_monitor_snmp_dca import Parameters
+    from library.modules.bigip_monitor_snmp_dca import ModuleManager
+    from library.modules.bigip_monitor_snmp_dca import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args

@@ -18,21 +18,20 @@ module: bigip_user
 short_description: Manage user accounts and user attributes on a BIG-IP
 description:
   - Manage user accounts and user attributes on a BIG-IP. Typically this
-    module operates only on the REST API users and not the CLI users. There
-    is one exception though and that is if you specify the C(username_credential)
-    of C(root). When specifying C(root), you may only change the password.
+    module operates only on the REST API users and not the CLI users.
+    When specifying C(root), you may only change the password.
     Your other parameters will be ignored in this case. Changing the C(root)
     password is not an idempotent operation. Therefore, it will change it
     every time this module attempts to change it.
-version_added: "2.4"
+version_added: 2.4
 options:
   full_name:
     description:
       - Full name of the user.
   username_credential:
     description:
-      - Name of the user to create, remove or modify. There is a special case
-        that exists for the user C(root).
+      - Name of the user to create, remove or modify.
+      - The C(root) user may not be removed.
     required: True
     aliases:
       - name
@@ -70,7 +69,7 @@ options:
       - C(always) will allow to update passwords if the user chooses to do so.
         C(on_create) will only set the password for newly created users. When
         C(username_credential) is C(root), this value will be forced to C(always).
-    default: on_create
+    default: always
     choices:
       - always
       - on_create
@@ -196,40 +195,28 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from distutils.version import LooseVersion
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 
 
 class Parameters(AnsibleF5Parameters):

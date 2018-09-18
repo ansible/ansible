@@ -26,7 +26,7 @@ options:
   port:
     type: int
     description:
-      - Specifies the port on the remote device to listening for connections
+      - Specifies the port on the remote device that listens for connections
         when establishing the SSH connection.
     default: 22
     ini:
@@ -40,8 +40,7 @@ options:
     description:
       - Configures the device platform network operating system.  This value is
         used to load the correct terminal and cliconf plugins to communicate
-        with the remote device
-    default: null
+        with the remote device.
     vars:
       - name: ansible_network_os
   remote_user:
@@ -49,7 +48,7 @@ options:
       - The username used to authenticate to the remote device when the SSH
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
-      - Can be configured form the CLI via the C(--user) or C(-u) options
+      - Can be configured from the CLI via the C(--user) or C(-u) options.
     ini:
       - section: defaults
         key: remote_user
@@ -62,14 +61,15 @@ options:
       - Configures the user password used to authenticate to the remote device
         when first establishing the SSH connection.
     vars:
-      - name: ansible_pass
+      - name: ansible_password
+      - name: ansible_ssh_pass
   private_key_file:
     description:
-      - The private SSH key or certificate file used to to authenticate to the
+      - The private SSH key or certificate file used to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
-     section: defaults
-     key: private_key_file
+      - section: defaults
+        key: private_key_file
     env:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
@@ -77,10 +77,10 @@ options:
   timeout:
     type: int
     description:
-      - Sets the connection time, in seconds, for the communicating with the
+      - Sets the connection time, in seconds, for communicating with the
         remote device.  This timeout is used as the default timeout value for
         commands when issuing a command to the network CLI.  If the command
-        does not return in timeout seconds, the an error is generated.
+        does not return in timeout seconds, an error is generated.
     default: 120
   become:
     type: boolean
@@ -90,12 +90,12 @@ options:
         transitioning from user mode to C(enable) mode in the CLI session.
         If become is set to True and the remote device does not support
         privilege escalation or the privilege has already been elevated, then
-        this option is silently ignored
-      - Can be configured form the CLI via the C(--become) or C(-b) options
+        this option is silently ignored.
+      - Can be configured from the CLI via the C(--become) or C(-b) options.
     default: False
     ini:
-      section: privilege_escalation
-      key: become
+      - section: privilege_escalation
+        key: become
     env:
       - name: ANSIBLE_BECOME
     vars:
@@ -107,8 +107,8 @@ options:
         C(enable) but could be defined as other values.
     default: sudo
     ini:
-      section: privilege_escalation
-      key: become_method
+      - section: privilege_escalation
+        key: become_method
     env:
       - name: ANSIBLE_BECOME_METHOD
     vars:
@@ -125,8 +125,8 @@ options:
         option on production systems as it could create a security vulnerability.
     default: False
     ini:
-      section: paramiko_connection
-      key: host_key_auto_add
+      - section: paramiko_connection
+        key: host_key_auto_add
     env:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
   persistent_connect_timeout:
@@ -135,11 +135,11 @@ options:
       - Configures, in seconds, the amount of time to wait when trying to
         initially establish a persistent connection.  If this value expires
         before the connection to the remote device is completed, the connection
-        will fail
+        will fail.
     default: 30
     ini:
-      section: persistent_connection
-      key: persistent_connect_timeout
+      - section: persistent_connection
+        key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
   persistent_command_timeout:
@@ -148,31 +148,34 @@ options:
       - Configures, in seconds, the amount of time to wait for a command to
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
-        close
+        close.
     default: 10
     ini:
-      section: persistent_connection
-      key: persistent_command_timeout
+      - section: persistent_connection
+        key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
 
+import getpass
 import json
 import logging
 import re
 import os
 import socket
 import traceback
+from io import BytesIO
 
-from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.six import BytesIO, PY3
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins.connection import NetworkConnectionBase
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
-from ansible.plugins.connection import ConnectionBase
-from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -181,12 +184,11 @@ except ImportError:
     display = Display()
 
 
-class Connection(ConnectionBase):
+class Connection(NetworkConnectionBase):
     ''' CLI (shell) SSH connections on Paramiko '''
 
     transport = 'network_cli'
     has_pipelining = True
-    force_persistence = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -194,32 +196,22 @@ class Connection(ConnectionBase):
         self._ssh_shell = None
 
         self._matched_prompt = None
+        self._matched_cmd_prompt = None
         self._matched_pattern = None
         self._last_response = None
         self._history = list()
-        self._play_context = play_context
-
-        self._local = connection_loader.get('local', play_context, '/dev/null')
-        self._local.set_options()
 
         self._terminal = None
-        self._cliconf = None
-
-        self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
+        self.cliconf = None
+        self.paramiko_conn = None
 
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
-        # reconstruct the socket_path and set instance values accordingly
-        self._update_connection_state()
-
-    def __getattr__(self, name):
-        try:
-            return self.__dict__[name]
-        except KeyError:
-            if name.startswith('_'):
-                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
-            return getattr(self._cliconf, name)
+    def _get_log_channel(self):
+        name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
+        name += "paramiko [%s]" % self._play_context.remote_addr
+        return name
 
     def get_prompt(self):
         """Returns the current prompt from the device"""
@@ -234,7 +226,7 @@ class Connection(ConnectionBase):
             try:
                 cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
                 kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
-                for key in ('prompt', 'answer', 'sendonly', 'newline'):
+                for key in ('prompt', 'answer', 'sendonly', 'newline', 'prompt_retry_check'):
                     if cmd.get(key) is True or cmd.get(key) is False:
                         kwargs[key] = cmd[key]
                     elif cmd.get(key) is not None:
@@ -245,13 +237,7 @@ class Connection(ConnectionBase):
                 return self.send(command=cmd)
 
         else:
-            return self._local.exec_command(cmd, in_data, sudoable)
-
-    def put_file(self, in_path, out_path):
-        return self._local.put_file(in_path, out_path)
-
-    def fetch_file(self, in_path, out_path):
-        return self._local.fetch_file(in_path, out_path)
+            return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def update_play_context(self, pc_data):
         """Updates the play context information for the connection"""
@@ -264,97 +250,75 @@ class Connection(ConnectionBase):
         play_context.deserialize(pc_data)
 
         messages = ['updating play_context for connection']
-        if self._play_context.become is False and play_context.become is True:
-            auth_pass = play_context.become_pass
-            self._terminal.on_become(passwd=auth_pass)
-            messages.append('authorizing connection')
-
-        elif self._play_context.become is True and not play_context.become:
-            self._terminal.on_unbecome()
-            messages.append('deauthorizing connection')
+        if self._play_context.become ^ play_context.become:
+            if play_context.become is True:
+                auth_pass = play_context.become_pass
+                self._terminal.on_become(passwd=auth_pass)
+                messages.append('authorizing connection')
+            else:
+                self._terminal.on_unbecome()
+                messages.append('deauthorizing connection')
 
         self._play_context = play_context
+
+        self.reset_history()
+        self.disable_response_logging()
         return messages
 
     def _connect(self):
         '''
         Connects to the remote device and starts the terminal
         '''
-        if self.connected:
-            return
+        if not self.connected:
+            if not self._network_os:
+                raise AnsibleConnectionFailure(
+                    'Unable to automatically determine host network os. Please '
+                    'manually configure ansible_network_os value for this host'
+                )
+            display.display('network_os is set to %s' % self._network_os, log_only=True)
 
-        p = connection_loader.get('paramiko', self._play_context, '/dev/null')
-        p.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
-        p.force_persistence = self.force_persistence
-        ssh = p._connect()
+            self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+            self.paramiko_conn._set_log_channel(self._get_log_channel())
+            self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
+            self.paramiko_conn.force_persistence = self.force_persistence
+            ssh = self.paramiko_conn._connect()
 
-        display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
+            host = self.get_option('host')
+            display.vvvv('ssh connection done, setting terminal', host=host)
 
-        self._ssh_shell = ssh.ssh.invoke_shell()
-        self._ssh_shell.settimeout(self._play_context.timeout)
+            self._ssh_shell = ssh.ssh.invoke_shell()
+            self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
 
-        network_os = self._play_context.network_os
-        if not network_os:
-            raise AnsibleConnectionFailure(
-                'Unable to automatically determine host network os. Please '
-                'manually configure ansible_network_os value for this host'
-            )
+            self._terminal = terminal_loader.get(self._network_os, self)
+            if not self._terminal:
+                raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
-        self._terminal = terminal_loader.get(network_os, self)
-        if not self._terminal:
-            raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
+            display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
 
-        display.vvvv('loaded terminal plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
+                self._implementation_plugins.append(self.cliconf)
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
 
-        self._cliconf = cliconf_loader.get(network_os, self)
-        if self._cliconf:
-            display.vvvv('loaded cliconf plugin for network_os %s' % network_os, host=self._play_context.remote_addr)
-        else:
-            display.vvvv('unable to load cliconf for network_os %s' % network_os)
+            super(Connection, self)._connect()
 
-        self.receive()
+            self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
+                         newline=self._terminal.terminal_inital_prompt_newline)
 
-        display.vvvv('firing event: on_open_shell()', host=self._play_context.remote_addr)
-        self._terminal.on_open_shell()
+            display.vvvv('firing event: on_open_shell()', host=host)
+            self._terminal.on_open_shell()
 
-        if self._play_context.become and self._play_context.become_method == 'enable':
-            display.vvvv('firing event: on_become', host=self._play_context.remote_addr)
-            auth_pass = self._play_context.become_pass
-            self._terminal.on_become(passwd=auth_pass)
+            if self._play_context.become and self._play_context.become_method == 'enable':
+                display.vvvv('firing event: on_become', host=host)
+                auth_pass = self._play_context.become_pass
+                self._terminal.on_become(passwd=auth_pass)
 
-        display.vvvv('ssh connection has completed successfully', host=self._play_context.remote_addr)
-        self._connected = True
+            display.vvvv('ssh connection has completed successfully', host=host)
+            self._connected = True
 
         return self
-
-    def _update_connection_state(self):
-        '''
-        Reconstruct the connection socket_path and check if it exists
-
-        If the socket path exists then the connection is active and set
-        both the _socket_path value to the path and the _connected value
-        to True.  If the socket path doesn't exist, leave the socket path
-        value to None and the _connected value to False
-        '''
-        ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(self._play_context.remote_addr, self._play_context.port, self._play_context.remote_user, self._play_context.connection,
-                                      self._ansible_playbook_pid)
-
-        tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
-        socket_path = unfrackpath(cp % dict(directory=tmp_path))
-
-        if os.path.exists(socket_path):
-            self._connected = True
-            self._socket_path = socket_path
-
-    def reset(self):
-        '''
-        Reset the connection
-        '''
-        if self._socket_path:
-            display.vvvv('resetting persistent connection for socket_path %s' % self._socket_path, host=self._play_context.remote_addr)
-            self.close()
-        display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
 
     def close(self):
         '''
@@ -362,17 +326,20 @@ class Connection(ConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.debug("closing ssh connection to device")
+            display.debug("closing ssh connection to device", host=self._play_context.remote_addr)
             if self._ssh_shell:
                 display.debug("firing event: on_close_shell()")
                 self._terminal.on_close_shell()
                 self._ssh_shell.close()
                 self._ssh_shell = None
                 display.debug("cli session is now closed")
-            self._connected = False
-            display.debug("ssh connection has been closed successfully")
 
-    def receive(self, command=None, prompts=None, answer=None, newline=True):
+                self.paramiko_conn.close()
+                self.paramiko_conn = None
+                display.debug("ssh connection has been closed successfully")
+        super(Connection, self).close()
+
+    def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
         '''
         Handles receiving of output from command
         '''
@@ -380,6 +347,8 @@ class Connection(ConnectionBase):
         handled = False
 
         self._matched_prompt = None
+        self._matched_cmd_prompt = None
+        matched_prompt_window = window_count = 0
 
         while True:
             data = self._ssh_shell.recv(256)
@@ -393,24 +362,38 @@ class Connection(ConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            window_count += 1
+
             if prompts and not handled:
-                handled = self._handle_prompt(window, prompts, answer, newline)
+                handled = self._handle_prompt(window, prompts, answer, newline, False, check_all)
+                matched_prompt_window = window_count
+            elif prompts and handled and prompt_retry_check and matched_prompt_window + 1 == window_count:
+                # check again even when handled, if same prompt repeats in next window
+                # (like in the case of a wrong enable password, etc) indicates
+                # value of answer is wrong, report this as error.
+                if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all):
+                    raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
                 return self._sanitize(resp, command)
 
-    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False):
+    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False, check_all=False):
         '''
         Sends the command to the device in the opened shell
         '''
+        if check_all:
+            prompt_len = len(to_list(prompt))
+            answer_len = len(to_list(answer))
+            if prompt_len != answer_len:
+                raise AnsibleConnectionFailure("Number of prompts (%s) is not same as that of answers (%s)" % (prompt_len, answer_len))
         try:
             self._history.append(command)
             self._ssh_shell.sendall(b'%s\r' % command)
             if sendonly:
                 return
-            response = self.receive(command, prompt, answer, newline)
+            response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
@@ -424,25 +407,42 @@ class Connection(ConnectionBase):
             data = regex.sub(b'', data)
         return data
 
-    def _handle_prompt(self, resp, prompts, answer, newline):
+    def _handle_prompt(self, resp, prompts, answer, newline, prompt_retry_check=False, check_all=False):
         '''
         Matches the command prompt and responds
 
         :arg resp: Byte string containing the raw response from the remote
         :arg prompts: Sequence of byte strings that we consider prompts for input
-        :arg answer: Byte string to send back to the remote if we find a prompt.
+        :arg answer: Sequence of Byte string to send back to the remote if we find a prompt.
                 A carriage return is automatically appended to this string.
-        :returns: True if a prompt was found in ``resp``.  False otherwise
+        :param prompt_retry_check: Bool value for trying to detect more prompts
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
+        :returns: True if a prompt was found in ``resp``. If check_all is True
+                  will True only after all the prompt in the prompts list are matched. False otherwise.
         '''
+        single_prompt = False
         if not isinstance(prompts, list):
             prompts = [prompts]
-        prompts = [re.compile(r, re.I) for r in prompts]
-        for regex in prompts:
+            single_prompt = True
+        if not isinstance(answer, list):
+            answer = [answer]
+        prompts_regex = [re.compile(r, re.I) for r in prompts]
+        for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
-                self._ssh_shell.sendall(b'%s' % answer)
-                if newline:
-                    self._ssh_shell.sendall(b'\r')
+                # if prompt_retry_check is enabled to check if same prompt is
+                # repeated don't send answer again.
+                if not prompt_retry_check:
+                    prompt_answer = answer[index] if len(answer) > index else answer[0]
+                    self._ssh_shell.sendall(b'%s' % prompt_answer)
+                    if newline:
+                        self._ssh_shell.sendall(b'\r')
+                self._matched_cmd_prompt = match.group()
+                if check_all and prompts and not single_prompt:
+                    prompts.pop(0)
+                    answer.pop(0)
+                    return False
                 return True
         return False
 
@@ -472,6 +472,7 @@ class Connection(ConnectionBase):
                     match = regex.search(response)
                     if match:
                         errored_response = response
+                        self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
                         break
 

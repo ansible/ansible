@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
+# Copyright: (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -27,7 +27,7 @@ description:
        absent on the filesystem.
      - In 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
-     - This module is also supported for Windows targets.
+     - For Windows targets, use the M(win_wait_for) module instead.
 version_added: "0.7"
 options:
   host:
@@ -83,8 +83,6 @@ options:
       - Number of seconds to sleep between checks, before 2.3 this was hardcoded to 1 second.
   msg:
     version_added: "2.4"
-    required: false
-    default: null
     description:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
@@ -108,19 +106,19 @@ EXAMPLES = r'''
   wait_for: timeout=300
   delegate_to: localhost
 
-- name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
+- name: Wait for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000
     delay: 10
 
-- name: Wait 300 seconds for port 8000 of any IP to close active connections, don't start checking for 10 seconds
+- name: Waits for port 8000 of any IP to close active connections, don't start checking for 10 seconds
   wait_for:
     host: 0.0.0.0
     port: 8000
     delay: 10
     state: drained
 
-- name: Wait 300 seconds for port 8000 of any IP to close active connections, ignoring connections for specified hosts
+- name: Wait for port 8000 of any IP to close active connections, ignoring connections for specified hosts
   wait_for:
     host: 0.0.0.0
     port: 8000
@@ -170,6 +168,14 @@ EXAMPLES = r'''
     delay: 10
   vars:
     ansible_connection: local
+'''
+
+RETURN = r'''
+elapsed:
+  description: The number of seconds that elapsed while waiting
+  returned: always
+  type: int
+  sample: 23
 '''
 
 import binascii
@@ -461,18 +467,18 @@ def main():
         compiled_search_re = None
 
     if port and path:
-        module.fail_json(msg="port and path parameter can not both be passed to wait_for")
+        module.fail_json(msg="port and path parameter can not both be passed to wait_for", elapsed=0)
     if path and state == 'stopped':
-        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
+        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module", elapsed=0)
     if path and state == 'drained':
-        module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module")
+        module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module", elapsed=0)
     if module.params['exclude_hosts'] is not None and state != 'drained':
-        module.fail_json(msg="exclude_hosts should only be with state=drained")
+        module.fail_json(msg="exclude_hosts should only be with state=drained", elapsed=0)
     for _connection_state in module.params['active_connection_states']:
         try:
             get_connection_state_id(_connection_state)
         except:
-            module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state)
+            module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state, elapsed=0)
 
     start = datetime.datetime.utcnow()
 

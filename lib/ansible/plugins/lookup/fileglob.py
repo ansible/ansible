@@ -17,7 +17,8 @@ DOCUMENTATION = """
         description: path(s) of files to read
         required: True
     notes:
-      - Patterns ore only supported on files, not directory/paths.
+      - Patterns are only supported on files, not directory/paths.
+      - Matching is against local system files.
 """
 
 EXAMPLES = """
@@ -35,9 +36,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-  _raw:
+  _list:
     description:
-      - content of file(s)
+      - list of files
 """
 
 import os

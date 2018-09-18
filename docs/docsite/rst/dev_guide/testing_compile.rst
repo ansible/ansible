@@ -1,3 +1,7 @@
+:orphan:
+
+.. _testing_compile:
+
 *************
 Compile Tests
 *************
@@ -15,34 +19,36 @@ Compile tests check source files for valid syntax on all supported python versio
 - 3.5
 - 3.6
 
+NOTE: In Ansible 2.4 and earlier the compile test was provided by a dedicated sub-command ``ansible-test compile`` instead of a sanity test using ``ansible-test sanity --test compile``.
+
 Running compile tests locally
 =============================
 
-Unit tests can be run across the whole code base by doing:
+Compile tests can be run across the whole code base by doing:
 
 .. code:: shell
 
     cd /path/to/ansible/source
     source hacking/env-setup
-    ansible-test compile
+    ansible-test sanity --test compile
 
 Against a single file by doing:
 
 .. code:: shell
 
-   ansible-test compile lineinfile
+   ansible-test sanity --test compile lineinfile
 
 Or against a specific Python version by doing:
 
 .. code:: shell
 
-   ansible-test compile --python 2.7 lineinfile
+   ansible-test sanity --test compile --python 2.7 lineinfile
 
 For advanced usage see the help:
 
 .. code:: shell
 
-   ansible-test units --help
+   ansible-test sanity --help
 
 
 Installing dependencies
@@ -54,7 +60,7 @@ The dependencies can be installed using the ``--requirements`` argument. For exa
 
 .. code:: shell
 
-   ansible-test units --requirements lineinfile
+   ansible-test sanity --test compile --requirements lineinfile
 
 
 
@@ -64,4 +70,4 @@ The full list of requirements can be found at `test/runner/requirements <https:/
 Extending compile tests
 =======================
 
-If you believe changes are needed to the Compile tests please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/meetings/README.md>`_ so it can be discussed.
+If you believe changes are needed to the compile tests please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/meetings/README.md>`_ so it can be discussed.

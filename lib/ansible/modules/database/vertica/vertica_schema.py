@@ -34,50 +34,36 @@ options:
     description:
       - Comma separated list of roles to create and grant usage access to the schema.
     aliases: ['usage_role']
-    required: false
-    default: null
   create_roles:
     description:
       - Comma separated list of roles to create and grant usage and create access to the schema.
     aliases: ['create_role']
-    required: false
-    default: null
   owner:
     description:
       - Name of the user to set as owner of the schema.
-    required: false
-    default: null
   state:
     description:
       - Whether to create C(present), or drop C(absent) a schema.
-    required: false
     default: present
     choices: ['present', 'absent']
   db:
     description:
       - Name of the Vertica database.
-    required: false
-    default: null
   cluster:
     description:
       - Name of the Vertica cluster.
-    required: false
     default: localhost
   port:
     description:
       - Vertica cluster port to connect to.
-    required: false
     default: 5433
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.

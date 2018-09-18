@@ -23,7 +23,6 @@ options:
   provider:
     description:
       - A dict object containing connection details.
-    default: null
     suboptions:
       host:
         description:
@@ -47,7 +46,6 @@ options:
             the remote device.   This value is used to authenticate
             the SSH session. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-        default: null
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device
@@ -68,13 +66,12 @@ options:
             attempt to execute all commands in non-privileged mode. If the value
             is not specified in the task, the value of environment variable
             C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-        default: no
-        choices: ['yes', 'no']
+        type: bool
+        default: 'no'
       auth_pass:
         description:
           - Specifies the password to use if required to enter privileged mode
             on the remote device.  If I(authorize) is false, then this argument
             does nothing. If the value is not specified in the task, the value of
             environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-        default: none
 """

@@ -25,6 +25,9 @@ module: panos_import
 short_description: import file on PAN-OS devices
 description:
     - Import file on PAN-OS device
+notes:
+    - API reference documentation can be read from the C(/api/) directory of your appliance
+    - Certificate validation is enabled by default as of Ansible 2.6. This may break existing playbooks but should be disabled with caution.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
@@ -32,34 +35,24 @@ requirements:
     - requests
     - requests_toolbelt
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device.
-        required: true
-    password:
-        description:
-            - Password for device authentication.
-        required: true
-    username:
-        description:
-            - Username for device authentication.
-        required: false
-        default: "admin"
     category:
         description:
             - Category of file uploaded. The default is software.
-        required: false
+            - See API > Import section of the API reference for category options.
         default: software
     file:
         description:
             - Location of the file to import into device.
-        required: false
-        default: None
     url:
         description:
             - URL of the file that will be imported to device.
-        required: false
-        default: None
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. Disabling certificate validation is not recommended.
+        default: yes
+        type: bool
+        version_added: "2.6"
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -83,7 +76,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 import os.path
 import xml.etree
@@ -119,7 +112,7 @@ def import_file(xapi, module, ip_address, file_, category):
 
     r = requests.post(
         'https://' + ip_address + '/api/',
-        verify=False,
+        verify=module.params['validate_certs'],
         params=params,
         headers={'Content-Type': mef.content_type},
         data=mef
@@ -156,7 +149,8 @@ def main():
         username=dict(default='admin'),
         category=dict(default='software'),
         file=dict(),
-        url=dict()
+        url=dict(),
+        validate_certs=dict(type='bool', default=True),
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, required_one_of=[['file', 'url']])
     if not HAS_LIB:
@@ -183,15 +177,15 @@ def main():
 
     try:
         changed, filename = import_file(xapi, module, ip_address, file_, category)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except Exception as exc:
+        module.fail_json(msg=to_native(exc))
 
     # cleanup and delete file if local
     if url is not None:
         delete_file(file_)
 
     module.exit_json(changed=changed, filename=filename, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

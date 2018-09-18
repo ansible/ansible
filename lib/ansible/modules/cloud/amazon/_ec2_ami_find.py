@@ -16,7 +16,10 @@ DOCUMENTATION = r'''
 module: ec2_ami_find
 version_added: '2.0'
 short_description: Searches for AMIs to obtain the AMI ID and other information
-deprecated: Deprecated in 2.5. Use M(ec2_ami_facts) instead.
+deprecated:
+  removed_in: "2.9"
+  why: Various AWS modules have been combined and replaced with M(ec2_ami_facts).
+  alternative: Use M(ec2_ami_facts) instead.
 description:
   - Returns list of matching AMIs with AMI ID, along with other useful information
   - Can search AMIs with different owners
@@ -41,49 +44,31 @@ options:
       - You can include wildcards in many of the search options. An asterisk (*) matches zero or more characters, and a question mark (?) matches exactly one
         character. You can escape special characters using a backslash (\) before the character. For example, a value of \*amazon\?\\ searches for the
         literal string *amazon?\.
-    required: false
-    default: null
   ami_id:
     description:
       - An AMI ID to match.
-    default: null
-    required: false
   ami_tags:
     description:
       - A hash/dictionary of tags to match for the AMI.
-    default: null
-    required: false
   architecture:
     description:
       - An architecture type to match (e.g. x86_64).
-    default: null
-    required: false
   hypervisor:
     description:
       - A hypervisor type type to match (e.g. xen).
-    default: null
-    required: false
   is_public:
     description:
       - Whether or not the image(s) are public.
-    choices: ['yes', 'no']
-    default: null
-    required: false
+    type: bool
   name:
     description:
       - An AMI name to match.
-    default: null
-    required: false
   platform:
     description:
       - Platform type to match.
-    default: null
-    required: false
   product_code:
     description:
       - Marketplace product code to match.
-    default: null
-    required: false
     version_added: "2.3"
   sort:
     description:
@@ -107,48 +92,34 @@ options:
         - 'root_device_type'
         - 'state'
         - 'virtualization_type'
-    default: null
-    required: false
   sort_tag:
     description:
       - Tag name with which to sort results.
       - Required when specifying 'sort=tag'.
-    default: null
-    required: false
   sort_order:
     description:
       - Order in which to sort results.
       - Only used when the 'sort' parameter is specified.
     choices: ['ascending', 'descending']
     default: 'ascending'
-    required: false
   sort_start:
     description:
       - Which result to start with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
   sort_end:
     description:
       - Which result to end with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
   state:
     description:
       - AMI state to match.
     default: 'available'
-    required: false
   virtualization_type:
     description:
       - Virtualization type to match (e.g. hvm).
-    default: null
-    required: false
   root_device_type:
     description:
       - Root device type to match (e.g. ebs, instance-store).
-    default: null
-    required: false
     version_added: "2.5"
   no_result_action:
     description:
@@ -157,7 +128,6 @@ options:
       - "'fail' causes the module to report failure"
     choices: ['success', 'fail']
     default: 'success'
-    required: false
 extends_documentation_fragment:
     - aws
 requirements:

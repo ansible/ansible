@@ -1,13 +1,12 @@
+.. _ansible_documentation:
+
 Ansible Documentation
 =====================
 
 About Ansible
 `````````````
 
-Welcome to the Ansible documentation!
-
-Ansible is an IT automation tool.  It can configure systems, deploy software, and orchestrate more advanced IT tasks
-such as continuous deployments or zero downtime rolling updates.
+Ansible is an IT automation tool.  It can configure systems, deploy software, and orchestrate more advanced IT tasks such as continuous deployments or zero downtime rolling updates.
 
 Ansible's main goals are simplicity and ease-of-use. It also has a strong focus on security and reliability, featuring a minimum of moving parts, usage of OpenSSH for transport (with other transports and pull modes as alternatives), and a language that is designed around auditability by humans--even those not familiar with the program.
 
@@ -16,35 +15,82 @@ We believe simplicity is relevant to all sizes of environments, so we design for
 Ansible manages machines in an agent-less manner. There is never a question of how to
 upgrade remote daemons or the problem of not being able to manage systems because daemons are uninstalled.  Because OpenSSH is one of the most peer-reviewed open source components, security exposure is greatly reduced. Ansible is decentralized--it relies on your existing OS credentials to control access to remote machines. If needed, Ansible can easily connect with Kerberos, LDAP, and other centralized authentication management systems.
 
-This documentation covers the current released version of Ansible (2.3) and also some development version features (2.4).  For recent features, we note in each section the version of Ansible where the feature was added.
+This documentation covers the current released version of Ansible (2.6) and also some development version features.  For recent features, we note in each section the version of Ansible where the feature was added.
 
-Ansible, Inc. releases a new major release of Ansible approximately every two months.  The core application evolves somewhat conservatively, valuing simplicity in language design and setup. However, the community around new modules and plugins being developed and contributed moves very quickly, typically adding 20 or so new modules in each release.
+Ansible releases a new major release of Ansible approximately every two months.  The core application evolves somewhat conservatively, valuing simplicity in language design and setup. However, the community around new modules and plugins being developed and contributed moves very quickly, adding many new modules in each release.
 
-.. _an_introduction:
 
 .. toctree::
    :maxdepth: 2
+   :caption: Installation, Upgrade & Configuration
 
-   intro
-   quickstart
-   playbooks
-   playbooks_special_topics
-   modules
-   module_docs/modules_by_category
-   vault
-   command_line_tools
-   plugins_by_category
-   guides
-   dev_guide/index
-   tower
+   installation_guide/index
+   porting_guides/porting_guides
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Using Ansible
+
+   user_guide/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contributing to Ansible
+
    community/index
-   galaxy
-   test_strategies
-   faq
-   config
-   glossary
-   YAMLSyntax
-   porting_guides
-   python_3_support
-   release_and_maintenance
-   windows
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Extending Ansible
+
+   dev_guide/index
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+   :caption: Scenario Guides
+
+   scenario_guides/guide_*
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Ansible for VMWare
+
+   vmware/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Ansible for Network Automation
+
+   network/index
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference & Appendices
+
+   ../modules/modules_by_category
+   reference_appendices/playbooks_keywords
+   reference_appendices/galaxy
+   reference_appendices/common_return_values
+   reference_appendices/config
+   reference_appendices/YAMLSyntax
+   reference_appendices/python_3_support
+   reference_appendices/release_and_maintenance
+   reference_appendices/test_strategies
+   dev_guide/testing/sanity/index
+   reference_appendices/faq
+   reference_appendices/glossary
+   reference_appendices/module_utils
+   reference_appendices/special_variables
+   reference_appendices/tower
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Release Notes
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Roadmaps
+
+   roadmap/index.rst

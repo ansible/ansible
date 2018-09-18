@@ -8,6 +8,9 @@ DOCUMENTATION = '''
     name: aws_ec2
     plugin_type: inventory
     short_description: ec2 inventory source
+    requirements:
+        - boto3
+        - botocore
     extends_documentation_fragment:
         - inventory_cache
         - constructed
@@ -15,6 +18,10 @@ DOCUMENTATION = '''
         - Get inventory hosts from Amazon Web Services EC2.
         - Uses a <name>.aws_ec2.yaml (or <name>.aws_ec2.yml) YAML configuration file.
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'aws_ec2' plugin.
+            required: True
+            choices: ['aws_ec2']
         boto_profile:
           description: The boto profile to use.
           env:
@@ -46,7 +53,7 @@ DOCUMENTATION = '''
         hostnames:
           description: A list in order of precedence for hostname variables. You can use the options specified in
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
-              use the syntax tag:Name=Value to use the hostname Name_Value.
+              use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
         filters:
           description: A dictionary of filter value pairs. Available filters are listed here
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
@@ -56,50 +63,82 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-simple_config_file:
 
-    plugin: aws_ec2
-    boto_profile: aws_profile
-    regions: # populate inventory with instances in these regions
-      - us-east-1
-      - us-east-2
-    filters:
-      # all instances with their `Environment` tag set to `dev`
-      tag:Environment: dev
-      # all dev and QA hosts
-      tag:Environment:
-        - dev
-        - qa
-      instance.group-id: sg-xxxxxxxx
-    # ignores 403 errors rather than failing
-    strict_permissions: False
-    hostnames:
-      - tag:Name=Tag1,Name=Tag2
-      - dns-name
+# Minimal example using environment vars or instance role credentials
+# Fetch all hosts in us-east-1, the hostname is the public DNS if it exists, otherwise the private IP address
+plugin: aws_ec2
+regions:
+  - us-east-1
 
-    # constructed features may be used to create custom groups
-    strict: False
-    keyed_groups:
-      - prefix: arch
-        key: 'Architecture'
-        value: 'x86_64'
-      - prefix: tag
-        key: Tags
-        value:
-          "Key": "Name"
-          "Value": "Test"
+# Example using filters, ignoring permission errors, and specifying the hostname precedence
+plugin: aws_ec2
+boto_profile: aws_profile
+regions: # populate inventory with instances in these regions
+  - us-east-1
+  - us-east-2
+filters:
+  # all instances with their `Environment` tag set to `dev`
+  tag:Environment: dev
+  # all dev and QA hosts
+  tag:Environment:
+    - dev
+    - qa
+  instance.group-id: sg-xxxxxxxx
+# ignores 403 errors rather than failing
+strict_permissions: False
+# note: I(hostnames) sets the inventory_hostname. To modify ansible_host without modifying
+# inventory_hostname use compose (see example below).
+hostnames:
+  - tag:Name=Tag1,Name=Tag2  # return specific hosts only
+  - tag:CustomDNSName
+  - dns-name
+  - private-ip-address
 
+# Example using constructed features to create groups and set ansible_host
+plugin: aws_ec2
+regions:
+  - us-east-1
+  - us-west-1
+# keyed_groups may be used to create custom groups
+strict: False
+keyed_groups:
+  # add e.g. x86_64 hosts to an arch_x86_64 group
+  - prefix: arch
+    key: 'architecture'
+  # add hosts to tag_Name_Value groups for each Name/Value tag pair
+  - prefix: tag
+    key: tags
+  # add hosts to e.g. instance_type_z3_tiny
+  - prefix: instance_type
+    key: instance_type
+  # create security_groups_sg_abcd1234 group for each SG
+  - key: 'security_groups|json_query("[].group_id")'
+    prefix: 'security_groups'
+  # create a group for each value of the Application tag
+  - key: tags.Application
+    separator: ''
+  # create a group per region e.g. aws_region_us_east_2
+  - key: placement.region
+    prefix: aws_region
+# set individual variables with compose
+compose:
+  # use the private IP address to connect to the host
+  # (note: this does not modify inventory_hostname, which is set via I(hostnames))
+  ansible_host: private_ip_address
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.basic import jsonify
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
-from collections import namedtuple
-import os
 
 try:
     import boto3
@@ -243,7 +282,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _get_boto_attr_chain(self, filter_name, instance):
         '''
             :param filter_name: The filter
-            :param instance: A namedtuple
+            :param instance: instance dict returned by boto3 ec2 describe_instances()
         '''
         allowed_filters = sorted(list(instance_data_filter_to_boto_attr.keys()) + list(instance_meta_filter_to_boto_attr.keys()))
         if filter_name not in allowed_filters:
@@ -299,12 +338,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
            :param regions: a list of regions in which to describe instances
            :param filters: a list of boto3 filter dicionaries
            :param strict_permissions: a boolean determining whether to fail or ignore 403 error codes
-           :return A list of namedtuples containing the fields region, instance_meta, and instance_data
+           :return A list of instance dictionaries
         '''
         all_instances = []
 
         for connection, region in self._boto3_conn(regions):
             try:
+                # By default find non-terminated/terminating instances
+                if not any([f['Name'] == 'instance-state-name' for f in filters]):
+                    filters.append({'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopping', 'stopped']})
                 paginator = connection.get_paginator('describe_instances')
                 reservations = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
                 instances = []
@@ -328,16 +370,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             tag_hostnames = tag_hostnames.split(',')
         else:
             tag_hostnames = [tag_hostnames]
+        tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
         for v in tag_hostnames:
-            tag_name, tag_value = v.split('=')
-            tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
-            if tags.get(tag_name) == tag_value:
-                return to_text(tag_name) + "_" + to_text(tag_value)
+            if '=' in v:
+                tag_name, tag_value = v.split('=')
+                if tags.get(tag_name) == tag_value:
+                    return to_text(tag_name) + "_" + to_text(tag_value)
+            else:
+                tag_value = tags.get(v)
+                if tag_value:
+                    return to_text(tag_value)
         return None
 
     def _get_hostname(self, instance, hostnames):
         '''
-            :param instance: a named tuple with instance_data field
+            :param instance: an instance dict returned by boto3 ec2 describe_instances()
             :param hostnames: a list of hostname destination variables in order of preference
             :return the preferred identifer for the host
         '''
@@ -408,53 +455,64 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         for host in hosts:
             hostname = self._get_hostname(host, hostnames)
+
+            host = camel_dict_to_snake_dict(host, ignore_list=['Tags'])
+            host['tags'] = boto3_tag_list_to_ansible_dict(host.get('tags', []))
+
+            # Allow easier grouping by region
+            host['placement']['region'] = host['placement']['availability_zone'][:-1]
+
             if not hostname:
                 continue
             self.inventory.add_host(hostname, group=group)
-            for hostvar in host.keys():
-                self.inventory.set_variable(hostname, hostvar, host[hostvar])
+            for hostvar, hostval in host.items():
+                self.inventory.set_variable(hostname, hostvar, hostval)
 
             # Use constructed if applicable
 
-            strict = self._options.get('strict', False)
+            strict = self.get_option('strict')
 
             # Composed variables
-            if self._options.get('compose'):
-                self._set_composite_vars(self._options.get('compose'), host, hostname, strict=strict)
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
 
-            # Complex groups based on jinaj2 conditionals, hosts that meet the conditional are added to group
-            if self._options.get('groups'):
-                self._add_host_to_composed_groups(self._options.get('groups'), host, hostname, strict=strict)
+            # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
+            self._add_host_to_composed_groups(self.get_option('groups'), host, hostname, strict=strict)
 
             # Create groups based on variable values and add the corresponding hosts to it
-            if self._options.get('keyed_groups'):
-                self._add_host_to_keyed_groups(self._options.get('keyed_groups'), host, hostname, strict=strict)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
 
     def _set_credentials(self):
         '''
             :param config_data: contents of the inventory config file
         '''
 
-        self.boto_profile = self._options.get('boto_profile')
-        self.aws_access_key_id = self._options.get('aws_access_key_id')
-        self.aws_secret_access_key = self._options.get('aws_secret_access_key')
-        self.aws_security_token = self._options.get('aws_security_token')
+        self.boto_profile = self.get_option('boto_profile')
+        self.aws_access_key_id = self.get_option('aws_access_key_id')
+        self.aws_secret_access_key = self.get_option('aws_secret_access_key')
+        self.aws_security_token = self.get_option('aws_security_token')
+
+        if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
+            session = botocore.session.get_session()
+            if session.get_credentials() is not None:
+                self.aws_access_key_id = session.get_credentials().access_key
+                self.aws_secret_access_key = session.get_credentials().secret_key
+                self.aws_security_token = session.get_credentials().token
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
                                "inventory configuration file or set them as environment variables.")
 
-    def _validate_config(self, loader, path):
+    def verify_file(self, path):
         '''
             :param loader: an ansible.parsing.dataloader.DataLoader object
             :param path: the path to the inventory config file
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.aws_ec2.yml' or '.aws_ec2.yaml'):
-                return self._read_config_data(path)
-        else:
-            raise AnsibleParserError("Not a ec2 inventory plugin configuration file")
+            if path.endswith('.aws_ec2.yml') or path.endswith('.aws_ec2.yaml'):
+                return True
+        display.debug("aws_ec2 inventory filename must end with '*.aws_ec2.yml' or '*.aws_ec2.yaml'")
+        return False
 
     def _get_query_options(self, config_data):
         '''
@@ -502,19 +560,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        config_data = self._validate_config(loader, path)
+        config_data = self._read_config_data(path)
         self._set_credentials()
 
         # get user specifications
         regions, filters, hostnames, strict_permissions = self._get_query_options(config_data)
 
+        cache_key = self.get_cache_key(path)
         # false when refresh_cache or --flush-cache is used
         if cache:
             # get the user-specified directive
-            cache = self._options.get('cache')
-            cache_key = self.get_cache_key(path)
-        else:
-            cache_key = None
+            cache = self.get_option('cache')
 
         # Generate inventory
         formatted_inventory = {}
@@ -533,5 +589,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._populate(results, hostnames)
             formatted_inventory = self._format_inventory(results, hostnames)
 
-        if cache_needs_update:
+        # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
+        # when the user is using caching, update the cached inventory
+        if cache_needs_update or (not cache and self.get_option('cache')):
             self.cache.set(cache_key, formatted_inventory)

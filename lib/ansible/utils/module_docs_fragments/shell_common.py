@@ -7,27 +7,29 @@ class ModuleDocFragment(object):
     # common shelldocumentation fragment
     DOCUMENTATION = """
 options:
-  remote_temp:
+  remote_tmp:
     description:
       - Temporary directory to use on targets when executing tasks.
     default: '~/.ansible/tmp'
-    env: [{name: ANSIBLE_REMOTE_TEMP}]
+    env: [{name: ANSIBLE_REMOTE_TEMP}, {name: ANSIBLE_REMOTE_TMP}]
     ini:
       - section: defaults
         key: remote_tmp
     vars:
       - name: ansible_remote_tmp
-  system_temps:
+  system_tmpdirs:
     description:
-       - List of valid system temporary directories for Ansible to choose when it cannot use ``remote_temp``, normally due to permission issues.
+       - "List of valid system temporary directories for Ansible to choose when it cannot use
+         ``remote_tmp``, normally due to permission issues.  These must be world readable, writable,
+         and executable."
     default: [ /var/tmp, /tmp ]
     type: list
-    env: [{name: ANSIBLE_SYSTEM_TMPS}]
+    env: [{name: ANSIBLE_SYSTEM_TMPDIRS}]
     ini:
       - section: defaults
-        key: system_tmps
+        key: system_tmpdirs
     vars:
-      - name: ansible_system_tmps
+      - name: ansible_system_tmpdirs
   async_dir:
     description:
        - Directory in which ansible will keep async job inforamtion
@@ -45,9 +47,10 @@ options:
       - dictionary of environment variables and their values to use when executing commands.
   admin_users:
     type: list
-    default: ['root', 'toor', 'admin']
+    default: ['root', 'toor']
     description:
-      - list of users to be expected to have admin privileges, for BSD you might want to add 'toor' for windows 'Administrator'.
+      - list of users to be expected to have admin privileges. This is used by the controller to
+        determine how to share temporary files between the remote user and the become user.
     env:
       - name: ANSIBLE_ADMIN_USERS
     ini:

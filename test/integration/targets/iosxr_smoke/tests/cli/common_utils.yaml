@@ -1,0 +1,37 @@
+---
+- debug: msg="START iosxr cli/common_utils.yaml on connection={{ ansible_connection }}"
+
+# Functions used by iosxr: conditional, remove_default_spec
+
+# hit conditional() and remove_default_spec()
+- name: Check intent arguments
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    state: up
+    tx_rate: ge(0)
+    rx_rate: ge(0)
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check intent arguments (failed condition)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    state: down
+    tx_rate: gt(0)
+    rx_rate: lt(0)
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(down)' in result.failed_conditions"
+      - "'tx_rate gt(0)' in result.failed_conditions"
+      - "'rx_rate lt(0)' in result.failed_conditions"
+
+- debug: msg="END iosxr cli/common_utils.yaml on connection={{ ansible_connection }}"

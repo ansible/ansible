@@ -30,27 +30,23 @@ options:
         transfered. The argument C(recursive) must be C(true) to transfer
         directories.
     required: true
-    default: null
   dest:
     description:
       - The C(dest) argument specifies the path in which to receive the files.
-    required: false
     default: '.'
   recursive:
     description:
       - The C(recursive) argument enables recursive transfer of files and
         directories.
-    required: false
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
   remote_src:
     description:
       - The C(remote_src) argument enables the download of files (I(scp get)) from
         the remote device. The default behavior is to upload files (I(scp put))
         to the remote device.
-    required: false
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)
@@ -58,6 +54,7 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vMX JUNOS version 17.3R1.10.
+  - Works with C(local) connections only.
 """
 
 EXAMPLES = """
@@ -86,7 +83,7 @@ changed:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     from jnpr.junos import Device
@@ -117,9 +114,8 @@ def connect(module):
         device = Device(host, **kwargs)
         device.open()
         device.timeout = get_param(module, 'timeout') or 10
-    except ConnectError:
-        exc = get_exception()
-        module.fail_json('unable to connect to %s: %s' % (host, str(exc)))
+    except ConnectError as exc:
+        module.fail_json('unable to connect to %s: %s' % (host, to_native(exc)))
 
     return device
 
@@ -158,7 +154,7 @@ def main():
     if not HAS_PYEZ:
         module.fail_json(
             msg='junos-eznc is required but does not appear to be installed. '
-                'It can be installed using `pip  install junos-eznc`'
+                'It can be installed using `pip install junos-eznc`'
         )
 
     result = dict(changed=True)
@@ -170,7 +166,7 @@ def main():
             transfer_files(module, device)
         except Exception as ex:
             module.fail_json(
-                msg=str(ex)
+                msg=to_native(ex)
             )
         finally:
             try:

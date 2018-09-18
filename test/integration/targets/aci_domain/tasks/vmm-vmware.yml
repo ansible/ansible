@@ -1,0 +1,184 @@
+# Test code for the ACI modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+# CLEAN ENVIRONMENT
+- name: Remove VMM domain
+  aci_domain: &domain_absent
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    domain: vmm_dom
+    domain_type: vmm
+    vm_provider: vmware
+    state: absent
+
+
+# ADD DOMAIN
+- name: Add VMM domain (check_mode)
+  aci_domain: &domain_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    domain: vmm_dom
+    domain_type: vmm
+    vm_provider: vmware
+    state: present
+  check_mode: yes
+  register: cm_add_domain
+
+- name: Add VMM domain (normal mode)
+  aci_domain: *domain_present
+  register: nm_add_domain
+
+- name: Verify add_domain
+  assert:
+    that:
+    - cm_add_domain is changed
+    - nm_add_domain is changed
+    - 'cm_add_domain.sent == nm_add_domain.sent == {"vmmDomP": {"attributes": {"name": "vmm_dom"}}}'
+    - 'cm_add_domain.proposed == nm_add_domain.proposed == {"vmmDomP": {"attributes": {"name": "vmm_dom"}}}'
+    - cm_add_domain.current == cm_add_domain.previous == nm_add_domain.previous == []
+    - nm_add_domain.current.0.vmmDomP.attributes.dn == 'uni/vmmp-VMware/dom-vmm_dom'
+    - nm_add_domain.current.0.vmmDomP.attributes.name == 'vmm_dom'
+
+- name: Add VMM domain again (check_mode)
+  aci_domain: *domain_present
+  check_mode: yes
+  register: cm_add_domain_again
+
+- name: Add physical domain again (normal mode)
+  aci_domain: *domain_present
+  register: nm_add_domain_again
+
+- name: Verify add_domain_again
+  assert:
+    that:
+    - cm_add_domain_again is not changed
+    - nm_add_domain_again is not changed
+
+
+# QUERY ALL DOMAINS
+- name: Query all VMM domains (check_mode)
+  aci_domain: &domain_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    domain_type: vmm
+    vm_provider: vmware
+    state: query
+  check_mode: yes
+  register: cm_query_all_domains
+
+- name: Query all VMM domains (normal mode)
+  aci_domain: *domain_query
+  register: nm_query_all_domains
+
+- name: Verify query_all_domains
+  assert:
+    that:
+    - cm_query_all_domains is not changed
+    - nm_query_all_domains is not changed
+    - cm_query_all_domains == nm_query_all_domains
+    - nm_query_all_domains.current|length >= 1
+
+
+# QUERY A DOMAIN
+- name: Query our VMM domain (check_mode)
+  aci_domain:
+    <<: *domain_query
+    domain: vmm_dom
+    vm_provider: vmware
+  check_mode: yes
+  register: cm_query_domain
+
+- name: Query our VMM domain (normal mode)
+  aci_domain:
+    <<: *domain_query
+    domain: vmm_dom
+    vm_provider: vmware
+  register: nm_query_domain
+
+- name: Verify query_domain
+  assert:
+    that:
+    - cm_query_domain is not changed
+    - nm_query_domain is not changed
+    - cm_query_domain == nm_query_domain
+    - nm_query_domain.current.0.vmmDomP.attributes.dn == 'uni/vmmp-VMware/dom-vmm_dom'
+    - nm_query_domain.current.0.vmmDomP.attributes.name == 'vmm_dom'
+
+
+# REMOVE DOMAIN
+- name: Remove VMM domain (check_mode)
+  aci_domain: *domain_absent
+  check_mode: yes
+  register: cm_remove_domain
+
+- name: Remove VMM domain (normal mode)
+  aci_domain: *domain_absent
+  register: nm_remove_domain
+
+- name: Verify remove_domain
+  assert:
+    that:
+    - cm_remove_domain is changed
+    - nm_remove_domain is changed
+    - cm_remove_domain.current == cm_remove_domain.previous == nm_remove_domain.previous
+    - nm_remove_domain.previous.0.vmmDomP.attributes.dn == 'uni/vmmp-VMware/dom-vmm_dom'
+    - nm_remove_domain.previous.0.vmmDomP.attributes.name == 'vmm_dom'
+    - nm_remove_domain.current == []
+
+- name: Remove VMM domain again (check_mode)
+  aci_domain: *domain_absent
+  check_mode: yes
+  register: cm_remove_domain_again
+
+- name: Remove VMM domain again (normal mode)
+  aci_domain: *domain_absent
+  register: nm_remove_domain_again
+
+- name: Verify remove_domain_again
+  assert:
+    that:
+    - cm_remove_domain_again is not changed
+    - nm_remove_domain_again is not changed
+
+
+# QUERY NON-EXISTING DOMAIN
+- name: Query non-existing VMM domain (check_mode)
+  aci_domain:
+    <<: *domain_query
+    domain: vmm_dom
+    vm_provider: vmware
+  check_mode: yes
+  register: cm_query_non_domain
+
+- name: Query non-existing VMM domain (normal mode)
+  aci_domain:
+    <<: *domain_query
+    domain: vmm_dom
+    vm_provider: vmware
+  register: nm_query_non_domain
+
+- name: Verify query_non_domain
+  assert:
+    that:
+    - cm_query_non_domain is not changed
+    - nm_query_non_domain is not changed
+    - cm_query_non_domain == nm_query_non_domain
+    - nm_query_non_domain.current == []

@@ -27,9 +27,8 @@ description:
 options:
   state:
     description:
-      - absent - provider should not exist, present - provider should be present.
-    required: False
-    choices: ['absent', 'present']
+      - absent - provider should not exist, present - provider should be present, refresh - provider will be refreshed
+    choices: ['absent', 'present', 'refresh']
     default: 'present'
   name:
     description: The provider's name.
@@ -37,161 +36,114 @@ options:
   type:
     description: The provider's type.
     required: true
-    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure', 'Director']
+    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure', 'Director', 'OpenStack', 'GCE']
   zone:
     description: The ManageIQ zone name that will manage the provider.
-    required: false
     default: 'default'
   provider_region:
     description: The provider region name to connect to (e.g. AWS region for Amazon).
-    required: false
-    default: null
   host_default_vnc_port_start:
-    required: false
-    default: null
     description: The first port in the host VNC range. defaults to None.
     version_added: "2.5"
   host_default_vnc_port_end:
-    required: false
-    default: null
     description: The last port in the host VNC range. defaults to None.
     version_added: "2.5"
   subscription:
-    required: false
-    default: null
     description: Microsoft Azure subscription ID. defaults to None.
     version_added: "2.5"
+  project:
+    description: Google Compute Engine Project ID. defaults to None.
+    version_added: "2.5"
   azure_tenant_id:
-    required: false
-    default: null
     description: Tenant ID. defaults to None.
     version_added: "2.5"
+    aliases: [ keystone_v3_domain_id ]
+  tenant_mapping_enabled:
+    type: bool
+    default: 'no'
+    description: Whether to enable mapping of existing tenants. defaults to False.
+    version_added: "2.5"
   api_version:
-    required: false
-    default: null
     description: The OpenStack Keystone API version. defaults to None.
     choices: ['v2', 'v3']
     version_added: "2.5"
 
   provider:
-    required: false
     description: Default endpoint connection information, required if state is true.
-    default: null
     suboptions:
       hostname:
         description: The provider's api hostname.
         required: true
       port:
         description: The provider's api port.
-        required: false
       userid:
-        required: false
-        default: null
         description: Provider's api endpoint authentication userid. defaults to None.
       password:
-        required: false
-        default: null
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
-        required: false
-        default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
       verify_ssl:
-        required: false
-        default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+        type: bool
+        default: 'yes'
       security_protocol:
-        required: false
-        default: None
-        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation','non-ssl']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
+        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation','non-ssl']
       certificate_authority:
-        required: false
-        default: null
         description: The CA bundle string with custom certificates. defaults to None.
 
   metrics:
-    required: false
     description: Metrics endpoint connection information.
-    default: null
     suboptions:
       hostname:
         description: The provider's api hostname.
         required: true
       port:
         description: The provider's api port.
-        required: false
       userid:
-        required: false
-        default: null
         description: Provider's api endpoint authentication userid. defaults to None.
       password:
-        required: false
-        default: null
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
-        required: false
-        default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
       verify_ssl:
-        required: false
-        default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+        type: bool
+        default: 'yes'
       security_protocol:
-        required: false
-        default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation','non-ssl']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
       certificate_authority:
-        required: false
-        default: null
         description: The CA bundle string with custom certificates. defaults to None.
       path:
-        required: false
-        default: ovirt_engine_history
         description: Database name for oVirt metrics. Defaults to ovirt_engine_history.
+        default: ovirt_engine_history
 
   alerts:
-    required: false
     description: Alerts endpoint connection information.
-    default: null
     suboptions:
       hostname:
         description: The provider's api hostname.
         required: true
       port:
         description: The provider's api port.
-        required: false
       userid:
-        required: false
-        default: null
         description: Provider's api endpoint authentication userid. defaults to None.
       password:
-        required: false
-        default: null
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
-        required: false
-        default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
       verify_ssl:
-        required: false
-        default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+        default: true
       security_protocol:
-        required: false
-        default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
       certificate_authority:
-        required: false
-        default: null
         description: The CA bundle string with custom certificates. defaults to None.
 
   ssh_keypair:
-    required: false
     description: SSH key pair used for SSH connections to all hosts in this provider.
-    default: null
     version_added: "2.5"
     suboptions:
       hostname:
@@ -199,10 +151,8 @@ options:
         required: true
       userid:
         description: SSH username.
-        required: false
       auth_key:
         description: SSH private key.
-        required: false
 '''
 
 EXAMPLES = '''
@@ -487,6 +437,61 @@ EXAMPLES = '''
       hostname: director.example.com
       userid: heat-admin
       auth_key: 'SecretSSHPrivateKey'
+
+- name: Create a new OpenStack provider in ManageIQ with amqp metrics
+  manageiq_provider:
+    name: 'EngOpenStack'
+    type: 'OpenStack'
+    api_version: 'v3'
+    state: 'present'
+    provider_region: 'europe'
+    tenant_mapping_enabled: 'False'
+    keystone_v3_domain_id: 'mydomain'
+    provider:
+      hostname: 'openstack.example.com'
+      userid: 'admin'
+      password: 'password'
+      security_protocol: 'ssl-with-validation'
+      verify_ssl: 'true'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    metrics:
+      role: amqp
+      hostname: 'amqp.example.com'
+      security_protocol: 'non-ssl'
+      port: 5666
+      userid: admin
+      password: password
+
+
+- name: Create a new GCE provider in ManageIQ
+  manageiq_provider:
+    name: 'EngGoogle'
+    type: 'GCE'
+    provider_region: 'europe-west1'
+    project: 'project1'
+    state: 'present'
+    provider:
+      hostname: 'gce.example.com'
+      auth_key: 'google_json_key'
+      verify_ssl: 'false'
 '''
 
 RETURN = '''
@@ -523,6 +528,12 @@ def supported_providers():
             class_name='ManageIQ::Providers::Openstack::InfraManager',
             ssh_keypair_role="ssh_keypair"
         ),
+        OpenStack=dict(
+            class_name='ManageIQ::Providers::Openstack::CloudManager',
+        ),
+        GCE=dict(
+            class_name='ManageIQ::Providers::Google::CloudManager',
+        ),
     )
 
 
@@ -554,6 +565,7 @@ def endpoint_argument_spec():
         password=dict(no_log=True),
         auth_key=dict(no_log=True),
         subscription=dict(no_log=True),
+        project=dict(),
         uid_ems=dict(),
         path=dict(),
     )
@@ -681,8 +693,8 @@ class ManageIQProvider(object):
 
     def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region,
                       host_default_vnc_port_start, host_default_vnc_port_end,
-                      subscription, uid_ems, api_version):
-        """ Edit a user from manageiq.
+                      subscription, project, uid_ems, tenant_mapping_enabled, api_version):
+        """ Edit a provider from manageiq.
 
         Returns:
             a short message describing the operation executed.
@@ -697,7 +709,9 @@ class ManageIQProvider(object):
             host_default_vnc_port_start=host_default_vnc_port_start,
             host_default_vnc_port_end=host_default_vnc_port_end,
             subscription=subscription,
+            project=project,
             uid_ems=uid_ems,
+            tenant_mapping_enabled=tenant_mapping_enabled,
             api_version=api_version,
         )
 
@@ -722,32 +736,33 @@ class ManageIQProvider(object):
 
     def create_provider(self, name, provider_type, endpoints, zone_id, provider_region,
                         host_default_vnc_port_start, host_default_vnc_port_end,
-                        subscription, uid_ems, api_version):
-        """ Creates the user in manageiq.
+                        subscription, project, uid_ems, tenant_mapping_enabled, api_version):
+        """ Creates the provider in manageiq.
 
         Returns:
-            the created user id, name, created_on timestamp,
-            updated_on timestamp, userid and current_group_id.
+            a short message describing the operation executed.
         """
+        resource = dict(
+            name=name,
+            zone={'id': zone_id},
+            provider_region=provider_region,
+            host_default_vnc_port_start=host_default_vnc_port_start,
+            host_default_vnc_port_end=host_default_vnc_port_end,
+            subscription=subscription,
+            project=project,
+            uid_ems=uid_ems,
+            tenant_mapping_enabled=tenant_mapping_enabled,
+            api_version=api_version,
+            connection_configurations=endpoints,
+        )
+
         # clean nulls, we do not send nulls to the api
-        endpoints = delete_nulls(endpoints)
+        resource = delete_nulls(resource)
 
         # try to create a new provider
         try:
             url = '%s/providers' % (self.api_url)
-            result = self.client.post(
-                url,
-                name=name,
-                type=supported_providers()[provider_type]['class_name'],
-                zone={'id': zone_id},
-                provider_region=provider_region,
-                host_default_vnc_port_start=host_default_vnc_port_start,
-                host_default_vnc_port_end=host_default_vnc_port_end,
-                subscription=subscription,
-                uid_ems=uid_ems,
-                api_version=api_version,
-                connection_configurations=endpoints,
-            )
+            result = self.client.post(url, type=supported_providers()[provider_type]['class_name'], **resource)
         except Exception as e:
             self.module.fail_json(msg="failed to create provider %s: %s" % (name, str(e)))
 
@@ -755,20 +770,38 @@ class ManageIQProvider(object):
             changed=True,
             msg="successfully created the provider %s: %s" % (name, result['results']))
 
+    def refresh(self, provider, name):
+        """ Trigger provider refresh.
+
+        Returns:
+            a short message describing the operation executed.
+        """
+        try:
+            url = '%s/providers/%s' % (self.api_url, provider['id'])
+            result = self.client.post(url, action='refresh')
+        except Exception as e:
+            self.module.fail_json(msg="failed to refresh provider %s: %s" % (name, str(e)))
+
+        return dict(
+            changed=True,
+            msg="refreshing provider %s" % name)
+
 
 def main():
     zone_id = None
     endpoints = []
     argument_spec = dict(
-        state=dict(choices=['absent', 'present'], default='present'),
+        state=dict(choices=['absent', 'present', 'refresh'], default='present'),
         name=dict(required=True),
         zone=dict(default='default'),
         provider_region=dict(),
         host_default_vnc_port_start=dict(),
         host_default_vnc_port_end=dict(),
         subscription=dict(),
-        azure_tenant_id=dict(),
-        api_version=dict(),
+        project=dict(),
+        azure_tenant_id=dict(aliases=['keystone_v3_domain_id']),
+        tenant_mapping_enabled=dict(default=False, type='bool'),
+        api_version=dict(choices=['v2', 'v3']),
         type=dict(choices=supported_providers().keys()),
     )
     # add the manageiq connection arguments to the arguments
@@ -779,7 +812,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_if=[
-            ('state', 'present', ['provider'])],
+            ('state', 'present', ['provider']),
+            ('state', 'refresh', ['name'])],
         required_together=[
             ['host_default_vnc_port_start', 'host_default_vnc_port_end']
         ],
@@ -794,6 +828,8 @@ def main():
     host_default_vnc_port_end = module.params['host_default_vnc_port_end']
     subscription = module.params['subscription']
     uid_ems = module.params['azure_tenant_id']
+    project = module.params['project']
+    tenant_mapping_enabled = module.params['tenant_mapping_enabled']
     api_version = module.params['api_version']
     state = module.params['state']
 
@@ -842,12 +878,21 @@ def main():
         if provider:
             res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, provider_region,
                                                        host_default_vnc_port_start, host_default_vnc_port_end,
-                                                       subscription, uid_ems, api_version)
+                                                       subscription, project, uid_ems, tenant_mapping_enabled, api_version)
         # if we do not have a provider, create it
         else:
             res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region,
                                                          host_default_vnc_port_start, host_default_vnc_port_end,
-                                                         subscription, uid_ems, api_version)
+                                                         subscription, project, uid_ems, tenant_mapping_enabled, api_version)
+
+    # refresh provider (trigger sync)
+    if state == "refresh":
+        if provider:
+            res_args = manageiq_provider.refresh(provider, name)
+        else:
+            res_args = dict(
+                changed=False,
+                msg="provider %s: does not exist in manageiq" % (name))
 
     module.exit_json(**res_args)
 

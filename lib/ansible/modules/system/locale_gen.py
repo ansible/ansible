@@ -43,7 +43,6 @@ import re
 from subprocess import Popen, PIPE, call
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_native
 
 LOCALE_NORMALIZATION = {
@@ -228,9 +227,8 @@ def main():
                     apply_change(state, name)
                 else:
                     apply_change_ubuntu(state, name)
-            except EnvironmentError:
-                e = get_exception()
-                module.fail_json(msg=e.strerror, exitValue=e.errno)
+            except EnvironmentError as e:
+                module.fail_json(msg=to_native(e), exitValue=e.errno)
 
         module.exit_json(name=name, changed=changed, msg="OK")
 

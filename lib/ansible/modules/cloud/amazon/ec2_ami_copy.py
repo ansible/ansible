@@ -39,42 +39,41 @@ options:
   name:
     description:
       - The name of the new AMI to copy. (As of 2.3 the default is 'default', in prior versions it was 'null'.)
-    required: false
     default: "default"
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the new AMI.
-    required: false
-    default: null
   encrypted:
     description:
       - Whether or not the destination snapshots of the copied AMI should be encrypted.
-    required: false
-    default: null
     version_added: "2.2"
   kms_key_id:
     description:
       - KMS key id used to encrypt image. If not specified, uses default EBS Customer Master Key (CMK) for your account.
-    required: false
-    default: null
     version_added: "2.2"
   wait:
     description:
       - Wait for the copied AMI to be in state 'available' before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
-      - How long before wait gives up, in seconds. (As of 2.3 this option is deprecated. See boto3 Waiters)
-    required: false
-    default: 1200
+      - How long before wait gives up, in seconds. Prior to 2.3 the default was 1200.
+      - From 2.3-2.5 this option was deprecated in favor of boto3 waiter defaults.
+        This was reenabled in 2.6 to allow timeouts greater than 10 minutes.
+    default: 600
   tags:
     description:
       - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
-author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
+  tag_equality:
+    description:
+      - Whether to use tags if the source AMI already exists in the target region. If this is set, and all tags match
+        in an existing AMI, the AMI will not be copied again.
+    default: false
+    version_added: 2.6
+author:
+- Amir Moulavi (@amir343) <amir.moulavi@gmail.com>
+- Tim C <defunct@defunct.io>
 extends_documentation_fragment:
     - aws
     - ec2
@@ -95,6 +94,7 @@ EXAMPLES = '''
     region: eu-west-1
     source_image_id: ami-xxxxxxx
     wait: yes
+    wait_timeout: 1200  # Default timeout is 600
   register: image_id
 
 # Named AMI copy
@@ -105,7 +105,7 @@ EXAMPLES = '''
     name: My-Awesome-AMI
     description: latest patch
 
-# Tagged AMI copy
+# Tagged AMI copy (will not copy the same AMI twice)
 - ec2_ami_copy:
     source_region: us-east-1
     region: eu-west-1
@@ -113,6 +113,7 @@ EXAMPLES = '''
     tags:
         Name: My-Super-AMI
         Patch: 1.2.3
+    tag_equality: yes
 
 # Encrypted AMI copy
 - ec2_ami_copy:
@@ -138,13 +139,12 @@ image_id:
   sample: ami-e689729e
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
-
-import traceback
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
 
 try:
-    from botocore.exceptions import ClientError, NoCredentialsError, WaiterError
+    from botocore.exceptions import ClientError, NoCredentialsError, WaiterError, BotoCoreError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -158,6 +158,10 @@ def copy_image(module, ec2):
     ec2: ec2 connection object
     """
 
+    image = None
+    changed = False
+    tags = module.params.get('tags')
+
     params = {'SourceRegion': module.params.get('source_region'),
               'SourceImageId': module.params.get('source_image_id'),
               'Name': module.params.get('name'),
@@ -168,22 +172,33 @@ def copy_image(module, ec2):
         params['KmsKeyId'] = module.params.get('kms_key_id')
 
     try:
-        image_id = ec2.copy_image(**params)['ImageId']
+        if module.params.get('tag_equality'):
+            filters = [{'Name': 'tag:%s' % k, 'Values': [v]} for (k, v) in module.params.get('tags').items()]
+            filters.append(dict(Name='state', Values=['available', 'pending']))
+            images = ec2.describe_images(Filters=filters)
+            if len(images['Images']) > 0:
+                image = images['Images'][0]
+        if not image:
+            image = ec2.copy_image(**params)
+            image_id = image['ImageId']
+            if tags:
+                ec2.create_tags(Resources=[image_id],
+                                Tags=ansible_dict_to_boto3_tag_list(tags))
+            changed = True
+
         if module.params.get('wait'):
-            ec2.get_waiter('image_available').wait(ImageIds=[image_id])
-        if module.params.get('tags'):
-            ec2.create_tags(
-                Resources=[image_id],
-                Tags=[{'Key': k, 'Value': v} for k, v in module.params.get('tags').items()]
+            delay = 15
+            max_attempts = module.params.get('wait_timeout') // delay
+            ec2.get_waiter('image_available').wait(
+                ImageIds=[image_id],
+                WaiterConfig={'Delay': delay, 'MaxAttempts': max_attempts}
             )
 
-        module.exit_json(changed=True, image_id=image_id)
-    except WaiterError as we:
-        module.fail_json(msg='An error occurred waiting for the image to become available. (%s)' % str(we), exception=traceback.format_exc())
-    except ClientError as ce:
-        module.fail_json(msg=ce.message)
-    except NoCredentialsError:
-        module.fail_json(msg='Unable to authenticate, AWS credentials are invalid.')
+        module.exit_json(changed=changed, **camel_dict_to_snake_dict(image))
+    except WaiterError as e:
+        module.fail_json_aws(e, msg='An error occurred waiting for the image to become available')
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Could not copy AMI")
     except Exception as e:
         module.fail_json(msg='Unhandled exception. (%s)' % str(e))
 
@@ -198,15 +213,13 @@ def main():
         encrypted=dict(type='bool', default=False, required=False),
         kms_key_id=dict(type='str', required=False),
         wait=dict(type='bool', default=False),
-        wait_timeout=dict(default=1200),
-        tags=dict(type='dict')))
+        wait_timeout=dict(type='int', default=600),
+        tags=dict(type='dict')),
+        tag_equality=dict(type='bool', default=False))
 
-    module = AnsibleModule(argument_spec=argument_spec)
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url,
-                     **aws_connect_params)
-
+    module = AnsibleAWSModule(argument_spec=argument_spec)
+    # TODO: Check botocore version
+    ec2 = module.client('ec2')
     copy_image(module, ec2)
 
 

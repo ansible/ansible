@@ -50,7 +50,7 @@ options:
         choices:
             - public
             - none
-        default: None
+        default: 'none'
     ports:
         description:
             - List of ports exposed within the container group.
@@ -93,10 +93,11 @@ options:
         description:
             - Force update of existing container instance. Any update will result in deletion and recreation of existing containers.
         type: bool
-        default: False
+        default: 'no'
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -145,14 +146,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerinstance.models import (ContainerGroup,
-                                                     Container,
-                                                     ResourceRequirements,
-                                                     ResourceRequests,
-                                                     ImageRegistryCredential,
-                                                     IpAddress,
-                                                     Port,
-                                                     ContainerPort)
+    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -263,25 +257,27 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         self.containers = None
 
+        self.tags = None
+
         self.results = dict(changed=False, state=dict())
-        self.mgmt_client = None
+        self.cgmodels = None
 
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                        supports_check_mode=True,
-                                                       supports_tags=False)
+                                                       supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         resource_group = None
         response = None
         results = dict()
 
-        self.mgmt_client = self.get_mgmt_svc_client(ContainerInstanceManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
+        # since this client hasn't been upgraded to expose models directly off the OperationClass, fish them out
+        self.cgmodels = self.containerinstance_client.container_groups.models
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -307,6 +303,10 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.log("Container instance deleted")
             elif self.state == 'present':
                 self.log("Need to check if container group has to be deleted or may be updated")
+                update_tags, newtags = self.update_tags(response.get('tags', dict()))
+                if update_tags:
+                    self.tags = newtags
+
                 if self.force_update:
                     self.log('Deleting container instance before update')
                     if not self.check_mode:
@@ -341,9 +341,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         registry_credentials = None
 
         if self.registry_login_server is not None:
-            registry_credentials = [ImageRegistryCredential(server=self.registry_login_server,
-                                                            username=self.registry_username,
-                                                            password=self.registry_password)]
+            registry_credentials = [self.cgmodels.ImageRegistryCredential(server=self.registry_login_server,
+                                                                          username=self.registry_username,
+                                                                          password=self.registry_password)]
 
         ip_address = None
 
@@ -352,8 +352,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             if self.ports:
                 ports = []
                 for port in self.ports:
-                    ports.append(Port(port=port, protocol="TCP"))
-                ip_address = IpAddress(ports=ports, ip=self.ip_address)
+                    ports.append(self.cgmodels.Port(port=port, protocol="TCP"))
+                ip_address = self.cgmodels.IpAddress(ports=ports, ip=self.ip_address)
 
         containers = []
 
@@ -367,22 +367,30 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             port_list = container_def.get("ports")
             if port_list:
                 for port in port_list:
-                    ports.append(ContainerPort(port))
+                    ports.append(self.cgmodels.ContainerPort(port=port))
 
-            containers.append(Container(name=name,
-                                        image=image,
-                                        resources=ResourceRequirements(ResourceRequests(memory_in_gb=memory, cpu=cpu)),
-                                        ports=ports))
+            containers.append(self.cgmodels.Container(name=name,
+                                                      image=image,
+                                                      resources=self.cgmodels.ResourceRequirements(
+                                                          requests=self.cgmodels.ResourceRequests(memory_in_gb=memory, cpu=cpu)
+                                                      ),
+                                                      ports=ports))
 
-        parameters = ContainerGroup(location=self.location,
-                                    containers=containers,
-                                    image_registry_credentials=registry_credentials,
-                                    restart_policy=None,
-                                    ip_address=ip_address,
-                                    os_type=self.os_type,
-                                    volumes=None)
+        parameters = self.cgmodels.ContainerGroup(location=self.location,
+                                                  containers=containers,
+                                                  image_registry_credentials=registry_credentials,
+                                                  restart_policy=None,
+                                                  ip_address=ip_address,
+                                                  os_type=self.os_type,
+                                                  volumes=None,
+                                                  tags=self.tags)
 
-        response = self.mgmt_client.container_groups.create_or_update(self.resource_group, self.name, parameters)
+        response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                   container_group_name=self.name,
+                                                                                   container_group=parameters)
+
+        if isinstance(response, AzureOperationPoller):
+            response = self.get_poller_result(response)
 
         return response.as_dict()
 
@@ -393,7 +401,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         :return: True
         '''
         self.log("Deleting the container instance {0}".format(self.name))
-        response = self.mgmt_client.container_groups.delete(self.resource_group, self.name)
+        response = self.containerinstance_client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
         return True
 
     def get_containerinstance(self):
@@ -405,7 +413,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.log("Checking if the container instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.container_groups.get(self.resource_group, self.name)
+            response = self.containerinstance_client.container_groups.get(resource_group_name=self.resource_group, container_group_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Container instance : {0} found".format(response.name))
@@ -420,6 +428,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMContainerInstance()
+
 
 if __name__ == '__main__':
     main()

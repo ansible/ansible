@@ -66,6 +66,7 @@ options:
     save_local:
         description:
             - Local backup.
+        type: bool
     ssh_user_ref:
         description:
             - Access credentials for remote destination.
@@ -76,6 +77,7 @@ options:
     upload_to_remote_host:
         description:
             - Remote backup.
+        type: bool
     url:
         description:
             - Avi controller URL of the object.
@@ -140,6 +142,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'backupconfiguration',
                            set(['backup_passphrase']))
+
 
 if __name__ == '__main__':
     main()

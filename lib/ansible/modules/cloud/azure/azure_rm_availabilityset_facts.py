@@ -26,13 +26,12 @@ options:
     name:
         description:
             - Limit results to a specific availability set
-        required: false
-        default: null
     resource_group:
         description:
             - The resource group to search for the desired availability set
-        required: false
-        default: null
+    tags:
+        description:
+            - List of tags to be matched
 
 extends_documentation_fragment:
     - azure
@@ -172,6 +171,7 @@ def main():
     """Main module execution code path"""
 
     AzureRMAvailabilitySetFacts()
+
 
 if __name__ == '__main__':
     main()

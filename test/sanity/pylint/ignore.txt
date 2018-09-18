@@ -2,7 +2,6 @@ lib/ansible/module_utils/network/iosxr/iosxr.py ansible-format-automatic-specifi
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/aws_kms.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/ec2_eip.py ansible-format-automatic-specification
-lib/ansible/modules/cloud/amazon/ec2_group.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/ecs_ecr.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/sns.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/azure/azure_rm_acs.py ansible-format-automatic-specification
@@ -18,8 +17,6 @@ lib/ansible/modules/cloud/lxd/lxd_container.py ansible-format-automatic-specific
 lib/ansible/modules/cloud/lxd/lxd_profile.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/misc/proxmox_kvm.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/misc/serverless.py ansible-format-automatic-specification
-lib/ansible/modules/cloud/ovirt/ovirt_users.py ansible-format-automatic-specification
-lib/ansible/modules/cloud/ovirt/ovirt_vms.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/univention/udm_dns_record.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/univention/udm_dns_zone.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/univention/udm_group.py ansible-format-automatic-specification
@@ -47,7 +44,6 @@ lib/ansible/modules/network/eos/eos_linkagg.py ansible-format-automatic-specific
 lib/ansible/modules/network/eos/eos_logging.py ansible-format-automatic-specification
 lib/ansible/modules/network/eos/eos_static_route.py ansible-format-automatic-specification
 lib/ansible/modules/network/ios/ios_l3_interface.py ansible-format-automatic-specification
-lib/ansible/modules/network/ios/ios_vlan.py ansible-format-automatic-specification
 lib/ansible/modules/network/iosxr/iosxr_banner.py ansible-format-automatic-specification
 lib/ansible/modules/network/iosxr/iosxr_interface.py ansible-format-automatic-specification
 lib/ansible/modules/network/nxos/nxos_logging.py ansible-format-automatic-specification
@@ -67,9 +63,6 @@ lib/ansible/modules/storage/infinidat/infini_vol.py ansible-format-automatic-spe
 lib/ansible/modules/storage/purestorage/purefa_host.py ansible-format-automatic-specification
 lib/ansible/modules/storage/purestorage/purefa_pg.py ansible-format-automatic-specification
 lib/ansible/modules/system/firewalld.py ansible-format-automatic-specification
-lib/ansible/plugins/cliconf/junos.py ansible-no-format-on-bytestring 3
-lib/ansible/plugins/cliconf/nxos.py ansible-format-automatic-specification
-test/runner/importer.py missing-docstring 3.7
 test/runner/injector/importer.py missing-docstring 3.7
 test/runner/injector/injector.py missing-docstring 3.7
 test/runner/lib/ansible_util.py missing-docstring 3.7
@@ -97,8 +90,10 @@ test/runner/lib/powershell_import_analysis.py missing-docstring 3.7
 test/runner/lib/pytar.py missing-docstring 3.7
 test/runner/lib/sanity/__init__.py missing-docstring 3.7
 test/runner/lib/sanity/ansible_doc.py missing-docstring 3.7
+test/runner/lib/sanity/compile.py missing-docstring 3.7
 test/runner/lib/sanity/import.py missing-docstring 3.7
 test/runner/lib/sanity/pep8.py missing-docstring 3.7
+test/runner/lib/sanity/pslint.py missing-docstring 3.7
 test/runner/lib/sanity/pylint.py missing-docstring 3.7
 test/runner/lib/sanity/rstcheck.py missing-docstring 3.7
 test/runner/lib/sanity/sanity_docs.py missing-docstring 3.7
@@ -113,3 +108,4 @@ test/runner/retry.py missing-docstring 3.7
 test/runner/shippable.py missing-docstring 3.7
 test/runner/test.py missing-docstring 3.7
 test/runner/units/test_diff.py missing-docstring 3.7
+test/sanity/import/importer.py missing-docstring 3.7

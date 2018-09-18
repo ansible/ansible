@@ -36,7 +36,19 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['console', 'logfile', 'module', 'monitor']
+    choices: ['console', 'logfile', 'module', 'monitor', 'server']
+  remote_server:
+    description:
+      - Hostname or IP Address for remote logging (when dest is 'server').
+    version_added: '2.7'
+  use_vrf:
+    description:
+      - VRF to be used while configuring remote logging (when dest is 'server').
+    version_added: '2.7'
+  interface:
+    description:
+      - Interface to be used while configuring source-interface for logging (e.g., 'Ethernet1/2', 'mgmt0')
+    version_added: '2.7'
   name:
     description:
       - If value of C(dest) is I(logfile) it indicates file-name.
@@ -52,10 +64,6 @@ options:
       - Set logging serverity levels for facility based log messages.
   aggregate:
     description: List of logging definitions.
-  purge:
-    description:
-      - Purge logging not defined in the aggregate parameter.
-    default: no
   state:
     description:
       - State of the logging configuration.
@@ -91,6 +99,26 @@ EXAMPLES = """
     facility: daemon
     facility_level: 0
     state: absent
+- name: Configure Remote Logging
+  nxos_logging:
+    dest: server
+    remote_server: test-syslogserver.com
+    facility: auth
+    facility_level: 1
+    use_vrf: management
+    state: present
+- name: Configure Source Interface for Logging
+  nxos_logging:
+    interface: mgmt0
+    state: present
+
+- name: Configure logging using aggregate
+  nxos_logging:
+    aggregate:
+      - { dest: console, dest_level: 2 }
+      - { dest: logfile, dest_level: 2, name: testfile }
+      - { facility: daemon, facility_level: 0 }
+    state: present
 """
 
 RETURN = """
@@ -106,30 +134,26 @@ commands:
 
 import re
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args, normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 
 
-DEST_GROUP = ['console', 'logfile', 'module', 'monitor']
+DEST_GROUP = ['console', 'logfile', 'module', 'monitor', 'server']
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates):
     commands = list()
     want, have = updates
 
     for w in want:
-        dest = w['dest']
-        name = w['name']
-        facility = w['facility']
-        dest_level = w['dest_level']
-        facility_level = w['facility_level']
         state = w['state']
         del w['state']
 
         if state == 'absent' and w in have:
             if w['facility'] is not None:
-                commands.append('no logging level {}'.format(w['facility']))
+                if not w['dest']:
+                    commands.append('no logging level {}'.format(w['facility']))
 
             if w['name'] is not None:
                 commands.append('no logging logfile')
@@ -137,20 +161,67 @@ def map_obj_to_commands(updates, module):
             if w['dest'] in ('console', 'module', 'monitor'):
                 commands.append('no logging {}'.format(w['dest']))
 
+            if w['dest'] == 'server':
+                commands.append('no logging server {}'.format(w['remote_server']))
+
+            if w['interface']:
+                commands.append('no logging source-interface')
+
         if state == 'present' and w not in have:
             if w['facility'] is None:
-                if w['dest'] is not None:
-                    if w['dest'] != 'logfile':
+                if w['dest']:
+                    if w['dest'] not in ('logfile', 'server'):
                         commands.append('logging {} {}'.format(w['dest'], w['dest_level']))
+
                     elif w['dest'] == 'logfile':
                         commands.append('logging logfile {} {}'.format(w['name'], w['dest_level']))
-                    else:
-                        pass
 
-            if w['facility'] is not None:
-                commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
+                    elif w['dest'] == 'server':
+                        if w['facility_level']:
+                            if w['use_vrf']:
+                                commands.append('logging server {0} {1} use-vrf {2}'.format(
+                                    w['remote_server'], w['facility_level'], w['use_vrf']))
+                            else:
+                                commands.append('logging server {0} {1}'.format(
+                                    w['remote_server'], w['facility_level']))
+
+                        else:
+                            if w['use_vrf']:
+                                commands.append('logging server {0} use-vrf {1}'.format(
+                                    w['remote_server'], w['use_vrf']))
+                            else:
+                                commands.append('logging server {0}'.format(w['remote_server']))
+
+            if w['facility']:
+                if w['dest'] == 'server':
+                    if w['facility_level']:
+                        if w['use_vrf']:
+                            commands.append('logging server {0} {1} facility {2} use-vrf {3}'.format(
+                                w['remote_server'], w['facility_level'], w['facility'], w['use_vrf']))
+                        else:
+                            commands.append('logging server {0} {1} facility {2}'.format(
+                                w['remote_server'], w['facility_level'], w['facility']))
+                    else:
+                        if w['use_vrf']:
+                            commands.append('logging server {0} facility {1} use-vrf {2}'.format(
+                                w['remote_server'], w['facility'], w['use_vrf']))
+                        else:
+                            commands.append('logging server {0} facility {1}'.format(w['remote_server'],
+                                                                                     w['facility']))
+                else:
+                    commands.append('logging level {} {}'.format(w['facility'],
+                                                                 w['facility_level']))
+
+            if w['interface']:
+                commands.append('logging source-interface {0} {1}'.format(*split_interface(w['interface'])))
 
     return commands
+
+
+def split_interface(interface):
+    match = re.search(r'(\D+)(\S*)', interface, re.M)
+    if match:
+        return match.group(1), match.group(2)
 
 
 def parse_name(line, dest):
@@ -167,6 +238,17 @@ def parse_name(line, dest):
     return name
 
 
+def parse_remote_server(line, dest):
+    remote_server = None
+
+    if dest and dest == 'server':
+        match = re.search(r'logging server (\S+)', line, re.M)
+        if match:
+            remote_server = match.group(1)
+
+    return remote_server
+
+
 def parse_dest_level(line, dest, name):
     dest_level = None
 
@@ -179,9 +261,14 @@ def parse_dest_level(line, dest, name):
                 pass
         return level
 
-    if dest is not None:
+    if dest and dest != 'server':
         if dest == 'logfile':
             match = re.search(r'logging logfile {} (\S+)'.format(name), line, re.M)
+            if match:
+                dest_level = parse_match(match)
+
+        elif dest == 'server':
+            match = re.search(r'logging server (?:\S+) (\d+)', line, re.M)
             if match:
                 dest_level = parse_match(match)
         else:
@@ -192,15 +279,51 @@ def parse_dest_level(line, dest, name):
     return dest_level
 
 
-def parse_facility_level(line, facility):
+def parse_facility_level(line, facility, dest):
     facility_level = None
 
-    if facility is not None:
+    if dest == 'server':
+        match = re.search(r'logging server (?:\S+) (\d+)', line, re.M)
+        if match:
+            facility_level = match.group(1)
+
+    elif facility is not None:
         match = re.search(r'logging level {} (\S+)'.format(facility), line, re.M)
         if match:
             facility_level = match.group(1)
 
     return facility_level
+
+
+def parse_facility(line):
+    facility = None
+
+    match = re.search(r'logging server (?:\S+) (?:\d+) (?:\S+) (?:\S+) (?:\S+) (\S+)', line, re.M)
+    if match:
+        facility = match.group(1)
+
+    return facility
+
+
+def parse_use_vrf(line, dest):
+    use_vrf = None
+
+    if dest and dest == 'server':
+        match = re.search(r'logging server (?:\S+) (?:\d+) use-vrf (\S+)', line, re.M)
+        if match:
+            use_vrf = match.group(1)
+
+    return use_vrf
+
+
+def parse_interface(line):
+    interface = None
+
+    match = re.search(r'logging source-interface (\S*)', line, re.M)
+    if match:
+        interface = match.group(1)
+
+    return interface
 
 
 def map_config_to_obj(module):
@@ -216,6 +339,9 @@ def map_config_to_obj(module):
                 dest = match.group(1)
                 facility = None
 
+                if dest == 'server':
+                    facility = parse_facility(line)
+
             elif match.group(1) == 'level':
                 match_facility = re.search(r'logging level (\S+)', line, re.M)
                 facility = match_facility.group(1)
@@ -226,10 +352,38 @@ def map_config_to_obj(module):
                 facility = None
 
             obj.append({'dest': dest,
+                        'remote_server': parse_remote_server(line, dest),
+                        'use_vrf': parse_use_vrf(line, dest),
                         'name': parse_name(line, dest),
                         'facility': facility,
                         'dest_level': parse_dest_level(line, dest, parse_name(line, dest)),
-                        'facility_level': parse_facility_level(line, facility)})
+                        'facility_level': parse_facility_level(line, facility, dest),
+                        'interface': parse_interface(line)})
+
+    cmd = [{'command': 'show logging | section enabled | section console', 'output': 'text'},
+           {'command': 'show logging | section enabled | section monitor', 'output': 'text'}]
+
+    default_data = run_commands(module, cmd)
+
+    for line in default_data:
+        flag = False
+        match = re.search(r'Logging (\w+):(?:\s+) (?:\w+) (?:\W)Severity: (\w+)', str(line), re.M)
+        if match:
+            if match.group(1) == 'console' and match.group(2) == 'critical':
+                dest_level = '2'
+                flag = True
+            elif match.group(1) == 'monitor' and match.group(2) == 'notifications':
+                dest_level = '5'
+                flag = True
+        if flag:
+            obj.append({'dest': match.group(1),
+                        'remote_server': None,
+                        'name': None,
+                        'facility': None,
+                        'dest_level': dest_level,
+                        'facility_level': None,
+                        'use_vrf': None,
+                        'interface': None})
 
     return obj
 
@@ -239,11 +393,13 @@ def map_params_to_obj(module):
 
     if 'aggregate' in module.params and module.params['aggregate']:
         args = {'dest': '',
+                'remote_server': '',
+                'use_vrf': '',
                 'name': '',
                 'facility': '',
                 'dest_level': '',
-                'facility_level': ''
-                }
+                'facility_level': '',
+                'interface': ''}
 
         for c in module.params['aggregate']:
             d = c.copy()
@@ -257,6 +413,9 @@ def map_params_to_obj(module):
 
             if d['facility_level'] is not None:
                 d['facility_level'] = str(d['facility_level'])
+
+            if d['interface']:
+                d['interface'] = normalize_interface(d['interface'])
 
             if 'state' not in d:
                 d['state'] = module.params['state']
@@ -275,13 +434,15 @@ def map_params_to_obj(module):
 
         obj.append({
             'dest': module.params['dest'],
+            'remote_server': module.params['remote_server'],
+            'use_vrf': module.params['use_vrf'],
             'name': module.params['name'],
             'facility': module.params['facility'],
             'dest_level': dest_level,
             'facility_level': facility_level,
+            'interface': normalize_interface(module.params['interface']),
             'state': module.params['state']
         })
-
     return obj
 
 
@@ -292,20 +453,22 @@ def main():
         dest=dict(choices=DEST_GROUP),
         name=dict(),
         facility=dict(),
+        remote_server=dict(),
+        use_vrf=dict(),
         dest_level=dict(type='int', aliases=['level']),
         facility_level=dict(type='int'),
+        interface=dict(),
         state=dict(default='present', choices=['present', 'absent']),
-        aggregate=dict(type='list'),
-        purge=dict(default=False, type='bool')
+        aggregate=dict(type='list')
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    required_if = [('dest', 'logfile', ['name'])]
+    required_if = [('dest', 'logfile', ['name']),
+                   ('dest', 'server', ['remote_server'])]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
-                           required_together=[['facility', 'facility_level']],
                            supports_check_mode=True)
 
     warnings = list()
@@ -318,7 +481,7 @@ def main():
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands((want, have))
     result['commands'] = commands
 
     if commands:
@@ -327,6 +490,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

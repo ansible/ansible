@@ -30,7 +30,9 @@ import re
 import sys
 import warnings
 from collections import defaultdict
+from copy import deepcopy
 from distutils.version import LooseVersion
+from functools import partial
 from pprint import PrettyPrinter
 
 try:
@@ -48,10 +50,13 @@ from jinja2 import Environment, FileSystemLoader
 from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
+from ansible.utils._build_helpers import update_file_if_different
 
 
 #####################################################################################
@@ -75,7 +80,9 @@ _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL = re.compile(r"U\(([^)]+)\)")
+_LINK = re.compile(r"L\(([^)]+),([^)]+)\)")
 _CONST = re.compile(r"C\(([^)]+)\)")
+_RULER = re.compile(r"HORIZONTALLINE")
 
 DEPRECATED = b" (D)"
 
@@ -83,17 +90,41 @@ pp = PrettyPrinter()
 display = Display()
 
 
+# kludge_ns gives us a kludgey way to set variables inside of loops that need to be visible outside
+# the loop.  We can get rid of this when we no longer need to build docs with less than Jinja-2.10
+# http://jinja.pocoo.org/docs/2.10/templates/#assignments
+# With Jinja-2.10 we can use jinja2's namespace feature, restoring the namespace template portion
+# of: fa5c0282a4816c4dd48e80b983ffc1e14506a1f5
+NS_MAP = {}
+
+
+def to_kludge_ns(key, value):
+    NS_MAP[key] = value
+    return ""
+
+
+def from_kludge_ns(key):
+    return NS_MAP[key]
+
+
+# The max filter was added in Jinja2-2.10.  Until we can require that version, use this
+def do_max(seq):
+    return max(seq)
+
+
 def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
 
     try:
-        t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
-        t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-        t = _MODULE.sub(r':ref:`module_docs/' + r"\1 <\1>" + r"`", t)
+        t = _ITALIC.sub(r"*\1*", text)
+        t = _BOLD.sub(r"**\1**", t)
+        t = _MODULE.sub(r":ref:`\1 <\1_module>`", t)
+        t = _LINK.sub(r"`\1 <\2>`_", t)
         t = _URL.sub(r"\1", t)
-        t = _CONST.sub(r'``' + r"\1" + r"``", t)
+        t = _CONST.sub(r"``\1``", t)
+        t = _RULER.sub(r"------------", t)
     except Exception as e:
-        raise AnsibleError("Could not process (%s) : %s" % (str(text), str(e)))
+        raise AnsibleError("Could not process (%s) : %s" % (text, e))
 
     return t
 
@@ -101,14 +132,19 @@ def rst_ify(text):
 def html_ify(text):
     ''' convert symbols like I(this is in italics) to valid HTML '''
 
-    t = html_escape(text)
-    t = _ITALIC.sub("<em>" + r"\1" + "</em>", t)
-    t = _BOLD.sub("<b>" + r"\1" + "</b>", t)
-    t = _MODULE.sub("<span class='module'>" + r"\1" + "</span>", t)
-    t = _URL.sub("<a href='" + r"\1" + "'>" + r"\1" + "</a>", t)
-    t = _CONST.sub("<code>" + r"\1" + "</code>", t)
+    if not isinstance(text, string_types):
+        text = to_text(text)
 
-    return t
+    t = html_escape(text)
+    t = _ITALIC.sub(r"<em>\1</em>", t)
+    t = _BOLD.sub(r"<b>\1</b>", t)
+    t = _MODULE.sub(r"<span class='module'>\1</span>", t)
+    t = _URL.sub(r"<a href='\1'>\1</a>", t)
+    t = _LINK.sub(r"<a href='\2'>\1</a>", t)
+    t = _CONST.sub(r"<code>\1</code>", t)
+    t = _RULER.sub(r"<hr/>", t)
+
+    return t.strip()
 
 
 def rst_fmt(text, fmt):
@@ -123,6 +159,20 @@ def rst_xline(width, char="="):
     return char * width
 
 
+test_list = partial(is_sequence, include_strings=False)
+
+
+def normalize_options(value):
+    """Normalize boolean option value."""
+
+    if value.get('type') == 'bool' and 'default' in value:
+        try:
+            value['default'] = boolean(value['default'], strict=True)
+        except TypeError:
+            pass
+    return value
+
+
 def write_data(text, output_dir, outputname, module=None):
     ''' dumps module output to a file or the screen, as requested '''
 
@@ -134,8 +184,8 @@ def write_data(text, output_dir, outputname, module=None):
             os.makedirs(output_dir)
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
-        with open(fname, 'wb') as f:
-            f.write(to_bytes(text))
+
+        update_file_if_different(fname, to_bytes(text))
     else:
         print(text)
 
@@ -215,11 +265,18 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # Regular module to process
         #
 
+        # use ansible core library to parse out doc metadata YAML and plaintext examples
+        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+
+        if metadata and 'removed' in metadata.get('status'):
+            continue
+
         category = categories
 
         # Start at the second directory because we don't want the "vendor"
         mod_path_only = os.path.dirname(module_path[len(module_dir):])
 
+        primary_category = ''
         module_categories = []
         # build up the categories that this module belongs to
         for new_cat in mod_path_only.split('/')[1:]:
@@ -235,13 +292,21 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         if module_categories:
             primary_category = module_categories[0]
 
-        # use ansible core library to parse out doc metadata YAML and plaintext examples
-        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+        if 'options' in doc and doc['options'] is None:
+            display.error("*** ERROR: DOCUMENTATION.options must be a dictionary/hash when used. ***")
+            pos = getattr(doc, "ansible_pos", None)
+            if pos is not None:
+                display.error("Module position: %s, %d, %d" % doc.ansible_pos)
+            doc['options'] = dict()
+
+        for key, opt in doc.get('options', {}).items():
+            doc['options'][key] = normalize_options(opt)
 
         # save all the information
         module_info[module] = {'path': module_path,
+                               'source': os.path.relpath(module_path, module_dir),
                                'deprecated': deprecated,
-                               'aliases': set(),
+                               'aliases': module_info[module].get('aliases', set()),
                                'metadata': metadata,
                                'doc': doc,
                                'examples': examples,
@@ -288,12 +353,21 @@ def jinja2_environment(template_dir, typ, plugin_type):
                       trim_blocks=True)
     env.globals['xline'] = rst_xline
 
+    # Can be removed (and template switched to use namespace) when we no longer need to build
+    # with <Jinja-2.10
+    env.globals['to_kludge_ns'] = to_kludge_ns
+    env.globals['from_kludge_ns'] = from_kludge_ns
+    if 'max' not in env.filters:
+        # Jinja < 2.10
+        env.filters['max'] = do_max
+
     templates = {}
     if typ == 'rst':
         env.filters['convert_symbols_to_format'] = rst_ify
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
+        env.tests['list'] = test_list
         templates['plugin'] = env.get_template('plugin.rst.j2')
 
         if plugin_type == 'module':
@@ -413,6 +487,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         doc['option_keys'] = option_names
         doc['filename'] = fname
+        doc['source'] = module_map[module]['source']
         doc['docuri'] = doc['module'].replace('_', '-')
         doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
         doc['ansible_version'] = ansible_version
@@ -456,6 +531,11 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
 
 def process_categories(plugin_info, categories, templates, output_dir, output_name, plugin_type):
+    # For some reason, this line is changing plugin_info:
+    # text = templates['list_of_CATEGORY_modules'].render(template_data)
+    # To avoid that, make a deepcopy of the data.
+    # We should track that down and fix it at some point in the future.
+    plugin_info = deepcopy(plugin_info)
     for category in sorted(categories.keys()):
         module_map = categories[category]
         category_filename = output_name % category
@@ -549,6 +629,7 @@ These modules are currently shipped with Ansible, but will most likely be shippe
                          'modules': data['modules'],
                          'slug': data['slug'],
                          'module_info': plugin_info,
+                         'plugin_type': plugin_type
                          }
         text = templates['support_list'].render(template_data)
         write_data(text, output_dir, data['output'])

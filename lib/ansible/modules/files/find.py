@@ -36,13 +36,17 @@ options:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
+            - This parameter expects a list, which can be either comma separated or YAML. If any of the
+              patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
+              in undesirable ways.
+        type: list
         aliases: ['pattern']
     excludes:
-        default: null
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
-            - Excludes is a patterns should not be returned in list. Multiple patterns can be specified
-              using a list.
+            - Items matching an C(excludes) pattern are culled from C(patterns) matches.
+              Multiple patterns can be specified using a list.
+        type: list
         aliases: ['exclude']
         version_added: "2.5"
     contains:
@@ -53,6 +57,7 @@ options:
         aliases: [ name, path ]
         description:
             - List of paths of directories to search. All paths must be fully qualified.
+        type: list
     file_type:
         description:
             - Type of file to select.
@@ -60,15 +65,15 @@ options:
         choices: [ any, directory, file, link ]
         default: file
     recurse:
-        default: 'no'
-        choices: [ 'no', 'yes' ]
         description:
             - If target is a directory, recursively descend into the directory looking for files.
+        type: bool
+        default: 'no'
     size:
         description:
             - Select files whose size is equal to or greater than the specified size.
               Use a negative size to find files equal to or less than the specified size.
-              Unqualified values are in bytes, but b, k, m, g, and t can be appended to specify
+              Unqualified values are in bytes but b, k, m, g, and t can be appended to specify
               bytes, kilobytes, megabytes, gigabytes, and terabytes, respectively.
               Size is not evaluated for directories.
     age_stamp:
@@ -77,25 +82,31 @@ options:
         description:
             - Choose the file property against which we compare age.
     hidden:
-        default: 'no'
-        choices: [ 'no', 'yes' ]
         description:
             - Set this to true to include hidden files, otherwise they'll be ignored.
-    follow:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    follow:
         description:
             - Set this to true to follow symlinks in path for systems with python 2.6+.
-    get_checksum:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    get_checksum:
         description:
             - Set this to true to retrieve a file's sha1 checksum.
-    use_regex:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    use_regex:
         description:
-            - If false the patterns are file globs (shell) if true they are python regexes.
+            - If false, the patterns are file globs (shell). If true, they are python regexes.
+        type: bool
+        default: 'no'
+    depth:
+        description:
+            - Set the maximum number of levels to decend into. Setting recurse
+              to false will override this value, which is effectively depth 1.
+              Default is unlimited depth.
+        version_added: "2.6"
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''
@@ -142,6 +153,24 @@ EXAMPLES = r'''
     recurse: no
     file_type: directory
     excludes: 'nginx,mysql'
+
+# When using patterns that contain a comma, make sure they are formatted as lists to avoid splitting the pattern
+- name: Use a single pattern that contains a comma formatted as a list
+  find:
+    paths: /var/log
+    file_type: file
+    use_regex: yes
+    patterns: ['^_[0-9]{2,4}_.*.log$']
+
+- name: Use multiple patterns that contain a comma formatted as a YAML list
+  find:
+    paths: /var/log
+    file_type: file
+    use_regex: yes
+    patterns:
+      - '^_[0-9]{2,4}_.*.log$'
+      - '^[a-z]{1,5}_.*log$'
+
 '''
 
 RETURN = r'''
@@ -245,20 +274,25 @@ def sizefilter(st, size):
 
 
 def contentfilter(fsname, pattern):
-    '''filter files which contain the given expression'''
+    """
+    Filter files which contain the given expression
+    :arg fsname: Filename to scan for lines matching a pattern
+    :arg pattern: Pattern to look for inside of line
+    :rtype: bool
+    :returns: True if one of the lines in fsname matches the pattern. Otherwise False
+    """
     if pattern is None:
         return True
 
-    try:
-        f = open(fsname)
-        prog = re.compile(pattern)
-        for line in f:
-            if prog.match(line):
-                f.close()
-                return True
+    prog = re.compile(pattern)
 
-        f.close()
-    except:
+    try:
+        with open(fsname) as f:
+            for line in f:
+                if prog.match(line):
+                    return True
+
+    except Exception:
         pass
 
     return False
@@ -270,12 +304,12 @@ def statinfo(st):
 
     try:  # user data
         pw_name = pwd.getpwuid(st.st_uid).pw_name
-    except:
+    except Exception:
         pass
 
     try:  # group data
         gr_name = grp.getgrgid(st.st_gid).gr_name
-    except:
+    except Exception:
         pass
 
     return {
@@ -328,6 +362,7 @@ def main():
             follow=dict(type='bool', default='no'),
             get_checksum=dict(type='bool', default='no'),
             use_regex=dict(type='bool', default='no'),
+            depth=dict(type='int', default=None),
         ),
         supports_check_mode=True,
     )
@@ -366,6 +401,13 @@ def main():
         if os.path.isdir(npath):
             ''' ignore followlinks for python version < 2.6 '''
             for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
+                if params['depth']:
+                    depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
+                    if files or dirs:
+                        depth += 1
+                    if depth > params['depth']:
+                        del(dirs[:])
+                        continue
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
@@ -375,7 +417,7 @@ def main():
 
                     try:
                         st = os.lstat(fsname)
-                    except:
+                    except Exception:
                         msg += "%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % fsname
                         continue
 
@@ -384,6 +426,8 @@ def main():
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
+                            if stat.S_ISREG(st.st_mode) and params['get_checksum']:
+                                r['checksum'] = module.sha1(fsname)
                             filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':

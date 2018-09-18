@@ -42,26 +42,21 @@ options:
       - Address-Family Identifier (AFI).
     required: true
     choices: ['ipv4', 'ipv6']
-    default: null
   safi:
     description:
       - Sub Address-Family Identifier (SAFI).
       - Deprecated in 2.4
     required: true
     choices: ['unicast', 'multicast']
-    default: null
   route_target_both_auto_evpn:
     description:
       - Enable/Disable the EVPN route-target 'auto' setting for both
         import and export target communities.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   state:
     description:
       - Determines whether the config should be present or
         not on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -124,14 +119,14 @@ def main():
 
         if current:
             have = 'route-target both auto evpn' in current
-            want = bool(module.params['route_target_both_auto_evpn'])
-
-            if want and not have:
-                commands.append('address-family %s unicast' % module.params['afi'])
-                commands.append('route-target both auto evpn')
-            elif have and not want:
-                commands.append('address-family %s unicast' % module.params['afi'])
-                commands.append('no route-target both auto evpn')
+            if module.params['route_target_both_auto_evpn'] is not None:
+                want = bool(module.params['route_target_both_auto_evpn'])
+                if want and not have:
+                    commands.append('address-family %s unicast' % module.params['afi'])
+                    commands.append('route-target both auto evpn')
+                elif have and not want:
+                    commands.append('address-family %s unicast' % module.params['afi'])
+                    commands.append('no route-target both auto evpn')
 
         else:
             commands.append('address-family %s unicast' % module.params['afi'])

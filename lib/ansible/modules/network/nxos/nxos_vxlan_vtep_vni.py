@@ -49,39 +49,28 @@ options:
         that are associated with a VRF and used for routing. The VRF
         and VNI specified with this command must match the configuration
         of the VNI under the VRF.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   ingress_replication:
     description:
       - Specifies mechanism for host reachability advertisement.
-    required: false
     choices: ['bgp','static', 'default']
-    default: null
   multicast_group:
     description:
       - The multicast group (range) of the VNI. Valid values are
         string and keyword 'default'.
-    required: false
-    default: null
   peer_list:
     description:
       - Set the ingress-replication static peer list. Valid values
         are an array, a space-separated string of ip addresses,
         or the keyword 'default'.
-    required: false
-    default: null
   suppress_arp:
     description:
       - Suppress arp under layer 2 VNI.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -224,11 +213,12 @@ def state_present(module, existing, proposed, candidate):
             evalue = existing_commands.get(key)
             dvalue = PARAM_TO_DEFAULT_KEYMAP.get('ingress_replication', 'default')
             if value != dvalue:
-                if evalue != dvalue:
+                if evalue and evalue != dvalue:
                     commands.append('no {0} {1}'.format(key, evalue))
                 commands.append('{0} {1}'.format(key, value))
             else:
-                commands.append('no {0} {1}'.format(key, evalue))
+                if evalue:
+                    commands.append('no {0} {1}'.format(key, evalue))
 
         elif value is True:
             commands.append(key)

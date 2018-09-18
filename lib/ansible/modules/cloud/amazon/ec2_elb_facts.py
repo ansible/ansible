@@ -32,8 +32,6 @@ options:
   names:
     description:
       - List of ELB names to gather facts about. Pass this option to gather facts about a set of ELBs, otherwise, all ELBs are returned.
-    required: false
-    default: null
     aliases: ['elb_ids', 'ec2_elbs']
 extends_documentation_fragment:
     - aws
@@ -130,6 +128,7 @@ class ElbInformation(object):
                 'load_balancer_port': listener[0],
                 'instance_port': listener[1],
                 'protocol': listener[2],
+                'instance_protocol': listener[3]
             }
 
             try:

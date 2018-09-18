@@ -39,39 +39,33 @@ options:
   mode:
     description:
       - Mode for the link aggregation group.
-    required: false
-    default: on
-    choices: ['active','passive','on']
+    choices: [ active, 'on', passive ]
+    default: 'on'
   min_links:
     description:
       - Minimum number of ports required up
         before bringing up the link aggregation group.
-    required: false
-    default: null
   members:
     description:
       - List of interfaces that will be managed in the link aggregation group.
-    required: false
-    default: null
   force:
     description:
       - When true it forces link aggregation group members to match what
         is declared in the members param. This can be used to remove members.
-    required: false
-    choices: [True, False]
-    default: False
+    type: bool
+    default: 'no'
   aggregate:
     description: List of link aggregation definitions.
   state:
     description:
       - State of the link aggregation group.
-    required: false
     default: present
     choices: ['present','absent']
   purge:
     description:
       - Purge links not defined in the I(aggregate) parameter.
-    default: no
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -133,29 +127,29 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-
-
-def execute_show_command(command, module):
-    provider = module.params['provider']
-    if provider['transport'] == 'cli':
-        if 'show port-channel summary' in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif provider['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
 
 
 def search_obj_in_list(group, lst):
     for o in lst:
         if o['group'] == group:
             return o
+
+
+def get_diff(w, obj):
+    c = deepcopy(w)
+    o = deepcopy(obj)
+
+    if o['group'] == c['group'] and o.get('members') == c.get('members'):
+        if 'members' in o:
+            del o['members']
+        if 'members' in c:
+            del c['members']
+        diff_dict = dict(set(c.items()) - set(o.items()))
+        return diff_dict
 
 
 def map_obj_to_commands(updates, module):
@@ -227,6 +221,18 @@ def map_obj_to_commands(updates, module):
                             commands.append('exit')
                             commands.append('interface {0}'.format(m))
                             commands.append('no channel-group {0}'.format(group))
+
+                    else:
+                        diff = get_diff(w, obj_in_have)
+                        if diff and 'mode' in diff:
+                            mode = diff['mode']
+                            for i in members:
+                                commands.append('interface {0}'.format(i))
+                                if force:
+                                    commands.append('channel-group {0} force mode {1}'.format(group, mode))
+                                else:
+                                    commands.append('channel-group {0} mode {1}'.format(group, mode))
+
     if purge:
         for h in have:
             obj_in_want = search_obj_in_list(h['group'], want)
@@ -248,14 +254,20 @@ def map_params_to_obj(module):
             d = item.copy()
             d['group'] = str(d['group'])
             d['min_links'] = str(d['min_links'])
+            if d['members']:
+                d['members'] = [normalize_interface(i) for i in d['members']]
 
             obj.append(d)
     else:
+        members = None
+        if module.params['members']:
+            members = [normalize_interface(i) for i in module.params['members']]
+
         obj.append({
             'group': str(module.params['group']),
             'mode': module.params['mode'],
             'min_links': str(module.params['min_links']),
-            'members': module.params['members'],
+            'members': members,
             'state': module.params['state']
         })
 
@@ -294,10 +306,10 @@ def get_members(channel):
         return list()
 
     if isinstance(interfaces, dict):
-        members.append(interfaces.get('port'))
+        members.append(normalize_interface(interfaces.get('port')))
     elif isinstance(interfaces, list):
         for i in interfaces:
-            members.append(i.get('port'))
+            members.append(normalize_interface(i.get('port')))
 
     return members
 
@@ -323,7 +335,7 @@ def parse_channel_options(module, output, channel):
 
     group = channel['group']
     obj['group'] = group
-    obj['min-links'] = parse_min_links(module, group)
+    obj['min_links'] = parse_min_links(module, group)
     members = parse_members(output, group)
     obj['members'] = members
     for m in members:
@@ -334,13 +346,13 @@ def parse_channel_options(module, output, channel):
 
 def map_config_to_obj(module):
     objs = list()
-    output = execute_show_command('show port-channel summary', module)[0]
+    output = run_commands(module, ['show port-channel summary | json'])[0]
     if not output:
         return list()
 
     try:
         channels = output['TABLE_channel']['ROW_channel']
-    except KeyError:
+    except (TypeError, KeyError):
         return objs
 
     if channels:
@@ -402,10 +414,20 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands)
+            resp = load_config(module, commands, True)
+            if resp:
+                for item in resp:
+                    if item:
+                        if isinstance(item, dict):
+                            err_str = item['clierror']
+                        else:
+                            err_str = item
+                        if 'cannot add' in err_str.lower():
+                            module.fail_json(msg=err_str)
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

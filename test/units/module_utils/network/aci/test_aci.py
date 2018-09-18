@@ -21,11 +21,31 @@
 import sys
 
 from ansible.compat.tests import unittest
-from ansible.module_utils.network.aci.aci import aci_response_json, aci_response_xml
+from ansible.module_utils.network.aci.aci import ACIModule
 from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_native
 
 from nose.plugins.skip import SkipTest
+
+
+class AltModule():
+    params = dict(
+        hostname='dummy',
+        port=123,
+        protocol='https',
+        state='present',
+    )
+
+
+class AltACIModule(ACIModule):
+    def __init__(self):
+        self.result = dict(changed=False)
+        self.module = AltModule
+        self.params = self.module.params
+
+
+aci = AltACIModule()
+
 
 try:
     from lxml import etree
@@ -40,24 +60,28 @@ class AciRest(unittest.TestCase):
     def test_invalid_aci_login(self):
         self.maxDiff = None
 
-        expected_result = {
-            'error_code': '401',
-            'error_text': 'Username or password is incorrect - FAILED local authentication',
-            'imdata': [{
-                'error': {
-                    'attributes': {
-                        'code': '401',
-                        'text': 'Username or password is incorrect - FAILED local authentication',
-                    },
+        error = dict(
+            code='401',
+            text='Username or password is incorrect - FAILED local authentication',
+        )
+
+        imdata = [{
+            'error': {
+                'attributes': {
+                    'code': '401',
+                    'text': 'Username or password is incorrect - FAILED local authentication',
                 },
-            }],
-            'totalCount': '1',
-        }
+            },
+        }]
+
+        totalCount = 1
 
         json_response = '{"totalCount":"1","imdata":[{"error":{"attributes":{"code":"401","text":"Username or password is incorrect - FAILED local authentication"}}}]}'  # NOQA
         json_result = dict()
-        aci_response_json(json_result, json_response)
-        self.assertEqual(expected_result, json_result)
+        aci.response_json(json_response)
+        self.assertEqual(aci.error, error)
+        self.assertEqual(aci.imdata, imdata)
+        self.assertEqual(aci.totalCount, totalCount)
 
         # Python 2.7+ is needed for xmljson
         if sys.version_info < (2, 7):
@@ -68,94 +92,94 @@ class AciRest(unittest.TestCase):
         </imdata>
         '''
         xml_result = dict()
-        aci_response_xml(xml_result, xml_response)
-        self.assertEqual(json_result, xml_result)
+        aci.response_xml(xml_response)
+        self.assertEqual(aci.error, error)
+        self.assertEqual(aci.imdata, imdata)
+        self.assertEqual(aci.totalCount, totalCount)
 
     def test_valid_aci_login(self):
         self.maxDiff = None
 
-        expected_result = {
-            'error_code': 0,
-            'error_text': 'Success',
-            'imdata': [{
-                'aaaLogin': {
-                    'attributes': {
-                        'token': 'ZldYAsoO9d0FfAQM8xaEVWvQPSOYwpnqzhwpIC1r4MaToknJjlIuAt9+TvXqrZ8lWYIGPj6VnZkWiS8nJfaiaX/AyrdD35jsSxiP3zydh+849xym7ALCw/fFNsc7b5ik1HaMuSUtdrN8fmCEUy7Pq/QNpGEqkE8m7HaxAuHpmvXgtdW1bA+KKJu2zY1c/tem',  # NOQA
-                        'siteFingerprint': 'NdxD72K/uXaUK0wn',
-                        'refreshTimeoutSeconds': '600',
-                        'maximumLifetimeSeconds': '86400',
-                        'guiIdleTimeoutSeconds': '1200',
-                        'restTimeoutSeconds': '90',
-                        'creationTime': '1500134817',
-                        'firstLoginTime': '1500134817',
-                        'userName': 'admin',
-                        'remoteUser': 'false',
-                        'unixUserId': '15374',
-                        'sessionId': 'o7hObsqNTfCmDGcZI5c4ng==',
-                        'lastName': '',
-                        'firstName': '',
-                        'version': '2.0(2f)',
-                        'buildTime': 'Sat Aug 20 23:07:07 PDT 2016',
-                        'node': 'topology/pod-1/node-1',
-                    },
-                    'children': [{
-                        'aaaUserDomain': {
-                            'attributes': {
-                                'name': 'all',
-                                'rolesR': 'admin',
-                                'rolesW': 'admin',
-                            },
-                            'children': [{
-                                'aaaReadRoles': {
-                                    'attributes': {},
-                                },
-                            }, {
-                                'aaaWriteRoles': {
-                                    'attributes': {},
-                                    'children': [{
-                                        'role': {
-                                            'attributes': {
-                                                'name': 'admin',
-                                            },
-                                        },
-                                    }],
-                                },
-                            }],
-                        },
-                    }, {
-                        'DnDomainMapEntry': {
-                            'attributes': {
-                                'dn': 'uni/tn-common',
-                                'readPrivileges': 'admin',
-                                'writePrivileges': 'admin',
-                            },
-                        },
-                    }, {
-                        'DnDomainMapEntry': {
-                            'attributes': {
-                                'dn': 'uni/tn-infra',
-                                'readPrivileges': 'admin',
-                                'writePrivileges': 'admin',
-                            },
-                        },
-                    }, {
-                        'DnDomainMapEntry': {
-                            'attributes': {
-                                'dn': 'uni/tn-mgmt',
-                                'readPrivileges': 'admin',
-                                'writePrivileges': 'admin',
-                            },
-                        },
-                    }],
+        imdata = [{
+            'aaaLogin': {
+                'attributes': {
+                    'token': 'ZldYAsoO9d0FfAQM8xaEVWvQPSOYwpnqzhwpIC1r4MaToknJjlIuAt9+TvXqrZ8lWYIGPj6VnZkWiS8nJfaiaX/AyrdD35jsSxiP3zydh+849xym7ALCw/fFNsc7b5ik1HaMuSUtdrN8fmCEUy7Pq/QNpGEqkE8m7HaxAuHpmvXgtdW1bA+KKJu2zY1c/tem',  # NOQA
+                    'siteFingerprint': 'NdxD72K/uXaUK0wn',
+                    'refreshTimeoutSeconds': '600',
+                    'maximumLifetimeSeconds': '86400',
+                    'guiIdleTimeoutSeconds': '1200',
+                    'restTimeoutSeconds': '90',
+                    'creationTime': '1500134817',
+                    'firstLoginTime': '1500134817',
+                    'userName': 'admin',
+                    'remoteUser': 'false',
+                    'unixUserId': '15374',
+                    'sessionId': 'o7hObsqNTfCmDGcZI5c4ng==',
+                    'lastName': '',
+                    'firstName': '',
+                    'version': '2.0(2f)',
+                    'buildTime': 'Sat Aug 20 23:07:07 PDT 2016',
+                    'node': 'topology/pod-1/node-1',
                 },
-            }],
-            'totalCount': '1',
-        }
+                'children': [{
+                    'aaaUserDomain': {
+                        'attributes': {
+                            'name': 'all',
+                            'rolesR': 'admin',
+                            'rolesW': 'admin',
+                        },
+                        'children': [{
+                            'aaaReadRoles': {
+                                'attributes': {},
+                            },
+                        }, {
+                            'aaaWriteRoles': {
+                                'attributes': {},
+                                'children': [{
+                                    'role': {
+                                        'attributes': {
+                                            'name': 'admin',
+                                        },
+                                    },
+                                }],
+                            },
+                        }],
+                    },
+                }, {
+                    'DnDomainMapEntry': {
+                        'attributes': {
+                            'dn': 'uni/tn-common',
+                            'readPrivileges': 'admin',
+                            'writePrivileges': 'admin',
+                        },
+                    },
+                }, {
+                    'DnDomainMapEntry': {
+                        'attributes': {
+                            'dn': 'uni/tn-infra',
+                            'readPrivileges': 'admin',
+                             'writePrivileges': 'admin',
+                        },
+                    },
+                }, {
+                    'DnDomainMapEntry': {
+                        'attributes': {
+                            'dn': 'uni/tn-mgmt',
+                            'readPrivileges': 'admin',
+                            'writePrivileges': 'admin',
+                        },
+                    },
+                }],
+            },
+        }]
+
+        totalCount = 1
 
         json_response = '{"totalCount":"1","imdata":[{"aaaLogin":{"attributes":{"token":"ZldYAsoO9d0FfAQM8xaEVWvQPSOYwpnqzhwpIC1r4MaToknJjlIuAt9+TvXqrZ8lWYIGPj6VnZkWiS8nJfaiaX/AyrdD35jsSxiP3zydh+849xym7ALCw/fFNsc7b5ik1HaMuSUtdrN8fmCEUy7Pq/QNpGEqkE8m7HaxAuHpmvXgtdW1bA+KKJu2zY1c/tem","siteFingerprint":"NdxD72K/uXaUK0wn","refreshTimeoutSeconds":"600","maximumLifetimeSeconds":"86400","guiIdleTimeoutSeconds":"1200","restTimeoutSeconds":"90","creationTime":"1500134817","firstLoginTime":"1500134817","userName":"admin","remoteUser":"false","unixUserId":"15374","sessionId":"o7hObsqNTfCmDGcZI5c4ng==","lastName":"","firstName":"","version":"2.0(2f)","buildTime":"Sat Aug 20 23:07:07 PDT 2016","node":"topology/pod-1/node-1"},"children":[{"aaaUserDomain":{"attributes":{"name":"all","rolesR":"admin","rolesW":"admin"},"children":[{"aaaReadRoles":{"attributes":{}}},{"aaaWriteRoles":{"attributes":{},"children":[{"role":{"attributes":{"name":"admin"}}}]}}]}},{"DnDomainMapEntry":{"attributes":{"dn":"uni/tn-common","readPrivileges":"admin","writePrivileges":"admin"}}},{"DnDomainMapEntry":{"attributes":{"dn":"uni/tn-infra","readPrivileges":"admin","writePrivileges":"admin"}}},{"DnDomainMapEntry":{"attributes":{"dn":"uni/tn-mgmt","readPrivileges":"admin","writePrivileges":"admin"}}}]}}]}'  # NOQA
         json_result = dict()
-        aci_response_json(json_result, json_response)
-        self.assertEqual(expected_result, json_result)
+        aci.response_json(json_response)
+        self.assertEqual(aci.imdata, imdata)
+        self.assertEqual(aci.totalCount, totalCount)
 
         # Python 2.7+ is needed for xmljson
         if sys.version_info < (2, 7):
@@ -163,30 +187,35 @@ class AciRest(unittest.TestCase):
 
         xml_response = '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1">\n<aaaLogin token="ZldYAsoO9d0FfAQM8xaEVWvQPSOYwpnqzhwpIC1r4MaToknJjlIuAt9+TvXqrZ8lWYIGPj6VnZkWiS8nJfaiaX/AyrdD35jsSxiP3zydh+849xym7ALCw/fFNsc7b5ik1HaMuSUtdrN8fmCEUy7Pq/QNpGEqkE8m7HaxAuHpmvXgtdW1bA+KKJu2zY1c/tem" siteFingerprint="NdxD72K/uXaUK0wn" refreshTimeoutSeconds="600" maximumLifetimeSeconds="86400" guiIdleTimeoutSeconds="1200" restTimeoutSeconds="90" creationTime="1500134817" firstLoginTime="1500134817" userName="admin" remoteUser="false" unixUserId="15374" sessionId="o7hObsqNTfCmDGcZI5c4ng==" lastName="" firstName="" version="2.0(2f)" buildTime="Sat Aug 20 23:07:07 PDT 2016" node="topology/pod-1/node-1">\n<aaaUserDomain name="all" rolesR="admin" rolesW="admin">\n<aaaReadRoles/>\n<aaaWriteRoles>\n<role name="admin"/>\n</aaaWriteRoles>\n</aaaUserDomain>\n<DnDomainMapEntry dn="uni/tn-common" readPrivileges="admin" writePrivileges="admin"/>\n<DnDomainMapEntry dn="uni/tn-infra" readPrivileges="admin" writePrivileges="admin"/>\n<DnDomainMapEntry dn="uni/tn-mgmt" readPrivileges="admin" writePrivileges="admin"/>\n</aaaLogin></imdata>\n'''  # NOQA
         xml_result = dict()
-        aci_response_xml(xml_result, xml_response)
-        self.assertEqual(json_result, xml_result)
+        aci.response_xml(xml_response)
+        self.assertEqual(aci.imdata, imdata)
+        self.assertEqual(aci.totalCount, totalCount)
 
     def test_invalid_input(self):
         self.maxDiff = None
 
-        expected_result = {
-            'error_code': '401',
-            'error_text': 'Username or password is incorrect - FAILED local authentication',
-            'imdata': [{
-                'error': {
-                    'attributes': {
-                        'code': '401',
-                        'text': 'Username or password is incorrect - FAILED local authentication',
-                    },
+        error = dict(
+            code='401',
+            text='Username or password is incorrect - FAILED local authentication',
+        )
+
+        imdata = [{
+            'error': {
+                'attributes': {
+                    'code': '401',
+                    'text': 'Username or password is incorrect - FAILED local authentication',
                 },
-            }],
-            'totalCount': '1',
-        }
+            },
+        }]
+
+        totalCount = 1
 
         json_response = '{"totalCount":"1","imdata":[{"error":{"attributes":{"code":"401","text":"Username or password is incorrect - FAILED local authentication"}}}]}'  # NOQA
         json_result = dict()
-        aci_response_json(json_result, json_response)
-        self.assertEqual(expected_result, json_result)
+        aci.response_json(json_response)
+        self.assertEqual(aci.error, error)
+        self.assertEqual(aci.imdata, imdata)
+        self.assertEqual(aci.totalCount, totalCount)
 
         # Python 2.7+ is needed for xmljson
         if sys.version_info < (2, 7):
@@ -197,8 +226,10 @@ class AciRest(unittest.TestCase):
         </imdata>
         '''
         xml_result = dict()
-        aci_response_xml(xml_result, xml_response)
-        self.assertEqual(json_result, xml_result)
+        aci.response_xml(xml_response)
+        self.assertEqual(aci.error, error)
+        self.assertEqual(aci.imdata, imdata)
+        self.assertEqual(aci.totalCount, totalCount)
 
     def test_empty_response(self):
         self.maxDiffi = None
@@ -208,16 +239,17 @@ class AciRest(unittest.TestCase):
         else:
             error_text = "Unable to parse output as JSON, see 'raw' output. Expecting value: line 1 column 1 (char 0)"
 
-        expected_json_result = {
-            'error_code': -1,
-            'error_text': error_text,
-            'raw': '',
-        }
+        error = dict(
+            code=-1,
+            text=error_text,
+        )
+        raw = ''
 
         json_response = ''
         json_result = dict()
-        aci_response_json(json_result, json_response)
-        self.assertEqual(expected_json_result, json_result)
+        aci.response_json(json_response)
+        self.assertEqual(aci.error, error)
+        self.assertEqual(aci.result['raw'], raw)
 
         # Python 2.7+ is needed for xmljson
         if sys.version_info < (2, 7):
@@ -229,21 +261,21 @@ class AciRest(unittest.TestCase):
             error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
         elif PY2:
             error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (line 1)"
-        elif sys.version_info >= (3, 7):
-            error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
         else:
             error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (<string>, line 1)"
 
-        expected_xml_result = {
-            'error_code': -1,
-            'error_text': error_text,
-            'raw': '',
-        }
+        error = dict(
+            code=-1,
+            text=error_text,
+        )
+
+        raw = ''
 
         xml_response = ''
         xml_result = dict()
-        aci_response_xml(xml_result, xml_response)
-        self.assertEqual(expected_xml_result, xml_result)
+        aci.response_xml(xml_response)
+        self.assertEqual(aci.error, error)
+        self.assertEqual(aci.result['raw'], raw)
 
     def test_invalid_response(self):
         self.maxDiff = None
@@ -255,16 +287,18 @@ class AciRest(unittest.TestCase):
         else:
             error_text = "Unable to parse output as JSON, see 'raw' output. Expecting value: line 1 column 9 (char 8)"
 
-        expected_json_result = {
-            'error_code': -1,
-            'error_text': error_text,
-            'raw': '{ "aaa":',
-        }
+        error = dict(
+            code=-1,
+            text=error_text,
+        )
+
+        raw = '{ "aaa":'
 
         json_response = '{ "aaa":'
         json_result = dict()
-        aci_response_json(json_result, json_response)
-        self.assertEqual(expected_json_result, json_result)
+        aci.response_json(json_response)
+        self.assertEqual(aci.error, error)
+        self.assertEqual(aci.result['raw'], raw)
 
         # Python 2.7+ is needed for xmljson
         if sys.version_info < (2, 7):
@@ -279,13 +313,15 @@ class AciRest(unittest.TestCase):
         else:
             error_text = "Unable to parse output as XML, see 'raw' output. Couldn't find end of Start Tag aaa line 1, line 1, column 6 (<string>, line 1)"  # NOQA
 
-        expected_xml_result = {
-            'error_code': -1,
-            'error_text': error_text,
-            'raw': '<aaa ',
-        }
+        error = dict(
+            code=-1,
+            text=error_text,
+        )
+
+        raw = '<aaa '
 
         xml_response = '<aaa '
         xml_result = dict()
-        aci_response_xml(xml_result, xml_response)
-        self.assertEqual(expected_xml_result, xml_result)
+        aci.response_xml(xml_response)
+        self.assertEqual(aci.error, error)
+        self.assertEqual(aci.result['raw'], raw)

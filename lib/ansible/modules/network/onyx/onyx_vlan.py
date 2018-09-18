@@ -138,6 +138,8 @@ class OnyxVlanModule(BaseOnyxModule):
             self._required_config.append(params)
 
     def _create_vlan_data(self, vlan_id, vlan_data):
+        if self._os_version >= self.ONYX_API_VERSION:
+            vlan_data = vlan_data[0]
         return {
             'vlan_id': vlan_id,
             'name': self.get_config_attr(vlan_data, 'Name')
@@ -148,6 +150,7 @@ class OnyxVlanModule(BaseOnyxModule):
 
     def load_current_config(self):
         # called in base class in run function
+        self._os_version = self._get_os_version()
         self._current_config = dict()
         vlan_config = self._get_vlan_config()
         if not vlan_config:

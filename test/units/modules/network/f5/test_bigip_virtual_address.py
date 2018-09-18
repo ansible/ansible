@@ -20,15 +20,17 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_virtual_address import Parameters
-    from library.bigip_virtual_address import ModuleManager
-    from library.bigip_virtual_address import ArgumentSpec
+    from library.modules.bigip_virtual_address import ApiParameters
+    from library.modules.bigip_virtual_address import ModuleParameters
+    from library.modules.bigip_virtual_address import ModuleManager
+    from library.modules.bigip_virtual_address import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_virtual_address import Parameters
+        from ansible.modules.network.f5.bigip_virtual_address import ApiParameters
+        from ansible.modules.network.f5.bigip_virtual_address import ModuleParameters
         from ansible.modules.network.f5.bigip_virtual_address import ModuleManager
         from ansible.modules.network.f5.bigip_virtual_address import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
@@ -69,88 +71,88 @@ class TestParameters(unittest.TestCase):
             arp_state='enabled',
             auto_delete='enabled',
             icmp_echo='enabled',
-            advertise_route='always',
+            availability_calculation='always',
             use_route_advertisement='yes'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.state == 'present'
         assert p.address == '1.1.1.1'
         assert p.netmask == '2.2.2.2'
         assert p.connection_limit == 10
-        assert p.arp_state == 'enabled'
+        assert p.arp is True
         assert p.auto_delete is True
         assert p.icmp_echo == 'enabled'
-        assert p.advertise_route == 'none'
-        assert p.use_route_advertisement == 'enabled'
+        assert p.availability_calculation == 'none'
+        assert p.route_advertisement_type == 'enabled'
 
     def test_api_parameters(self):
         args = load_fixture('load_ltm_virtual_address_default.json')
-        p = Parameters(params=args)
+        p = ApiParameters(params=args)
         assert p.name == '1.1.1.1'
         assert p.address == '1.1.1.1'
-        assert p.arp_state == 'enabled'
+        assert p.arp is True
         assert p.auto_delete is True
         assert p.connection_limit == 0
         assert p.state == 'enabled'
         assert p.icmp_echo == 'enabled'
         assert p.netmask == '255.255.255.255'
-        assert p.use_route_advertisement == 'disabled'
-        assert p.advertise_route == 'any'
+        assert p.route_advertisement_type == 'disabled'
+        assert p.availability_calculation == 'any'
 
     def test_module_parameters_advertise_route_all(self):
         args = dict(
-            advertise_route='when_all_available'
+            availability_calculation='when_all_available'
         )
-        p = Parameters(params=args)
-        assert p.advertise_route == 'all'
+        p = ModuleParameters(params=args)
+        assert p.availability_calculation == 'all'
 
     def test_module_parameters_advertise_route_any(self):
         args = dict(
-            advertise_route='when_any_available'
+            availability_calculation='when_any_available'
         )
-        p = Parameters(params=args)
-        assert p.advertise_route == 'any'
+        p = ModuleParameters(params=args)
+        assert p.availability_calculation == 'any'
 
     def test_module_parameters_icmp_echo_disabled(self):
         args = dict(
             icmp_echo='disabled'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.icmp_echo == 'disabled'
 
     def test_module_parameters_icmp_echo_selective(self):
         args = dict(
             icmp_echo='selective'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.icmp_echo == 'selective'
 
     def test_module_parameters_auto_delete_disabled(self):
         args = dict(
             auto_delete='disabled'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.auto_delete is False
 
     def test_module_parameters_arp_state_disabled(self):
         args = dict(
             arp_state='disabled'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.arp_state == 'disabled'
 
     def test_module_parameters_use_route_advert_disabled(self):
         args = dict(
             use_route_advertisement='no'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.use_route_advertisement == 'disabled'
 
     def test_module_parameters_state_present(self):
         args = dict(
             state='present'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.state == 'present'
         assert p.enabled == 'yes'
 
@@ -158,14 +160,14 @@ class TestParameters(unittest.TestCase):
         args = dict(
             state='absent'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.state == 'absent'
 
     def test_module_parameters_state_enabled(self):
         args = dict(
             state='enabled'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.state == 'enabled'
         assert p.enabled == 'yes'
 
@@ -173,7 +175,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             state='disabled'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.state == 'disabled'
         assert p.enabled == 'no'
 

@@ -1,12 +1,17 @@
+.. _appendix_module_utilities:
+
+**************************
 Appendix: Module Utilities
-``````````````````````````
+**************************
 
-Ansible provides a number of module utilities that provide helper functions that you can use when developing your own modules. The `basic.py` module utility provides the main entry point for accessing the Ansible library, and all Ansible modules must, at minimum, import from basic.py::
+Ansible provides a number of module utilities that provide helper functions that you can use when developing your own modules. The ``basic.py`` module utility provides the main entry point for accessing the Ansible library, and all Python Ansible modules must, at minimum, import ``AnsibleModule``::
 
-  from ansible.module_utils.basic import *
+  from ansible.module_utils.basic import AnsibleModule
 
 
-The following is a list of module_utils files and a general description. The module utility source code lives in the `./lib/module_utils` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
+The following is a list of ``module_utils`` files and a general description. The module utility source code lives in the ``./lib/ansible/module_utils`` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
+
+.. include:: shared_snippets/licensing.txt
 
 - api.py - Adds shared support for generic API modules.
 - azure_rm_common.py - Definitions and utilities for Microsoft Azure Resource Manager template deployments.
@@ -21,6 +26,7 @@ The following is a list of module_utils files and a general description. The mod
 - keycloak.py - Definitions and helper functions for modules working with the Keycloak API
 - known_hosts.py - utilities for working with known_hosts file
 - manageiq.py - Functions and utilities for modules that work with ManageIQ platform and its resources.
+- memset.py - Helper functions and utilities for interacting with Memset's API.
 - mysql.py - Allows modules to connect to a MySQL instance
 - netapp.py - Functions and utilities for modules that work with the NetApp storage platforms.
 - network/a10/a10.py - Utilities used by the a10_server module to manage A10 Networks devices.
@@ -48,6 +54,7 @@ The following is a list of module_utils files and a general description. The mod
 - network/iosxr/iosxr.py - Definitions and helper functions for modules that manage Cisco IOS-XR networking devices.
 - network/ironware/ironware.py - Module support utilities for managing Brocade IronWare devices.
 - network/junos/junos.py -  Definitions and helper functions for modules that manage Junos networking devices.
+- network/meraki/meraki.py - Utilities specifically for the Meraki network modules.
 - network/netscaler/netscaler.py - Utilities specifically for the netscaler network modules.
 - network/nso/nso.py - Utilities for modules that work with Cisco NSO.
 - network/nxos/nxos.py - Contains definitions and helper functions specific to Cisco NXOS networking devices.

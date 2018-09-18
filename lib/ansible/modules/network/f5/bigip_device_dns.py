@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -17,8 +17,8 @@ DOCUMENTATION = r'''
 module: bigip_device_dns
 short_description: Manage BIG-IP device DNS settings
 description:
-  - Manage BIG-IP device DNS settings
-version_added: "2.2"
+  - Manage BIG-IP device DNS settings.
+version_added: 2.2
 options:
   cache:
     description:
@@ -26,17 +26,14 @@ options:
         operation each time a lookup is needed. Please note that this applies
         only to Access Policy Manager features, such as ACLs, web application
         rewrites, and authentication.
-    default: disable
     choices:
        - enabled
        - disabled
+       - enable
+       - disable
   name_servers:
     description:
       - A list of name servers that the system uses to validate DNS lookups
-  forwarders:
-    description:
-      - A list of BIND servers that the system can use to perform DNS lookups
-      - Deprecated in 2.4. Use the GUI or edit named.conf.
   search:
     description:
       - A list of domains that the system searches for local domain lookups,
@@ -106,30 +103,23 @@ warnings:
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -199,15 +189,6 @@ class Parameters(AnsibleF5Parameters):
         return True if self._values['dhcp'] in valid else False
 
     @property
-    def forwarders(self):
-        if self._values['forwarders'] is None:
-            return None
-        else:
-            raise F5ModuleError(
-                "The modifying of forwarders is not supported."
-            )
-
-    @property
     def ip_version(self):
         if self._values['ip_version'] in [6, '6', 'options inet6']:
             return "options inet6"
@@ -225,7 +206,7 @@ class ModuleManager(object):
         self.have = None
         self.changes = Parameters()
 
-    def _update_changed_options(self):
+    def _update_changed_options(self):  # lgtm [py/similar-function]
         changed = {}
         for key in Parameters.updatables:
             if getattr(self.want, key) is not None:
@@ -238,7 +219,7 @@ class ModuleManager(object):
             return True
         return False
 
-    def exec_module(self):
+    def exec_module(self):  # lgtm [py/similar-function]
         changed = False
         result = dict()
         state = self.want.state
@@ -340,23 +321,12 @@ class ArgumentSpec(object):
                 choices=['disabled', 'enabled', 'disable', 'enable']
             ),
             name_servers=dict(
-                required=False,
-                default=None,
-                type='list'
-            ),
-            forwarders=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             search=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             ip_version=dict(
-                required=False,
-                default=None,
                 choices=[4, 6],
                 type='int'
             ),
@@ -369,7 +339,7 @@ class ArgumentSpec(object):
         self.argument_spec.update(f5_argument_spec)
         self.argument_spec.update(argument_spec)
         self.required_one_of = [
-            ['name_servers', 'search', 'forwarders', 'ip_version', 'cache']
+            ['name_servers', 'search', 'ip_version', 'cache']
         ]
 
 

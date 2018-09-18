@@ -97,6 +97,13 @@ EXAMPLES = """
     mode: trunk
     trunk_vlans: 51-4094
     state: absent
+
+-  name: Aggregate Configure interfaces for access_vlan with aggregate
+   nxos_l2_interface:
+     aggregate:
+       - { name: "Ethernet1/2", access_vlan: 6 }
+       - { name: "Ethernet1/7", access_vlan: 15 }
+     mode: access
 """
 
 RETURN = """
@@ -113,34 +120,9 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-
-
-def get_interface_type(name):
-    """Gets the type of interface
-    Args:
-        interface (str): full name of interface, i.e. Ethernet1/1, loopback10,
-            port-channel20, vlan20
-    Returns:
-        type of interface: ethernet, svi, loopback, management, portchannel,
-         or unknown
-    """
-    if name.upper().startswith('ET'):
-        return 'ethernet'
-    elif name.upper().startswith('VL'):
-        return 'svi'
-    elif name.upper().startswith('LO'):
-        return 'loopback'
-    elif name.upper().startswith('MG'):
-        return 'management'
-    elif name.upper().startswith('MA'):
-        return 'management'
-    elif name.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def get_interface_mode(name, module):
@@ -252,18 +234,15 @@ def remove_switchport_config_commands(name, existing, proposed, module):
             commands.append(command)
 
     elif mode == 'trunk':
-        tv_check = existing.get('trunk_vlans_list') == proposed.get('trunk_vlans_list')
+        existing_vlans = existing.get('trunk_vlans_list')
+        proposed_vlans = proposed.get('trunk_vlans_list')
+        vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
 
-        if not tv_check:
-            existing_vlans = existing.get('trunk_vlans_list')
-            proposed_vlans = proposed.get('trunk_vlans_list')
-            vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
-
-            if vlans_to_remove:
-                proposed_allowed_vlans = proposed.get('trunk_allowed_vlans')
-                remove_trunk_allowed_vlans = proposed.get('trunk_vlans', proposed_allowed_vlans)
-                command = 'switchport trunk allowed vlan remove {0}'.format(remove_trunk_allowed_vlans)
-                commands.append(command)
+        if vlans_to_remove:
+            proposed_allowed_vlans = proposed.get('trunk_allowed_vlans')
+            remove_trunk_allowed_vlans = proposed.get('trunk_vlans', proposed_allowed_vlans)
+            command = 'switchport trunk allowed vlan remove {0}'.format(remove_trunk_allowed_vlans)
+            commands.append(command)
 
         native_check = existing.get('native_vlan') == proposed.get('native_vlan')
         if native_check and proposed.get('native_vlan'):

@@ -21,9 +21,9 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_wait import Parameters
-    from library.bigip_wait import ModuleManager
-    from library.bigip_wait import ArgumentSpec
+    from library.modules.bigip_wait import Parameters
+    from library.modules.bigip_wait import ModuleManager
+    from library.modules.bigip_wait import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -93,10 +93,15 @@ class TestParameters(unittest.TestCase):
 class TestManager(unittest.TestCase):
     def setUp(self):
         self.spec = ArgumentSpec()
+        self.patcher1 = patch('time.sleep')
+        self.patcher1.start()
+
+    def tearDown(self):
+        self.patcher1.stop()
 
     def test_wait_already_available(self, *args):
         set_module_args(dict(
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -111,8 +116,9 @@ class TestManager(unittest.TestCase):
         mm._connect_to_device = Mock(return_value=True)
         mm._device_is_rebooting = Mock(return_value=False)
         mm._is_mprov_running_on_device = Mock(return_value=False)
+        mm._get_client_connection = Mock(return_value=True)
 
         results = mm.exec_module()
 
         assert results['changed'] is False
-        assert results['elapsed'] == 1
+        assert results['elapsed'] == 0

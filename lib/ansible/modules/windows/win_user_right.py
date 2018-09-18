@@ -1,9 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -12,7 +10,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -31,7 +28,7 @@ options:
     - The name of the User Right as shown by the C(Constant Name) value from
       U(https://technet.microsoft.com/en-us/library/dd349804.aspx).
     - The module will return an error if the right is invalid.
-    required: True
+    required: yes
   users:
     description:
     - A list of users or groups to add/remove on the User Right.
@@ -40,14 +37,15 @@ options:
     - For local users/groups it can be in the form user-group, .\user-group,
       SERVERNAME\user-group where SERVERNAME is the name of the remote server.
     - You can also add special local accounts like SYSTEM and others.
-    required: True
+    required: yes
+    type: list
   action:
     description:
     - C(add) will add the users/groups to the existing right.
     - C(remove) will remove the users/groups from the existing right.
     - C(set) will replace the users/groups of the existing right.
     default: set
-    choices: [set, add, remove]
+    choices: [ add, remove, set ]
 author:
 - Jordan Borean (@jborean93)
 '''

@@ -31,28 +31,22 @@ docs/man/man3/*
 # docsite stuff...
 docs/api/_build/
 docs/api/rst/
-docs/docsite/*.html
 docs/docsite/_build
+docs/docsite/*.html
+docs/docsite/htmlout
+docs/docsite/rst/cli/ansible-*.rst
+docs/docsite/rst/cli/ansible.rst
+docs/docsite/rst/modules/*.rst
+docs/docsite/rst/playbooks_directives.rst
+docs/docsite/rst/plugins_by_category.rst
+docs/docsite/rst/plugins/*/*.rst
+docs/docsite/rst/reference_appendices/config.rst
+docs/docsite/rst/reference_appendices/playbooks_keywords.rst
+docs/docsite/rst_warnings
+docs/docsite/searchindex.js
 docs/docsite/_static/*.gif
 docs/docsite/_static/*.png
 docs/docsite/_static/websupport.js
-docs/docsite/htmlout
-docs/docsite/searchindex.js
-docs/docsite/rst_warnings
-docs/docsite/rst/*_module.rst
-docs/docsite/rst/ansible.rst
-docs/docsite/rst/ansible-*.rst
-docs/docsite/rst/community_maintained.rst
-docs/docsite/rst/config.rst
-docs/docsite/rst/core_maintained.rst
-docs/docsite/rst/list_of_*.rst
-docs/docsite/rst/modules_by_category.rst
-docs/docsite/rst/network_maintained.rst
-docs/docsite/rst/plugins_by_category.rst
-docs/docsite/rst/partner_maintained.rst
-docs/docsite/rst/playbooks_keywords.rst
-docs/docsite/rst/playbooks_directives.rst
-docs/docsite/rst/plugins/*/*.rst
 # deb building stuff...
 /debian/
 deb-build
@@ -63,8 +57,10 @@ credentials.yml
 # test output
 *.retry
 *.out
+.pytest_cache/
 .tox
 .cache
+.pytest_cache
 results.xml
 coverage.xml
 /test/units/cover-html
@@ -79,6 +75,7 @@ ansible.egg-info/
 /shippable/
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
+.python-version
 # Release directory
 packaging/release/ansible_release
 /.cache/
@@ -106,3 +103,5 @@ htmlcov/
 # ansible-test coverage results
 test/units/.coverage.*
 /test/integration/cloud-config-azure.yml
+/SYMLINK_CACHE.json
+changelogs/.plugin-cache.yaml

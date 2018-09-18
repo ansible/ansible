@@ -27,8 +27,6 @@ options:
       - The file on the remote system to fetch. This I(must) be a file, not a
         directory. Recursive fetching may be supported in a later release.
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - A directory to save the file into. For example, if the I(dest)
@@ -36,25 +34,21 @@ options:
         C(host.example.com), would be saved into
         C(/backup/host.example.com/etc/profile)
     required: true
-    default: null
   fail_on_missing:
     version_added: "1.1"
     description:
       - When set to 'yes', the task will fail if the remote file cannot be
-        read for any reason.  Prior to Ansible-2.4, setting this would only fail
+        read for any reason.  Prior to Ansible-2.5, setting this would only fail
         if the source file was missing.
-      - The default was changed to "yes" in Ansible-2.4.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "yes"
+      - The default was changed to "yes" in Ansible-2.5.
+    type: bool
+    default: 'yes'
   validate_checksum:
     version_added: "1.4"
     description:
       - Verify that the source and destination checksums match after the files are fetched.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "yes"
-    aliases: [ "validate_md5" ]
+    type: bool
+    default: 'yes'
   flat:
     version_added: "1.2"
     description:
@@ -62,7 +56,8 @@ options:
         hostname/path/to/file to the destination.  If dest ends with '/', it
         will use the basename of the source file, similar to the copy module.
         Obviously this is only handy if the filenames are unique.
-requirements: []
+    type: bool
+    default: 'no'
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
@@ -73,8 +68,8 @@ notes:
       depending on the file size can consume all available memory on the
       remote or local hosts causing a C(MemoryError). Due to this it is
       advisable to run this module without C(become) whenever possible.
-    - Prior to Ansible-2.4 this module would not fail if reading the remote
-      file was impossible unless fail_on_missing was set.  In Ansible-2.4+,
+    - Prior to Ansible-2.5 this module would not fail if reading the remote
+      file was impossible unless fail_on_missing was set.  In Ansible-2.5+,
       playbook authors are encouraged to use fail_when or ignore_errors to
       get this ability.  They may also explicitly set fail_on_missing to False
       to get the non-failing behaviour.

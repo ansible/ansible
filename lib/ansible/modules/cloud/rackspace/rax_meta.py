@@ -29,11 +29,9 @@ options:
   name:
     description:
       - Server name to modify metadata for
-    default: null
   meta:
     description:
       - A hash of metadata to associate with the instance
-    default: null
 author: "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace.openstack
 '''

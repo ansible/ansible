@@ -22,8 +22,6 @@ options:
   iam_type:
     description:
       - Type of IAM resource
-    required: true
-    default: null
     choices: ["user", "group", "role"]
   name:
     description:
@@ -32,47 +30,34 @@ options:
   new_name:
     description:
       - When state is update, will replace name with new_name on IAM resource
-    required: false
-    default: null
   new_path:
     description:
       - When state is update, will replace the path with new_path on the IAM resource
-    required: false
-    default: null
   state:
     description:
       - Whether to create, delete or update the IAM resource. Note, roles cannot be updated.
     required: true
-    default: null
     choices: [ "present", "absent", "update" ]
   path:
     description:
       - When creating or updating, specify the desired path of the resource. If state is present,
         it will replace the current path to match what is passed in when they do not match.
-    required: false
     default: "/"
   trust_policy:
     description:
       - The inline (JSON or YAML) trust policy document that grants an entity permission to assume the role. Mutually exclusive with C(trust_policy_filepath).
-    required: false
-    default: null
     version_added: "2.2"
   trust_policy_filepath:
     description:
       - The path to the trust policy document that grants an entity permission to assume the role. Mutually exclusive with C(trust_policy).
-    required: false
-    default: null
     version_added: "2.2"
   access_key_state:
     description:
       - When type is user, it creates, removes, deactivates or activates a user's access key(s). Note that actions apply only to keys specified.
-    required: false
-    default: null
     choices: [ "create", "remove", "active", "inactive"]
   key_count:
     description:
       - When access_key_state is create it will ensure this quantity of keys are present. Defaults to 1.
-    required: false
     default: '1'
   access_key_ids:
     description:
@@ -80,15 +65,10 @@ options:
   groups:
     description:
       - A list of groups the user should belong to. When update, will gracefully remove groups not listed.
-    required: false
-    default: null
   password:
     description:
       - When type is user and state is present, define the users login password. Also works with update. Note that always returns changed.
-    required: false
-    default: null
   update_password:
-    required: false
     default: always
     choices: ['always', 'on_create']
     description:
@@ -274,7 +254,7 @@ def delete_dependencies_first(module, iam, name):
         changed = True
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
-        if 'Cannot find Login Profile' not in error_msg:
+        if 'Login Profile for User ' + name + ' cannot be found.' not in error_msg:
             module.fail_json(changed=changed, msg="Failed to delete login profile: %s" % err, exception=traceback.format_exc())
 
     # try to detach policies

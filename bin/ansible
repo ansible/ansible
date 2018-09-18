@@ -157,7 +157,7 @@ if __name__ == '__main__':
         display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()), log_only=log_only)
         exit_code = 250
     finally:
-        # Remove ansible tempdir
+        # Remove ansible tmpdir
         shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
     sys.exit(exit_code)

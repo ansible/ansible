@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -51,6 +37,7 @@ options:
     - Will check the existance of the path specified and use the result to
       determine whether the package is already installed.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
+    type: path
     version_added: '2.4'
   creates_service:
     description:
@@ -73,12 +60,8 @@ options:
       C(3010).
     - A return code of C(3010) usually means that a reboot is required, the
       C(reboot_required) return value is set if the return code is C(3010).
+    type: list
     default: [0, 3010]
-  name:
-    description:
-    - Name of the package, if name isn't specified the path will be used for
-      log messages.
-    - As of Ansible 2.4 this is deprecated and no longer required.
   password:
     description:
     - The password for C(user_name), must be set when C(user_name) is.
@@ -142,7 +125,7 @@ notes:
   different structure but this module should support any format.
 - By default all msi installs and uninstalls will be run with the options
   C(/log, /qn, /norestart).
-- It is recommended you download the pacakge first from the URL using the
+- It is recommended you download the package first from the URL using the
   M(win_get_url) module as it opens up more flexibility with what must be set
   when calling C(win_package).
 - Packages will be temporarily downloaded or copied locally when path is a
@@ -232,30 +215,19 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-exit_code:
-  description: See rc, this will be removed in favour of rc in Ansible 2.6.
-  returned: change occured
-  type: int
-  sample: 0
 log:
   description: The contents of the MSI log.
   returned: change occured and package is an MSI
   type: str
   sample: Installation completed successfully
 rc:
-  description: The return code of the pacakge process.
+  description: The return code of the package process.
   returned: change occured
   type: int
   sample: 0
 reboot_required:
   description: Whether a reboot is required to finalise package. This is set
     to true if the executable return code is 3010.
-  returned: always
-  type: bool
-  sample: True
-restart_required:
-  description: See reboot_required, this will be removed in favour of
-    reboot_required in Ansible 2.6
   returned: always
   type: bool
   sample: True

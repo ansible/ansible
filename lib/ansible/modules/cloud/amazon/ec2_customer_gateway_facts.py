@@ -20,13 +20,9 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeCustomerGateways.html) for possible filters.
-    required: false
-    default: None
   customer_gateway_ids:
     description:
       - Get details of a specific customer gateways using customer gateway ID/IDs. This value should be provided as a list.
-    required: false
-    default: None
 extends_documentation_fragment:
     - aws
     - ec2

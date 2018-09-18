@@ -29,16 +29,12 @@ options:
     description:
       - Get details of specific endpoint IDs
       - Provide this value as a list
-    required: false
-    default: None
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcEndpoints.html)
         for possible filters.
-    required: false
-    default: None
-author: Karen Cheng(@Etherdaemon)
+author: Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
     - aws
     - ec2

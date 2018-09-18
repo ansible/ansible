@@ -45,8 +45,8 @@ options:
        - Ignored. Present for backwards compatibility
      required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -54,7 +54,7 @@ EXAMPLES = '''
 - os_server_group:
     state: present
     auth:
-      auth_url: https://api.cloud.catalyst.net.nz:5000/v2.0
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -66,7 +66,7 @@ EXAMPLES = '''
 - os_server_group:
     state: absent
     auth:
-      auth_url: https://api.cloud.catalyst.net.nz:5000/v2.0
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -104,14 +104,8 @@ user_id:
     type: string
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(state, server_group):
@@ -136,15 +130,12 @@ def main():
         **module_kwargs
     )
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     name = module.params['name']
     policies = module.params['policies']
     state = module.params['state']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         server_group = cloud.get_server_group(name)
 
         if module.check_mode:
@@ -173,7 +164,7 @@ def main():
                 cloud.delete_server_group(server_group['id'])
                 changed = True
             module.exit_json(changed=changed)
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

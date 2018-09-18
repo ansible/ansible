@@ -1,4 +1,2 @@
-posix/ci/cloud/group1/vcenter
-posix/ci/cloud/group1/smoketest
+shippable/vcenter/group1
 cloud/vcenter
-destructive

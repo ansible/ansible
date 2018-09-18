@@ -22,7 +22,7 @@ from ansible.module_utils.facts.network.generic_bsd import GenericBsdIfconfigNet
 
 class DarwinNetwork(GenericBsdIfconfigNetwork):
     """
-    This is the Mac OS X/Darwin Network Class.
+    This is the Mac macOS Darwin Network Class.
     It uses the GenericBsdIfconfigNetwork unchanged
     """
     platform = 'Darwin'

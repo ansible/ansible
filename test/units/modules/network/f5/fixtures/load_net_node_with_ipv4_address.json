@@ -1,0 +1,24 @@
+{
+    "kind": "tm:ltm:node:nodestate",
+    "name": "7.3.67.8",
+    "partition": "Common",
+    "fullPath": "/Common/7.3.67.8",
+    "generation": 162,
+    "selfLink": "https://localhost/mgmt/tm/ltm/node/~Common~7.3.67.8?ver=12.0.0",
+    "address": "7.3.67.8",
+    "connectionLimit": 0,
+    "dynamicRatio": 1,
+    "ephemeral": "false",
+    "fqdn": {
+        "addressFamily": "ipv4",
+        "autopopulate": "disabled",
+        "downInterval": 5,
+        "interval": "3600"
+    },
+    "logging": "disabled",
+    "monitor": "default",
+    "rateLimit": "disabled",
+    "ratio": 1,
+    "session": "user-enabled",
+    "state": "unchecked"
+}

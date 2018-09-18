@@ -14,17 +14,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_aep_to_domain
-short_description: Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics (infra:RsDomP)
+short_description: Bind AEPs to Physical or Virtual Domains (infra:RsDomP)
 description:
 - Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:RsDomP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
-version_added: '2.5'
 notes:
 - The C(aep) and C(domain) parameters should exist before using this module.
   The M(aci_aep) and M(aci_domain) can be used for these.
+- More information about the internal APIC class B(infra:RsDomP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Dag Wieers (@dagwieers)
+version_added: '2.5'
 options:
   aep:
     description:
@@ -54,9 +54,155 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add AEP to domain binding
+  aci_aep_to_domain: &binding_present
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: present
+  delegate_to: localhost
 
-RETURN = ''' # '''
+- name: Remove AEP to domain binding
+  aci_aep_to_domain: &binding_absent
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: absent
+  delegate_to: localhost
+
+- name: Query our AEP to domain binding
+  aci_aep_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all AEP to domain bindings
+  aci_aep_to_domain: &binding_query
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+  delegate_to: localhost
+  register: query_result
+'''
+
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -75,9 +221,9 @@ VM_PROVIDER_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        aep=dict(type='str', aliases=['aep_name']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
+        aep=dict(type='str', aliases=['aep_name']),  # Not required for querying all objects
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
+        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
     )
@@ -89,6 +235,9 @@ def main():
             ['domain_type', 'vmm', ['vm_provider']],
             ['state', 'absent', ['aep', 'domain', 'domain_type']],
             ['state', 'present', ['aep', 'domain', 'domain_type']],
+        ],
+        required_together=[
+            ['domain', 'domain_type'],
         ],
     )
 
@@ -114,43 +263,40 @@ def main():
     elif domain_type == 'vmm':
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     else:
-        aci_domain = None
+        domain_mo = None
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='infraAttEntityP',
             aci_rn='infra/attentp-{0}'.format(aep),
-            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
             module_object=aep,
+            target_filter={'name': aep},
         ),
         subclass_1=dict(
             aci_class='infraRsDomP',
             aci_rn='rsdomP-[{0}]'.format(domain_mo),
-            filter_target='eq(infraRsDomP.tDn, "{0}")'.format(domain_mo),
             module_object=domain_mo,
+            target_filter={'tDn': domain_mo},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='infraRsDomP',
             class_config=dict(tDn=domain_mo),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraRsDomP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

@@ -60,6 +60,7 @@ options:
             - Enum options - WAF_MODE_DETECTION_ONLY, WAF_MODE_ENFORCEMENT.
             - Field introduced in 17.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as WAF_MODE_DETECTION_ONLY.
+        required: true
     name:
         description:
             - Field introduced in 17.2.1.
@@ -96,6 +97,7 @@ options:
             - Waf profile for waf policy.
             - It is a reference to an object of type wafprofile.
             - Field introduced in 17.2.1.
+        required: true
 extends_documentation_fragment:
     - avi
 '''
@@ -135,7 +137,7 @@ def main():
         created_by=dict(type='str',),
         crs_groups=dict(type='list',),
         description=dict(type='str',),
-        mode=dict(type='str',),
+        mode=dict(type='str', required=True),
         name=dict(type='str', required=True),
         paranoia_level=dict(type='str',),
         post_crs_groups=dict(type='list',),
@@ -143,7 +145,7 @@ def main():
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
-        waf_profile_ref=dict(type='str',),
+        waf_profile_ref=dict(type='str', required=True),
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
@@ -154,6 +156,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'wafpolicy',
                            set([]))
+
 
 if __name__ == '__main__':
     main()
