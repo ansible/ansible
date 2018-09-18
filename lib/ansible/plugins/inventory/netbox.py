@@ -70,6 +70,7 @@ query_filters:
 import json
 import uuid
 from sys import version as python_version
+from threading import Thread
 
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.module_utils.ansible_release import __version__ as ansible_version
@@ -260,13 +261,24 @@ class InventoryModule(BaseInventoryPlugin):
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
 
     def refresh_lookups(self):
-        self.refresh_sites_lookup()
-        self.refresh_regions_lookup()
-        self.refresh_tenants_lookup()
-        self.refresh_racks_lookup()
-        self.refresh_device_roles_lookup()
-        self.refresh_device_types_lookup()
-        self.refresh_manufacturers_lookup()
+        lookup_processes = (
+            self.refresh_sites_lookup,
+            self.refresh_regions_lookup,
+            self.refresh_tenants_lookup,
+            self.refresh_racks_lookup,
+            self.refresh_device_roles_lookup,
+            self.refresh_device_types_lookup,
+            self.refresh_manufacturers_lookup,
+        )
+
+        thread_list = []
+        for p in lookup_processes:
+            t = Thread(target=p)
+            thread_list.append(t)
+            t.start()
+
+        for thread in thread_list:
+            thread.join()
 
     def validate_query_parameters(self, x):
         if not (isinstance(x, dict) and len(x) == 1):
