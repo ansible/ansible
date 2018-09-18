@@ -285,6 +285,7 @@ def get_aws_connection_info(module, boto3=False):
         boto_params['verify'] = validate_certs
 
         if profile_name:
+            boto_params = dict(aws_access_key_id=None, aws_secret_access_key=None, aws_session_token=None)
             boto_params['profile_name'] = profile_name
 
     else:
