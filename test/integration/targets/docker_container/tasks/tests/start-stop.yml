@@ -2,6 +2,8 @@
 - name: Registering container name
   set_fact:
     cname: "{{ cname_prefix ~ '-hi' }}"
+- name: Registering container name
+  set_fact:
     cnames: "{{ cnames }} + [cname]"
 
 ####################################################################

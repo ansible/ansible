@@ -3,6 +3,8 @@
 - name: Registering container name
   set_fact:
     cname: "{{ cname_prefix ~ '-45700' }}"
+- name: Registering container name
+  set_fact:
     cnames: "{{ cnames }} + [cname]"
 
 - name: Start container
