@@ -1495,18 +1495,6 @@
 ## prepare for test
 - block:
 
-  - name: execute - create a user for test
-    user:
-      name: ptux
-      uid: 14131
-      state: present
-
-  - name: execute - create a group for test
-    group:
-      name: ptux
-      gid: 14131
-      state: present
-
   - name: execute - Create a test src dir
     file:
       path: '{{ remote_dir }}/remote_dir_src'
@@ -1689,7 +1677,7 @@
       stat:
         path: '{{ remote_dir }}/testcase2_local_follow_true/link_file12'
       register: stat_testcase2_local_follow_true_link_file12
-  
+
     - name: assert - remote_dir_src has copied with local_follow True.
       assert:
         that:
@@ -1946,64 +1934,89 @@
 
 ## test copying the directory on remote with chown
 - block:
-   - name: execute - Copy the directory on remote with chown
-     copy:
-       remote_src: True
-       src: '{{ remote_dir }}/remote_dir_src/'
-       dest: '{{ remote_dir }}/new_dir_with_chown'
-       owner: ptux
-       group: ptux
-     register: testcase5
+  - name: execute - create a user for test
+    user:
+      name: ptux
+      uid: 14131
+      state: present
 
-   - name: gather - Stat the new_dir_with_chown
-     stat:
-       path: '{{ remote_dir }}/new_dir_with_chown'
-     register: stat_new_dir_with_chown
+  - name: execute - create a group for test
+    group:
+      name: ptux
+      gid: 14131
+      state: present
 
-   - name: gather - Stat the new_dir_with_chown/file1
-     stat:
-       path: '{{ remote_dir }}/new_dir_with_chown/file1'
-     register: stat_new_dir_with_chown_file1
+  - name: execute - Copy the directory on remote with chown
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/new_dir_with_chown'
+      owner: ptux
+      group: ptux
+    register: testcase5
 
-   - name: gather - Stat the new_dir_with_chown/subdir
-     stat:
-       path: '{{ remote_dir }}/new_dir_with_chown/subdir'
-     register: stat_new_dir_with_chown_subdir
+  - name: gather - Stat the new_dir_with_chown
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown'
+    register: stat_new_dir_with_chown
 
-   - name: gather - Stat the new_dir_with_chown/subdir/file12
-     stat:
-       path: '{{ remote_dir }}/new_dir_with_chown/subdir/file12'
-     register: stat_new_dir_with_chown_subdir_file12
+  - name: gather - Stat the new_dir_with_chown/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/file1'
+    register: stat_new_dir_with_chown_file1
 
-   - name: gather - Stat the new_dir_with_chown/link_file12
-     stat:
-       path: '{{ remote_dir }}/new_dir_with_chown/link_file12'
-     register: stat_new_dir_with_chown_link_file12
+  - name: gather - Stat the new_dir_with_chown/subdir
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/subdir'
+    register: stat_new_dir_with_chown_subdir
 
-   - name: assert - owner and group have changed
-     assert:
-       that:
-       - testcase5 is changed
-       - "stat_new_dir_with_chown.stat.uid == 14131"
-       - "stat_new_dir_with_chown.stat.gid == 14131"
-       - "stat_new_dir_with_chown.stat.pw_name == 'ptux'"
-       - "stat_new_dir_with_chown.stat.gr_name == 'ptux'"
-       - "stat_new_dir_with_chown_file1.stat.uid == 14131"
-       - "stat_new_dir_with_chown_file1.stat.gid == 14131"
-       - "stat_new_dir_with_chown_file1.stat.pw_name == 'ptux'"
-       - "stat_new_dir_with_chown_file1.stat.gr_name == 'ptux'"
-       - "stat_new_dir_with_chown_subdir.stat.uid == 14131"
-       - "stat_new_dir_with_chown_subdir.stat.gid == 14131"
-       - "stat_new_dir_with_chown_subdir.stat.pw_name == 'ptux'"
-       - "stat_new_dir_with_chown_subdir.stat.gr_name == 'ptux'"
-       - "stat_new_dir_with_chown_subdir_file12.stat.uid == 14131"
-       - "stat_new_dir_with_chown_subdir_file12.stat.gid == 14131"
-       - "stat_new_dir_with_chown_subdir_file12.stat.pw_name == 'ptux'"
-       - "stat_new_dir_with_chown_subdir_file12.stat.gr_name == 'ptux'"
-       - "stat_new_dir_with_chown_link_file12.stat.uid == 14131"
-       - "stat_new_dir_with_chown_link_file12.stat.gid == 14131"
-       - "stat_new_dir_with_chown_link_file12.stat.pw_name == 'ptux'"
-       - "stat_new_dir_with_chown_link_file12.stat.gr_name == 'ptux'"
+  - name: gather - Stat the new_dir_with_chown/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/subdir/file12'
+    register: stat_new_dir_with_chown_subdir_file12
+
+  - name: gather - Stat the new_dir_with_chown/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/link_file12'
+    register: stat_new_dir_with_chown_link_file12
+
+  - name: assert - owner and group have changed
+    assert:
+      that:
+      - testcase5 is changed
+      - "stat_new_dir_with_chown.stat.uid == 14131"
+      - "stat_new_dir_with_chown.stat.gid == 14131"
+      - "stat_new_dir_with_chown.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown.stat.gr_name == 'ptux'"
+      - "stat_new_dir_with_chown_file1.stat.uid == 14131"
+      - "stat_new_dir_with_chown_file1.stat.gid == 14131"
+      - "stat_new_dir_with_chown_file1.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown_file1.stat.gr_name == 'ptux'"
+      - "stat_new_dir_with_chown_subdir.stat.uid == 14131"
+      - "stat_new_dir_with_chown_subdir.stat.gid == 14131"
+      - "stat_new_dir_with_chown_subdir.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown_subdir.stat.gr_name == 'ptux'"
+      - "stat_new_dir_with_chown_subdir_file12.stat.uid == 14131"
+      - "stat_new_dir_with_chown_subdir_file12.stat.gid == 14131"
+      - "stat_new_dir_with_chown_subdir_file12.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown_subdir_file12.stat.gr_name == 'ptux'"
+      - "stat_new_dir_with_chown_link_file12.stat.uid == 14131"
+      - "stat_new_dir_with_chown_link_file12.stat.gid == 14131"
+      - "stat_new_dir_with_chown_link_file12.stat.pw_name == 'ptux'"
+      - "stat_new_dir_with_chown_link_file12.stat.gr_name == 'ptux'"
+
+  always:
+    - name: execute - remove the user for test
+      user:
+        name: ptux
+        uid: 14131
+        state: absent
+
+    - name: execute - remove the group for test
+      group:
+        name: ptux
+        gid: 14131
+        state: absent
 
 ## testcase last - make sure remote_dir_src not change
 - block:
