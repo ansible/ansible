@@ -61,7 +61,7 @@ options:
     description:
     - Routing protocol for the L3Out
     type: list
-    choices: [ static, bgp, ospf, pim ]
+    choices: [ static, bgp, ospf, eigrp, pim ]
   description:
     description:
     - Description for the L3Out.
@@ -234,7 +234,8 @@ def main():
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42',
                            'AF43', 'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        l3protocol=dict(type='list', choices=['static', 'bgp', 'ospf', 'pim']),
+        l3protocol=dict(type='list', choices=['static', 'bgp', 'ospf', 'eigrp', 'pim']),
+        asn=dict(type='str', aliases=['as_number']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
 
@@ -242,8 +243,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['name', 'tenant']],
-            ['state', 'present', ['name', 'tenant', 'domain', 'vrf']],
+            ['state', 'absent', ['l3out', 'tenant']],
+            ['state', 'present', ['l3out', 'tenant', 'domain', 'vrf']],
         ],
     )
 
@@ -256,6 +257,7 @@ def main():
     enforceRtctrl = module.params['route_control']
     vrf = module.params['vrf']
     l3protocol = module.params['l3protocol']
+    asn = module.params['asn']
     state = module.params['state']
     tenant = module.params['tenant']
 
@@ -301,6 +303,9 @@ def main():
             elif protocol == 'ospf':
                 child_configs.append(
                     dict(ospfExtP=dict(attributes=dict(descr='', nameAlias=''))))
+            elif protocol == 'eigrp':
+                child_configs.append(
+                    dict(eigrpExtP=dict(attributes=dict(descr='', nameAlias='', asn=asn))))
             elif protocol == 'pim':
                 child_configs.append(
                     dict(pimExtP=dict(attributes=dict(descr='', nameAlias=''))))
