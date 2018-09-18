@@ -1,0 +1,5 @@
+version: '3'
+services:
+    busybox:
+        image: busybox:latest
+        command: sleep 3600
