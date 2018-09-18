@@ -125,7 +125,8 @@ options:
     aliases: ['new_identifier']
   wait:
     description:
-      - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be terminated.
+      - When command=create, modify or restore then wait for the database to enter the 'available' state.
+        When command=delete wait for the database to be terminated.
     type: bool
     default: 'no'
   wait_timeout:
@@ -243,7 +244,7 @@ def _collect_facts(resource):
     for node in resource['ClusterNodes']:
         if node['NodeRole'] in ('SHARED', 'LEADER'):
             facts['private_ip_address'] = node['PrivateIPAddress']
-            if facts['enhanced_vpc_routing'] == False:
+            if facts['enhanced_vpc_routing'] is False:
                 facts['public_ip_address'] = node['PublicIPAddress']
             else:
                 facts['public_ip_address'] = None
@@ -414,7 +415,7 @@ def modify_cluster(module, redshift):
         if module.params.get(p) is not None:
             params[p] = module.params.get(p)
 
-    # enhanced_vpc_routing parameter change needs a single request
+    # enhanced_vpc_routing parameter change needs an exclusive request
     if module.params.get('enhanced_vpc_routing') is not None:
         try:
             redshift.modify_cluster(ClusterIdentifier=identifier,
@@ -438,7 +439,6 @@ def modify_cluster(module, redshift):
                                 **snake_dict_to_camel_dict(params, capitalize_first=True))
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Couldn't modify redshift cluster %s " % identifier)
-
 
     if module.params.get('new_cluster_identifier'):
         identifier = module.params.get('new_cluster_identifier')
