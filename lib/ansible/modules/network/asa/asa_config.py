@@ -205,8 +205,7 @@ vars:
 
 - name: Show changes to interface from task above
   debug:
-    var:
-      - "{{ interface }}"
+    var: interface
 
 """
 
