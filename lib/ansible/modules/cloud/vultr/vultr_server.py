@@ -648,8 +648,8 @@ class AnsibleVultrServer(Vultr):
         server_user_data = self.get_server_user_data(server=server)
         if user_data is not None and user_data != server_user_data:
             self.result['changed'] = True
-            self.result['diff']['before']['tag'] = server_user_data
-            self.result['diff']['after']['tag'] = user_data
+            self.result['diff']['before']['user_data'] = server_user_data
+            self.result['diff']['after']['user_data'] = user_data
 
             if not self.module.check_mode:
                 data = {
