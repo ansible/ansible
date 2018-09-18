@@ -759,6 +759,11 @@ class TaskParameters(DockerBaseClass):
         if self.state == 'absent':
             return
 
+        if self.groups:
+            # In case integers are passed as groups, we need to convert them to
+            # strings as docker internally treats them as strings.
+            self.groups = [str(g) for g in self.groups]
+
         for param_name in REQUIRES_CONVERSION_TO_BYTES:
             if client.module.params.get(param_name):
                 try:
