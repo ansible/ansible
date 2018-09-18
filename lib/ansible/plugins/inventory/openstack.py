@@ -81,6 +81,14 @@ DOCUMENTATION = '''
                 inventory script's option fail_on_errors)
             type: bool
             default: 'no'
+        exit_on_errors:
+            description: |
+                Causes ansible to exit if there are any errors retrieving info
+                from openstack clouds from which inventory is built. This can
+                be valuable if you would rather ansible not run if you do not
+                have a complete openstack inventory picture.
+            type: bool
+            default: 'no'
         clouds_yaml_path:
             description: |
                 Override path to clouds.yaml file. If this value is given it
@@ -191,10 +199,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 cloud_inventory.clouds = new_clouds
 
             expand_hostvars = self._config_data.get('expand_hostvars', False)
-            fail_on_errors = self._config_data.get('fail_on_errors', False)
+            exit_on_errors = self._config_data.get('exit_on_errors', False)
+            fail_on_errors = exit_on_errors or \
+                    self._config_data.get('fail_on_errors', False)
 
-            source_data = cloud_inventory.list_hosts(
-                expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
+            try:
+                source_data = cloud_inventory.list_hosts(
+                    expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
+            except:
+                if exit_on_errors:
+                    sys.exit("Unable to generate complete inventory "
+                             "from openstack clouds")
+                else:
+                    # Use normal ansible error handling
+                    raise
 
             self.cache.set(cache_key, source_data)
 
