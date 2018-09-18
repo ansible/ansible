@@ -18,6 +18,7 @@ To get started, please read and understand the :ref:`code_of_conduct`, and then 
    reporting_bugs_and_features
    communication
    development_process
+   contributor_license_agreement
    triage_process
    other_tools_and_programs
    ../dev_guide/style_guide/index
