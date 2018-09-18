@@ -835,6 +835,9 @@ def group_exists(client, module, vpc_id, group_id, name):
     if security_groups:
         groups = dict((group['GroupId'], group) for group in all_groups)
         groups.update(dict((group['GroupName'], group) for group in all_groups))
+        if vpc_id:
+            vpc_wins = dict((group['GroupName'], group) for group in all_groups if group['VpcId'] == vpc_id)
+            groups.update(vpc_wins)
         # maintain backwards compatibility by using the last matching group
         return security_groups[-1], groups
     return None, {}
