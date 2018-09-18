@@ -73,7 +73,7 @@ def ipv6_netmask_to_cidr(mask):
                 break
             count += bit_masks.index(int(w, 16))
         return count
-    except:
+    except Exception:
         return -1
 
 

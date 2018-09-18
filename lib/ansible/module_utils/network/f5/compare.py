@@ -10,9 +10,9 @@ __metaclass__ = type
 def cmp_simple_list(want, have):
     if want is None:
         return None
-    if have is None and want == '':
+    if have is None and want in ['', 'none']:
         return None
-    if have is not None and want == '':
+    if have is not None and want in ['', 'none']:
         return []
     if have is None:
         return want
