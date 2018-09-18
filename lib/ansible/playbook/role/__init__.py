@@ -235,7 +235,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         # TODO: need a playbook.base.Base derived object here?
         # TODO: do we want a Role (or Task or Base) object to have a arg_spec attribute?
-        #       Seems like it would be handy for introspection and error reporting...
+        #       Seems like it would be handy for introspection and error reporting and copy()
         self._argument_specs = argument_specs
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
@@ -508,6 +508,9 @@ class Role(Base, Become, Conditional, Taggable):
         if self._metadata:
             res['_metadata'] = self._metadata.serialize()
 
+        if self._argument_specs:
+            res['_argument_specs'] = self._argument_specs
+
         if include_deps:
             deps = []
             for role in self.get_direct_dependencies():
@@ -551,6 +554,10 @@ class Role(Base, Become, Conditional, Taggable):
             m = RoleMetadata()
             m.deserialize(metadata_data)
             self._metadata = m
+
+        argument_specs = data.get('_argument_specs', {})
+        if argument_specs:
+            self._argument_specs = argument_specs
 
         super(Role, self).deserialize(data)
 

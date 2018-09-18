@@ -119,6 +119,110 @@ class TestHashParams(unittest.TestCase):
         self.assertRaises(TypeError, hash_params, params)
 
 
+def build_complete_role():
+    loader_data = {
+        '/etc/ansible/roles/foo_arg_spec/meta/main.yml': """
+            allow_duplicates: true
+            dependencies:
+                - bar_metadata
+            galaxy_info:
+                a: 1
+                b: 2
+                c: 3
+        """,
+        '/etc/ansible/roles/foo_arg_spec/meta/argument_specs.yml': """
+        main:
+            description: "The arg spec for testing"
+            argument_spec:
+                some_int:
+                type: "int"
+                some_bool:
+                type: "bool"
+            mutually_exclusive:
+                - ["some_bool", "some_int"]
+        """,
+        "/etc/ansible/roles/foo_arg_spec/tasks/main.yml": """
+        - shell: echo 'hello world'
+        """,
+        "/etc/ansible/roles/foo_arg_spec/handlers/main.yml": """
+        - name: test handler
+          shell: echo 'hello world'
+        """,
+        "/etc/ansible/roles/foo_arg_spec/defaults/main.yml": """
+        foo: bar
+        """,
+        "/etc/ansible/roles/foo_arg_spec/vars/main.yml": """
+        foo: bam
+        """,
+        '/etc/ansible/roles/bar_metadata/meta/main.yml': """
+            dependencies:
+                - baz_metadata
+        """,
+        '/etc/ansible/roles/baz_metadata/meta/main.yml': """
+            dependencies:
+                - bam_metadata
+        """,
+        '/etc/ansible/roles/bam_metadata/meta/main.yml': """
+            dependencies: []
+        """,
+        '/etc/ansible/roles/baz_metadata/task/main.yml': """
+        - shell: echo 'hello world from baz_metadata'
+        """,
+        '/etc/ansible/roles/baz_metadata/handlers/main.yml': """
+        - name: baz_metadata test handler
+          shell: echo 'hello world from baz_metadata test handler'
+        """,
+        '/etc/ansible/roles/bad1_metadata/meta/main.yml': """
+            1
+        """,
+        '/etc/ansible/roles/bad2_metadata/meta/main.yml': """
+            foo: bar
+        """,
+        '/etc/ansible/roles/recursive1_metadata/meta/main.yml': """
+            dependencies: ['recursive2_metadata']
+        """,
+        '/etc/ansible/roles/recursive2_metadata/meta/main.yml': """
+            dependencies: ['recursive1_metadata']
+        """,
+    }
+
+    fake_loader = DictDataLoader(loader_data)
+    mock_play = MagicMock()
+    mock_play.ROLE_CACHE = {}
+
+    i = RoleInclude.load('foo_arg_spec', play=mock_play, loader=fake_loader)
+    r = Role.load(i, play=mock_play)
+
+    return {'role': r,
+            'name': 'foo_arg_spec',
+            'role_include': i,
+            'play': mock_play,
+            'loader': fake_loader,
+            'loader_data': loader_data}
+
+
+class TestRoleCreateArgSpecValidatationTaskData(unittest.TestCase):
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test(self):
+        role_info = build_complete_role()
+        loader_data = role_info['loader_data']
+
+        # add a bogus argument_specs.yml
+        loader_data['/etc/ansible/roles/foo_arg_spec/meta/argument_specs.yml'] = """
+        { - this isnt valid yaml
+        """
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+        fake_loader = DictDataLoader(loader_data)
+
+        i = RoleInclude.load('foo_arg_spec', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        expected_argument_specs = {'main': {}}
+        self.assertEqual(r._argument_specs, expected_argument_specs)
+
+
 class TestRole(unittest.TestCase):
 
     def setUp(self):
@@ -185,6 +289,11 @@ class TestRole(unittest.TestCase):
         self.assertEqual(len(r._handler_blocks), 1)
         assert isinstance(r._handler_blocks[0], Block)
 
+        handler_blocks = r.get_handler_blocks(play=mock_play)
+
+        self.assertEqual(len(handler_blocks), 1)
+        assert isinstance(handler_blocks[0], Block)
+
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_vars(self):
 
@@ -205,6 +314,14 @@ class TestRole(unittest.TestCase):
 
         self.assertEqual(r._default_vars, dict(foo='bar'))
         self.assertEqual(r._role_vars, dict(foo='bam'))
+
+        vars_ = r.get_vars()
+        vars_with_params = r.get_vars(include_params=True)
+        default_vars = r.get_default_vars()
+
+        self.assertEqual(vars_, dict(foo='bam'))
+        self.assertEqual(vars_with_params, dict(foo='bam'))
+        self.assertEqual(default_vars, dict(foo='bar'))
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_vars_dirs(self):
@@ -317,6 +434,54 @@ class TestRole(unittest.TestCase):
         assert r._argument_specs == {'main': {'argument_spec': {'some_int': {'type': 'int'},
                                                                 'some_bool': {'type': 'bool'}},
                                               'mutually_exclusive': [['some_bool', 'some_int']]}}
+
+        role_data = r.serialize()
+        assert r._argument_specs == role_data['_argument_specs']
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_serialize_deserialize(self):
+        role_info = build_complete_role()
+        r = role_info['role']
+
+        role_data = r.serialize(include_deps=True)
+
+        new_role = Role()
+        new_role.deserialize(role_data, include_deps=True)
+
+        # asser the serialized data is the same
+        assert new_role._argument_specs == r._argument_specs
+        assert r.serialize() == new_role.serialize()
+        assert r.serialize(include_deps=False) == new_role.serialize(include_deps=False)
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_compile(self):
+        role_info = build_complete_role()
+        r = role_info['role']
+        mock_play = role_info['play']
+
+        compiled_blocks = r.compile(play=mock_play)
+
+        self.assertEqual(len(compiled_blocks), 1)
+        assert isinstance(compiled_blocks[0], Block)
+
+        self.assertEqual(len(r._handler_blocks), 1)
+        assert isinstance(r._handler_blocks[0], Block)
+
+        handler_blocks = r.get_handler_blocks(play=mock_play)
+
+        self.assertEqual(len(handler_blocks), 2)
+        assert isinstance(handler_blocks[0], Block)
+
+        all_deps = r.get_all_dependencies()
+        self.assertEqual(len(all_deps), 3)
+
+        vars_ = r.get_vars()
+        vars_with_params = r.get_vars(include_params=True)
+        default_vars = r.get_default_vars()
+
+        self.assertEqual(vars_, {'foo': 'bam'})
+        self.assertEqual(vars_with_params, {'foo': 'bam'})
+        self.assertEqual(default_vars, {'foo': 'bar'})
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_metadata(self):
