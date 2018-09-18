@@ -73,8 +73,8 @@ HOW_MANY_DOTS = (
      'PostgreSQL does not support column with more than 4 dots'),
 )
 
-VALID_QUOTES = ((test, VALID[test]) for test in VALID)
-INVALID_QUOTES = ((test[0], test[1], INVALID[test]) for test in INVALID)
+VALID_QUOTES = ((test, VALID[test]) for test in sorted(VALID))
+INVALID_QUOTES = ((test[0], test[1], INVALID[test]) for test in sorted(INVALID))
 
 
 @pytest.mark.parametrize("identifier, quoted_identifier", VALID_QUOTES)
