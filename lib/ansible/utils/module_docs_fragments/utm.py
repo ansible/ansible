@@ -15,7 +15,8 @@ options:
         default: 4444
     utm_token:
         description:
-          - The token used to identify at the REST-API. See U(https://www.sophos.com/en-us/medialibrary/PDFs/documentation/UTMonAWS/Sophos-UTM-RESTful-API.pdf?la=en), Chapter 2.4.2
+          - "The token used to identify at the REST-API. See U(https://www.sophos.com/en-us/medialibrary/\
+            PDFs/documentation/UTMonAWS/Sophos-UTM-RESTful-API.pdf?la=en), Chapter 2.4.2"
         required: true
     utm_protocol:
         description:
