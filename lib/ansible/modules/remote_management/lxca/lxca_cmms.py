@@ -80,7 +80,7 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     from pylxca import connect
     from pylxca import disconnect
-    from pylxca import nodes
+    from pylxca import cmms
     HAS_PYLXCA = True
 except Exception:
     HAS_PYLXCA = False

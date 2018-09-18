@@ -67,7 +67,7 @@ class TestMyModule(unittest.TestCase):
                 "login_user": "USERID",
                 "login_password": "Password",
                 "noverify": "True",
-                "ip": "10.233.30.210",
+                "discover_ip": "10.233.30.210",
                 "jobid": "12"
             })
             lxca_discover.main()
@@ -81,7 +81,7 @@ class TestMyModule(unittest.TestCase):
             login_password=dict(required=True, no_log=True),
             command_options=dict(default='discover', choices=['discover']),
             auth_url=dict(required=True),
-            ip=dict(default=None),
+            discover_ip=dict(default=None),
             jobid=dict(default=None),
             noverify=dict(default=True),
         )
