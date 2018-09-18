@@ -38,7 +38,7 @@ Find the task that best describes what you want to do:
 * I want to contribute back to the Ansible project:
 
   * I want to :ref:`contribute my module or plugin <developing_modules_checklist>`.
-  * I want to :ref:`understand the Contributor License Agreement <contributor_license_agreement>` for Ansible.
+  * I want to :ref:`understand the license agreement <contributor_license_agreement>` for contributions to Ansible.
 
 If you prefer to read the entire guide, here's a list of the pages in order.
 
