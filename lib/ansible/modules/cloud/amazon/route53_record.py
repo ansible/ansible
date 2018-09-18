@@ -21,7 +21,8 @@ DOCUMENTATION = '''
 module: route53_record
 version_added: "2.8"
 author: Shuang Wang (@ptux)
-short_description: add or delete entries in Amazons Route53 DNS service
+short_description: Manages DNS records in Amazons Route53 service
+description: Creates,deletes,updates,reads DNS records in Amazons Route53 service
 requirements:
   - botocore
   - boto3
@@ -132,10 +133,10 @@ def main():
     )
     results = dict(changed=False)
 
-record_controller = AWSRoute53Record(module=module, results=results)
-record_controller.process()
+    record_controller = AWSRoute53Record(module=module, results=results)
+    record_controller.process()
 
-module.exit_json(**results)
+    module.exit_json(**results)
 
 if __name__ == '__main__':
     main()
