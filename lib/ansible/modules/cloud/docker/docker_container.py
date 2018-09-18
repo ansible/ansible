@@ -1380,6 +1380,7 @@ class Container(DockerBaseClass):
             detach=detach,
             interactive=config.get('OpenStdin'),
             capabilities=host_config.get('CapAdd'),
+            cap_drop=host_config.get('CapDrop'),
             expected_devices=host_config.get('Devices'),
             dns_servers=host_config.get('Dns'),
             dns_opts=host_config.get('DnsOptions'),
