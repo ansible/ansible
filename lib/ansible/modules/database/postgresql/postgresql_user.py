@@ -160,6 +160,7 @@ EXAMPLES = '''
     name: django
     password: ceec4eif7ya
     priv: "CONNECT/products:ALL"
+    expires: "Jan 31 2020"
 
 # Create rails user, set its password (MD5-hashed) and grant privilege to create other
 # databases and demote rails from super user status
@@ -189,7 +190,7 @@ EXAMPLES = '''
     name: django
     password: mysupersecretword
     priv: "CONNECT/products:ALL"
-    expire: infinity
+    expires: infinity
 
 # Example privileges string format
 # INSERT,UPDATE/table:SELECT/anothertable:ALL
