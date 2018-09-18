@@ -16,6 +16,8 @@ DOCUMENTATION = '''
 ---
 author:
   - "Jens Carl (@j-carl), Hothead Games Inc."
+  - "Rafael Driutti (@rafaeldriutti)"
+
 module: redshift
 version_added: "2.2"
 short_description: create, delete, or modify an Amazon Redshift instance
@@ -123,8 +125,7 @@ options:
     aliases: ['new_identifier']
   wait:
     description:
-      - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be
-        terminated.
+      - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be terminated.
     type: bool
     default: 'no'
   wait_timeout:
@@ -181,7 +182,7 @@ cluster:
             type: string
             sample: "new_db_name"
         availability_zone:
-            description: Amazon availability zone where the cluster is located.
+            description: Amazon availability zone where the cluster is located. "None" until cluster is available.
             returned: success
             type: string
             sample: "us-east-1b"
@@ -196,20 +197,24 @@ cluster:
             type: string
             sample: "10.10.10.10"
         public_ip_address:
-            description: Public IP address of the main node.
+            description: Public IP address of the main node. "None" when enhanced_vpc_routing is enabled.
             returned: success
             type: string
             sample: "0.0.0.0"
         port:
-            description: Port of the cluster.
+            description: Port of the cluster. "None" until cluster is available.
             returned: success
             type: int
             sample: 5439
         url:
-            description: FQDN of the main cluster node.
+            description: FQDN of the main cluster node. "None" until cluster is available.
             returned: success
             type: string
             sample: "new-redshift_cluster.jfkdjfdkj.us-east-1.redshift.amazonaws.com"
+        enhanced_vpc_routing:
+            description: status of the enhanced vpc routing feature.
+            returned: success
+            type: boolean
 '''
 
 import time
@@ -231,17 +236,26 @@ def _collect_facts(resource):
         'username': resource['MasterUsername'],
         'db_name': resource['DBName'],
         'maintenance_window': resource['PreferredMaintenanceWindow'],
+        'enhanced_vpc_routing': resource['EnhancedVpcRouting']
 
     }
 
     for node in resource['ClusterNodes']:
         if node['NodeRole'] in ('SHARED', 'LEADER'):
             facts['private_ip_address'] = node['PrivateIPAddress']
-            facts['public_ip_address'] = node['PublicIPAddress']
+            if facts['enhanced_vpc_routing'] == False:
+                facts['public_ip_address'] = node['PublicIPAddress']
+            else:
+                facts['public_ip_address'] = None
             break
 
     # Some parameters are not ready instantly if you don't wait for available
     # cluster status
+    facts['create_time'] = None
+    facts['url'] = None
+    facts['port'] = None
+    facts['availability_zone'] = None
+
     if resource['ClusterStatus'] != "creating":
         facts['create_time'] = resource['ClusterCreateTime']
         facts['url'] = resource['Endpoint']['Address']
@@ -280,10 +294,9 @@ def create_cluster(module, redshift):
               'cluster_version', 'allow_version_upgrade',
               'number_of_nodes', 'publicly_accessible',
               'encrypted', 'elastic_ip', 'enhanced_vpc_routing'):
-        if p in module.params:
-            # https://github.com/boto/boto3/issues/400
-            if module.params.get(p) is not None:
-                params[p] = module.params.get(p)
+        # https://github.com/boto/boto3/issues/400
+        if module.params.get(p) is not None:
+            params[p] = module.params.get(p)
 
     if d_b_name:
         params['d_b_name'] = d_b_name
@@ -300,11 +313,6 @@ def create_cluster(module, redshift):
                                     **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Failed to create cluster")
-    try:
-        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        module.fail_json_aws(e, msg="Failed to create cluster")
-
     if wait:
         attempts = wait_timeout // 60
         waiter = redshift.get_waiter('cluster_available')
@@ -315,6 +323,10 @@ def create_cluster(module, redshift):
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Timeout waiting for the cluster creation")
+    try:
+        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to describe cluster")
 
     return(changed, _collect_facts(resource))
 
@@ -397,26 +409,18 @@ def modify_cluster(module, redshift):
               'availability_zone', 'preferred_maintenance_window',
               'cluster_parameter_group_name',
               'automated_snapshot_retention_period', 'port', 'cluster_version',
-              'allow_version_upgrade', 'number_of_nodes', 'new_cluster_identifier',
-              'enhanced_vpc_routing'):
-        if p in module.params:
-            # https://github.com/boto/boto3/issues/400
-            if module.params.get(p) is not None:
-                params[p] = module.params.get(p)
+              'allow_version_upgrade', 'number_of_nodes', 'new_cluster_identifier'):
+        # https://github.com/boto/boto3/issues/400
+        if module.params.get(p) is not None:
+            params[p] = module.params.get(p)
 
-    try:
-        redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
-    except botocore.exceptions.ClientError as e:
+    # enhanced_vpc_routing parameter change needs a single request
+    if module.params.get('enhanced_vpc_routing') is not None:
         try:
             redshift.modify_cluster(ClusterIdentifier=identifier,
-                                    **snake_dict_to_camel_dict(params, capitalize_first=True))
+                                    EnhancedVpcRouting=module.params.get('enhanced_vpc_routing'))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
-    try:
-        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
-
+            module.fail_json_aws(e, msg="Couldn't modify redshift cluster %s " % identifier)
     if wait:
         attempts = wait_timeout // 60
         waiter = redshift.get_waiter('cluster_available')
@@ -426,7 +430,33 @@ def modify_cluster(module, redshift):
                 WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                module.fail_json_aws(e, msg="Timeout waiting for cluster creation")
+                module.fail_json_aws(e, msg="Timeout waiting for cluster enhanced vpc routing modification")
+
+    # change the rest
+    try:
+        redshift.modify_cluster(ClusterIdentifier=identifier,
+                                **snake_dict_to_camel_dict(params, capitalize_first=True))
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Couldn't modify redshift cluster %s " % identifier)
+
+
+    if module.params.get('new_cluster_identifier'):
+        identifier = module.params.get('new_cluster_identifier')
+
+    if wait:
+        attempts = wait_timeout // 60
+        waiter2 = redshift.get_waiter('cluster_available')
+        try:
+            waiter2.wait(
+                ClusterIdentifier=identifier,
+                WaiterConfig=dict(MaxAttempts=attempts)
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Timeout waiting for cluster modification")
+    try:
+        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
 
     return(True, _collect_facts(resource))
 
@@ -441,7 +471,7 @@ def main():
                                 'dw2.8xlarge'], required=False),
         username=dict(required=False),
         password=dict(no_log=True, required=False),
-        db_name=dict(require=False, type='str'),
+        db_name=dict(require=False),
         cluster_type=dict(choices=['multi-node', 'single-node'], default='single-node'),
         cluster_security_groups=dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids=dict(aliases=['vpc_security_groups'], type='list'),
@@ -484,13 +514,7 @@ def main():
     if command == 'delete' and skip_final_cluster_snapshot is False and final_cluster_snapshot_identifier is None:
         module.fail_json(msg="Need to specifiy final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False")
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg=str("region not specified and unable to determine region from EC2_REGION."))
-
-    # connect to the rds endpoint
-
-    conn = boto3_conn(module, conn_type='client', resource='redshift', region=region, endpoint=ec2_url, **aws_connect_params)
+    conn = module.client('redshift')
 
     changed = True
     if command == 'create':

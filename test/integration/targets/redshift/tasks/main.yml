@@ -147,6 +147,27 @@
           - 'not result.changed'
           - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
     # ============================================================
+
+    - name: test modify cluster
+      redshift:
+        command: modify
+        identifier: "{{ redshift_cluster_name }}"
+        new_cluster_identifier: "{{ redshift_cluster_name }}-modified"
+        enhanced_vpc_routing: True
+        wait: yes
+        wait_timeout: 1000
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert cluster was modified
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.cluster.identifier == "{{ redshift_cluster_name }}-modified"'
+          - 'result.cluster.enhanced_vpc_routing == True'
+
+
+    # ============================================================
     - name: test delete with no cluster identifier
       redshift:
         command: delete
@@ -180,7 +201,7 @@
     - name: test successful delete
       redshift:
         command: delete
-        identifier: "{{ redshift_cluster_name }}"
+        identifier: "{{ redshift_cluster_name }}-modified"
         skip_final_cluster_snapshot: true
         wait: yes
         wait_timeout: 1200
