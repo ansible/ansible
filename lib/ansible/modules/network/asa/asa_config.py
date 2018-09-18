@@ -204,7 +204,9 @@ vars:
   register: interface
 
 - name: Show changes to interface from task above
-  debug: var="{{ interface }}"
+  debug:
+    var:
+      - "{{ interface }}"
 
 """
 
