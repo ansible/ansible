@@ -35,7 +35,10 @@ Find the task that best describes what you want to do:
    * I want to :ref:`connect Ansible to a new source of inventory <developing_inventory>`.
    * I want to :ref:`deprecate an outdated module <deprecating_modules>`.
 
-* I want to :ref:`contribute my module or plugin to Ansible Core <developing_modules_checklist>`.
+* I want to contribute back to the Ansible project:
+
+  * I want to :ref:`contribute my module or plugin <developing_modules_checklist>`.
+  * I want to :ref:`understand the Contributor License Agreement <contributor_license_agreement>` for Ansible.
 
 If you prefer to read the entire guide, here's a list of the pages in order.
 
