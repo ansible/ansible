@@ -109,6 +109,41 @@ To see if a list includes or is included by another list, you can use 'subset' a
             msg: "B is included in A"
           when: b is subset(a)
 
+.. _contains_test:
+
+Test if a list contains a value
+```````````````````````````````
+
+.. versionadded:: 2.8
+
+Ansible includes a ``contains`` test which operates similarly, but in reverse of the Jinja2 provided ``in`` test.
+This is designed with the ability to allow use of ``contains`` with filters such as ``map`` and ``selectattr``::
+
+    vars:
+      lacp_groups:
+        - master: lacp0
+          network: 10.65.100.0/24
+          gateway: 10.65.100.1
+          dns4:
+            - 10.65.100.10
+            - 10.65.100.11
+          interfaces:
+            - em1
+            - em2
+
+        - master: lacp1
+          network: 10.65.120.0/24
+          gateway: 10.65.120.1
+          dns4:
+            - 10.65.100.10
+            - 10.65.100.11
+          interfaces:
+              - em3
+              - em4
+
+    tasks:
+      - debug:
+          msg: "{{ (lacp_groups|selectattr('interfaces', 'contains', 'em1')|first).master }}"
 
 .. _path_tests:
 
