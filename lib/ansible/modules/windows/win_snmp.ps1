@@ -7,8 +7,8 @@
 
 $params      = Parse-Args -arguments $args -supports_check_mode $true;
 $check_mode  = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$managers    = Get-AnsibleParam -obj $params -name "permitted_managers"  -type "list" -failifempty $true
-$communities = Get-AnsibleParam -obj $params -name "community_strings"   -type "list" -failifempty $true
+$managers    = Get-AnsibleParam -obj $params -name "permitted_managers"  -type "list"
+$communities = Get-AnsibleParam -obj $params -name "community_strings"   -type "list"
 $replace     = Get-AnsibleParam -obj $params -name "replace"             -type "bool" -default $false
 
 $result = @{failed = $False; changed = $False;}
