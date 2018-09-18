@@ -88,5 +88,5 @@
         - snmp_manager_replace is changed
         - snmp_manager_reg_next_replace.exists == false
         - snmp_manager_reg_replace.exists
-        - snmp_manager_reg_replace.type == 'REG_SZ`'
+        - snmp_manager_reg_replace.type == 'REG_SZ'
         - snmp_manager_reg_replace.value == '192.168.1.10'
