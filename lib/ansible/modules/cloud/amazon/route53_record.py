@@ -92,9 +92,39 @@ class AWSRoute53Record(object):
 
 def main():
     argument_spec = ec2_argument_spec()
-
     argument_spec.update(dict(
+        state=dict(aliases=['command'], choices=['present', 'absent', 'get', 'create', 'delete'], required=True),
+        zone=dict(required=True),
+        hosted_zone_id=dict(required=False, default=None),
+        record=dict(required=True),
+        ttl=dict(required=False, type='int', default=3600),
+        type=dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA'], required=True),
+        alias=dict(required=False, type='bool'),
+        alias_hosted_zone_id=dict(required=False),
+        alias_evaluate_target_health=dict(required=False, type='bool', default=False),
+        value=dict(required=False, type='list'),
+        overwrite=dict(required=False, type='bool'),
+        retry_interval=dict(required=False, default=500),
+        private_zone=dict(required=False, type='bool', default=False),
+        identifier=dict(required=False, default=None),
+        weight=dict(required=False, type='int'),
+        region=dict(required=False),
+        health_check=dict(required=False),
+        failover=dict(required=False, choices=['PRIMARY', 'SECONDARY']),
+        vpc_id=dict(required=False),
+        wait=dict(required=False, type='bool', default=False),
+        wait_timeout=dict(required=False, type='int', default=300),
     ))
+
+    # state=present, absent, create, delete THEN value is required
+    required_if = [('state', 'present', ['value']), ('state', 'create', ['value'])]
+    required_if.extend([('state', 'absent', ['value']), ('state', 'delete', ['value'])])
+
+    # If alias is True then you must specify alias_hosted_zone as well
+    required_together = [['alias', 'alias_hosted_zone_id']]
+
+    # failover, region, and weight are mutually exclusive
+    mutually_exclusive = [('failover', 'region', 'weight')]
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
