@@ -50,8 +50,9 @@ options:
     required: true
   ttl:
     description:
-      - The TTL to give the new record
-    default: 3600 (one hour)
+      - The TTL(seconds) to give the new record
+    type: int
+    default: 3600
   type:
     description:
       - The type of DNS record to create
@@ -77,6 +78,7 @@ options:
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
+    type: bool
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many
@@ -112,6 +114,7 @@ options:
     description:
       - Failover resource record sets only. Whether this is the primary or
         secondary resource record set. Allowed values are PRIMARY and SECONDARY
+    choices: [PRIMARY, SECONDARY]
   vpc_id:
     description:
       - "When used in conjunction with private_zone: true, this will only modify records in the private hosted zone attached to this VPC."
@@ -410,8 +413,8 @@ class AWSRoute53Record(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = (dict(
+        region=dict(aliases=['aws_region', 'ec2_region']),
         state=dict(aliases=['command'], choices=['present', 'absent', 'get', 'create', 'delete'], required=True),
         zone=dict(required=True),
         hosted_zone_id=dict(required=False, default=None),
