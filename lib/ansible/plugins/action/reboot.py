@@ -94,8 +94,8 @@ class ActionModule(ActionBase):
         return reboot_command
 
     def get_system_boot_time(self):
-        stdout = ''
-        stderr = ''
+        stdout = b''
+        stderr = b''
         command_result = self._low_level_execute_command(self.DEFAULT_BOOT_TIME_COMMAND, sudoable=self.DEFAULT_SUDOABLE)
 
         # For single board computers, e.g., Raspberry Pi, that lack a real time clock and are using fake-hwclock
