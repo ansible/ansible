@@ -700,10 +700,10 @@ def get_launch_object(connection, ec2_connection):
         return launch_object
     elif launch_template:
         lt = describe_launch_templates(ec2_connection, launch_template)['LaunchTemplates'][0]
-        if 'version' in launch_template:
+        if launch_template['version'] is not None:
             launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": launch_template['version']}}
         else:
-            launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": lt['LatestVersionNumber']}}
+            launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": str(lt['LatestVersionNumber'])}}
         return launch_object
 
 
