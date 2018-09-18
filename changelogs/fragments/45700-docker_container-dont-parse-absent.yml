@@ -1,0 +1,2 @@
+bugfixes:
+- "Don't parse parameters and options when ``state`` is ``absent`` (https://github.com/ansible/ansible/pull/45700)."
