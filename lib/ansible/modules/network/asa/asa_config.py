@@ -192,6 +192,21 @@ vars:
   register: bgp
   when: bgp_neighbor_as is defined
 
+- name: configure ASA interface with standby
+  asa_config:
+    lines:
+      - description my cloud interface
+      - nameif cloud13
+      - security-level 50
+      - ip address 192.168.13.1 255.255.255.0 standby 192.168.13.2
+    provider: "{{ cli }}"
+    parents: ["interface Vlan13"]
+  register: interface
+
+- name: Show changes to interface from task above
+  debug:
+    var: interface
+
 """
 
 RETURN = """
