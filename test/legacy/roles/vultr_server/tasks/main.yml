@@ -11,6 +11,11 @@
     that:
     - result is success
 
+# Servers can only be destroyed 5 min after creation
+- name: wait for 5 min
+  local_action: wait_for
+  when: result is changed
+
 - name: test fail if missing name
   vultr_server:
   register: result
