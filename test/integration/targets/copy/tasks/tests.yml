@@ -1942,13 +1942,13 @@
 
   - name: execute - create a user for test
     user:
-      name: {{ ansible_copy_test_user_name }}
+      name: '{{ ansible_copy_test_user_name }}'
       state: present
     register: ansible_copy_test_user
 
   - name: execute - create a group for test
     group:
-      name: {{ ansible_copy_test_user_name }}
+      name: '{{ ansible_copy_test_user_name }}'
       state: present
     register: ansible_copy_test_group
 
@@ -1957,8 +1957,8 @@
       remote_src: True
       src: '{{ remote_dir }}/remote_dir_src/'
       dest: '{{ remote_dir }}/new_dir_with_chown'
-      owner: {{ ansible_copy_test_user_name }}
-      group: {{ ansible_copy_test_user_name }}
+      owner: '{{ ansible_copy_test_user_name }}'
+      group: '{{ ansible_copy_test_user_name }}'
     register: testcase5
 
   - name: gather - Stat the new_dir_with_chown
@@ -2014,13 +2014,13 @@
   always:
     - name: execute - remove the user for test
       user:
-        name: {{ ansible_copy_test_user_name }}
+        name: '{{ ansible_copy_test_user_name }}'
         state: absent
         remove: yes
 
     - name: execute - remove the group for test
       group:
-        name: {{ ansible_copy_test_user_name }}
+        name: '{{ ansible_copy_test_user_name }}'
         state: absent
 
 ## testcase last - make sure remote_dir_src not change
