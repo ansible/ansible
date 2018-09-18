@@ -134,7 +134,7 @@ options:
       default: 'no'
     ask_inventory:
       description:
-        - Propmt user for inventory on launch.
+        - Prompt user for inventory on launch.
       type: bool
       default: 'no'
     ask_credential:
@@ -209,6 +209,7 @@ def update_fields(p):
         'ask_inventory': 'ask_inventory_on_launch',
         'ask_credential': 'ask_credential_on_launch',
         'ask_job_type': 'ask_job_type_on_launch',
+        'machine_credential': 'credential',
         'diff_mode_enabled': 'diff_mode',
         'concurrent_jobs_enabled': 'allow_simultaneous',
         'force_handlers_enabled': 'force_handlers',
