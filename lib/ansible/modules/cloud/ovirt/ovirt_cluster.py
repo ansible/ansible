@@ -54,8 +54,9 @@ options:
     gluster:
         description:
             - "If I(True), hosts in this cluster will be used as Gluster Storage
-               server nodes, and not for running virtual machines."
-            - "By default the cluster is created for virtual machine hosts."
+               server nodes."
+            - "By default the cluster is created for virtual machine hosts only."
+            - "Note that you cannot add oVirt Node (RHV-H) to a Gluster-enabled cluster"
     threads_as_cores:
         description:
             - "If I(True) the exposed host threads would be treated as cores
