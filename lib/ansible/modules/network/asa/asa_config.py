@@ -168,6 +168,7 @@ vars:
       - access-group cloud-acl_access_in in interface cloud13
     provider: "{{ cli }}"
 
+<<<<<<< HEAD
 - name: configure ASA (>=9.2) default BGP
   asa_config:
     lines:
@@ -193,6 +194,9 @@ vars:
   when: bgp_neighbor_as is defined
 
 - name: configure ASA interface
+=======
+- name: configure ASA interface with standby
+>>>>>>> newline, names, and debug:var
   asa_config:
     lines:
       - description my cloud interface
@@ -202,8 +206,9 @@ vars:
     provider: "{{ cli }}"
     parents: ["interface Vlan13"]
   register: interface
-- name: Show interface update
-  debug: msg="{{ interface }}"
+
+- name: Show changes to interface from task above
+  debug: var="{{ interface }}"
 
 """
 
