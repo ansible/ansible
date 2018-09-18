@@ -52,6 +52,8 @@ from lib.docker_util import (
     docker_rm,
     docker_run,
     docker_available,
+    docker_network_disconnect,
+    get_docker_networks,
 )
 
 from lib.cloud import (
@@ -276,6 +278,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 cmd += ['--python', 'default']
 
             # run unit tests unprivileged to prevent stray writes to the source tree
+            # also disconnect from the network once requirements have been installed
             if isinstance(args, UnitsConfig):
                 writable_dirs = [
                     '/root/ansible/.pytest_cache',
@@ -292,6 +295,11 @@ def delegate_docker(args, exclude, require, integration_targets):
                 docker_exec(args, test_id, ['useradd', 'pytest', '--create-home'])
 
                 docker_exec(args, test_id, cmd + ['--requirements-mode', 'only'], options=cmd_options)
+
+                networks = get_docker_networks(args, test_id)
+
+                for network in networks:
+                    docker_network_disconnect(args, test_id, network)
 
                 cmd += ['--requirements-mode', 'skip']
 
