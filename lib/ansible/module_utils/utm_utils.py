@@ -17,6 +17,7 @@ class UTMModuleConfigurationError(Exception):
     def do_fail(self, module):
         module.fail_json(msg=self.msg, other=self.module_fail_args)
 
+<<<<<<< HEAD
     def add(self):
         """
         adds or updates a host object on utm
@@ -45,6 +46,8 @@ class UTMModuleConfigurationError(Exception):
                     is_changed = True
                     result = self._clean_result(json.loads(response.read()))
             self.module.exit_json(result=result, changed=is_changed)
+=======
+>>>>>>> #18568
 
 class UTMModule(AnsibleModule):
     """
