@@ -5,4 +5,4 @@
     resource_prefix: 'ansible-testing'
 
   roles:
-    - efs_facts
+    - efs
