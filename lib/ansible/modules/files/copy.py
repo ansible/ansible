@@ -164,6 +164,18 @@ EXAMPLES = r'''
   copy:
     content: '# This file was moved to /etc/other.conf'
     dest: /etc/mine.conf
+
+- name: if follow is true, /path/to/file will be overwritten by contents of foo.conf
+  copy:
+    src: /etc/foo.conf
+    dest: /path/to/link # /path/to/link is link to /path/to/file
+    follow: True
+
+- name: if follow is False, /path/to/link will become a file and be overwritten by contents of foo.conf
+  copy:
+    src: /etc/foo.conf
+    dest: /path/to/a/link # /path/to/link is link to /path/to/file
+    follow: False
 '''
 
 RETURN = r'''
