@@ -334,9 +334,6 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if module._name == 'ovirt_host_networks':
-        module.deprecate("The 'ovirt_host_networks' module is being renamed 'ovirt_host_network'", version=2.8)
-
     check_sdk(module)
 
     try:

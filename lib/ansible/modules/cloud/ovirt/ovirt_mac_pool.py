@@ -152,9 +152,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_mac_pools':
-        module.deprecate("The 'ovirt_mac_pools' module is being renamed 'ovirt_mac_pool'", version=2.8)
-
     check_sdk(module)
 
     try:

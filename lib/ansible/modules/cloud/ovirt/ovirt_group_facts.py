@@ -79,9 +79,6 @@ def main():
     )
     module = AnsibleModule(argument_spec)
 
-    if module._name == 'ovirt_groups_facts':
-        module.deprecate("The 'ovirt_groups_facts' module is being renamed 'ovirt_group_facts'", version=2.8)
-
     check_sdk(module)
 
     try:

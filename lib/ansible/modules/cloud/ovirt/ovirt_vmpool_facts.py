@@ -79,9 +79,6 @@ def main():
     )
     module = AnsibleModule(argument_spec)
 
-    if module._name == 'ovirt_vmpools_facts':
-        module.deprecate("The 'ovirt_vmpools_facts' module is being renamed 'ovirt_vmpool_facts'", version=2.8)
-
     check_sdk(module)
 
     try:

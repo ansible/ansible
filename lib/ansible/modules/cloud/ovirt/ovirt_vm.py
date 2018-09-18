@@ -1986,9 +1986,6 @@ def main():
         required_one_of=[['id', 'name']],
     )
 
-    if module._name == 'ovirt_vms':
-        module.deprecate("The 'ovirt_vms' module is being renamed 'ovirt_vm'", version=2.8)
-
     check_sdk(module)
     check_params(module)
 

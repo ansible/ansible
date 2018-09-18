@@ -244,9 +244,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_quotas':
-        module.deprecate("The 'ovirt_quotas' module is being renamed 'ovirt_quota'", version=2.8)
-
     check_sdk(module)
 
     try:

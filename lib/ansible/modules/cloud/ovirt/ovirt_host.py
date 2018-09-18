@@ -440,9 +440,6 @@ def main():
         ]
     )
 
-    if module._name == 'ovirt_hosts':
-        module.deprecate("The 'ovirt_hosts' module is being renamed 'ovirt_host'", version=2.8)
-
     check_sdk(module)
 
     try:
