@@ -185,28 +185,28 @@ class TestCallbackDiff(unittest.TestCase):
 
     def test_difflist(self):
         # TODO: split into smaller tests?
-        difflist = [{'before': ['preface\nThe Before String\npostscript'],
-                     'after': ['preface\nThe After String\npostscript'],
-                     'before_header': 'just before',
-                     'after_header': 'just after'
+        difflist = [{'before': u'preface\nThe Before String\npostscript',
+                     'after': u'preface\nThe After String\npostscript',
+                     'before_header': u'just before',
+                     'after_header': u'just after'
                      },
-                    {'before': ['preface\nThe Before String\npostscript'],
-                     'after': ['preface\nThe After String\npostscript'],
+                    {'before': u'preface\nThe Before String\npostscript',
+                     'after': u'preface\nThe After String\npostscript',
                      },
                     {'src_binary': 'chicane'},
                     {'dst_binary': 'chicanery'},
                     {'dst_larger': 1},
                     {'src_larger': 2},
-                    {'prepared': 'what does prepared do?'},
-                    {'before_header': 'just before'},
-                    {'after_header': 'just after'}]
+                    {'prepared': u'what does prepared do?'},
+                    {'before_header': u'just before'},
+                    {'after_header': u'just after'}]
 
         res = self.cb._get_diff(difflist)
 
-        self.assertIn('Before String', res)
-        self.assertIn('After String', res)
-        self.assertIn('just before', res)
-        self.assertIn('just after', res)
+        self.assertIn(u'Before String', res)
+        self.assertIn(u'After String', res)
+        self.assertIn(u'just before', res)
+        self.assertIn(u'just after', res)
 
     def test_simple_diff(self):
         self.assertMultiLineEqual(
