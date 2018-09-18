@@ -25,7 +25,7 @@ description:
   - This module returns/displays a inventory details of discover
 
 options:
-  ip:
+  discover_ip:
     description:
       discover for this ip,
 
@@ -98,12 +98,12 @@ def has_pylxca(module):
 
 def _discover(module, lxca_con):
     result = None
-    if module.params.get('ip', None):
-        reuslt = discover(lxca_con, ip=module.params['ip'])
+    if module.params.get('discover_ip', None):
+        result = discover(lxca_con, ip=module.params['discover_ip'])
     elif module.params.get('jobid', None):
-        reuslt = discover(lxca_con, job=module.params['jobid'])
+        result = discover(lxca_con, job=module.params['jobid'])
     else:
-        reuslt = discover(lxca_con)
+        result = discover(lxca_con)
     return result
 
 
@@ -115,7 +115,7 @@ def setup_module_object():
     args_spec = dict(LXCA_COMMON_ARGS)
     args_spec.update(INPUT_ARG_SPEC)
     module = AnsibleModule(argument_spec=args_spec,
-                           mutually_exclusive=[['ip', 'jobid']],
+                           mutually_exclusive=[['discover_ip', 'jobid']],
                            supports_check_mode=False)
 
     return module
@@ -161,7 +161,7 @@ LXCA_COMMON_ARGS = dict(
 
 INPUT_ARG_SPEC = dict(
     command_options=dict(default='discover', choices=list(FUNC_DICT)),
-    ip=dict(default=None),
+    discover_ip=dict(default=None),
     jobid=dict(default=None),
 )
 
