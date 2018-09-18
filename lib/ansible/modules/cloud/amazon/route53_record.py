@@ -413,7 +413,8 @@ class AWSRoute53Record(object):
 
 
 def main():
-    argument_spec = (dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
         state=dict(aliases=['command'], choices=['present', 'absent', 'get', 'create', 'delete'], required=True),
         zone=dict(required=True),
         hosted_zone_id=dict(required=False, default=None),
@@ -429,7 +430,6 @@ def main():
         private_zone=dict(required=False, type='bool', default=False),
         identifier=dict(required=False, default=None),
         weight=dict(required=False, type='int'),
-        region=dict(aliases=['aws_region', 'ec2_region']),
         health_check=dict(required=False),
         failover=dict(required=False, choices=['PRIMARY', 'SECONDARY']),
         vpc_id=dict(required=False),
