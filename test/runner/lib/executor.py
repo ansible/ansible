@@ -12,6 +12,7 @@ import time
 import textwrap
 import functools
 import pipes
+import sys
 import hashlib
 
 import lib.pytar
@@ -49,6 +50,8 @@ from lib.util import (
     raw_command,
     get_coverage_path,
     get_available_port,
+    generate_pip_command,
+    find_python,
 )
 
 from lib.docker_util import (
@@ -148,9 +151,10 @@ def create_shell_command(command):
     return cmd
 
 
-def install_command_requirements(args):
+def install_command_requirements(args, python_version=None):
     """
     :type args: EnvironmentConfig
+    :type python_version: str | None
     """
     generate_egg_info(args)
 
@@ -168,7 +172,10 @@ def install_command_requirements(args):
         if args.junit:
             packages.append('junit-xml')
 
-    pip = args.pip_command
+    if not python_version:
+        python_version = args.python_version
+
+    pip = generate_pip_command(find_python(python_version))
 
     commands = [generate_pip_install(pip, args.command, packages=packages)]
 
@@ -1133,14 +1140,15 @@ def command_units(args):
     if args.delegate:
         raise Delegate(require=changes)
 
-    install_command_requirements(args)
-
     version_commands = []
 
     for version in SUPPORTED_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
         if args.python and version != args.python_version:
             continue
+
+        if args.requirements_mode != 'skip':
+            install_command_requirements(args, version)
 
         env = ansible_environment(args)
 
@@ -1166,6 +1174,9 @@ def command_units(args):
         cmd += [target.path for target in include]
 
         version_commands.append((version, cmd, env))
+
+    if args.requirements_mode == 'only':
+        sys.exit()
 
     for version, command, env in version_commands:
         display.info('Unit test with Python %s' % version)
