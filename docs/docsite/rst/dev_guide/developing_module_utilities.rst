@@ -74,5 +74,6 @@ The following is a list of ``module_utils`` files and a general description. The
 - six/__init__.py - Bundled copy of the `Six Python library <https://pythonhosted.org/six/>`_ to aid in writing code compatible with both Python 2 and Python 3.
 - splitter.py - String splitting and manipulation utilities for working with Jinja2 templates
 - urls.py - Utilities for working with http and https requests
+- utm_utils.py - Contains base class for creating new Sophos UTM Modules and helper functions for handling the rest interface of Sophos UTM
 - vca.py - Contains utilities for modules that work with VMware vCloud Air
 - vmware.py - Contains utilities for modules that work with VMware vSphere VMs
