@@ -62,6 +62,10 @@ options:
     - Routing protocol for the L3Out
     type: list
     choices: [ static, bgp, ospf, eigrp, pim ]
+  asn:
+    description:
+    - The AS number for the L3Out. Only applicable when using 'eigrp' as the l3protocol
+    aliases: [ as_number ]
   description:
     description:
     - Description for the L3Out.
