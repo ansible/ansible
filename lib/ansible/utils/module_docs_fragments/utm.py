@@ -11,7 +11,7 @@ options:
         required: true
     utm_port:
         description:
-            - the port of the rest interface
+          - the port of the rest interface
         default: 4444
     utm_token:
         description:
