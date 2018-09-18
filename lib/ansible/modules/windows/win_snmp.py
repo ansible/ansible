@@ -20,12 +20,12 @@ author:
 description:
     - This module configures the Windows SNMP service.
 options:
-    managers:
+    permitted_managers:
         description:
         - The list of permitted SNMP managers
         required: false
         type: list
-    communities:
+    community_strings:
         description:
         - The list of read-only SNMP community strings
         required: false
