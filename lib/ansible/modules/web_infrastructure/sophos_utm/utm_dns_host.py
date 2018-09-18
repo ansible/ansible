@@ -67,8 +67,7 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = """
-# Create a dns_host entry
-- name: utm dns_host
+- name: Create UTM dns host entry
   utm_dns_host:
     utm_host: sophos.host.name
     utm_token: abcdefghijklmno1234
@@ -76,8 +75,7 @@ EXAMPLES = """
     hostname: testentry.some.tld
     state: present
 
-# remove a dns_host entry
-- name: utm dns_host
+- name: Remove UTM dns host entry
   utm_dns_host:
     utm_host: sophos.host.name
     utm_token: abcdefghijklmno1234
