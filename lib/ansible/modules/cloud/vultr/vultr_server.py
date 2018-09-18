@@ -529,7 +529,6 @@ class AnsibleVultrServer(Vultr):
                             method="POST",
                             data=data
                         )
-                        server = self._wait_for_state(key='server_state', state='ok')
         return server
 
     def _update_ipv6_setting(self, server, start_server):
@@ -554,7 +553,6 @@ class AnsibleVultrServer(Vultr):
                             method="POST",
                             data=data
                         )
-                        server = self._wait_for_state(key='server_state', state='ok')
                         server = self._wait_for_state(key='v6_main_ip')
         return server
 
@@ -579,7 +577,6 @@ class AnsibleVultrServer(Vultr):
                             method="POST",
                             data=data
                         )
-                        server = self._wait_for_state(key='server_state', state='ok')
         return server
 
     def _update_plan_setting(self, server, start_server):
@@ -602,7 +599,6 @@ class AnsibleVultrServer(Vultr):
                         method="POST",
                         data=data
                     )
-                    server = self._wait_for_state(key='server_state', state='ok')
         return server
 
     def _handle_power_status_for_update(self, server, start_server):
@@ -702,7 +698,7 @@ class AnsibleVultrServer(Vultr):
             if self.server_power_state in ['starting', 'running'] and start_server:
                 server = self.start_server(skip_results=True)
 
-        server = self._wait_for_state(key='server_state', state='ok')
+        server = self._wait_for_state(key='status', state='active')
         return server
 
     def absent_server(self):
@@ -720,7 +716,7 @@ class AnsibleVultrServer(Vultr):
                     method="POST",
                     data=data
                 )
-                for s in range(0, 30):
+                for s in range(0, 60):
                     if server is not None:
                         break
                     time.sleep(2)
@@ -764,7 +760,7 @@ class AnsibleVultrServer(Vultr):
     def _wait_for_state(self, key='power_status', state=None):
         time.sleep(1)
         server = self.get_server(refresh=True)
-        for s in range(0, 30):
+        for s in range(0, 60):
             # Check for Truely if wanted state is None
             if state is None and server.get(key):
                 break
