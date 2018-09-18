@@ -237,6 +237,13 @@ class UnitsConfig(TestConfig):
 
         self.collect_only = args.collect_only  # type: bool
 
+        self.requirements_mode = args.requirements_mode if 'requirements_mode' in args else ''
+
+        if self.requirements_mode == 'only':
+            self.requirements = True
+        elif self.requirements_mode == 'skip':
+            self.requirements = False
+
 
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
