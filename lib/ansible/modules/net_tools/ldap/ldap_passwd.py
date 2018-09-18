@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017-2018, Keller Fuchs <kellerfuchs@hashbang.sh>
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -39,7 +38,6 @@ requirements:
 options:
   passwd:
     required: true
-    default: null
     description:
       - The (plaintext) password to be set for I(dn).
 extends_documentation_fragment: ldap.documentation

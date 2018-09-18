@@ -1,22 +1,8 @@
 #!/usr/bin/python
-#
-# (c) 2018 Extreme Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# Copyright: (c) 2018, Extreme Networks Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -44,7 +30,6 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    default: null
     aliases: ['commands']
   parents:
     description:
@@ -52,7 +37,6 @@ options:
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -60,7 +44,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -68,14 +51,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -112,8 +93,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    default: no
     type: bool
+    default: 'no'
   running_config:
     description:
       - The module, by default, will connect to the remote device and
@@ -123,7 +104,6 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    default: null
     aliases: ['config']
   defaults:
     description:

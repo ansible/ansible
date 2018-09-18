@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
 
-# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# Copyright: (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -74,13 +74,9 @@ options:
     client:
       description:
         - Client or application ID for azure_rm type.
-      required: False
-      default: null
     security_token:
       description:
         - STS token for aws type.
-      required: False
-      default: null
       version_added: "2.6"
     secret:
       description:
