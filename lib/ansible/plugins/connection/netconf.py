@@ -256,8 +256,6 @@ class Connection(NetworkConnectionBase):
             return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def _connect(self):
-        super(Connection, self)._connect()
-
         display.display('ssh connection done, starting ncclient', log_only=True)
 
         allow_agent = True

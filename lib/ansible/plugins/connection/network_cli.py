@@ -304,8 +304,6 @@ class Connection(NetworkConnectionBase):
 
             display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
 
-            super(Connection, self)._connect()
-
             self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
                          newline=self._terminal.terminal_inital_prompt_newline)
 
