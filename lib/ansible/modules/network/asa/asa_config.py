@@ -168,7 +168,6 @@ vars:
       - access-group cloud-acl_access_in in interface cloud13
     provider: "{{ cli }}"
 
-<<<<<<< HEAD
 - name: configure ASA (>=9.2) default BGP
   asa_config:
     lines:
@@ -193,10 +192,7 @@ vars:
   register: bgp
   when: bgp_neighbor_as is defined
 
-- name: configure ASA interface
-=======
 - name: configure ASA interface with standby
->>>>>>> newline, names, and debug:var
   asa_config:
     lines:
       - description my cloud interface
