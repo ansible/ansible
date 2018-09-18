@@ -276,6 +276,7 @@ import hashlib
 import os
 import pty
 import subprocess
+import stat
 import time
 
 from functools import wraps
@@ -542,7 +543,12 @@ class Connection(ConnectionBase):
 
         key = self._play_context.private_key_file
         if key:
-            b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
+            b_identity_key = to_bytes(os.path.expanduser(key), errors='surrogate_or_strict')
+            identity_key_st = os.stat(b_identity_key)
+            if identity_key_st & (stat.S_IRWXG | stat.S_IRWXO):
+                raise AnsibleError("Private key file %s cannot be used as its file permissions are insecure."
+                                   " Permission should be 600." % key)
+            b_args = (b"-o", b'IdentityFile="' + b_identity_key + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 
         if not self._play_context.password:
