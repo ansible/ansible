@@ -278,7 +278,6 @@ def delegate_docker(args, exclude, require, integration_targets):
             # run unit tests unprivileged to prevent stray writes to the source tree
             if isinstance(args, UnitsConfig):
                 writable_dirs = [
-                    '/root/ansible/lib/ansible.egg-info',
                     '/root/ansible/.pytest_cache',
                 ]
 
