@@ -253,9 +253,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_networks':
-        module.deprecate("The 'ovirt_networks' module is being renamed 'ovirt_network'", version=2.8)
-
     check_sdk(module)
     check_params(module)
 

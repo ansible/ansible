@@ -86,9 +86,6 @@ def main():
     )
     module = AnsibleModule(argument_spec)
 
-    if module._name == 'ovirt_nics_facts':
-        module.deprecate("The 'ovirt_nics_facts' module is being renamed 'ovirt_nic_facts'", version=2.8)
-
     check_sdk(module)
 
     try:

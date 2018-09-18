@@ -246,9 +246,6 @@ def main():
         ]
     )
 
-    if module._name == 'ovirt_snapshots':
-        module.deprecate("The 'ovirt_snapshots' module is being renamed 'ovirt_snapshot'", version=2.8)
-
     check_sdk(module)
 
     vm_name = module.params.get('vm_name')

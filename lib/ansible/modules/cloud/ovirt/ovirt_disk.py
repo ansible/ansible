@@ -584,9 +584,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_disks':
-        module.deprecate("The 'ovirt_disks' module is being renamed 'ovirt_disk'", version=2.8)
-
     check_sdk(module)
     check_params(module)
 

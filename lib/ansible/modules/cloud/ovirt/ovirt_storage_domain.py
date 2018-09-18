@@ -626,9 +626,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_storage_domains':
-        module.deprecate("The 'ovirt_storage_domains' module is being renamed 'ovirt_storage_domain'", version=2.8)
-
     check_sdk(module)
 
     try:
