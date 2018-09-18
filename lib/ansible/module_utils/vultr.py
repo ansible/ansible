@@ -169,8 +169,7 @@ class Vultr:
                 timeout=self.api_config['api_timeout'],
             )
 
-            # Did we hit the rate limit?
-            if info.get('status') and info.get('status') != 503:
+            if info.get('status') == 200:
                 break
 
             # Vultr has a rate limiting requests per second, try to be polite
