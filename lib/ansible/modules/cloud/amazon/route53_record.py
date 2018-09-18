@@ -211,7 +211,7 @@ set:
 
 EXAMPLES = '''
 # Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
-- route53:
+- route53_record:
       state: present
       zone: foo.com
       record: new.foo.com
@@ -221,7 +221,7 @@ EXAMPLES = '''
       wait: yes
 
 # Update new.foo.com as an A record with a list of 3 IPs and wait until the changes have been replicated
-- route53:
+- route53_record:
       state: present
       zone: foo.com
       record: new.foo.com
@@ -234,7 +234,7 @@ EXAMPLES = '''
       wait: yes
 
 # Retrieve the details for new.foo.com
-- route53:
+- route53_record:
       state: get
       zone: foo.com
       record: new.foo.com
@@ -242,7 +242,7 @@ EXAMPLES = '''
   register: rec
 
 # Delete new.foo.com A record using the results from the get command
-- route53:
+- route53_record:
       state: absent
       zone: foo.com
       record: "{{ rec.set.record }}"
@@ -252,7 +252,7 @@ EXAMPLES = '''
 
 # Add an AAAA record.  Note that because there are colons in the value
 # that the IPv6 address must be quoted. Also shows using the old form command=create.
-- route53:
+- route53_record:
       command: create
       zone: foo.com
       record: localhost.foo.com
@@ -263,7 +263,7 @@ EXAMPLES = '''
 # Add a SRV record with multiple fields for a service on port 22222
 # For more information on SRV records see:
 # https://en.wikipedia.org/wiki/SRV_record
-- route53:
+- route53_record:
       state: present
       zone: foo.com
       record: "_example-service._tcp.foo.com"
@@ -272,7 +272,7 @@ EXAMPLES = '''
 
 # Add a TXT record. Note that TXT and SPF records must be surrounded
 # by quotes when sent to Route 53:
-- route53:
+- route53_record:
       state: present
       zone: foo.com
       record: localhost.foo.com
@@ -281,7 +281,7 @@ EXAMPLES = '''
       value: '"bar"'
 
 # Add an alias record that points to an Amazon ELB:
-- route53:
+- route53_record:
       state: present
       zone: foo.com
       record: elb.foo.com
@@ -291,7 +291,7 @@ EXAMPLES = '''
       alias_hosted_zone_id: "{{ elb_zone_id }}"
 
 # Retrieve the details for elb.foo.com
-- route53:
+- route53_record:
       state: get
       zone: foo.com
       record: elb.foo.com
@@ -299,7 +299,7 @@ EXAMPLES = '''
   register: rec
 
 # Delete an alias record using the results from the get command
-- route53:
+- route53_record:
       state: absent
       zone: foo.com
       record: "{{ rec.set.record }}"
@@ -310,7 +310,7 @@ EXAMPLES = '''
       alias_hosted_zone_id: "{{ rec.set.alias_hosted_zone_id }}"
 
 # Add an alias record that points to an Amazon ELB and evaluates it health:
-- route53:
+- route53_record:
     state: present
     zone: foo.com
     record: elb.foo.com
@@ -321,7 +321,7 @@ EXAMPLES = '''
     alias_evaluate_target_health: True
 
 # Add an AAAA record with Hosted Zone ID.
-- route53:
+- route53_record:
       state: present
       zone: foo.com
       hosted_zone_id: Z2AABBCCDDEEFF
@@ -331,7 +331,7 @@ EXAMPLES = '''
       value: "::1"
 
 # Use a routing policy to distribute traffic:
-- route53:
+- route53_record:
       state: present
       zone: foo.com
       record: www.foo.com
@@ -344,7 +344,7 @@ EXAMPLES = '''
       health_check: "d994b780-3150-49fd-9205-356abdd42e75"
 
 # Add a CAA record (RFC 6844):
-- route53:
+- route53_record:
       state: present
       zone: example.com
       record: example.com
