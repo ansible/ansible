@@ -349,7 +349,7 @@ if($gather_subset.Contains('processor')) {
     }
 
     $cpu_list = @( )
-    for ($i=1; $i -le ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors); $i++) {
+    for ($i=1; $i -le $win32_cs.NumberOfProcessors; $i++) {
         $cpu_list += $win32_cpu.Manufacturer
         $cpu_list += $win32_cpu.Name
     }
@@ -358,8 +358,8 @@ if($gather_subset.Contains('processor')) {
         ansible_processor = $cpu_list
         ansible_processor_cores = $win32_cpu.NumberOfCores
         ansible_processor_count = $win32_cs.NumberOfProcessors
-        ansible_processor_threads_per_core = ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors / $win32_cpu.NumberOfCores)
-        ansible_processor_vcpus = ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors)
+        ansible_processor_threads_per_core = ($win32_cpu.NumberOfLogicalProcessors / $win32_cpu.NumberofCores)
+        ansible_processor_vcpus = ($win32_cpu.NumberOfLogicalProcessors * $win32_cs.NumberOfProcessors)
     }
 }
 
