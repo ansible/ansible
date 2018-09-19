@@ -50,16 +50,9 @@ import os
 import warnings
 from re import match
 
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, mysql_quote_identifier
-from ansible.module_utils.mysql import mysql_connect, mysqldb_found
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
 
 
@@ -148,10 +141,10 @@ def main():
         module.fail_json(msg="Cannot run without variable to operate with")
     if match('^[0-9a-z_]+$', mysqlvar) is None:
         module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
-    if not mysqldb_found:
-        module.fail_json(msg="The MySQL-python module is required.")
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
     else:
-        warnings.filterwarnings('error', category=MySQLdb.Warning)
+        warnings.filterwarnings('error', category=mysql_driver.Warning)
 
     try:
         cursor = mysql_connect(module, user, password, config_file, ssl_cert, ssl_key, ssl_ca, db,
