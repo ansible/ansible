@@ -61,7 +61,7 @@ options:
     description:
     - Routing protocol for the L3Out
     type: list
-    choices: [ static, bgp, eigrp, ospf, pim ]
+    choices: [ bgp, eigrp, ospf, pim, static ]
   asn:
     description:
     - The AS number for the L3Out. Only applicable when using 'eigrp' as the l3protocol
@@ -239,7 +239,7 @@ def main():
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42',
                            'AF43', 'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        l3protocol=dict(type='list', choices=['static', 'bgp', 'eigrp', 'ospf', 'pim']),
+        l3protocol=dict(type='list', choices=['bgp', 'eigrp', 'ospf', 'pim', 'static']),
         asn=dict(type='int', aliases=['as_number']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
@@ -266,10 +266,10 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
 
-    if asn and 'eigrp' not in l3protocol:
-        module._warnings = ["Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored"]
-    if not asn and 'eigrp' in l3protocol:
+    if 'eigrp' in l3protocol and asn is None:
         module.fail_json(msg="Parameter 'asn' is required when l3protocol is 'eigrp'")
+    if 'eigrp' not in l3protocol and asn is not None:
+        module.warn("Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored")
 
     enforce_ctrl = ''
     if enforceRtctrl is not None:
