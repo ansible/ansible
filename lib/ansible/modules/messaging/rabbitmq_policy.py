@@ -103,16 +103,20 @@ class RabbitMqPolicy(object):
             return out.splitlines()
         return list()
 
-    def list(self):
+    def get(self):
         policies = self._exec(['list_policies'], True)
 
         for policy in policies:
             if not policy:
                 continue
-            policy_name = policy.split('\t')[1]
-            if policy_name == self._name:
-                return True
-        return False
+            policy_data = policy.split('\t')
+            if policy_data[1] == self._name:
+                return dict(
+                    apply_to=policy_data[2],
+                    pattern=policy_data[3].encode('utf-8').decode('unicode_escape'),  # decode C-escaped string, python 2+3 way
+                    tags=json.loads(policy_data[4]),
+                    priority=policy_data[5]
+                )
 
     def set(self):
         args = ['set_policy']
@@ -136,12 +140,26 @@ class RabbitMqPolicy(object):
             state=self._state
         )
 
-        if self.list():
+        current_state = self.get()
+        exists = current_state is not None
+
+        if exists:
             if self._state == 'absent':
                 self.clear()
                 result['changed'] = True
             else:
-                result['changed'] = False
+                diffs = [
+                    self._apply_to != current_state['apply_to'],
+                    self._pattern != current_state['pattern'],
+                    self._tags != current_state['tags'],
+                    str(self._priority) != str(current_state['priority'])
+                ]
+
+                needs_change = any(diffs)
+                if needs_change:
+                    self.set()
+
+                result['changed'] = needs_change
         elif self._state == 'present':
             self.set()
             result['changed'] = True
