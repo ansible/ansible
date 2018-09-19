@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Sebastian Kornehl <sebastian.kornehl@asideas.de>
+# Copyright: (c) 2015, Sebastian Kornehl <sebastian.kornehl@asideas.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -62,7 +62,6 @@ options:
         description:
             - The number of minutes before a monitor will notify when data stops reporting. Must be at least 2x the monitor timeframe for metric
               alerts or 2 minutes for service checks.
-        required: false
         default: 2x timeframe for metric, 2 minutes for service
     timeout_h:
         description: ["The number of hours of the monitor not reporting data before it will automatically resolve from a triggered state."]
@@ -99,8 +98,6 @@ options:
         version_added: "2.4"
     evaluation_delay:
         description: ["Time to delay evaluation (in seconds). It is effective for sparse values."]
-        required: false
-        default: null
         version_added: "2.7"
     id:
         description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]

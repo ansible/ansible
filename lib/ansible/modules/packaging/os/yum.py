@@ -29,7 +29,6 @@ options:
         upstream yum developers. As of Ansible 2.7+, this module also supports C(YUM4), which is the
         "new yum" and it has an C(dnf) backend.
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
-    required: false
     default: "auto"
     choices: [ auto, yum, yum4, dnf ]
     version_added: "2.7"
@@ -112,7 +111,6 @@ options:
     description:
       - When using latest, only update installed packages. Do not install packages.
       - Has an effect only if state is I(latest)
-    required: false
     default: "no"
     type: bool
     version_added: "2.5"
@@ -132,7 +130,6 @@ options:
   bugfix:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
-    required: false
     default: "no"
     version_added: "2.6"
   allow_downgrade:
@@ -152,21 +149,17 @@ options:
     description:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
-    required: false
     version_added: "2.5"
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
-    required: false
     version_added: "2.5"
   releasever:
     description:
       - Specifies an alternative release from which all packages will be
         installed.
-    required: false
     version_added: "2.7"
-    default: null
   autoremove:
     description:
       - If C(yes), removes all "leaf" packages from the system that were originally
@@ -174,7 +167,7 @@ options:
         required by any such package. Should be used alone or when state is I(absent)
       - "NOTE: This feature requires yum >= 3.4.3 (RHEL/CentOS 7+)"
     type: bool
-    default: false
+    default: "no"
     version_added: "2.7"
   disable_excludes:
     description:
@@ -182,13 +175,11 @@ options:
       - If set to C(all), disables all excludes.
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
-    required: false
     choices: [ all, main, repoid ]
     version_added: "2.7"
   download_only:
     description:
       - Only download the packages, do not install them.
-    required: false
     default: "no"
     type: bool
     version_added: "2.7"
