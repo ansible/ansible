@@ -76,7 +76,7 @@ options:
     version_added: '2.8'
   message:
     description:
-      - Add interface description to interface syslogs.  
+      - Add interface description to interface syslogs.
         Does not work with version 6.0 images using nxapi as a transport.
     choices: ['add-interface-description']
     version_added: '2.8'
@@ -86,7 +86,7 @@ options:
     version_added: '2.8'
   facility_link_status:
     description:
-      - Set logging facility ethpm link status.  
+      - Set logging facility ethpm link status.
         Not idempotent with version 6.0 images.
     choices: ['link-down-notif', 'link-down-error', 'link-up-notif', 'link-up-error']
     version_added: '2.8'
@@ -709,7 +709,7 @@ def absent(h):
     return h
 
 
-def outliers(haves, wants): # outer-section between two lists
+def outliers(haves, wants):
     wants = list(wants)
     return [absent(h) for h in haves if not (h in wants or wants.append(h))]
 
