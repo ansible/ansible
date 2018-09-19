@@ -31,8 +31,8 @@ description: This module will allow user to pass and execute any supported OP co
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.5"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
-    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
+    - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is NOT supported.
     - Panorama is NOT supported.
