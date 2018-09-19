@@ -76,8 +76,8 @@ options:
     version_added: '2.8'
   message:
     description:
-      - Add interface description to interface syslogs [default: ethernet]
-      - Does not work with 6.0 images using nxapi as a transport.
+      - Add interface description to interface syslogs.  
+        Does not work with version 6.0 images using nxapi as a transport.
     choices: ['add-interface-description']
     version_added: '2.8'
   file_size:
@@ -86,7 +86,8 @@ options:
     version_added: '2.8'
   facility_link_status:
     description:
-      - Set logging facility ethpm link status.  Not idempotent with 6.0 images.
+      - Set logging facility ethpm link status.  
+        Not idempotent with version 6.0 images.
     choices: ['link-down-notif', 'link-down-error', 'link-up-notif', 'link-up-error']
     version_added: '2.8'
   timestamp:
@@ -147,7 +148,7 @@ EXAMPLES = """
   nxos_logging:
     interface: mgmt0
     state: present
-- name: Purge configuration not what was just configured
+- name: Purge nxos_logging configuration not managed by this playbook
   nxos_logging:
     purge: true
 - name: Configure logging timestamp

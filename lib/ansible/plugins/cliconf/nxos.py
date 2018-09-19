@@ -40,7 +40,6 @@ class Cliconf(CliconfBase):
         super(Cliconf, self).__init__(*args, **kwargs)
 
     def read_module_context(self, module_key):
-        #return [{'logging': 'this is a test'}]
         if self._module_context.get(module_key):
             return self._module_context[module_key]
 

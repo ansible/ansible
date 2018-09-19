@@ -484,7 +484,6 @@ class Nxapi:
         return result
 
     def read_module_context(self, module_key):
-        Connection('')
         if self._module_context.get(module_key):
             return self._module_context[module_key]
 
