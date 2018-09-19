@@ -934,6 +934,7 @@ class TaskParameters(DockerBaseClass):
             links='links',
             privileged='privileged',
             dns='dns_servers',
+            dns_opt='dns_opts',
             dns_search='dns_search_domains',
             binds='volume_binds',
             volumes_from='volumes_from',
