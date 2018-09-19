@@ -273,7 +273,6 @@ class Nxapi:
 
         self._url = '%s://%s:%s/ins' % (proto, host, port)
 
-
     def _error(self, msg, **kwargs):
         self._nxapi_auth = None
         if 'url' not in kwargs:

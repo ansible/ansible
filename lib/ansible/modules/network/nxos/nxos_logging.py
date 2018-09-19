@@ -77,6 +77,7 @@ options:
   message:
     description:
       - Add interface description to interface syslogs [default: ethernet]
+      - Does not work with 6.0 images using nxapi as a transport.
     choices: ['add-interface-description']
     version_added: '2.8'
   file_size:
@@ -339,6 +340,7 @@ def parse_facility_link_status(line, facility, status):
             facility_link_status = status + "-" + match.group(1)
 
     return facility_link_status
+
 
 def parse_event_status(line, event):
     status = None
@@ -754,11 +756,12 @@ def main():
 
     commands = map_obj_to_commands((want, have))
     result['commands'] = commands
+
     if commands:
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
-
+    
     save_module_context(module, merged_wants)
 
     if module.params.get('purge'):
