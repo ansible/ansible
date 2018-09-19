@@ -630,7 +630,7 @@ class Interfaces(FactsBase):
             fact = dict()
             fact['port'] = self.parse_lldp_port(item)
             fact['sysname'] = self.parse_lldp_sysname(item)
-            facts[local_intf].append(facts)
+            facts[local_intf].append(fact)
 
         return facts
 
