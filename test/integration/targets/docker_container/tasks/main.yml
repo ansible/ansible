@@ -1,0 +1,23 @@
+---
+- block:
+  - name: Create random container name prefix
+    set_fact:
+      cname_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+      cnames: []
+
+  - debug:
+      msg: "Using container name prefix {{ cname_prefix }}"
+
+  - block:
+    - include_tasks: run-test.yml
+      with_fileglob:
+      - "tests/*.yml"
+
+    always:
+    - name: "Make sure all containers are removed"
+      docker_container:
+        name: "{{ item }}"
+        state: absent
+        stop_timeout: 1
+      with_items: "{{ cnames }}"
+  when: ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6'
