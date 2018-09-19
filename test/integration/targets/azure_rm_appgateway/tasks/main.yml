@@ -66,6 +66,8 @@
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
         frontend_port: ag_frontend_port
+        protocol: https
+        ssl_certificate: cert2
         name: sample_http_listener
     request_routing_rules:
       - rule_type: basic
@@ -129,6 +131,8 @@
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
         frontend_port: ag_frontend_port
+        protocol: https
+        ssl_certificate: cert2
         name: sample_http_listener
     request_routing_rules:
       - rule_type: Basic
@@ -187,6 +191,8 @@
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
         frontend_port: ag_frontend_port
+        protocol: https
+        ssl_certificate: cert2
         name: sample_http_listener
     request_routing_rules:
       - rule_type: Basic
@@ -245,6 +251,8 @@
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
         frontend_port: ag_frontend_port
+        protocol: https
+        ssl_certificate: cert2
         name: sample_http_listener
     request_routing_rules:
       - rule_type: Basic
