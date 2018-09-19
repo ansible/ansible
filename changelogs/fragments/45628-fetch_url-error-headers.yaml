@@ -1,0 +1,2 @@
+bugfixes:
+- "fetch_url did not always return lower-case header names in case of HTTP errors (https://github.com/ansible/ansible/pull/45628)."
