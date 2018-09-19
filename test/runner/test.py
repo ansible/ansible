@@ -6,7 +6,25 @@ from __future__ import absolute_import, print_function
 
 import errno
 import os
+import os.path
 import sys
+
+libdir = None
+if os.path.islink(__file__):
+    libdir = os.path.dirname(os.path.realpath(__file__))
+else:
+    scriptdir = os.path.dirname(__file__)
+    if scriptdir.endswith('bin'):
+        libdir = os.path.abspath(os.path.join(scriptdir, '..', 'test', 'runner'))
+
+if libdir is None:
+    print('Error: unable to detect the test/runner directory.  Maybe an invalid git checkout?')
+    sys.exit(1)
+elif os.path.exists(libdir):
+    # Success
+    sys.path.insert(0, libdir)
+else:
+    print('Warning: Unable to detect a test/runner directory that exists.  Imports may fail')
 
 from lib.util import (
     ApplicationError,
@@ -72,7 +90,7 @@ import lib.cover
 def main():
     """Main program function."""
     try:
-        git_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+        git_root = os.path.abspath(os.path.join(libdir, '..', '..'))
         os.chdir(git_root)
         initialize_cloud_plugins()
         sanity_init()
