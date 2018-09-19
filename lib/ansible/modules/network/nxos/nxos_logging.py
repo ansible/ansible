@@ -98,6 +98,7 @@ options:
   purge:
     description:
       - Remove any switch logging configuration that does not match what has been configured
+    type: bool
     default: no
     version_added: '2.8'
 extends_documentation_fragment: nxos
@@ -535,7 +536,7 @@ def map_config_to_obj(module):
 
                 if dest == 'server':
                     facility = parse_facility(line)
-                
+
                 facility_level = parse_facility_level(line, facility, dest)
 
                 if dest == 'logfile':
@@ -699,7 +700,7 @@ def merge_wants(wants, want):
                 wants.remove(w)
         elif w not in wants:
             wants.append(w)
- 
+
     return wants
 
 
@@ -762,7 +763,7 @@ def main():
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
-    
+
     save_module_context(module, merged_wants)
 
     if module.params.get('purge'):
