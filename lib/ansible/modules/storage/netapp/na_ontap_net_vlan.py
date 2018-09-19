@@ -12,37 +12,37 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_net_vlan
-short_description: Manage NetApp ONTAP network vlan
+short_description: NetApp ONTAP network VLAN
 extends_documentation_fragment:
     - netapp.ontap
 version_added: '2.6'
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
-- Create or Delete a network vlan
+- Create or Delete a network VLAN
 options:
   state:
     description:
-    - Whether the specified network vlan should exist or not
+    - Whether the specified network VLAN should exist or not
     choices: ['present', 'absent']
     default: present
   parent_interface:
     description:
-    - The interface that hosts the vlan interface.
+    - The interface that hosts the VLAN interface.
     required: true
   vlanid:
     description:
-    - The vlan id. Ranges from 1 to 4094.
+    - The VLAN id. Ranges from 1 to 4094.
     required: true
   node:
     description:
-    - Node name of vlan interface.
+    - Node name of VLAN interface.
     required: true
 notes:
   - The C(interface_name) option has been removed and should be deleted from playbooks
 '''
 
 EXAMPLES = """
-    - name: create vlan
+    - name: create VLAN
       na_ontap_net_vlan:
         state=present
         vlanid=13

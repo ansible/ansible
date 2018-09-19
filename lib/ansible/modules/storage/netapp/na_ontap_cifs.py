@@ -40,7 +40,7 @@ options:
       - "Whether the specified CIFS share should exist or not."
     required: false
     default: present
-short_description: "Manage NetApp cifs-share"
+short_description: "NetApp ONTAP manage cifs-share"
 version_added: "2.6"
 
 '''
