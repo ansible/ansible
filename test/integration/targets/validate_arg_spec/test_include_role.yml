@@ -2,31 +2,71 @@
 - name: "Running include_role test1 }}"
   hosts: localhost
   gather_facts: false
-  tasks:
-    - name: debug vars
+  pre_tasks:
+    - name: debug pre_task
       debug:
-        var: vars.hostvars.localhost
-      when: false
+        msg: "hello from pre_task"
 
-    - name: include_role test1 since it has a arg_spec.yml
+  tasks:
+    - name: include_role test1 since it has a arg_spec.yml provide all args
+      include_role:
+        name: test1
+      vars:
+        test1_choices: "this remote control"
+        tidy_expected:
+          - "blip test_include_role"
+        blip: "test_include_role_sdfadfasdfasdf"
+        test1_var1: "some test1_var1 value from test_include_role"
+        test1_var2: "some test1_var2 value from test_include_role"
+        # mutually exclusive with tidy_expected
+        # bust_some_stuff: 37
+        peanut_butter: "smooth"
+        jelly: "grape"
+        hostname: "somehostnametestincluderole.invalid"
+        secret_choices: "secret_ballot_choice2"
+        some_str: "some str value from test_include_role"
+        some_list:
+          - 3.14
+          - 9.8
+          - 0.0000001
+        some_dict:
+          first_key: "try not to care"
+          second_key: "plastics"
+        some_int: 42
+        some_float: 1.3
+        some_path: /dev/null/some/path
+        some_raw: "does this count as raw?"
+        some_jsonarg: []
+        some_json: []
+        # FIXME: how to get a Bit/"bits" from yaml?
+        some_bytes: "2.314P"
+        some_bits: "0.4M"
+        # alias to some_str_aliases
+        some_str_formery_known_as: "some value that should set some_str_aliases"
+        some_dict_options:
+          some_second_level: true
+        # this should require some_tmp_path
+        do_something_to_some_path: true
+        some_tmp_path: /dev/null/some/tmp/path
+        # we enabled common file args
+        group: root
+        owner: root
+
+    - name: set some facts for task vars
+      set_fact:
+        peanut_butter: "crunchyfacts"
+        test1_var1: "some value set from set_facts"
+        some_str: "some str value from set_fact"
+
+    - name: include_role test1 but now with some facts set
       include_role:
         name: test1
       vars:
         tidy_expected:
           - foo
-        blip: dfgdfg
-        # bust_some_stuff: 31
-          # test1_choices: "the chair"
-          # test1_choices: "my dog"
-      register: results_include_role_test1
-
-    - name: show results_include_role_test1
-      debug:
-        var: results_include_role_test1
-
-        #    - name: creating import_role args
-        #      set_fact:
-        #        import_role_args: "{{ role_provided_arguments|combine({'name': role_name }) }}"
-
-        #    - debug:
-        #        var: import_role_args
+        blip: dfgdfgfacts
+        jelly: "grape"
+        # required
+        some_jsonarg: []
+        some_json: []
+        ip_address: "127.0.0.1"

@@ -1,25 +1,69 @@
 ---
-- name: "Running import_role test1 }}"
+- name: "Running import_role test1 "
   hosts: localhost
   gather_facts: false
+  vars:
+    expected:
+      test1_1:
+        argument_errors:
+          - "parameters are mutually exclusive: bust_some_stuff, tidy_expected"
   tasks:
-    - name: debug vars
-      debug:
-        var: vars.hostvars.localhost
-      when: false
-
     - name: import_role test1 since it has a arg_spec.yml
-      import_role:
-        name: test1
-      register: results_import_role_test1
+      block:
+        - import_role:
+            name: test1
+          vars:
+            some_json: []
+            some_jsonarg: []
+            ip_address: "127.0.0.1"
+            test1_choices: "this paddle game"
+            # tidy_expected:
+            #   - '/tmp/dsfafadfadfasdf/txt.txt'
+            # Note: we dont set bust_some_stuff here
+            # bust_some_stuff: 12
+      rescue:
+        - debug:
+            msg: "first task rescue"
+      always:
+        - debug:
+            msg: "first task always"
 
-    - name: show results_import_role_test1
-      debug:
-        var: results_import_role_test1
+    # now with some bogus args
+    - name: import_role test1 but with some invalid args
+      block:
+        - import_role:
+            name: test1
+          vars:
+            ip_address: "127.0.0.2"
+            some_list: 37.1
+            test1_var1: "This is from a import_role that should have invalid args"
+            test1_choices: "My dog"
+            # NOTE: the bust_some_stuff value here is used for this task and the first task...?
+            bust_some_stuff: 42
+            # some_json: []
+            # some_jsonarg: []
+      rescue:
+        - name: figure out the difference between expected and actual validate_arg_spec failures
+          set_fact:
+            # actual_not_in_expected: []
+            # expected_not_in_actual: []
+            actual_not_in_expected: "{{ ansible_failed_result.argument_errors | difference(expected.test1_1.argument_errors) }}"
+            expected_not_in_actual: "{{ expected.test1_1.argument_errors | difference(ansible_failed_result.argument_errors) }}"
 
-        #    - name: creating import_role args
-        #      set_fact:
-        #        import_role_args: "{{ role_provided_arguments|combine({'name': role_name }) }}"
+        - name: assert that all actual validate_arg_spec failures were in expected
+          assert:
+            that:
+              - true
+              # - actual_not_in_expected | length == 0
+            msg: "Actual validate_arg_spec failures that were not expected: {{ actual_not_in_expected }}"
 
-        #    - debug:
-        #        var: import_role_args
+        - name: assert that all expected validate_arg_spec failures were in expected
+          assert:
+            that:
+              - true
+            # - expected_not_in_actual | length == 0
+            msg: "Expected validate_arg_spec failures that were not in actual results: {{ expected_not_in_actual }}"
+      always:
+        - name: the always block for import_role with arg validation errors
+          debug:
+            msg: "always foo"

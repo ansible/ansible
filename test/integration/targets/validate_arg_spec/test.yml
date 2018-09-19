@@ -1,5 +1,0 @@
----
-- hosts: testhost
-  gather_facts: true
-  roles:
-    - {role: validate_arg_spec}

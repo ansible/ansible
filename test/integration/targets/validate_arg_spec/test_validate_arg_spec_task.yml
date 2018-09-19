@@ -1,0 +1,39 @@
+---
+- name: "Running validate_arg_specs as a task"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    category: "Misc"
+    argument_spec_data:
+      argument_spec:
+        some_int:
+          type: "int"
+          required: true
+        some_str:
+          type: "str"
+          default: "blippyfoobar"
+        some_choice:
+          type: "str"
+          choices:
+            - "large"
+            - "gigantic"
+            - "extra gigantic"
+          required: false
+    provided_arguments:
+      some_int: "does this count as an int"
+      some_str: "hunter42"
+      some_choice: "medium"
+  tasks:
+    - name: "test validate_arg_spec"
+      block:
+        - validate_arg_spec:
+            argument_spec: "{{ argument_spec_data }}"
+            provided_arguments: "{{ provided_arguments }}"
+            validate_args_context:
+              type: "standalone task"
+              name: "test stuff"
+              category: "{{ category }}"
+      rescue:
+        - name: show failed task result
+          debug:
+            var: ansible_failed_result

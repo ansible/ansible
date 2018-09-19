@@ -1,12 +1,41 @@
 ---
-- name: "Running include_role test1 }}"
+- name: "Running include_role test1 play 1"
   hosts: localhost
   gather_facts: false
+  pre_tasks:
+    - name: debug pre_task
+      debug:
+        msg: "hello from pre_task "
   roles:
     - {role: test1,
-       test1_var1: 'test1_var1 from the play level role'}
-  tasks:
-    - name: debug vars
+       test1_var1: 'play1 test1_var1 from the play level role',
+       some_json: [],
+       some_jsonarg: [],
+       hostname: somehost.invalid}
+  post_tasks:
+    - name: debug post_task
       debug:
-        var: vars.hostvars.localhost
-      when: false
+        msg: "hello from post_task"
+
+- name: "Running include_role test1 play 2"
+  hosts: localhost
+  gather_facts: false
+  pre_tasks:
+    - name: debug pre_task
+      debug:
+        msg: "hello from pre_task"
+  roles:
+    - {role: test1,
+       test1_var1: 'play2 test1_var1 from play level role',
+       some_json: [],
+       some_jsonarg: [],
+       hostname: somehost.invalid}
+    - {role: test1,
+       test1_var1: 'play2 test1_var1 from the second play level role',
+       some_json: [],
+       some_jsonarg: [],
+       hostname: somehost.invalid}
+  post_tasks:
+    - name: debug post_task
+      debug:
+        msg: "hello from post_task"

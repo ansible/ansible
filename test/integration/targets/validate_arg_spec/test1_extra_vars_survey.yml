@@ -1,7 +1,0 @@
-test1_var3: "Some value from test1_extra_vars for test1_var3"
-# survey3_multiselect_answer:
-#  - blip
-#  - foo
-survey3_multiselect_answer:
-  - the chair
-test1_var2: "Hey, I got test1_var2 from extra_vars on the cli"

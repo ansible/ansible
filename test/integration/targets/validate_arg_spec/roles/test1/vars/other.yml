@@ -1,0 +1,4 @@
+---
+# vars file for test1
+test1_var1: 'other_THE_TEST1_VAR1_VARS_VALUE'
+test1_var2: 'other_THE_TEST1_VAR2_VARS_VALUE'
