@@ -1,3 +1,3 @@
 ---
 minor_changes:
-- copy module - implement that allow copy module to work with recursive and remote_src #14131
+- copy - support recursive copying with remote_src
