@@ -213,11 +213,6 @@ EXAMPLES = """
   eos_config:
     lines: hostname {{ inventory_hostname }}
 
-- name: diff against a provided master config
-  eos_config:
-    diff_against: config
-    config: "{{ lookup('file', 'master.cfg') }}"
-
 - name: load an acl into the device
   eos_config:
     lines:
