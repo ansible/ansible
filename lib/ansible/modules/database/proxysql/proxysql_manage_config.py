@@ -96,15 +96,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
-
-try:
-    import MySQLdb
-except ImportError:
-    MYSQLDB_FOUND = False
-else:
-    MYSQLDB_FOUND = True
 
 # ===========================================
 # proxysql module specific support methods.
@@ -140,10 +133,8 @@ def perform_checks(module):
                           " with the CONFIG config_layer")
             module.fail_json(msg=msg_string % module.params["direction"])
 
-    if not MYSQLDB_FOUND:
-        module.fail_json(
-            msg="the python mysqldb module is required"
-        )
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
 
 
 def manage_config(manage_config_settings, cursor):
@@ -201,7 +192,7 @@ def main():
                                login_user,
                                login_password,
                                config_file)
-    except MySQLdb.Error as e:
+    except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
@@ -214,7 +205,7 @@ def main():
     try:
         result['changed'] = manage_config(manage_config_settings,
                                           cursor)
-    except MySQLdb.Error as e:
+    except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to manage config.. %s" % to_native(e)
         )

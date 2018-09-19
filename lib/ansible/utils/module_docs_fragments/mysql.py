@@ -52,7 +52,8 @@ options:
   ssl_ca:
     version_added: "2.0"
     description:
-      - The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate as used by the server.
+      - The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate
+        as used by the server.
   ssl_cert:
     version_added: "2.0"
     description:
@@ -62,11 +63,12 @@ options:
     description:
       - The path to the client private key.
 requirements:
-   - MySQLdb
+   - PyMySQL (Python 2.7 and Python 3.X), or
+   - MySQLdb (Python 2.x)
 notes:
-   - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
-     is as easy as apt-get install python-mysqldb. (See M(apt).) For CentOS/Fedora, this
-     is as easy as yum install MySQL-python. (See M(yum).)
+   - Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) Python package on the remote host.
+     For Ubuntu, this is as easy as apt-get install python-pymysql. (See M(apt).) For CentOS/Fedora, this
+     is as easy as yum install python2-PyMySQL. (See M(yum).)
    - Both C(login_password) and C(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
