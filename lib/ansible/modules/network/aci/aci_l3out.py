@@ -61,7 +61,7 @@ options:
     description:
     - Routing protocol for the L3Out
     type: list
-    choices: [ static, bgp, ospf, eigrp, pim ]
+    choices: [ static, bgp, eigrp, ospf, pim ]
   asn:
     description:
     - The AS number for the L3Out. Only applicable when using 'eigrp' as the l3protocol
@@ -239,8 +239,8 @@ def main():
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42',
                            'AF43', 'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        l3protocol=dict(type='list', choices=['static', 'bgp', 'ospf', 'eigrp', 'pim']),
-        asn=dict(type='str', aliases=['as_number']),
+        l3protocol=dict(type='list', choices=['static', 'bgp', 'eigrp', 'ospf', 'pim']),
+        asn=dict(type='int', aliases=['as_number']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
 
@@ -265,6 +265,11 @@ def main():
     asn = module.params['asn']
     state = module.params['state']
     tenant = module.params['tenant']
+    
+    if asn and 'eigrp' not in l3protocol:
+        module._warnings = ["Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored"]
+    if not asn and 'eigrp' in l3protocol:
+        module.fail_json(msg="Parameter 'asn' is required when l3protocol is 'eigrp'")
 
     enforce_ctrl = ''
     if enforceRtctrl is not None:
@@ -305,12 +310,12 @@ def main():
             if protocol == 'bgp':
                 child_configs.append(
                     dict(bgpExtP=dict(attributes=dict(descr='', nameAlias=''))))
-            elif protocol == 'ospf':
-                child_configs.append(
-                    dict(ospfExtP=dict(attributes=dict(descr='', nameAlias=''))))
             elif protocol == 'eigrp':
                 child_configs.append(
                     dict(eigrpExtP=dict(attributes=dict(descr='', nameAlias='', asn=asn))))
+            elif protocol == 'ospf':
+                child_configs.append(
+                    dict(ospfExtP=dict(attributes=dict(descr='', nameAlias=''))))
             elif protocol == 'pim':
                 child_configs.append(
                     dict(pimExtP=dict(attributes=dict(descr='', nameAlias=''))))
