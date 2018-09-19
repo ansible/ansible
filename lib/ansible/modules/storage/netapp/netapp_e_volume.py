@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: netapp_e_volume
 version_added: "2.2"
-short_description: Manage storage volumes (standard and thin)
+short_description: NetApp E-Series manage storage volumes (standard and thin)
 description:
     - Create or remove volumes (standard and thin) for NetApp E/EF-series storage arrays.
 extends_documentation_fragment:

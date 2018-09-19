@@ -14,9 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_host
-short_description: manage eseries hosts
-description:
-    - Create, update, remove hosts on NetApp E-series storage arrays
+short_description: NetApp E-Series manage eseries hosts
+description: Create, update, remove hosts on NetApp E-series storage arrays
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
 extends_documentation_fragment:

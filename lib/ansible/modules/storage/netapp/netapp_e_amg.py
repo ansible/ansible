@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_amg
-short_description: Create, Remove, and Update Asynchronous Mirror Groups
+short_description: NetApp E-Series create, remove, and update asynchronous mirror groups
 description:
     - Allows for the creation, removal and updating of Asynchronous Mirror Groups for NetApp E-series storage arrays
 version_added: '2.2'
