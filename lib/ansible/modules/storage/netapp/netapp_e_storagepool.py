@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: netapp_e_storagepool
-short_description: Manage disk groups and disk pools
+short_description: NetApp E-Series manage disk groups and disk pools
 version_added: '2.2'
 description:
     - Create or remove disk groups and disk pools for NetApp E-series storage arrays.

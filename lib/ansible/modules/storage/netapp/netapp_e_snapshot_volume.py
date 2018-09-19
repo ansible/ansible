@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_snapshot_volume
-short_description: Manage E/EF-Series snapshot volumes.
+short_description: NetApp E-Series manage snapshot volumes.
 description:
     - Create, update, remove snapshot volumes for NetApp E/EF-Series storage arrays.
 version_added: '2.2'
