@@ -82,15 +82,16 @@ from ansible.module_utils.basic import AnsibleModule
 
 class RabbitMqPolicy(object):
 
-    def __init__(self, module, name):
+    def __init__(self, module):
         self._module = module
-        self._name = name
+        self._name = module.params['name']
         self._vhost = module.params['vhost']
         self._pattern = module.params['pattern']
         self._apply_to = module.params['apply_to']
         self._tags = module.params['tags']
         self._priority = module.params['priority']
         self._node = module.params['node']
+        self._state = module.params['state']
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
     def _exec(self, args, run_in_check_mode=False):
@@ -128,6 +129,25 @@ class RabbitMqPolicy(object):
     def clear(self):
         return self._exec(['clear_policy', self._name])
 
+    def run(self):
+        result = dict(
+            changed=False,
+            name=self._name,
+            state=self._state
+        )
+
+        if self.list():
+            if self._state == 'absent':
+                self.clear()
+                result['changed'] = True
+            else:
+                result['changed'] = False
+        elif self._state == 'present':
+            self.set()
+            result['changed'] = True
+
+        self._module.exit_json(**result)
+
 
 def main():
     arg_spec = dict(
@@ -146,22 +166,7 @@ def main():
         supports_check_mode=True
     )
 
-    name = module.params['name']
-    state = module.params['state']
-    rabbitmq_policy = RabbitMqPolicy(module, name)
-
-    result = dict(changed=False, name=name, state=state)
-    if rabbitmq_policy.list():
-        if state == 'absent':
-            rabbitmq_policy.clear()
-            result['changed'] = True
-        else:
-            result['changed'] = False
-    elif state == 'present':
-        rabbitmq_policy.set()
-        result['changed'] = True
-
-    module.exit_json(**result)
+    RabbitMqPolicy(module).run()
 
 
 if __name__ == '__main__':
