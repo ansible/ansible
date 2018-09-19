@@ -67,10 +67,15 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.12. Please update your playbooks accordingly.
 
+* ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+* ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+
 
 Noteworthy module changes
 -------------------------
 
+* The ``foreman`` and ``katello`` modules have been deprecated in favor of a set of modules that are broken out per entity with better idempotency in mind.
+* The ``foreman`` and ``katello`` modules replacement is officially part of the Foreman Community and supported there.
 * The ``tower_credential`` module originally required the ``ssh_key_data`` to be the path to a ssh_key_file.
   In order to work like Tower/AWX, ``ssh_key_data`` now contains the content of the file.
   The previous behavior can be achieved with ``lookup('file', '/path/to/file')``.
