@@ -1160,7 +1160,9 @@ class TaskParameters(DockerBaseClass):
         )
 
         if self.log_options is not None:
-            options['Config'] = self.log_options
+            options['Config'] = dict()
+            for k, v in self.log_options.items():
+                options['Config'][k] = str(v)
 
         try:
             return LogConfig(**options)
