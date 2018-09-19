@@ -1,4 +1,8 @@
 #!/usr/bin/python
+# coding: utf-8s
+
+# (c) 2018, Jan Christian Grünhage <jan.christian@gruenhage.xyz>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -12,7 +16,7 @@ module: matrix
 
 short_description: This module can send notifications to matrix rooms
 
-version_added: "2.7"
+version_added: "2.8"
 
 description:
     - "This module can send html formatted notifications to matrix rooms"
@@ -43,7 +47,7 @@ options:
     password:
         description:
             - The password to log in with
-    
+
 
 author:
     - Jan Christian Grünhage (@jcgruenhage)
@@ -57,7 +61,7 @@ EXAMPLES = '''
     room_id: "!12345678:server.tld"
     hs_url: "https://matrix.org"
     token: "{{ matrix_auth_token }}"
-    
+
 - name: Send matrix notification with user_id and password
   matrix:
     msg_plain: "**hello world**"
@@ -65,14 +69,21 @@ EXAMPLES = '''
     room_id: "!12345678:server.tld"
     hs_url: "https://matrix.org"
     user_id: "ansible_notification_bot"
-    password: "{{ matrix_auth_password }}"    
+    password: "{{ matrix_auth_password }}"
 '''
 
 RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from matrix_client.client import MatrixClient
+
+try:
+    from matrix_client.client import MatrixClient
+except ImportError:
+    matrix_found = False
+else:
+    matrix_found = True
+
 
 def run_module():
     module_args = dict(
@@ -95,6 +106,9 @@ def run_module():
         supports_check_mode=True
     )
 
+    if not matrix_found:
+        module.fail_json(msg="Python 'matrix-client' module is required. Install via: $ pip install matrix-client")
+
     if module.check_mode:
         return result
 
@@ -111,11 +125,13 @@ def run_module():
 
     room = client.join_room(module.params['room_id'])
     room.send_html(module.params['msg_html'], module.params['msg_plain'])
-    
+
     module.exit_json(**result)
+
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()
