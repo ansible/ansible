@@ -381,17 +381,39 @@ class AWSRoute53Record(object):
     def __init__(self, module=None, results=None):
         self._module = module
         self._results = results
-        self._connection = self._module.client('ec2')
+        self._connection = self._module.client('route53')
         self._check_mode = self._module.check_mode
         self.warnings = []
 
-    def _read_zone(self):
-        pass
+    def _get_zone(self):
+        """gets a zone by name or id"""
+        if self._module.params['hosted_zone_id'] is not None:
+            try:
+                hosted_zone_id = self._module.params['hosted_zone_id']
+                zone = self._connection.get_hosted_zone(Id=hosted_zone_id)
+                zone_name = zone['HostedZone']['Name'].rstrip('.')
+                if not self._module.params['zone'] == zone_name:
+                    self._module.fail_json(msg="Hosted zone id not matches zone name")
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                self._module.fail_json_aws(e, msg="Couldn't get zone by hosted zone id")
+        else:
+            try:
+                # todo: ListHostedZonesからself._module.params['zone']を探し出す
+                zone_name = self._module.params['zone']
+                list_hosted_zones = self._connection.list_hosted_zones()
+                hosted_zones = list_hosted_zones.get('HostedZones', [])
+#                response = (item for item in hosted_zones if item['Name'] == zone_name).__next__()
+                response = hosted_zones
+                self._module.fail_json(msg="レスポンス: %s" % (response))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                self._module.fail_json_aws(e, msg="Couldn't get zone")
+
+        return zone
 
     def _create_record(self):
         pass
 
-    def _read_record(self):
+    def _get_record(self):
         pass
 
     def _update_record(self):
@@ -407,7 +429,7 @@ class AWSRoute53Record(object):
         pass
 
     def process(self):
-        pass
+        zone = self._get_zone()
 
 
 def main():
@@ -435,20 +457,21 @@ def main():
         wait_timeout=dict(required=False, type='int', default=300),
     ))
 
-    # state=present, absent, create, delete THEN value is required
-    required_if = [('state', 'present', ['value']), ('state', 'create', ['value'])]
-    required_if.extend([('state', 'absent', ['value']), ('state', 'delete', ['value'])])
-
-    # If alias is True then you must specify alias_hosted_zone as well
+    required_if = [('state', 'present', ['value']),
+                   ('state', 'absent', ['value']),
+                   ('state', 'delete', ['value']),
+                   ('state', 'create', ['value'])]
     required_together = [['alias', 'alias_hosted_zone_id']]
-
-    # failover, region, and weight are mutually exclusive
     mutually_exclusive = [('failover', 'region', 'weight')]
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
+        required_if=required_if,
+        required_together=required_together,
+        mutually_exclusive=mutually_exclusive,
         supports_check_mode=True
     )
+
     results = dict(changed=False)
 
     record_controller = AWSRoute53Record(module=module, results=results)
