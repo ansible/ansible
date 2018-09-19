@@ -26,7 +26,6 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.block import Block
-from ansible.playbook.task import Task
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
@@ -290,6 +289,34 @@ class TestRole(unittest.TestCase):
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r._role_vars, dict(foo='bam'))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_metadata_argument_spec(self):
+        fake_loader = DictDataLoader({
+            '/etc/ansible/roles/foo_arg_spec/meta/argument_specs.yml': """
+            main:
+                argument_spec:
+                  some_int:
+                    type: "int"
+                  some_bool:
+                    type: "bool"
+                mutually_exclusive:
+                  - ["some_bool", "some_int"]
+            """,
+            "/etc/ansible/roles/foo_arg_spec/tasks/main.yml": """
+            - shell: echo 'hello world'
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_arg_spec', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        assert r._argument_specs == {'main': {'argument_spec': {'some_int': {'type': 'int'},
+                                                                'some_bool': {'type': 'bool'}},
+                                              'mutually_exclusive': [['some_bool', 'some_int']]}}
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_metadata(self):
