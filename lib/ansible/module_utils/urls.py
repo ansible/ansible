@@ -1099,7 +1099,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
         # Try to add exception info to the output but don't fail if we can't
         try:
-            info.update(dict(**e.info()))
+            # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+            info.update(dict((k.lower(), v) for k, v in e.info().items()))
         except:
             pass
 
