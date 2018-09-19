@@ -265,7 +265,7 @@ def main():
     asn = module.params['asn']
     state = module.params['state']
     tenant = module.params['tenant']
-    
+
     if asn and 'eigrp' not in l3protocol:
         module._warnings = ["Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored"]
     if not asn and 'eigrp' in l3protocol:
