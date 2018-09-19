@@ -173,7 +173,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_native
-from ansible.module_utils.cloud.profitbricks.profitbricks import (
+from ansible.module_utils.profitbricks import (
     AVAILABILITY_ZONES,
     BUS_TYPES,
     DISK_TYPES,
