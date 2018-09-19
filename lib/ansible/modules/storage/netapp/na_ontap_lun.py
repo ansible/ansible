@@ -16,36 +16,36 @@ DOCUMENTATION = '''
 
 module: na_ontap_lun
 
-short_description: Manage  NetApp ONTAP luns
+short_description: NetApp ONTAP manage LUNs
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
-- Create, destroy, resize luns on NetApp ONTAP.
+- Create, destroy, resize LUNs on NetApp ONTAP.
 
 options:
 
   state:
     description:
-    - Whether the specified lun should exist or not.
+    - Whether the specified LUN should exist or not.
     choices: ['present', 'absent']
     default: present
 
   name:
     description:
-    - The name of the lun to manage.
+    - The name of the LUN to manage.
     required: true
 
   flexvol_name:
     description:
-    - The name of the FlexVol the lun should exist on.
+    - The name of the FlexVol the LUN should exist on.
     required: true
 
   size:
     description:
-    - The size of the lun in C(size_unit).
+    - The size of the LUN in C(size_unit).
     - Required when C(state=present).
 
   size_unit:
@@ -117,7 +117,7 @@ EXAMPLES = """
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
 
-- name: Resize Lun
+- name: Resize LUN
   na_ontap_lun:
     state: present
     name: ansibleLUN

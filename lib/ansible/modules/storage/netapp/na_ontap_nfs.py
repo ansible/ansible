@@ -14,22 +14,22 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: na_ontap_nfs
-short_description: Manage ONTAP NFS status
+short_description: NetApp ONTAP NFS status
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
-- Enable or disable nfs on ONTAP
+- Enable or disable NFS on ONTAP
 options:
   state:
     description:
-    - Whether nfs should exist or not.
+    - Whether NFS should exist or not.
     choices: ['present', 'absent']
     default: present
   service_state:
     description:
-    - Whether the specified nfs should be enabled or disabled. Creates nfs service if doesnt exist.
+    - Whether the specified NFS should be enabled or disabled. Creates NFS service if doesnt exist.
     choices: ['started', 'stopped']
   vserver:
     description:
@@ -37,7 +37,7 @@ options:
     required: true
   nfsv3:
     description:
-    - status of nfsv3.
+    - status of NFSv3.
     choices: ['enabled', 'disabled']
   nfsv3_fsid_change:
     description:
@@ -46,11 +46,11 @@ options:
     version_added: '2.7'
   nfsv4:
     description:
-    - status of nfsv4.
+    - status of NFSv4.
     choices: ['enabled', 'disabled']
   nfsv41:
     description:
-    - status of nfsv41.
+    - status of NFSv41.
     aliases: ['nfsv4.1']
     choices: ['enabled', 'disabled']
   vstorage_state:
@@ -100,7 +100,7 @@ options:
     choices: ['enabled', 'disabled']
   showmount:
     description:
-    - status for if SVM allows showmount
+    - Whether SVM allows showmount
     choices: ['enabled', 'disabled']
     version_added: '2.7'
 
