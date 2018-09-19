@@ -304,7 +304,7 @@ def main():
             value=dict(type='str', default=NOT_SET),
             session=dict(type='str'),
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     test_dependencies(module)
