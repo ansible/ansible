@@ -221,7 +221,7 @@ def _get_monitor(module):
     else:
         monitors = api.Monitor.get_all()
         for monitor in monitors:
-            if monitor['name'] == module.params['name']:
+            if monitor['name'] == _fix_template_vars(module.params['name']):
                 return monitor
     return {}
 
@@ -229,7 +229,7 @@ def _get_monitor(module):
 def _post_monitor(module, options):
     try:
         kwargs = dict(type=module.params['type'], query=module.params['query'],
-                      name=module.params['name'], message=_fix_template_vars(module.params['message']),
+                      name=_fix_template_vars(module.params['name']), message=_fix_template_vars(module.params['message']),
                       options=options)
         if module.params['tags'] is not None:
             kwargs['tags'] = module.params['tags']
@@ -251,7 +251,7 @@ def _equal_dicts(a, b, ignore_keys):
 def _update_monitor(module, monitor, options):
     try:
         kwargs = dict(id=monitor['id'], query=module.params['query'],
-                      name=module.params['name'], message=_fix_template_vars(module.params['message']),
+                      name=_fix_template_vars(module.params['name']), message=_fix_template_vars(module.params['message']),
                       options=options)
         if module.params['tags'] is not None:
             kwargs['tags'] = module.params['tags']
@@ -274,7 +274,7 @@ def install_monitor(module):
         "no_data_timeframe": module.params['no_data_timeframe'],
         "timeout_h": module.params['timeout_h'],
         "renotify_interval": module.params['renotify_interval'],
-        "escalation_message": module.params['escalation_message'],
+        "escalation_message": _fix_template_vars(module.params['message']),
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
         "require_full_window": module.params['require_full_window'],
@@ -308,7 +308,7 @@ def delete_monitor(module):
 def mute_monitor(module):
     monitor = _get_monitor(module)
     if not monitor:
-        module.fail_json(msg="Monitor %s not found!" % module.params['name'])
+        module.fail_json(msg="Monitor %s not found!" % _fix_template_vars(module.params['name']))
     elif monitor['options']['silenced']:
         module.fail_json(msg="Monitor is already muted. Datadog does not allow to modify muted alerts, consider unmuting it first.")
     elif (module.params['silenced'] is not None and len(set(monitor['options']['silenced']) ^ set(module.params['silenced'])) == 0):
@@ -326,7 +326,7 @@ def mute_monitor(module):
 def unmute_monitor(module):
     monitor = _get_monitor(module)
     if not monitor:
-        module.fail_json(msg="Monitor %s not found!" % module.params['name'])
+        module.fail_json(msg="Monitor %s not found!" % _fix_template_vars(module.params['name']))
     elif not monitor['options']['silenced']:
         module.exit_json(changed=False)
     try:
