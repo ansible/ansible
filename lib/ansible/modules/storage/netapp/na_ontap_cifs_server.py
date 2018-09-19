@@ -24,7 +24,7 @@ version_added: '2.6'
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
-    - Creating / deleting and modifying the CIFS server .
+    - Creating / deleting and modifying the CIFS server.
 
 options:
 
