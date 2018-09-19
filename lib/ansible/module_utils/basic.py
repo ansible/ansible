@@ -82,6 +82,7 @@ import pwd
 import platform
 import errno
 import datetime
+from collections import deque
 from itertools import chain, repeat
 
 try:
@@ -148,7 +149,6 @@ except Exception:
         pass
 
 from ansible.module_utils.common._collections_compat import (
-    deque,
     KeysView,
     Mapping, MutableMapping,
     Sequence, MutableSequence,
