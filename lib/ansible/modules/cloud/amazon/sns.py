@@ -134,15 +134,18 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 
 
-def arn_topic_lookup(client, short_topic):
+def arn_topic_lookup(module, client, short_topic):
     lookup_topic = ':{}'.format(short_topic)
 
-    paginator = client.get_paginator('list_topics')
-    topic_iterator = paginator.paginate()
-    for response in topic_iterator:
-        for topic in response['Topics']:
-            if topic['TopicArn'].endswith(lookup_topic):
-                return topic['TopicArn']
+    try:
+        paginator = client.get_paginator('list_topics')
+        topic_iterator = paginator.paginate()
+        for response in topic_iterator:
+            for topic in response['Topics']:
+                if topic['TopicArn'].endswith(lookup_topic):
+                    return topic['TopicArn']
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to look up topic ARN')
 
     return None
 
@@ -200,7 +203,7 @@ def main():
         # Short names can't contain ':' so we'll assume this is the full ARN
         sns_kwargs['TopicArn'] = topic
     else:
-        sns_kwargs['TopicArn'] = arn_topic_lookup(client, topic)
+        sns_kwargs['TopicArn'] = arn_topic_lookup(module, client, topic)
 
     if not sns_kwargs['TopicArn']:
         module.fail_json(msg='Could not find topic: {}'.format(topic))
