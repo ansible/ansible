@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_job_schedule
-short_description: Manage NetApp ONTAP Job Schedule
+short_description: NetApp ONTAP Job Schedule
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

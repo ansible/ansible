@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_ontap_export_policy_rule
 
-short_description: Manage ONTAP Export rules
+short_description: NetApp ONTAP manage export policy rules
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

@@ -49,7 +49,7 @@ options:
     description:
      - Destination password.
      - Optional if this is same as source password.
-short_description: "Manage NetApp Vserver peering"
+short_description: NetApp ONTAP Vserver peering
 version_added: "2.7"
 '''
 

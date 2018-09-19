@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 
 module: na_ontap_igroup
-short_description: ONTAP iSCSI igroup configuration
+short_description: NetApp ONTAP iSCSI igroup configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

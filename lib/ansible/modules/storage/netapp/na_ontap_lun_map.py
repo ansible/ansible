@@ -19,20 +19,20 @@ DOCUMENTATION = """
 
 module: na_ontap_lun_map
 
-short_description: Manage NetApp ONTAP lun maps
+short_description: NetApp ONTAP LUN maps
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
-- Map and unmap luns on NetApp ONTAP.
+- Map and unmap LUNs on NetApp ONTAP.
 
 options:
 
   state:
     description:
-    - Whether the specified lun should exist or not.
+    - Whether the specified LUN should exist or not.
     choices: ['present', 'absent']
     default: present
 
@@ -59,7 +59,7 @@ options:
 """
 
 EXAMPLES = """
-- name: Create lun mapping
+- name: Create LUN mapping
   na_ontap_lun_map:
     state: present
     initiator_group_name: ansibleIgroup3234
@@ -69,7 +69,7 @@ EXAMPLES = """
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
 
-- name: Unmap Lun
+- name: Unmap LUN
   na_ontap_lun_map:
     state: absent
     initiator_group_name: ansibleIgroup3234
@@ -102,7 +102,7 @@ lun_naa_id:
     type: string
     sample: 600a0980383045372f5d4c5a70315474
 lun_state:
-    description: Online or offline tatus of the LUN.
+    description: Online or offline status of the LUN.
     returned: success
     type: string
     sample: online

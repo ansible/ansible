@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_cluster
-short_description: Create/Join ONTAP cluster. Apply license to cluster
+short_description: NetApp ONTAP cluster - create, join, add license
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

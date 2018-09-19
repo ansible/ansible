@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_ontap_user
 
-short_description: useradmin configuration and management
+short_description: NetApp ONTAP user configuration and management
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
