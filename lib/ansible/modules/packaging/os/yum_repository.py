@@ -109,6 +109,7 @@ options:
       - Tells yum whether or not it should perform a GPG signature check on
         packages.
     type: bool
+    default: 'no'
   gpgkey:
     description:
       - A URL pointing to the ASCII-armored GPG key file for the repository.
