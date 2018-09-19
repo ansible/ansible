@@ -222,8 +222,43 @@ from ansible.module_utils.six import string_types
 
 # TODO: get this info from API
 STATES = ['present', 'absent']
-DATACENTERS = ['ams01', 'ams03', 'che01', 'dal01', 'dal05', 'dal06', 'dal09', 'dal10', 'fra02', 'hkg02', 'hou02', 'lon02', 'mel01', 'mex01', 'mil01', 'mon01',
-               'osl01', 'par01', 'sjc01', 'sjc03', 'sao01', 'sea01', 'sng01', 'syd01', 'tok02', 'tor01', 'wdc01', 'wdc04']
+DATACENTERS = ['ams01',
+               'ams03',
+               'che01',
+               'dal01',
+               'dal05',
+               'dal06',
+               'dal09',
+               'dal10',
+               'dal12',
+               'dal13',
+               'fra02',
+               'hkg02',
+               'hou02',
+               'lon02',
+               'lon04',
+               'lon06',
+               'mel01',
+               'mex01',
+               'mil01',
+               'mon01',
+               'osl01',
+               'par01',
+               'sao01',
+               'sea01',
+               'seo01',
+               'sjc01',
+               'sjc03',
+               'sjc04',
+               'sng01',
+               'syd01',
+               'tok02',
+               'tor01',
+               'wdc01',
+               'wdc04',
+               'wdc06',
+               'wdc07']
+
 CPU_SIZES = [1, 2, 4, 8, 16, 32, 56]
 MEMORY_SIZES = [1024, 2048, 4096, 6144, 8192, 12288, 16384, 32768, 49152, 65536, 131072, 247808]
 INITIALDISK_SIZES = [25, 100]
@@ -312,7 +347,7 @@ def cancel_instance(module):
                 canceled = False
     elif module.params.get('instance_id') and module.params.get('instance_id') != 0:
         try:
-            vsManager.cancel_instance(instance['id'])
+            vsManager.cancel_instance(module.params.get('instance_id'))
         except:
             canceled = False
     else:
