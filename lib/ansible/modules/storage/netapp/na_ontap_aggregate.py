@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_ontap_aggregate
 
-short_description: Manage NetApp ONTAP aggregates.
+short_description: NetApp ONTAP manage aggregates.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

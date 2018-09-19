@@ -39,7 +39,7 @@ options:
       - Allows the update to continue if warnings are encountered during the validation phase.
     default: False
     type: bool
-short_description: "NetApp ONTAP Update software"
+short_description: NetApp ONTAP Update Software
 version_added: "2.7"
 '''
 

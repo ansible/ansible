@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_ontap_volume
 
-short_description: Manage NetApp ONTAP volumes.
+short_description: NetApp ONTAP manage volumes.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

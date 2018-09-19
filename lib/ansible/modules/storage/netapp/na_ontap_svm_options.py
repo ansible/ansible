@@ -11,11 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-short_description: NetApp ONTAP Modify Options
+short_description: NetApp ONTAP Modify SVM Options
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
-  - Modify ONTAP Options
-  - Only Options that appear on "vserver options show" are setable
+  - Modify ONTAP SVM Options
+  - Only Options that appear on "vserver options show" can be set
 extends_documentation_fragment:
   - netapp.na_ontap
 module: na_ontap_svm_options
@@ -23,10 +23,10 @@ version_added: "2.7"
 options:
   name:
     description:
-      - Name of the option. This field is optional in Data ONTAP Cluster-Mode, but required in Data ONTAP 7-Mode.
+      - Name of the option.
   value:
     description:
-      - Value of the option. This field is optional in Data ONTAP Cluster-Mode, but required in Data ONTAP 7-Mode.
+      - Value of the option. 
       - Value must be in quote
   vserver:
     description:
@@ -35,7 +35,7 @@ options:
 '''
 
 EXAMPLES = """
-    - name: Set Options
+    - name: Set SVM Options
       na_ontap_svm_options:
         vserver: "{{ netapp_vserver_name }}"
         hostname: "{{ netapp_hostname }}"

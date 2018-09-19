@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 
 module: na_ontap_interface
-short_description: ONTAP LIF configuration
+short_description: NetApp ONTAP LIF configuration
 
 extends_documentation_fragment:
     - netapp.na_ontap
