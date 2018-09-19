@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: netapp_e_hostgroup
 version_added: "2.2"
-short_description: Manage NetApp Storage Array Host Groups
+short_description: NetApp E-Series manage array host groups
 author: Kevin Hulquest (@hulquest)
 description:
 - Create, update or destroy host groups on a NetApp E-Series storage array.

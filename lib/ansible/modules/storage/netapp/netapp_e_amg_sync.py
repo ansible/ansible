@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_amg_sync
-short_description: Conduct synchronization actions on asynchronous mirror groups.
+short_description: NetApp E-Series conduct synchronization actions on asynchronous mirror groups.
 description:
     - Allows for the initialization, suspension and resumption of an asynchronous mirror group's synchronization for NetApp E-series storage arrays.
 version_added: '2.2'
