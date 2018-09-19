@@ -1,21 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015 Matt Martz <matt@sivel.net>
-# Copyright (C) 2015 Rackspace US, Inc.
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2015, Matt Martz <matt@sivel.net>
+# Copyright: (c) 2015, Rackspace US, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import print_function
 
@@ -39,9 +27,8 @@ from fnmatch import fnmatch
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.plugins.loader import fragment_loader
+from ansible.utils._module_args import AnsibleModuleImportError, get_argument_spec
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
-
-from module_args import AnsibleModuleImportError, get_argument_spec
 
 from schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
@@ -1200,16 +1187,14 @@ class ModuleValidator(Validator):
                              'with type %r defined in the argument_spec' % (data['default'], _type))
                     )
                     continue
-            elif data.get('default') is None and _type == 'bool' and 'options' not in data:
-                arg_default = False
+
+            doc_default_defined = 'default' in docs.get('options', {}).get(arg, {})
+            doc_default = None
+            doc_options_arg = docs.get('options', {}).get(arg, {})
             try:
-                doc_default = None
-                doc_options_arg = docs.get('options', {}).get(arg, {})
-                if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
+                if doc_default_defined and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
-                elif doc_options_arg.get('default') is None and _type == 'bool' and 'suboptions' not in doc_options_arg:
-                    doc_default = False
             except (Exception, SystemExit):
                 self.reporter.error(
                     path=self.object_path,
@@ -1219,7 +1204,7 @@ class ModuleValidator(Validator):
                 )
                 continue
 
-            if arg_default != doc_default:
+            if doc_default_defined and arg_default != doc_default:
                 self.reporter.error(
                     path=self.object_path,
                     code=324,
@@ -1228,15 +1213,17 @@ class ModuleValidator(Validator):
                 )
 
             # TODO: needs to recursively traverse suboptions
+            doc_type_defined = 'type' in docs.get('options', {}).get(arg, {})
             doc_type = docs.get('options', {}).get(arg, {}).get('type', 'str')
-            if 'type' in data and data['type'] == 'bool' and doc_type != 'bool':
+            if doc_type_defined and 'type' in data and data['type'] != doc_type:
                 self.reporter.error(
                     path=self.object_path,
                     code=325,
-                    msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
+                    msg='argument_spec for "%s" defines type="%s" but documentation defines type="%s"' % (arg, data['type'], doc_type)
                 )
 
             # TODO: needs to recursively traverse suboptions
+            doc_choices_defined = 'choices' in docs.get('options', {}).get(arg, {})
             doc_choices = []
             try:
                 for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
@@ -1271,7 +1258,7 @@ class ModuleValidator(Validator):
             except StopIteration:
                 continue
 
-            if not compare_unordered_lists(arg_choices, doc_choices):
+            if doc_choices_defined and not compare_unordered_lists(arg_choices, doc_choices):
                 self.reporter.error(
                     path=self.object_path,
                     code=326,
@@ -1290,22 +1277,7 @@ class ModuleValidator(Validator):
                 args_from_docs.add(arg)
                 args_from_docs.update(data.get('aliases', []))
 
-            args_missing_from_docs = args_from_argspec.difference(args_from_docs)
             docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
-            for arg in args_missing_from_docs:
-                # args_from_argspec contains undocumented argument
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
-                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
-                    continue
-                if arg in provider_args:
-                    # Provider args are being removed from network module top level
-                    # So they are likely not documented on purpose
-                    continue
-                self.reporter.error(
-                    path=self.object_path,
-                    code=322,
-                    msg='"%s" is listed in the argument_spec, but not documented in the module' % arg
-                )
             for arg in docs_missing_from_args:
                 # args_from_docs contains argument not in the argument_spec
                 if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:

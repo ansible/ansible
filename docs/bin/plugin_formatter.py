@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+
 # Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
 # Copyright: (c) 2012-2014, Michael DeHaan <michael@ansible.com> and others
 # Copyright: (c) 2017, Ansible Project
-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -45,6 +45,7 @@ from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
 from ansible.utils._build_helpers import update_file_if_different
+from ansible.utils._module_args import AnsibleModuleImportError, get_argument_spec
 
 
 #####################################################################################
@@ -253,6 +254,8 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
 
     module_index = 0
     for module_path in files:
+        spec = dict()
+
         # Do not list __init__.py files
         if module_path.endswith('__init__.py'):
             continue
@@ -326,6 +329,29 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
 
         for key, opt in doc.get('options', {}).items():
             doc['options'][key] = normalize_options(opt)
+
+        try:
+            spec, args, kwargs = get_argument_spec(module_path)
+        except AnsibleModuleImportError as e:
+            display.error(e)
+            spec = dict()
+        except:
+            display.error(e)
+            spec = dict()
+
+        for arg, data in spec.items():
+            if 'options' not in doc:
+                doc['options'] = dict()
+
+            if arg not in doc['options']:
+                doc['options'][arg] = data
+
+            else:
+                for key, value in data.items():
+                    if key.startswith('_'):
+                        continue
+                    if key not in doc['options'][arg]:
+                        doc['options'][arg][key] = value
 
         # save all the information
         module_info[module] = {'path': module_path,
