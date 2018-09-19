@@ -72,7 +72,7 @@ import lib.cover
 def main():
     """Main program function."""
     try:
-        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+        git_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         os.chdir(git_root)
         initialize_cloud_plugins()
         sanity_init()
