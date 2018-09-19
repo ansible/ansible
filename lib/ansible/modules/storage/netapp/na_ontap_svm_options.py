@@ -26,7 +26,7 @@ options:
       - Name of the option.
   value:
     description:
-      - Value of the option. 
+      - Value of the option.
       - Value must be in quote
   vserver:
     description:
