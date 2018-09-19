@@ -17,8 +17,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-import os
 import copy
+import json
+import os
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -115,6 +116,17 @@ AUTH_ARG_SPEC = {
         'type': 'path',
     },
 }
+
+
+def format_dynamic_api_exc(exc):
+    if exc.body:
+        if exc.headers and exc.headers.get('Content-Type') == 'application/json':
+            message = json.loads(exc.body).get('message')
+            if message:
+                return message
+        return exc.body
+    else:
+        return '%s Reason: %s' % (exc.status, exc.reason)
 
 
 class K8sAnsibleMixin(object):

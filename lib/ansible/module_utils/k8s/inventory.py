@@ -18,7 +18,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER
+from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER, format_dynamic_api_exc
 
 try:
     from ansible.errors import AnsibleError
@@ -92,7 +92,7 @@ class K8sInventoryHelper(K8sAnsibleMixin):
         try:
             obj = v1_namespace.get()
         except DynamicApiError as exc:
-            raise K8sInventoryException('Error fetching Namespace list: {0}'.format(exc.message))
+            raise K8sInventoryException('Error fetching Namespace list: %s' % format_dynamic_api_exc(exc))
         return [namespace.metadata.name for namespace in obj.items]
 
     def get_pods_for_namespace(self, client, name, namespace):
@@ -100,7 +100,7 @@ class K8sInventoryHelper(K8sAnsibleMixin):
         try:
             obj = v1_pod.get(namespace=namespace)
         except DynamicApiError as exc:
-            raise K8sInventoryException('Error fetching Pod list: {0}'.format(exc.message))
+            raise K8sInventoryException('Error fetching Pod list: %s' % format_dynamic_api_exc(exc))
 
         namespace_group = 'namespace_{0}'.format(namespace)
         namespace_pods_group = '{0}_pods'.format(namespace_group)
@@ -171,7 +171,7 @@ class K8sInventoryHelper(K8sAnsibleMixin):
         try:
             obj = v1_service.get(namespace=namespace)
         except DynamicApiError as exc:
-            raise K8sInventoryException('Error fetching Service list: {0}'.format(exc.message))
+            raise K8sInventoryException('Error fetching Service list: %s' % format_dynamic_api_exc(exc))
 
         namespace_group = 'namespace_{0}'.format(namespace)
         namespace_services_group = '{0}_services'.format(namespace_group)
@@ -271,7 +271,7 @@ class OpenShiftInventoryHelper(K8sInventoryHelper):
         try:
             obj = v1_route.get(namespace=namespace)
         except DynamicApiError as exc:
-            raise K8sInventoryException('Error fetching Routes list: {0}'.format(exc.message))
+            raise K8sInventoryException('Error fetching Routes list: %s' % format_dynamic_api_exc(exc))
 
         namespace_group = 'namespace_{0}'.format(namespace)
         namespace_routes_group = '{0}_routes'.format(namespace_group)
