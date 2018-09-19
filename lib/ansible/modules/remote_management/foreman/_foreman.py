@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: foreman
 short_description: Manage Foreman Resources
 deprecated:
-    removed_in: "2.11"
+    removed_in: "2.12"
     why: "Replaced by re-designed individual modules living at https://github.com/theforeman/foreman-ansible-modules"
     alternative: https://github.com/theforeman/foreman-ansible-modules
 description:
