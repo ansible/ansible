@@ -201,7 +201,7 @@ else:
 # balancer member attributes extraction regexp:
 EXPRESSION = r"(b=([\w\.\-]+)&w=(https?|ajp|wss?|ftp|[sf]cgi)://([\w\.\-]+):?(\d*)([/\w\.\-]*)&?[\w\-\=]*)"
 # Apache2 server version extraction regexp:
-APACHE_VERSION_EXPRESSION = r"Server Version: Apache/([\d.]+) \(([\w]+)\)"
+APACHE_VERSION_EXPRESSION = r"SERVER VERSION: APACHE/([\d.]+)"
 
 
 def regexp_extraction(string, _regexp, groups=1):
@@ -317,10 +317,13 @@ class Balancer(object):
             self.module.fail_json(msg="Could not get balancer page! HTTP status response: " + str(page[1]['status']))
         else:
             content = page[0].read()
-            apache_version = regexp_extraction(content, APACHE_VERSION_EXPRESSION, 1)
-            if not re.search(pattern=r"2\.4\.[\d]*", string=apache_version):
-                self.module.fail_json(msg="This module only acts on an Apache2 2.4+ instance, current Apache2 version: " + str(apache_version))
-            return content
+            apache_version = regexp_extraction(content.upper(), APACHE_VERSION_EXPRESSION, 1)
+            if apache_version:
+                if not re.search(pattern=r"2\.4\.[\d]*", string=apache_version):
+                    self.module.fail_json(msg="This module only acts on an Apache2 2.4+ instance, current Apache2 version: " + str(apache_version))
+                return content
+            else:
+                self.module.fail_json(msg="Could not get the Apache server version from the balancer-manager")
 
     def get_balancer_members(self):
         """ Returns members of the balancer as a generator object for later iteration."""
