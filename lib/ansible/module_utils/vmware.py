@@ -172,6 +172,17 @@ def find_resource_pool_by_name(content, resource_pool_name):
     return find_object_by_name(content, resource_pool_name, [vim.ResourcePool])
 
 
+def find_resource_pool_by_name_and_host(content, resource_pool_name,
+                                        host_name):
+    for obj in get_all_objs(content, [vim.ResourcePool]):
+        if obj.name == resource_pool_name:
+            for host in obj.owner.host:
+                if host.name == host_name:
+                    return obj
+
+    return None
+
+
 def find_network_by_name(content, network_name):
     return find_object_by_name(content, network_name, [vim.Network])
 

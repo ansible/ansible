@@ -57,6 +57,11 @@ options:
       - "Name of the destination datastore the virtual machine's vmdk should be moved on."
       aliases: ['datastore']
       version_added: 2.7
+    destination_resource_pool:
+      description:
+      - "Name of the resource pool that the virtual machine should run within."
+      aliases: ['resource_pool', 'pool']
+      version_added: 2.8
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -110,6 +115,8 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (PyVmomi, find_hostsystem_by_name,
                                          find_vm_by_id, find_datastore_by_name,
+                                         find_resource_pool_by_name,
+                                         find_resource_pool_by_name_and_host,
                                          vmware_argument_spec, wait_for_task, TaskError)
 
 
@@ -132,6 +139,16 @@ class VmotionManager(PyVmomi):
         if dest_host_name is not None:
             self.host_object = find_hostsystem_by_name(content=self.content,
                                                        hostname=dest_host_name)
+
+        # Get destination resource pool if specified by user
+        dest_pool_name = self.params.get('destination_resource_pool', None)
+        self.dest_pool_object = None
+        if dest_pool_name is not None:
+            self.dest_pool_object = find_resource_pool_by_name_and_host(
+                content=self.content,
+                resource_pool_name=dest_pool_name,
+                host_name=dest_host_name
+            )
 
         # Get Destination Datastore if specified by user
         dest_datastore = self.params.get('destination_datastore', None)
@@ -243,7 +260,8 @@ class VmotionManager(PyVmomi):
         Migrate virtual machine and return the task.
         """
         relocate_spec = vim.vm.RelocateSpec(host=self.host_object,
-                                            datastore=self.datastore_object)
+                                            datastore=self.datastore_object,
+                                            pool=self.dest_pool_object)
         task_object = self.vm.Relocate(relocate_spec)
         return task_object
 
@@ -281,7 +299,8 @@ def main():
             vm_name=dict(aliases=['vm']),
             vm_uuid=dict(aliases=['uuid']),
             destination_host=dict(aliases=['destination']),
-            destination_datastore=dict(aliases=['datastore'])
+            destination_datastore=dict(aliases=['datastore']),
+            destination_resource_pool=dict(aliases=['resource_pool', 'pool'])
         )
     )
 
