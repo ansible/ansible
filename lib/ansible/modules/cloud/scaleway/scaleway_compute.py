@@ -537,7 +537,7 @@ state_strategy = {
     "stopped": stop_strategy,
     "running": running_strategy,
     "absent": absent_strategy,
-    "terminate": terminate_strategy
+    "terminated": terminate_strategy
 }
 
 
