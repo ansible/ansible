@@ -252,7 +252,6 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
                     credentials['password2'] = password['value']
             credentials.pop('passwords')
 
-
         d = {
             'resource_group': resource_group,
             'name': d['name'],
