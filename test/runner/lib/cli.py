@@ -12,6 +12,7 @@ from lib.util import (
     raw_command,
     get_docker_completion,
     generate_pip_command,
+    read_lines_without_comments,
 )
 
 from lib.delegation import (
@@ -687,8 +688,7 @@ def complete_remote(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    with open('test/runner/completion/remote.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = read_lines_without_comments('test/runner/completion/remote.txt', remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix)]
 
@@ -701,12 +701,10 @@ def complete_remote_shell(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    with open('test/runner/completion/remote.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = read_lines_without_comments('test/runner/completion/remote.txt', remove_blank_lines=True)
 
     # 2008 doesn't support SSH so we do not add to the list of valid images
-    with open('test/runner/completion/windows.txt', 'r') as completion_fd:
-        images.extend(["windows/%s" % i for i in completion_fd.read().splitlines() if i != '2008'])
+    images.extend(["windows/%s" % i for i in read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True) if i != '2008'])
 
     return [i for i in images if i.startswith(prefix)]
 
@@ -730,8 +728,7 @@ def complete_windows(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    with open('test/runner/completion/windows.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
 
@@ -742,8 +739,7 @@ def complete_network_platform(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    with open('test/runner/completion/network.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = read_lines_without_comments('test/runner/completion/network.txt', remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 

@@ -42,8 +42,7 @@ def get_docker_completion():
     :rtype: dict[str, str]
     """
     if not DOCKER_COMPLETION:
-        with open('test/runner/completion/docker.txt', 'r') as completion_fd:
-            images = completion_fd.read().splitlines()
+        images = read_lines_without_comments('test/runner/completion/docker.txt', remove_blank_lines=True)
 
         DOCKER_COMPLETION.update(dict(kvp for kvp in [parse_docker_completion(i) for i in images] if kvp))
 
@@ -79,6 +78,23 @@ def remove_file(path):
     """
     if os.path.isfile(path):
         os.remove(path)
+
+
+def read_lines_without_comments(path, remove_blank_lines=False):
+    """
+    :type path: str
+    :type remove_blank_lines: bool
+    :rtype: list[str]
+    """
+    with open(path, 'r') as path_fd:
+        lines = path_fd.read().splitlines()
+
+    lines = [re.sub(r' *#.*$', '', line) for line in lines]
+
+    if remove_blank_lines:
+        lines = [line for line in lines if line]
+
+    return lines
 
 
 def find_executable(executable, cwd=None, path=None, required=True):

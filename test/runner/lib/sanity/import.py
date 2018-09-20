@@ -19,6 +19,7 @@ from lib.util import (
     remove_tree,
     display,
     find_python,
+    read_lines_without_comments,
 )
 
 from lib.ansible_util import (
@@ -43,9 +44,8 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        with open('test/sanity/import/skip.txt', 'r') as skip_fd:
-            skip_paths = skip_fd.read().splitlines()
-
+        skip_file = 'test/sanity/import/skip.txt'
+        skip_paths = read_lines_without_comments(skip_file, remove_blank_lines=True)
         skip_paths_set = set(skip_paths)
 
         paths = sorted(
@@ -121,7 +121,7 @@ class ImportTest(SanityMultipleVersion):
                 column=int(r['column']),
             ) for r in results]
 
-            results = [result for result in results if result.path not in skip_paths]
+            results = [result for result in results if result.path not in skip_paths_set]
 
         if results:
             return SanityFailure(self.name, messages=results, python_version=python_version)
