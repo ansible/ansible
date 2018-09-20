@@ -74,6 +74,7 @@ options:
     description:
       - Specifies interface ospf network type. Valid values are 'point-to-point' or 'broadcast'.
     choices: ['point-to-point', 'broadcast']
+    version_added: "2.8"
   message_digest:
     description:
       - Enables or disables the usage of message digest authentication.
