@@ -128,7 +128,7 @@ def map_obj_to_commands(want, have, module):
             wanted_fail_mode = want['fail_mode']
             have_fail_mode = have['fail_mode']
             if wanted_fail_mode != have_fail_mode:
-                if wanted_fail_mode is not None:
+                if wanted_fail_mode is not None and wanted_fail_mode != 'None':
                     if wanted_fail_mode.strip():
                         # only set the fail-mode if specified and not empty
                         templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
