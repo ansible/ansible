@@ -59,6 +59,11 @@ def main():
             # No way to get line numbers
             print('%s:%d:%d: %s' % (path, 0, 0, humanize_error(botmeta, error)))
 
+    # Ensure botmeta is always support:core
+    botmeta_support = botmeta.get('files', {}).get('.github/BOTMETA.yml', '').get('support', '')
+    if botmeta_support != 'core':
+        print('%s:%d:%d: .github/BOTMETA.yml MUST be support: core' % (path, 0, 0))
+
     # We have two macros to define locations, ensure they haven't been removed
     module_utils_path = botmeta.get('macros', {}).get('module_utils', '')
     modules_path = botmeta.get('macros', {}).get('modules', '')
