@@ -298,7 +298,7 @@ class Features(FactsBase):
 
         if data:
             features = []
-            for feature in data.replace('feature','').splitlines():
+            for feature in data.replace('feature', '').splitlines():
                 features.append(feature.strip())
 
             self.facts['features_enabled'] = features
