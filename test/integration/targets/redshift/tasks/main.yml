@@ -123,6 +123,7 @@
       register: result
     - debug:
         msg: "{{ result }}"
+        verbosity: 1
     - name: assert create success
       assert:
         that:
