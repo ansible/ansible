@@ -118,17 +118,6 @@ AUTH_ARG_SPEC = {
 }
 
 
-def format_dynamic_api_exc(exc):
-    if exc.body:
-        if exc.headers and exc.headers.get('Content-Type') == 'application/json':
-            message = json.loads(exc.body).get('message')
-            if message:
-                return message
-        return exc.body
-    else:
-        return '%s Reason: %s' % (exc.status, exc.reason)
-
-
 class K8sAnsibleMixin(object):
     _argspec_cache = None
 
