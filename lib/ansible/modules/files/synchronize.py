@@ -305,9 +305,12 @@ EXAMPLES = '''
 
 
 import os
+import subprocess
+import errno
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, to_bytes, PY3
 from ansible.module_utils.six.moves import shlex_quote
+from ansible.errors import AnsibleError
 
 
 client_addr = None
@@ -416,8 +419,19 @@ def main():
         rsync = module.get_bin_path(rsync, required=True)
 
     cmd = [rsync, '--delay-updates', '-F']
+    _sshpass_pipe = None
     if rsync_password:
-        cmd = ['sshpass', '-p', rsync_password] + cmd
+        try:
+            proc = subprocess.Popen(
+                ["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            proc.communicate()
+        except OSError:
+            raise AnsibleError(
+                "to use rsync connection with passwords, you must install the sshpass program"
+            )
+        _sshpass_pipe = os.pipe()
+        cmd = ['sshpass', '-d' + _sshpass_pipe[0]] + cmd
     if compress:
         cmd.append('--compress')
     if rsync_timeout:
@@ -524,7 +538,27 @@ def main():
     cmd.append(source)
     cmd.append(dest)
     cmdstr = ' '.join(cmd)
-    (rc, out, err) = module.run_command(cmd)
+
+    if not (PY3 and rsync_password):
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+    # If we are using password authentication, write the password into the pipe
+    else:
+        # pylint: disable=unexpected-keyword-arg
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=_sshpass_pipe
+        )
+        os.close(_sshpass_pipe[0])
+        try:
+            os.write(_sshpass_pipe[1], to_bytes(rsync_password) + b'\n')
+        except OSError as exc:
+            # Ignore broken pipe errors if the sshpass process has exited.
+            if exc.errno != errno.EPIPE or proc.poll() is None:
+                raise
+    out, err = proc.communicate()
+    rc = proc.returncode
+
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
 
