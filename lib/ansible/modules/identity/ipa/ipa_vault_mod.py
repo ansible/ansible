@@ -92,7 +92,7 @@ options:
             - Mutually exclusive with user.
         aliases: ["vault_service", "vaultservice"]
 extends_documentation_fragment: ipa.documentation
-version_added: "2.7"
+version_added: "2.8"
 '''
 
 EXAMPLES = '''

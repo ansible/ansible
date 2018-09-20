@@ -81,7 +81,7 @@ options:
         type: bool
         default: true
 extends_documentation_fragment: ipa.documentation
-version_added: "2.7"
+version_added: "2.8"
 '''
 
 EXAMPLES = '''
