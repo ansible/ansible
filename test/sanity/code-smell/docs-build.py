@@ -14,7 +14,10 @@ def main():
     stdout, stderr = sphinx.communicate()
 
     if sphinx.returncode != 0:
-        raise subprocess.CalledProcessError(sphinx.returncode, cmd, output=stdout + stderr)
+        print("Command '%s' failed with status code: %d" % (' '.join(cmd), sphinx.returncode))
+        print(stdout)
+        print(stderr)
+        return
 
     with open('docs/docsite/rst_warnings', 'r') as warnings_fd:
         output = warnings_fd.read().strip()
