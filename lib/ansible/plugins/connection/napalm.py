@@ -186,7 +186,7 @@ class Connection(NetworkConnectionBase):
 
             self.napalm.open()
 
-            self._implementation_plugins.append(self.napalm)
+            self._sub_plugins.append({'type': 'external', 'name': 'napalm', 'obj': self.napalm})
             display.vvvv('created napalm device for network_os %s' % self._network_os, host=host)
             self._connected = True
 
