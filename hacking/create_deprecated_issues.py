@@ -66,7 +66,7 @@ for line in text.splitlines():
     if path.endswith('__init__.py'):
         component = os.path.basename(os.path.dirname(path))
     else:
-        component, _ = os.path.splitext(os.path.basename(path).lstrip('_'))
+        component, ext_ = os.path.splitext(os.path.basename(path).lstrip('_'))
 
     title = (
         '%s contains deprecated call to be removed in %s' %
