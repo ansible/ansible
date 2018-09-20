@@ -16,39 +16,46 @@ DOCUMENTATION = '''
         - nagios shall use NRDP to recive passive events
         - the passive check is sent to a dedicated host/service for ansible
     version_added: 2.7
-    requirements:
-        - requests
     options:
         url:
             description: url of the nrdp server
             required: True
             env:
                 - name : NRDP_URL
+            ini:
+                - section: callback_nrdp
+                  key: url
         token:
             description: token to be allowed to push nrdp events
             required: True
             env:
                 - name: NRDP_TOKEN
+            ini:
+                - section: callback_nrdp
+                  key: token
         hostname:
             description: hostname where the passive check is linked to
             required: True
             env:
-                - name : NRDP_ANSIBLE_HOSTNAME
+                - name : NRDP_HOSTNAME
+            ini:
+                - section: callback_nrdp
+                  key: hostname
         servicename:
             description: service where the passive check is linked to
             required: True
             env:
-                - name : NRDP_ANSIBLE_SERVICENAME
+                - name : NRDP_SERVICENAME
+            ini:
+                - section: callback_nrdp
+                  key: servicename
 '''
 
 import os
+import json
 
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
-
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 
 
@@ -71,29 +78,28 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         super(CallbackModule, self).__init__()
 
-        if not HAS_REQUESTS:
-            self._display.warning(
-                "The required python requests library is not installed."
-                " The NRDP callback plugin is disabled.")
-            self.disabled = True
+        self.printed_playbook = False
+        self.playbook_name = None
+        self.play = None
 
-        self.url = os.getenv("NRDP_URL")
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.url = self.get_option('url')
         if not self.url.endswith('/'):
             self.url += '/'
-        self.token = os.getenv("NRDP_TOKEN")
-        self.hostname = os.getenv("NRDP_ANSIBLE_HOSTNAME")
-        self.servicename = os.getenv("NRDP_ANSIBLE_SERVICENAME")
+        self.token = self.get_option('token')
+        self.hostname = self.get_option('hostname')
+        self.servicename = self.get_option('servicename')
 
         if (self.url or self.token or self.hostname or
                 self.servicename) is None:
             self._display.warning("NRDP callback wants the NRDP_URL,"
-                                  " NRDP_TOKEN, NRDP_ANSIBLE_HOSTNAME,"
-                                  " NRDP_ANSIBLE_SERVICENAME"
+                                  " NRDP_TOKEN, NRDP_HOSTNAME,"
+                                  " NRDP_SERVICENAME"
                                   " environment variables'."
                                   " The NRDP callback plugin is disabled.")
             self.disabled = True
-
-        self.play = None
 
     def _send_nrdp(self, state, msg):
         '''
@@ -118,24 +124,23 @@ class CallbackModule(CallbackBase):
         xmldata += "</checkresult>\n"
         xmldata += "</checkresults>\n"
 
+        body={
+            'cmd': 'submitcheck',
+            'token': self.token,
+            'XMLDATA': bytes(xmldata)
+        }
+
         try:
-            # disable urllib3 and ssl warnings
-            if hasattr(requests.packages.urllib3, 'disable_warnings'):
-                requests.packages.urllib3.disable_warnings()
-            response = requests.post(
-                self.url,
-                data={
-                    'cmd': 'submitcheck',
-                    'token': self.token,
-                    'XMLDATA': bytes(xmldata)
-                },
-                verify=False,
-                stream=False
-            )
-            if not response.ok:
-                self._display.warning("NRDP callback cannot send result.")
-        except:
-            self._display.warning("NRDP callback cannot send result.")
+            response = open_url(self.url,
+                data=urlencode(body),
+                method='POST',
+                validate_certs=False)
+#            if not response.ok:
+#                self._display.warning("NRDP callback cannot send result.")
+#            self._display.warning(response.read())
+            return response.read()
+        except Exception as ex:
+            self._display.warning("NRDP callback cannot send result {0}".format(ex))
 
     def v2_playbook_on_play_start(self, play):
         '''
@@ -163,7 +168,7 @@ class CallbackModule(CallbackBase):
             # Warning when changed tasks
             warning += stat['changed']
 
-        msg = "%s|%s" % (name, gstats)
+        msg = "%s | %s" % (name, gstats)
         if critical:
             # Send Critical
             self._send_nrdp(self.CRITICAL, msg)
