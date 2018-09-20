@@ -463,6 +463,7 @@ def main():
                 checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
                 with open(checksum_tmpsrc) as f:
                     lines = [line.rstrip('\n') for line in f]
+                os.remove(checksum_tmpsrc)
                 lines = dict(s.split(None, 1) for s in lines)
                 filename = url_filename(url)
 
