@@ -17,6 +17,7 @@ from lib.util import (
     parse_to_dict,
     display,
     find_executable,
+    read_lines_without_comments,
 )
 
 from lib.config import (
@@ -40,8 +41,8 @@ class RstcheckTest(SanitySingleVersion):
             display.warning('Skipping rstcheck on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
 
-        with open('test/sanity/rstcheck/ignore-substitutions.txt', 'r') as ignore_fd:
-            ignore_substitutions = sorted(set(ignore_fd.read().splitlines()))
+        ignore_file = 'test/sanity/rstcheck/ignore-substitutions.txt'
+        ignore_substitutions = sorted(set(read_lines_without_comments(ignore_file, remove_blank_lines=True)))
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))
 
