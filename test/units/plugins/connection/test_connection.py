@@ -41,6 +41,7 @@ from ansible.plugins.connection.ssh import Connection as SSHConnection
 from ansible.plugins.connection.docker import Connection as DockerConnection
 # from ansible.plugins.connection.winrm import Connection as WinRmConnection
 from ansible.plugins.connection.network_cli import Connection as NetworkCliConnection
+from ansible.plugins.connection.httpapi import Connection as HttpapiConnection
 
 PY3 = sys.version_info[0] == 3
 
@@ -162,10 +163,15 @@ class TestConnectionBaseClass(unittest.TestCase):
 #        self.assertIsInstance(WinRmConnection(), WinRmConnection)
 
     def test_network_cli_connection_module(self):
+        self.play_context.network_os = 'eos'
         self.assertIsInstance(NetworkCliConnection(self.play_context, self.in_stream), NetworkCliConnection)
 
     def test_netconf_connection_module(self):
         self.assertIsInstance(NetconfConnection(self.play_context, self.in_stream), NetconfConnection)
+
+    def test_httpapi_connection_module(self):
+        self.play_context.network_os = 'eos'
+        self.assertIsInstance(HttpapiConnection(self.play_context, self.in_stream), HttpapiConnection)
 
     def test_check_password_prompt(self):
         local = (
