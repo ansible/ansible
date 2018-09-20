@@ -310,7 +310,6 @@ import errno
 
 from ansible.module_utils.basic import AnsibleModule, to_bytes, PY3
 from ansible.module_utils.six.moves import shlex_quote
-from ansible.errors import AnsibleError
 
 
 client_addr = None
@@ -427,8 +426,8 @@ def main():
             )
             proc.communicate()
         except OSError:
-            raise AnsibleError(
-                "to use rsync connection with passwords, you must install the sshpass program"
+            module.fail_json(
+                msg="to use rsync connection with passwords, you must install the sshpass program"
             )
         _sshpass_pipe = os.pipe()
         cmd = ['sshpass', '-d' + _sshpass_pipe[0]] + cmd
