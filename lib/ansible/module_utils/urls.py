@@ -1347,7 +1347,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     # download file
     bufsize = 65536
     file_name, file_ext = os.path.splitext(str(url.rsplit('/', 1)[1]))
-    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix='.{0}'.format(file_ext), delete=False)
+    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
     module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout)
