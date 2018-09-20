@@ -1,0 +1,2 @@
+bugfixes:
+- powershell - Fix issue where setting ANSIBLE_KEEP_REMOTE_FILES fails when using Python 2.6 - https://github.com/ansible/ansible/issues/45490
