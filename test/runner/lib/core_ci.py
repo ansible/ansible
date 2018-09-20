@@ -95,6 +95,8 @@ class AnsibleCoreCI(object):
                     self.provider = candidate
                     break
 
+        self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
+
         if self.provider in ('aws', 'azure'):
             if self.provider != 'aws':
                 self.resource = self.provider
@@ -114,6 +116,7 @@ class AnsibleCoreCI(object):
                 # send all non-Shippable jobs to us-east-1 to reduce api key maintenance
                 region = 'us-east-1'
 
+            self.path = "%s-%s" % (self.path, region)
             self.endpoints = AWS_ENDPOINTS[region],
 
             if self.platform == 'windows':
@@ -130,8 +133,6 @@ class AnsibleCoreCI(object):
             self.port = None
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
-
-        self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
         if persist and load and self._load():
             try:
