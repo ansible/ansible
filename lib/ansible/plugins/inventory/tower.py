@@ -8,7 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: tower
     plugin_type: inventory
-    authors:
+    author:
       - Matthew Jones (@matburt)
       - Yunfan Zhang (@YunfanZhang42)
     short_description: Ansible dynamic inventory plugin for Ansible Tower.
