@@ -306,6 +306,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             openstack=server)
         self.inventory.add_host(current_host)
 
+        metadata = server.get('metadata', {})
+        for meta_key in metadata:
+            hostvars[current_host][meta_key] = metadata[meta_key]
+
         for group in self._get_groups_from_server(server, namegroup=namegroup):
             groups[group].append(current_host)
 
