@@ -335,7 +335,7 @@ def peer_status(client, module):
         return vpc_peering_connection['VpcPeeringConnections'][0]['Status']['Code']
     except is_boto3_error_code('InvalidVpcPeeringConnectionId.Malformed') as e:  # pylint: disable=duplicate-except
         module.fail_json(msg='Malformed connection ID: {0}'.format(e), traceback=traceback.format_exc())
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError as e:  # pylint: disable=duplicate-except
         module.fail_json(msg='Error while describing peering connection by peering_id: {0}'.format(e), traceback=traceback.format_exc())
 
 
