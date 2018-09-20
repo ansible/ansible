@@ -705,7 +705,7 @@ def main():
         targets=dict(required=False, type="list", default=[]),
         performance_mode=dict(required=False, type='str', choices=["general_purpose", "max_io"], default="general_purpose"),
         throughput_mode=dict(required=False, type='str', choices=["bursting", "provisioned"], default=None),
-        provisioned_throughput_in_mibps=dict(required=False, type=float),
+        provisioned_throughput_in_mibps=dict(required=False, type='float'),
         wait=dict(required=False, type="bool", default=False),
         wait_timeout=dict(required=False, type="int", default=0)
     ))
