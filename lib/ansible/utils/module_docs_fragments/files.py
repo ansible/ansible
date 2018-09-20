@@ -57,11 +57,13 @@ options:
     default: "s0"
   unsafe_writes:
     description:
-      -  Normally this module uses atomic operations to prevent data corruption or inconsistent reads from the target files,
-         sometimes systems are configured or just broken in ways that prevent this. One example are docker mounted files,
-         they cannot be updated atomically and can only be done in an unsafe manner.
-      -  This boolean option allows ansible to fall back to unsafe methods of updating files for those cases in which you do
-         not have any other choice. Be aware that this is subject to race conditions and can lead to data corruption.
+      - By default this module uses atomic operations to prevent data
+        corruption or inconsistent reads from the target files,
+        but sometimes systems are configured or just broken in ways that prevent this. One example is docker mounted files,
+        which cannot be updated atomically from inside the container and can only be written in an unsafe manner.
+      - This option allows Ansible to fall back to unsafe methods of
+        updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe writes).
+        IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
     type: bool
     default: 'no'
     version_added: "2.2"
