@@ -255,7 +255,7 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
             'login_server': d['login_server'],
             'id': d['id'],
             'tags': d.get('tags', None),
-            'credentials': credentials
+            'credentials': credentials.as_dict()
         }
         return d
 
