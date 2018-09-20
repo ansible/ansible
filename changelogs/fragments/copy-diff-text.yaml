@@ -1,0 +1,5 @@
+bugfixes:
+- copy - Ensure that the src file contents is converted to unicode in diff
+  information so that it is properly wrapped by AnsibleUnsafeText to prevent
+  unexpected templating of diff data in Python3
+  (https://github.com/ansible/ansible/issues/45717)
