@@ -43,7 +43,15 @@ By default in Ansible 2.7, or with ``AGNOSTIC_BECOME_PROMPT=False`` in Ansible 2
 Deprecated
 ==========
 
-No notable changes.
+* Setting the async directory using ``ANSIBLE_ASYNC_DIR`` as an task/play environment key is deprecated and will be
+  removed in Ansible 2.12. You can achieve the same result by setting ``ansible_async_dir`` as a variable like::
+
+      - name: run task with custom async directory
+        command: sleep 5
+        async: 10
+        vars:
+          ansible_aync_dir: /tmp/.ansible_async
+
 
 Modules
 =======
@@ -98,7 +106,9 @@ Noteworthy module changes
 Plugins
 =======
 
-No notable changes.
+* The ``powershell`` shell plugin now uses ``async_dir`` to define the async path for the results file and the default
+  has changed to ``%USERPROFILE%\.ansible_async``. To control this path now, either set the ``ansible_async_dir``
+  variable or the ``async_dir`` value in the ``powershell`` section of the config ini.
 
 Porting custom scripts
 ======================

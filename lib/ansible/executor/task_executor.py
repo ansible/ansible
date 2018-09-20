@@ -751,8 +751,8 @@ class TaskExecutor:
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
-        normal_handler = self._shared_loader_obj.action_loader.get(
-            'normal',
+        async_handler = self._shared_loader_obj.action_loader.get(
+            'async_status',
             task=async_task,
             connection=self._connection,
             play_context=self._play_context,
@@ -766,7 +766,7 @@ class TaskExecutor:
             time.sleep(self._task.poll)
 
             try:
-                async_result = normal_handler.run(task_vars=task_vars)
+                async_result = async_handler.run(task_vars=task_vars)
                 # We do not bail out of the loop in cases where the failure
                 # is associated with a parsing error. The async_runner can
                 # have issues which result in a half-written/unparseable result
@@ -783,7 +783,7 @@ class TaskExecutor:
                 display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:
-                    normal_handler._connection.reset()
+                    async_handler._connection.reset()
                 except AttributeError:
                     pass
 
