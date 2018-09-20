@@ -1,5 +1,6 @@
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2014, and others
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+# test to trigger ci
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
