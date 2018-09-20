@@ -46,19 +46,19 @@ options:
             - File containing the vault public key
             - Will not appear in logs.
         aliases: ["vault_public_key_file", "public_key_file"]
-	version_added: "2.8"
+        version_added: "2.8"
     ipavaultpassword:
         description:
             - The vault password.
             - Will not appear in logs.
         aliases: ["vault_password", "password"]
-	version_added: "2.8"
+        version_added: "2.8"
     ipavaultpasswordfile:
         description:
             - File containing the vault password
             - Will not appear in logs.
         aliases: ["vault_password_file", "password_file"]
-	version_added: "2.8"
+        version_added: "2.8"
     ipavaultsalt:
         description:
             - Vault Salt.
@@ -84,7 +84,7 @@ options:
         type: bool
         default: true
 extends_documentation_fragment: ipa.documentation
-version_added: "2.8"
+version_added: "2.7"
 '''
 
 EXAMPLES = '''
