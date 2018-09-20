@@ -36,6 +36,10 @@ class AnsibleJSONDecoder(json.JSONDecoder):
             for k in value:
                 if isinstance(value[k], Mapping):
                     value[k] = self._decode_map(value[k])
+                elif isinstance(value[k], list):
+                    for i in range(len(value[k])):
+                        if isinstance(value[k][i], Mapping):
+                            value[k][i] = self._decode_map(value[k][i])
         return value
 
     def decode(self, obj):
