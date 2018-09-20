@@ -1,2 +1,0 @@
-minor_changes:
-- contains jinja2 filter - Add a contains jinja2 filter designed for use in map and selectattr tests (https://github.com/ansible/ansible/pull/45798)
