@@ -62,7 +62,8 @@ options:
         but sometimes systems are configured or just broken in ways that prevent this. One example is docker mounted files,
         which cannot be updated atomically from inside the container and can only be written in an unsafe manner.
       - This option allows Ansible to fall back to unsafe methods of
-        updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe writes). IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+        updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe writes).
+        IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
     type: bool
     default: 'no'
     version_added: "2.2"
