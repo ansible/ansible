@@ -243,7 +243,15 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
         admin_user_enabled = d['admin_user_enabled']
 
         if self.retrieve_credentials and admin_user_enabled:
-            credentials = self.containerregistry_client.registries.list_credentials(resource_group, name)
+            credentials = self.containerregistry_client.registries.list_credentials(resource_group, name).as_dict()
+            for index in range(credentials['passwords']):
+                password = credentials['passwords'][index]
+                if password['name'] == 'password':
+                    credentials['password'] = password['value']
+                elif password['name'] == 'password2':
+                    credentials['password2'] = password['value']
+            credentials.pop('passwords')
+
 
         d = {
             'resource_group': resource_group,
@@ -255,7 +263,7 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
             'login_server': d['login_server'],
             'id': d['id'],
             'tags': d.get('tags', None),
-            'credentials': credentials.as_dict()
+            'credentials': credentials
         }
         return d
 
