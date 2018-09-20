@@ -293,15 +293,15 @@ class Config(FactsBase):
 class Features(FactsBase):
 
     def populate(self):
-      super(Features, self).populate()
-      data = get_config(self.module, flags=[' | include feature'])
+        super(Features, self).populate()
+        data = get_config(self.module, flags=[' | include feature'])
 
-      if data:
-        features = []
-        for feature in data.replace('feature','').splitlines():
-          features.append(feature.strip())
+        if data:
+            features = []
+            for feature in data.replace('feature','').splitlines():
+                features.append(feature.strip())
 
-        self.facts['features_enabled'] = features
+            self.facts['features_enabled'] = features
 
 
 class Hardware(FactsBase):
