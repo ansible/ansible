@@ -45,6 +45,10 @@ options:
         choices: ['present', 'absent']
         default: 'present'
 
+    realm:
+        description:
+            - The realm to create the client in.
+
     client_id:
         description:
             - Client id of client to be worked on. This is usually an alphanumeric name chosen by
