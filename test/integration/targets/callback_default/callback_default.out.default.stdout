@@ -40,5 +40,5 @@ TASK [Second free task] ********************************************************
 changed: [testhost]
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=10   changed=7    unreachable=0    failed=0   
+testhost                   : ok=10   changed=7    unreachable=0    failed=0    skipped=1   
 
