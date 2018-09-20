@@ -290,6 +290,20 @@ class Config(FactsBase):
         self.facts['config'] = get_config(self.module)
 
 
+class Features(FactsBase):
+
+    def populate(self):
+      super(Features, self).populate()
+      data = get_config(self.module, flags=[' | include feature'])
+
+      if data:
+        features = []
+        for feature in data.replace('feature','').splitlines():
+          features.append(feature.strip())
+
+        self.facts['features_enabled'] = features
+
+
 class Hardware(FactsBase):
 
     def populate(self):
@@ -903,6 +917,7 @@ FACT_SUBSETS = dict(
     hardware=Hardware,
     interfaces=Interfaces,
     config=Config,
+    features=Features
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
