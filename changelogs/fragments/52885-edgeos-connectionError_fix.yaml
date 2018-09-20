@@ -1,0 +1,2 @@
+minor_changes:
+- Add missing import for ConnectionError in edge and routeros module_utils.
