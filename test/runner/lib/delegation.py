@@ -143,7 +143,7 @@ def delegate_tox(args, exclude, require, integration_targets):
 
         tox.append('--')
 
-        cmd = generate_command(args, os.path.abspath('test/runner/test.py'), options, exclude, require)
+        cmd = generate_command(args, os.path.abspath('bin/ansible-test'), options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
@@ -195,7 +195,7 @@ def delegate_docker(args, exclude, require, integration_targets):
         '--docker-util': 1,
     }
 
-    cmd = generate_command(args, '/root/ansible/test/runner/test.py', options, exclude, require)
+    cmd = generate_command(args, '/root/ansible/bin/ansible-test', options, exclude, require)
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
@@ -364,7 +364,7 @@ def delegate_remote(args, exclude, require, integration_targets):
                 '--remote': 1,
             }
 
-            cmd = generate_command(args, 'ansible/test/runner/test.py', options, exclude, require)
+            cmd = generate_command(args, 'ansible/bin/ansible-test', options, exclude, require)
 
             if httptester_id:
                 cmd += ['--inject-httptester']
