@@ -4,3 +4,4 @@ scaleway_image_id: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
 scaleway_organization: '{{ scw_org }}'
 scaleway_region: ams1
 scaleway_commerial_type: START1-S
+scaleway_name: scaleway_compute_test
