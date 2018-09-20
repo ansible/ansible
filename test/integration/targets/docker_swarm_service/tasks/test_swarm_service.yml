@@ -133,3 +133,8 @@
     that:
     - output is success
     - output is not changed
+
+- name: Remove a Swarm cluster
+  docker_swarm:
+    state: absent
+    force: true
