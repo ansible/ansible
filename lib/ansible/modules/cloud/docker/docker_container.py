@@ -974,6 +974,9 @@ class TaskParameters(DockerBaseClass):
         if self.client.HAS_INIT_OPT:
             host_config_params['init'] = 'init'
 
+        if self.client.HAS_UTS_MODE_OPT:
+            host_config_params['uts_mode'] = 'uts'
+
         params = dict()
         for key, value in host_config_params.items():
             if getattr(self, value, None) is not None:
@@ -2150,7 +2153,13 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             self.fail("docker or docker-py version is %s. Minimum version required is 2.2 to set init option. "
                       "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
 
+        uts_mode_supported = LooseVersion(docker_version) >= LooseVersion('3.5')
+        if self.module.params.get("uts") is not None and not uts_mode_supported:
+            self.fail("docker or docker-py version is %s. Minimum version required is 3.5 to set uts option. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+
         self.HAS_INIT_OPT = init_supported
+        self.HAS_UTS_MODE_OPT = uts_mode_supported
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
         if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
             self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
