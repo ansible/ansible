@@ -108,6 +108,5 @@ test/runner/lib/thread.py missing-docstring 3.7
 test/runner/lib/util.py missing-docstring 3.7
 test/runner/retry.py missing-docstring 3.7
 test/runner/shippable.py missing-docstring 3.7
-test/runner/test.py missing-docstring 3.7
 test/runner/units/test_diff.py missing-docstring 3.7
 test/sanity/import/importer.py missing-docstring 3.7
