@@ -133,7 +133,7 @@ class CallbackModule(CallbackBase):
         xmldata += "</checkresult>\n"
         xmldata += "</checkresults>\n"
 
-        body={
+        body = {
             'cmd': 'submitcheck',
             'token': self.token,
             'XMLDATA': bytes(xmldata)
@@ -141,9 +141,9 @@ class CallbackModule(CallbackBase):
 
         try:
             response = open_url(self.url,
-                data=urlencode(body),
-                method='POST',
-                validate_certs=self.validate_nrdp_certs)
+                                data=urlencode(body),
+                                method='POST',
+                                validate_certs=self.validate_nrdp_certs)
             return response.read()
         except Exception as ex:
             self._display.warning("NRDP callback cannot send result {0}".format(ex))
