@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_global_parameter
 author: "Juergen Kirschbaum (@jgkirschbaum)"
-version_added: "2.7"
+version_added: "2.8"
 
 short_description: Adds or removes global parameters to RabbitMQ
 description:
