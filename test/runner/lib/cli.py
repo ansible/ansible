@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# PYTHON_ARGCOMPLETE_OK
 """Test runner for all Ansible tests."""
 
 from __future__ import absolute_import, print_function
@@ -72,7 +70,7 @@ import lib.cover
 def main():
     """Main program function."""
     try:
-        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
         os.chdir(git_root)
         initialize_cloud_plugins()
         sanity_init()
@@ -786,7 +784,3 @@ def complete_sanity_test(prefix, parsed_args, **_):
     tests = sorted(t.name for t in sanity_get_tests())
 
     return [i for i in tests if i.startswith(prefix)]
-
-
-if __name__ == '__main__':
-    main()
