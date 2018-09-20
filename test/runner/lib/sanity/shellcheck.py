@@ -19,6 +19,7 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     run_command,
+    read_lines_without_comments,
 )
 
 from lib.config import (
@@ -34,11 +35,11 @@ class ShellcheckTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        with open('test/sanity/shellcheck/skip.txt', 'r') as skip_fd:
-            skip_paths = set(skip_fd.read().splitlines())
+        skip_file = 'test/sanity/shellcheck/skip.txt'
+        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True))
 
-        with open('test/sanity/shellcheck/exclude.txt', 'r') as exclude_fd:
-            exclude = set(exclude_fd.read().splitlines())
+        exclude_file = 'test/sanity/shellcheck/exclude.txt'
+        exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True))
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh' and i.path not in skip_paths)
 
