@@ -244,7 +244,7 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
 
         if self.retrieve_credentials and admin_user_enabled:
             credentials = self.containerregistry_client.registries.list_credentials(resource_group, name).as_dict()
-            for index in range(len(credentials['passwords']):
+            for index in range(len(credentials['passwords'])):
                 password = credentials['passwords'][index]
                 if password['name'] == 'password':
                     credentials['password'] = password['value']
