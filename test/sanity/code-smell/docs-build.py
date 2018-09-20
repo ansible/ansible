@@ -14,7 +14,7 @@ def main():
     stdout, stderr = sphinx.communicate()
 
     if sphinx.returncode != 0:
-        raise subprocess.CalledProcessError(sphinx.returncode, cmd, output=stdout, stderr=stderr)
+        raise subprocess.CalledProcessError(sphinx.returncode, cmd, output=stdout + stderr)
 
     with open('docs/docsite/rst_warnings', 'r') as warnings_fd:
         output = warnings_fd.read().strip()
