@@ -36,6 +36,7 @@ notes:
   - To remove an existing authentication configuration you should use
     C(message_digest_key_id=default) plus all other options matching their
     existing values.
+  - Loopback interfaces only support ospf network type 'point-to-point'.
   - C(state=absent) removes the whole OSPF interface configuration.
 options:
   interface:
@@ -69,6 +70,10 @@ options:
       - Setting to true will prevent this interface from receiving
         HELLO packets.
     type: bool
+  network:
+    description:
+      - Specifies interface ospf network type. Valid values are 'point-to-point' or 'broadcast'.
+    choices: ['point-to-point', 'broadcast']
   message_digest:
     description:
       - Enables or disables the usage of message digest authentication.
@@ -105,6 +110,13 @@ EXAMPLES = '''
     ospf: 1
     area: 1
     cost: default
+
+- nxos_interface_ospf:
+    interface: loopback0
+    ospf: prod
+    area: 0.0.0.0
+    network: point-to-point
+    state: present
 '''
 
 RETURN = '''
