@@ -263,6 +263,8 @@ def main():
 
                     if rc == 0:
                         process.run()
+                    else:
+                        process.shutdown()
 
                     sys.exit(rc)
 
