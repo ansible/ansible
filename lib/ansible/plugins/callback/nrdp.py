@@ -15,7 +15,7 @@ DOCUMENTATION = '''
         - this callback send playbook result to nagios
         - nagios shall use NRDP to recive passive events
         - the passive check is sent to a dedicated host/service for ansible
-    version_added: 2.7
+    version_added: 2.8
     options:
         url:
             description: url of the nrdp server
