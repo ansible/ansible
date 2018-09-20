@@ -70,10 +70,13 @@ class AnsibleCoreCI(object):
                 'junos',
                 'ios',
                 'tower',
-                'rhel',
             ),
             azure=(
                 'azure',
+                'rhel',
+                'windows/2012',
+                'windows/2012-R2',
+                'windows/2016'
             ),
             parallels=(
                 'osx',
