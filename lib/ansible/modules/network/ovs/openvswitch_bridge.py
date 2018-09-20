@@ -50,12 +50,14 @@ options:
         version_added: 2.0
         description:
             - A dictionary of external-ids. Omitting this parameter is a No-op.
-              To  clear all external-ids pass an empty value.
+              To clear all external-ids pass an empty value.
     fail_mode:
         version_added: 2.0
         choices : [secure, standalone]
         description:
             - Set bridge fail-mode. The default value (None) is a No-op.
+              Omitting this parameter is a No-op.
+              To clear previously set fail_mode pass an empty value.
     set:
         version_added: 2.3
         description:
@@ -132,6 +134,11 @@ def map_obj_to_commands(want, have, module):
                         templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
                                                " set-fail-mode %(bridge)s"
                                                " %(fail_mode)s")
+                    else:
+                        # if fail-mode is specified, but empty it means user
+                        # wants to reset the fail-mode, so clear it off
+                        templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                               " del-fail-mode %(bridge)s")
 
                     command = templatized_command % module.params
                     commands.append(command)
