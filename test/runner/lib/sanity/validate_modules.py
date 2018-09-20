@@ -77,7 +77,8 @@ class ValidateModulesTest(SanitySingleVersion):
                     invalid_ignores.append((line, 'Invalid syntax'))
                     continue
 
-                path, code = ignore_entry.split(' ', 1)
+                # Ignore additional comments in ignore.txt
+                path, code = ignore_entry.split(' ')[0:2]
 
                 ignore[path][code] = line
 
