@@ -25,6 +25,14 @@ DOCUMENTATION = '''
             ini:
                 - section: callback_nrdp
                   key: url
+        validate_nrdp_certs:
+            description: (bool) validate the SSL certificate of the nrdp server. (For HTTPS url)
+            env:
+                - name: NRDP_VALIDATE_CERTS
+            ini:
+                - section: callback_nrdp
+                  key: validate_nrdp_certs
+            default: False
         token:
             description: token to be allowed to push nrdp events
             required: True
@@ -91,6 +99,7 @@ class CallbackModule(CallbackBase):
         self.token = self.get_option('token')
         self.hostname = self.get_option('hostname')
         self.servicename = self.get_option('servicename')
+        self.validate_nrdp_certs = self.get_option('validate_nrdp_certs')
 
         if (self.url or self.token or self.hostname or
                 self.servicename) is None:
@@ -134,7 +143,7 @@ class CallbackModule(CallbackBase):
             response = open_url(self.url,
                 data=urlencode(body),
                 method='POST',
-                validate_certs=False)
+                validate_certs=self.validate_nrdp_certs)
             return response.read()
         except Exception as ex:
             self._display.warning("NRDP callback cannot send result {0}".format(ex))
