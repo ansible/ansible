@@ -135,9 +135,6 @@ class CallbackModule(CallbackBase):
                 data=urlencode(body),
                 method='POST',
                 validate_certs=False)
-#            if not response.ok:
-#                self._display.warning("NRDP callback cannot send result.")
-#            self._display.warning(response.read())
             return response.read()
         except Exception as ex:
             self._display.warning("NRDP callback cannot send result {0}".format(ex))
