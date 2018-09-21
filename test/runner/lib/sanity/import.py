@@ -20,6 +20,7 @@ from lib.util import (
     display,
     find_python,
     read_lines_without_comments,
+    parse_to_list_of_dict,
 )
 
 from lib.ansible_util import (
@@ -112,7 +113,7 @@ class ImportTest(SanityMultipleVersion):
 
             pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
 
-            results = [re.search(pattern, line).groupdict() for line in ex.stdout.splitlines()]
+            results = parse_to_list_of_dict(pattern, ex.stdout)
 
             results = [SanityMessage(
                 message=r['message'],
