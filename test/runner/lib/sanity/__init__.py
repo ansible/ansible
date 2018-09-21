@@ -15,7 +15,7 @@ from lib.util import (
     run_command,
     import_plugins,
     load_plugins,
-    parse_to_dict,
+    parse_to_list_of_dict,
     ABC,
     is_binary_file,
     read_lines_without_comments,
@@ -305,7 +305,7 @@ class SanityCodeSmellTest(SanityTest):
 
         if stdout and not stderr:
             if pattern:
-                matches = [parse_to_dict(pattern, line) for line in stdout.splitlines()]
+                matches = parse_to_list_of_dict(pattern, stdout)
 
                 messages = [SanityMessage(
                     message=m['message'],
