@@ -18,6 +18,7 @@ from lib.util import (
     display,
     find_python,
     read_lines_without_comments,
+    parse_to_list_of_dict,
 )
 
 from lib.config import (
@@ -72,7 +73,7 @@ class CompileTest(SanityMultipleVersion):
 
         pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
 
-        results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+        results = parse_to_list_of_dict(pattern, stdout)
 
         results = [SanityMessage(
             message=r['message'],

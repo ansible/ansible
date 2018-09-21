@@ -16,6 +16,7 @@ from lib.util import (
     display,
     run_command,
     read_lines_without_comments,
+    parse_to_list_of_dict,
 )
 
 from lib.config import (
@@ -80,7 +81,7 @@ class Pep8Test(SanitySingleVersion):
         if stdout:
             pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WE][0-9]{3}) (?P<message>.*)$'
 
-            results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+            results = parse_to_list_of_dict(pattern, stdout)
         else:
             results = []
 

@@ -14,7 +14,7 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     run_command,
-    parse_to_dict,
+    parse_to_list_of_dict,
     display,
     find_executable,
     read_lines_without_comments,
@@ -72,7 +72,7 @@ class RstcheckTest(SanitySingleVersion):
 
         pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+): \((?P<level>INFO|WARNING|ERROR|SEVERE)/[0-4]\) (?P<message>.*)$'
 
-        results = [parse_to_dict(pattern, line) for line in stderr.splitlines()]
+        results = parse_to_list_of_dict(pattern, stderr)
 
         results = [SanityMessage(
             message=r['message'],
