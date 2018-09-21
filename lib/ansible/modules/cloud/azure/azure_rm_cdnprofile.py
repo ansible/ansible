@@ -82,6 +82,7 @@ id:
             id: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+ from azure.mgmt.cdn import CdnManagementClient
 
 try:
     from azure.mgmt.cdn.models import Profile, Sku, ErrorResponseException
@@ -102,6 +103,12 @@ def cdnprofile_to_dict(cdnprofile):
         tags=cdnprofile.tags
     )
 
+def get_cdn_client(client):
+    if not client:
+        client = self.get_mgmt_svc_client(CdnManagementClient,
+                                          base_url=self._cloud_environment.endpoints.resource_manager,
+                                          api_version='2017-04-02')
+    return client
 
 class AzureRMCdnprofile(AzureRMModuleBase):
 
@@ -136,6 +143,8 @@ class AzureRMCdnprofile(AzureRMModuleBase):
         self.tags = None
         self.sku = None
 
+        self._cdn_client = None
+
         required_if = [
             ('state', 'present', ['sku'])
         ]
@@ -152,6 +161,8 @@ class AzureRMCdnprofile(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
+
+        self._cdn_client = get_cdn_client(self._cdn_client)
 
         to_be_updated = False
 

@@ -18,7 +18,7 @@ module: azure_rm_cdnprofile_facts
 
 version_added: "2.8"
 
-short_description: Get Azure  CDN profile facts
+short_description: Get Azure CDN profile facts
 
 description:
     - Get facts for a specific Azure CDN profile or all CDN profiles.
@@ -119,6 +119,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from azure.mgmt.cdn.models import ErrorResponseException
     from azure.common import AzureHttpError
+    from azure_rm_cdnprofile import get_cdn_client
 except:
     # handled in azure_rm_common
     pass
@@ -147,6 +148,7 @@ class AzureRMCdnprofileFacts(AzureRMModuleBase):
         self.name = None
         self.resource_group = None
         self.tags = None
+        self._cdn_client = None
 
         super(AzureRMCdnprofileFacts, self).__init__(
             derived_arg_spec=self.module_args,
@@ -158,6 +160,8 @@ class AzureRMCdnprofileFacts(AzureRMModuleBase):
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
+
+        self._cdn_client = get_cdn_client(self._cdn_client)
 
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
