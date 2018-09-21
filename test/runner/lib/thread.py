@@ -30,7 +30,7 @@ class WrappedThread(threading.Thread):
         Run action and capture results or exception.
         Do not override. Do not call directly. Executed by the start() method.
         """
-        # noinspection PyBroadException
+        # noinspection PyBroadException, PyPep8
         try:
             self._result.put((self.action(), None))
         except:  # pylint: disable=locally-disabled, bare-except

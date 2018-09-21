@@ -21,13 +21,6 @@ from lib.docker_util import (
     get_docker_container_id,
 )
 
-try:
-    # noinspection PyPep8Naming
-    import ConfigParser as configparser
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    import configparser
-
 
 class VcenterProvider(CloudProvider):
     """VMware vcenter/esx plugin. Sets up cloud resources for tests."""

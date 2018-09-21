@@ -16,7 +16,6 @@ from lib.util import (
     run_command,
     parse_to_list_of_dict,
     display,
-    find_executable,
     read_lines_without_comments,
 )
 
