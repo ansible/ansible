@@ -64,7 +64,7 @@ options:
         - jobs
         - jobs_by_uuid
         - jobs_delete
-        - Jobs_cancel
+        - jobs_cancel
 
 extends_documentation_fragment:
     - lxca_common
@@ -223,7 +223,7 @@ FUNC_DICT = {
     'jobs': _jobs,
     'jobs_by_uuid': _jobs_by_uuid,
     'jobs_delete': _jobs_delete,
-    'Jobs_cancel': _jobs_cancel,
+    'jobs_cancel': _jobs_cancel,
 }
 
 
