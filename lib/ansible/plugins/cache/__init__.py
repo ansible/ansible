@@ -42,6 +42,11 @@ class BaseCacheModule(AnsiblePlugin):
     # Backwards compat only.  Just import the global display instead
     _display = display
 
+    def __init__(self, *args, **kwargs):
+        self._load_name = self.__module__.split('.')[-1]
+        super(BaseCacheModule, self).__init__()
+        self.set_options(var_options=args, direct=kwargs)
+
     @abstractmethod
     def get(self, key):
         pass
@@ -76,12 +81,11 @@ class BaseFileCacheModule(BaseCacheModule):
     A caching module backed by file based storage.
     """
     def __init__(self, *args, **kwargs):
-
+        super(BaseFileCacheModule, self).__init__(*args, **kwargs)
         self.plugin_name = self.__module__.split('.')[-1]
-        self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
-        self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
-        self._set_inventory_cache_override(**kwargs)
+        self._timeout = float(self.get_option('_timeout'))
+        self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
         self.validate_cache_connection()
 
     def _get_cache_connection(self, source):
@@ -90,12 +94,6 @@ class BaseFileCacheModule(BaseCacheModule):
                 return os.path.expanduser(os.path.expandvars(source))
             except TypeError:
                 pass
-
-    def _set_inventory_cache_override(self, **kwargs):
-        if kwargs.get('cache_timeout'):
-            self._timeout = kwargs.get('cache_timeout')
-        if kwargs.get('cache_connection'):
-            self._cache_dir = self._get_cache_connection(kwargs.get('cache_connection'))
 
     def validate_cache_connection(self):
         if not self._cache_dir:
@@ -297,50 +295,3 @@ class FactCache(MutableMapping):
         host_cache = self._plugin.get(key)
         host_cache.update(value)
         self._plugin.set(key, host_cache)
-
-
-class InventoryCacheModule(FactCache, AnsiblePlugin):
-    def __init__(self, *args, **kwargs):
-        self._cache = {}
-        self._display = display
-
-        plugin_name = kwargs.pop('cache_plugin')
-        plugin_path = cache_loader.find_plugin(plugin_name)
-        # FIXME Right now individual cache plugins are setting self._load_name because the line below only sets _load_name after set_options is called, which blows up
-        self._plugin = cache_loader.get(plugin_name, *args, **kwargs)
-
-        if not self._plugin:
-            super(FactCache, self).__init__()
-
-
-    def validate_cache_connection(self):
-        try:
-            super(InventoryFileCacheModule, self).validate_cache_connection()
-        except AnsibleError as e:
-            cache_connection_set = False
-        else:
-            cache_connection_set = True
-
-        if not cache_connection_set:
-            raise AnsibleError(
-                "error, '%s' inventory cache plugin requires the one of the following to be set:\n"
-                "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
-                "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION."
-                "to be set to a writeable directory path" % self.plugin_name
-            )
-
-
-    def set(self, value, path):
-        if isinstance(self._plugin, BaseFileCacheModule):
-            self._plugin._dump(value, path)
-        else:
-            self._plugin.set(value, path)
-
-
-    def get(self, key):
-        if isinstance(self._plugin, BaseFileCacheModule):
-            if not self.contains(cache_key):
-                raise KeyError
-            return self._plugin._load(key)
-        else:
-            return self._plugin.get(key)

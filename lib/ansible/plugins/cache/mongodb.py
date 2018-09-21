@@ -62,9 +62,8 @@ class CacheModule(BaseCacheModule):
     A caching module backed by mongodb.
     """
     def __init__(self, *args, **kwargs):
-        self._load_name = 'mongodb'
-        super(CacheModule, self).__init__()
-        self.set_options(var_options=args, direct=kwargs)
+        super(CacheModule, self).__init__(*args, **kwargs)
+        self.cache_dir = self.get_option('_uri')
         self._timeout = int(self.get_option('_timeout'))
         self._prefix = self.get_option('_prefix')
         self._cache = {}
@@ -97,7 +96,7 @@ class CacheModule(BaseCacheModule):
         This is a context manager for opening and closing mongo connections as needed. This exists as to not create a global
         connection, due to pymongo not being fork safe (http://api.mongodb.com/python/current/faq.html#is-pymongo-fork-safe)
         '''
-        mongo = pymongo.MongoClient(C.CACHE_PLUGIN_CONNECTION)
+        mongo = pymongo.MongoClient(self._cache_dir)
         try:
             db = mongo.get_default_database()
         except pymongo.errors.ConfigurationError:

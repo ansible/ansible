@@ -165,9 +165,7 @@ class CacheModuleKeys(collections.MutableSet):
 class CacheModule(BaseCacheModule):
 
     def __init__(self, *args, **kwargs):
-        self._load_name = 'memcached'
-        super(CacheModule, self).__init__()
-        self.set_options(var_options=args, direct=kwargs)
+        super(CacheModule, self).__init__(*args, **kwargs)
         if self.get_option('_uri'):
             connection = self.get_option('_uri')
         else:

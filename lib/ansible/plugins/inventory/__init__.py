@@ -27,11 +27,11 @@ import string
 from collections import Mapping
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.plugins import AnsiblePlugin
-from ansible.plugins.cache import InventoryCacheModule
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
+from ansible.plugins import AnsiblePlugin
+from ansible.plugins.loader import cache_loader
 from ansible.template import Templar
 
 try:
@@ -208,10 +208,17 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
         self.set_options(direct=config)
         if self.get_option('cache'):
-            cache_option_keys = ['cache_plugin', '_uri', '_prefix', '_timeout']
-            provided_cache_option_keys = list(set(self._options.keys()) & set(cache_option_keys))
-            cache_options = dict((k, self.get_option(k)) for k in provided_cache_option_keys if self.get_option(k) is not None)
-            self.cache = InventoryCacheModule(**cache_options)
+            try:
+                self.cache = cache_loader.get(self.get_option('cache_plugin'), **self._options)
+            except AnsibleError as e:
+                if 'fact_caching_connection' in to_native(e):
+                    raise AnsibleError(
+                        "error, '%s' inventory cache plugin requires the one of the following to be set:\n"
+                        "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
+                        "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION "
+                        "to be set to a writeable directory path" % self.get_option('cache_plugin')
+                    )
+                raise e
 
         return config
 
