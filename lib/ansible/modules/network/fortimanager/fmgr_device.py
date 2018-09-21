@@ -182,7 +182,7 @@ def delete_device(fmg, paramgram):
 
 
 # FUNCTION/METHOD FOR LOGGING OUT AND ANALYZING ERROR CODES
-def fmgr_logout(fmg, module, msg="NULL", results=list(), good_codes=[0], logout_on_fail=True, logout_on_success=False):
+def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_fail=True, logout_on_success=False):
     """
     THIS METHOD CONTROLS THE LOGOUT AND ERROR REPORTING AFTER AN METHOD OR FUNCTION RUNS
     """
@@ -260,7 +260,7 @@ def main():
         module.fail_json(msg="Connection to FortiManager Failed")
     else:
         # START SESSION LOGIC
-
+        results = (-100000, {"msg": "Nothing Happened."})
         if paramgram["state"] == "present":
             # add device
             results = discover_device(fmg, paramgram)
