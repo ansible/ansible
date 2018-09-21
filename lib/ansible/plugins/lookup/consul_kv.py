@@ -32,6 +32,8 @@ DOCUMENTATION = """
         default: localhost
         description:
            - The target to connect to, must be a resolvable address.
+           - Will be determined from C(ANSIBLE_CONSUL_URL) if that is set
+           - C(ANSIBLE_CONSUL_URL) should look like this: C(https://my.consul.server:8500)
         env:
           - name: ANSIBLE_CONSUL_URL
         ini:
@@ -39,11 +41,15 @@ DOCUMENTATION = """
             key: host
         version_added: '2.7'
       port:
-        description: The port of the target host to connect to.
+        description:
+          - The port of the target host to connect to.
+          - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there
         default: 8500
       scheme:
         default: http
-        description: Whether to use http or https
+        description: 
+          - Whether to use http or https.
+          - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there. 
         version_added: '2.7'
       validate_certs:
         default: True
@@ -121,7 +127,7 @@ class LookupModule(LookupBase):
                 try:
                     url = os.environ['ANSIBLE_CONSUL_URL']
                     validate_certs = os.environ['ANSIBLE_CONSUL_VALIDATE_CERTS'] or True
-                    client_cert = os.environ['ANSIBLE_CONSUL_CLIENT_CERT']
+                    client_cert = os.environ['ANSIBLE_CONSUL_CLIENT_CERT'] or None
                     u = urlparse(url)
                     consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme, verify=validate_certs,
                                                cert=client_cert)
