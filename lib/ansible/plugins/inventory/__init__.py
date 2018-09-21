@@ -207,7 +207,11 @@ class BaseInventoryPlugin(AnsiblePlugin):
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
         self.set_options(direct=config)
-        if self.get_option('cache'):
+        try:
+            has_cache_options = self.get_option('cache')
+        except AnsibleError:
+            has_cache_options = False
+        if has_cache_options:
             try:
                 self.cache = cache_loader.get(self.get_option('cache_plugin'), **self._options)
             except AnsibleError as e:
