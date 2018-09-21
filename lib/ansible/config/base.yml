@@ -1549,8 +1549,13 @@ PLUGIN_FILTERS_CFG:
   ini:
   - key: plugin_filters_cfg
     section: default
+    deprecated:
+      why: Specifying "plugin_filters_cfg" under the "default" section is deprecated
+      version: "2.12"
+      alternatives: the "defaults" section instead
   - key: plugin_filters_cfg
     section: defaults
+    version_added: "2.8"
   type: path
 RETRY_FILES_ENABLED:
   name: Retry files
