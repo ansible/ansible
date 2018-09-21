@@ -103,10 +103,10 @@ def cdnprofile_to_dict(cdnprofile):
         tags=cdnprofile.tags
     )
 
-def get_cdn_client(client):
+def get_cdn_client(client, base_url):
     if not client:
         client = self.get_mgmt_svc_client(CdnManagementClient,
-                                          base_url=self._cloud_environment.endpoints.resource_manager,
+                                          base_url=base_url,
                                           api_version='2017-04-02')
     return client
 
@@ -162,7 +162,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
-        self._cdn_client = get_cdn_client(self._cdn_client)
+        self._cdn_client = get_cdn_client(self._cdn_client, self._cloud_environment.endpoints.resource_manager)
 
         to_be_updated = False
 

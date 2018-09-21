@@ -161,7 +161,7 @@ class AzureRMCdnprofileFacts(AzureRMModuleBase):
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        self._cdn_client = get_cdn_client(self._cdn_client)
+        self._cdn_client = get_cdn_client(self._cdn_client, self._cloud_environment.endpoints.resource_manager)
 
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
