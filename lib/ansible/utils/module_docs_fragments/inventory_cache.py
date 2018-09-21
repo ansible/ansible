@@ -34,9 +34,12 @@ options:
     type: integer
     env:
       - name: ANSIBLE_INVENTORY_CACHE_TIMEOUT
+      - name: ANSIBLE_CACHE_PLUGIN_TIMEOUT
     ini:
       - section: inventory
         key: cache_timeout
+      - section: defaults
+        key: fact_caching_timeout
   _uri:
     aliases:
       - cache_connection:
@@ -44,15 +47,21 @@ options:
       - Cache connection data or path, read cache plugin documentation for specifics.
     env:
       - name: ANSIBLE_INVENTORY_CACHE_CONNECTION
+      - name: ANSIBLE_CACHE_PLUGIN_CONNECTION
     ini:
       - section: inventory
         key: cache_connection
+      - section: default
+        key: fact_caching_connection
   _prefix:
     description:
       - Prefix to use for cache plugin files/tables
     env:
       - name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX
+      - name: ANSIBLE_CACHE_PLUGIN_PREFIX
     ini:
       - section: inventory
         key: cache_prefix
+      - section: default
+        key: fact_caching_prefix
 """
