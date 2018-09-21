@@ -33,7 +33,7 @@ community has a great experience with GCP and therefore recommends that begin
 adopting these new modules if possible.
 
 
-Introduction
+Requisites
 ---------------
 The Google Cloud Platform (GCP) modules require both the ``requests`` and the
 ``google-auth`` libraries to be installed.
