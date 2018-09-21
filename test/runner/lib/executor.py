@@ -52,6 +52,7 @@ from lib.util import (
     get_available_port,
     generate_pip_command,
     find_python,
+    get_docker_completion,
 )
 
 from lib.docker_util import (
@@ -1457,15 +1458,9 @@ def get_integration_docker_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --docker-privileged to run under docker: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
-    docker_image = args.docker.split('@')[0]  # strip SHA for proper tag comparison
-
     python_version = 2  # images are expected to default to python 2 unless otherwise specified
 
-    if docker_image.endswith('py3'):
-        python_version = 3  # docker images ending in 'py3' are expected to default to python 3
-
-    if docker_image.endswith(':default'):
-        python_version = 3  # docker images tagged 'default' are expected to default to python 3
+    python_version = int(get_docker_completion().get(args.docker_raw).get('python', str(python_version)))
 
     if args.python:  # specifying a numeric --python option overrides the default python
         if args.python.startswith('3'):
