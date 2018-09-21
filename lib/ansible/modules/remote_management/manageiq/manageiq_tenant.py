@@ -31,7 +31,7 @@ module: manageiq_tenant
 
 short_description: Management of tenants in ManageIQ.
 extends_documentation_fragment: manageiq
-version_added: '2.7'
+version_added: '2.8'
 author: Evert Mulder
 description:
   - The manageiq_tenant module supports adding, updating and deleting tenants in ManageIQ.
