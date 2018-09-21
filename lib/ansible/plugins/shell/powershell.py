@@ -1488,7 +1488,7 @@ class ShellModule(ShellBase):
         path = '\\'.join(parts)
         if path.startswith('~'):
             return path
-        return '\'%s\'' % path
+        return path
 
     def get_remote_filename(self, pathname):
         # powershell requires that script files end with .ps1
