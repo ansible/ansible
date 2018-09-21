@@ -32,7 +32,7 @@ options:
   modules:
     description:
     - Specifies the name of the module or modules to which you want to map the file name
-      or file name with extension. If you specify more than one value, separate the values with a comma ','. 
+      or file name with extension. If you specify more than one value, separate the values with a comma ','.
     type: str
     default: 'ManagedPipelineHandler'
   name:
@@ -114,7 +114,8 @@ options:
 notes:
 - This must be run on a host that has the WebAdministration powershell module installed.
 - Works with Windows Server 2012 and newer.
-- All parameter' description and other techical information was taken from U(https://docs.microsoft.com/en-us/iis/configuration/system.webserver/handlers/add) article.
+- All parameter' description and other techical information was taken from
+  U(https://docs.microsoft.com/en-us/iis/configuration/system.webserver/handlers/add) article.
 author:
 - Andrii Bilousko (@arestarh)
 '''
