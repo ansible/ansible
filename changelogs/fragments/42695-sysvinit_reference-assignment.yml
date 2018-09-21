@@ -1,0 +1,2 @@
+bugfixes:
+  - sysvinit - fixed an UnboundLocalError. The local variable 'worked' was referenced before assignment (https://github.com/ansible/ansible/pull/42695)
