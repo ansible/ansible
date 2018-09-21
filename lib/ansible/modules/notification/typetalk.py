@@ -19,7 +19,7 @@ module: typetalk
 version_added: "1.6"
 short_description: Send a message to typetalk
 description:
-  - Send a message to typetalk using typetalk API ( http://developers.typetalk.com/ )
+  - Send a message to typetalk using typetalk API ( https://developer.nulab-inc.com/docs/typetalk/ )
 options:
   client_id:
     description:
