@@ -28,13 +28,6 @@ from lib.docker_util import (
     get_docker_container_id,
 )
 
-try:
-    # noinspection PyPep8Naming
-    import ConfigParser as configparser
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    import configparser
-
 
 class ACMEProvider(CloudProvider):
     """ACME plugin. Sets up cloud resources for tests."""

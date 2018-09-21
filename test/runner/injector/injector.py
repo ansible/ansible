@@ -25,7 +25,6 @@ NOTE: Running ansible-test with the --tox option or inside a virtual environment
 
 from __future__ import absolute_import, print_function
 
-import errno
 import json
 import os
 import sys
@@ -203,10 +202,10 @@ def find_executable(executable):
     :rtype: str
     """
     self = os.path.abspath(__file__)
-    path = os.environ.get('PATH', os.defpath)
+    path = os.environ.get('PATH', os.path.defpath)
     seen_dirs = set()
 
-    for path_dir in path.split(os.pathsep):
+    for path_dir in path.split(os.path.pathsep):
         if path_dir in seen_dirs:
             continue
 

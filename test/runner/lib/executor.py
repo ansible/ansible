@@ -541,6 +541,7 @@ def command_windows_integration(args):
                 instance.result.stop()
 
 
+# noinspection PyUnusedLocal
 def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, unused-argument
     """
     :type args: WindowsIntegrationConfig
