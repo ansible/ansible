@@ -49,7 +49,6 @@ def fixture_data(request):
     return request.param.get(func_name, None)
 
 
-
 def test_discover_device(fixture_data, mocker):
     mocker.patch("pyFMG.fortimgr.FortiManager._post_request", side_effect=fixture_data)
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.151', 'state': 'present',
