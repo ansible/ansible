@@ -16,7 +16,6 @@ from lib.util import (
     ApplicationError,
     is_shippable,
     run_command,
-    generate_password,
     SubprocessError,
 )
 
@@ -27,15 +26,6 @@ from lib.cloud import (
 
 from lib.core_ci import (
     AnsibleCoreCI,
-    InstanceConnection,
-)
-
-from lib.manage_ci import (
-    ManagePosixCI,
-)
-
-from lib.http import (
-    HttpClient,
 )
 
 

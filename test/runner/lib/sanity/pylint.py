@@ -23,7 +23,6 @@ from lib.util import (
     SubprocessError,
     run_command,
     display,
-    find_executable,
     read_lines_without_comments,
 )
 
