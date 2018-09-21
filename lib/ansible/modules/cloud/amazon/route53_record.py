@@ -386,28 +386,43 @@ class AWSRoute53Record(object):
         self._check_mode = self._module.check_mode
         self.warnings = []
 
-    def _get_zone(self):
-        """gets a zone by name or id"""
+    def _get_zone_by_id(self, zone_id=None):
+        """gets a zone by id"""
+        zone = None
         if self._module.params['hosted_zone_id'] is not None:
+            hosted_zone_id = self._module.params['hosted_zone_id']
+        else:
+            hosted_zone_id = zone_id
+
+        if hosted_zone_id is not None:
             try:
-                hosted_zone_id = self._module.params['hosted_zone_id']
                 zone = self._connection.get_hosted_zone(Id=hosted_zone_id)
                 zone_name = zone['HostedZone']['Name'].rstrip('.')
                 if not self._module.params['zone'] == zone_name:
-                    self._module.fail_json(msg="Hosted zone id not matches zone name")
+                    self._module.fail_json(msg="hosted zone id not matches zone name")
+                if zone is None:
+                    self._module.fail_json(msg="zone id not exists: %s" % hosted_zone_id)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self._module.fail_json_aws(e, msg="Couldn't get zone by hosted zone id")
         else:
-            try:
-                # todo: ListHostedZonesからself._module.params['zone']を探し出す
-                zone_name = self._module.params['zone']
-                list_hosted_zones = self._connection.list_hosted_zones()
-                hosted_zones = list_hosted_zones.get('HostedZones', [])
-#                response = (item for item in hosted_zones if item['Name'] == zone_name).__next__()
-                response = hosted_zones
-                self._module.fail_json(msg="レスポンス: %s" % (response))
-            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                self._module.fail_json_aws(e, msg="Couldn't get zone")
+            self._module.fail_json(msg="hosted zone id is requied.")
+
+        return zone
+
+    def _get_zone_by_name(self):
+        """gets a zone by name"""
+        try:
+            zone_name = self._module.params['zone']
+            hosted_zones = self._connection.list_hosted_zones().get('HostedZones', [])
+            zone = None
+            for dic in hosted_zones:
+                if dic.get('Name').rstrip('.') == zone_name:
+                    zone_id = dic.get('Id')
+                    zone = self._get_zone_by_id(zone_id)
+            if zone is None:
+                self._module.fail_json(msg="zone name not exists: %s" % zone_name)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="Couldn't get zone by hosted zone name")
 
         return zone
 
@@ -430,7 +445,8 @@ class AWSRoute53Record(object):
         pass
 
     def process(self):
-        zone = self._get_zone()
+        zone = self._get_zone_by_id()
+#        zone = self._get_zone_by_name()
 
 
 def main():
