@@ -131,7 +131,7 @@ The ACIModule has six main methods that are used by the modules:
 * construct_url
 * get_existing
 * payload
-* git_diff
+* get_diff
 * post_config
 * delete_config
 
