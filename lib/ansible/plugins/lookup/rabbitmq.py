@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = """
     lookup: rabbitmq
     author: John Imison <@Im0>
-    version_added: "2.7"
+    version_added: "2.8"
     short_description: Retrieve messages from an AMQP/AMQPS RabbitMQ queue/channel.
     description:
         - This lookup uses a basic get to retrieve all, or a limited number C(count), messages from a RabbitMQ queue.
