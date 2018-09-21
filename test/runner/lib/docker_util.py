@@ -172,8 +172,8 @@ def docker_inspect(args, container_id):
     except SubprocessError as ex:
         try:
             return json.loads(ex.stdout)
-        except:
-            raise ex  # pylint: disable=locally-disabled, raising-bad-type
+        except Exception:
+            raise ex
 
 
 def docker_network_disconnect(args, container_id, network):
@@ -200,8 +200,8 @@ def docker_network_inspect(args, network):
     except SubprocessError as ex:
         try:
             return json.loads(ex.stdout)
-        except:
-            raise ex  # pylint: disable=locally-disabled, raising-bad-type
+        except Exception:
+            raise ex
 
 
 def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None):

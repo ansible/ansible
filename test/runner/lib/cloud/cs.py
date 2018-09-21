@@ -205,7 +205,7 @@ class CsCloudProvider(CloudProvider):
             containers = bridge['Containers']
             container = [containers[container] for container in containers if containers[container]['Name'] == self.DOCKER_SIMULATOR_NAME][0]
             return re.sub(r'/[0-9]+$', '', container['IPv4Address'])
-        except:
+        except Exception:
             display.error('Failed to process the following docker network inspect output:\n%s' %
                           json.dumps(networks, indent=4, sort_keys=True))
             raise
