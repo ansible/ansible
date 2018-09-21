@@ -233,45 +233,45 @@ class TestOnePass(unittest.TestCase):
 
     def test_onepassword_get(self):
         op = MockOnePass()
-        op._logged_in = True
+        op.logged_in = True
         query_generator = get_mock_query_generator()
         for dummy, query, dummy, field_name, field_value in query_generator:
             self.assertEqual(field_value, op.get_field(query, field_name))
 
     def test_onepassword_get_raw(self):
         op = MockOnePass()
-        op._logged_in = True
+        op.logged_in = True
         for entry in MOCK_ENTRIES:
             for query in entry['queries']:
                 self.assertEqual(json.dumps(entry['output']), op.get_raw(query))
 
     def test_onepassword_get_not_found(self):
         op = MockOnePass()
-        op._logged_in = True
+        op.logged_in = True
         self.assertEqual('', op.get_field('a fake query', 'a fake field'))
 
     def test_onepassword_get_with_section(self):
         op = MockOnePass()
-        op._logged_in = True
+        op.logged_in = True
         dummy, query, section_title, field_name, field_value = get_one_mock_query()
         self.assertEqual(field_value, op.get_field(query, field_name, section=section_title))
 
     def test_onepassword_get_with_vault(self):
         op = MockOnePass()
-        op._logged_in = True
+        op.logged_in = True
         entry, query, dummy, field_name, field_value = get_one_mock_query()
         for vault_query in [entry['vault_name'], entry['output']['vaultUuid']]:
             self.assertEqual(field_value, op.get_field(query, field_name, vault=vault_query))
 
     def test_onepassword_get_with_wrong_vault(self):
         op = MockOnePass()
-        op._logged_in = True
+        op.logged_in = True
         dummy, query, dummy, field_name, dummy = get_one_mock_query()
         self.assertEqual('', op.get_field(query, field_name, vault='a fake vault'))
 
     def test_onepassword_get_diff_case(self):
         op = MockOnePass()
-        op._logged_in = True
+        op.logged_in = True
         entry, query, section_title, field_name, field_value = get_one_mock_query()
         self.assertEqual(
             field_value,
