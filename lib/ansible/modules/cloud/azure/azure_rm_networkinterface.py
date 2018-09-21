@@ -386,7 +386,8 @@ def nic_to_dict(nic):
                                                  if config.load_balancer_backend_address_pools else None),
             public_ip_address=dict(
                 id=config.public_ip_address.id,
-                name=azure_id_to_dict(config.public_ip_address.id).get('publicIPAddresses'),
+                name=azure_id_to_dict(config.public_ip_address.id).get(
+                    'publicIPAddresses'),
                 public_ip_allocation_method=config.public_ip_address.public_ip_allocation_method
             ) if config.public_ip_address else None
         ) for config in nic.ip_configurations
@@ -399,7 +400,8 @@ def nic_to_dict(nic):
         tags=nic.tags,
         network_security_group=dict(
             id=nic.network_security_group.id,
-            name=azure_id_to_dict(nic.network_security_group.id).get('networkSecurityGroups')
+            name=azure_id_to_dict(nic.network_security_group.id).get(
+                'networkSecurityGroups')
         ) if nic.network_security_group else None,
         dns_settings=dict(
             dns_servers=nic.dns_settings.dns_servers,
@@ -408,7 +410,8 @@ def nic_to_dict(nic):
             internal_fqdn=nic.dns_settings.internal_fqdn
         ),
         ip_configurations=ip_configurations,
-        ip_configuration=ip_configurations[0] if len(ip_configurations) == 1 else None,  # for compatiable issue, keep this field
+        ip_configuration=ip_configurations[0] if len(
+            ip_configurations) == 1 else None,  # for compatiable issue, keep this field
         mac_address=nic.mac_address,
         enable_ip_forwarding=nic.enable_ip_forwarding,
         provisioning_state=nic.provisioning_state,
@@ -421,9 +424,12 @@ def nic_to_dict(nic):
 ip_configuration_spec = dict(
     name=dict(type='str', required=True),
     private_ip_address=dict(type='str'),
-    private_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
-    public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
-    public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
+    private_ip_allocation_method=dict(
+        type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
+    public_ip_address_name=dict(
+        type='str', aliases=['public_ip_address', 'public_ip_name']),
+    public_ip_allocation_method=dict(
+        type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
     load_balancer_backend_address_pools=dict(type='list'),
     primary=dict(type='bool', default=False)
 )
@@ -442,16 +448,22 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             security_group=dict(type='raw', aliases=['security_group_name']),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
-            private_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
-            public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
+            private_ip_allocation_method=dict(
+                type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
+            public_ip_address_name=dict(
+                type='str', aliases=['public_ip_address', 'public_ip_name']),
             public_ip=dict(type='bool', default=True),
             subnet_name=dict(type='str', aliases=['subnet']),
             virtual_network=dict(type='raw', aliases=['virtual_network_name']),
-            public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
-            ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
-            os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
+            public_ip_allocation_method=dict(
+                type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
+            ip_configurations=dict(
+                type='list', default=None, elements='dict', options=ip_configuration_spec),
+            os_type=dict(type='str', choices=[
+                         'Windows', 'Linux'], default='Linux'),
             open_ports=dict(type='list'),
-            enable_ip_forwarding=dict(type='bool', aliases=['ip_forwarding'], default=False),
+            enable_ip_forwarding=dict(type='bool', aliases=[
+                                      'ip_forwarding'], default=False),
             dns_servers=dict(type='list'),
         )
 
@@ -506,10 +518,16 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.location = normalize_location_name(self.location)
 
         # parse the virtual network resource group and name
-        self.virtual_network = self.parse_resource_to_dict(self.virtual_network)
+        self.virtual_network = self.parse_resource_to_dict(
+            self.virtual_network)
 
         # if not set the security group name, use nic name for default
-        self.security_group = self.parse_resource_to_dict(self.security_group or self.name)
+        self.security_group = self.parse_resource_to_dict(
+            self.security_group or self.name)
+
+        if self.state == 'present':
+            nsg = self.get_security_group(
+                self.security_group['resource_group'], self.security_group['name'])
 
         if self.state == 'present' and not self.ip_configurations:
             # construct the ip_configurations array for compatiable
@@ -528,22 +546,24 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         try:
             self.log('Fetching network interface {0}'.format(self.name))
-            nic = self.network_client.network_interfaces.get(self.resource_group, self.name)
+            nic = self.network_client.network_interfaces.get(
+                self.resource_group, self.name)
 
             self.log('Network interface {0} exists'.format(self.name))
             self.check_provisioning_state(nic, self.state)
             results = nic_to_dict(nic)
             self.log(results, pretty_print=True)
 
-            nsg = None
             if self.state == 'present':
                 # check for update
-                update_tags, results['tags'] = self.update_tags(results['tags'])
+                update_tags, results['tags'] = self.update_tags(
+                    results['tags'])
                 if update_tags:
                     changed = True
 
-                if self.create_with_security_group != bool(results.get('network_security_group')):
-                    self.log("CHANGED: add or remove network interface {0} network security group".format(self.name))
+                if self.create_with_security_group and not bool(results.get('network_security_group')):
+                    self.log(
+                        "CHANGED: add or remove network interface {0} network security group".format(self.name))
                     changed = True
 
                 if self.enable_accelerated_networking != bool(results.get('enable_accelerated_networking')):
@@ -559,50 +579,68 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     changed = True
 
                 # We need to ensure that dns_servers are list like
-                dns_servers_res = results.get('dns_settings').get('dns_servers')
-                _dns_servers_set = sorted(self.dns_servers) if isinstance(self.dns_servers, list) else list()
-                _dns_servers_res = sorted(dns_servers_res) if isinstance(self.dns_servers, list) else list()
+                dns_servers_res = results.get(
+                    'dns_settings').get('dns_servers')
+                _dns_servers_set = sorted(self.dns_servers) if isinstance(
+                    self.dns_servers, list) else list()
+                _dns_servers_res = sorted(dns_servers_res) if isinstance(
+                    self.dns_servers, list) else list()
                 if _dns_servers_set != _dns_servers_res:
                     self.log("CHANGED: DNS servers set to {0} (previously {1})".format(
                         ", ".join(_dns_servers_set),
                         ", ".join(_dns_servers_res)))
                     changed = True
 
-                if not changed:
-                    nsg = self.get_security_group(self.security_group['resource_group'], self.security_group['name'])
-                    if nsg and results.get('network_security_group') and results['network_security_group'].get('id') != nsg.id:
-                        self.log("CHANGED: network interface {0} network security group".format(self.name))
+                if nsg:
+                    # If my Nic doesn't have an NSG or the NSG on the NIC is not the same ID as the once creates
+                    nic_already_has_nsg = bool(
+                        results.get('network_security_group'))
+
+                    nic_specified_new_nsg = nic_already_has_nsg and results['network_security_group'].get(
+                        'id') != nsg.id
+
+                    if not nic_already_has_nsg or nic_specified_new_nsg:
+                        self.log(
+                            "CHANGED: network interface {0} network security group".format(self.name))
                         changed = True
 
                 if results['ip_configurations'][0]['subnet']['virtual_network_name'] != self.virtual_network['name']:
-                    self.log("CHANGED: network interface {0} virtual network name".format(self.name))
+                    self.log(
+                        "CHANGED: network interface {0} virtual network name".format(self.name))
                     changed = True
 
                 if results['ip_configurations'][0]['subnet']['resource_group'] != self.virtual_network['resource_group']:
-                    self.log("CHANGED: network interface {0} virtual network resource group".format(self.name))
+                    self.log(
+                        "CHANGED: network interface {0} virtual network resource group".format(self.name))
                     changed = True
 
                 if results['ip_configurations'][0]['subnet']['name'] != self.subnet_name:
-                    self.log("CHANGED: network interface {0} subnet name".format(self.name))
+                    self.log(
+                        "CHANGED: network interface {0} subnet name".format(self.name))
                     changed = True
 
                 # check the ip_configuration is changed
                 # construct two set with the same structure and then compare
                 # the list should contains:
                 # name, private_ip_address, public_ip_address_name, private_ip_allocation_method, subnet_name
-                ip_configuration_result = self.construct_ip_configuration_set(results['ip_configurations'])
-                ip_configuration_request = self.construct_ip_configuration_set(self.ip_configurations)
+                ip_configuration_result = self.construct_ip_configuration_set(
+                    results['ip_configurations'])
+                ip_configuration_request = self.construct_ip_configuration_set(
+                    self.ip_configurations)
                 if ip_configuration_result != ip_configuration_request:
-                    self.log("CHANGED: network interface {0} ip configurations".format(self.name))
+                    self.log(
+                        "CHANGED: network interface {0} ip configurations".format(self.name))
                     changed = True
 
             elif self.state == 'absent':
-                self.log("CHANGED: network interface {0} exists but requested state is 'absent'".format(self.name))
+                self.log(
+                    "CHANGED: network interface {0} exists but requested state is 'absent'".format(self.name))
                 changed = True
         except CloudError:
             self.log('Network interface {0} does not exist'.format(self.name))
             if self.state == 'present':
-                self.log("CHANGED: network interface {0} does not exist but requested state is 'present'".format(self.name))
+                self.log(
+                    "CHANGED: network interface {0} does not exist but requested state is 'present'".format(self.name))
                 changed = True
 
         self.results['changed'] = changed
@@ -622,11 +660,13 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
                 nic_ip_configurations = [
                     self.network_models.NetworkInterfaceIPConfiguration(
-                        private_ip_allocation_method=ip_config.get('private_ip_allocation_method'),
+                        private_ip_allocation_method=ip_config.get(
+                            'private_ip_allocation_method'),
                         private_ip_address=ip_config.get('private_ip_address'),
                         name=ip_config.get('name'),
                         subnet=subnet,
-                        public_ip_address=self.get_or_create_public_ip_address(ip_config),
+                        public_ip_address=self.get_or_create_public_ip_address(
+                            ip_config),
                         load_balancer_backend_address_pools=([self.network_models.BackendAddressPool(id=self.backend_addr_pool_id(bap_id))
                                                               for bap_id in ip_config.get('load_balancer_backend_address_pools')]
                                                              if ip_config.get('load_balancer_backend_address_pools') else None),
@@ -634,13 +674,15 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     ) for ip_config in self.ip_configurations
                 ]
 
-                nsg = self.create_default_securitygroup(self.security_group['resource_group'],
-                                                        self.location,
-                                                        self.security_group['name'],
-                                                        self.os_type,
-                                                        self.open_ports) if self.create_with_security_group else None
+                if not nsg:
+                    nsg = self.create_default_securitygroup(self.security_group['resource_group'],
+                                                            self.location,
+                                                            self.security_group['name'],
+                                                            self.os_type,
+                                                            self.open_ports) if self.create_with_security_group else None
 
-                self.log('Creating or updating network interface {0}'.format(self.name))
+                self.log(
+                    'Creating or updating network interface {0}'.format(self.name))
                 nic = self.network_models.NetworkInterface(
                     id=results['id'] if results else None,
                     location=self.location,
@@ -673,10 +715,12 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         if not pip:
             params = self.network_models.PublicIPAddress(
                 location=self.location,
-                public_ip_allocation_method=ip_config.get('public_ip_allocation_method'),
+                public_ip_allocation_method=ip_config.get(
+                    'public_ip_allocation_method'),
             )
             try:
-                poller = self.network_client.public_ip_addresses.create_or_update(self.resource_group, name, params)
+                poller = self.network_client.public_ip_addresses.create_or_update(
+                    self.resource_group, name, params)
                 pip = self.get_poller_result(poller)
             except CloudError as exc:
                 self.fail("Error creating {0} - {1}".format(name, str(exc)))
@@ -684,18 +728,22 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
     def create_or_update_nic(self, nic):
         try:
-            poller = self.network_client.network_interfaces.create_or_update(self.resource_group, self.name, nic)
+            poller = self.network_client.network_interfaces.create_or_update(
+                self.resource_group, self.name, nic)
             new_nic = self.get_poller_result(poller)
             return nic_to_dict(new_nic)
         except Exception as exc:
-            self.fail("Error creating or updating network interface {0} - {1}".format(self.name, str(exc)))
+            self.fail(
+                "Error creating or updating network interface {0} - {1}".format(self.name, str(exc)))
 
     def delete_nic(self):
         try:
-            poller = self.network_client.network_interfaces.delete(self.resource_group, self.name)
+            poller = self.network_client.network_interfaces.delete(
+                self.resource_group, self.name)
             self.get_poller_result(poller)
         except Exception as exc:
-            self.fail("Error deleting network interface {0} - {1}".format(self.name, str(exc)))
+            self.fail(
+                "Error deleting network interface {0} - {1}".format(self.name, str(exc)))
         return True
 
     def get_public_ip_address(self, name):
@@ -728,7 +776,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
     def construct_ip_configuration_set(self, raw):
         configurations = [str(dict(
-            private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
+            private_ip_allocation_method=to_native(
+                item.get('private_ip_allocation_method')),
             public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
                                     if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
             primary=item.get('primary'),
