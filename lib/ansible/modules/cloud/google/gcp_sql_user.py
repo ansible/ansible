@@ -231,9 +231,9 @@ def unwrap_resource(result, module):
         return None
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'sql')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def fetch_wrapped_resource(module, kind, wrap_kind, wrap_path):
@@ -270,7 +270,7 @@ def collection(module):
     return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users".format(**res)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
     if response.status_code == 404:
         return None
