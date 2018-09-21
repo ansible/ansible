@@ -25,8 +25,8 @@ def ansible_environment(args, color=True):
 
     ansible_path = os.path.join(os.getcwd(), 'bin')
 
-    if not path.startswith(ansible_path + os.pathsep):
-        path = ansible_path + os.pathsep + path
+    if not path.startswith(ansible_path + os.path.pathsep):
+        path = ansible_path + os.path.pathsep + path
 
     if isinstance(args, IntegrationConfig):
         ansible_config = 'test/integration/%s.cfg' % args.command
