@@ -682,7 +682,7 @@ try:
     else:
         from docker.utils.types import Ulimit, LogConfig
     from ansible.module_utils.docker_common import docker_version
-except:
+except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
