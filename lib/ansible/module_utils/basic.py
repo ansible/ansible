@@ -2831,7 +2831,7 @@ class AnsibleModule(object):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        if PY3:
+        if PY3 and pass_fds:
             kwargs["pass_fds"] = pass_fds
 
         # store the pwd
