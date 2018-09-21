@@ -491,7 +491,8 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
         if self.append_tags and self.tags:
             try:
-                rg = self.get_resource_group(self.resource_group_name)
+                # fetch the RG directly (instead of using the base helper) since we don't want to exit if it's missing
+                rg = self.rm_client.resource_groups.get(self.resource_group_name)
                 if rg.tags:
                     self.tags = dict(self.tags, **rg.tags)
             except CloudError:
