@@ -5,6 +5,22 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.0rc3
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-09-20
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- ec2_group - Sanitize the ingress and egress rules before operating on them by flattening any lists within lists describing the target CIDR(s) into a list of strings. Prior to Ansible 2.6 the ec2_group module accepted a list of strings, a list of lists, or a combination of strings and lists within a list. https://github.com/ansible/ansible/pull/45594
+- fix nxos_facts indefinite hang for text based output (https://github.com/ansible/ansible/pull/45845).
+
 v2.7.0rc2
 =========
 

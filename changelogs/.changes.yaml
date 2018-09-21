@@ -430,3 +430,10 @@ releases:
       strategy:
       - host_pinned
     release_date: '2018-09-13'
+  2.7.0rc3:
+    codename: In the Light
+    fragments:
+    - ec2_group_fix_target_containing_list_within_list.yaml
+    - fix_nxos_facts_indefinite_hang.yaml
+    - v2.7.0rc3_summary.yaml
+    release_date: '2018-09-20'
