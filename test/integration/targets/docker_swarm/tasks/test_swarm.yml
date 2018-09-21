@@ -1,3 +1,8 @@
+- name: Make sure we're not already using Docker swarm
+  docker_swarm:
+    state: absent
+    force: true
+
 - name: Test parameters with state=present
   docker_swarm:
     state: present
