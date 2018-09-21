@@ -104,10 +104,10 @@ options:
         version_added: "2.3"
     scope:
         description: ["String of monitor's scope. The defined scope will be muted, or, if not defined, or defined as '*', all scopes will be muted."]
-        version_added: "2.7"
+        version_added: "2.8"
     end:
         description: ["String of POSIX timestamp. The defined scope/all scopes will be muted until the given POSIX, or forever if the value is not defined."]
-        version_added: "2.7"
+        version_added: "2.8"
 
 '''
 
