@@ -154,7 +154,7 @@ class AWSRoute53Record(object):
                     hosted_zone_id = dic.get('Id')
                     hosted_zone = self._get_zone_by_id(hosted_zone_id)
             if hosted_zone is None:
-                self._module.fail_json(msg="hosted zone name not exists: %s" % zone_name)
+                self._module.fail_json(msg="hosted zone name not exists: %s" % hosted_zone_name)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't get hosted zone by hosted_zone_name")
 
