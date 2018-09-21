@@ -61,7 +61,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 hosts_capability_facts:
-    description: metadata about host's capability infromation
+    description: metadata about host's capability information
     returned: always
     type: dict
     sample: {

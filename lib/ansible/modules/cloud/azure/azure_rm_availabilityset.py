@@ -98,7 +98,7 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Current state of the avaibility set
+    description: Current state of the availability set
     returned: always
     type: dict
 changed:
@@ -118,7 +118,7 @@ except ImportError:
 
 def availability_set_to_dict(avaset):
     '''
-    Serialazing the availability set from the API to Dict
+    Serializing the availability set from the API to Dict
     :return: dict
     '''
     return dict(
@@ -242,7 +242,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
     def faildeploy(self, param):
         '''
         Helper method to push fail message in the console.
-        Usefull to notify that the users cannot change some values in a Availibility Set
+        Useful to notify that the users cannot change some values in a Availability Set
 
         :param: variable's name impacted
         :return: void
