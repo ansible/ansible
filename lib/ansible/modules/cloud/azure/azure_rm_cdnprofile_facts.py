@@ -115,11 +115,11 @@ cdnprofiles:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from azure.mgmt.cdn import CdnManagementClient
 
 try:
     from azure.mgmt.cdn.models import ErrorResponseException
     from azure.common import AzureHttpError
-    from azure_rm_cdnprofile import get_cdn_client
 except:
     # handled in azure_rm_common
     pass
@@ -161,7 +161,7 @@ class AzureRMCdnprofileFacts(AzureRMModuleBase):
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        self._cdn_client = get_cdn_client(self._cdn_client, self._cloud_environment.endpoints.resource_manager)
+        self._cdn_client = self.get_cdn_client()
 
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
@@ -245,6 +245,13 @@ class AzureRMCdnprofileFacts(AzureRMModuleBase):
         new_result['provisioning_state'] = cdnprofile.provisioning_state
         new_result['tags'] = cdnprofile.tags
         return new_result
+
+    def get_cdn_client():
+        if not self._cdn_client:
+            self._cdn_client = self.get_mgmt_svc_client(CdnManagementClient,
+                                                        base_url=self._cloud_environment.endpoints.resource_manager,
+                                                        api_version='2017-04-02')
+        return self._cdn_client
 
 
 def main():
