@@ -14,6 +14,12 @@
     name: pika
     state: latest
 
+- name: Install requests
+  pip:
+    name: requests
+    state: latest
+
+
 - name: Test that giving an incorrect amqp protocol in URL will error
   set_fact:
     rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='zzzamqp://guest:guest@192.168.250.1:5672/%2F', channel='hello', count=3) }}"
@@ -45,7 +51,7 @@
 - assert:
     that:
       - "rabbitmq_params_error is failed"
-      - "'URL is required for ampq lookup.' in rabbitmq_params_error.msg"
+      - "'URL is required for rabbitmq lookup.' in rabbitmq_params_error.msg"
  
 - name: Test missing channel will error
   set_fact:
@@ -56,4 +62,55 @@
 - assert:
     that:
       - "rabbitmq_channel_error is failed"
-      - "'Channel is required for ampq lookup' in rabbitmq_channel_error.msg"
+      - "'Channel is required for rabbitmq lookup' in rabbitmq_channel_error.msg"
+
+- name: Enables the rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+# This is an ugly workaround!
+# There is a problem to run services via systemd inside docker containers (https://github.com/moby/moby/issues/2296):
+# systemctl command fails with the error 'Failed to connect to bus: No such file or directory'
+- name: Restart RabbitMQ service
+  command: /etc/init.d/rabbitmq-server restart
+  when: ansible_distribution_release == 'xenial'
+
+- name: Setup test queue
+  rabbitmq_queue:
+      name: hello
+
+- name: Post test message to the exchange
+  uri:
+    url: http://localhost:15672/api/exchanges/%2f/amq.default/publish
+    method: POST
+    body: '{"properties":{},"routing_key":"hello","payload":"ansible-test","payload_encoding":"string"}'
+    user: guest
+    password: guest
+    force_basic_auth: yes
+    return_content: yes
+    register: post_data
+    headers:
+      Content-Type: "application/json"
+
+- name: Test retrieve message
+  set_fact:
+    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2f/hello', channel='hello') }}"
+  ignore_errors: yes
+  register: rabbitmq_msg_error
+
+- assert:
+    that:
+      - "rabbitmq_msg_error is not failed"
+      - rabbitmq_msg | length == 1
+      - rabbitmq_msg[0].msg == "ansible-test"
+
+- name: Test missing vhost
+  set_fact:
+    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/missing/', channel='hello') }}"
+  ignore_errors: yes
+  register: rabbitmq_vhost_error
+
+- assert:
+    that:
+      - "rabbitmq_vhost_error is failed"
+      - "'NOT_ALLOWED' in rabbitmq_vhost_error.msg"

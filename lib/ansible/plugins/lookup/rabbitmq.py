@@ -182,5 +182,4 @@ class LookupModule(LookupBase):
                 connection.close()
             except pika.exceptions.AMQPConnectionError:
                 pass
-            finally:
-                return [ret]
+            return [ret]
