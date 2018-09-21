@@ -122,7 +122,7 @@ ifneq ($(REPOTAG),)
 endif
 
 # ansible-test parameters
-ANSIBLE_TEST ?= test/runner/ansible-test
+ANSIBLE_TEST ?= bin/ansible-test
 TEST_FLAGS ?=
 
 # ansible-test units parameters (make test / make test-py3)

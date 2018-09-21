@@ -249,10 +249,10 @@ def find_executable(executable):
     :rtype: str
     """
     self = os.path.abspath(__file__)
-    path = os.environ.get('PATH', os.defpath)
+    path = os.environ.get('PATH', os.path.defpath)
     seen_dirs = set()
 
-    for path_dir in path.split(os.pathsep):
+    for path_dir in path.split(os.path.pathsep):
         if path_dir in seen_dirs:
             continue
 
