@@ -110,6 +110,8 @@ def main():
                 args, env, require_cwd = cover()
             else:
                 args, env = runner()
+        elif os.path.basename(__file__) == 'python.py':
+            args, env = python()  # run arbitrary python commands using the correct python and with optional code coverage
         else:
             args, env = injector()
 
@@ -140,6 +142,20 @@ def main():
     except Exception as ex:
         logger.fatal(ex)
         raise
+
+
+def python():
+    """
+    :rtype: list[str], dict[str, str]
+    """
+    if config.coverage_file:
+        args, env = coverage_command()
+    else:
+        args, env = [config.python_interpreter], os.environ.copy()
+
+    args += config.arguments[1:]
+
+    return args, env
 
 
 def injector():
