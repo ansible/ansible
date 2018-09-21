@@ -301,7 +301,13 @@ def main():
         def runme(doit):
 
             args = module.params['arguments']
-            cmd = "%s %s %s" % (script, doit, "" if args is None else args)
+            last_cmd = '%s %s' % (doit, "" if args is None else args)
+
+            if location.get('service'):
+                # standard tool that has been 'destandarized' by reimplementation in other OS/distros
+                cmd = '%s %s %s' % (location['service'], name, last_cmd)
+            else:
+                cmd = "%s %s" % (script, last_cmd)
 
             # how to run
             if module.params['daemonize']:
