@@ -97,7 +97,7 @@ class TestMyModule(unittest.TestCase):
         mod_obj.params = args
         lxca_discover.main()
         assert mock.call(argument_spec=expected_arguments_spec,
-                         mutually_exclusive=[['ip', 'jobid']],
+                         mutually_exclusive=[['discover_ip', 'jobid']],
                          supports_check_mode=False) == ansible_mod_cls.call_args
 
     @mock.patch("ansible.modules.remote_management.lxca.lxca_discover._discover",
