@@ -1,20 +1,7 @@
 # Test code for the command and shell modules.
-# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: use command to execute sudo
   command: sudo -h
@@ -240,16 +227,18 @@
 ## shell
 ##
 
-- name: execute the test.sh script
+- name: Execute the test.sh script
   shell: "{{output_dir_test | expanduser}}/test.sh"
   register: shell_result0
 
-- name: assert that the script executed correctly
+- name: Assert that the script executed correctly
   assert:
     that:
-      - "shell_result0.rc == 0"
-      - "shell_result0.stderr == ''"
-      - "shell_result0.stdout == 'win'"
+    - shell_result0 is changed
+    - shell_result0.cmd == '{{output_dir_test | expanduser}}/test.sh'
+    - shell_result0.rc == 0
+    - shell_result0.stderr == ''
+    - shell_result0.stdout == 'win'
 
 # executable
 
@@ -268,34 +257,36 @@
 
 # chdir
 
-- name: execute the test.sh script with chdir
+- name: Execute the test.sh script with chdir
   shell: ./test.sh chdir="{{output_dir_test | expanduser}}"
   register: shell_result2
 
-- name: assert that the shell executed correctly with chdir
+- name: Assert that the shell executed correctly with chdir
   assert:
     that:
-      - "shell_result2.rc == 0"
-      - "shell_result2.stderr == ''"
-      - "shell_result2.stdout == 'win'"
+    - shell_result2 is changed
+    - shell_result2.cmd == './test.sh'
+    - shell_result2.rc == 0
+    - shell_result2.stderr == ''
+    - shell_result2.stdout == 'win'
 
 # creates
 
-- name: verify that afile.txt is absent
+- name: Verify that afile.txt is absent
   file: path={{output_dir_test}}/afile.txt state=absent
 
-- name: execute the test.sh script with chdir
+- name: Execute the test.sh script with chdir
   shell: "{{output_dir_test | expanduser}}/test.sh > {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.txt"
 
-- name: verify that afile.txt is present
+- name: Verify that afile.txt is present
   file: path={{output_dir_test}}/afile.txt state=file
 
 # multiline
 
-- name: remove test file previously created
+- name: Remove test file previously created
   file: path={{output_dir_test | expanduser}}/afile.txt state=absent
 
-- name: execute a shell command using a literal multiline block
+- name: Execute a shell command using a literal multiline block
   args:
     executable: "{{ bash.stdout }}"
   shell: |
@@ -307,24 +298,45 @@
     echo "this is a second line"
   register: shell_result5
 
-- name: assert the multiline shell command ran as expected
+- name: Assert the multiline shell command ran as expected
   assert:
     that:
-      - "shell_result5.changed"
-      - "shell_result5.stdout == '5575bb6b71c9558db0b6fbbf2f19909eeb4e3b98\nthis is a second line'"
+    - shell_result5 is changed
+    - shell_result5.rc == 0
+    - shell_result5.cmd == 'echo this is a "multiline echo" "with a new line\nin quotes" | ' + ansible_python_interpreter + ' -c \'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin).read()).hexdigest())\'\necho "this is a second line"\n'
+    - shell_result5.stdout == '5575bb6b71c9558db0b6fbbf2f19909eeb4e3b98\nthis is a second line'
 
-- name: execute a shell command using a literal multiline block with arguments in it
+- name: Execute a shell command using a literal multiline block with arguments in it
   shell: |
     executable="{{ bash.stdout }}"
     creates={{output_dir_test | expanduser}}/afile.txt
     echo "test"
   register: shell_result6
 
-- name: assert the multiline shell command with arguments in it run as expected
+- name: Assert the multiline shell command with arguments in it run as expected
   assert:
     that:
-      - "shell_result6.changed"
-      - "shell_result6.stdout == 'test'"
+    - shell_result6 is changed
+    - shell_result6.rc == 0
+    - shell_result6.cmd == 'echo "test"\n'
+    - shell_result6.stdout == 'test'
+
+- name: Execute a shell command using a multiline block where whitespaces matter
+  shell: |
+    cat <<EOF
+    One
+      Two
+        Three
+    EOF
+  register: shell_result7
+
+- name: Assert the multiline shell command outputs with whitespaces preserved
+  assert:
+    that:
+    - shell_result7 is changed
+    - shell_result7.rc == 0
+    - shell_result7.cmd == 'cat <<EOF\nOne\n  Two\n    Three\nEOF\n'
+    - shell_result7.stdout == 'One\n  Two\n    Three'
 
 - name: remove the previously created file
   file: path={{output_dir_test}}/afile.txt state=absent
