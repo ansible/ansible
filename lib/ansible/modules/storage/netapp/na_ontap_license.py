@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_ontap_license
 
-short_description: Manage NetApp ONTAP protocol and feature licenses
+short_description: NetApp ONTAP protocol and feature licenses
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
