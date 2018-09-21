@@ -123,10 +123,10 @@ def find_executable(executable, cwd=None, path=None, required=True):
             match = executable
     else:
         if path is None:
-            path = os.environ.get('PATH', os.defpath)
+            path = os.environ.get('PATH', os.path.defpath)
 
         if path:
-            path_dirs = path.split(os.pathsep)
+            path_dirs = path.split(os.path.pathsep)
             seen_dirs = set()
 
             for path_dir in path_dirs:
@@ -203,7 +203,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
-    env['PATH'] = inject_path + os.pathsep + env['PATH']
+    env['PATH'] = inject_path + os.path.pathsep + env['PATH']
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
 
@@ -394,7 +394,7 @@ def common_environment():
     """Common environment used for executing all programs."""
     env = dict(
         LC_ALL='en_US.UTF-8',
-        PATH=os.environ.get('PATH', os.defpath),
+        PATH=os.environ.get('PATH', os.path.defpath),
     )
 
     required = (

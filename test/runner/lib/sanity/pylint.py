@@ -263,7 +263,7 @@ class PylintTest(SanitySingleVersion):
         ] + paths
 
         env = ansible_environment(args)
-        env['PYTHONPATH'] += '%s%s' % (os.pathsep, self.plugin_dir)
+        env['PYTHONPATH'] += '%s%s' % (os.path.pathsep, self.plugin_dir)
 
         if paths:
             try:
