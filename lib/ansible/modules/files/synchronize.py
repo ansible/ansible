@@ -538,16 +538,18 @@ def main():
     cmd.append(dest)
     cmdstr = ' '.join(cmd)
 
-    if not (PY3 and rsync_password):
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-    # If we are using password authentication, write the password into the pipe
-    else:
+    # On python3 we need to pass file descriptors explicitly
+    if PY3 and rsync_password:
         # pylint: disable=unexpected-keyword-arg
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=_sshpass_pipe
         )
+    else:
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+    # If we are using password authentication, write the password into the pipe
+    if rsync_password:
         os.close(_sshpass_pipe[0])
         try:
             os.write(_sshpass_pipe[1], to_bytes(rsync_password) + b'\n')
