@@ -79,7 +79,11 @@ def _maintain_symlinks(symlink_type, base_path):
             if 'ansible-playbook' in symlink_data['script']['ansible']:
                 _cache_symlinks(symlink_data)
             else:
-                raise
+                raise RuntimeError(
+                    "Pregenerated symlink list was not present and expected "
+                    "symlinks in ./bin were missing or broken. "
+                    "Perhaps this isn't a git checkout?"
+                )
         else:
             raise
     symlinks = symlink_data[symlink_type]
