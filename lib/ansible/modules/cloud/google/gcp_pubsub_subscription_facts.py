@@ -30,31 +30,22 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: gcp_compute_backend_bucket_facts
+module: gcp_pubsub_subscription_facts
 description:
-  - Gather facts for GCP BackendBucket
-short_description: Gather facts for GCP BackendBucket
+  - Gather facts for GCP Subscription
+short_description: Gather facts for GCP Subscription
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
     - python >= 2.6
     - requests >= 2.18.4
     - google-auth >= 1.3.0
-options:
-    filters:
-       description:
-           A list of filter value pairs. Available filters are listed here
-           U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
-           Each additional filter in the list will act be added as an AND condition
-           (filter1 and filter2)
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a backend bucket facts
-  gcp_compute_backend_bucket_facts:
-      filters:
-      - name = test_object
+- name:  a subscription facts
+  gcp_pubsub_subscription_facts:
       project: test_project
       auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
@@ -66,42 +57,48 @@ items:
     returned: always
     type: complex
     contains:
-        bucket_name:
-            description:
-                - Cloud Storage bucket name.
-            returned: success
-            type: str
-        creation_timestamp:
-            description:
-                - Creation timestamp in RFC3339 text format.
-            returned: success
-            type: str
-        description:
-            description:
-                - An optional textual description of the resource; provided by the client when the
-                  resource is created.
-            returned: success
-            type: str
-        enable_cdn:
-            description:
-                - If true, enable Cloud CDN for this BackendBucket.
-            returned: success
-            type: bool
-        id:
-            description:
-                - Unique identifier for the resource.
-            returned: success
-            type: int
         name:
             description:
-                - Name of the resource. Provided by the client when the resource is created. The name
-                  must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-                  be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-                  which means the first character must be a lowercase letter, and all following characters
-                  must be a dash, lowercase letter, or digit, except the last character, which cannot
-                  be a dash.
+                - Name of the subscription.
             returned: success
             type: str
+        topic:
+            description:
+                - A reference to a Topic resource.
+            returned: success
+            type: dict
+        push_config:
+            description:
+                - If push delivery is used with this subscription, this field is used to configure
+                  it. An empty pushConfig signifies that the subscriber will pull and ack messages
+                  using API methods.
+            returned: success
+            type: complex
+            contains:
+                push_endpoint:
+                    description:
+                        - A URL locating the endpoint to which messages should be pushed.
+                        - For example, a Webhook endpoint might use "U(https://example.com/push".)
+                    returned: success
+                    type: str
+        ack_deadline_seconds:
+            description:
+                - This value is the maximum time after a subscriber receives a message before the
+                  subscriber should acknowledge the message. After message delivery but before the
+                  ack deadline expires and before the message is acknowledged, it is an outstanding
+                  message and will not be delivered again during that time (on a best-effort basis).
+                - For pull subscriptions, this value is used as the initial value for the ack deadline.
+                  To override this value for a given message, call subscriptions.modifyAckDeadline
+                  with the corresponding ackId if using pull. The minimum custom deadline you can
+                  specify is 10 seconds. The maximum custom deadline you can specify is 600 seconds
+                  (10 minutes).
+                - If this parameter is 0, a default value of 10 seconds is used.
+                - For push delivery, this value is also used to set the request timeout for the call
+                  to the push endpoint.
+                - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
+                  redeliver the message.
+            returned: success
+            type: int
 '''
 
 ################################################################################
@@ -118,16 +115,15 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str')
         )
     )
 
     if 'scopes' not in module.params:
-        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+        module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
 
-    items = fetch_list(module, collection(module), query_options(module.params['filters']))
-    if items.get('items'):
-        items = items.get('items')
+    items = fetch_list(module, collection(module))
+    if items.get('subscriptions'):
+        items = items.get('subscriptions')
     else:
         items = []
     return_value = {
@@ -137,31 +133,13 @@ def main():
 
 
 def collection(module):
-    return "https://www.googleapis.com/compute/v1/projects/{project}/global/backendBuckets".format(**module.params)
+    return "https://pubsub.googleapis.com/v1/projects/{project}/subscriptions".format(**module.params)
 
 
-def fetch_list(module, link, query):
-    auth = GcpSession(module, 'compute')
-    response = auth.get(link, params={'filter': query})
+def fetch_list(module, link):
+    auth = GcpSession(module, 'pubsub')
+    response = auth.get(link)
     return return_if_object(module, response)
-
-
-def query_options(filters):
-    if not filters:
-        return ''
-
-    if len(filters) == 1:
-        return filters[0]
-    else:
-        queries = []
-        for f in filters:
-            # For multiple queries, all queries should have ()
-            if f[0] != '(' and f[-1] != ')':
-                queries.append("(%s)" % ''.join(f))
-            else:
-                queries.append(f)
-
-        return ' '.join(queries)
 
 
 def return_if_object(module, response):
