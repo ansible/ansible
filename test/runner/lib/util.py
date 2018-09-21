@@ -31,6 +31,13 @@ except ImportError:
     from abc import ABCMeta
     ABC = ABCMeta('ABC', (), {})
 
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import SafeConfigParser as ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
+
 DOCKER_COMPLETION = {}
 
 coverage_path = ''  # pylint: disable=locally-disabled, invalid-name

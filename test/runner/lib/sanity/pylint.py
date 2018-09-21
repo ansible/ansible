@@ -6,11 +6,6 @@ import json
 import os
 import datetime
 
-try:
-    import ConfigParser as configparser
-except ImportError:
-    import configparser
-
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -24,6 +19,7 @@ from lib.util import (
     run_command,
     display,
     read_lines_without_comments,
+    ConfigParser,
 )
 
 from lib.executor import (
@@ -244,7 +240,7 @@ class PylintTest(SanitySingleVersion):
         if not os.path.exists(rcfile):
             rcfile = 'test/sanity/pylint/config/default'
 
-        parser = configparser.SafeConfigParser()
+        parser = ConfigParser()
         parser.read(rcfile)
 
         if parser.has_section('ansible-test'):
