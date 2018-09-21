@@ -1549,6 +1549,9 @@ PLUGIN_FILTERS_CFG:
   ini:
   - key: plugin_filters_cfg
     section: default
+  - key: plugin_filters_cfg
+    section: defaults
+  type: path
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True
