@@ -224,7 +224,34 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :notes:
 
   * Details of any important information that doesn't fit in one of the above sections.
-  * For example, whether ``check_mode`` is or is not supported, or links to external documentation.
+  * For example, whether ``check_mode`` is or is not supported.
+
+:seealso:
+
+  * A list of references to other modules, documentation or Internet resources
+  * A reference can be one of the following formats:
+
+
+    .. code-block:: yaml+jinja
+
+        seealso::
+
+        # Reference by module name
+        - module: aci_tenant
+
+        # Reference by module name, including description
+        - module: aci_tenant
+          description: ACI module to create tenants on a Cisco ACI fabric.
+
+        # Reference by rST documentation anchor
+        - ref: aci_guide
+          description: Detailed information on how to manage your ACI infrastructure using Ansible.
+
+        # Reference by Internet resource
+        - name: APIC Management Information Model reference
+          description: Complete reference of the APIC object model.
+          link: https://developer.cisco.com/docs/apic-mim-ref/
+
 
 Linking within module documentation
 -----------------------------------
@@ -239,7 +266,8 @@ You can link from your module documentation to other module docs, other resource
 
 .. note::
 
-  To refer a collection of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
+    - To refer a collection of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
+    - Because it stands out better, using ``seealso`` is preferred for general references over the use of notes or adding links to the description.
 
 Documentation fragments
 -----------------------
@@ -248,9 +276,12 @@ If you're writing multiple related modules, they may share common documentation,
 
 For example, all AWS modules should include::
 
+.. code-block:: yaml+jinja
+
     extends_documentation_fragment:
         - aws
         - ec2
+
 
 You can find more examples by searching for ``extends_documentation_fragment`` under the Ansible source tree.
 
