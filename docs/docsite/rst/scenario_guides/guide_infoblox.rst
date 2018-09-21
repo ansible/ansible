@@ -20,6 +20,8 @@ Before using Ansible ``nios`` modules with Infoblox, you must install the ``info
 
     $ sudo pip install infoblox-client
 
+.. _nios_credentials:
+
 Credentials and authenticating
 ==============================
 
@@ -42,7 +44,7 @@ Ansible includes the following lookup plugins for NIOS:
 - :ref:`nios_next_ip <nios_next_ip_lookup>` Provides the next available IP address from a network. You'll see an example of this in `Creating a host record`_.
 - :ref:`nios_next_network <nios_next_network_lookup>` - Returns the next available network range for a network-container.
 
-You must run the NIOS lookup plugins locally by specifying ``connection: local``. See :ref:`lookup plugins <lookup_plugins>` for more detail. 
+You must run the NIOS lookup plugins locally by specifying ``connection: local``. See :ref:`lookup plugins <lookup_plugins>` for more detail.
 
 
 Retrieving all network views
@@ -155,7 +157,7 @@ You can access these playbooks at `Infoblox lookup playbooks <https://github.com
 Use cases with modules
 ======================
 
-You can use the ``nios`` modules in tasks to simplify common Infoblox workflows. Be sure to set up your `NIOS credentials <nios_credentials>`_ before following these examples.
+You can use the ``nios`` modules in tasks to simplify common Infoblox workflows. Be sure to set up your :ref:`NIOS credentials<nios_credentials>` before following these examples.
 
 Configuring an IPv4 network
 ---------------------------
