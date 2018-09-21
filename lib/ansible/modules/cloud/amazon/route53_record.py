@@ -30,7 +30,7 @@ options:
       - Specifies the state of the resource record.
     required: true
     choices: [ 'present', 'absent' ]
-  hosted_zone:
+  hosted_zone_name:
     description:
       - The DNS zone to modify
     required: true
@@ -53,7 +53,7 @@ options:
     choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA' ]
   record_set_value:
     description:
-      - The new value when creating a DNS record. 
+      - The new value when creating a DNS record.
   wait:
     description:
       - Wait until the changes have been replicated to all Amazon Route 53 DNS servers.
@@ -79,6 +79,18 @@ nameservers:
   - ns-516.awsdns-00.net.
   - ns-1504.awsdns-00.co.uk.
   - ns-1.awsdns-00.com.
+'''
+
+EXAMPLES = '''
+# Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
+- route53:
+      state: present
+      zone: foo.com
+      record: new.foo.com
+      type: A
+      ttl: 7200
+      value: 1.1.1.1,2.2.2.2,3.3.3.3
+      wait: yes
 '''
 
 try:
@@ -199,6 +211,7 @@ def main():
     record_controller = AWSRoute53Record(module=module, results=results)
     record_controller.process()
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()
