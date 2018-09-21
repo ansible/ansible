@@ -113,11 +113,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     def _get_json(self, url, ignore_errors=None):
 
-        if not self.use_cache or url not in self._cache.get(self.cache_key, {}):
+        if not self.use_cache:
+            new_results = True
+        else:
+            new_results = not self.cache.contains(self.cache_key) or url not in self.cache.get(self.cache_key)
 
-            if self.cache_key not in self._cache:
-                self._cache[self.cache_key] = {'url': ''}
-
+        if new_results:
             results = []
             s = self._get_session()
             params = {'page': 1, 'per_page': 250}
@@ -153,9 +154,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     # get next page
                     params['page'] += 1
 
-            self._cache[self.cache_key][url] = results
+            if self.use_cache:
+                self.cache.set(self.cache_key, {url: results})
+            return results
 
-        return self._cache[self.cache_key][url]
+        return self.cache.get(self.cache_key)[url]
 
     def _get_hosts(self):
         return self._get_json("%s/api/v2/hosts" % self.foreman_url)
