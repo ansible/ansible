@@ -19,10 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import pytest
 import os
 import json
 from pyFMG.fortimgr import FortiManager
+import pytest
 
 try:
     from ansible.modules.network.fortimanager import fmgr_device
@@ -33,7 +33,8 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{}.json".format(os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(
+        filename=os.path.splitext(os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -46,6 +47,7 @@ def load_fixtures():
 def fixture_data(request):
     func_name = request.function.__name__.replace("test_", "")
     return request.param.get(func_name, None)
+
 
 
 def test_discover_device(fixture_data, mocker):
@@ -65,7 +67,6 @@ def test_discover_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert isinstance(output['raw_response'], dict) is True
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.152', 'state': 'present',
                       'device_unique_name': 'FGT2', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -81,7 +82,6 @@ def test_discover_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert isinstance(output['raw_response'], dict) is True
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.153', 'state': 'present',
                       'device_unique_name': 'FGT3', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -97,7 +97,6 @@ def test_discover_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert output['raw_response']['status']['code'] == -20042
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.151', 'state': 'present',
                       'device_unique_name': 'FGT1', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -113,7 +112,6 @@ def test_discover_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert isinstance(output['raw_response'], dict) is True
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.152', 'state': 'present',
                       'device_unique_name': 'FGT2', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -129,7 +127,6 @@ def test_discover_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert isinstance(output['raw_response'], dict) is True
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.153', 'state': 'present',
                       'device_unique_name': 'FGT3', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -164,7 +161,6 @@ def test_add_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert isinstance(output['raw_response'], dict) is True
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.152', 'state': 'present',
                       'device_unique_name': 'FGT2', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -180,7 +176,6 @@ def test_add_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert isinstance(output['raw_response'], dict) is True
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.151', 'state': 'present',
                       'device_unique_name': 'FGT1', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -196,7 +191,6 @@ def test_add_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert output['raw_response']['status']['code'] == -20010
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.152', 'state': 'present',
                       'device_unique_name': 'FGT2', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -212,7 +206,6 @@ def test_add_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert output['raw_response']['status']['code'] == -20010
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.153', 'state': 'present',
                       'device_unique_name': 'FGT3', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -247,7 +240,6 @@ def test_delete_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert output['raw_response']['status']['code'] == 0
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.152', 'state': 'absent',
                       'device_unique_name': 'FGT2', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
@@ -263,7 +255,6 @@ def test_delete_device(fixture_data, mocker):
     # mode: execute
     ##################################################
     assert output['raw_response']['status']['code'] == 0
-
     paramgram_used = {'device_username': 'admin', 'adom': 'ansible', 'device_ip': '10.7.220.153', 'state': 'absent',
                       'device_unique_name': 'FGT3', 'device_serial': None, 'device_password': 'fortinet',
                       'mode': 'execute'}
