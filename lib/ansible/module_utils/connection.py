@@ -159,7 +159,7 @@ class Connection(object):
 
             raise ConnectionError(
                 "Failed to encode some variables as JSON for communication with ansible-connection. "
-                "The original exception was: " % to_text(exc)
+                "The original exception was: %s" % to_text(exc)
             )
 
         try:
