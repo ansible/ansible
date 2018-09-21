@@ -91,6 +91,9 @@ SPLIT_DATA = (
     (u'a={{ foo | some_filter(\' \', " ") }} b=bar',
         [u'a={{ foo | some_filter(\' \', " ") }}', u'b=bar'],
         {u'a': u'{{ foo | some_filter(\' \', " ") }}', u'b': u'bar'}),
+    (u'One\n  Two\n    Three\n',
+        [u'One\n ', u'Two\n   ', u'Three\n'],
+        {u'_raw_params': u'One\n  Two\n    Three\n'}),
 )
 
 SPLIT_ARGS = ((test[0], test[1]) for test in SPLIT_DATA)
