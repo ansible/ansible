@@ -72,6 +72,8 @@ notes:
      are not supplied, the task will be skipped.
   -  To sanitize any variables passed to the shell module, you should use
      "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
+  - An alternative to using inline shell scripts with this module is to use
+    the M(script) module possibly together with the M(template) module.
   - For Windows targets, use the M(win_shell) module instead.
 author:
     - Ansible Core Team
