@@ -143,7 +143,7 @@ class Connection(object):
         try:
             data = json.dumps(req)
         except TypeError as exc:
-            data = req['params']
+            data = req.get('params')
 
             if isinstance(data, dict):
                 data = data.get('var_options', {})
