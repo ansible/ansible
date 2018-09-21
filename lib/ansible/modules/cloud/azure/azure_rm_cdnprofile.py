@@ -103,6 +103,7 @@ def cdnprofile_to_dict(cdnprofile):
         tags=cdnprofile.tags
     )
 
+
 class AzureRMCdnprofile(AzureRMModuleBase):
 
     def __init__(self):
@@ -144,7 +145,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
 
         self.results = dict(changed=False)
 
-        super(AzureRMCdnprofile, self).__init__(derived_arg_spec=self.module_arGg_spec,
+        super(AzureRMCdnprofile, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                 supports_check_mode=True,
                                                 supports_tags=True,
                                                 required_if=required_if)
@@ -291,6 +292,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
                                                        base_url=self._cloud_environment.endpoints.resource_manager,
                                                        api_version='2017-04-02')
         return self.cdn_client
+
 
 def main():
     """Main execution"""
