@@ -737,18 +737,27 @@ def docker_qualify_image(name):
     return config.get('name', name)
 
 
-def parse_to_dict(pattern, value):
+def parse_to_list_of_dict(pattern, value):
     """
     :type pattern: str
     :type value: str
-    :return: dict[str, str]
+    :return: list[dict[str, str]]
     """
-    match = re.search(pattern, value)
+    matched = []
+    unmatched = []
 
-    if match is None:
-        raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
+    for line in value.splitlines():
+        match = re.search(pattern, line)
 
-    return match.groupdict()
+        if match:
+            matched.append(match.groupdict())
+        else:
+            unmatched.append(line)
+
+    if unmatched:
+        raise Exception('Pattern "%s" did not match values:\n%s' % (pattern, '\n'.join(unmatched)))
+
+    return matched
 
 
 def get_available_port():
