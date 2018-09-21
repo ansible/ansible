@@ -403,10 +403,10 @@ class AWSRoute53Record(object):
                 if zone is None:
                     self._module.fail_json(msg="zone id not exists: %s" % hosted_zone_id)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                self._module.fail_json_aws(e, msg="Couldn't get zone by hosted zone id")
+                self._module.fail_json_aws(e, msg="couldn't get zone by hosted zone id")
         else:
             self._module.fail_json(msg="hosted zone id is requied.")
-
+        self._module.fail_json(msg=zone)
         return zone
 
     def _get_zone_by_name(self):
@@ -422,14 +422,17 @@ class AWSRoute53Record(object):
             if zone is None:
                 self._module.fail_json(msg="zone name not exists: %s" % zone_name)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            self._module.fail_json_aws(e, msg="Couldn't get zone by hosted zone name")
+            self._module.fail_json_aws(e, msg="couldn't get zone by hosted zone name")
 
         return zone
 
     def _create_record(self):
+        #      self._connection.change_resource_record_sets(**kwargs)
         pass
 
     def _get_record(self):
+        #      self._connection.list_resource_record_sets(**kwargs)
+        # Lists the resource record sets in a specified hosted zone.
         pass
 
     def _update_record(self):
