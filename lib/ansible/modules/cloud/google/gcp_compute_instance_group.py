@@ -131,7 +131,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -153,7 +153,7 @@ RETURN = '''
             - The name must be 1-63 characters long, and comply with RFC1035.
         returned: success
         type: str
-    named_ports:
+    namedPorts:
         description:
             - Assigns a name to a port number.
             - 'For example: {name: "http", port: 80}.'

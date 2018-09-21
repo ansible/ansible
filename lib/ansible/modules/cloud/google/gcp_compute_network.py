@@ -146,7 +146,7 @@ RETURN = '''
             - Server-defined fully-qualified URLs for all subnetworks in this network.
         returned: success
         type: list
-    auto_create_subnetworks:
+    autoCreateSubnetworks:
         description:
             - When set to true, the network is created in "auto subnet mode". When set to false,
               the network is in "custom subnet mode".
@@ -154,7 +154,7 @@ RETURN = '''
               and it automatically creates one subnetwork per region.
         returned: success
         type: bool
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success

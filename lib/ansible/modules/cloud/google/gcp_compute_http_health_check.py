@@ -121,12 +121,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    check_interval_sec:
+    checkIntervalSec:
         description:
             - How often (in seconds) to send a health check. The default value is 5 seconds.
         returned: success
         type: int
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -137,7 +137,7 @@ RETURN = '''
               the resource.
         returned: success
         type: str
-    healthy_threshold:
+    healthyThreshold:
         description:
             - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
               The default value is 2.
@@ -171,20 +171,20 @@ RETURN = '''
             - The default value is 80.
         returned: success
         type: int
-    request_path:
+    requestPath:
         description:
             - The request path of the HTTP health check request.
             - The default value is /.
         returned: success
         type: str
-    timeout_sec:
+    timeoutSec:
         description:
             - How long (in seconds) to wait before claiming failure.
             - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
               than checkIntervalSec.
         returned: success
         type: int
-    unhealthy_threshold:
+    unhealthyThreshold:
         description:
             - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
               The default value is 2.

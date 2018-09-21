@@ -193,12 +193,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
         type: str
-    default_service:
+    defaultService:
         description:
             - A reference to BackendService resource if none of the hostRules match.
         returned: success
@@ -209,7 +209,7 @@ RETURN = '''
               the resource.
         returned: success
         type: str
-    host_rules:
+    hostRules:
         description:
             - The list of HostRules to use against the URL.
         returned: success
@@ -228,7 +228,7 @@ RETURN = '''
                       must be followed in the pattern by either - or .
                 returned: success
                 type: list
-            path_matcher:
+            pathMatcher:
                 description:
                     - The name of the PathMatcher to use to match the path portion of the URL if the hostRule
                       matches the URL's host portion.
@@ -249,13 +249,13 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    path_matchers:
+    pathMatchers:
         description:
             - The list of named PathMatchers to use against the URL.
         returned: success
         type: complex
         contains:
-            default_service:
+            defaultService:
                 description:
                     - A reference to a BackendService resource. This will be used if none of the pathRules
                       defined by this PathMatcher is matched by the URL's path portion.
@@ -271,7 +271,7 @@ RETURN = '''
                     - The name to which this PathMatcher is referred by the HostRule.
                 returned: success
                 type: str
-            path_rules:
+            pathRules:
                 description:
                     - The list of path rules.
                 returned: success

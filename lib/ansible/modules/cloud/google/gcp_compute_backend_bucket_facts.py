@@ -66,12 +66,12 @@ items:
     returned: always
     type: complex
     contains:
-        bucket_name:
+        bucketName:
             description:
                 - Cloud Storage bucket name.
             returned: success
             type: str
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -82,7 +82,7 @@ items:
                   resource is created.
             returned: success
             type: str
-        enable_cdn:
+        enableCdn:
             description:
                 - If true, enable Cloud CDN for this BackendBucket.
             returned: success

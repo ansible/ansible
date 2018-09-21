@@ -129,7 +129,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -140,7 +140,7 @@ RETURN = '''
               the resource. This field can be set only at resource creation time.
         returned: success
         type: str
-    gateway_address:
+    gatewayAddress:
         description:
             - The gateway address for default routes to reach destination addresses outside this
               subnetwork.
@@ -151,7 +151,7 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
-    ip_cidr_range:
+    ipCidrRange:
         description:
             - The range of internal addresses that are owned by this subnetwork.
             - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
@@ -175,7 +175,7 @@ RETURN = '''
             - Only networks that are in the distributed mode can have subnetworks.
         returned: success
         type: dict
-    private_ip_google_access:
+    privateIpGoogleAccess:
         description:
             - Whether the VMs in this subnet can access Google services without assigned external
               IP addresses.

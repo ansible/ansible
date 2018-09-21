@@ -98,7 +98,7 @@ RETURN = '''
               The final segment of the name must be between 6 and 30 characters in length.
         returned: success
         type: str
-    extra_statements:
+    extraStatements:
         description:
             - 'An optional list of DDL statements to run inside the newly created database. Statements
               can create tables, indexes, etc. These statements execute atomically with the creation

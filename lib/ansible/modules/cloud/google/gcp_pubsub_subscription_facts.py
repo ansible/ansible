@@ -67,7 +67,7 @@ items:
                 - A reference to a Topic resource.
             returned: success
             type: dict
-        push_config:
+        pushConfig:
             description:
                 - If push delivery is used with this subscription, this field is used to configure
                   it. An empty pushConfig signifies that the subscriber will pull and ack messages
@@ -75,13 +75,13 @@ items:
             returned: success
             type: complex
             contains:
-                push_endpoint:
+                pushEndpoint:
                     description:
                         - A URL locating the endpoint to which messages should be pushed.
                         - For example, a Webhook endpoint might use "U(https://example.com/push".)
                     returned: success
                     type: str
-        ack_deadline_seconds:
+        ackDeadlineSeconds:
             description:
                 - This value is the maximum time after a subscriber receives a message before the
                   subscriber should acknowledge the message. After message delivery but before the

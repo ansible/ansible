@@ -66,7 +66,7 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -91,7 +91,7 @@ items:
                   be a dash.
             returned: success
             type: str
-        proxy_header:
+        proxyHeader:
             description:
                 - Specifies the type of proxy header to append before sending data to the backend,
                   either NONE or PROXY_V1. The default is NONE.

@@ -152,7 +152,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    dest_range:
+    destRange:
         description:
             - The destination range of outgoing packets that this route applies to.
             - Only IPv4 is supported.
@@ -193,7 +193,7 @@ RETURN = '''
             - A list of instance tags to which this route applies.
         returned: success
         type: list
-    next_hop_gateway:
+    nextHopGateway:
         description:
             - URL to a gateway that should handle matching packets.
             - 'Currently, you can only specify the internet gateway, using a full or partial valid
@@ -202,7 +202,7 @@ RETURN = '''
               .'
         returned: success
         type: str
-    next_hop_instance:
+    nextHopInstance:
         description:
             - URL to an instance that should handle matching packets.
             - 'You can specify this as a full or partial URL. For example:  * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
@@ -210,17 +210,17 @@ RETURN = '''
               .'
         returned: success
         type: str
-    next_hop_ip:
+    nextHopIp:
         description:
             - Network IP address of an instance that should handle matching packets.
         returned: success
         type: str
-    next_hop_vpn_tunnel:
+    nextHopVpnTunnel:
         description:
             - URL to a VpnTunnel that should handle matching packets.
         returned: success
         type: str
-    next_hop_network:
+    nextHopNetwork:
         description:
             - URL to a Network that should handle matching packets.
         returned: success

@@ -68,7 +68,7 @@ items:
                   user's convenience. Has no effect on the managed zone's function.
             returned: success
             type: str
-        dns_name:
+        dnsName:
             description:
                 - The DNS name of this managed zone, for instance "example.com.".
             returned: success
@@ -84,20 +84,20 @@ items:
                 - Must be unique within the project.
             returned: success
             type: str
-        name_servers:
+        nameServers:
             description:
                 - Delegate your managed_zone to these virtual name servers; defined by the server
                   .
             returned: success
             type: list
-        name_server_set:
+        nameServerSet:
             description:
                 - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
                   a set of DNS name servers that all host the same ManagedZones. Most users will leave
                   this field unset.
             returned: success
             type: list
-        creation_time:
+        creationTime:
             description:
                 - The time that this resource was created on the server.
                 - This is in RFC3339 text format.

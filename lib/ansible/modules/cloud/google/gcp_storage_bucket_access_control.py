@@ -143,7 +143,7 @@ RETURN = '''
               entity would be domain-example.com.
         returned: success
         type: str
-    entity_id:
+    entityId:
         description:
             - The ID for the entity.
         returned: success
@@ -153,13 +153,13 @@ RETURN = '''
             - The ID of the access-control entry.
         returned: success
         type: str
-    project_team:
+    projectTeam:
         description:
             - The project team associated with the entity.
         returned: success
         type: complex
         contains:
-            project_number:
+            projectNumber:
                 description:
                     - The project team associated with the entity.
                 returned: success

@@ -131,7 +131,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    backup_pool:
+    backupPool:
         description:
             - This field is applicable only when the containing target pool is serving a forwarding
               rule as the primary pool, and its failoverRatio field is properly set to a value
@@ -146,7 +146,7 @@ RETURN = '''
               with the best effort, or to all instances when no instance is healthy.
         returned: success
         type: dict
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -156,7 +156,7 @@ RETURN = '''
             - An optional description of this resource.
         returned: success
         type: str
-    failover_ratio:
+    failoverRatio:
         description:
             - This field is applicable only when the containing target pool is serving a forwarding
               rule as the primary pool (i.e., not as a backup pool to some other target pool).
@@ -171,7 +171,7 @@ RETURN = '''
               or to all instances when no instance is healthy.
         returned: success
         type: str
-    health_check:
+    healthCheck:
         description:
             - A reference to a HttpHealthCheck resource.
             - A member instance in this pool is considered healthy if and only if the health checks
@@ -200,7 +200,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    session_affinity:
+    sessionAffinity:
         description:
             - 'Session affinity option. Must be one of these values:  - NONE: Connections from
               the same client IP may go to any instance in   the pool.'

@@ -396,7 +396,7 @@ RETURN = '''
                       entity would be domain-example.com.
                 returned: success
                 type: str
-            entity_id:
+            entityId:
                 description:
                     - The ID for the entity.
                 returned: success
@@ -406,13 +406,13 @@ RETURN = '''
                     - The ID of the access-control entry.
                 returned: success
                 type: str
-            project_team:
+            projectTeam:
                 description:
                     - The project team associated with the entity.
                 returned: success
                 type: complex
                 contains:
-                    project_number:
+                    projectNumber:
                         description:
                             - The project team associated with the entity.
                         returned: success
@@ -433,7 +433,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            max_age_seconds:
+            maxAgeSeconds:
                 description:
                     - The value, in seconds, to return in the Access-Control-Max-Age header used in preflight
                       responses.
@@ -451,13 +451,13 @@ RETURN = '''
                     - 'Note: "*" is permitted in the list of origins, and means "any Origin".'
                 returned: success
                 type: list
-            response_header:
+            responseHeader:
                 description:
                     - The list of HTTP headers other than the simple response headers to give permission
                       for the user-agent to share across domains.
                 returned: success
                 type: list
-    default_object_acl:
+    defaultObjectAcl:
         description:
             - Default access controls to apply to new objects when no ACL is provided.
         returned: success
@@ -489,7 +489,7 @@ RETURN = '''
                       entity would be domain-example.com.
                 returned: success
                 type: str
-            entity_id:
+            entityId:
                 description:
                     - The ID for the entity.
                 returned: success
@@ -509,13 +509,13 @@ RETURN = '''
                     - The name of the object, if applied to an object.
                 returned: success
                 type: str
-            project_team:
+            projectTeam:
                 description:
                     - The project team associated with the entity.
                 returned: success
                 type: complex
                 contains:
-                    project_number:
+                    projectNumber:
                         description:
                             - The project team associated with the entity.
                         returned: success
@@ -555,7 +555,7 @@ RETURN = '''
                         returned: success
                         type: complex
                         contains:
-                            storage_class:
+                            storageClass:
                                 description:
                                     - Target storage class. Required iff the type of the action is SetStorageClass.
                                 returned: success
@@ -571,32 +571,32 @@ RETURN = '''
                         returned: success
                         type: complex
                         contains:
-                            age_days:
+                            ageDays:
                                 description:
                                     - Age of an object (in days). This condition is satisfied when an object reaches the
                                       specified age.
                                 returned: success
                                 type: int
-                            created_before:
+                            createdBefore:
                                 description:
                                     - A date in RFC 3339 format with only the date part (for instance, "2013-01-15").
                                       This condition is satisfied when an object is created before midnight of the specified
                                       date in UTC.
                                 returned: success
                                 type: str
-                            is_live:
+                            isLive:
                                 description:
                                     - Relevant only for versioned objects.  If the value is true, this condition matches
                                       live objects; if the value is false, it matches archived objects.
                                 returned: success
                                 type: bool
-                            matches_storage_class:
+                            matchesStorageClass:
                                 description:
                                     - Objects having any of the storage classes specified by this condition will be matched.
                                       Values include MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.
                                 returned: success
                                 type: list
-                            num_newer_versions:
+                            numNewerVersions:
                                 description:
                                     - Relevant only for versioned objects. If the value is N, this condition is satisfied
                                       when there are at least N versions (including the live version) newer than this
@@ -617,12 +617,12 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            log_bucket:
+            logBucket:
                 description:
                     - The destination bucket where the current bucket's logs should be placed.
                 returned: success
                 type: str
-            log_object_prefix:
+            logObjectPrefix:
                 description:
                     - A prefix for log object names.
                 returned: success
@@ -648,17 +648,17 @@ RETURN = '''
                     - The entity, in the form project-owner-projectId.
                 returned: success
                 type: str
-            entity_id:
+            entityId:
                 description:
                     - The ID for the entity.
                 returned: success
                 type: str
-    project_number:
+    projectNumber:
         description:
             - The project number of the project the bucket belongs to.
         returned: success
         type: int
-    storage_class:
+    storageClass:
         description:
             - The bucket's default storage class, used whenever no storageClass is specified for
               a newly-created object. This defines how objects in the bucket are stored and determines
@@ -668,7 +668,7 @@ RETURN = '''
               For more information, see storage classes.
         returned: success
         type: str
-    time_created:
+    timeCreated:
         description:
             - The creation time of the bucket in RFC 3339 format.
         returned: success
@@ -696,14 +696,14 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            main_page_suffix:
+            mainPageSuffix:
                 description:
                     - If the requested object path is missing, the service will ensure the path has a
                       trailing '/', append this suffix, and attempt to retrieve the resulting object.
                       This allows the creation of index.html objects to represent directory pages.
                 returned: success
                 type: str
-            not_found_page:
+            notFoundPage:
                 description:
                     - If the requested object path is missing, and any mainPageSuffix object is missing,
                       if applicable, the service will return the named object from this bucket as the
@@ -715,7 +715,7 @@ RETURN = '''
             - A valid API project identifier.
         returned: success
         type: str
-    predefined_default_object_acl:
+    predefinedDefaultObjectAcl:
         description:
             - Apply a predefined set of default object access controls to this bucket.
             - 'Acceptable values are:   - "authenticatedRead": Object owner gets OWNER access,

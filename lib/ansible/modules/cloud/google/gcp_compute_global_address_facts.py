@@ -71,7 +71,7 @@ items:
                 - The static external IP address represented by this resource.
             returned: success
             type: str
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -97,13 +97,13 @@ items:
                   be a dash.
             returned: success
             type: str
-        label_fingerprint:
+        labelFingerprint:
             description:
                 - The fingerprint used for optimistic locking of this resource.  Used internally during
                   updates.
             returned: success
             type: str
-        ip_version:
+        ipVersion:
             description:
                 - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
                   The default value is IPV4.

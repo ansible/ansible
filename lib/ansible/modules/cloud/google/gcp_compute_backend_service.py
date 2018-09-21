@@ -311,7 +311,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    affinity_cookie_ttl_sec:
+    affinityCookieTtlSec:
         description:
             - Lifetime of cookies in seconds if session_affinity is GENERATED_COOKIE. If set to
               0, the cookie is non-persistent and lasts only until the end of the browser session
@@ -325,7 +325,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            balancing_mode:
+            balancingMode:
                 description:
                     - Specifies the balancing mode for this backend.
                     - For global HTTP(S) or TCP/SSL load balancing, the default is UTILIZATION. Valid
@@ -333,7 +333,7 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: str
-            capacity_scaler:
+            capacityScaler:
                 description:
                     - A multiplier applied to the group's maximum servicing capacity (based on UTILIZATION,
                       RATE or CONNECTION).
@@ -359,7 +359,7 @@ RETURN = '''
                       be in a zone within the same region as the BackendService.
                 returned: success
                 type: dict
-            max_connections:
+            maxConnections:
                 description:
                     - The max number of simultaneous connections for the group. Can be used with either
                       CONNECTION or UTILIZATION balancing modes.
@@ -368,7 +368,7 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: int
-            max_connections_per_instance:
+            maxConnectionsPerInstance:
                 description:
                     - The max number of simultaneous connections that a single backend instance can handle.
                       This is used to calculate the capacity of the group. Can be used in either CONNECTION
@@ -378,7 +378,7 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: int
-            max_rate:
+            maxRate:
                 description:
                     - The max requests per second (RPS) of the group.
                     - Can be used with either RATE or UTILIZATION balancing modes, but required if RATE
@@ -386,7 +386,7 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: int
-            max_rate_per_instance:
+            maxRatePerInstance:
                 description:
                     - The max requests per second (RPS) that a single backend instance can handle. This
                       is used to calculate the capacity of the group. Can be used in either balancing
@@ -394,43 +394,43 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: str
-            max_utilization:
+            maxUtilization:
                 description:
                     - Used when balancingMode is UTILIZATION. This ratio defines the CPU utilization target
                       for the group. The default is 0.8. Valid range is [0.0, 1.0].
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: str
-    cdn_policy:
+    cdnPolicy:
         description:
             - Cloud CDN configuration for this BackendService.
         returned: success
         type: complex
         contains:
-            cache_key_policy:
+            cacheKeyPolicy:
                 description:
                     - The CacheKeyPolicy for this CdnPolicy.
                 returned: success
                 type: complex
                 contains:
-                    include_host:
+                    includeHost:
                         description:
                             - If true requests to different hosts will be cached separately.
                         returned: success
                         type: bool
-                    include_protocol:
+                    includeProtocol:
                         description:
                             - If true, http and https requests will be cached separately.
                         returned: success
                         type: bool
-                    include_query_string:
+                    includeQueryString:
                         description:
                             - If true, include query string parameters in the cache key according to query_string_whitelist
                               and query_string_blacklist. If neither is set, the entire query string will be included.
                             - If false, the query string will be excluded from the cache key entirely.
                         returned: success
                         type: bool
-                    query_string_blacklist:
+                    queryStringBlacklist:
                         description:
                             - Names of query string parameters to exclude in cache keys.
                             - All other parameters will be included. Either specify query_string_whitelist or
@@ -438,7 +438,7 @@ RETURN = '''
                             - "'&' and '=' will be percent encoded and not treated as delimiters."
                         returned: success
                         type: list
-                    query_string_whitelist:
+                    queryStringWhitelist:
                         description:
                             - Names of query string parameters to include in cache keys.
                             - All other parameters will be excluded. Either specify query_string_whitelist or
@@ -446,19 +446,19 @@ RETURN = '''
                             - "'&' and '=' will be percent encoded and not treated as delimiters."
                         returned: success
                         type: list
-    connection_draining:
+    connectionDraining:
         description:
             - Settings for connection draining.
         returned: success
         type: complex
         contains:
-            draining_timeout_sec:
+            drainingTimeoutSec:
                 description:
                     - Time for which instance will be drained (not accept new connections, but still work
                       to finish started).
                 returned: success
                 type: int
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -468,13 +468,13 @@ RETURN = '''
             - An optional description of this resource.
         returned: success
         type: str
-    enable_cdn:
+    enableCDN:
         description:
             - If true, enable Cloud CDN for this BackendService.
             - When the load balancing scheme is INTERNAL, this field is not used.
         returned: success
         type: bool
-    health_checks:
+    healthChecks:
         description:
             - The list of URLs to the HttpHealthCheck or HttpsHealthCheck resource for health
               checking this BackendService. Currently at most one health check can be specified,
@@ -498,22 +498,22 @@ RETURN = '''
                     - Enables IAP.
                 returned: success
                 type: bool
-            oauth2_client_id:
+            oauth2ClientId:
                 description:
                     - OAuth2 Client ID for IAP.
                 returned: success
                 type: str
-            oauth2_client_secret:
+            oauth2ClientSecret:
                 description:
                     - OAuth2 Client Secret for IAP.
                 returned: success
                 type: str
-            oauth2_client_secret_sha256:
+            oauth2ClientSecretSha256:
                 description:
                     - OAuth2 Client Secret SHA-256 for IAP.
                 returned: success
                 type: str
-    load_balancing_scheme:
+    loadBalancingScheme:
         description:
             - Indicates whether the backend service will be used with internal or external load
               balancing. A backend service created for one type of load balancing cannot be used
@@ -530,7 +530,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    port_name:
+    portName:
         description:
             - Name of backend port. The same name should appear in the instance groups referenced
               by this service. Required when the load balancing scheme is EXTERNAL.
@@ -551,7 +551,7 @@ RETURN = '''
             - This field is not applicable to global backend services.
         returned: success
         type: str
-    session_affinity:
+    sessionAffinity:
         description:
             - Type of session affinity to use. The default is NONE.
             - When the load balancing scheme is EXTERNAL, can be NONE, CLIENT_IP, or GENERATED_COOKIE.
@@ -560,7 +560,7 @@ RETURN = '''
             - When the protocol is UDP, this field is not used.
         returned: success
         type: str
-    timeout_sec:
+    timeoutSec:
         description:
             - How many seconds to wait for the backend before considering it a failed request.
               Default is 30 seconds. Valid range is [1, 86400].

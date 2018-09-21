@@ -261,12 +261,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    check_interval_sec:
+    checkIntervalSec:
         description:
             - How often (in seconds) to send a health check. The default value is 5 seconds.
         returned: success
         type: int
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -277,7 +277,7 @@ RETURN = '''
               the resource.
         returned: success
         type: str
-    healthy_threshold:
+    healthyThreshold:
         description:
             - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
               The default value is 2.
@@ -298,14 +298,14 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    timeout_sec:
+    timeoutSec:
         description:
             - How long (in seconds) to wait before claiming failure.
             - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
               than checkIntervalSec.
         returned: success
         type: int
-    unhealthy_threshold:
+    unhealthyThreshold:
         description:
             - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
               The default value is 2.
@@ -318,7 +318,7 @@ RETURN = '''
               be specified, which must match type field.
         returned: success
         type: str
-    http_health_check:
+    httpHealthCheck:
         description:
             - A nested object resource.
         returned: success
@@ -331,7 +331,7 @@ RETURN = '''
                       is performed will be used.
                 returned: success
                 type: str
-            request_path:
+            requestPath:
                 description:
                     - The request path of the HTTP health check request.
                     - The default value is /.
@@ -343,19 +343,19 @@ RETURN = '''
                     - The default value is 80.
                 returned: success
                 type: int
-            port_name:
+            portName:
                 description:
                     - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
                       are defined, port takes precedence.
                 returned: success
                 type: str
-            proxy_header:
+            proxyHeader:
                 description:
                     - Specifies the type of proxy header to append before sending data to the backend,
                       either NONE or PROXY_V1. The default is NONE.
                 returned: success
                 type: str
-    https_health_check:
+    httpsHealthCheck:
         description:
             - A nested object resource.
         returned: success
@@ -368,7 +368,7 @@ RETURN = '''
                       is performed will be used.
                 returned: success
                 type: str
-            request_path:
+            requestPath:
                 description:
                     - The request path of the HTTPS health check request.
                     - The default value is /.
@@ -380,19 +380,19 @@ RETURN = '''
                     - The default value is 443.
                 returned: success
                 type: int
-            port_name:
+            portName:
                 description:
                     - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
                       are defined, port takes precedence.
                 returned: success
                 type: str
-            proxy_header:
+            proxyHeader:
                 description:
                     - Specifies the type of proxy header to append before sending data to the backend,
                       either NONE or PROXY_V1. The default is NONE.
                 returned: success
                 type: str
-    tcp_health_check:
+    tcpHealthCheck:
         description:
             - A nested object resource.
         returned: success
@@ -418,19 +418,19 @@ RETURN = '''
                     - The default value is 443.
                 returned: success
                 type: int
-            port_name:
+            portName:
                 description:
                     - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
                       are defined, port takes precedence.
                 returned: success
                 type: str
-            proxy_header:
+            proxyHeader:
                 description:
                     - Specifies the type of proxy header to append before sending data to the backend,
                       either NONE or PROXY_V1. The default is NONE.
                 returned: success
                 type: str
-    ssl_health_check:
+    sslHealthCheck:
         description:
             - A nested object resource.
         returned: success
@@ -456,13 +456,13 @@ RETURN = '''
                     - The default value is 443.
                 returned: success
                 type: int
-            port_name:
+            portName:
                 description:
                     - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
                       are defined, port takes precedence.
                 returned: success
                 type: str
-            proxy_header:
+            proxyHeader:
                 description:
                     - Specifies the type of proxy header to append before sending data to the backend,
                       either NONE or PROXY_V1. The default is NONE.

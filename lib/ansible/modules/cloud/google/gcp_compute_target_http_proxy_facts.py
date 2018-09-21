@@ -66,7 +66,7 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -91,7 +91,7 @@ items:
                   be a dash.
             returned: success
             type: str
-        url_map:
+        urlMap:
             description:
                 - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
             returned: success

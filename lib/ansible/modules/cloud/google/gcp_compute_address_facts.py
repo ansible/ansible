@@ -79,13 +79,13 @@ items:
                   be inside the specified subnetwork, if any.
             returned: success
             type: str
-        address_type:
+        addressType:
             description:
                 - The type of address to reserve, either INTERNAL or EXTERNAL.
                 - If unspecified, defaults to EXTERNAL.
             returned: success
             type: str
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success

@@ -105,7 +105,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -140,7 +140,7 @@ RETURN = '''
             - A list of references to VpnTunnel resources associated to this VPN gateway.
         returned: success
         type: list
-    forwarding_rules:
+    forwardingRules:
         description:
             - A list of references to the ForwardingRule resources associated to this VPN gateway.
         returned: success

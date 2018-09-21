@@ -129,7 +129,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -154,7 +154,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    url_map:
+    urlMap:
         description:
             - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
         returned: success

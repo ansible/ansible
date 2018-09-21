@@ -423,18 +423,18 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    can_ip_forward:
+    canIpForward:
         description:
             - Allows this instance to send and receive packets with non-matching destination or
               source IPs. This is required if you plan to use this instance to forward routes.
         returned: success
         type: bool
-    cpu_platform:
+    cpuPlatform:
         description:
             - The CPU platform used by this instance.
         returned: success
         type: str
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -446,7 +446,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            auto_delete:
+            autoDelete:
                 description:
                     - Specifies whether the disk will be auto-deleted when the instance is deleted (but
                       not when the disk is detached from the instance).
@@ -460,26 +460,26 @@ RETURN = '''
                       of the disk for its root filesystem.
                 returned: success
                 type: bool
-            device_name:
+            deviceName:
                 description:
                     - Specifies a unique device name of your choice that is reflected into the /dev/disk/by-id/google-*
                       tree of a Linux operating system running within the instance. This name can be used
                       to reference the device for mounting, resizing, and so on, from within the instance.
                 returned: success
                 type: str
-            disk_encryption_key:
+            diskEncryptionKey:
                 description:
                     - Encrypts or decrypts a disk using a customer-supplied encryption key.
                 returned: success
                 type: complex
                 contains:
-                    raw_key:
+                    rawKey:
                         description:
                             - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                               to either encrypt or decrypt this resource.
                         returned: success
                         type: str
-                    rsa_encrypted_key:
+                    rsaEncryptedKey:
                         description:
                             - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
                               key to either encrypt or decrypt this resource.
@@ -498,7 +498,7 @@ RETURN = '''
                       a unique index number. If not specified, the server will choose an appropriate value.
                 returned: success
                 type: int
-            initialize_params:
+            initializeParams:
                 description:
                     - Specifies the parameters for a new disk that will be created alongside the new instance.
                       Use initialization parameters to create boot disks or local SSDs attached to the
@@ -506,32 +506,32 @@ RETURN = '''
                 returned: success
                 type: complex
                 contains:
-                    disk_name:
+                    diskName:
                         description:
                             - Specifies the disk name. If not specified, the default is to use the name of the
                               instance.
                         returned: success
                         type: str
-                    disk_size_gb:
+                    diskSizeGb:
                         description:
                             - Specifies the size of the disk in base-2 GB.
                         returned: success
                         type: int
-                    disk_type:
+                    diskType:
                         description:
                             - Reference to a gcompute_disk_type resource.
                             - Specifies the disk type to use to create the instance.
                             - If not specified, the default is pd-standard.
                         returned: success
                         type: str
-                    source_image:
+                    sourceImage:
                         description:
                             - The source image to create this disk. When creating a new instance, one of initializeParams.sourceImage
                               or disks.source is required.  To create a disk with one of the public operating
                               system images, specify the image by its family name.
                         returned: success
                         type: str
-                    source_image_encryption_key:
+                    sourceImageEncryptionKey:
                         description:
                             - The customer-supplied encryption key of the source image. Required if the source
                               image is protected by a customer-supplied encryption key.
@@ -541,7 +541,7 @@ RETURN = '''
                         returned: success
                         type: complex
                         contains:
-                            raw_key:
+                            rawKey:
                                 description:
                                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                                       to either encrypt or decrypt this resource.
@@ -581,18 +581,18 @@ RETURN = '''
                       the default is PERSISTENT.
                 returned: success
                 type: str
-    guest_accelerators:
+    guestAccelerators:
         description:
             - List of the type and count of accelerator cards attached to the instance .
         returned: success
         type: complex
         contains:
-            accelerator_count:
+            acceleratorCount:
                 description:
                     - The number of the guest accelerator cards exposed to this instance.
                 returned: success
                 type: int
-            accelerator_type:
+            acceleratorType:
                 description:
                     - Full or partial URL of the accelerator type resource to expose to this instance.
                 returned: success
@@ -602,7 +602,7 @@ RETURN = '''
             - The unique identifier for the resource. This identifier is defined by the server.
         returned: success
         type: int
-    label_fingerprint:
+    labelFingerprint:
         description:
             - A fingerprint for this request, which is essentially a hash of the metadata's contents
               and used for optimistic locking. The fingerprint is initially generated by Compute
@@ -616,12 +616,12 @@ RETURN = '''
               These pairs can consist of custom metadata or predefined keys.
         returned: success
         type: dict
-    machine_type:
+    machineType:
         description:
             - A reference to a machine type which defines VM kind.
         returned: success
         type: str
-    min_cpu_platform:
+    minCpuPlatform:
         description:
             - Specifies a minimum CPU platform for the VM instance. Applicable values are the
               friendly names of CPU platforms .
@@ -637,7 +637,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    network_interfaces:
+    networkInterfaces:
         description:
             - An array of configurations for this interface. This specifies how this interface
               is configured to interact with other network services, such as connecting to the
@@ -645,7 +645,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            access_configs:
+            accessConfigs:
                 description:
                     - An array of configurations for this interface. Currently, only one access config,
                       ONE_TO_ONE_NAT, is supported. If there are no accessConfigs specified, then this
@@ -660,7 +660,7 @@ RETURN = '''
                               IP or Network Access.
                         returned: success
                         type: str
-                    nat_ip:
+                    natIP:
                         description:
                             - Specifies the title of a gcompute_address.
                             - An external IP address associated with this instance.
@@ -675,14 +675,14 @@ RETURN = '''
                             - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
                         returned: success
                         type: str
-            alias_ip_ranges:
+            aliasIpRanges:
                 description:
                     - An array of alias IP ranges for this network interface. Can only be specified for
                       network interfaces on subnet-mode networks.
                 returned: success
                 type: complex
                 contains:
-                    ip_cidr_range:
+                    ipCidrRange:
                         description:
                             - The IP CIDR range represented by this alias IP range.
                             - This IP CIDR range must belong to the specified subnetwork and cannot contain IP
@@ -691,7 +691,7 @@ RETURN = '''
                               (e.g. 10.1.2.0/24).
                         returned: success
                         type: str
-                    subnetwork_range_name:
+                    subnetworkRangeName:
                         description:
                             - Optional subnetwork secondary range name specifying the secondary range from which
                               to allocate the IP CIDR range for this alias IP range. If left unspecified, the
@@ -712,7 +712,7 @@ RETURN = '''
                       is inferred.
                 returned: success
                 type: dict
-            network_ip:
+            networkIP:
                 description:
                     - An IPv4 internal network address to assign to the instance for this network interface.
                       If not specified by the user, an unused internal IP is assigned by the system.
@@ -732,7 +732,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            automatic_restart:
+            automaticRestart:
                 description:
                     - Specifies whether the instance should be automatically restarted if it is terminated
                       by Compute Engine (not terminated by a user).
@@ -740,7 +740,7 @@ RETURN = '''
                       instances cannot be automatically restarted.
                 returned: success
                 type: bool
-            on_host_maintenance:
+            onHostMaintenance:
                 description:
                     - Defines the maintenance behavior for this instance. For standard instances, the
                       default behavior is MIGRATE. For preemptible instances, the default and only possible
@@ -754,7 +754,7 @@ RETURN = '''
                       creation, it cannot be set or changed after the instance has been created.
                 returned: success
                 type: bool
-    service_accounts:
+    serviceAccounts:
         description:
             - A list of service accounts, with their specified scopes, authorized for this instance.
               Only one service account per VM instance is supported.
@@ -777,7 +777,7 @@ RETURN = '''
               RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
         returned: success
         type: str
-    status_message:
+    statusMessage:
         description:
             - An optional, human-readable explanation of the status.
         returned: success

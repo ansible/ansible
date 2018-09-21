@@ -162,7 +162,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    base_instance_name:
+    baseInstanceName:
         description:
             - The base instance name to use for instances in this group. The value must be 1-58
               characters long. Instances are named by appending a hyphen and a random four-character
@@ -170,12 +170,12 @@ RETURN = '''
             - The base instance name must comply with RFC1035.
         returned: success
         type: str
-    creation_timestamp:
+    creationTimestamp:
         description:
             - The creation timestamp for this managed instance group in RFC3339 text format.
         returned: success
         type: str
-    current_actions:
+    currentActions:
         description:
             - The list of instance actions and the number of instances in this managed instance
               group that are scheduled for each of those actions.
@@ -198,7 +198,7 @@ RETURN = '''
                       the creatingWithoutRetries field will be populated.
                 returned: success
                 type: int
-            creating_without_retries:
+            creatingWithoutRetries:
                 description:
                     - The number of instances that the managed instance group will attempt to create.
                       The group attempts to create each instance only once. If the group fails to create
@@ -249,12 +249,12 @@ RETURN = '''
             - A unique identifier for this resource.
         returned: success
         type: int
-    instance_group:
+    instanceGroup:
         description:
             - The instance group being managed.
         returned: success
         type: dict
-    instance_template:
+    instanceTemplate:
         description:
             - The instance template that is specified for this managed instance group. The group
               uses this template to create all new instances in the managed instance group.
@@ -266,7 +266,7 @@ RETURN = '''
               comply with RFC1035.
         returned: success
         type: str
-    named_ports:
+    namedPorts:
         description:
             - Named ports configured for the Instance Groups complementary to this Instance Group
               Manager.
@@ -289,14 +289,14 @@ RETURN = '''
             - The region this managed instance group resides (for regional resources).
         returned: success
         type: str
-    target_pools:
+    targetPools:
         description:
             - TargetPool resources to which instances in the instanceGroup field are added. The
               target pools automatically apply to all of the instances in the managed instance
               group.
         returned: success
         type: list
-    target_size:
+    targetSize:
         description:
             - The target number of running instances for this managed instance group. Deleting
               or abandoning instances reduces this number. Resizing the group changes this number.

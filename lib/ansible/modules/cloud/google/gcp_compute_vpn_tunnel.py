@@ -164,7 +164,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -183,7 +183,7 @@ RETURN = '''
             - An optional description of this resource.
         returned: success
         type: str
-    target_vpn_gateway:
+    targetVpnGateway:
         description:
             - URL of the Target VPN gateway with which this VPN tunnel is associated.
         returned: success
@@ -193,29 +193,29 @@ RETURN = '''
             - URL of router resource to be used for dynamic routing.
         returned: success
         type: dict
-    peer_ip:
+    peerIp:
         description:
             - IP address of the peer VPN gateway. Only IPv4 is supported.
         returned: success
         type: str
-    shared_secret:
+    sharedSecret:
         description:
             - Shared secret used to set the secure session between the Cloud VPN gateway and the
               peer VPN gateway.
         returned: success
         type: str
-    shared_secret_hash:
+    sharedSecretHash:
         description:
             - Hash of the shared secret.
         returned: success
         type: str
-    ike_version:
+    ikeVersion:
         description:
             - IKE protocol version to use when establishing the VPN tunnel with peer VPN gateway.
             - Acceptable IKE versions are 1 or 2. Default version is 2.
         returned: success
         type: int
-    local_traffic_selector:
+    localTrafficSelector:
         description:
             - Local traffic selector to use when establishing the VPN tunnel with peer VPN gateway.
               The value should be a CIDR formatted string, for example `192.168.0.0/16`. The ranges
@@ -223,7 +223,7 @@ RETURN = '''
             - Only IPv4 is supported.
         returned: success
         type: list
-    remote_traffic_selector:
+    remoteTrafficSelector:
         description:
             - Remote traffic selector to use when establishing the VPN tunnel with peer VPN gateway.
               The value should be a CIDR formatted string, for example `192.168.0.0/16`. The ranges
@@ -236,7 +236,7 @@ RETURN = '''
             - Labels to apply to this VpnTunnel.
         returned: success
         type: dict
-    label_fingerprint:
+    labelFingerprint:
         description:
             - The fingerprint used for optimistic locking of this resource.  Used internally during
               updates.

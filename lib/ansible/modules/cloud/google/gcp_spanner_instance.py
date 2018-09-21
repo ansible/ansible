@@ -117,13 +117,13 @@ RETURN = '''
             - A reference to the instance configuration.
         returned: success
         type: str
-    display_name:
+    displayName:
         description:
             - The descriptive name for this instance as it appears in UIs. Must be unique per
               project and between 4 and 30 characters in length.
         returned: success
         type: str
-    node_count:
+    nodeCount:
         description:
             - The number of nodes allocated to this instance.
         returned: success

@@ -88,7 +88,7 @@ items:
                         - 'Example inputs include: ["22"], ["80","443"], and ["12345-12349"].'
                     returned: success
                     type: list
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -121,7 +121,7 @@ items:
                   the resource.
             returned: success
             type: str
-        destination_ranges:
+        destinationRanges:
             description:
                 - If destination ranges are specified, the firewall will apply only to traffic that
                   has destination IP address in these ranges. These ranges must be expressed in CIDR
@@ -170,7 +170,7 @@ items:
                   precedence over ALLOW rules having equal priority.
             returned: success
             type: int
-        source_ranges:
+        sourceRanges:
             description:
                 - If source ranges are specified, the firewall will apply only to traffic that has
                   source IP address in these ranges. These ranges must be expressed in CIDR format.
@@ -180,7 +180,7 @@ items:
                   does not need to match both properties for the firewall to apply. Only IPv4 is supported.
             returned: success
             type: list
-        source_service_accounts:
+        sourceServiceAccounts:
             description:
                 - If source service accounts are specified, the firewall will apply only to traffic
                   originating from an instance with a service account in this list. Source service
@@ -193,7 +193,7 @@ items:
                   cannot be used at the same time as sourceTags or targetTags.
             returned: success
             type: list
-        source_tags:
+        sourceTags:
             description:
                 - If source tags are specified, the firewall will apply only to traffic with source
                   IP that belongs to a tag listed in source tags. Source tags cannot be used to control
@@ -205,7 +205,7 @@ items:
                   firewall to apply.
             returned: success
             type: list
-        target_service_accounts:
+        targetServiceAccounts:
             description:
                 - A list of service accounts indicating sets of instances located in the network that
                   may make network connections as specified in allowed[].
@@ -214,7 +214,7 @@ items:
                   applies to all instances on the specified network.
             returned: success
             type: list
-        target_tags:
+        targetTags:
             description:
                 - A list of instance tags indicating sets of instances located in the network that
                   may make network connections as specified in allowed[].

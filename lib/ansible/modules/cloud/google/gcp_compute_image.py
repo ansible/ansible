@@ -202,12 +202,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    archive_size_bytes:
+    archiveSizeBytes:
         description:
             - Size of the image tar.gz archive stored in Google Cloud Storage (in bytes).
         returned: success
         type: int
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -261,7 +261,7 @@ RETURN = '''
               the resource.
         returned: success
         type: str
-    disk_size_gb:
+    diskSizeGb:
         description:
             - Size of the image when restored onto a persistent disk (in GB).
         returned: success
@@ -274,7 +274,7 @@ RETURN = '''
               comply with RFC1035.
         returned: success
         type: str
-    guest_os_features:
+    guestOsFeatures:
         description:
             - A list of features to enable on the guest OS. Applicable for bootable images only.
               Currently, only one feature can be enabled, VIRTIO_SCSI_MULTIQUEUE, which allows
@@ -300,7 +300,7 @@ RETURN = '''
             - The unique identifier for the resource. This identifier is defined by the server.
         returned: success
         type: int
-    image_encryption_key:
+    imageEncryptionKey:
         description:
             - Encrypts the image using a customer-supplied encryption key.
             - After you encrypt an image with a customer-supplied key, you must provide the same
@@ -308,7 +308,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            raw_key:
+            rawKey:
                 description:
                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                       to either encrypt or decrypt this resource.
@@ -335,20 +335,20 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    raw_disk:
+    rawDisk:
         description:
             - The parameters of the raw disk image.
         returned: success
         type: complex
         contains:
-            container_type:
+            containerType:
                 description:
                     - The format used to encode and transmit the block device, which should be TAR. This
                       is just a container and transmission format and not a runtime format. Provided by
                       the client when the disk image is created.
                 returned: success
                 type: str
-            sha1_checksum:
+            sha1Checksum:
                 description:
                     - An optional SHA1 checksum of the disk image before unpackaging.
                     - This is provided by the client when the disk image is created.
@@ -360,20 +360,20 @@ RETURN = '''
                       either this property or the sourceDisk property but not both.
                 returned: success
                 type: str
-    source_disk:
+    sourceDisk:
         description:
             - Refers to a gcompute_disk object You must provide either this property or the rawDisk.source
               property but not both to create an image.
         returned: success
         type: dict
-    source_disk_encryption_key:
+    sourceDiskEncryptionKey:
         description:
             - The customer-supplied encryption key of the source disk. Required if the source
               disk is protected by a customer-supplied encryption key.
         returned: success
         type: complex
         contains:
-            raw_key:
+            rawKey:
                 description:
                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                       to either encrypt or decrypt this resource.
@@ -385,14 +385,14 @@ RETURN = '''
                       that protects this resource.
                 returned: success
                 type: str
-    source_disk_id:
+    sourceDiskId:
         description:
             - The ID value of the disk used to create this image. This value may be used to determine
               whether the image was taken from the current or a previous instance of a given disk
               name.
         returned: success
         type: str
-    source_type:
+    sourceType:
         description:
             - The type of the image used to create this disk. The default and only value is RAW
               .
