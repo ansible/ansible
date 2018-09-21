@@ -1,3 +1,8 @@
+- name: Make sure we're not already using Docker swarm
+  docker_swarm:
+    state: absent
+    force: true
+
 - name: Create a Swarm cluster
   docker_swarm:
     state: present
