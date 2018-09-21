@@ -41,6 +41,7 @@ def ansible_environment(args, color=True):
         ANSIBLE_DEPRECATION_WARNINGS='false',
         ANSIBLE_HOST_KEY_CHECKING='false',
         ANSIBLE_CONFIG=os.path.abspath(ansible_config),
+        ANSIBLE_LIBRARY='/dev/null',
         PYTHONPATH=os.path.abspath('lib'),
         PAGER='/bin/cat',
         PATH=path,
