@@ -1441,6 +1441,13 @@ def get_integration_docker_filter(args, targets):
 
     common_integration_filter(args, targets, exclude)
 
+    skip = 'skip/docker/'
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which cannot run under --docker: %s'
+                        % (skip.rstrip('/'), ', '.join(skipped)))
+
     if not args.docker_privileged:
         skip = 'needs/privileged/'
         skipped = [target.name for target in targets if skip in target.aliases]
