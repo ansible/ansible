@@ -77,7 +77,7 @@ options:
             - The list of DENY rules specified by this firewall. Each rule specifies a protocol
               and port-range tuple that describes a denied connection.
         required: false
-        version_added: 2.7
+        version_added: 2.8
         suboptions:
             ip_protocol:
                 description:
@@ -103,14 +103,14 @@ options:
               has destination IP address in these ranges. These ranges must be expressed in CIDR
               format. Only IPv4 is supported.
         required: false
-        version_added: 2.7
+        version_added: 2.8
     direction:
         description:
             - 'Direction of traffic to which this firewall applies; default is INGRESS. Note:
               For INGRESS traffic, it is NOT supported to specify destinationRanges; For EGRESS
               traffic, it is NOT supported to specify sourceRanges OR sourceTags.'
         required: false
-        version_added: 2.7
+        version_added: 2.8
         choices: ['INGRESS', 'EGRESS']
     name:
         description:
@@ -140,7 +140,7 @@ options:
               precedence over ALLOW rules having equal priority.
         required: false
         default: 1000
-        version_added: 2.7
+        version_added: 2.8
     source_ranges:
         description:
             - If source ranges are specified, the firewall will apply only to traffic that has
@@ -162,7 +162,7 @@ options:
               connection does not need to match both properties for the firewall to apply. sourceServiceAccounts
               cannot be used at the same time as sourceTags or targetTags.
         required: false
-        version_added: 2.7
+        version_added: 2.8
     source_tags:
         description:
             - If source tags are specified, the firewall will apply only to traffic with source
@@ -182,7 +182,7 @@ options:
               If neither targetServiceAccounts nor targetTags are specified, the firewall rule
               applies to all instances on the specified network.
         required: false
-        version_added: 2.7
+        version_added: 2.8
     target_tags:
         description:
             - A list of instance tags indicating sets of instances located in the network that

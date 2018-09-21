@@ -34,7 +34,7 @@ module: gcp_pubsub_topic_facts
 description:
   - Gather facts for GCP Topic
 short_description: Gather facts for GCP Topic
-version_added: 2.7
+version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
     - python >= 2.6

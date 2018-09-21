@@ -34,7 +34,7 @@ module: gcp_dns_resource_record_set_facts
 description:
   - Gather facts for GCP ResourceRecordSet
 short_description: Gather facts for GCP ResourceRecordSet
-version_added: 2.7
+version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
     - python >= 2.6

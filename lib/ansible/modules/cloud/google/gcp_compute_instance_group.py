@@ -102,7 +102,7 @@ options:
               be deleted.
             - Only the full identifier of the instance will be returned.
         required: false
-        version_added: 2.7
+        version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
