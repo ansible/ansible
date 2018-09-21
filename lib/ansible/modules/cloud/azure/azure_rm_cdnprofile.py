@@ -136,7 +136,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
         self.tags = None
         self.sku = None
 
-        self._cdn_client = None
+        self.cdn_client = None
 
         required_if = [
             ('state', 'present', ['sku'])
@@ -155,7 +155,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
-        self._cdn_client = self.get_cdn_client()
+        self.cdn_client = self.get_cdn_client()
 
         to_be_updated = False
 
@@ -285,12 +285,12 @@ class AzureRMCdnprofile(AzureRMModuleBase):
             self.log('Did not find the CDN profile.')
             return False
 
-    def get_cdn_client():
-        if not self._cdn_client:
-            self._cdn_client = self.get_mgmt_svc_client(CdnManagementClient,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager,
-                                                        api_version='2017-04-02')
-        return self._cdn_client
+    def get_cdn_client(self):
+        if not self.cdn_client:
+            self.cdn_client = self.get_mgmt_svc_client(CdnManagementClient,
+                                                       base_url=self._cloud_environment.endpoints.resource_manager,
+                                                       api_version='2017-04-02')
+        return self.cdn_client
 
 def main():
     """Main execution"""
