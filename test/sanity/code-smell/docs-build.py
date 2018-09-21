@@ -3,21 +3,32 @@
 import os
 import re
 import subprocess
+import sys
 
 
 def main():
-    base_dir = os.getcwd() + os.sep
+    base_dir = os.getcwd() + os.path.sep
     docs_dir = os.path.abspath('docs/docsite')
     cmd = ['make', 'singlehtmldocs']
 
     sphinx = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=docs_dir)
     stdout, stderr = sphinx.communicate()
 
+    stdout = stdout.decode('utf-8')
+    stderr = stderr.decode('utf-8')
+
     if sphinx.returncode != 0:
-        print("Command '%s' failed with status code: %d" % (' '.join(cmd), sphinx.returncode))
-        print(stdout)
-        print(stderr)
-        return
+        sys.stderr.write("Command '%s' failed with status code: %d\n" % (' '.join(cmd), sphinx.returncode))
+
+        if stdout.strip():
+            sys.stderr.write("--> Standard Output\n")
+            sys.stderr.write("%s\n" % stdout.strip())
+
+        if stderr.strip():
+            sys.stderr.write("--> Standard Error\n")
+            sys.stderr.write("%s\n" % stderr.strip())
+
+        sys.exit(1)
 
     with open('docs/docsite/rst_warnings', 'r') as warnings_fd:
         output = warnings_fd.read().strip()
