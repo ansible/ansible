@@ -16,8 +16,3 @@
       pip:
         state: present
         name: 'docker{{ extra_packages }}'
-
-    - name: Make sure we're not using Docker swarm
-      docker_swarm:
-        state: absent
-        force: true
