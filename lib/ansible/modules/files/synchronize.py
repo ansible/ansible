@@ -305,7 +305,6 @@ EXAMPLES = '''
 
 
 import os
-import subprocess
 import errno
 
 from ansible.module_utils.basic import AnsibleModule, to_bytes, PY3
@@ -421,10 +420,7 @@ def main():
     _sshpass_pipe = None
     if rsync_password:
         try:
-            proc = subprocess.Popen(
-                ["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            proc.communicate()
+            module.run_command(["sshpass"])
         except OSError:
             module.fail_json(
                 msg="to use rsync connection with passwords, you must install the sshpass program"
@@ -538,27 +534,22 @@ def main():
     cmd.append(dest)
     cmdstr = ' '.join(cmd)
 
-    # On python3 we need to pass file descriptors explicitly
-    if PY3 and rsync_password:
-        # pylint: disable=unexpected-keyword-arg
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=_sshpass_pipe
-        )
-    else:
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
     # If we are using password authentication, write the password into the pipe
     if rsync_password:
-        os.close(_sshpass_pipe[0])
-        try:
-            os.write(_sshpass_pipe[1], to_bytes(rsync_password) + b'\n')
-        except OSError as exc:
-            # Ignore broken pipe errors if the sshpass process has exited.
-            if exc.errno != errno.EPIPE or proc.poll() is None:
-                raise
-    out, err = proc.communicate()
-    rc = proc.returncode
+        def _write_password_to_pipe(proc):
+            os.close(_sshpass_pipe[0])
+            try:
+                os.write(_sshpass_pipe[1], to_bytes(rsync_password) + b'\n')
+            except OSError as exc:
+                # Ignore broken pipe errors if the sshpass process has exited.
+                if exc.errno != errno.EPIPE or proc.poll() is None:
+                    raise
+        (rc, out, err) = module.run_command(
+            cmd, pass_fds=_sshpass_pipe,
+            before_communicate_callback=_write_password_to_pipe
+        )
+    else:
+        (rc, out, err) = module.run_command(cmd)
 
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
