@@ -115,11 +115,11 @@ cdnprofiles:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-from azure.mgmt.cdn import CdnManagementClient
 
 try:
     from azure.mgmt.cdn.models import ErrorResponseException
     from azure.common import AzureHttpError
+    from azure.mgmt.cdn import CdnManagementClient
 except:
     # handled in azure_rm_common
     pass

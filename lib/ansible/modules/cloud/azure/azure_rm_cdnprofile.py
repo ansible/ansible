@@ -82,10 +82,10 @@ id:
             id: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-from azure.mgmt.cdn import CdnManagementClient
 
 try:
     from azure.mgmt.cdn.models import Profile, Sku, ErrorResponseException
+    from azure.mgmt.cdn import CdnManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
