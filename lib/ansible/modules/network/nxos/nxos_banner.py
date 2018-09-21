@@ -93,7 +93,7 @@ import re
 
 
 def execute_show_command(module, command):
-    format = 'json'
+    format = 'text'
     cmds = [{
         'command': command,
         'output': format,
