@@ -75,7 +75,9 @@ Includes and imports can also be used in the ``handlers:`` section. For instance
 
    # more_handlers.yml
    - name: restart apache
-     service: name=apache state=restarted
+     service:
+       name: apache
+       state: restarted
 
 And in your main playbook file::
 
