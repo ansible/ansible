@@ -62,6 +62,7 @@ DOCUMENTATION = """
       - This lookup stores potentially sensitive data from 1Password as Ansible facts.
         Facts are subject to caching if enabled, which means this data could be stored in clear text
         on disk or in a database.
+      - Tested with C(op) version 0.5.3
 """
 
 EXAMPLES = """

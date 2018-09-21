@@ -28,6 +28,7 @@ notes:
     - This module stores potentially sensitive data from 1Password as Ansible facts.
       Facts are subject to caching if enabled, which means this data could be stored in clear text
       on disk or in a database.
+      - Tested with C(op) version 0.5.3
 short_description: Gather items from 1Password and set them as facts
 description:
     - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1Password items and return as Ansible facts.
