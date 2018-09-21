@@ -151,7 +151,7 @@ class LookupModule(LookupBase):
             if method_frame:
                 display.vvv(u"%s, %s, %s " % (method_frame, properties, body))
                 msg_details = dict({
-                                   'msg': body,
+                                   'msg': to_native(body),
                                    'message_count': method_frame.message_count,
                                    'routing_key': method_frame.routing_key,
                                    'delivery_tag': method_frame.delivery_tag,

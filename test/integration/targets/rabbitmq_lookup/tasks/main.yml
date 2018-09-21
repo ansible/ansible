@@ -79,7 +79,7 @@
   rabbitmq_queue:
       name: hello
 
-- name: Post test message to the exchange
+- name: Post test message to the exchange (string)
   uri:
     url: http://localhost:15672/api/exchanges/%2f/amq.default/publish
     method: POST
@@ -92,17 +92,41 @@
     headers:
       Content-Type: "application/json"
 
-- name: Test retrieve message
+
+- name: Post test message to the exchange (json)
+  uri:
+    url: http://localhost:15672/api/exchanges/%2f/amq.default/publish
+    method: POST
+    body: '{"properties":{"content_type": "application/json"},"routing_key":"hello","payload":"{\"key\": \"value\" }","payload_encoding":"string"}'
+    user: guest
+    password: guest
+    force_basic_auth: yes
+    return_content: yes
+    register: post_data_json
+    headers:
+      Content-Type: "application/json"
+
+- name: Test retrieve messages
   set_fact:
     rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2f/hello', channel='hello') }}"
   ignore_errors: yes
   register: rabbitmq_msg_error
 
-- assert:
+- name: Ensure two messages received
+  assert:
     that:
       - "rabbitmq_msg_error is not failed"
-      - rabbitmq_msg | length == 1
+      - rabbitmq_msg | length == 2
+
+- name: Ensure first message is a string
+  assert:
+    that:
       - rabbitmq_msg[0].msg == "ansible-test"
+
+- name: Ensure second message is json
+  assert:
+    that:
+      - rabbitmq_msg[1].json.key == "value"
 
 - name: Test missing vhost
   set_fact:
