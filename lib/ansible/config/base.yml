@@ -1555,7 +1555,6 @@ PLUGIN_FILTERS_CFG:
       alternatives: the "defaults" section instead
   - key: plugin_filters_cfg
     section: defaults
-    version_added: "2.8"
   type: path
 RETRY_FILES_ENABLED:
   name: Retry files
