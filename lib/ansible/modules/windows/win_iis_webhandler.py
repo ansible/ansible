@@ -160,7 +160,7 @@ path:
     description: File name or the file name extension for which the handler applies
     returned: hanlder exists
     type: string
-    sample: *.py
+    sample: '*.py'
 precondition:
     description: Conditions under which the handler will run
     returned: hanlder exists
