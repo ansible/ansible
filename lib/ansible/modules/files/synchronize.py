@@ -307,7 +307,7 @@ EXAMPLES = '''
 import os
 import errno
 
-from ansible.module_utils.basic import AnsibleModule, to_bytes, PY3
+from ansible.module_utils.basic import AnsibleModule, to_bytes
 from ansible.module_utils.six.moves import shlex_quote
 
 
