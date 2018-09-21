@@ -147,8 +147,7 @@ allowpathinfo:
     type: boolean
     sample: true
 modules:
-    description: Name of the module or modules to which the file name
-    or file name with extension is mapped.
+    description: Name of the module(s) to which the file name or file name with extension is mapped.
     returned: hanlder exists
     type: string
     sample: ManagedPipelineHandler
