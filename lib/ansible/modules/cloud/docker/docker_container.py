@@ -57,7 +57,8 @@ options:
     description:
       - Allows to specify how properties of existing containers are compared with
         module options to decide whether the container should be recreated / updated
-        or not.
+        or not. Only options which correspond to the state of a container as handled
+        by the Docker daemon can be specified.
       - Must be a dictionary specifying for an option one of the keys C(strict), C(ignore)
         and C(allow_more_present).
       - If C(strict) is specified, values are tested for equality, and changes always
@@ -2171,7 +2172,11 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             etc_hosts='set',
             ulimits='set(dict)',
         )
+        all_options = set()  # this is for improving user feedback when a wrong option was specified for comparison
         for option, data in self.module.argument_spec.items():
+            all_options.add(option)
+            for alias in data.get('aliases', []):
+                all_options.add(alias)
             # Ignore options which aren't used as container properties
             if option in ('docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
                           'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
@@ -2207,7 +2212,10 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 # Find main key
                 key_main = comp_aliases.get(key)
                 if key_main is None:
-                    self.fail("Unknown or invalid module option '%s' in comparisons dict!" % key)
+                    if key_main in all_options:
+                        self.fail(("The module option '%s' cannot be specified in the comparisons dict," +
+                                   " since it does not correspond to container's state!") % key)
+                    self.fail("Unknown module option '%s' in comparisons dict!" % key)
                 if key_main in comp_aliases_used:
                     self.fail("Both '%s' and '%s' (aliases of %s) are specified in comparisons dict!" % (key, comp_aliases_used[key_main], key_main))
                 comp_aliases_used[key_main] = key
