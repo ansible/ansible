@@ -2419,6 +2419,83 @@
     - restart_retries_3 is changed
 
 ####################################################################
+## security_opts ###################################################
+####################################################################
+
+# In case some of the options stop working, here are some more
+# options which *currently* work with all integration test targets:
+#   no-new-privileges
+#   label:disable
+#   label=disable
+#   label:level:s0:c100,c200
+#   label=level:s0:c100,c200
+#   label:type:svirt_apache_t
+#   label=type:svirt_apache_t
+#   label:user:root
+#   label=user:root
+#   seccomp:unconfined
+#   seccomp=unconfined
+#   apparmor:docker-default
+#   apparmor=docker-default
+
+- name: security_opts
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    security_opts:
+    - "label:level:s0:c100,c200"
+    - "no-new-privileges"
+  register: security_opts_1
+
+- name: security_opts (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    security_opts:
+    - "label:level:s0:c100,c200"
+    - "no-new-privileges"
+  register: security_opts_2
+
+- name: security_opts (less security options)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    security_opts:
+    - "no-new-privileges"
+  register: security_opts_3
+
+- name: security_opts (more security options)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    security_opts:
+    - "label:disable"
+    - "no-new-privileges"
+    stop_timeout: 1
+  register: security_opts_4
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - security_opts_1 is changed
+    - security_opts_2 is not changed
+    - security_opts_3 is not changed
+    - security_opts_4 is changed
+
+####################################################################
 ## shm_size ########################################################
 ####################################################################
 
