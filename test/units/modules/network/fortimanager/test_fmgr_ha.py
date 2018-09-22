@@ -25,7 +25,9 @@ import pytest
 try:
     from ansible.modules.network.fortimanager import fmgr_ha
 except ImportError:
-    pytest.skip("Could not load required modules for testing", allow_module_level=True)
+    pytest.skip(
+        "Could not load required modules for testing",
+        allow_module_level=True)
 
 fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
@@ -48,10 +50,24 @@ def fixture_data(request):
 
 
 def test_fmgr_set_ha_mode(fixture_data, mocker):
-    mocker.patch("pyFMG.fortimgr.FortiManager._post_request", side_effect=fixture_data)
-    paramgram_used = {'fmgr_ha_peer_sn': None, 'fmgr_ha_hb_threshold': 10, 'fmgr_ha_cluster_pw': 'fortinet', 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_peer_status': None, 'fmgr_ha_file_quota': 2048, 'fmgr_ha_cluster_id': 2, 'fmgr_ha_peer_ipv4': None, 'fmgr_ha_hb_interval': 15, 'fmgr_ha_mode': 'master', 'mode': 'set'}
+    mocker.patch(
+        "pyFMG.fortimgr.FortiManager._post_request",
+        side_effect=fixture_data)
+
+    paramgram_used = {
+        'fmgr_ha_peer_sn': None,
+        'fmgr_ha_hb_threshold': 10,
+        'fmgr_ha_cluster_pw': 'fortinet',
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_peer_status': None,
+        'fmgr_ha_file_quota': 2048,
+        'fmgr_ha_cluster_id': 2,
+        'fmgr_ha_peer_ipv4': None,
+        'fmgr_ha_hb_interval': 15,
+        'fmgr_ha_mode': 'master',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_mode(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: None
     # fmgr_ha_hb_threshold: 10
     # fmgr_ha_cluster_pw: fortinet
@@ -63,10 +79,22 @@ def test_fmgr_set_ha_mode(fixture_data, mocker):
     # fmgr_ha_hb_interval: 15
     # fmgr_ha_mode: master
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': None, 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': 'fortinet', 'fmgr_ha_hb_interval': 5, 'fmgr_ha_cluster_id': 2, 'fmgr_ha_file_quota': 4096, 'fmgr_ha_peer_status': None, 'fmgr_ha_peer_ipv4': None, 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_mode': 'slave', 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': None,
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': 'fortinet',
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_cluster_id': 2,
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_peer_status': None,
+        'fmgr_ha_peer_ipv4': None,
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_mode': 'slave',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_mode(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: None
     # fmgr_ha_hb_threshold: 3
     # fmgr_ha_cluster_pw: fortinet
@@ -78,10 +106,22 @@ def test_fmgr_set_ha_mode(fixture_data, mocker):
     # fmgr_ha_peer_ipv6: None
     # fmgr_ha_mode: slave
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': 'FMG-VM0A17004505', 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': 'fortinet', 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_peer_status': 'enable', 'fmgr_ha_file_quota': 4096, 'fmgr_ha_cluster_id': 2, 'fmgr_ha_peer_ipv4': '10.7.220.35', 'fmgr_ha_hb_interval': 5, 'fmgr_ha_mode': 'slave', 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': 'FMG-VM0A17004505',
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': 'fortinet',
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_peer_status': 'enable',
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_cluster_id': 2,
+        'fmgr_ha_peer_ipv4': '10.7.220.35',
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_mode': 'slave',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_mode(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: FMG-VM0A17004505
     # fmgr_ha_hb_threshold: 3
     # fmgr_ha_cluster_pw: fortinet
@@ -93,10 +133,22 @@ def test_fmgr_set_ha_mode(fixture_data, mocker):
     # fmgr_ha_hb_interval: 5
     # fmgr_ha_mode: slave
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': None, 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': None, 'fmgr_ha_hb_interval': 5, 'fmgr_ha_cluster_id': 1, 'fmgr_ha_file_quota': 4096, 'fmgr_ha_peer_status': None, 'fmgr_ha_peer_ipv4': None, 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_mode': 'standalone', 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': None,
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': None,
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_cluster_id': 1,
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_peer_status': None,
+        'fmgr_ha_peer_ipv4': None,
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_mode': 'standalone',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_mode(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: None
     # fmgr_ha_hb_threshold: 3
     # fmgr_ha_cluster_pw: None
@@ -108,10 +160,22 @@ def test_fmgr_set_ha_mode(fixture_data, mocker):
     # fmgr_ha_peer_ipv6: None
     # fmgr_ha_mode: standalone
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': None, 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': None, 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_peer_status': None, 'fmgr_ha_file_quota': 4096, 'fmgr_ha_cluster_id': 1, 'fmgr_ha_peer_ipv4': None, 'fmgr_ha_hb_interval': 5, 'fmgr_ha_mode': 'standalone', 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': None,
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': None,
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_peer_status': None,
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_cluster_id': 1,
+        'fmgr_ha_peer_ipv4': None,
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_mode': 'standalone',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_mode(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: None
     # fmgr_ha_hb_threshold: 3
     # fmgr_ha_cluster_pw: None
@@ -123,10 +187,22 @@ def test_fmgr_set_ha_mode(fixture_data, mocker):
     # fmgr_ha_hb_interval: 5
     # fmgr_ha_mode: standalone
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': None, 'fmgr_ha_hb_threshold': 10, 'fmgr_ha_cluster_pw': 'fortinet', 'fmgr_ha_hb_interval': 15, 'fmgr_ha_cluster_id': 2, 'fmgr_ha_file_quota': 2048, 'fmgr_ha_peer_status': None, 'fmgr_ha_peer_ipv4': None, 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_mode': 'master', 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': None,
+        'fmgr_ha_hb_threshold': 10,
+        'fmgr_ha_cluster_pw': 'fortinet',
+        'fmgr_ha_hb_interval': 15,
+        'fmgr_ha_cluster_id': 2,
+        'fmgr_ha_file_quota': 2048,
+        'fmgr_ha_peer_status': None,
+        'fmgr_ha_peer_ipv4': None,
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_mode': 'master',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_mode(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: None
     # fmgr_ha_hb_threshold: 10
     # fmgr_ha_cluster_pw: fortinet
@@ -138,10 +214,22 @@ def test_fmgr_set_ha_mode(fixture_data, mocker):
     # fmgr_ha_peer_ipv6: None
     # fmgr_ha_mode: master
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': None, 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': 'fortinet', 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_peer_status': None, 'fmgr_ha_file_quota': 4096, 'fmgr_ha_cluster_id': 2, 'fmgr_ha_peer_ipv4': None, 'fmgr_ha_hb_interval': 5, 'fmgr_ha_mode': 'slave', 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': None,
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': 'fortinet',
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_peer_status': None,
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_cluster_id': 2,
+        'fmgr_ha_peer_ipv4': None,
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_mode': 'slave',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_mode(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: None
     # fmgr_ha_hb_threshold: 3
     # fmgr_ha_cluster_pw: fortinet
@@ -153,10 +241,22 @@ def test_fmgr_set_ha_mode(fixture_data, mocker):
     # fmgr_ha_hb_interval: 5
     # fmgr_ha_mode: slave
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': 'FMG-VM0A17004505', 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': 'fortinet', 'fmgr_ha_hb_interval': 5, 'fmgr_ha_cluster_id': 2, 'fmgr_ha_file_quota': 4096, 'fmgr_ha_peer_status': 'enable', 'fmgr_ha_peer_ipv4': '10.7.220.35', 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_mode': 'slave', 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': 'FMG-VM0A17004505',
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': 'fortinet',
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_cluster_id': 2,
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_peer_status': 'enable',
+        'fmgr_ha_peer_ipv4': '10.7.220.35',
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_mode': 'slave',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_mode(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: FMG-VM0A17004505
     # fmgr_ha_hb_threshold: 3
     # fmgr_ha_cluster_pw: fortinet
@@ -168,30 +268,52 @@ def test_fmgr_set_ha_mode(fixture_data, mocker):
     # fmgr_ha_peer_ipv6: None
     # fmgr_ha_mode: slave
     # mode: set
-    ##################################################
+    #
     assert output['raw_response']['status']['code'] == 0
 
+
 def test_fmgr_get_ha_peer_list(fixture_data, mocker):
-    mocker.patch("pyFMG.fortimgr.FortiManager._post_request", side_effect=fixture_data)
+    mocker.patch(
+        "pyFMG.fortimgr.FortiManager._post_request",
+        side_effect=fixture_data)
+
     paramgram_used = {'method': 'get', 'mode': 'get'}
     output = fmgr_ha.fmgr_get_ha_peer_list(fmg_instance)
-    ##################################################
+    #
     # method: get
     # mode: get
-    ##################################################
-    assert isinstance(output['raw_response'], list) is True    paramgram_used = {'method': 'get', 'mode': 'get'}
+    #
+    assert isinstance(output['raw_response'], list) is True
+    paramgram_used = {'method': 'get', 'mode': 'get'}
     output = fmgr_ha.fmgr_get_ha_peer_list(fmg_instance)
-    ##################################################
+    #
     # method: get
     # mode: get
-    ##################################################
+    #
     assert isinstance(output['raw_response'], list) is True
 
+
 def test_fmgr_set_ha_peer(fixture_data, mocker):
-    mocker.patch("pyFMG.fortimgr.FortiManager._post_request", side_effect=fixture_data)
-    paramgram_used = {'fmgr_ha_peer_sn': 'FMG-VM0A17004505', 'next_peer_id': 1, 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': 'fortinet', 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_peer_status': 'enable', 'fmgr_ha_file_quota': 4096, 'fmgr_ha_cluster_id': 2, 'peer_id': 1, 'fmgr_ha_peer_ipv4': '10.7.220.35', 'fmgr_ha_hb_interval': 5, 'fmgr_ha_mode': 'slave', 'mode': 'set'}
+    mocker.patch(
+        "pyFMG.fortimgr.FortiManager._post_request",
+        side_effect=fixture_data)
+
+    paramgram_used = {
+        'fmgr_ha_peer_sn': 'FMG-VM0A17004505',
+        'next_peer_id': 1,
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': 'fortinet',
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_peer_status': 'enable',
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_cluster_id': 2,
+        'peer_id': 1,
+        'fmgr_ha_peer_ipv4': '10.7.220.35',
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_mode': 'slave',
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_peer(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: FMG-VM0A17004505
     # next_peer_id: 1
     # fmgr_ha_hb_threshold: 3
@@ -205,10 +327,24 @@ def test_fmgr_set_ha_peer(fixture_data, mocker):
     # fmgr_ha_hb_interval: 5
     # fmgr_ha_mode: slave
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': 'FMG-VM0A17005528', 'next_peer_id': 1, 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': None, 'fmgr_ha_hb_interval': 5, 'fmgr_ha_cluster_id': 1, 'fmgr_ha_file_quota': 4096, 'fmgr_ha_peer_status': 'enable', 'peer_id': 1, 'fmgr_ha_peer_ipv4': '10.7.220.36', 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_mode': None, 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': 'FMG-VM0A17005528',
+        'next_peer_id': 1,
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': None,
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_cluster_id': 1,
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_peer_status': 'enable',
+        'peer_id': 1,
+        'fmgr_ha_peer_ipv4': '10.7.220.36',
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_mode': None,
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_peer(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: FMG-VM0A17005528
     # next_peer_id: 1
     # fmgr_ha_hb_threshold: 3
@@ -222,10 +358,24 @@ def test_fmgr_set_ha_peer(fixture_data, mocker):
     # fmgr_ha_peer_ipv6: None
     # fmgr_ha_mode: None
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_peer_sn': 'FMG-VM0A17005528', 'next_peer_id': 1, 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': None, 'fmgr_ha_hb_interval': 5, 'fmgr_ha_cluster_id': 1, 'fmgr_ha_file_quota': 4096, 'fmgr_ha_peer_status': 'enable', 'peer_id': 1, 'fmgr_ha_peer_ipv4': '10.7.220.36', 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_mode': None, 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_peer_sn': 'FMG-VM0A17005528',
+        'next_peer_id': 1,
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': None,
+        'fmgr_ha_hb_interval': 5,
+        'fmgr_ha_cluster_id': 1,
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_peer_status': 'enable',
+        'peer_id': 1,
+        'fmgr_ha_peer_ipv4': '10.7.220.36',
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_mode': None,
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_peer(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_peer_sn: FMG-VM0A17005528
     # next_peer_id: 1
     # fmgr_ha_hb_threshold: 3
@@ -239,10 +389,24 @@ def test_fmgr_set_ha_peer(fixture_data, mocker):
     # fmgr_ha_peer_ipv6: None
     # fmgr_ha_mode: None
     # mode: set
-    ##################################################
-    assert output['raw_response']['status']['code'] == 0    paramgram_used = {'fmgr_ha_file_quota': 4096, 'fmgr_ha_peer_status': 'enable', 'fmgr_ha_peer_sn': 'FMG-VM0A17004505', 'next_peer_id': 1, 'fmgr_ha_hb_threshold': 3, 'fmgr_ha_cluster_pw': 'fortinet', 'fmgr_ha_peer_ipv6': None, 'fmgr_ha_mode': 'slave', 'fmgr_ha_cluster_id': 2, 'peer_id': 1, 'fmgr_ha_peer_ipv4': '10.7.220.35', 'fmgr_ha_hb_interval': 5, 'mode': 'set'}
+    #
+    assert output['raw_response']['status']['code'] == 0
+    paramgram_used = {
+        'fmgr_ha_file_quota': 4096,
+        'fmgr_ha_peer_status': 'enable',
+        'fmgr_ha_peer_sn': 'FMG-VM0A17004505',
+        'next_peer_id': 1,
+        'fmgr_ha_hb_threshold': 3,
+        'fmgr_ha_cluster_pw': 'fortinet',
+        'fmgr_ha_peer_ipv6': None,
+        'fmgr_ha_mode': 'slave',
+        'fmgr_ha_cluster_id': 2,
+        'peer_id': 1,
+        'fmgr_ha_peer_ipv4': '10.7.220.35',
+        'fmgr_ha_hb_interval': 5,
+        'mode': 'set'}
     output = fmgr_ha.fmgr_set_ha_peer(fmg_instance, paramgram_used)
-    ##################################################
+    #
     # fmgr_ha_file_quota: 4096
     # fmgr_ha_peer_status: enable
     # fmgr_ha_peer_sn: FMG-VM0A17004505
@@ -256,5 +420,5 @@ def test_fmgr_set_ha_peer(fixture_data, mocker):
     # fmgr_ha_peer_ipv4: 10.7.220.35
     # fmgr_ha_hb_interval: 5
     # mode: set
-    ##################################################
+    #
     assert output['raw_response']['status']['code'] == 0
