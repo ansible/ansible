@@ -177,7 +177,7 @@ options:
     - List of dictionaries describing the service configs.
     - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
     - Maps docker service --config option.
-    default: []
+    default: null
   networks:
     required: false
     default: []
@@ -498,7 +498,7 @@ class DockerService(DockerBaseClass):
         self.mode = "replicated"
         self.user = "root"
         self.mounts = []
-        self.configs = []
+        self.configs = None
         self.secrets = []
         self.constraints = []
         self.networks = []
@@ -629,16 +629,18 @@ class DockerService(DockerBaseClass):
             service_m['target'] = param_m['target']
             s.mounts.append(service_m)
 
-        s.configs = []
-        for param_m in ap['configs']:
-            service_c = {}
-            service_c['config_id'] = param_m['config_id']
-            service_c['config_name'] = str(param_m['config_name'])
-            service_c['filename'] = param_m.get('filename', service_c['config_name'])
-            service_c['uid'] = int(param_m.get('uid', "0"))
-            service_c['gid'] = int(param_m.get('gid', "0"))
-            service_c['mode'] = param_m.get('mode', 0o444)
-            s.configs.append(service_c)
+        s.configs = None
+        if ap['configs']:
+            s.configs = []
+            for param_m in ap['configs']:
+                service_c = {}
+                service_c['config_id'] = param_m['config_id']
+                service_c['config_name'] = str(param_m['config_name'])
+                service_c['filename'] = param_m.get('filename', service_c['config_name'])
+                service_c['uid'] = int(param_m.get('uid', "0"))
+                service_c['gid'] = int(param_m.get('gid', "0"))
+                service_c['mode'] = param_m.get('mode', 0o444)
+                s.configs.append(service_c)
 
         s.secrets = []
         for param_m in ap['secrets']:
@@ -756,18 +758,21 @@ class DockerService(DockerBaseClass):
                             read_only=mount_config['readonly'])
             )
 
-        configs = []
-        for config_config in self.configs:
-            configs.append(
-                types.ConfigReference(
-                    config_id=config_config['config_id'],
-                    config_name=config_config['config_name'],
-                    filename=config_config.get('filename'),
-                    uid=config_config.get('uid'),
-                    gid=config_config.get('gid'),
-                    mode=config_config.get('mode')
+        configs = None
+        if self.configs:
+            configs = []
+            for config_config in self.configs:
+                configs.append(
+                    types.ConfigReference(
+                        config_id=config_config['config_id'],
+                        config_name=config_config['config_name'],
+                        filename=config_config.get('filename'),
+                        uid=config_config.get('uid'),
+                        gid=config_config.get('gid'),
+                        mode=config_config.get('mode')
+                    )
                 )
-            )
+
         secrets = []
         for secret_config in self.secrets:
             secrets.append(
@@ -1021,7 +1026,7 @@ class DockerServiceManager():
             {'param': 'hostname', 'attribute': 'hostname', 'min_version': '1.25'},
             {'param': 'tty', 'attribute': 'tty', 'min_version': '1.25'},
             {'param': 'secrets', 'attribute': 'secrets', 'min_version': '1.25'},
-            {'param': 'configs', 'attribute': 'configs', 'min_version': '1.30'}]
+            {'param': 'configs', 'attribute': 'configs', 'min_version': '1.30'},
         params = self.client.module.params
         empty_service = DockerService()
         for pv in parameters_versions:
@@ -1118,7 +1123,7 @@ def main():
         image=dict(type='str'),
         state=dict(default="present", choices=['present', 'absent']),
         mounts=dict(default=[], type='list'),
-        configs=dict(default=[], type='list'),
+        configs=dict(default=None, type='list'),
         secrets=dict(default=[], type='list'),
         networks=dict(default=[], type='list'),
         args=dict(default=[], type='list'),
