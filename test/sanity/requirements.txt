@@ -1,5 +1,0 @@
-# pip packages required to build sanity tests
-pylint
-PyYAML
-voluptuous
-yamllint
