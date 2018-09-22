@@ -19,7 +19,7 @@ module: typetalk
 version_added: "1.6"
 short_description: Send a message to typetalk
 description:
-  - Send a message to typetalk using typetalk API ( https://developer.nulab-inc.com/docs/typetalk/ )
+  - Send a message to typetalk using typetalk API
 options:
   client_id:
     description:
@@ -37,6 +37,8 @@ options:
     description:
       - message body
     required: true
+notes:
+  - U(https://developer.nulab-inc.com/docs/typetalk/)
 requirements: [ json ]
 author: "Takashi Someda (@tksmd)"
 '''
