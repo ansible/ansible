@@ -152,14 +152,10 @@ class ApiEndpoint(object):
         self.version = version
 
     def __str__(self):
-        url = "https://"
-        url += self.host
-        url += ":"
-        url += str(self.port)
-        url += "/"
-        url += self.api
-        url += "/"
-        url += self.version
+        url = ""
+        if not self.host.startswith("https://"):
+            url = "https://"
+        url += "%s:%s/%s/%s" % (self.host, str(self.port), self.api, self.version)
         return url
 
 
