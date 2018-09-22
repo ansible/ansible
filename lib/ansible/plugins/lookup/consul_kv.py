@@ -31,9 +31,9 @@ DOCUMENTATION = """
       host:
         default: localhost
         description:
-           - The target to connect to, must be a resolvable address.
-             Will be determined from C(ANSIBLE_CONSUL_URL) if that is set
-           - C(ANSIBLE_CONSUL_URL) should look like this: C(https://my.consul.server:8500)
+          - The target to connect to, must be a resolvable address.
+            Will be determined from C(ANSIBLE_CONSUL_URL) if that is set
+          - C(ANSIBLE_CONSUL_URL) should look like this: C(https://my.consul.server:8500)
         env:
           - name: ANSIBLE_CONSUL_URL
         ini:
@@ -43,7 +43,7 @@ DOCUMENTATION = """
       port:
         description:
           - The port of the target host to connect to.
-          - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there
+          - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there.
         default: 8500
       scheme:
         default: http
