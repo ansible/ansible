@@ -1,12 +1,12 @@
 service_expected_output:
   args: [sleep, '1800']
-  configs: []
+  configs: null
   constraints: []
   container_labels: {}
   dns: []
   dns_options: []
   dns_search: []
-  endpoint_mode: dnsrr
+  endpoint_mode: vip
   env: []
   force_update: null
   hostname: ''
@@ -20,8 +20,8 @@ service_expected_output:
   mounts: []
   networks: []
   publish:
-  - {mode: ingress, protocol: tcp, published_port: 60001, target_port: 60001}
-  - {mode: host, protocol: udp, published_port: 60001, target_port: 60001}
+  - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
+  - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
   replicas: null
   reserve_cpu: 0.0
   reserve_memory: 0
@@ -34,5 +34,5 @@ service_expected_output:
   update_failure_action: continue
   update_max_failure_ratio: 0.0
   update_monitor: 5000000000
-  update_order: stop-first
+  update_order: null
   update_parallelism: 1
