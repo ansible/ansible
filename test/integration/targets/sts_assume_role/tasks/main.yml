@@ -290,14 +290,14 @@
       assert:
         that:
           - 'result.failed'
-          - "'Not authorized to perform sts:AssumeRole' in result.msg"
+          - "'Access denied' in result.msg"
       when: result.module_stderr is not defined
 
     - name: assert assume not existing sts role
       assert:
         that:
           - 'result.failed'
-          - "'Not authorized to perform sts:AssumeRole' in result.module_stderr"
+          - "'Access denied' in result.module_stderr"
       when: result.module_stderr is defined
 
     # ============================================================
