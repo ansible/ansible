@@ -202,25 +202,7 @@ def test_add_group_member(fixture_data, mocker):
     # vdom: root
     # mode: add
     #
-    assert output['raw_response']['status']['code'] == 0
-    paramgram_used = {
-        'grp_desc': None,
-        'adom': 'ansible',
-        'grp_members': 'FGT1,FGT2',
-        'state': 'present',
-        'grp_name': 'TestGroup',
-        'vdom': 'root',
-        'mode': 'add'}
-    output = fmgr_device_group.add_group_member(fmg_instance, paramgram_used)
-    #
-    # grp_desc: None
-    # adom: ansible
-    # grp_members: FGT1,FGT2
-    # state: present
-    # grp_name: TestGroup
-    # vdom: root
-    # mode: add
-    #
+
     assert output['raw_response']['status']['code'] == 0
     paramgram_used = {
         'grp_desc': None,
@@ -287,24 +269,3 @@ def test_delete_group_member(fixture_data, mocker):
     # vdom: root
     # mode: delete
     #
-    assert output['raw_response']['status']['code'] == 0
-    paramgram_used = {
-        'grp_desc': None,
-        'adom': 'ansible',
-        'grp_members': 'FGT1,FGT2',
-        'state': 'absent',
-        'grp_name': 'TestGroup',
-        'vdom': 'root',
-        'mode': 'delete'}
-    output = fmgr_device_group.delete_group_member(
-        fmg_instance, paramgram_used)
-    #
-    # grp_desc: None
-    # adom: ansible
-    # grp_members: FGT1,FGT2
-    # state: absent
-    # grp_name: TestGroup
-    # vdom: root
-    # mode: delete
-    #
-    assert output['raw_response']['status']['code'] == 0
