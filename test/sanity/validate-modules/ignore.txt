@@ -154,9 +154,6 @@ lib/ansible/modules/cloud/cloudstack/cs_iso.py E325
 lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule.py E322
 lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule.py E324
 lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule.py E325
-lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule_member.py E322
-lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule_member.py E324
-lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule_member.py E325
 lib/ansible/modules/cloud/cloudstack/cs_network.py E324
 lib/ansible/modules/cloud/cloudstack/cs_network_acl_rule.py E324
 lib/ansible/modules/cloud/cloudstack/cs_network_acl_rule.py E326
