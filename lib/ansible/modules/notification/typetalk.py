@@ -19,7 +19,7 @@ module: typetalk
 version_added: "1.6"
 short_description: Send a message to typetalk
 description:
-  - Send a message to typetalk using typetalk API ( http://developers.typetalk.in/ )
+  - Send a message to typetalk using typetalk API ( https://developer.nulab-inc.com/docs/typetalk/ )
 options:
   client_id:
     description:
@@ -88,7 +88,7 @@ def send_message(module, client_id, client_secret, topic, msg):
     """
     try:
         access_token = get_access_token(module, client_id, client_secret)
-        url = 'https://typetalk.in/api/v1/topics/%d' % topic
+        url = 'https://typetalk.com/api/v1/topics/%d' % topic
         headers = {
             'Authorization': 'Bearer %s' % access_token,
         }
