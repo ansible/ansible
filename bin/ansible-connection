@@ -89,10 +89,9 @@ class ConnectionProcess(object):
         self._ansible_playbook_pid = ansible_playbook_pid
 
     def start(self, variables):
+        messages = list()
+        result = {}
         try:
-            messages = list()
-            result = {}
-
             messages.append('control socket path is %s' % self.socket_path)
 
             # If this is a relative path (~ gets expanded later) then plug the
