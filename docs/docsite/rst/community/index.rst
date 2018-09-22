@@ -21,8 +21,5 @@ To get started, please read and understand the :ref:`code_of_conduct`, and then 
    maintainers
    release_managers
    communication
+   contributor_license_agreement
    other_tools_and_programs
-   
-
-
-

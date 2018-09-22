@@ -8,7 +8,6 @@ The purpose of this guide is to document all of the paths available to you for i
 
 To get started, select one of the following topics.
 
-
 .. toctree::
    :maxdepth: 2
 
