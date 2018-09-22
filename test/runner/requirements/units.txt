@@ -4,6 +4,7 @@ cryptography
 pycrypto
 jinja2
 mock
+mocker
 nose
 passlib
 pytest
