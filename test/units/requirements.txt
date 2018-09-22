@@ -1,0 +1,6 @@
+# pip packages required to use unit tests
+coverage
+jinja2
+pytest
+pytest-xdist
+PyYAML
