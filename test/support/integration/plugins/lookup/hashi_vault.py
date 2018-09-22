@@ -42,6 +42,27 @@ DOCUMENTATION = """
       description: Secret id for a vault AppRole auth.
       env:
         - name: VAULT_SECRET_ID
+    access_key:
+      description: AWS access key id for a vault AWS IAM auth
+      env:
+        - name: AWS_ACCESS_KEY_ID
+    secret_key:
+      description: AWS secret access key for a vault AWS IAM auth
+      env:
+        - name: AWS_SECRET_ACCESS_KEY
+    session_token:
+      description: Optional AWS IAM session token for a vault AWS IAM auth
+    header_value:
+      description: Optional header value for a vault AWS IAM auth
+    role:
+      description: Role name for a vault AWS IAM auth or vault AWS EC2 auth
+    region:
+      description: Optional AWS region for a vault AWS IAM auth
+      env:
+        - name: AWS_DEFAULT_REGION
+      default: us-east-1
+    nonce:
+      description: Optional nonce for a vault AWS EC2 auth
     auth_method:
       description:
       - Authentication method to be used.
@@ -53,8 +74,7 @@ DOCUMENTATION = """
         - ldap
         - approle
     mount_point:
-      description: vault mount point, only required if you have a custom mount point.
-      default: ldap
+      description: vault mount point for auth_method, only required if you have a custom mount point.
     ca_cert:
       description: path to certificate to use for authentication.
       aliases: [ cacert ]
@@ -99,6 +119,14 @@ EXAMPLES = """
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
 
+- name: authenticate via AWS IAM auth
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=aws_iam access_key=access secret_key=secret role=myrole url=http://myvault:8200')}}"
+
+  debug:
+- name: authenticate via AWS EC2 auth
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=aws_ec2 nonce=my_nonce role=myawsrole url=http://myvault:8200')}}"
+
 # When using KV v2 the PATH should include "data" between the secret engine mount and path (e.g. "secret/data/:path")
 # see: https://www.vaultproject.io/api/secret/kv/kv-v2.html#read-secret-version
 - name: Return latest KV v2 secret from path
@@ -115,6 +143,7 @@ _raw:
 """
 
 import os
+import requests
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -139,7 +168,7 @@ class HashiVault:
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
         self.namespace = kwargs.get('namespace', None)
-        self.avail_auth_method = ['approle', 'userpass', 'ldap']
+        self.avail_auth_method = ['approle', 'userpass', 'ldap', 'aws_iam', 'aws_ec2']
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -270,6 +299,53 @@ class HashiVault:
             raise AnsibleError("Authentication method app role requires a secret_id")
 
         self.client.auth_approle(role_id, secret_id)
+
+    def auth_aws_iam(self, **kwargs):
+        access_key = kwargs.get('access_key', os.environ.get('AWS_ACCESS_KEY_ID'))
+        if access_key is None:
+            raise AnsibleError("Authentication method aws iam requires a access_key")
+
+        secret_key = kwargs.get('secret_key', os.environ.get('AWS_SECRET_ACCESS_KEY'))
+        if secret_key is None:
+            raise AnsibleError("Authentication method aws iam requires a secret_key")
+
+        session_token = kwargs.get('session_token')
+
+        header_value = kwargs.get('header_value')
+
+        mount_point = kwargs.get('mount_point')
+        if mount_point is None:
+            mount_point = 'aws'
+
+        role = kwargs.get('role')
+        if role is None:
+            raise AnsibleError("Authentication method aws iam requires a role")
+
+        region = kwargs.get('region', os.environ.get('AWS_DEFAULT_REGION'))
+        if region is None:
+            region = 'us-east-1'
+
+        self.client.auth_aws_iam(access_key, secret_key, session_token, header_value, mount_point, role, region=region)
+
+    def auth_aws_ec2(self, **kwargs):
+        url = "http://169.254.169.254/latest/dynamic/instance-identity/pkcs7"
+
+        try:
+            pkcs7 = requests.get(url, timeout=0.1).text.replace('\n', '')
+        except requests.exceptions.ConnectionError:
+            raise AnsibleError("hashi_vault lookup plugin failed to connect to http://169.254.169.254, Make sure you are running from a AWS EC2 instance")
+
+        nonce = kwargs.get('nonce')
+
+        role = kwargs.get('role')
+        if role is None:
+            raise AnsibleError("Authentication method aws ec2 requires a role")
+
+        mount_point = kwargs.get('mount_point')
+        if mount_point is None:
+            mount_point = 'aws'
+
+        self.client.auth_ec2(pkcs7, nonce, role, mount_point=mount_point)
 
 
 class LookupModule(LookupBase):
