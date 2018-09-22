@@ -1,0 +1,4 @@
+shippable/vcenter/group1
+cloud/vcenter
+skip/python3
+destructive
