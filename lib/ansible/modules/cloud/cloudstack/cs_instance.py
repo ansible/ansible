@@ -82,6 +82,7 @@ options:
     description:
       - Keyboard device type for the instance.
     choices: [ de, de-ch, es, fi, fr, fr-be, fr-ch, is, it, jp, nl-be, no, pt, uk, us ]
+    type: str
   networks:
     description:
       - List of networks to use for the new instance.
