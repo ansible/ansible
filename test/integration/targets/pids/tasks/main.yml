@@ -1,0 +1,77 @@
+# Test code for the pid module
+# Copyright 2018, Saranya sridharan
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: "Installing PidOf module"
+  yum:
+    name: sysvinit-tools
+    state: present
+  when: ansible_distribution == 'CentOS'
+   
+- name:  "Installing PidOf in freebsd"  
+  pkgng:
+    name: pidof
+    state: present
+  when: ansible_distribution == 'FreeBSD'
+  
+- name: Install  PidOf in OSX
+  block:
+    - name: Find brew binary
+      command: which brew
+      register: brew_which
+    - name: Get owner of brew binary
+      stat: path="{{ brew_which.stdout }}"
+      register: brew_stat
+    - name: "Install package"
+      homebrew:
+        name: pidof
+        state: present
+        update_homebrew: no
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"    
+  when: ansible_os_family == 'Darwin'
+  
+- name: "Checking the empty result" 
+  pids: 
+    name: "blahblah"
+  register: emptypids
+   
+- name: "Verify that the list of Process IDs (PIDs) returned is empty"
+  assert:
+    that:
+    - emptypids is not changed
+    - emptypids.pids == [] 
+    
+- name: "Picking a random process name"
+  command: echo "{{ 99999999 | random }}"
+  register: random_name
+
+- name: "finding the 'sleep' binary"
+  command: which sleep
+  register: find_sleep
+
+- name: "copying 'sleep' binary"
+  copy:
+    src: "{{ find_sleep.stdout }}"
+    dest: "{{ output_dir }}/{{ random_name.stdout }}"
+    mode: "u+rwx"
+
+- name: "Running the copy of 'sleep' binary"
+  command: "{{ output_dir }}/{{ random_name.stdout }} 100"
+  async: 100
+  poll: 0
+
+- name: "Finding the process ID(PIDs)"
+  command: pidof "{{ random_name.stdout }}"
+  register: find_process
+
+- name: "Checking the process IDs (PIDs) of sleep binary" 
+  pids: 
+    name: "{{ random_name.stdout }}"
+  register: pids
+      
+- name: "Verify that the Process IDs (PIDs) returned is not empty and also equal to the PIDs obtained in console"
+  assert:
+    that:
+    - "pids.pids | length > 0"
+    - "pids.pids | join(' ')  == find_process.stdout | trim"
