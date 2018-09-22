@@ -189,8 +189,9 @@ options:
     required: false
     description:
     - List of dictionaries describing the service published ports.
-    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp'), mode <ingress|host>, default to ingress.
+    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp')
     - Only used with api_version >= 1.25
+    - If api_version >= 1.32 the dictionaries can contain the attribute 'mode' set to 'ingress' or 'host' (default 'ingress').
   replicas:
     required: false
     default: -1
@@ -608,13 +609,13 @@ class DockerService(DockerBaseClass):
         for param_p in ap['publish']:
             service_p = {}
             service_p['protocol'] = param_p.get('protocol', 'tcp')
-            service_p['mode'] = param_p.get('mode', 'ingress')
+            service_p['mode'] = param_p.get('mode', None)
             service_p['published_port'] = int(param_p['published_port'])
             service_p['target_port'] = int(param_p['target_port'])
             if service_p['protocol'] not in ['tcp', 'udp']:
                 raise ValueError("got publish.protocol '%s', valid values:'tcp', 'udp'" %
                                  service_p['protocol'])
-            if service_p['mode'] not in ['ingress', 'host']:
+            if service_p['mode'] not in [None, 'ingress', 'host']:
                 raise ValueError("got publish.mode '%s', valid values:'ingress', 'host'" %
                                  service_p['mode'])
             s.publish.append(service_p)
@@ -851,7 +852,10 @@ class DockerService(DockerBaseClass):
 
         ports = {}
         for port in self.publish:
-            ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'], port['mode'])
+            if port['mode']:
+                ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'], port['mode'])
+            else:
+                ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'])
         endpoint_spec = types.EndpointSpec(mode=self.endpoint_mode, ports=ports)
         return update_policy, task_template, networks, endpoint_spec, mode, self.labels
 
@@ -920,7 +924,7 @@ class DockerServiceManager():
                 for port in raw_data_endpoint_spec.get('Ports', []):
                     ds.publish.append({
                         'protocol': port['Protocol'],
-                        'mode': port.get('PublishMode', 'ingress'),
+                        'mode': port.get('PublishMode', None),
                         'published_port': int(port['PublishedPort']),
                         'target_port': int(port['TargetPort'])})
 
