@@ -32,7 +32,7 @@ DOCUMENTATION = """
         default: localhost
         description:
            - The target to connect to, must be a resolvable address.
-           - Will be determined from C(ANSIBLE_CONSUL_URL) if that is set
+             Will be determined from C(ANSIBLE_CONSUL_URL) if that is set
            - C(ANSIBLE_CONSUL_URL) should look like this: C(https://my.consul.server:8500)
         env:
           - name: ANSIBLE_CONSUL_URL
@@ -47,9 +47,9 @@ DOCUMENTATION = """
         default: 8500
       scheme:
         default: http
-        description: 
+        description:
           - Whether to use http or https.
-          - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there. 
+          - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there.
         version_added: '2.7'
       validate_certs:
         default: True
