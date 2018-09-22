@@ -262,13 +262,11 @@ options:
     - Maps to docker service --update-max-failure-ratio
   update_order:
     required: false
-    default: stop-first
+    default: null
     description:
     - Specifies the order of operations when rolling out an updated task.
     - Maps to docker service --update-order
-    choices:
-    - stop-first
-    - start-first
+    - Requires docker api version >= 1.29
   user:
     required: false
     default: root
@@ -515,7 +513,7 @@ class DockerService(DockerBaseClass):
         self.update_failure_action = "continue"
         self.update_monitor = 5000000000
         self.update_max_failure_ratio = 0.00
-        self.update_order = "stop-first"
+        self.update_order = None
 
     def get_facts(self):
         return {
@@ -890,7 +888,9 @@ class DockerServiceManager():
         ds.update_failure_action = update_config_data['FailureAction']
         ds.update_monitor = update_config_data['Monitor']
         ds.update_max_failure_ratio = update_config_data['MaxFailureRatio']
-        ds.update_order = update_config_data['Order']
+
+        if 'Order' in update_config_data:
+            ds.update_order = update_config_data['Order']
 
         dns_config = task_template_data['ContainerSpec'].get('DNSConfig', None)
         if dns_config:
@@ -1027,6 +1027,7 @@ class DockerServiceManager():
             {'param': 'tty', 'attribute': 'tty', 'min_version': '1.25'},
             {'param': 'secrets', 'attribute': 'secrets', 'min_version': '1.25'},
             {'param': 'configs', 'attribute': 'configs', 'min_version': '1.30'},
+            {'param': 'update_order', 'attribute': 'update_order', 'min_version': '1.29'}]
         params = self.client.module.params
         empty_service = DockerService()
         for pv in parameters_versions:
@@ -1156,7 +1157,7 @@ def main():
         update_failure_action=dict(default='continue', choices=['continue', 'pause']),
         update_monitor=dict(default=5000000000, type='int'),
         update_max_failure_ratio=dict(default=0, type='float'),
-        update_order=dict(default='stop-first', choices=['stop-first', 'start-first']),
+        update_order=dict(default=None, type='string'),
         user=dict(default='root'))
     required_if = [
         ('state', 'present', ['image'])
