@@ -2116,6 +2116,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         explicit_types = dict(
             command='list',
             devices='set(dict)',
+            dns_servers='list',
             env='set',
             entrypoint='list',
             etc_hosts='set',
