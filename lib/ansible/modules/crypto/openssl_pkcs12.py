@@ -150,7 +150,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 
 
 class PkcsError(crypto_utils.OpenSSLObjectError):
@@ -169,7 +169,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.action = module.params['action']
         self.ca_certificates = module.params['ca_certificates']
         self.certificate_path = module.params['certificate_path']
-        self.friendly_name = module.params['friendly_name']
+        self.friendly_name = to_bytes(module.params['friendly_name'])
         self.iter_size = module.params['iter_size']
         self.maciter_size = module.params['maciter_size']
         self.passphrase = module.params['passphrase']
@@ -266,7 +266,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
             pkcs12_file = os.open(self.path,
                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
                                   self.mode)
-            os.write(pkcs12_file, '%s%s' % (pkey, crt))
+            os.write(pkcs12_file, to_bytes('%s%s' % (pkey, crt)))
             os.close(pkcs12_file)
 
         except IOError as exc:
