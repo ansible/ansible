@@ -22,7 +22,7 @@ description:
 - Allows users to add or remove flatpaks.
 - See the M(flatpak_remote) module for managing flatpak remotes.
 author:
-- John Kwiatkoski (@jaykayy)
+- John Kwiatkoski (@JayKayy)
 - Alexander Bethke (@oolongbrothers)
 requirements:
 - flatpak

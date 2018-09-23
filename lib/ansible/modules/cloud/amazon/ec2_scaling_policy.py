@@ -18,7 +18,7 @@ description:
   - Can create or delete scaling policies for autoscaling groups
   - Referenced autoscaling groups must already exist
 version_added: "1.6"
-author: "Zacharie Eakin (@zeekin)"
+author: "Zacharie Eakin (@Zeekin)"
 options:
   state:
     description:
