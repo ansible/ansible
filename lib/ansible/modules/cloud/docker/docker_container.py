@@ -832,17 +832,24 @@ class TaskParameters(DockerBaseClass):
         '''
 
         update_parameters = dict(
-            blkio_weight='blkio_weight',
             cpu_period='cpu_period',
             cpu_quota='cpu_quota',
             cpu_shares='cpu_shares',
             cpuset_cpus='cpuset_cpus',
-            cpuset_mems='cpuset_mems',
             mem_limit='memory',
             mem_reservation='memory_reservation',
             memswap_limit='memory_swap',
             kernel_memory='kernel_memory',
         )
+
+        if self.client.HAS_BLKIO_WEIGHT_OPT:
+            # blkio_weight is only supported in docker>=1.9
+            update_parameters['blkio_weight'] = 'blkio_weight'
+
+        if self.client.HAS_CPUSET_MEMS_OPT:
+            # cpuset_mems is only supported in docker>=2.3
+            update_parameters['cpuset_mems'] = 'cpuset_mems'
+
         result = dict()
         for key, value in update_parameters.items():
             if getattr(self, value, None) is not None:
@@ -964,12 +971,15 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode',
             tmpfs='tmpfs',
-            blkio_weight='blkio_weight',
         )
 
         if self.client.HAS_AUTO_REMOVE_OPT:
             # auto_remove is only supported in docker>=2
             host_config_params['auto_remove'] = 'auto_remove'
+
+        if self.client.HAS_BLKIO_WEIGHT_OPT:
+            # blkio_weight is only supported in docker>=1.9
+            host_config_params['blkio_weight'] = 'blkio_weight'
 
         if HAS_DOCKER_PY_3:
             # cpu_shares and volume_driver moved to create_host_config in > 3
@@ -1470,11 +1480,9 @@ class Container(DockerBaseClass):
         host_config = self.container['HostConfig']
 
         config_mapping = dict(
-            blkio_weight=host_config.get('BlkioWeight'),
             cpu_period=host_config.get('CpuPeriod'),
             cpu_quota=host_config.get('CpuQuota'),
             cpuset_cpus=host_config.get('CpusetCpus'),
-            cpuset_mems=host_config.get('CpusetMems'),
             kernel_memory=host_config.get("KernelMemory"),
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
@@ -1482,6 +1490,14 @@ class Container(DockerBaseClass):
             oom_score_adj=host_config.get('OomScoreAdj'),
             oom_killer=host_config.get('OomKillDisable'),
         )
+
+        if self.parameters.client.HAS_BLKIO_WEIGHT_OPT:
+            # blkio_weight is only supported in docker>=1.9
+            config_mapping['blkio_weight'] = host_config.get('BlkioWeight')
+
+        if self.parameters.client.HAS_CPUSET_MEMS_OPT:
+            # cpuset_mems is only supported in docker>=2.3
+            config_mapping['cpuset_mems'] = host_config.get('CpusetMems')
 
         if HAS_DOCKER_PY_3:
             # cpu_shares moved to create_host_config in > 3
@@ -2172,8 +2188,19 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             self.fail("docker or docker-py version is %s. Minimum version required is 3.5 to set uts option. "
                       "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
 
+        blkio_weight_supported = LooseVersion(docker_version) >= LooseVersion('1.9')
+        if self.module.params.get("blkio_weight") is not None and not blkio_weight_supported:
+            self.fail("docker or docker-py version is %s. Minimum version required is 1.9 to set blkio_weight option.")
+
+        cpuset_mems_supported = LooseVersion(docker_version) >= LooseVersion('2.3')
+        if self.module.params.get("cpuset_mems") is not None and not cpuset_mems_supported:
+            self.fail("docker or docker-py version is %s. Minimum version required is 2.3 to set cpuset_mems option. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+
         self.HAS_INIT_OPT = init_supported
         self.HAS_UTS_MODE_OPT = uts_mode_supported
+        self.HAS_BLKIO_WEIGHT_OPT = blkio_weight_supported
+        self.HAS_CPUSET_MEMS_OPT = cpuset_mems_supported
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
         if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
             self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
