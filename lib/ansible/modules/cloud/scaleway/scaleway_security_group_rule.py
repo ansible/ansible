@@ -8,6 +8,7 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.compat.ipaddress import ip_network
 
 __metaclass__ = type
 
@@ -58,13 +59,14 @@ options:
 
   port:
     description:
-      - Port related to the rule
+      - Port related to the rule, null value for all the ports
     required: true
 
   ip_range:
     description:
       - IPV4 CIDR notation to apply to the rule
     default: 0.0.0.0/0
+    type: ip_network
 
   direction:
     description:
@@ -125,6 +127,20 @@ data:
 from ansible.module_utils.scaleway import SCALEWAY_LOCATION, scaleway_argument_spec, Scaleway, payload_from_object
 from ansible.module_utils.basic import AnsibleModule
 
+def valid_ip_network(address):
+    try:
+        ip_network(u'{0}'.format(address))
+        return address
+    except ValueError:
+        raise
+
+def valid_port(port):
+    try:
+        if port:
+            return int(port)
+        return port
+    except ValueError:
+        raise
 
 def get_sgr_from_api(security_group_rules, security_group_rule):
     """ Check if a security_group_rule specs are present in security_group_rules
@@ -132,7 +148,7 @@ def get_sgr_from_api(security_group_rules, security_group_rule):
         Return the rule if found
     """
     for sgr in security_group_rules:
-        if (sgr['ip_range'] == security_group_rule['ip_range'] and str(sgr['dest_port_from']) == str(security_group_rule['dest_port_from']) and
+        if (sgr['ip_range'] == security_group_rule['ip_range'] and sgr['dest_port_from'] == security_group_rule['dest_port_from'] and
             sgr['direction'] == security_group_rule['direction'] and sgr['action'] == security_group_rule['action'] and
                 sgr['protocol'] == security_group_rule['protocol']):
             return sgr
@@ -204,6 +220,8 @@ def absent_strategy(api, security_group_id, security_group_rule):
 
 
 def core(module):
+    api = Scaleway(module=module)
+
     security_group_rule = {
         'protocol': module.params['protocol'],
         'dest_port_from': module.params['port'],
@@ -215,7 +233,6 @@ def core(module):
     region = module.params['region']
     module.params['api_url'] = SCALEWAY_LOCATION[region]['api_endpoint']
 
-    api = Scaleway(module=module)
     if module.params['state'] == 'present':
         summary = present_strategy(
             api=api,
@@ -235,8 +252,8 @@ def main():
         state=dict(default='present', choices=['absent', 'present']),
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
         protocol=dict(required=True, choices=['TCP', 'UDP', 'ICMP']),
-        port=dict(required=True),
-        ip_range=dict(default='0.0.0.0/0'),
+        port=dict(required=True, type=valid_port),
+        ip_range=dict(default='0.0.0.0/0', type=valid_ip_network),
         direction=dict(required=True, choices=['inbound', 'outbound']),
         action=dict(required=True, choices=['accept', 'drop']),
         security_group=dict(required=True),
