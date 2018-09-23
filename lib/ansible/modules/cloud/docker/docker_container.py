@@ -1325,6 +1325,10 @@ class Container(DockerBaseClass):
                 if not found:
                     return False
             if method == 'strict':
+                # If we would know that both a and b do not contain duplicates,
+                # we could simply compare len(a) to len(b) to finish this test.
+                # We can assume that b has no duplicates (as it is returned by
+                # docker), but we don't know for a.
                 for bv in b:
                     found = False
                     for av in a:
