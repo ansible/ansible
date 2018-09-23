@@ -8,7 +8,6 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from ansible.module_utils.compat.ipaddress import ip_network
 
 __metaclass__ = type
 
@@ -125,7 +124,9 @@ data:
 '''
 
 from ansible.module_utils.scaleway import SCALEWAY_LOCATION, scaleway_argument_spec, Scaleway, payload_from_object
+from ansible.module_utils.compat.ipaddress import ip_network
 from ansible.module_utils.basic import AnsibleModule
+
 
 def valid_ip_network(address):
     try:
@@ -134,6 +135,7 @@ def valid_ip_network(address):
     except ValueError:
         raise
 
+
 def valid_port(port):
     try:
         if port:
@@ -141,6 +143,7 @@ def valid_port(port):
         return port
     except ValueError:
         raise
+
 
 def get_sgr_from_api(security_group_rules, security_group_rule):
     """ Check if a security_group_rule specs are present in security_group_rules
