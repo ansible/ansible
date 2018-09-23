@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages interface specific VPN configuration on HUAWEI CloudEngine switches.
 description:
     - Manages interface specific VPN configuration of HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that a VPN instance has been created and the IPv4 address family has been enabled for the VPN instance.
 options:
