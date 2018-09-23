@@ -65,7 +65,6 @@ options:
     description:
       - IPV4 CIDR notation to apply to the rule
     default: 0.0.0.0/0
-    type: ip_network
 
   direction:
     description:
