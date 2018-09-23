@@ -783,7 +783,7 @@
     - /bin/sh
     - "-v"
     - "-c"
-    - "sleep 10m"
+    - "'sleep 10m'"
     name: "{{ cname }}"
     state: started
   register: entrypoint_1
@@ -795,10 +795,22 @@
     - /bin/sh
     - "-v"
     - "-c"
-    - "sleep 10m"
+    - "'sleep 10m'"
     name: "{{ cname }}"
     state: started
   register: entrypoint_2
+
+- name: entrypoint (change order idempotency)
+  docker_container:
+    image: alpine:3.8
+    entrypoint:
+    - /bin/sh
+    - "-c"
+    - "'sleep 10m'"
+    - "-v"
+    name: "{{ cname }}"
+    state: started
+  register: entrypoint_3
 
 - name: entrypoint (less parameters)
   docker_container:
@@ -806,11 +818,11 @@
     entrypoint:
     - /bin/sh
     - "-c"
-    - "sleep 10m"
+    - "'sleep 10m'"
     name: "{{ cname }}"
     state: started
     stop_timeout: 1
-  register: entrypoint_3
+  register: entrypoint_4
 
 - name: entrypoint (other parameters)
   docker_container:
@@ -818,11 +830,11 @@
     entrypoint:
     - /bin/sh
     - "-c"
-    - "sleep 5m"
+    - "'sleep 5m'"
     name: "{{ cname }}"
     state: started
     stop_timeout: 1
-  register: entrypoint_4
+  register: entrypoint_5
 
 - name: cleanup
   docker_container:
@@ -836,6 +848,7 @@
     - entrypoint_2 is not changed
     - entrypoint_3 is changed
     - entrypoint_4 is changed
+    - entrypoint_5 is changed
 
 ####################################################################
 ## env #############################################################
