@@ -1281,7 +1281,7 @@ class Container(DockerBaseClass):
         Compare values a and b as described in compare.
         '''
         method = compare['comparison']
-        if method == 'igore':
+        if method == 'ignore':
             return True
         # If a or b is None:
         if a is None or b is None:
