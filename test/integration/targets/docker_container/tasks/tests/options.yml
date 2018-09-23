@@ -504,8 +504,8 @@
     name: "{{ cname }}"
     state: started
     devices:
-    - "/dev/random:/dev/virt-random:rwm"
     - "/dev/urandom:/dev/virt-urandom:rwm"
+    - "/dev/random:/dev/virt-random:rwm"
   register: devices_2
 
 - name: devices (less)
@@ -565,8 +565,8 @@
     name: "{{ cname }}"
     state: started
     dns_opts:
-    - "timeout:10"
     - rotate
+    - "timeout:10"
   register: dns_opts_2
 
 - name: dns_opts (less resolv.conf options)
@@ -777,7 +777,11 @@
 - name: entrypoint
   docker_container:
     image: alpine:3.8
-    entrypoint: '/bin/sh -v -c "sleep 10m"'
+    entrypoint:
+    - /bin/sh
+    - "-v"
+    - "-c"
+    - "sleep 10m"
     name: "{{ cname }}"
     state: started
   register: entrypoint_1
@@ -785,7 +789,11 @@
 - name: entrypoint (idempotency)
   docker_container:
     image: alpine:3.8
-    entrypoint: '/bin/sh -v -c "sleep 10m"'
+    entrypoint:
+    - /bin/sh
+    - "-v"
+    - "-c"
+    - "sleep 10m"
     name: "{{ cname }}"
     state: started
   register: entrypoint_2
@@ -793,11 +801,26 @@
 - name: entrypoint (less parameters)
   docker_container:
     image: alpine:3.8
-    entrypoint: '/bin/sh -c "sleep 10m"'
+    entrypoint:
+    - /bin/sh
+    - "-c"
+    - "sleep 10m"
     name: "{{ cname }}"
     state: started
     stop_timeout: 1
   register: entrypoint_3
+
+- name: entrypoint (other parameters)
+  docker_container:
+    image: alpine:3.8
+    entrypoint:
+    - /bin/sh
+    - "-c"
+    - "sleep 5m"
+    name: "{{ cname }}"
+    state: started
+    stop_timeout: 1
+  register: entrypoint_4
 
 - name: cleanup
   docker_container:
@@ -810,6 +833,7 @@
     - entrypoint_1 is changed
     - entrypoint_2 is not changed
     - entrypoint_3 is changed
+    - entrypoint_4 is changed
 
 ####################################################################
 ## env #############################################################
@@ -833,8 +857,8 @@
     name: "{{ cname }}"
     state: started
     env:
-      TEST1: val1
       TEST2: val2
+      TEST1: val1
   register: env_2
 
 - name: env (less environment variables)
@@ -927,8 +951,8 @@
     name: "{{ cname }}"
     state: started
     etc_hosts:
-      example.com: 1.2.3.4
       example.org: 4.3.2.1
+      example.com: 1.2.3.4
   register: etc_hosts_2
 
 - name: etc_hosts (less hosts)
@@ -988,8 +1012,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
     - 5678
+    - 1234
   register: exposed_ports_2
 
 - name: exposed_ports (less ports)
@@ -1055,8 +1079,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
     - 5678
+    - 1234
   register: groups_2
 
 - name: groups (less groups)
@@ -1416,8 +1440,8 @@
     name: "{{ cname }}"
     state: started
     labels:
-      ansible.test.1: hello
       ansible.test.2: world
+      ansible.test.1: hello
   register: labels_2
 
 - name: labels (less labels)
@@ -1490,8 +1514,8 @@
     name: "{{ cname }}"
     state: started
     links:
-    - "{{ cname_h1 }}:test1"
     - "{{ cname_h2 }}:test2"
+    - "{{ cname_h1 }}:test1"
   register: links_2
 
 - name: links (less links)
@@ -1604,8 +1628,8 @@
     state: started
     log_driver: json-file
     log_options:
-      labels: production_status
       env: os,customer
+      labels: production_status
   register: log_options_2
 
 - name: log_options (less log options)
@@ -1951,8 +1975,8 @@
     state: started
     purge_networks: yes
     networks:
-    - name: bridge
     - name: "{{ nname_1 }}"
+    - name: bridge
   register: networks_2
 
 - name: networks (less networks)
@@ -2226,8 +2250,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
     - 5678
+    - 1234
   register: published_ports_2
 
 - name: published_ports (less published_ports)
@@ -2456,8 +2480,8 @@
     name: "{{ cname }}"
     state: started
     security_opts:
-    - "label:level:s0:c100,c200"
     - "no-new-privileges"
+    - "label:level:s0:c100,c200"
   register: security_opts_2
 
 - name: security_opts (less security options)
@@ -2621,8 +2645,8 @@
     name: "{{ cname }}"
     state: started
     sysctls:
-      net.ipv4.icmp_echo_ignore_all: 1
       net.ipv4.ip_forward: 1
+      net.ipv4.icmp_echo_ignore_all: 1
   register: sysctls_2
 
 - name: sysctls (less sysctls)
@@ -2688,8 +2712,8 @@
     name: "{{ cname }}"
     state: started
     tmpfs:
-    - "/test1:rw,noexec,nosuid,size=65536k"
     - "/test2:rw,noexec,nosuid,size=65536k"
+    - "/test1:rw,noexec,nosuid,size=65536k"
   register: tmpfs_2
 
 - name: tmpfs (less tmpfs)
@@ -2799,8 +2823,8 @@
     name: "{{ cname }}"
     state: started
     ulimits:
-    - "nofile:1234:1234"
     - "nproc:3:6"
+    - "nofile:1234:1234"
   register: ulimits_2
 
 - name: ulimits (less ulimits)
@@ -3042,8 +3066,8 @@
     name: "{{ cname }}"
     state: started
     volumes:
-    - "/tmp:/tmp"
     - "/:/whatever"
+    - "/tmp:/tmp"
   register: volumes_2
 
 - name: volumes (less volumes)
