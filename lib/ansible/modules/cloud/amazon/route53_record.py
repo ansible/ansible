@@ -3,10 +3,6 @@
 # Copyright: (c) 2018, Shuang Wang <ooocamel@icloud.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -22,7 +18,7 @@ author: Shuang Wang (@ptux)
 requirements:
   - botocore
   - boto3
-  - python >= 2.7
+  - python >= 2.6
 
 options:
   state:
@@ -70,27 +66,11 @@ extends_documentation_fragment:
 '''
 
 RETURN = '''
-nameservers:
-  description: nameservers associated with the zone
-  returned: when state is 'get'
-  type: list
-  sample:
-  - ns-1036.awsdns-00.org.
-  - ns-516.awsdns-00.net.
-  - ns-1504.awsdns-00.co.uk.
-  - ns-1.awsdns-00.com.
+results
 '''
 
 EXAMPLES = '''
-# Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
-- route53:
-      state: present
-      zone: foo.com
-      record: new.foo.com
-      type: A
-      ttl: 7200
-      value: 1.1.1.1,2.2.2.2,3.3.3.3
-      wait: yes
+examples
 '''
 
 try:
@@ -98,8 +78,8 @@ try:
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
+import time
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import (
     AWSRetry,
     boto3_conn,
@@ -119,7 +99,17 @@ class AWSRoute53Record(object):
         self._check_mode = self._module.check_mode
 
     def process(self):
-        zone = self._get_zone_by_name()
+        hosted_zone = self._get_zone_by_name()
+        if state == 'present':
+            changed, result = _ensure_present()
+        elif state == 'absent':
+            changed, result = _ensure_absent()
+
+    def _ensure_present(self):
+        pass
+
+    def _ensure_absent(self):
+        pass
 
     def _get_zone_by_id(self, zone_id=None):
         """gets a zone by id"""
@@ -160,25 +150,19 @@ class AWSRoute53Record(object):
 
         return hosted_zone
 
-    def _create_record(self):
-        #      self._connection.change_resource_record_sets(**kwargs)
-        pass
-
     def _get_record(self):
         #      self._connection.list_resource_record_sets(**kwargs)
         # Lists the resource record sets in a specified hosted zone.
+        pass
+
+    def _create_record(self):
+        #      self._connection.change_resource_record_sets(**kwargs)
         pass
 
     def _update_record(self):
         pass
 
     def _delete_record(self):
-        pass
-
-    def _ensure_present(self):
-        pass
-
-    def _ensure_absent(self):
         pass
 
 
@@ -197,10 +181,7 @@ def main():
     ))
 
     required_if = [('state', 'present', ['record_set_value']),
-                   ('state', 'absent', ['record_set_value']),
-                   ('state', 'delete', ['record_set_value']),
-                   ('state', 'create', ['record_set_value'])]
-
+                   ('state', 'absent', ['record_set_value'])]
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=required_if,
