@@ -630,25 +630,26 @@
     - example.org
   register: dns_search_domains_2
 
-- name: dns_search_domains (less)
+- name: dns_search_domains (different order)
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
     dns_search_domains:
+    - example.org
     - example.com
   register: dns_search_domains_3
 
-- name: dns_search_domains (changed)
+- name: dns_search_domains (changed elements)
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
     dns_search_domains:
-    - example.com
     - ansible.com
+    - example.com
     stop_timeout: 1
   register: dns_search_domains_4
 
@@ -662,7 +663,7 @@
     that:
     - dns_search_domains_1 is changed
     - dns_search_domains_2 is not changed
-    - dns_search_domains_3 is not changed
+    - dns_search_domains_3 is changed
     - dns_search_domains_4 is changed
 
 ####################################################################
@@ -691,24 +692,25 @@
     - 8.8.8.8
   register: dns_servers_2
 
-- name: dns_servers (less)
+- name: dns_servers (changed order)
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
     dns_servers:
+    - 8.8.8.8
     - 1.1.1.1
   register: dns_servers_3
 
-- name: dns_servers (changed)
+- name: dns_servers (changed elements)
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
     dns_servers:
-    - 1.1.1.1
+    - 8.8.8.8
     - 9.9.9.9
     stop_timeout: 1
   register: dns_servers_4
@@ -723,7 +725,7 @@
     that:
     - dns_servers_1 is changed
     - dns_servers_2 is not changed
-    - dns_servers_3 is not changed
+    - dns_servers_3 is changed
     - dns_servers_4 is changed
 
 ####################################################################
