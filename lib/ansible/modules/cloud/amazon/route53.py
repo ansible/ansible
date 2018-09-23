@@ -598,8 +598,6 @@ def main():
             record['type'] = rset.type
             record['record'] = decoded_name
             record['ttl'] = rset.ttl
-            record['value'] = ','.join(sorted(rset.resource_records))
-            record['values'] = sorted(rset.resource_records)
             if hosted_zone_id_in:
                 record['hosted_zone_id'] = hosted_zone_id_in
             record['identifier'] = rset.identifier
