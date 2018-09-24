@@ -53,34 +53,28 @@ options:
     description:
       - Sets the role of the FortiManager host for HA
     required: false
-    default: False
     choices: ["standalone", "master", "slave"]
   fmgr_ha_peer_ipv4:
     description:
       - Sets the IPv4 address of a HA peer.
     required: false
-    default: False
   fmgr_ha_peer_ipv6:
     description:
       - Sets the IPv6 address of a HA peer.
     required: false
-    default: False
   fmgr_ha_peer_sn:
     description:
       - Sets the HA Peer Serial Number
     required: false
-    default: False
   fmgr_ha_peer_status:
     description:
       - Sets the peer status enable or disable
     required: false
-    default: False
     choices: ["enable", "disable"]
   fmgr_ha_cluster_pw:
     description:
       - Sets the password for the HA cluster. Only required once. System remembers between HA mode switches.
     required: false
-    default: False
   fmgr_ha_cluster_id:
     description:
       - Sets the ID number of the HA cluster. Defaults to 1
