@@ -1081,6 +1081,10 @@ To use one value on true and another on false (new in version 1.9)::
 
     {{ (name == "John") | ternary('Mr','Ms') }}
 
+To use one value on true, one value on false and a third value on null (new in version 2.8)::
+
+   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
+
 To concatenate a list into a string::
 
     {{ list | join(" ") }}
