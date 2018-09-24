@@ -588,7 +588,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     http://stackoverflow.com/questions/1087227/validate-ssl-certificates-with-python
     http://techknack.net/python-urllib2-handlers/
     '''
-    CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\nConnection: close\r\n"
+    CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\n"
 
     def __init__(self, hostname, port):
         self.hostname = hostname
