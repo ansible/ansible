@@ -987,7 +987,7 @@ def fmgr_antivirus_profile_addSetDelete(fmg, paramgram):
 
 # ADDITIONAL COMMON FUNCTIONS
 # FUNCTION/METHOD FOR LOGGING OUT AND ANALYZING ERROR CODES
-def fmgr_logout(fmg, module, msg="NULL", results=list(), good_codes=[0], logout_on_fail=True, logout_on_success=False):
+def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_fail=True, logout_on_success=False):
     """
     THIS METHOD CONTROLS THE LOGOUT AND ERROR REPORTING AFTER AN METHOD OR FUNCTION RUNS
     """
