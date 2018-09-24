@@ -116,6 +116,9 @@ class Scaleway(object):
     def update(self, path, data=None, headers=None):
         return self.send("UPDATE", path, data, headers)
 
+    def warn(self, x):
+        self.module.warn(str(x))
+
 
 SCALEWAY_LOCATION = {
     'par1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},

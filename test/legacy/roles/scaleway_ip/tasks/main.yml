@@ -1,0 +1,441 @@
+# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_ip
+
+- name: Create IP (Check)
+  check_mode: yes
+  scaleway_ip:
+    state: present
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+  register: ip_creation_check_task
+
+- debug: var=ip_creation_check_task
+
+- name: ip_creation_check_task is success
+  assert:
+    that:
+      - ip_creation_check_task is success
+
+- name: ip_creation_check_task is changed
+  assert:
+    that:
+      - ip_creation_check_task is changed
+
+- name: Create IP
+  scaleway_ip:
+    state: present
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+  register: ip_creation_task
+
+- debug: var=ip_creation_task
+
+- name: ip_creation_task is success
+  assert:
+    that:
+      - ip_creation_task is success
+
+- name: ip_creation_task is changed
+  assert:
+    that:
+      - ip_creation_task is changed
+
+- name: ip_creation_task.scaleway_ip.server is none
+  assert:
+    that:
+      - '{{ ip_creation_task.scaleway_ip.server is none }}'
+
+- name: Create IP (Confirmation)
+  scaleway_ip:
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    state: present
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+  register: ip_creation_confirmation_task
+
+- debug: var=ip_creation_confirmation_task
+
+- name: ip_creation_confirmation_task is success
+  assert:
+    that:
+      - ip_creation_confirmation_task is success
+
+- name: ip_creation_confirmation_task is not changed
+  assert:
+    that:
+      - ip_creation_confirmation_task is not changed
+
+- name: ip_creation_confirmation_task.scaleway_ip.server is none
+  assert:
+    that:
+      - '{{ ip_creation_task.scaleway_ip.server is none }}'
+
+- name: Assign reverse to server (Check)
+  check_mode: yes
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_reverse_assignation_check_task
+
+- debug: var=ip_reverse_assignation_check_task
+
+- name: ip_reverse_assignation_check_task is success
+  assert:
+    that:
+      - ip_reverse_assignation_check_task is success
+
+- name: ip_reverse_assignation_check_task is success
+  assert:
+    that:
+      - ip_reverse_assignation_check_task is success
+
+- name: Assign reverse to an IP
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_reverse_assignation_task
+
+- debug: var=ip_reverse_assignation_task
+
+- name: ip_reverse_assignation_task is success
+  assert:
+    that:
+      - ip_reverse_assignation_task is success
+
+- name: ip_reverse_assignation_task is changed
+  assert:
+    that:
+      - ip_reverse_assignation_task is changed
+
+- name: Assign reverse to an IP (Confirmation)
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_reverse_assignation_confirmation_task
+
+- debug: var=ip_reverse_assignation_confirmation_task
+
+- name: ip_reverse_assignation_confirmation_task is success
+  assert:
+    that:
+      - ip_reverse_assignation_confirmation_task is success
+
+- name: ip_reverse_assignation_confirmation_task is not changed
+  assert:
+    that:
+      - ip_reverse_assignation_confirmation_task is not changed
+
+- name: Create a server
+  scaleway_compute:
+    state: present
+    name: '{{ scaleway_server_name }}'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    dynamic_ip_required: false
+    wait: true
+
+  register: server_creation_task
+
+- debug: var=server_creation_task
+
+- name: server_creation_task is success
+  assert:
+    that:
+      - server_creation_task is success
+
+- name: Assign IP to server (Check)
+  check_mode: yes
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    server: '{{ server_creation_task.msg.id }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_assignation_check_task
+
+- debug: var=ip_assignation_check_task
+
+- name: ip_assignation_check_task is success
+  assert:
+    that:
+      - ip_assignation_check_task is success
+
+- name: ip_assignation_check_task is success
+  assert:
+    that:
+      - ip_assignation_check_task is success
+
+- name: Assign IP to server
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    server: '{{ server_creation_task.msg.id }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_assignation_task
+
+- debug: var=ip_assignation_task
+
+- name: ip_assignation_task is success
+  assert:
+    that:
+      - ip_assignation_task is success
+
+- name: ip_assignation_task is changed
+  assert:
+    that:
+      - ip_assignation_task is changed
+
+- name: Assign IP to server (Confirmation)
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    server: '{{ server_creation_task.msg.id }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_assignation_confirmation_task
+
+- debug: var=ip_assignation_confirmation_task
+
+- name: ip_assignation_confirmation_task is success
+  assert:
+    that:
+      - ip_assignation_confirmation_task is success
+
+- name: ip_assignation_confirmation_task is not changed
+  assert:
+    that:
+      - ip_assignation_confirmation_task is not changed
+
+- name: Unassign IP to server (Check)
+  check_mode: yes
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_unassignation_check_task
+
+- debug: var=ip_unassignation_check_task
+
+- name: ip_unassignation_check_task is success
+  assert:
+    that:
+      - ip_unassignation_check_task is success
+
+- name: ip_unassignation_check_task is changed
+  assert:
+    that:
+      - ip_unassignation_check_task is changed
+
+- name: Unassign IP to server
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_unassignation_task
+
+- debug: var=ip_unassignation_task
+
+- name: ip_unassignation_task is success
+  assert:
+    that:
+      - ip_unassignation_task is success
+
+- name: ip_unassignation_task is changed
+  assert:
+    that:
+      - ip_unassignation_task is changed
+
+- name: ip_unassignation_task.scaleway_ip.server is none
+  assert:
+    that:
+      - '{{ ip_unassignation_task.scaleway_ip.server is none }}'
+
+- name: Unassign IP to server (Confirmation)
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+    reverse: '{{ scaleway_reverse_name }}'
+  register: ip_unassignation_confirmation_task
+
+- debug: var=ip_unassignation_confirmation_task
+
+- name: ip_unassignation_confirmation_task is success
+  assert:
+    that:
+      - ip_unassignation_confirmation_task is success
+
+- name: ip_unassignation_confirmation_task is not changed
+  assert:
+    that:
+      - ip_unassignation_confirmation_task is not changed
+
+- name: ip_unassignation_confirmation_task.scaleway_ip.server is none
+  assert:
+    that:
+      - '{{ ip_unassignation_task.scaleway_ip.server is none }}'
+
+- name: Unassign reverse to IP (Check)
+  check_mode: yes
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+  register: ip_reverse_unassignation_check_task
+
+- debug: var=ip_reverse_unassignation_check_task
+
+- name: ip_reverse_unassignation_check_task is success
+  assert:
+    that:
+      - ip_reverse_unassignation_check_task is success
+
+- name: ip_reverse_unassignation_check_task is changed
+  assert:
+    that:
+      - ip_reverse_unassignation_check_task is changed
+
+- name: Unassign reverse to an IP
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+  register: ip_reverse_unassignation_task
+
+- debug: var=ip_reverse_unassignation_task
+
+- name: ip_reverse_unassignation_task is success
+  assert:
+    that:
+      - ip_reverse_unassignation_task is success
+
+- name: ip_reverse_unassignation_task is changed
+  assert:
+    that:
+      - ip_reverse_unassignation_task is changed
+
+- name: ip_reverse_unassignation_task.scaleway_ip.reverse is none
+  assert:
+    that:
+      - '{{ ip_reverse_unassignation_task.scaleway_ip.reverse is none }}'
+
+- name: Unassign reverse to an IP (Confirmation)
+  scaleway_ip:
+    state: present
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+    region: '{{ scaleway_region }}'
+    organization: '{{ scaleway_organization }}'
+  register: ip_reverse_unassignation_confirmation_task
+
+- debug: var=ip_reverse_unassignation_confirmation_task
+
+- name: ip_reverse_unassignation_confirmation_task is success
+  assert:
+    that:
+      - ip_reverse_unassignation_confirmation_task is success
+
+- name: ip_reverse_unassignation_confirmation_task is not changed
+  assert:
+    that:
+      - ip_reverse_unassignation_confirmation_task is not changed
+
+- name: ip_reverse_unassignation_confirmation_task.scaleway_ip.server is none
+  assert:
+    that:
+      - '{{ ip_reverse_unassignation_confirmation_task.scaleway_ip.reverse is none }}'
+
+- name: Destroy a server
+  scaleway_compute:
+    name: '{{ scaleway_server_name }}'
+    state: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+  register: server_destroy_task
+
+- debug: var=server_destroy_task
+
+- name: server_destroy_task is success
+  assert:
+    that:
+      - server_destroy_task is success
+
+- name: server_destroy_task is changed
+  assert:
+    that:
+      - server_destroy_task is changed
+
+- name: Delete IP (Check)
+  check_mode: yes
+  scaleway_ip:
+    state: absent
+    region: '{{ scaleway_region }}'
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+  register: ip_deletion_check_task
+
+- name: ip_deletion_check_task is success
+  assert:
+    that:
+      - ip_deletion_check_task is success
+
+- name: ip_deletion_check_task is changed
+  assert:
+    that:
+      - ip_deletion_check_task is changed
+
+- name: Delete IP
+  scaleway_ip:
+    state: absent
+    region: '{{ scaleway_region }}'
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+  register: ip_deletion_task
+
+- name: ip_deletion_task is success
+  assert:
+    that:
+      - ip_deletion_task is success
+
+- name: ip_deletion_task is changed
+  assert:
+    that:
+      - ip_deletion_task is changed
+
+- name: Delete IP (Confirmation)
+  scaleway_ip:
+    state: absent
+    region: '{{ scaleway_region }}'
+    id: '{{ ip_creation_task.scaleway_ip.id }}'
+  register: ip_deletion_confirmation_task
+
+- name: ip_deletion_confirmation_task is success
+  assert:
+    that:
+      - ip_deletion_confirmation_task is success
+
+- name: ip_deletion_confirmation_task is not changed
+  assert:
+    that:
+      - ip_deletion_confirmation_task is not changed

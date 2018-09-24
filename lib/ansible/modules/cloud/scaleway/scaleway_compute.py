@@ -608,6 +608,7 @@ def core(module):
         "name": module.params["name"],
         "commercial_type": module.params["commercial_type"],
         "enable_ipv6": module.params["enable_ipv6"],
+        "dynamic_ip_required": module.params["dynamic_ip_required"],
         "tags": module.params["tags"],
         "organization": module.params["organization"]
     }
