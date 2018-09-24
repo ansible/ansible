@@ -92,33 +92,50 @@ from ansible.module_utils.ec2 import (
 
 
 class AWSRoute53Record(object):
-    def __init__(self, module=None, results=None):
+    def __init__(self, module=None):
         self._module = module
-        self._results = results
         self._connection = self._module.client('route53')
         self._check_mode = self._module.check_mode
 
     def process(self):
-        hosted_zone = self._get_zone_by_name()
-        if state == 'present':
-            changed, result = _ensure_present()
-        elif state == 'absent':
-            changed, result = _ensure_absent()
+        if self._module.params['state'] == 'present':
+            results = self._ensure_present()
+        elif self._module.params['state'] == 'absent':
+            results = self._ensure_absent()
 
     def _ensure_present(self):
         pass
+        results = dict(changed=False)
+        record_exists = False
+        
+        return results
 
     def _ensure_absent(self):
         pass
+        results = dict(changed=False)
+        record_exists = False
+        return results
 
-    def _get_zone_by_id(self, zone_id=None):
+    def _get_zone_id(self, hosted_zone_name=None):
+        """gets a zone id by zone name"""
+        hosted_zone_id = None
+        if hosted_zone_name is not None:
+            try:
+                hosted_zones = self._connection.list_hosted_zones().get('HostedZones', [])
+                for dic in hosted_zones:
+                    if dic.get('Name').rstrip('.') == hosted_zone_name:
+                        hosted_zone_id = dic.get('Id')
+                if hosted_zone_id is None:
+                    self._module.fail_json(msg="hosted zone name not exists: %s" % hosted_zone_name)
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                self._module.fail_json_aws(e, msg="couldn't get hosted zone id by hosted_zone_name")
+        else:
+            self._module.fail_json(msg="hosted zone name is requied.")
+        return hosted_zone_id
+
+    def _get_zone(self, hosted_zone_id=None):
         """gets a zone by id"""
         hosted_zone = None
-        if self._module.params['hosted_zone_id'] is not None:
-            hosted_zone_id = self._module.params['hosted_zone_id']
-        else:
-            hosted_zone_id = zone_id
-
         if hosted_zone_id is not None:
             try:
                 hosted_zone = self._connection.get_hosted_zone(Id=hosted_zone_id)
@@ -131,23 +148,6 @@ class AWSRoute53Record(object):
                 self._module.fail_json_aws(e, msg="couldn't get hosted zone by hosted_zone_id")
         else:
             self._module.fail_json(msg="hosted zone id is requied.")
-        return hosted_zone
-
-    def _get_zone_by_name(self):
-        """gets a zone by name"""
-        try:
-            hosted_zone_name = self._module.params['hosted_zone_name']
-            hosted_zones = self._connection.list_hosted_zones().get('HostedZones', [])
-            hosted_zone = None
-            for dic in hosted_zones:
-                if dic.get('Name').rstrip('.') == hosted_zone_name:
-                    hosted_zone_id = dic.get('Id')
-                    hosted_zone = self._get_zone_by_id(hosted_zone_id)
-            if hosted_zone is None:
-                self._module.fail_json(msg="hosted zone name not exists: %s" % hosted_zone_name)
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            self._module.fail_json_aws(e, msg="couldn't get hosted zone by hosted_zone_name")
-
         return hosted_zone
 
     def _get_record(self):
@@ -182,15 +182,14 @@ def main():
 
     required_if = [('state', 'present', ['record_set_value']),
                    ('state', 'absent', ['record_set_value'])]
-    module = AnsibleAWSModule(
+    ansible_aws_module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True
     )
 
-    results = dict(changed=False)
-    record_controller = AWSRoute53Record(module=module, results=results)
-    record_controller.process()
+    aws_route53_record = AWSRoute53Record(module=ansible_aws_module)
+    aws_route53_record.process()
     module.exit_json(**results)
 
 
