@@ -296,7 +296,8 @@ options:
     - ' - C(dns_suffix) (list): List of domain suffixes, also known as DNS search path (default: C(domain) parameter).'
     - ' - C(domain) (string): DNS domain name to use.'
     - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter). Allowed characters are alphanumeric (uppercase and lowercase)
-          and minus, rest of the characters are dropped as per RFC 952.'
+          and minus, rest of the characters are dropped as per RFC 952. Ansible 2.8 and onwards, this is a required parameter.
+          Use "force=True" to use older behavior of using "name" as "hostname" if not specified.'
     - 'Parameters related to Windows customization:'
     - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False).'
     - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
@@ -1552,7 +1553,14 @@ class PyVmomiHelper(PyVmomi):
                 ident.domain = str(self.params['customization']['domain'])
 
             ident.hostName = vim.vm.customization.FixedName()
-            hostname = str(self.params['customization'].get('hostname', self.params['name'].split('.')[0]))
+
+            hostname = str(self.params['customization'].get('hostname'))
+            if not hostname or hostname == '':
+                if self.params.get('force'):
+                    hostname = self.params['name'].split('.')[0]
+                else:
+                    self.module.fail_json(msg="customization.hostname is required parameter while Linux customizations."
+                                              " Please specify this parameter or use 'force=True' to use 'name' as 'hostname' in Linux customization.")
             # Remove all characters except alphanumeric and minus which is allowed by RFC 952
             valid_hostname = re.sub(r"[^a-zA-Z0-9\-]", "", hostname)
             ident.hostName.name = valid_hostname
