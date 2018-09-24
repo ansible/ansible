@@ -178,9 +178,11 @@ def regex_search(value, regex, *args, **kwargs):
             return items
 
 
-def ternary(value, true_val, false_val):
+def ternary(value, true_val, false_val, none_val=None):
     '''  value ? true_val : false_val '''
-    if bool(value):
+    if value is None and none_val is not None:
+        return none_val
+    elif bool(value):
         return true_val
     else:
         return false_val
