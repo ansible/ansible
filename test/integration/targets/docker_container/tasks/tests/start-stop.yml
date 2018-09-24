@@ -13,7 +13,7 @@
 - name: Create container (check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   check_mode: yes
@@ -22,7 +22,7 @@
 - name: Create container
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   register: create_2
@@ -30,7 +30,7 @@
 - name: Create container (idempotent)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   register: create_3
@@ -38,7 +38,7 @@
 - name: Create container (idempotent check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   check_mode: yes
@@ -95,7 +95,7 @@
 - name: Present check for running container (check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   check_mode: yes
@@ -104,7 +104,7 @@
 - name: Present check for running container
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   register: present_check_2
@@ -127,7 +127,7 @@
 - name: Start container from scratch (check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
   check_mode: yes
@@ -136,7 +136,7 @@
 - name: Start container from scratch
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
   register: start_scratch_2
@@ -144,7 +144,7 @@
 - name: Start container from scratch (idempotent)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
   register: start_scratch_3
@@ -152,7 +152,7 @@
 - name: Start container from scratch (idempotent check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
   check_mode: yes
@@ -254,7 +254,7 @@
 - name: Start container (setup for removing from running)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
 
