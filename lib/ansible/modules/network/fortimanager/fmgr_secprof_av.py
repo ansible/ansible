@@ -996,7 +996,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=list(), good_codes=[0], logout_
     if msg != "NULL" and len(results) == 0:
         try:
             fmg.logout()
-        except BaseException:
+        except:
             pass
         module.fail_json(msg=msg)
 
@@ -1005,7 +1005,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=list(), good_codes=[0], logout_
         if msg == "NULL":
             try:
                 msg = results[1]['status']['message']
-            except BaseException:
+            except:
                 msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
 
             if results[0] not in good_codes:
@@ -1036,42 +1036,20 @@ def fmgr_cidr_to_netmask(cidr):
 
 
 # utility function: removing keys wih value of None, nothing in playbook for that key
-def fmgr_del_none(d):
-    for k, v in d.items():
-        if v is None:
-            del d[k]
-        elif isinstance(v, dict):
-            all_none = True
-            for a, b in v.items():
-                if b is None:
-                    del v[a]
-                elif isinstance(b, dict):
-                    all_none = False
-                    all_none_2 = True
-                    for c, d in b.items():
-                        if d is None:
-                            del b[c]
-                        else:
-                            all_none_2 = False
-                    if all_none_2:
-                        del d[a]
-            if all_none:
-                del d[k]
-    return d
+def fmgr_del_none(obj):
+    if isinstance(obj, dict):
+        return type(obj)((fmgr_del_none(k), fmgr_del_none(v))
+                         for k, v in obj.items() if k is not None and v is not None)
+    else:
+        return obj
 
 
 # utility function: remove keys that are need for the logic but the FMG API won't accept them
-def fmgr_prepare_dict(d):
-    remove_elem = ["mode", "adom", "host", "username", "password"]
-    for k, v in d.items():
-
-        if k in remove_elem:
-            del d[k]
-        elif isinstance(v, dict):
-            for a, b in v.items():
-                if a in remove_elem:
-                    del v[a]
-    return d
+def fmgr_prepare_dict(obj):
+    list_of_elems = ["mode", "adom", "host", "username", "password"]
+    if isinstance(obj, dict):
+        obj = {key: fmgr_prepare_dict(value) for key, value in obj.items() if key not in list_of_elems}
+    return obj
 
 
 #############
