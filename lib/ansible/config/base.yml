@@ -1405,6 +1405,40 @@ INVENTORY_ANY_UNPARSED_IS_FAILED:
   ini:
     - {key: any_unparsed_is_failed, section: inventory}
   version_added: "2.7"
+INVENTORY_CACHE_ENABLED:
+  name: Inventory caching enabled
+  default: False
+  description: Toggle to turn on inventory caching
+  env: [{name: ANSIBLE_INVENTORY_CACHE}]
+  ini:
+  - {key: cache, section: inventory}
+  type: bool
+INVENTORY_CACHE_PLUGIN:
+  name: Inventory cache plugin
+  description: The plugin for caching inventory. If INVENTORY_CACHE_PLUGIN is not provided CACHE_PLUGIN can be used instead.
+  env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN}]
+  ini:
+  - {key: cache_plugin, section: inventory}
+INVENTORY_CACHE_PLUGIN_CONNECTION:
+  name: Inventory cache plugin URI to override the defaults section
+  description: The inventory cache connection. If INVENTORY_CACHE_PLUGIN_CONNECTION is not provided CACHE_PLUGIN_CONNECTION can be used instead.
+  env: [{name: ANSIBLE_INVENTORY_CACHE_CONNECTION}]
+  ini:
+  - {key: cache_connection, section: inventory}
+INVENTORY_CACHE_PLUGIN_PREFIX:
+  name: Inventory cache plugin table prefix
+  description: The table prefix for the cache plugin. If INVENTORY_CACHE_PLUGIN_PREFIX is not provided CACHE_PLUGIN_PREFIX can be used instead.
+  env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX}]
+  default: ansible_facts
+  ini:
+  - {key: cache_prefix, section: inventory}
+INVENTORY_CACHE_TIMEOUT:
+  name: Inventory cache plugin expiration timeout
+  description: Expiration timeout for the inventory cache plugin data. If INVENTORY_CACHE_TIMEOUT is not provided CACHE_TIMEOUT can be used instead.
+  default: 3600
+  env: [{name: ANSIBLE_INVENTORY_CACHE_TIMEOUT}]
+  ini:
+  - {key: cache_timeout, section: inventory}
 INVENTORY_ENABLED:
   name: Active Inventory plugins
   default: ['host_list', 'script', 'yaml', 'ini', 'auto']
