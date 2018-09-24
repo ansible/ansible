@@ -77,12 +77,14 @@ ResourceRecords:
     returned: always
     type: list
     sample: ['Value': 192.0.2.1, 'Value': 192.0.2.2]
-TTL: 
+
+TTL:
     description: record_set_name
     returned: always
     type: string
     sample: "300"
-Type: 
+
+Type:
     description: record_set_name
     returned: always
     type: string
@@ -106,13 +108,13 @@ try:
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
-import time
+#import time
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
 #    AWSRetry,
     boto3_conn,
     boto_exception,
-    ec2_argument_spec,
+    ec2_argument_spec
 #    get_aws_connection_info,
 #    snake_dict_to_camel_dict,
 #    camel_dict_to_snake_dict
@@ -162,10 +164,12 @@ class AWSRoute53Record(object):
         record_set_ttl = self._module.params['record_set_ttl']
         record_set_value = self._module.params['record_set_value']
         list_record_set_value = [{'Value': value} for value in record_set_value]
-        record_set_spec = {'Name': record_set_name,
-                            'ResourceRecords': list_record_set_value,
-                            'TTL': record_set_ttl,
-                            'Type': record_set_type}
+        record_set_spec = {
+            'Name': record_set_name,
+            'ResourceRecords': list_record_set_value,
+            'TTL': record_set_ttl,
+            'Type': record_set_type
+            }
         if record_set_spec in resource_record_sets:
             record_exists = True
         return record_exists
