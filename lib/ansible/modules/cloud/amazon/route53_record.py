@@ -104,14 +104,11 @@ class AWSRoute53Record(object):
             results = self._ensure_absent()
 
     def _ensure_present(self):
-        pass
         results = dict(changed=False)
         record_exists = False
-        
         return results
 
     def _ensure_absent(self):
-        pass
         results = dict(changed=False)
         record_exists = False
         return results
@@ -187,10 +184,10 @@ def main():
         required_if=required_if,
         supports_check_mode=True
     )
-
+    results = dict(changed=False)
     aws_route53_record = AWSRoute53Record(module=ansible_aws_module)
     aws_route53_record.process()
-    module.exit_json(**results)
+    aws_route53_record.exit_json(**results)
 
 
 if __name__ == '__main__':
