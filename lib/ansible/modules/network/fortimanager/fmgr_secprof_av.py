@@ -31,9 +31,9 @@ author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
-short_description: %%SHORT_DESC%%
+short_description: Manage security profile
 description:
-  -  %%LONG_DESC%%
+  -  Manage security profile groups for FortiManager objects
 
 options:
   adom:
@@ -1405,6 +1405,8 @@ def main():
 
     # CHECK IF LOGIN FAILED
     fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
+
+    results = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
 
     response = fmg.login()
     if response[1]['status']['code'] != 0:
