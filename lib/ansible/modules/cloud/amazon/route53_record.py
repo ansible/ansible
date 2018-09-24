@@ -108,16 +108,16 @@ try:
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
-#import time
+# import time
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
-#    AWSRetry,
+    # AWSRetry,
     boto3_conn,
     boto_exception,
     ec2_argument_spec
-#    get_aws_connection_info,
-#    snake_dict_to_camel_dict,
-#    camel_dict_to_snake_dict
+    # get_aws_connection_info,
+    # snake_dict_to_camel_dict,
+    # camel_dict_to_snake_dict
 )
 
 
@@ -169,7 +169,7 @@ class AWSRoute53Record(object):
             'ResourceRecords': list_record_set_value,
             'TTL': record_set_ttl,
             'Type': record_set_type
-            }
+        }
         if record_set_spec in resource_record_sets:
             record_exists = True
         return record_exists
