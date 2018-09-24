@@ -475,8 +475,11 @@ files:
     labels: networking
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
-  $module_utils/network/aci:
+  $module_utils/network/aci: &aci
     maintainers: $team_aci
+    labels:
+    - aci
+    - networking
   $module_utils/network/aireos:
     maintainers: jmighion
   $module_utils/network/aos:
@@ -527,8 +530,11 @@ files:
     maintainers: paulquack
   $module_utils/network/junos:
     support: network
-  $module_utils/network/meraki:
+  $module_utils/network/meraki: &meraki
     maintainers: $team_meraki
+    labels:
+      - meraki
+      - networking
   $module_utils/network/netconf:
     support: network
     maintainers: $team_networking
@@ -997,16 +1003,8 @@ files:
     maintainers:
       - samccann
       - gundalow
-  docs/docsite/rst/scenario_guides/guide_aci.rst:
-    maintainers: $team_aci
-    labels:
-    - aci
-    - networking
-  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst:
-    maintainers: $team_aci
-    labels:
-     - aci
-     - networkings
+  docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
+  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
 ###############################
 # 'test' is a component path, then 'test' label will be automatically added
   test/runner/:
@@ -1015,14 +1013,8 @@ files:
     notified: mattclay
   test/utils/shippable/:
     notified: mattclay
-  test/integration/targets/aci:
-    maintainers: $team_aci
-    labels:
-      - networking
-  test/integration/targets/meraki:
-    maintainers: $team_meraki
-    labels:
-      - networking
+  test/integration/targets/aci: *aci
+  test/integration/targets/meraki: *meraki
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
