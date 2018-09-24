@@ -151,9 +151,9 @@ options:
             - "When the hypervisor name is specified the newly created disk or
                an existing disk will refresh its information about the
                underlying storage( Disk size, Serial, Product ID, Vendor ID ...)
-               The specified host will be used for garherting the storage
+               The specified host will be used for gathering the storage
                related information. This option is only valid for passthrough
-               disks. This option require at least the logical_unit.id to be
+               disks. This option requires at least the logical_unit.id to be
                specified"
         version_added: "2.8"
 extends_documentation_fragment: ovirt
