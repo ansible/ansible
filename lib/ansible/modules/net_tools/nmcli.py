@@ -42,6 +42,7 @@ options:
         description:
             - 'Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]'
         required: True
+            - 'Where conn_name will be the name used to call the connection.'
     ifname:
         description:
             - Where IFNAME will be the what we call the interface name.
