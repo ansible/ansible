@@ -60,6 +60,7 @@ options:
     description:
       - Port related to the rule, null value for all the ports
     required: true
+    type: int
 
   ip_range:
     description:
@@ -124,24 +125,8 @@ data:
 
 from ansible.module_utils.scaleway import SCALEWAY_LOCATION, scaleway_argument_spec, Scaleway, payload_from_object
 from ansible.module_utils.compat.ipaddress import ip_network
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-
-
-def valid_ip_network(address):
-    try:
-        ip_network(u'{0}'.format(address))
-        return address
-    except ValueError:
-        raise
-
-
-def valid_port(port):
-    try:
-        if port:
-            return int(port)
-        return port
-    except ValueError:
-        raise
 
 
 def get_sgr_from_api(security_group_rules, security_group_rule):
@@ -254,8 +239,8 @@ def main():
         state=dict(default='present', choices=['absent', 'present']),
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
         protocol=dict(required=True, choices=['TCP', 'UDP', 'ICMP']),
-        port=dict(required=True, type=valid_port),
-        ip_range=dict(default='0.0.0.0/0', type=valid_ip_network),
+        port=dict(required=True, type=int),
+        ip_range=dict(default='0.0.0.0/0', type=lambda x: to_text(ip_network(to_text(x)))),
         direction=dict(required=True, choices=['inbound', 'outbound']),
         action=dict(required=True, choices=['accept', 'drop']),
         security_group=dict(required=True),
