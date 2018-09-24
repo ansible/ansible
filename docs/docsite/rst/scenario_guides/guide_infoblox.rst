@@ -20,6 +20,9 @@ Before using Ansible ``nios`` modules with Infoblox, you must install the ``info
 
     $ sudo pip install infoblox-client
 
+.. note::
+    You need an NIOS account with the WAPI feature enabled to use Ansible with Infoblox.
+
 .. _nios_credentials:
 
 Credentials and authenticating
