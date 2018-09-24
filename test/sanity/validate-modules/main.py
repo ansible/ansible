@@ -823,10 +823,15 @@ class ModuleValidator(Validator):
             else:
                 error_message = error
 
+            if path:
+                combined_path = '%s.%s' % (name, '.'.join(path))
+            else:
+                combined_path = name
+
             self.reporter.error(
                 path=self.object_path,
                 code=error_code,
-                msg='%s.%s: %s' % (name, '.'.join(path), error_message)
+                msg='%s: %s' % (combined_path, error_message)
             )
 
     def _validate_docs(self):
@@ -980,7 +985,6 @@ class ModuleValidator(Validator):
                     msg='No EXAMPLES provided'
                 )
             else:
-                examples_exists = True
                 _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
                                                doc_info['EXAMPLES']['lineno'],
                                                self.name, 'EXAMPLES', load_all=True)
@@ -997,7 +1001,6 @@ class ModuleValidator(Validator):
                     )
 
             if not bool(doc_info['RETURN']['value']):
-                returns_exists = True
                 if self._is_new_module():
                     self.reporter.error(
                         path=self.object_path,
@@ -1014,9 +1017,7 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
-                if data:
-                    for ret_key in data:
-                        self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN.%s' % ret_key, 319)
+                self._validate_docs_schema(data, return_schema, 'RETURN', 319)
 
                 for error in errors:
                     self.reporter.error(
