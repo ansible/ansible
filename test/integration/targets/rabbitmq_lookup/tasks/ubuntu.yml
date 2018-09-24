@@ -131,3 +131,15 @@
     that:
       - "rabbitmq_vhost_error is failed"
       - "'NOT_ALLOWED' in rabbitmq_vhost_error.msg"
+
+# Tidy up
+- name: Uninstall pika
+  pip:
+    name: pika
+    state: absent
+
+- name: Disable the rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: disabled
+#
