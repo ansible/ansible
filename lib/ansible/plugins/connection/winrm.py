@@ -97,7 +97,6 @@ DOCUMENTATION = """
 """
 
 import base64
-import inspect
 import os
 import re
 import traceback
@@ -117,11 +116,18 @@ from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import binary_type
+from ansible.module_utils.six import binary_type, PY3
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import leaf_exec
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
+
+# getargspec is deprecated in favour of getfullargspec in Python 3 but
+# getfullargspec is not available in Python 2
+if PY3:
+    from inspect import getfullargspec as getargspec
+else:
+    from inspect import getargspec
 
 try:
     import winrm
@@ -139,11 +145,18 @@ except ImportError as e:
     HAS_XMLTODICT = False
     XMLTODICT_IMPORT_ERR = e
 
+HAS_PEXPECT = False
 try:
     import pexpect
-    HAS_PEXPECT = True
+    # echo was added in pexpect 3.3+ which is newer than the RHEL package
+    # we can only use pexpect for kerb auth if echo is a valid kwarg
+    # https://github.com/ansible/ansible/issues/43462
+    if hasattr(pexpect, 'spawn'):
+        argspec = getargspec(pexpect.spawn.__init__)
+        if 'echo' in argspec.args:
+            HAS_PEXPECT = True
 except ImportError as e:
-    HAS_PEXPECT = False
+    pass
 
 # used to try and parse the hostname and detect if IPv6 is being used
 try:
@@ -243,7 +256,7 @@ class Connection(ConnectionBase):
         internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path', 'kinit_mode', 'kinit_cmd'])
 
         self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
-        argspec = inspect.getargspec(Protocol.__init__)
+        argspec = getargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
         supported_winrm_args.update(internal_kwarg_mask)
         passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in self.get_option('_extras')])
