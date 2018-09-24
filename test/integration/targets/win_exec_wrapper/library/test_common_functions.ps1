@@ -16,45 +16,9 @@ $result = @{
     changed = $false
 }
 
-# ConvertTo-AnsibleJson
-$obj = @{
-    string = "string"
-    int = 1
-    null = $null
-    float = 3.1415926
-    list = @(
-        "entry 1",
-        "entry 2"
-    )
-    dict = @{
-        string = "string"
-        int = 1
-    }
-}
-$expected = '{"string":"string","float":3.1415926,"dict":{"string":"string","int":1},"list":["entry 1","entry 2"],"null":null,"int":1}'
-$actual = ConvertTo-AnsibleJson -InputObject $obj
-Assert-Equals -actual $actual -expected $expected
-
-# ConvertFrom-AnsibleJson
-$input_json = $actual
+#ConvertFrom-AnsibleJso
+$input_json  = '{"string":"string","float":3.1415926,"dict":{"string":"string","int":1},"list":["entry 1","entry 2"],"null":null,"int":1}'
 $actual = ConvertFrom-AnsibleJson -InputObject $input_json
-Assert-Equals -actual $actual.GetType() -expected ([System.Collections.Generic.Dictionary`2[[String], [Object]]])
-Assert-Equals -actual $actual.string.GetType() -expected ([String])
-Assert-Equals -actual $actual.string -expected "string"
-Assert-Equals -actual $actual.int.GetType() -expected ([Int32])
-Assert-Equals -actual $actual.int -expected 1
-Assert-Equals -actual $actual.null -expected $null
-Assert-Equals -actual $actual.float.GetType() -expected ([Decimal])
-Assert-Equals -actual $actual.float -expected 3.1415926
-Assert-Equals -actual $actual.list.GetType() -expected ([System.Collections.ArrayList])
-Assert-Equals -actual $actual.list.Count -expected 2
-Assert-Equals -actual $actual.list[0] -expected "entry 1"
-Assert-Equals -actual $actual.list[1] -expected "entry 2"
-Assert-Equals -actual $actual.GetType() -expected ([System.Collections.Generic.Dictionary`2[[String], [Object]]])
-Assert-Equals -actual $actual.dict.string -expected "string"
-Assert-Equals -actual $actual.dict.int -expected 1
-
-$actual = ConvertFrom-AnsibleJson -InputObject $input_json -Type ([Hashtable])
 Assert-Equals -actual $actual.GetType() -expected ([Hashtable])
 Assert-Equals -actual $actual.string.GetType() -expected ([String])
 Assert-Equals -actual $actual.string -expected "string"
@@ -64,7 +28,7 @@ Assert-Equals -actual $actual.null -expected $null
 Assert-Equals -actual $actual.float.GetType() -expected ([Decimal])
 Assert-Equals -actual $actual.float -expected 3.1415926
 Assert-Equals -actual $actual.list.GetType() -expected ([Object[]])
-Assert-Equals -actual $actual.list.Length -expected 2
+Assert-Equals -actual $actual.list.Count -expected 2
 Assert-Equals -actual $actual.list[0] -expected "entry 1"
 Assert-Equals -actual $actual.list[1] -expected "entry 2"
 Assert-Equals -actual $actual.GetType() -expected ([Hashtable])

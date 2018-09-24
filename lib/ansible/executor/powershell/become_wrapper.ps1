@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][System.Collections.Generic.Dictionary`2[[String], [Object]]]$Payload
+    [Parameter(Mandatory=$true)][Hashtable]$Payload
 )
 
 #AnsibleRequires -CSharpUtil Ansible.Become
@@ -105,7 +105,7 @@ $Payload.actions = $Payload.actions[1..99]
 # we want the output from the exec_wrapper to be base64 encoded to preserve unicode chars
 $Payload.encoded_output = $true
 
-$payload_json = ConvertTo-AnsibleJson -InputObject $Payload
+$payload_json = ConvertTo-Json -InputObject $Payload -Depth 99 -Compress
 $exec_wrapper = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.exec_wrapper))
 $exec_wrapper = $exec_wrapper.Replace("`$json_raw = ''", "`$json_raw = @'`r`n$payload_json`r`n'@")
 

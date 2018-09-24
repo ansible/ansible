@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][System.Collections.Generic.Dictionary`2[[String], [Object]]]$Payload
+    [Parameter(Mandatory=$true)][Hashtable]$Payload
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,7 +28,7 @@ $Payload.async_results_path = $results_path
 # pop the async_wrapper action so we don't get stuck in a loop and create new
 # exec_wrapper for our async process
 $Payload.actions = $Payload.actions[1..99]
-$payload_json = ConvertTo-AnsibleJson -InputObject $Payload
+$payload_json = ConvertTo-Json -InputObject $Payload -Depth 99 -Compress
 
 $exec_wrapper = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.exec_wrapper))
 $exec_wrapper = $exec_wrapper.Replace("`$json_raw = ''", "`$json_raw = @'`r`n$payload_json`r`n'@")
@@ -130,7 +130,7 @@ try {
     }
 
     Write-AnsibleLog "INFO - writing initial async results to '$results_path'" "async_wrapper"
-    $result_json = ConvertTo-AnsibleJson -InputObject $result
+    $result_json = ConvertTo-Json -InputObject $result -Depth 99 -Compress
     Set-Content $results_path -Value $result_json
 
     Write-AnsibleLog "INFO - waiting for async process to connect to named pipe for 5 seconds" "async_wrapper"

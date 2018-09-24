@@ -8,101 +8,63 @@ begin {
     # as a script scoped variable so async_watchdog and module_wrapper can
     # access the functions when creating their Runspaces
     $script:common_functions = {
-        Function ConvertTo-AnsibleJson {
-            <#
-            .SYNOPSIS
-            Create a JSON string from a PS object. This is designed to work on both
-            PS Desktop and PS Core and have better performance than ConvertTo-Json.
-
-            .PARAMETER InputObject
-            Any PowerShell object to serialize to a JSON string.
-            #>
-            param([Parameter(Mandatory=$true)][Object]$InputObject)
-
-            # .NET Core does not have the System.Web.Extensions and use Newtonsoft.JSON
-            # .NET Framework does not have Newtonsoft.JSON so we need to detect what we
-            # can use
-            try {
-                # The -ErrorAction is needed, the try/catch will not block it from creating
-                # an error record if not set and the terminating except still fires
-                Add-Type -AssemblyName System.Web.Extensions -ErrorAction SilentlyContinue
-                $js_serial = $true
-            } catch {
-                $js_serial = $false
-            }
-
-            if ($js_serial) {
-                $json = New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer
-                $json.MaxJsonLength = [Int32]::MaxValue
-                $json.RecursionLimit = [Int32]::MaxValue
-                return $json.Serialize($InputObject)
-            } else {
-                $json = [Newtonsoft.Json.JsonConvert]::SerializeObject($InputObject)
-                return $json
-            }
-        }
-
         Function ConvertFrom-AnsibleJson {
             <#
             .SYNOPSIS
-            Converts a JSON string to a PS Object, defaults to a Dictionary. This is
-            designed to work on both PS Desktop and PS Core, have better performance
-            than ConvertTo-Json and also add the ability to specify the output type.
+            Converts a JSON string to a Hashtable/Array in the fastest way
+            possible. Unfortunately ConvertFrom-Json is still faster but outputs
+            a PSCustomObject which is combersone for module consumption.
 
             .PARAMETER InputObject
             [String] The JSON string to deserialize.
-
-            .PARAMETER Type
-            [Type] The type of object to create, by default will be Dictionary.
             #>
             param(
-                [Parameter(Mandatory=$true)][String]$InputObject,
-                [Type]$Type = [System.Collections.Generic.Dictionary`2[[String], [Object]]]
+                [Parameter(Mandatory=$true, Position=0)][String]$InputObject
             )
 
-            # .NET Core does not have the System.Web.Extensions and use Newtonsoft.JSON
-            # .NET Framework does not have Newtonsoft.JSON so we need to detect what we
-            # can use
-            try {
-                # The -ErrorAction is needed, the try/catch will not block it from creating
-                # an error record if not set and the terminating except still fires
-                Add-Type -AssemblyName System.Web.Extensions -ErrorAction SilentlyContinue
-                $js_serial = $true
-            } catch {
-                $js_serial = $false
-            }
-
-            if ($js_serial) {
-                $json = New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer
-                $json.MaxJsonLength = [Int32]::MaxValue
-                $json.RecursionLimit = [Int32]::MaxValue
-                return $json.Deserialize($InputObject, $Type)
+            # we can use -AsHashtable to get PowerShell to convert the JSON to
+            # a Hashtable and not a PSCustomObject. This was added in PowerShell
+            # 6.0, fall back to a manual conversion for older versions
+            $cmdlet = Get-Command -Name ConvertFrom-Json -CommandType Cmdlet
+            if ("AsHashtable" -in $cmdlet.Parameters.Keys) {
+                return ,(ConvertFrom-Json -InputObject $InputObject -AsHashtable)
             } else {
-                # need to use Reflection to set the output type we want on the DeserializeObject method
-                $binding_flags = [System.Reflection.BindingFlags]"DeclaredOnly, InvokeMethod, Public, Static"
-                $methods = ([Newtonsoft.Json.JsonConvert]).GetMethods($binding_flags) | `
-                    Where-Object { $_.Name -eq "DeserializeObject" -and $_.IsGenericMethod }
+                # get the PSCustomObject and then manually convert from there
+                $raw_obj = ConvertFrom-Json -InputObject $InputObject
 
-                $deserial_method = $null
-                foreach ($method in $methods) {
-                    $p = $method.GetParameters()
-                    if ($p.Count -eq 2 -and $p[0].ParameterType -eq [System.String] -and $p[1].ParameterType -eq [Newtonsoft.Json.JsonSerializerSettings]) {
-                        $deserial_method = $method.MakeGenericMethod($Type)
-                        break
+                Function ConvertTo-Hashtable {
+                    param($InputObject)
+
+                    if ($null -eq $InputObject) {
+                        return $null
+                    }
+
+                    if ($InputObject -is [PSCustomObject]) {
+                        $new_value = @{}
+                        foreach ($prop in $InputObject.PSObject.Properties.GetEnumerator()) {
+                            $new_value.($prop.Name) = (ConvertTo-Hashtable -InputObject $prop.Value)
+                        }
+                        return ,$new_value
+                    } elseif ($InputObject -is [Array]) {
+                        $new_value = [System.Collections.ArrayList]@()
+                        foreach ($val in $InputObject) {
+                            $new_value.Add((ConvertTo-Hashtable -InputObject $val)) > $null
+                        }
+                        return ,$new_value.ToArray()
+                    } else {
+                        return ,$InputObject
                     }
                 }
-                $settings = [System.Activator]::CreateInstance([Newtonsoft.Json.JsonSerializerSettings])
-                $settings.FloatParseHandling = [Newtonsoft.Json.FloatParseHandling]::Decimal
-                return $deserial_method.Invoke([Newtonsoft.Json.JsonConvert], @($InputObject, [Newtonsoft.Json.JsonSerializerSettings]$settings))
+                return ,(ConvertTo-Hashtable -InputObject $raw_obj)
             }
         }
 
         Function Add-CSharpType {
             <#
             .SYNOPSIS
-            Compiles one or more C# scripts into the current AppDomain similar
-            to Add-Type. Exposes more configuration options that we may need to
-            set within Ansible.
+            Compiles one or more C# scripts similar to Add-Type. This exposes
+            more configuration options that are useable within Ansible and it
+            also allows multiple C# sources to be compiled together.
 
             .PARAMETER References
             [String[]] A collection of C# scripts to compile together.
@@ -123,11 +85,13 @@ begin {
             .PARAMETER TempPath
             [String] The temporary directory in which the dynamic assembly is
             compiled to. This file is deleted once compilation is complete.
-            Cannot be used when AnsibleModule is set.
+            Cannot be used when AnsibleModule is set. This is a no-op when
+            running on PSCore.
 
             .PARAMETER IncludeDebugInfo
             [Switch] Whether to include debug information in the compiled
-            assembly. Cannot be used when AnsibleModule is set.
+            assembly. Cannot be used when AnsibleModule is set. This is a no-op
+            when running on PSCore.
             #>
             param(
                 [Parameter(Mandatory=$true)][AllowEmptyCollection()][String[]]$References,
@@ -141,62 +105,217 @@ begin {
                 return
             }
 
-            # configure compile options based on input
-            if ($PSCmdlet.ParameterSetName -eq "Module") {
-                $temp_path = $AnsibleModule.TmpDir
-                $include_debug = $AnsibleModule.Verbosity -ge 3
+            # define special symbols CORECLR, WINDOWS, UNIX if required
+            # the Is* variables are defined on PSCore, if absent we assume an
+            # older version of PowerShell under .NET Framework and Windows
+            $defined_symbols = [System.Collections.ArrayList]@()
+            $is_coreclr = Get-Variable -Name IsCoreCLR -ErrorAction SilentlyContinue
+            if ($null -ne $is_coreclr) {
+                if ($is_coreclr.Value) {
+                    $defined_symbols.Add("CORECLR") > $null
+                }
+            }
+            $is_windows = Get-Variable -Name IsWindows -ErrorAction SilentlyContinue
+            if ($null -ne $is_windows) {
+                if ($is_windows.Value) {
+                    $defined_symbols.Add("WINDOWS") > $null
+                } else {
+                    $defined_symbols.Add("UNIX") > $null
+                }
             } else {
-                $temp_path = $TempPath
-                $include_debug = $IncludeDebugInfo.IsPresent
+                $defined_symbols.Add("WINDOWS") > $null
             }
-            $compile_parameters = New-Object -TypeName System.CodeDom.Compiler.CompilerParameters
-            $compile_parameters.CompilerOptions = "/optimize"
-            $compile_parameters.GenerateExecutable = $false
-            $compile_parameters.GenerateInMemory = $true
-            $compile_parameters.TreatWarningsAsErrors = (-not $IgnoreWarnings.IsPresent)
-            $compile_parameters.IncludeDebugInformation = $include_debug
-            $compile_parameters.TempFiles = (New-Object -TypeName System.CodeDom.Compiler.TempFileCollection -ArgumentList $temp_path, $false)
 
-            # Add-Type automatically references System.dll, System.Core.dll,
-            # and System.Management.Automation.dll which we replicate here
-            $assemblies = [System.Collections.Generic.HashSet`1[String]]@(
-                "System.dll",
-                "System.Core.dll",
-                ([System.Reflection.Assembly]::GetAssembly([PSObject])).Location
-            )
+            # pattern used to find referenced assemblies in the code
+            $assembly_pattern = "^//\s*AssemblyReference\s+-Name\s+(?<Name>[\w.]*)(\s+-CLR\s+(?<CLR>Core|Framework))?$"
 
-            # create a code snippet for each reference and check if we need to
-            # reference any extra assemblyies (//AssemblyReference -Name ....)
-            $compile_units = [System.Collections.Generic.List`1[System.CodeDom.CodeSnippetCompileUnit]]@()
-            foreach ($reference in $References) {
-                $reference_code = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($reference))
-                $sr = New-Object -TypeName System.IO.StringReader -ArgumentList $reference_code
-                try {
-                    while ($null -ne ($line = $sr.ReadLine())) {
-                        if ($line -match "^//\s*AssemblyReference\s+-Name\s+([\w.]*)$") {
-                            $assemblies.Add($Matches[1]) > $null
+            # PSCore vs PSDesktop use different methods to compile the code,
+            # PSCore uses Roslyn and can compile the code purely in memory
+            # without touching the disk while PSDesktop uses CodeDom and csc.exe
+            # to compile the code. We branch out here and run each
+            # distribution's method to add our C# code.
+            if ($is_coreclr) {
+                # compile the code using Roslyn on PSCore
+
+                # Include the default assemblies using the logic in Add-Type
+                # https://github.com/PowerShell/PowerShell/blob/master/src/Microsoft.PowerShell.Commands.Utility/commands/utility/AddType.cs
+                $assemblies = [System.Collections.Generic.HashSet`1[Microsoft.CodeAnalysis.MetadataReference]]@(
+                    [Microsoft.CodeAnalysis.CompilationReference]::CreateFromFile(([System.Reflection.Assembly]::GetAssembly([PSObject])).Location)
+                )
+                $netcore_app_ref_folder = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName([PSObject].Assembly.Location), "ref")
+                foreach ($file in [System.IO.Directory]::EnumerateFiles($netcore_app_ref_folder, "*.dll", [System.IO.SearchOption]::TopDirectoryOnly)) {
+                    $assemblies.Add([Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile($file)) > $null
+                }
+
+                # loop through the references, parse as a SyntaxTree and get
+                # referenced assemblies
+                $parse_options = ([Microsoft.CodeAnalysis.CSharp.CSharpParseOptions]::Default).WithPreprocessorSymbols($defined_symbols)
+                $syntax_trees = [System.Collections.Generic.List`1[Microsoft.CodeAnalysis.SyntaxTree]]@()
+                foreach ($reference in $References) {
+                    $reference_code = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($reference))
+
+                    # scan through code and add any assemblies that match
+                    # //AssemblyReference -Name ... [-CLR Core]
+                    $sr = New-Object -TypeName System.IO.StringReader -ArgumentList $reference_code
+                    try {
+                        while ($null -ne ($line = $sr.ReadLine())) {
+                            if ($line -imatch $assembly_pattern) {
+                                # verify the reference is not for .NET Framework
+                                if ($Matches.ContainsKey("CLR") -and $Matches.CLR -ne "Core") {
+                                    continue
+                                }
+                                $assemblies.Add($Matches.Name) > $null
+                            }
                         }
+                    } finally {
+                        $sr.Close()
                     }
+                    $syntax_trees.Add([Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree]::ParseText($reference_code, $parse_options)) > $null
+                }
+
+                # Release seems to contain the correct line numbers compared to
+                # debug,may need to keep a closer eye on this in the future
+                $compiler_options = (New-Object -TypeName Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions -ArgumentList @(
+                    [Microsoft.CodeAnalysis.OutputKind]::DynamicallyLinkedLibrary
+                )).WithOptimizationLevel([Microsoft.CodeAnalysis.OptimizationLevel]::Release)
+
+                # set warnings to error out if IgnoreWarnings is not set
+                if (-not $IgnoreWarnings.IsPresent) {
+                    $compiler_options = $compiler_options.WithGeneralDiagnosticOption([Microsoft.CodeAnalysis.ReportDiagnostic]::Error)
+                }
+
+                # create compilation object
+                $compilation = [Microsoft.CodeAnalysis.CSharp.CSharpCompilation]::Create(
+                    [System.Guid]::NewGuid().ToString(),
+                    $syntax_trees,
+                    $assemblies,
+                    $compiler_options
+                )
+
+                # Load the compiled code and pdb info, we do this so we can
+                # include line number in a stracktrace
+                $code_ms = New-Object -TypeName System.IO.MemoryStream
+                $pdb_ms = New-Object -TypeName System.IO.MemoryStream
+                try {
+                    $emit_result = $compilation.Emit($code_ms, $pdb_ms)
+                    if (-not $emit_result.Success) {
+                        $errors = [System.Collections.ArrayList]@()
+
+                        foreach ($e in $emit_result.Diagnostics) {
+                            # builds the error msg, based on logic in Add-Type
+                            # https://github.com/PowerShell/PowerShell/blob/master/src/Microsoft.PowerShell.Commands.Utility/commands/utility/AddType.cs#L1239
+                            if ($null -eq $e.Location.SourceTree) {
+                                $errors.Add($e.ToString()) > $null
+                                continue
+                            }
+
+                            $cancel_token = New-Object -TypeName System.Threading.CancellationToken -ArgumentList $false
+                            $text_lines = $e.Location.SourceTree.GetText($cancel_token).Lines
+                            $line_span = $e.Location.GetLineSpan()
+
+                            $diagnostic_message = $e.ToString()
+                            $error_line_string = $text_lines[$line_span.StartLinePosition.Line].ToString()
+                            $error_position = $line_span.StartLinePosition.Character
+
+                            $sb = New-Object -TypeName System.Text.StringBuilder -ArgumentList ($diagnostic_message.Length + $error_line_string.Length * 2 + 4)
+                            $sb.AppendLine($diagnostic_message)
+                            $sb.AppendLine($error_line_string)
+
+                            for ($i = 0; $i -lt $error_line_string.Length; $i++) {
+                                if ([System.Char]::IsWhiteSpace($error_line_string[$i])) {
+                                    continue
+                                }
+                                $sb.Append($error_line_string, 0, $i)
+                                $sb.Append(' ', [Math]::Max(0, $error_position - $i))
+                                $sb.Append("^")
+                                break
+                            }
+
+                            $errors.Add($sb.ToString()) > $null
+                        }
+
+                        throw [InvalidOperationException]"Failed to compile C# code:`r`n$($errors -join "`r`n")"
+                    }
+
+                    $code_ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
+                    $pdb_ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
+                    $compiled_assembly = [System.Runtime.Loader.AssemblyLoadContext]::Default.LoadFromStream($code_ms, $pdb_ms)
                 } finally {
-                    $sr.Close()
+                    $code_ms.Close()
+                    $pdb_ms.Close()
                 }
-                $compile_units.Add((New-Object -TypeName System.CodeDom.CodeSnippetCompileUnit -ArgumentList $reference_code)) > $null
-            }
-            $compile_parameters.ReferencedAssemblies.AddRange($assemblies)
+            } else {
+                # compile the code using CodeDom on PSDesktop
 
-            # compile
-            $provider = New-Object -TypeName Microsoft.CSharp.CSharpCodeProvider
-            $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units.ToArray())
-            if ($compile.Errors.HasErrors) {
-                $msg = "Failed to compile C# code: "
-                foreach ($e in $compile.Errors) {
-                    $msg += "`r`n" + $e.ToString()
+                # configure compile options based on input
+                if ($PSCmdlet.ParameterSetName -eq "Module") {
+                    $temp_path = $AnsibleModule.TmpDir
+                    $include_debug = $AnsibleModule.Verbosity -ge 3
+                } else {
+                    $temp_path = $TempPath
+                    $include_debug = $IncludeDebugInfo.IsPresent
                 }
-                throw [InvalidOperationException]$msg
+                $compiler_options = [System.Collections.ArrayList]@("/optimize")
+                if ($defined_symbols.Count -gt 0) {
+                    $compiler_options.Add("/define:" + ([String]::Join(";", $defined_symbols.ToArray()))) > $null
+                }
+
+                $compile_parameters = New-Object -TypeName System.CodeDom.Compiler.CompilerParameters
+                $compile_parameters.CompilerOptions = [String]::Join(" ", $compiler_options.ToArray())
+                $compile_parameters.GenerateExecutable = $false
+                $compile_parameters.GenerateInMemory = $true
+                $compile_parameters.TreatWarningsAsErrors = (-not $IgnoreWarnings.IsPresent)
+                $compile_parameters.IncludeDebugInformation = $include_debug
+                $compile_parameters.TempFiles = (New-Object -TypeName System.CodeDom.Compiler.TempFileCollection -ArgumentList $temp_path, $false)
+
+                # Add-Type automatically references System.dll, System.Core.dll,
+                # and System.Management.Automation.dll which we replicate here
+                $assemblies = [System.Collections.Generic.HashSet`1[String]]@(
+                    "System.dll",
+                    "System.Core.dll",
+                    ([System.Reflection.Assembly]::GetAssembly([PSObject])).Location
+                )
+
+                # create a code snippet for each reference and check if we need
+                # to reference any extra assemblies
+                # //AssemblyReference -Name ... [-CLR Framework]
+                $compile_units = [System.Collections.Generic.List`1[System.CodeDom.CodeSnippetCompileUnit]]@()
+                foreach ($reference in $References) {
+                    $reference_code = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($reference))
+                    $sr = New-Object -TypeName System.IO.StringReader -ArgumentList $reference_code
+                    try {
+                        while ($null -ne ($line = $sr.ReadLine())) {
+                            if ($line -imatch $assembly_pattern) {
+                                # verify the reference is not for .NET Core
+                                if ($Matches.ContainsKey("CLR") -and $Matches.CLR -ne "Framework") {
+                                    continue
+                                }
+                                $assemblies.Add($Matches.Name) > $null
+                            }
+                        }
+                    } finally {
+                        $sr.Close()
+                    }
+                    $compile_units.Add((New-Object -TypeName System.CodeDom.CodeSnippetCompileUnit -ArgumentList $reference_code)) > $null
+                }
+                $compile_parameters.ReferencedAssemblies.AddRange($assemblies)
+
+                # compile the code together and check for errors
+                $provider = New-Object -TypeName Microsoft.CSharp.CSharpCodeProvider
+                $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units.ToArray())
+                if ($compile.Errors.HasErrors) {
+                    $msg = "Failed to compile C# code: "
+                    foreach ($e in $compile.Errors) {
+                        $msg += "`r`n" + $e.ToString()
+                    }
+                    throw [InvalidOperationException]$msg
+                }
+                $compiled_assembly = $compile.CompiledAssembly
             }
 
+            # return the compiled assembly if PassThru is set.
             if ($PassThru) {
-                return $compile.CompiledAssembly
+                return $compiled_assembly
             }
         }
 
@@ -241,8 +360,8 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
             <#
             .SYNOPSIS
             Writes an error message to a JSON string in the format that Ansible
-            understands. Also optionally adds an exception record if the ErrorRecord
-            is passed through.
+            understands. Also optionally adds an exception record if the
+            ErrorRecord is passed through.
             #>
             param(
                 [Parameter(Mandatory=$true)][String]$Message,
@@ -256,16 +375,16 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
                 $result.msg += ": $($ErrorRecord.Exception.Message)"
                 $result.exception = (Format-AnsibleException -ErrorRecord $ErrorRecord)
             }
-            Write-Output -InputObject (ConvertTo-AnsibleJson -InputObject $result)
+            Write-Output -InputObject (ConvertTo-Json -InputObject $result -Depth 99 -Compress)
         }
 
         Function Write-AnsibleLog {
             <#
             .SYNOPSIS
-            Used as a debugging tool to log events to a file as they run in the exec
-            wrappers. By default this is a noop function but the $log_path can be
-            manually set to enable it. Manually set ANSIBLE_EXEC_DEBUG as an env
-            value on the Windows host that this is run on to enable.
+            Used as a debugging tool to log events to a file as they run in the
+            exec wrappers. By default this is a noop function but the $log_path
+            can be manually set to enable it. Manually set ANSIBLE_EXEC_DEBUG as
+            an env value on the Windows host that this is run on to enable.
             #>
             param(
                 [Parameter(Mandatory=$true, Position=0)][String]$Message,

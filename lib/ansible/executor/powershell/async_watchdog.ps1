@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][System.Collections.Generic.Dictionary`2[[String], [Object]]]$Payload
+    [Parameter(Mandatory=$true)][Hashtable]$Payload
 )
 
 # help with debugging errors as we don't have visibility of this running process
@@ -84,7 +84,7 @@ if ($job_async_result.IsCompleted) {
         $result.stderr = $job_error | Out-String
     }
 
-    $result_json = ConvertTo-AnsibleJson -InputObject $result
+    $result_json = ConvertTo-Json -InputObject $result -Depth 99 -Compress
     Set-Content -Path $resultfile_path -Value $result_json
 
     Write-AnsibleLog "INFO - wrote output to $resultfile_path" "async_watchdog"
@@ -95,7 +95,7 @@ if ($job_async_result.IsCompleted) {
     # write timeout to result object
     $result.failed = $true
     $result.msg = "timed out waiting for module completion"
-    $result_json = ConvertTo-AnsibleJson -InputObject $result
+    $result_json = ConvertTo-Json -InputObject $result -Depth 99 -Compress
     Set-Content -Path $resultfile_path -Value $result_json
 
     Write-AnsibleLog "INFO - wrote timeout to '$resultfile_path'" "async_watchdog"

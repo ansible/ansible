@@ -1,13 +1,16 @@
 #!csharp
 
-//AssemblyReference -Name System.Web.Extensions.dll
+//AssemblyReference -Name System.Web.Extensions.dll -CLR Framework
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Security.Principal;
+#if !CORECLR
 using System.Web.Script.Serialization;
+#endif
 
 // TODO: swap over to using new Basic wrapper once implemented
 
@@ -17,7 +20,7 @@ namespace Ansible.Module
     {
         public static void Main(string[] args)
         {
-            Dictionary<string, object> input = GetParams();
+            Hashtable input = GetParams();
             Dictionary<string, object> result = new Dictionary<string, object>();
             string action = (string)input["action"];
             result["changed"] = true;
@@ -74,11 +77,10 @@ namespace Ansible.Module
             return jss.Serialize(obj);
         }
 
-        
-        public static Dictionary<string, object> GetParams()
+        public static Hashtable GetParams()
         {
             PSObject rawArgs = ScriptBlock.Create("$complex_args").Invoke()[0];
-            return rawArgs.BaseObject as Dictionary<string, object>;
+            return rawArgs.BaseObject as Hashtable;
         }
     }
 }

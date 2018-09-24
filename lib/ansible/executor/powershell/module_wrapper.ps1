@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][System.Collections.Generic.Dictionary`2[[String], [Object]]]$Payload
+    [Parameter(Mandatory=$true)][Hashtable]$Payload
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,20 +24,19 @@ Function Invoke-AnsibleModule {
         Scope: the scope of the variable
 
     .PARAMETER Environment
-    [System.Collections.Generic.Dictionary`2[[String], [Object]]]
-    A Dictionary of environment key/values to set in the new Pipeline.
+    [Hashtable] A Dictionary of environment key/values to set in the new
+    Pipeline.
 
     .PARAMETER Modules
-    [System.Collections.Generic.Dictionary`2[[String], [Object]]]
-    A Dictionary of PowerShell modules to import into the new Pipeline. The key
-    is the name of the module and the value is a base64 string of the module
-    util code.
+    [Hashtable] A Dictionary of PowerShell modules to import into the new
+    Pipeline. The key is the name of the module and the value is a base64 string
+    of the module util code.
     #>
     param(
         [String]$Script,
         [System.Collections.ArrayList]$Variables,
-        [System.Collections.Generic.Dictionary`2[[String], [Object]]]$Environment,
-        [System.Collections.Generic.Dictionary`2[[String], [Object]]]$Modules,
+        [Hashtable]$Environment,
+        [Hashtable]$Modules,
         [String]$ModuleName
     )
 
@@ -224,7 +223,7 @@ trap {
             failed = $true
             exception = (Format-AnsibleException -ErrorRecord $_)
         }
-        Write-Output -InputObject (ConvertTo-AnsibleJson -InputObject $result)
+        Write-Output -InputObject (ConvertTo-Json -InputObject $result -Depth 99 -Compress)
         $host.SetShouldExit(1)
     }
 } else {
@@ -255,7 +254,7 @@ trap {
             msg = "failed to find Main method class that starts with Ansible.Module in the loaded types: $($loaded_types.FullName -join ", ")"
             failed = $true
         }
-        Write-Output -InputObject (ConvertTo-AnsibleJson -InputObject $result)
+        Write-Output -InputObject (ConvertTo-Ansible -InputObject $result -Depth 99 -Compress)
         $host.SetShouldExit(1)
         return
     }
@@ -270,7 +269,7 @@ try {
         failed = $true
         exception = $_.Exception.InnerException.ToString()
     }
-    Write-Output -InputObject (ConvertTo-AnsibleJson -InputObject $result)
+    Write-Output -InputObject (ConvertTo-Json -InputObject $result -Depth 99 -Compress)
     $host.SetShouldExit(1)
 }
 '@
@@ -286,7 +285,7 @@ try {
             failed = $true
             exception = (Format-AnsibleException -ErrorRecord $_)
         }
-        Write-Output -InputObject (ConvertTo-AnsibleJson -InputObject $result)
+        Write-Output -InputObject (ConvertTo-Json -InputObject $result -Depth 99 -Compress)
         $host.SetShouldExit(1)
     }
 }

@@ -300,7 +300,7 @@ class ShellModule(ShellBase):
         script = to_text(script)
 
         if script == u'-':
-            cmd_parts = _common_args + ['-']
+            cmd_parts = _common_args + ['-Command', '-']
 
         else:
             if strict_mode:
