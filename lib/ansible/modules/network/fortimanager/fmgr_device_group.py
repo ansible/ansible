@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fmgr_device_group
-version_added: "2.6"
+version_added: "2.8"
 author: Luke Weighall, Andrew Welsh
 short_description: Alter FortiManager device groups
 description:
@@ -38,12 +38,14 @@ options:
   adom:
     description:
       - The ADOM the configuration should belong to.
-    required: true
+    required: false
+    default: root
 
   vdom:
     description:
       - The VDOM of on the Fortigate you want to add, must match the device in FMGR. Usually root.
-    required: true
+    required: false
+    default: root
 
   host:
     description:
