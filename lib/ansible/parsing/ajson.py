@@ -20,33 +20,27 @@ class AnsibleJSONDecoder(json.JSONDecoder):
 
     _vaults = {}
 
+    def __init__(self, *args, **kwargs):
+        kwargs['object_hook'] = self.object_hook
+        super(AnsibleJSONDecoder, self).__init__(*args, **kwargs)
+
     @classmethod
     def set_secrets(cls, secrets):
         cls._vaults['default'] = VaultLib(secrets=secrets)
 
-    def _decode_map(self, value):
+    def object_hook(self, pairs):
+        for key in pairs:
+            value = pairs[key]
 
-        if value.get('__ansible_unsafe', False):
-            value = wrap_var(value.get('__ansible_unsafe'))
-        elif value.get('__ansible_vault', False):
-            value = AnsibleVaultEncryptedUnicode(value.get('__ansible_vault'))
-            if self._vaults:
-                value.vault = self._vaults['default']
-        else:
-            for k in value:
-                if isinstance(value[k], Mapping):
-                    value[k] = self._decode_map(value[k])
-        return value
+            if key == '__ansible_vault':
+                value = AnsibleVaultEncryptedUnicode(value)
+                if self._vaults:
+                    value.vault = self._vaults['default']
+                return value
+            elif key == '__ansible_unsafe':
+                return wrap_var(value.get('__ansible_unsafe'))
 
-    def decode(self, obj):
-        ''' use basic json decoding except for specific ansible objects unsafe and vault '''
-
-        value = super(AnsibleJSONDecoder, self).decode(obj)
-
-        if isinstance(value, Mapping):
-            value = self._decode_map(value)
-
-        return value
+        return pairs
 
 
 # TODO: find way to integrate with the encoding modules do in module_utils
