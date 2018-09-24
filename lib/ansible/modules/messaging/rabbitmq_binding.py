@@ -128,8 +128,8 @@ class RabbitMqBinding(object):
                                                       urllib_parse.quote(self.vhost, safe=''),
                                                       urllib_parse.quote(self.name, safe=''),
                                                       self.destination_type,
-                                                      self.destination,
-                                                      self.routing_key)
+                                                      urllib_parse.quote(self.destination),
+                                                      urllib_parse.quote(self.routing_key))
         self.result = {
             'changed': False,
             'name': self.module.params['name'],
