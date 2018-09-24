@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fmgr_ha
-version_added: "2.6"
+version_added: "2.8"
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
