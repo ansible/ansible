@@ -46,8 +46,8 @@ Ansible releases a new major release of Ansible approximately every two months. 
    dev_guide/index
 
 .. toctree::
-   :maxdepth: 2
    :glob:
+   :maxdepth: 2
    :caption: Scenario Guides
 
    scenario_guides/guide_*

@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+.. _lookup_plugins:
 
 Lookup Plugins
 --------------
@@ -17,7 +18,7 @@ Lookups are an Ansible-specific extension to the Jinja2 templating language.
    - Lookups are executed with a working directory relative to the role or play,
      as opposed to local tasks, which are executed relative the executed script.
    - Since Ansible version 1.9, you can pass wantlist=True to lookups to use in Jinja2 template "for" loops.
-   - Lookup plugins are an advanced feature; to best leverage them you should have a good working knowledge of how to use Ansible plays.  
+   - Lookup plugins are an advanced feature; to best leverage them you should have a good working knowledge of how to use Ansible plays.
 
 .. warning::
    - Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage.

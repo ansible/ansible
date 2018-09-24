@@ -81,4 +81,6 @@ options:
         default: 1000
 notes:
   - "This module must be run locally, which can be achieved by specifying C(connection: local)."
+  - Please read the :ref:`nios_guide` for more detailed information on how to use Infoblox with Ansible.
+
 """
