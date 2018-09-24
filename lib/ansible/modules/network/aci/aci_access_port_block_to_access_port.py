@@ -255,8 +255,8 @@ def main():
         leaf_port_blk=dict(type='str', aliases=['leaf_port_blk_name']), # Not required for querying all objects
         from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']), # Not required for querying all objects and deleting port blocks
         to_port=dict(type='str', aliases=['to', 'toPort', 'to_port_range']), # Not required for querying all objects and deleting port blocks
-        from_card=dict(type='str', aliases=['from_card_range']), # Not required for querying all objects and deleting port blocks
-        to_card=dict(type='str', aliases=['to_card_range']), # Not required for querying all objects and deleting port blocks
+        from_card=dict(type='str', aliases=['from_card_range']),
+        to_card=dict(type='str', aliases=['to_card_range']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
