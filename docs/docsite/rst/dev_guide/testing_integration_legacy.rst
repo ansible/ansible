@@ -1,5 +1,6 @@
 :orphan:
-.. _testing_integration:
+
+.. _testing_integration_legacy:
 
 *******************************************
 Testing using the Legacy Integration system
