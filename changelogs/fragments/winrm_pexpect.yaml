@@ -1,0 +1,2 @@
+bugfixes:
+- winrm - Only use pexpect for auto kerb auth if it is installed and contains the required kwargs - https://github.com/ansible/ansible/issues/43462
