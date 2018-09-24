@@ -21,6 +21,8 @@ def main():
         sys.stderr.write("Command '%s' failed with status code: %d\n" % (' '.join(cmd), sphinx.returncode))
 
         if stdout.strip():
+            stdout = simplify_stdout(stdout)
+
             sys.stderr.write("--> Standard Output\n")
             sys.stderr.write("%s\n" % stdout.strip())
 
@@ -109,6 +111,41 @@ def main():
 
     for code in unused_ignore_codes:
         print('test/sanity/code-smell/docs-build.py:0:0: remove `%s` from the `ignore_codes` list as it is no longer needed' % code)
+
+
+def simplify_stdout(value):
+    """Simplify output by omitting earlier 'rendering: ...' messages."""
+    lines = value.strip().splitlines()
+
+    rendering = []
+    keep = []
+
+    def truncate_rendering():
+        """Keep last rendering line (if any) with a message about omitted lines as needed."""
+        if not rendering:
+            return
+
+        notice = rendering[-1]
+
+        if len(rendering) > 1:
+            notice += ' (%d previous rendering line(s) omitted)' % (len(rendering) - 1)
+
+        keep.append(notice)
+        rendering[:] = []
+
+    for line in lines:
+        if line.startswith('rendering: '):
+            rendering.append(line)
+            continue
+
+        truncate_rendering()
+        keep.append(line)
+
+    truncate_rendering()
+
+    result = '\n'.join(keep)
+
+    return result
 
 
 if __name__ == '__main__':
