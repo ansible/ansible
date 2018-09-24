@@ -11,8 +11,8 @@ DOCUMENTATION = '''
 ---
 module: route53_record
 version_added: "2.8"
-short_description: Manages DNS records in Amazons Route53 service
-description: Creates,deletes,updates,reads DNS records in Amazons Route53 service
+short_description: Manages DNS records in Amazon Route53 service.
+description: Creates,deletes,updates,reads DNS records in Amazon Route53 service.
 author: Shuang Wang (@ptux)
 
 requirements:
@@ -93,13 +93,13 @@ except ImportError:
 import time
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
-    AWSRetry,
+#    AWSRetry,
     boto3_conn,
     boto_exception,
     ec2_argument_spec,
-    get_aws_connection_info,
-    snake_dict_to_camel_dict,
-    camel_dict_to_snake_dict
+#    get_aws_connection_info,
+#    snake_dict_to_camel_dict,
+#    camel_dict_to_snake_dict
 )
 
 
@@ -110,29 +110,60 @@ class AWSRoute53Record(object):
         self._check_mode = self._module.check_mode
 
     def process(self):
-        if self._module.params['state'] == 'present':
-            results = self._ensure_present()
-        elif self._module.params['state'] == 'absent':
-            results = self._ensure_absent()
 
-    def _ensure_present(self):
-        results = dict(changed=False)
-        record_exists = False
+        if self._module.params['hosted_zone_id'] is not None:
+            hosted_zone_id = self._module.params['hosted_zone_id']
+            hosted_zone = self._connection.get_hosted_zone(Id=hosted_zone_id)
+            spec_hosted_zone_name = self._module.params['hosted_zone_name']
+            hosted_zone_name = hosted_zone['HostedZone']['Name']
+            if not spec_hosted_zone_name.endswith('.'):
+                spec_hosted_zone_name += "."
+            if not spec_hosted_zone_name == hosted_zone_name:
+                self._module.fail_json(msg="hosted_zone_id not matches hosted_zone_name")
+
+        record_exists = self._record_exists()
+        if self._module.params['state'] == 'present' and record_exists:
+            results = dict(changed=False)
+        if self._module.params['state'] == 'present' and not record_exists:
+            if not self._module.check_mode:
+                results = self._create_record()
+            results = dict(changed=True)
+        if self._module.params['state'] == 'absent' and record_exists:
+            if not self._module.check_mode:
+                results = self._delete_record()
+            results = dict(changed=True)
+        if self._module.params['state'] == 'absent' and not record_exists:
+            results = dict(changed=False)
         return results
 
-    def _ensure_absent(self):
-        results = dict(changed=False)
+    def _record_exists(self):
         record_exists = False
-        return results
+        resource_record_sets = self._get_resource_record_sets()
+        record_set_name = self._module.params['record_set_name']
+        if not record_set_name.endswith('.'):
+            record_set_name += "."
+        record_set_type = self._module.params['record_set_type']
+        record_set_ttl = self._module.params['record_set_ttl']
+        record_set_value = self._module.params['record_set_value']
+        list_record_set_value = [{'Value': value} for value in record_set_value]
+        record_set_spec = { 'Name': record_set_name,
+                            'ResourceRecords': list_record_set_value,
+                            'TTL': record_set_ttl,
+                            'Type': record_set_type }
+        if record_set_spec in resource_record_sets:
+            record_exists = True
+        return record_exists
 
-    def _get_zone_id(self, hosted_zone_name=None):
+    def _get_hosted_zone_id(self, hosted_zone_name=None):
         """gets a zone id by zone name"""
         hosted_zone_id = None
         if hosted_zone_name is not None:
             try:
                 hosted_zones = self._connection.list_hosted_zones().get('HostedZones', [])
+                if not hosted_zone_name.endswith('.'):
+                    hosted_zone_name += "."
                 for dic in hosted_zones:
-                    if dic.get('Name').rstrip('.') == hosted_zone_name:
+                    if dic.get('Name') == hosted_zone_name:
                         hosted_zone_id = dic.get('Id')
                 if hosted_zone_id is None:
                     self._module.fail_json(msg="hosted zone name not exists: %s" % hosted_zone_name)
@@ -142,27 +173,12 @@ class AWSRoute53Record(object):
             self._module.fail_json(msg="hosted zone name is requied.")
         return hosted_zone_id
 
-    def _get_zone(self, hosted_zone_id=None):
-        """gets a zone by id"""
-        hosted_zone = None
-        if hosted_zone_id is not None:
-            try:
-                hosted_zone = self._connection.get_hosted_zone(Id=hosted_zone_id)
-                hosted_zone_name = hosted_zone['HostedZone']['Name'].rstrip('.')
-                if not self._module.params['hosted_zone_name'] == hosted_zone_name:
-                    self._module.fail_json(msg="hosted_zone_id not matches hosted_zone_name")
-                if hosted_zone is None:
-                    self._module.fail_json(msg="hosted zone id not exists: %s" % hosted_zone_id)
-            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                self._module.fail_json_aws(e, msg="couldn't get hosted zone by hosted_zone_id")
-        else:
-            self._module.fail_json(msg="hosted zone id is requied.")
-        return hosted_zone
-
-    def _get_record(self):
-        #      self._connection.list_resource_record_sets(**kwargs)
-        # Lists the resource record sets in a specified hosted zone.
-        pass
+    def _get_resource_record_sets(self):
+        # todo: hanlde IsTruncated true
+        hosted_zone_name = self._module.params['hosted_zone_name']
+        hosted_zone_id = self._get_hosted_zone_id(hosted_zone_name)
+        resource_record_sets = self._connection.list_resource_record_sets(HostedZoneId = hosted_zone_id)['ResourceRecordSets']
+        return resource_record_sets
 
     def _create_record(self):
         #      self._connection.change_resource_record_sets(**kwargs)
@@ -191,15 +207,15 @@ def main():
 
     required_if = [('state', 'present', ['record_set_value']),
                    ('state', 'absent', ['record_set_value'])]
+
     ansible_aws_module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True
     )
-    results = dict(changed=False)
     aws_route53_record = AWSRoute53Record(module=ansible_aws_module)
-    aws_route53_record.process()
-    aws_route53_record.exit_json(**results)
+    results = aws_route53_record.process()
+    ansible_aws_module.exit_json(**results)
 
 
 if __name__ == '__main__':
