@@ -128,7 +128,7 @@ class RabbitMqBinding(object):
                                                       urllib_parse.quote(self.vhost, safe=''),
                                                       urllib_parse.quote(self.name, safe=''),
                                                       self.destination_type,
-                                                      urllib_parse.quote(self.destination),
+                                                      urllib_parse.quote(self.destination, safe=''),
                                                       urllib_parse.quote(self.routing_key))
         self.result = {
             'changed': False,
