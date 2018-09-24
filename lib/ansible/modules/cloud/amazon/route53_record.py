@@ -66,11 +66,23 @@ extends_documentation_fragment:
 '''
 
 RETURN = '''
-results
+name:
+    description: hosted zone name
+    returned: when hosted zone exists
+    type: string
+    sample: "private.local."
 '''
 
 EXAMPLES = '''
-examples
+# Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
+- route53_record:
+      state: present
+      zone: foo.com
+      record: new.foo.com
+      type: A
+      ttl: 7200
+      value: 1.1.1.1,2.2.2.2,3.3.3.3
+      wait: yes
 '''
 
 try:
