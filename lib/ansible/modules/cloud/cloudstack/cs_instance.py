@@ -77,12 +77,11 @@ options:
       - Name the hypervisor to be used for creating the new instance.
       - Relevant when using I(state=present), but only considered if not set on ISO/template.
       - If not set or found on ISO/template, first found hypervisor will be used.
-    choices: [KVM, kvm, VMware, vmware, BareMetal, baremetal, XenServer, xenserver, LXC, lxc, HyperV, hyperv, UCS, ucs, OVM, ovm, Simulator, simulator]
+    choices: [ KVM, kvm, VMware, vmware, BareMetal, baremetal, XenServer, xenserver, LXC, lxc, HyperV, hyperv, UCS, ucs, OVM, ovm, Simulator, simulator ]
   keyboard:
     description:
       - Keyboard device type for the instance.
-    choices: [ de, de-ch, es, fi, fr, fr-be, fr-ch, is, it, jp, nl-be, no, pt, uk, us ]
-    type: str
+    choices: [ 'de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us' ]
   networks:
     description:
       - List of networks to use for the new instance.
