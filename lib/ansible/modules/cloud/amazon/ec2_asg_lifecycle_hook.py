@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright (c) 2017 Ansible Project
+
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -15,7 +16,7 @@ description:
   - In case Hook found, but provided parameters are differes, will update existing Hook.
   - In case state=absent and Hook exists, will delete it.
 version_added: "2.5"
-author: "Igor (Tsigankov) Eyrich (@tsiganenok) <tsiganenok@gmail.com>"
+author: Igor 'Tsigankov' Eyrich (@tsiganenok) <tsiganenok@gmail.com>
 options:
   state:
     description:
