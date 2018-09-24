@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fmgr_device_config
-version_added: "2.6"
+version_added: "2.8"
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
@@ -42,6 +42,7 @@ options:
     description:
       - The ADOM the configuration should belong to.
     required: false
+    default: root
   host:
     description:
       - The FortiManager's Address.
