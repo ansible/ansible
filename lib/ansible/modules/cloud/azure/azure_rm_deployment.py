@@ -23,7 +23,7 @@ version_added: "2.1"
 description:
      - "Create or destroy Azure Resource Manager template deployments via the Azure SDK for Python.
        You can find some quick start templates in GitHub here https://github.com/azure/azure-quickstart-templates.
-       For more information on Azue resource manager templates see https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/."
+       For more information on Azure Resource Manager templates see https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/."
 
 options:
   resource_group_name:
