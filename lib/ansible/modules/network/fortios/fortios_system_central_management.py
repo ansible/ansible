@@ -33,7 +33,7 @@ description:
       allowing the user to configure system feature and central_management category.
       Examples includes all options and need to be adjusted to datasources before usage.
       Tested with FOS v6.0.2
-version_added: "2.6"
+version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
     - Nicolas Thomas (@thomnico)
