@@ -1,3 +1,6 @@
+:orphan:
+.. _testing_integration:
+
 *******************************************
 Testing using the Legacy Integration system
 *******************************************
@@ -102,4 +105,3 @@ Run the tests by doing::
    your cloud account. Care is taken to ensure that created resources are
    removed. However, it is advisable to inspect your AWS console to ensure no
    unexpected resources are running.
-
