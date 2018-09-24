@@ -119,7 +119,6 @@ except ImportError:
 class InventoryModule(K8sInventoryModule):
     NAME = 'openshift'
 
-    helper = None
     transport = 'oc'
 
     def fetch_objects(self, connections):

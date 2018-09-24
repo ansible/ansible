@@ -138,7 +138,6 @@ class K8sInventoryException(Exception):
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleMixin):
     NAME = 'k8s'
 
-    helper = None
     transport = 'kubectl'
 
     def parse(self, inventory, loader, path, cache=True):
