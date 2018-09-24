@@ -200,6 +200,11 @@ options:
                             - If desired, you can also attach existing non-root persistent disks using this property.
                               This field is only applicable for persistent disks.
                             - Note that for InstanceTemplate, specify the disk name, not the URL for the disk.
+                            - 'This field represents a link to a Disk resource in GCP. It can be specified in
+                              two ways. You can add `register: name-of-resource` to a gcp_compute_disk task and
+                              then set this source field to "{{ name-of-resource }}" Alternatively, you can set
+                              this source to a dictionary with the name key where the value is the name of your
+                              Disk.'
                         required: false
                     type:
                         description:
@@ -257,6 +262,11 @@ options:
                                       field undefined to use an IP from a shared ephemeral IP address pool. If you specify
                                       a static external IP address, it must live in the same region as the zone of the
                                       instance.
+                                    - 'This field represents a link to a Address resource in GCP. It can be specified
+                                      in two ways. You can add `register: name-of-resource` to a gcp_compute_address task
+                                      and then set this nat_ip field to "{{ name-of-resource }}" Alternatively, you can
+                                      set this nat_ip to a dictionary with the address key where the value is the address
+                                      of your Address.'
                                 required: false
                             type:
                                 description:
@@ -294,6 +304,11 @@ options:
                               if neither the network nor the subnetwork is specified, the default network global/networks/default
                               is used; if the network is not specified but the subnetwork is specified, the network
                               is inferred.
+                            - 'This field represents a link to a Network resource in GCP. It can be specified
+                              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+                              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+                              set this network to a dictionary with the selfLink key where the value is the selfLink
+                              of your Network.'
                         required: false
                     network_ip:
                         description:
@@ -306,6 +321,11 @@ options:
                             - If the network resource is in legacy mode, do not provide this property.  If the
                               network is in auto subnet mode, providing the subnetwork is optional. If the network
                               is in custom subnet mode, then this field should be specified.
+                            - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
+                              in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
+                              task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
+                              you can set this subnetwork to a dictionary with the selfLink key where the value
+                              is the selfLink of your Subnetwork.'
                         required: false
             scheduling:
                 description:

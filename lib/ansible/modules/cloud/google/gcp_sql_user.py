@@ -59,6 +59,11 @@ options:
     instance:
         description:
             - The name of the Cloud SQL instance. This does not include the project ID.
+            - 'This field represents a link to a Instance resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_sql_instance task
+              and then set this instance field to "{{ name-of-resource }}" Alternatively, you
+              can set this instance to a dictionary with the name key where the value is the name
+              of your Instance.'
         required: true
     password:
         description:

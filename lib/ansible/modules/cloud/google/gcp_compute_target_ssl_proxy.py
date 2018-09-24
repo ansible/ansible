@@ -69,6 +69,11 @@ options:
     service:
         description:
             - A reference to the BackendService resource.
+            - 'This field represents a link to a BackendService resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+              task and then set this service field to "{{ name-of-resource }}" Alternatively,
+              you can set this service to a dictionary with the selfLink key where the value is
+              the selfLink of your BackendService.'
         required: true
     ssl_certificates:
         description:

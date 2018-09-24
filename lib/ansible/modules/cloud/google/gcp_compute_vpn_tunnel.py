@@ -61,10 +61,20 @@ options:
     target_vpn_gateway:
         description:
             - URL of the Target VPN gateway with which this VPN tunnel is associated.
+            - 'This field represents a link to a TargetVpnGateway resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_target_vpn_gateway
+              task and then set this target_vpn_gateway field to "{{ name-of-resource }}" Alternatively,
+              you can set this target_vpn_gateway to a dictionary with the selfLink key where
+              the value is the selfLink of your TargetVpnGateway.'
         required: true
     router:
         description:
             - URL of router resource to be used for dynamic routing.
+            - 'This field represents a link to a Router resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_compute_router task
+              and then set this router field to "{{ name-of-resource }}" Alternatively, you can
+              set this router to a dictionary with the selfLink key where the value is the selfLink
+              of your Router.'
         required: false
     peer_ip:
         description:

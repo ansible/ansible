@@ -45,6 +45,11 @@ options:
         description:
             - Identifies the managed zone addressed by this request.
             - Can be the managed zone name or id.
+            - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_dns_managed_zone
+              task and then set this managed_zone field to "{{ name-of-resource }}" Alternatively,
+              you can set this managed_zone to a dictionary with the name key where the value
+              is the name of your ManagedZone.'
         required: true
 extends_documentation_fragment: gcp
 '''

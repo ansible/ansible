@@ -63,6 +63,11 @@ options:
     url_map:
         description:
             - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
+            - 'This field represents a link to a UrlMap resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_compute_url_map task
+              and then set this url_map field to "{{ name-of-resource }}" Alternatively, you can
+              set this url_map to a dictionary with the selfLink key where the value is the selfLink
+              of your UrlMap.'
         required: true
 extends_documentation_fragment: gcp
 notes:

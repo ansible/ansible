@@ -61,6 +61,11 @@ options:
     network:
         description:
             - A reference to the network to which this router belongs.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
         required: true
     bgp:
         description:

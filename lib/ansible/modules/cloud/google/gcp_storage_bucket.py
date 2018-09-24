@@ -59,6 +59,11 @@ options:
             bucket:
                 description:
                     - The name of the bucket.
+                    - 'This field represents a link to a Bucket resource in GCP. It can be specified in
+                      two ways. You can add `register: name-of-resource` to a gcp_storage_bucket task
+                      and then set this bucket field to "{{ name-of-resource }}" Alternatively, you can
+                      set this bucket to a dictionary with the name key where the value is the name of
+                      your Bucket.'
                 required: true
             domain:
                 description:
@@ -139,6 +144,11 @@ options:
             bucket:
                 description:
                     - The name of the bucket.
+                    - 'This field represents a link to a Bucket resource in GCP. It can be specified in
+                      two ways. You can add `register: name-of-resource` to a gcp_storage_bucket task
+                      and then set this bucket field to "{{ name-of-resource }}" Alternatively, you can
+                      set this bucket to a dictionary with the name key where the value is the name of
+                      your Bucket.'
                 required: true
             domain:
                 description:

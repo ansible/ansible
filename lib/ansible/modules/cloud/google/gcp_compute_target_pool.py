@@ -59,6 +59,11 @@ options:
               the backup pool are unhealthy, the traffic will be directed back to the primary
               pool in the "force" mode, where traffic will be spread to the healthy instances
               with the best effort, or to all instances when no instance is healthy.
+            - 'This field represents a link to a TargetPool resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_target_pool
+              task and then set this backup_pool field to "{{ name-of-resource }}" Alternatively,
+              you can set this backup_pool to a dictionary with the selfLink key where the value
+              is the selfLink of your TargetPool.'
         required: false
     description:
         description:
@@ -84,6 +89,11 @@ options:
             - A member instance in this pool is considered healthy if and only if the health checks
               pass. If not specified it means all member instances will be considered healthy
               at all times.
+            - 'This field represents a link to a HttpHealthCheck resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_http_health_check
+              task and then set this health_check field to "{{ name-of-resource }}" Alternatively,
+              you can set this health_check to a dictionary with the selfLink key where the value
+              is the selfLink of your HttpHealthCheck.'
         required: false
     instances:
         description:

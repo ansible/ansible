@@ -198,6 +198,11 @@ options:
     cluster:
         description:
             - The cluster this node pool belongs to.
+            - 'This field represents a link to a Cluster resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
+              task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
+              you can set this cluster to a dictionary with the name key where the value is the
+              name of your Cluster.'
         required: true
     zone:
         description:

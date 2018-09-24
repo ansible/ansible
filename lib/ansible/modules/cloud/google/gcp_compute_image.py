@@ -148,6 +148,11 @@ options:
         description:
             - Refers to a gcompute_disk object You must provide either this property or the rawDisk.source
               property but not both to create an image.
+            - 'This field represents a link to a Disk resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_compute_disk task and
+              then set this source_disk field to "{{ name-of-resource }}" Alternatively, you can
+              set this source_disk to a dictionary with the selfLink key where the value is the
+              selfLink of your Disk.'
         required: false
     source_disk_encryption_key:
         description:

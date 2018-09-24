@@ -86,6 +86,11 @@ options:
             - The URL of the subnetwork in which to reserve the address. If an IP address is specified,
               it must be within the subnetwork's IP range.
             - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
+            - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
+              task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
+              you can set this subnetwork to a dictionary with the selfLink key where the value
+              is the selfLink of your Subnetwork.'
         required: false
         version_added: 2.7
     region:

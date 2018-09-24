@@ -63,6 +63,11 @@ options:
     network:
         description:
             - The network this VPN gateway is accepting traffic for.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
         required: true
     region:
         description:

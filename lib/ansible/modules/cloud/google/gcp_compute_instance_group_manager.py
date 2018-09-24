@@ -67,6 +67,11 @@ options:
         description:
             - The instance template that is specified for this managed instance group. The group
               uses this template to create all new instances in the managed instance group.
+            - 'This field represents a link to a InstanceTemplate resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_instance_template
+              task and then set this instance_template field to "{{ name-of-resource }}" Alternatively,
+              you can set this instance_template to a dictionary with the selfLink key where the
+              value is the selfLink of your InstanceTemplate.'
         required: true
     name:
         description:

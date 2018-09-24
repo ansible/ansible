@@ -155,6 +155,11 @@ options:
               full URL to the resource. For example, the following are valid values: *
               `U(https://www.googleapis.com/compute/v1/projects/project/global/snapshots/snapshot`)
               * `projects/project/global/snapshots/snapshot` * `global/snapshots/snapshot` .'
+            - 'This field represents a link to a Snapshot resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_snapshot
+              task and then set this source_snapshot field to "{{ name-of-resource }}" Alternatively,
+              you can set this source_snapshot to a dictionary with the selfLink key where the
+              value is the selfLink of your Snapshot.'
         required: false
     source_snapshot_encryption_key:
         description:
