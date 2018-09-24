@@ -11,8 +11,8 @@ DOCUMENTATION = '''
 ---
 module: route53_record
 version_added: "2.8"
-short_description: Manages DNS records in Amazon Route53 service.
-description: Creates,deletes,updates,reads DNS records in Amazon Route53 service.
+short_description: Creates,deletes DNS records in Amazon Route53 service.
+description: Creates,deletes DNS records in Amazon Route53 service.
 author: Shuang Wang (@ptux)
 
 requirements:
@@ -66,23 +66,39 @@ extends_documentation_fragment:
 '''
 
 RETURN = '''
-name:
-    description: hosted zone name
-    returned: when hosted zone exists
+Name:
+    description: record_set_name
+    returned: always
     type: string
-    sample: "private.local."
+    sample: "sample.example.com"
+
+ResourceRecords:
+    description: record_set_name
+    returned: always
+    type: list
+    sample: ['Value': 192.0.2.1, 'Value': 192.0.2.2]
+TTL: 
+    description: record_set_name
+    returned: always
+    type: string
+    sample: "300"
+Type: 
+    description: record_set_name
+    returned: always
+    type: string
+    sample: "A"
 '''
 
 EXAMPLES = '''
-# Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
+# Add new A record and wait until the changes replicated
 - route53_record:
-      state: present
-      zone: foo.com
-      record: new.foo.com
-      type: A
-      ttl: 7200
-      value: 1.1.1.1,2.2.2.2,3.3.3.3
-      wait: yes
+    state: present
+    hosted_zone: example.com
+    record_set_name: sample.example.com
+    record_set_type: A
+    record_set_ttl: 300
+    record_set_value: 192.0.2.1
+    wait: yes
 '''
 
 try:
@@ -146,10 +162,10 @@ class AWSRoute53Record(object):
         record_set_ttl = self._module.params['record_set_ttl']
         record_set_value = self._module.params['record_set_value']
         list_record_set_value = [{'Value': value} for value in record_set_value]
-        record_set_spec = { 'Name': record_set_name,
+        record_set_spec = {'Name': record_set_name,
                             'ResourceRecords': list_record_set_value,
                             'TTL': record_set_ttl,
-                            'Type': record_set_type }
+                            'Type': record_set_type}
         if record_set_spec in resource_record_sets:
             record_exists = True
         return record_exists
@@ -177,14 +193,11 @@ class AWSRoute53Record(object):
         # todo: hanlde IsTruncated true
         hosted_zone_name = self._module.params['hosted_zone_name']
         hosted_zone_id = self._get_hosted_zone_id(hosted_zone_name)
-        resource_record_sets = self._connection.list_resource_record_sets(HostedZoneId = hosted_zone_id)['ResourceRecordSets']
+        resource_record_sets = self._connection.list_resource_record_sets(HostedZoneId=hosted_zone_id)['ResourceRecordSets']
         return resource_record_sets
 
     def _create_record(self):
         #      self._connection.change_resource_record_sets(**kwargs)
-        pass
-
-    def _update_record(self):
         pass
 
     def _delete_record(self):
