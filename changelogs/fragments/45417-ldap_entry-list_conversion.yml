@@ -1,0 +1,2 @@
+bugfixes:
+- Fix iterator to list conversion in ldap_entry module.
