@@ -52,6 +52,8 @@ class TerminalModule(TerminalBase):
     ]
 
     def on_open_shell(self):
+        if 'bash' in self._get_prompt():
+            self._exec_cli_command('FastCli')
         try:
             for cmd in (b'terminal length 0', b'terminal width 512'):
                 self._exec_cli_command(cmd)
