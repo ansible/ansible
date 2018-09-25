@@ -19,6 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
+from yaml import safe_load
 from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
@@ -132,33 +135,33 @@ class AnsibleConstructor(SafeConstructor):
 
         return (datasource, line, column)
 
+    def construct_import(self, node):
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:map',
-    AnsibleConstructor.construct_yaml_map)
+        construct = None
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/dict',
-    AnsibleConstructor.construct_yaml_map)
+        # TODO: add expand vars/user?
+        import_file = self.construct_scalar(node)
+        if import_file.startswith(os.path.sep):
+            filename = import_file
+        else:
+            filename = os.path.abspath(os.path.join(os.path.dirname(self._ansible_file_name), import_file))
+        ext = os.path.splitext(filename)[1].lstrip('.')
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:str',
-    AnsibleConstructor.construct_yaml_str)
+        with open(filename, 'r') as f:
+            if ext in ('', 'yaml', 'yml'):
+                construct = safe_load(f)
+            else:
+                construct = ''.join(f.readlines())
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/unicode',
-    AnsibleConstructor.construct_yaml_str)
+        return construct
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:seq',
-    AnsibleConstructor.construct_yaml_seq)
 
-AnsibleConstructor.add_constructor(
-    u'!unsafe',
-    AnsibleConstructor.construct_yaml_unsafe)
-
-AnsibleConstructor.add_constructor(
-    u'!vault',
-    AnsibleConstructor.construct_vault_encrypted_unicode)
-
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:map', AnsibleConstructor.construct_yaml_map)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:python/dict', AnsibleConstructor.construct_yaml_map)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:str', AnsibleConstructor.construct_yaml_str)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:python/unicode', AnsibleConstructor.construct_yaml_str)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:seq', AnsibleConstructor.construct_yaml_seq)
+AnsibleConstructor.add_constructor(u'!unsafe', AnsibleConstructor.construct_yaml_unsafe)
+AnsibleConstructor.add_constructor(u'!vault', AnsibleConstructor.construct_vault_encrypted_unicode)
 AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
+AnsibleConstructor.add_constructor(u'!import', AnsibleConstructor.construct_import)
