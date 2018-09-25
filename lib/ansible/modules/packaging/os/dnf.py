@@ -511,7 +511,7 @@ class DnfModule(YumDnf):
 
         # Set disable_excludes
         if self.disable_excludes:
-            conf.disable_excludes.append(self.disable_excludes)
+            conf.disable_excludes = conf.disable_excludes + (self.disable_excludes,)
 
         # Set releasever
         if self.releasever is not None:
