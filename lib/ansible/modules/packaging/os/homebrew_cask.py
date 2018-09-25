@@ -651,10 +651,12 @@ class HomebrewCask(object):
             )
             raise HomebrewCaskException(self.message)
 
-        cmd = [opt
-               for opt in (self.brew_path, 'cask', 'uninstall', self.current_cask)
-               if opt]
+        opts = (
+            [self.brew_path, 'cask', 'uninstall', self.current_cask]
+            + self.install_options
+        )
 
+        cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
         if not self._current_cask_is_installed():
