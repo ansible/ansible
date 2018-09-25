@@ -81,13 +81,13 @@ Status:
     description: The current state of the request.
     returned: changed
     type: string
-    sample: 'PENDING'|'INSYNC'
+    sample: 'PENDING'
 
 SubmittedAt:
     description: The date and time that the change request was submitted.
     returned: changed
     type: datetime
-    sample: "2018-09-25T02:03:51.365000+00:00"
+    sample: 2018-09-25T02:03:51.365000+00:00
 '''
 
 EXAMPLES = '''
@@ -202,7 +202,7 @@ class AWSRoute53Record(object):
                             'Type': self._module.params['record_set_type'],
                             # 'SetIdentifier': 'string',
                             # 'Weight': 123,
-                            # 'Region': 'us-east-1' | 'us-east-2' | 'us-west-1' | 'us-west-2' | 'ca-central-1' | 'eu-west-1' | 'eu-west-2' | 'eu-west-3' | 'eu-central-1' | 'ap-southeast-1' | 'ap-southeast-2' | 'ap-northeast-1' | 'ap-northeast-2' | 'ap-northeast-3' | 'sa-east-1' | 'cn-north-1' | 'cn-northwest-1' | 'ap-south-1',
+                            # 'Region': 'us-east-1' | 'us-east-2' |
                             # 'GeoLocation': {
                             # 'ContinentCode': 'string',
                             # 'CountryCode': 'string',
