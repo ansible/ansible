@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - vyos_facts - fix vyos_facts not returning version number issue (https://github.com/ansible/ansible/pull/39115)
