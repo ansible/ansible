@@ -43,7 +43,7 @@ options:
       - The JSON policy as a string.
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc. Otherwise assumes AWS
+      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
     aliases: [ S3_URL ]
   ceph:
     description:
