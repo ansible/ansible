@@ -29,7 +29,7 @@ options:
      description:
         - Name or id of the service.
      required: true
-   endpoint_interface :
+   endpoint_interface:
      description:
         - Interface of the service.
      choices: [admin, public, internal]
