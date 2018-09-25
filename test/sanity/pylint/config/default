@@ -1,6 +1,7 @@
 [MESSAGES CONTROL]
 
 disable=
+    ansible-deprecated-version,
     abstract-method,
     access-member-before-definition,
     arguments-differ,
