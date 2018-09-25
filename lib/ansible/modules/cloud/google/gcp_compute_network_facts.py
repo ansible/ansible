@@ -119,6 +119,21 @@ items:
                 - Creation timestamp in RFC3339 text format.
             returned: success
             type: str
+        routingConfig:
+            description:
+                - The network-level routing configuration for this network. Used by Cloud Router to
+                  determine what type of network-wide routing behavior to enforce.
+            returned: success
+            type: complex
+            contains:
+                routingMode:
+                    description:
+                        - The network-wide routing mode to use. If set to REGIONAL, this network's cloud routers
+                          will only advertise routes with subnetworks of this network in the same region as
+                          the router. If set to GLOBAL, this network's cloud routers will advertise routes
+                          with all subnetworks of this network, across regions.
+                    returned: success
+                    type: str
 '''
 
 ################################################################################
