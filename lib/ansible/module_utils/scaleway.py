@@ -17,13 +17,20 @@ def scaleway_argument_spec():
     )
 
 
+# Specify a complete Link header, for validation purposes
+R_LINK_HEADER = r'''</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>;
+    \srel="(first|previous|next|last)"
+    (,</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>;
+    \srel="(first|previous|next|last))*"'''
+# Specify a single relation, for iteration and string extraction purposes
+R_RELATION = r'<(?P<target_IRI>/[a-z]+\?page=(?P<page>[0-9]+)&per_page=([0-9]+)&)>; rel="(?P<relation>first|previous|next|last)"'
+
+
 def parse_pagination_link(header):
-    r_link_header = r'</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>; rel="(first|previous|next|last)"(,</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>; rel="(first|previous|next|last))*"'
-    r_relation = r'<(?P<target_IRI>/[a-z]+\?page=(?P<page>[0-9]+)&per_page=([0-9]+)&)>; rel="(?P<relation>first|previous|next|last)"'
-    if re.match(r_link_header, header):
+    if re.match(R_LINK_HEADER, header, re.VERBOSE):
         relations = header.split(',')
         parsed_relations = {}
-        rc_relation = re.compile(r_relation)
+        rc_relation = re.compile(R_RELATION)
         for relation in relations:
             match = rc_relation.match(relation)
             if match:

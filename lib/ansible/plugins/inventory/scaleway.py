@@ -92,6 +92,7 @@ from ansible.module_utils._text import to_native
 
 import ansible.module_utils.six.moves.urllib.parse as urllib_parse
 
+
 def _fetch_information(token, url):
     last = False
     results = []
@@ -116,7 +117,7 @@ def _fetch_information(token, url):
         link = response.getheader('Link')
         if link:
             relations = parse_pagination_link(link)
-            if not 'next' in relations:
+            if 'next' not in relations:
                 last = True
             else:
                 paginated_url = urllib_parse.urljoin(paginated_url, relations['next'])
