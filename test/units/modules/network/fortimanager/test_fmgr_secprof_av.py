@@ -31,8 +31,8 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + \
-                   "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(
+        filename=os.path.splitext(os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -185,4 +185,3 @@ def test_fmgr_antivirus_profile_addSetDelete(fixture_data, mocker):
     # Test using fixture 4 #
     output = fmgr_secprof_av.fmgr_antivirus_profile_addsetdelete(fmg_instance, fixture_data[3]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -10015
-
