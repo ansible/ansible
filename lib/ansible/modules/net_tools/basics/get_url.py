@@ -450,7 +450,6 @@ def main():
 
         # Not forcing redownload, unless checksum does not match
         if not force and not checksum_mismatch:
-            # Not forcing redownload, unless checksum does not match
             # allow file attribute changes
             module.params['path'] = dest
             file_args = module.load_file_common_arguments(module.params)
