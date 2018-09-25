@@ -523,7 +523,7 @@ def update_asg(connection, **params):
     connection.update_auto_scaling_group(**params)
 
 
-@AWSRetry.backoff(**backoff_params)
+@AWSRetry.backoff(catch_extra_error_codes=['ScalingActivityInProgress'], **backoff_params)
 def delete_asg(connection, asg_name, force_delete):
     connection.delete_auto_scaling_group(AutoScalingGroupName=asg_name, ForceDelete=force_delete)
 
