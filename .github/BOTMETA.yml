@@ -1029,6 +1029,9 @@ files:
       - remote_management
   test/legacy/:
     notified: mattclay
+  test/legacy/scaleway:
+    <<: *scaleway
+    support: community
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
