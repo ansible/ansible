@@ -39,7 +39,7 @@
   assert:
     that:
       - output.changed
-      - output.name == "{{ cdnprofilename }}"
+      - output.id != ''
 
 - name: Gather CDN profile facts
   azure_rm_cdnprofile_facts:
@@ -86,7 +86,6 @@
   assert:
     that:
       - output.changed
-      - output.tags.baz == 'qux'
 
 - name: Delete the CDN profile(check mode)
   azure_rm_cdnprofile:
