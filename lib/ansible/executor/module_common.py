@@ -465,7 +465,7 @@ class PSModuleDepFinder():
         self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
         self._re_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
 
-    def scan_module(self, module_data, wrapper=False):
+    def scan_module(self, module_data, wrapper=False, powershell=True):
         lines = module_data.split(b'\n')
         module_utils = set()
         if wrapper:
@@ -473,28 +473,28 @@ class PSModuleDepFinder():
         else:
             cs_utils = self.cs_utils_module
 
+        if powershell:
+            checks = [
+                # PS module contains '#Requires -Module Ansible.ModuleUtils.*'
+                (self._re_module, self.ps_modules, ".psm1"),
+                # PS module contains '#AnsibleRequires -CSharpUtil Ansible.*'
+                (self._re_cs_in_ps_module, cs_utils, ".cs"),
+            ]
+        else:
+            checks = [
+                # CS module contains 'using Ansible.*;'
+                (self._re_cs_module, cs_utils, ".cs"),
+            ]
+
         for line in lines:
-            # PS module contains '#Requires -Module Ansible.ModuleUtils.*'
-            ps_util_match = self._re_module.match(line)
-            if ps_util_match:
-                # tolerate windows line endings by stripping any remaining newline chars
-                module_util_name = to_text(ps_util_match.group(1).rstrip())
-                if module_util_name not in self.ps_modules.keys():
-                    module_utils.add((module_util_name, ".psm1"))
-
-            # PS module contains '#AnsibleRequires -CSharpUtil Ansible.*'
-            cs_in_ps_util_match = self._re_cs_in_ps_module.match(line)
-            if cs_in_ps_util_match:
-                module_util_name = to_text(cs_in_ps_util_match.group(1).rstrip())
-                if module_util_name not in cs_utils.keys():
-                    module_utils.add((module_util_name, ".cs"))
-
-            # CS module contains 'using Ansible.*;'
-            cs_util_match = self._re_cs_module.match(line)
-            if cs_util_match:
-                module_util_name = to_text(cs_util_match.group(1).rstrip())
-                if module_util_name not in cs_utils.keys():
-                    module_utils.add((module_util_name, ".cs"))
+            for check in checks:
+                match = check[0].match(line)
+                if match:
+                    # tolerate windows line endings by stripping any remaining
+                    # newline chars
+                    module_util_name = to_text(match.group(1).rstrip())
+                    if module_util_name not in check[1].keys():
+                        module_utils.add((module_util_name, check[2]))
 
             ps_version_match = self._re_ps_version.match(line)
             if ps_version_match:
@@ -531,7 +531,7 @@ class PSModuleDepFinder():
             self.exec_scripts[name] = b_data
         else:
             self.exec_scripts[name] = to_bytes(_strip_comments(to_text(b_data), powershell=True))
-        self.scan_module(b_data, wrapper=True)
+        self.scan_module(b_data, wrapper=True, powershell=True)
 
     def _add_module(self, name, wrapper=False):
         m, ext = name
@@ -548,7 +548,7 @@ class PSModuleDepFinder():
                 self.cs_utils_wrapper[m] = module_util_data
             else:
                 self.cs_utils_module[m] = module_util_data
-        self.scan_module(module_util_data, wrapper=wrapper)
+        self.scan_module(module_util_data, wrapper=wrapper, powershell=(ext == ".psm1"))
 
     def _parse_version_match(self, match, attribute):
         new_version = to_text(match.group(1)).rstrip()
@@ -776,7 +776,7 @@ def _create_powershell_wrapper(b_module_data, module_args, environment,
     if substyle != 'script':
         # don't scan the module for util dependencies and other Ansible related
         # flags if the substyle is script which is set by action/script
-        finder.scan_module(b_module_data)
+        finder.scan_module(b_module_data, powershell=(substyle == "powershell"))
 
     exec_manifest = dict(
         module_entry=to_text(base64.b64encode(b_module_data)),
@@ -890,7 +890,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
-    elif b_module_data.startswith((b"#!csharp\n")):
+    elif re.search(b'^#!csharp', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'csharp'
     elif REPLACER_JSONARGS in b_module_data:

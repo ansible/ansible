@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][Hashtable]$Payload
+    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
 )
 
 # help with debugging errors as we don't have visibility of this running process

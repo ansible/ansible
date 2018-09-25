@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][Hashtable]$Payload
+    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,19 +24,19 @@ Function Invoke-AnsibleModule {
         Scope: the scope of the variable
 
     .PARAMETER Environment
-    [Hashtable] A Dictionary of environment key/values to set in the new
-    Pipeline.
+    [System.Collections.IDictionary] A Dictionary of environment key/values to
+    set in the new Pipeline.
 
     .PARAMETER Modules
-    [Hashtable] A Dictionary of PowerShell modules to import into the new
-    Pipeline. The key is the name of the module and the value is a base64 string
-    of the module util code.
+    [System.Collections.IDictionary] A Dictionary of PowerShell modules to
+    import into the new Pipeline. The key is the name of the module and the
+    value is a base64 string of the module util code.
     #>
     param(
         [String]$Script,
         [System.Collections.ArrayList]$Variables,
-        [Hashtable]$Environment,
-        [Hashtable]$Modules,
+        [System.Collections.IDictionary]$Environment,
+        [System.Collections.IDictionary]$Modules,
         [String]$ModuleName
     )
 

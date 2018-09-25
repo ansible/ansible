@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][Hashtable]$Payload
+    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
 )
 
 #AnsibleRequires -CSharpUtil Ansible.Become

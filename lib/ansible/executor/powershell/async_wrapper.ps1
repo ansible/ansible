@@ -1,10 +1,16 @@
 param(
-    [Parameter(Mandatory=$true)][Hashtable]$Payload
+    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
 )
 
 $ErrorActionPreference = "Stop"
 
 Write-AnsibleLog "INFO - starting async_wrapper" "async_wrapper"
+
+if (-not $Payload.environment.ContainsKey("ANSIBLE_ASYNC_DIR")) {
+    Write-AnsibleError -Message "the environment variable ANSIBLE_ASYNC_DIR is not set and is required for an async task"
+    $host.SetShouldExit(1)
+    return
+}
 $async_dir = [System.Environment]::ExpandEnvironmentVariables($Payload.environment.ANSIBLE_ASYNC_DIR)
 
 # calculate the result path so we can include it in the worker payload
