@@ -1299,9 +1299,9 @@ def replace(connection):
 
     # check to see if instances are replaceable if checking launch configs
     if launch_config_name:
-        new_instances, old_instances = get_instances_by_lc(props, lc_check, instances)
+        new_instances, old_instances = get_instances_by_launch_config(props, lc_check, instances)
     elif launch_template:
-        new_instances, old_instances = get_instances_by_lt(props, lt_check, instances)
+        new_instances, old_instances = get_instances_by_launch_template(props, lt_check, instances)
 
     num_new_inst_needed = desired_capacity - len(new_instances)
 
@@ -1362,7 +1362,7 @@ def replace(connection):
     return(changed, asg_properties)
 
 
-def get_instances_by_lc(props, lc_check, initial_instances):
+def get_instances_by_launch_config(props, lc_check, initial_instances):
 
     new_instances = []
     old_instances = []
@@ -1390,7 +1390,7 @@ def get_instances_by_lc(props, lc_check, initial_instances):
     return new_instances, old_instances
 
 
-def get_instances_by_lt(props, lt_check, initial_instances):
+def get_instances_by_launch_template(props, lt_check, initial_instances):
     new_instances = []
     old_instances = []
     # old instances are those that have the old launch template or version of the same launch templatec
@@ -1464,9 +1464,9 @@ def terminate_batch(connection, replace_instances, initial_instances, leftovers=
     props = get_properties(as_group)
     desired_size = as_group['MinSize']
     if module.params.get('launch_config_name'):
-        new_instances, old_instances = get_instances_by_lc(props, lc_check, initial_instances)
+        new_instances, old_instances = get_instances_by_launch_config(props, lc_check, initial_instances)
     else:
-        new_instances, old_instances = get_instances_by_lt(props, lt_check, initial_instances)
+        new_instances, old_instances = get_instances_by_launch_template(props, lt_check, initial_instances)
     num_new_inst_needed = desired_capacity - len(new_instances)
 
     # check to make sure instances given are actually in the given ASG
