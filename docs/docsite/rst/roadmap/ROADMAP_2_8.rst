@@ -10,7 +10,7 @@ Release Schedule
 Expected
 ========
 
-- 2018Q1 General Availability
+- 2019Q1 General Availability
 
 Release Manager
 ---------------
