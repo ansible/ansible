@@ -60,7 +60,7 @@ def main():
             print('%s:%d:%d: %s' % (path, 0, 0, humanize_error(botmeta, error)))
 
     # Ensure botmeta is always support:core
-    botmeta_support = botmeta.get('files', {}).get('.github/BOTMETA.yml', '').get('support', '')
+    botmeta_support = botmeta.get('files', {}).get('.github/BOTMETA.yml', {}).get('support', '')
     if botmeta_support != 'core':
         print('%s:%d:%d: .github/BOTMETA.yml MUST be support: core' % (path, 0, 0))
 
