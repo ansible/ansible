@@ -1,0 +1,2 @@
+bugfixes:
+- Fix the quoting of vhost and other names in rabbitmq_binding
