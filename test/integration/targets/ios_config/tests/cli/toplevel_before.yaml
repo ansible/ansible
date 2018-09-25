@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/toplevel_before.yaml"
+- debug: msg="START cli/toplevel_before.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -7,13 +7,11 @@
       - "snmp-server contact ansible"
       - "hostname {{ shorter_hostname }}"
     match: none
-    authorize: yes
 
 - name: configure top level command with before
   ios_config:
     lines: ['hostname foo']
     before: ['snmp-server contact bar']
-    authorize: yes
   register: result
 
 - assert:
@@ -26,7 +24,6 @@
   ios_config:
     lines: ['hostname foo']
     before: ['snmp-server contact foo']
-    authorize: yes
   register: result
 
 - assert:
@@ -39,6 +36,5 @@
       - "no snmp-server contact"
       - "hostname {{ shorter_hostname }}"
     match: none
-    authorize: yes
 
-- debug: msg="END cli/toplevel_before.yaml"
+- debug: msg="END cli/toplevel_before.yaml on connection={{ ansible_connection }}"

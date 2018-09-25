@@ -59,6 +59,14 @@ class TestArubaConfigModule(TestArubaModule):
         set_module_args(dict(src=src))
         self.execute_module()
 
+    def test_aruba_config_unchanged_different_spacing(self):
+        # Tab indented
+        set_module_args(dict(lines=['description test string'], parents=['interface GigabitEthernet0/0']))
+        self.execute_module(changed=False)
+        # 3 spaces indented
+        set_module_args(dict(lines=['essid "blah"'], parents=['wlan ssid-profile "blah"']))
+        self.execute_module(changed=False)
+
     def test_aruba_config_src(self):
         src = load_fixture('aruba_config_src.cfg')
         set_module_args(dict(src=src))

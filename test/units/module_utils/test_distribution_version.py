@@ -1,35 +1,17 @@
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from itertools import product
 
-# to work around basic.py reading stdin
-import json
 import pytest
 
-from units.mock.procenv import swap_stdin_and_argv
-
-# for testing
-from ansible.compat.tests.mock import patch
-
-# the module we are actually testing (sort of
+# the module we are actually testing (sort of)
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector
+
 
 # to generate the testcase data, you can use the script gen_distribution_version_testcase.py in hacking/tests
 TESTSETS = [
@@ -239,9 +221,31 @@ ID_LIKE="suse"
         "result": {
             "distribution_release": "",
             "distribution": "openSUSE Tumbleweed",
-            "distribution_major_version": "NA",
+            "distribution_major_version": "20160917",
             "os_family": "Suse",
             "distribution_version": "20160917"
+        }
+    },
+    {
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/os-release": (
+                "NAME=\"openSUSE Leap\"\n# VERSION=\"15.0\"\nID=opensuse-leap\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.0\"\n"
+                "PRETTY_NAME=\"openSUSE Leap 15.0\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:leap:15.0\"\n"
+                "BUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"
+            )
+        },
+        "name": "openSUSE Leap 15.0",
+        "result": {
+            "distribution_release": "0",
+            "distribution": "openSUSE Leap",
+            "distribution_major_version": "15",
+            "os_family": "Suse",
+            "distribution_version": "15.0"
         }
     },
     {  # see https://github.com/ansible/ansible/issues/14837
@@ -393,6 +397,56 @@ BUG_REPORT_URL="http://bugs.debian.org/"
             'distribution_release': u'wheezy',
             "os_family": "Debian",
             'distribution_version': u'7.9'
+        }
+    },
+    {
+        'name': "SteamOS 2.0",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="SteamOS GNU/Linux 2.0 (brewmaster)"
+NAME="SteamOS GNU/Linux"
+VERSION_ID="2"
+VERSION="2 (brewmaster)"
+ID=steamos
+ID_LIKE=debian
+HOME_URL="http://www.steampowered.com/"
+SUPPORT_URL="http://support.steampowered.com/"
+BUG_REPORT_URL="http://support.steampowered.com/"
+""",
+            '/etc/lsb-release': """DISTRIB_ID=SteamOS
+DISTRIB_RELEASE=2.0
+DISTRIB_CODENAME=brewmaster
+DISTRIB_DESCRIPTION="SteamOS 2.0"
+"""
+        },
+        'platform.dist': ('Steamos', '2.0', 'brewmaster'),
+        'result': {
+            'distribution': u'SteamOS',
+            'distribution_major_version': u'2',
+            'distribution_release': u'brewmaster',
+            "os_family": "Debian",
+            'distribution_version': u'2.0'
+        }
+    },
+    {
+        'name': "Devuan",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux 1 (jessie)"
+NAME="Devuan GNU/Linux"
+VERSION_ID="1"
+VERSION="1 (jessie)"
+ID=devuan
+HOME_URL="http://www.devuan.org/"
+SUPPORT_URL="http://www.devuan.org/support/"
+BUG_REPORT_URL="https://bugs.devuan.org/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': u'Devuan',
+            'distribution_major_version': u'1',
+            'distribution_release': u'jessie',
+            'os_family': 'Debian',
+            'distribution_version': u'1'
         }
     },
     {
@@ -857,6 +911,37 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         }
     },
 
+    # ClearLinux https://github.com/ansible/ansible/issues/31501#issuecomment-340861535
+    {
+        "platform.dist": [
+            "Clear Linux OS for Intel Architecture",
+            "18450",
+            "clear-linux-os"
+        ],
+        "input": {
+            "/usr/lib/os-release": '''
+NAME="Clear Linux OS for Intel Architecture"
+VERSION=1
+ID=clear-linux-os
+VERSION_ID=18450
+PRETTY_NAME="Clear Linux OS for Intel Architecture"
+ANSI_COLOR="1;35"
+HOME_URL="https://clearlinux.org"
+SUPPORT_URL="https://clearlinux.org"
+BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
+PRIVACY_POLICY_URL="http://www.intel.com/privacy"
+'''
+        },
+        "name": "Clear Linux OS for Intel Architecture 1",
+        "result": {
+            "distribution_release": "clear-linux-os",
+            "distribution": "ClearLinux",
+            "distribution_major_version": "18450",
+            "os_family": "ClearLinux",
+            "distribution_version": "18450"
+        }
+    },
+
     # ArchLinux with no /etc/arch-release but with a /etc/os-release with NAME=Arch Linux
     # The fact needs to map 'Arch Linux' to 'Archlinux' for compat with 2.3 and earlier facts
     {
@@ -880,8 +965,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
 ]
 
 
-@pytest.mark.parametrize("testcase", TESTSETS, ids=lambda x: x['name'])
-def test_distribution_version(testcase):
+@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x['name'], indirect=['stdin'])
+def test_distribution_version(am, mocker, testcase):
     """tests the distribution parsing code of the Facts class
 
     testsets have
@@ -891,26 +976,10 @@ def test_distribution_version(testcase):
       * all files that are not listed here are assumed to not exist at all
     * the output of pythons platform.dist()
     * results for the ansible variables distribution* and os_family
+
     """
 
-    from ansible.module_utils import basic
-
-    args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-    with swap_stdin_and_argv(stdin_data=args):
-        basic._ANSIBLE_ARGS = None
-        module = basic.AnsibleModule(argument_spec=dict())
-
-        _test_one_distribution(module, testcase)
-
-
-def _test_one_distribution(module, testcase):
-    """run the test on one distribution testcase
-
-    * prepare some mock functions to get the testdata in
-    * run Facts()
-    * compare with the expected output
-    """
-
+    # prepare some mock functions to get the testdata in
     def mock_get_file_content(fname, default=None, strip=True):
         """give fake content if it exists, otherwise pretend the file is empty"""
         data = default
@@ -922,7 +991,7 @@ def _test_one_distribution(module, testcase):
             data = data.strip()
         return data
 
-    def mock_get_uname_version(module):
+    def mock_get_uname_version(am):
         return testcase.get('uname_v', None)
 
     def mock_file_exists(fname, allow_empty=False):
@@ -942,19 +1011,19 @@ def _test_one_distribution(module, testcase):
     def mock_platform_version():
         return testcase.get('platform.version', '')
 
-    @patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
-    @patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
-    @patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
-    @patch('platform.dist', lambda: testcase['platform.dist'])
-    @patch('platform.system', mock_platform_system)
-    @patch('platform.release', mock_platform_release)
-    @patch('platform.version', mock_platform_version)
-    def get_facts(testcase):
-        distro_collector = DistributionFactCollector()
-        res = distro_collector.collect(module)
-        return res
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
+    mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
+    mocker.patch('platform.dist', lambda: testcase['platform.dist'])
+    mocker.patch('platform.system', mock_platform_system)
+    mocker.patch('platform.release', mock_platform_release)
+    mocker.patch('platform.version', mock_platform_version)
 
-    generated_facts = get_facts(testcase)
+    # run Facts()
+    distro_collector = DistributionFactCollector()
+    generated_facts = distro_collector.collect(am)
+
+    # compare with the expected output
 
     # testcase['result'] has a list of variables and values it expects Facts() to set
     for key, val in testcase['result'].items():

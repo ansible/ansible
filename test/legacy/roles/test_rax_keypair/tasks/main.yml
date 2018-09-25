@@ -7,7 +7,7 @@
 - name: Validate results of rax_keypair with no args
   assert:
     that:
-      - rax_keypair|failed
+      - rax_keypair is failed
       - 'rax_keypair.msg == "missing required arguments: name"'
 # ============================================================
 
@@ -23,7 +23,7 @@
 - name: Validate results of rax_keypair with no args
   assert:
     that:
-      - rax_keypair|failed
+      - rax_keypair is failed
       - rax_keypair.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -41,7 +41,7 @@
 - name: Validate results of rax_keypair with name and credentials
   assert:
     that:
-      - rax_keypair|failed
+      - rax_keypair is failed
       - rax_keypair.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -73,8 +73,8 @@
 - name: Validate rax_keypair creds, region, name and public_key string
   assert:
     that:
-      - rax_keypair|success
-      - rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-1"
       - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
 
@@ -91,8 +91,8 @@
 - name: Validate delete integration 1
   assert:
     that:
-      - rax_keypair|success
-      - rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-1"
 # ============================================================
 
@@ -111,8 +111,8 @@
 - name: Validate rax_keypair creds, region, name and public_key path
   assert:
     that:
-      - rax_keypair|success
-      - rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-2"
       - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
 
@@ -129,8 +129,8 @@
 - name: Validate delete integration 2
   assert:
     that:
-      - rax_keypair|success
-      - rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-2"
 # ============================================================
 
@@ -149,8 +149,8 @@
 - name: Validate rax_keypair with idempotency 1
   assert:
     that:
-      - rax_keypair|success
-      - rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-3"
       - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
 
@@ -166,8 +166,8 @@
 - name: Validate rax_keypair with idempotency 1
   assert:
     that:
-      - rax_keypair|success
-      - not rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is not changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-3"
       - rax_keypair.keypair.public_key == "{{ rackspace_keypair_pub }}"
 
@@ -184,8 +184,8 @@
 - name: Validate delete integration 3
   assert:
     that:
-      - rax_keypair|success
-      - rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-3"
 # ============================================================
 
@@ -203,8 +203,8 @@
 - name: Validate rax_keypair creds, region and name
   assert:
     that:
-      - rax_keypair|success
-      - rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-4"
       - rax_keypair.keypair.private_key is defined
       - rax_keypair.keypair.public_key is defined
@@ -220,8 +220,8 @@
 - name: Validate rax_keypair creds, region and name
   assert:
     that:
-      - rax_keypair|success
-      - not rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is not changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-4"
       - rax_keypair.keypair.private_key is not defined
       - rax_keypair.keypair.public_key is defined
@@ -239,7 +239,7 @@
 - name: Validate delete integration 4
   assert:
     that:
-      - rax_keypair|success
-      - rax_keypair|changed
+      - rax_keypair is successful
+      - rax_keypair is changed
       - rax_keypair.keypair.name == "{{ resource_prefix }}-4"
 # ============================================================

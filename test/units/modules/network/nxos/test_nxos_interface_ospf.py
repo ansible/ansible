@@ -50,3 +50,9 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
     def test_nxos_interface_ospf(self):
         set_module_args(dict(interface='ethernet1/32', ospf=1, area=1))
         self.execute_module(changed=True, commands=['interface Ethernet1/32', 'ip router ospf 1 area 0.0.0.1'])
+
+    def test_loopback_interface_failed(self):
+        set_module_args(dict(interface='loopback0', ospf=1, area=0, passive_interface=True))
+        self.execute_module(failed=True, changed=False)
+        set_module_args(dict(interface='loopback0', ospf=1, area=0, network='broadcast'))
+        self.execute_module(failed=True, changed=False)

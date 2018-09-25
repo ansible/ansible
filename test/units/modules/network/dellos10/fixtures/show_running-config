@@ -1,0 +1,252 @@
+! Version 10.4.0E(R1)
+! Last configuration change at Jan  11 12:26:08 2018
+!
+snmp-server contact http://www.dell.com/support
+snmp-server host 192.0.2.1 traps version 1 c4 udp-port 5
+snmp-server host 192.0.2.1 traps version 2c c1 udp-port 4
+snmp-server host 192.0.2.2 traps version 1 c3 udp-port 162
+ip community-list expanded commex deny aaa
+ip community-list standard commstd deny internet
+ip community-list standard commstd permit no-advertise
+ip as-path access-list accesslist deny abc
+ip as-path access-list accesslist deny www
+ip extcommunity-list expanded extcommex deny aaa
+ip extcommunity-list standard extcommstd deny rt 22:33
+ip extcommunity-list standard extcommstd permit soo 22:33
+hostname os10
+interface breakout 1/1/1 map 40g-1x
+interface breakout 1/1/2 map 40g-1x
+interface breakout 1/1/3 map 40g-1x
+interface breakout 1/1/4 map 40g-1x
+interface breakout 1/1/5 map 40g-1x
+interface breakout 1/1/6 map 40g-1x
+interface breakout 1/1/7 map 40g-1x
+interface breakout 1/1/8 map 40g-1x
+interface breakout 1/1/9 map 40g-1x
+interface breakout 1/1/10 map 40g-1x
+interface breakout 1/1/11 map 40g-1x
+interface breakout 1/1/12 map 40g-1x
+interface breakout 1/1/13 map 40g-1x
+interface breakout 1/1/14 map 40g-1x
+interface breakout 1/1/15 map 40g-1x
+interface breakout 1/1/16 map 40g-1x
+interface breakout 1/1/17 map 40g-1x
+interface breakout 1/1/18 map 40g-1x
+interface breakout 1/1/19 map 40g-1x
+interface breakout 1/1/20 map 40g-1x
+interface breakout 1/1/21 map 40g-1x
+interface breakout 1/1/22 map 40g-1x
+interface breakout 1/1/23 map 40g-1x
+interface breakout 1/1/24 map 40g-1x
+interface breakout 1/1/25 map 40g-1x
+interface breakout 1/1/26 map 40g-1x
+interface breakout 1/1/27 map 40g-1x
+interface breakout 1/1/28 map 40g-1x
+interface breakout 1/1/29 map 40g-1x
+interface breakout 1/1/30 map 40g-1x
+interface breakout 1/1/31 map 40g-1x
+interface breakout 1/1/32 map 40g-1x
+username admin password $6$q9QBeYjZ$jfxzVqGhkxX3smxJSH9DDz7/3OJc6m5wjF8nnLD7/VKx8SloIhp4NoGZs0I/UNwh8WVuxwfd9q4pWIgNs5BKH. role sysadmin
+aaa authentication local
+iscsi target port 860
+iscsi target port 3260
+hash-algorithm ecmp xor
+logging console disable
+vrrp delay reload 5
+vrrp version 3
+spanning-tree mode rstp
+!
+interface vlan1
+ no shutdown
+!
+interface vlan100
+ no shutdown
+!
+interface port-channel12
+ no shutdown
+ switchport access vlan 1
+ vlt-port-channel 13
+!
+interface ethernet1/1/1
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/2
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/3
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/4
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/5
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/6
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/7
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/8
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/9
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/10
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/11
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/12
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/13
+ no shutdown
+ no switchport
+ !
+ vrrp-group 4
+  priority 120
+  track 3 priority-cost 25
+  virtual-address 4.1.1.1
+  virtual-address 4.1.1.2
+  advertise-interval centisecs 200
+  no preempt
+ !
+ vrrp-ipv6-group 2
+  priority 120
+  track 3 priority-cost 25
+  virtual-address 3001:4828:5808:ffa3::9
+  virtual-address fe80::10
+  advertise-interval centisecs 200
+  no preempt
+!
+interface ethernet1/1/14
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/15
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/16
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/17
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/18
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/19
+ no shutdown
+ no switchport
+!
+interface ethernet1/1/20
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/21
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/22
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/23
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/24
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/25
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/26
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/27
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/28
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/29
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/30
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/31
+ no shutdown
+ switchport access vlan 1
+!
+interface ethernet1/1/32
+ no shutdown
+ switchport access vlan 1
+!
+interface mgmt1/1/1
+ no shutdown
+ ip address 10.16.148.144/16
+ ipv6 address autoconfig
+!
+route-map test permit 1
+ match ip address prefix-list testprefix
+ match ip address testaccess
+ continue 20
+ set comm-list commstd delete
+ set comm-list commex add
+ set community internet
+ set extcommunity rt 22:33
+ set extcomm-list extcommstd delete
+ set extcomm-list extcommex add
+ set ip next-hop 10.1.1.1 track-id 3
+ set local-preference 1200
+ set metric + 30
+ set metric-type internal
+ set origin igp
+ set weight 50
+!
+route-map test deny 10
+ match ip address prefix-list testprefix
+ match ip address testaccess
+ set ip next-hop 10.1.1.1 track-id 3
+!
+support-assist
+!
+policy-map type application policy-iscsi
+!
+class-map type application class-iscsi
+!
+class-map type qos class-trust
+!
+vlt-domain 1
+ discovery-interface ethernet1/1/12
+ vlt-mac aa:aa:aa:aa:aa:aa
+

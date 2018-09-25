@@ -106,11 +106,10 @@ change_string:
   type: string
 """
 
-from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
-from ansible.module_utils.fortios import backup, AnsibleFortios
+from ansible.module_utils.network.fortios.fortios import fortios_argument_spec, fortios_required_if
+from ansible.module_utils.network.fortios.fortios import backup, AnsibleFortios
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 
 # check for netaddr lib
@@ -286,6 +285,7 @@ def main():
 
     # Apply changes (check mode is managed directly by the fortigate object)
     fortigate.apply_changes()
+
 
 if __name__ == '__main__':
     main()

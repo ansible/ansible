@@ -47,5 +47,5 @@
   - name: Make sure we failed in AnsiBallZ
     assert:
       that:
-        - result|failed
+        - result is failed
         - result['msg'] == "Could not find imported module support code for test_failure.  Looked for either foo.py or zebra.py"

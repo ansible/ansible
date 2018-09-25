@@ -11,7 +11,7 @@
 - name: verify setup
   assert:
     that:
-    - result|success
+    - result is successful
 
 - name: test fail on missing params
   local_action:
@@ -25,7 +25,7 @@
 - name: verify test fail on missing params
   assert:
     that:
-    - result|failed
+    - result is failed
     - 'result.msg == "one of the following params is required on state=present: config,enabled"'
 
 - name: test create a job
@@ -40,8 +40,8 @@
 - name: verify test create a job
   assert:
     that:
-    - result|success
-    - result|changed
+    - result is successful
+    - result is changed
     - result.enabled
 
 - name: test create a job idempotence
@@ -56,8 +56,8 @@
 - name: verify test create a job idempotence
   assert:
     that:
-    - result|success
-    - not result|changed
+    - result is successful
+    - result is not changed
     - result.enabled
 
 - name: test create a enabled job idempotence
@@ -72,8 +72,8 @@
 - name: verify test create a enabled job idempotence
   assert:
     that:
-    - result|success
-    - not result|changed
+    - result is successful
+    - result is not changed
     - result.enabled
 
 - name: test update a job
@@ -90,8 +90,8 @@
 - name: verify test create a enabled job idempotence
   assert:
     that:
-    - result|success
-    - result|changed
+    - result is successful
+    - result is changed
     - result.enabled
 
 - name: test disable an existing job without config
@@ -106,8 +106,8 @@
 - name: verify test disable an existing job without config
   assert:
     that:
-    - result|success
-    - result|changed
+    - result is successful
+    - result is changed
     - not result.enabled
 
 - name: test disable an existing job without config idempotence
@@ -122,8 +122,8 @@
 - name: verify test disable an existing job without config idempotence
   assert:
     that:
-    - result|success
-    - not result|changed
+    - result is successful
+    - result is not changed
     - not result.enabled
 
 - name: test reset to config job
@@ -138,8 +138,8 @@
 - name: verify test reset to config job
   assert:
     that:
-    - result|success
-    - result|changed
+    - result is successful
+    - result is changed
 
 - name: test remove job
   local_action:
@@ -153,8 +153,8 @@
 - name: verify test remove job
   assert:
     that:
-    - result|success
-    - result|changed
+    - result is successful
+    - result is changed
 
 - name: test remove job idempotence
   local_action:
@@ -168,5 +168,5 @@
 - name: verify test remove job idempotence
   assert:
     that:
-    - result|success
-    - not result|changed
+    - result is successful
+    - result is not changed

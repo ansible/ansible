@@ -4,12 +4,13 @@
     name: "{{ cs_resource_prefix }}_vpc"
     display_text: "{{ cs_resource_prefix }}_display_text"
     cidr: 10.10.0.0/16
+    vpc_offering: Redundant VPC offering
     zone: "{{ cs_common_zone_adv }}"
   register: vpc
 - name: verify setup vpc
   assert:
     that:
-    - vpc|success
+    - vpc is successful
 
 - name: setup network acl absent
   cs_network_acl:
@@ -21,7 +22,7 @@
 - name: verify setup network acl absent
   assert:
     that:
-    - acl|success
+    - acl is successful
 
 - name: test fail missing param name and vpc for network acl
   cs_network_acl:
@@ -30,7 +31,7 @@
 - name: verify test fail missing param name and vpc for network acl
   assert:
     that:
-    - acl|failed
+    - acl is failed
     - "acl.msg.startswith('missing required arguments: ')"
 
 - name: test create network acl in check mode
@@ -43,8 +44,8 @@
 - name: verify test create network acl in check mode
   assert:
     that:
-    - acl|success
-    - acl|changed
+    - acl is successful
+    - acl is changed
 
 - name: test create network acl
   cs_network_acl:
@@ -55,8 +56,8 @@
 - name: verify test create network acl
   assert:
     that:
-    - acl|success
-    - acl|changed
+    - acl is successful
+    - acl is changed
     - acl.vpc == "{{ cs_resource_prefix }}_vpc"
     - acl.name == "{{ cs_resource_prefix }}_acl"
 
@@ -69,8 +70,8 @@
 - name: verify test create network acl idempotence
   assert:
     that:
-    - acl|success
-    - not acl|changed
+    - acl is successful
+    - acl is not changed
     - acl.vpc == "{{ cs_resource_prefix }}_vpc"
     - acl.name == "{{ cs_resource_prefix }}_acl"
 
@@ -85,8 +86,8 @@
 - name: verify test remove network acl in check mode
   assert:
     that:
-    - acl|success
-    - acl|changed
+    - acl is successful
+    - acl is changed
     - acl.vpc == "{{ cs_resource_prefix }}_vpc"
     - acl.name == "{{ cs_resource_prefix }}_acl"
 
@@ -100,8 +101,8 @@
 - name: verify test remove network acl
   assert:
     that:
-    - acl|success
-    - acl|changed
+    - acl is successful
+    - acl is changed
     - acl.vpc == "{{ cs_resource_prefix }}_vpc"
     - acl.name == "{{ cs_resource_prefix }}_acl"
 
@@ -115,5 +116,5 @@
 - name: verify test remove network acl idempotence
   assert:
     that:
-    - acl|success
-    - not acl|changed
+    - acl is successful
+    - acl is not changed

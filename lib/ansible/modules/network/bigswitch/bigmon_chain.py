@@ -42,7 +42,7 @@ options:
         on personally controlled devices using self-signed certificates.
     required: false
     default: true
-    choices: [true, false]
+    type: bool
   access_token:
     description:
      - Bigmon access token. If this isn't set, the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
@@ -65,7 +65,7 @@ import os
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.bigswitch_utils import Rest
+from ansible.module_utils.network.bigswitch.bigswitch import Rest
 from ansible.module_utils._text import to_native
 
 
@@ -80,8 +80,8 @@ def chain(module):
     controller = module.params['controller']
 
     rest = Rest(module,
-                {'content-type': 'application/json', 'Cookie': 'session_cookie='+access_token},
-                'https://'+controller+':8443/api/v1/data/controller/applications/bigchain')
+                {'content-type': 'application/json', 'Cookie': 'session_cookie=' + access_token},
+                'https://' + controller + ':8443/api/v1/data/controller/applications/bigchain')
 
     if None in (name, state, controller):
         module.fail_json(msg='parameter `name` is missing')
@@ -114,6 +114,7 @@ def chain(module):
             module.exit_json(changed=True)
         else:
             module.fail_json(msg="error deleting chain '{}': {}".format(name, response.json['description']))
+
 
 def main():
     module = AnsibleModule(

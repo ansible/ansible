@@ -1,0 +1,39 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos common/net_logging.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Delete/disable console logging - setup
+  net_logging:
+    dest: console
+    dest_level: 0
+    provider: "{{ connection }}"
+    state: absent
+  register: result
+
+- name: Set up console logging using platform agnostic module
+  net_logging:
+    dest: console
+    dest_level: 0
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging console 0" in result.commands'
+
+- name: Delete/disable console logging - teardown
+  net_logging:
+    dest: console
+    dest_level: 0
+    provider: "{{ connection }}"
+    state: absent
+  register: result
+
+
+- debug: msg="END connection={{ ansible_connection }} nxos common/net_logging.yaml"

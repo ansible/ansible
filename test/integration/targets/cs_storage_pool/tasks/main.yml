@@ -14,7 +14,7 @@
 - name: verify setup host is present
   assert:
     that:
-      - host|success
+      - host is successful
 
 - name: setup storage pool is absent
   cs_storage_pool:
@@ -25,7 +25,7 @@
 - name: verify setup storage pool is absent
   assert:
     that:
-      - sp|success
+      - sp is successful
 
 - name: test fail if missing params
   cs_storage_pool:
@@ -34,7 +34,7 @@
 - name: verify results of fail if missing params
   assert:
     that:
-      - sp|failed
+      - sp is failed
       - "sp.msg == 'missing required arguments: name'"
 
 - name: test fail if provider unknown
@@ -51,7 +51,7 @@
 - name: verify test fail if provider unknown
   assert:
     that:
-      - sp|failed
+      - sp is failed
       - "sp.msg == 'Storage provider DNE not found'"
 
 - name: test fail if cluster unknown
@@ -67,7 +67,7 @@
 - name: verify test fail if cluster unknown
   assert:
     that:
-      - sp|failed
+      - sp is failed
       - "sp.msg == 'Cluster DNE not found'"
 
 - name: test fail if pod unknown
@@ -83,7 +83,7 @@
 - name: verify test fail if pod unknown
   assert:
     that:
-      - sp|failed
+      - sp is failed
       - "sp.msg == 'Pod DNE not found'"
 
 - name: create storage pool in check mode
@@ -99,8 +99,8 @@
 - name: verify create storage pool in check mode
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
 
 - name: create storage pool
   cs_storage_pool:
@@ -114,8 +114,8 @@
 - name: verify create storage pool
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
       - sp.storage_url == "RBD://ceph-mons.domain/poolname"
@@ -131,8 +131,8 @@
 - name: verify create storage pool idempotence
   assert:
     that:
-      - sp|success
-      - not sp|changed
+      - sp is successful
+      - sp is not changed
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
       - sp.storage_url == "RBD://ceph-mons.domain/poolname"
@@ -150,8 +150,8 @@
 - name: verify disable storage pool in check mode
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'enabled'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -170,8 +170,8 @@
 - name: verify disable storage pool
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'disabled'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -190,8 +190,8 @@
 - name: verify disable storage pool idempotence
   assert:
     that:
-      - sp|success
-      - not sp|changed
+      - sp is successful
+      - sp is not changed
       - sp.allocation_state == 'disabled'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -213,8 +213,8 @@
 - name: verify update while storage pool disabled in check mode
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'disabled'
       - sp.storage_tags == []
       - sp.cluster == "C0-adv"
@@ -236,8 +236,8 @@
 - name: verify update while storage pool disabled
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'disabled'
       - sp.storage_tags == ['eco', 'ssd']
       - sp.cluster == "C0-adv"
@@ -259,8 +259,8 @@
 - name: verify update while storage pool disabled idempotence
   assert:
     that:
-      - sp|success
-      - not sp|changed
+      - sp is successful
+      - sp is not changed
       - sp.allocation_state == 'disabled'
       - sp.storage_tags == ['eco', 'ssd']
       - sp.cluster == "C0-adv"
@@ -281,8 +281,8 @@
 - name: verify put storage in maintenance pool in check mode
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'disabled'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -301,8 +301,8 @@
 - name: verify put storage in maintenance pool
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'maintenance'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -321,8 +321,8 @@
 - name: verify put storage in maintenance pool idempotence
   assert:
     that:
-      - sp|success
-      - not sp|changed
+      - sp is successful
+      - sp is not changed
       - sp.allocation_state == 'maintenance'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -341,8 +341,8 @@
 - name: verify update while in maintenance pool
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'maintenance'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -359,8 +359,8 @@
 - name: verify remove storage pool in check mode
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
       - sp.storage_url == "RBD://ceph-mons.domain/poolname"
@@ -374,8 +374,8 @@
 - name: verify remove storage pool
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
       - sp.storage_url == "RBD://ceph-mons.domain/poolname"
@@ -389,8 +389,8 @@
 - name: verify remove storage pool idempotence
   assert:
     that:
-      - sp|success
-      - not sp|changed
+      - sp is successful
+      - sp is not changed
 
 - name: create storage pool in maintenance
   cs_storage_pool:
@@ -405,8 +405,8 @@
 - name: verify create storage pool in maintenance
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'maintenance'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -421,8 +421,8 @@
 - name: verify storage pool in maintenance
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'maintenance'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -441,8 +441,8 @@
 - name: verify create storage pool in disabled
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'disabled'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"
@@ -457,8 +457,8 @@
 - name: verify remove disabled storage pool
   assert:
     that:
-      - sp|success
-      - sp|changed
+      - sp is successful
+      - sp is changed
       - sp.allocation_state == 'disabled'
       - sp.cluster == "C0-adv"
       - sp.pod == "POD0-adv"

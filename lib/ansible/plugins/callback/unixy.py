@@ -13,17 +13,19 @@ DOCUMENTATION = '''
     short_description: condensed Ansible output
     version_added: 2.5
     description:
-      - Consolidated Ansible output in the style of *NIX startup logs
+      - Consolidated Ansible output in the style of LINUX/UNIX startup logs.
     extends_documentation_fragment:
       - default_callback
     requirements:
       - set as stdout in configuration
 '''
 
+from os.path import basename
+
+from ansible import constants as C
+from ansible.module_utils._text import to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
-from ansible import constants as C
-from os.path import basename
 
 
 class CallbackModule(CallbackBase):
@@ -75,7 +77,7 @@ class CallbackModule(CallbackBase):
             task_result = "%s -> %s %s" % (task_host, task_delegate_host, msg)
 
         if result._result.get('msg') and result._result.get('msg') != "All items completed":
-            task_result += " | msg: " + result._result.get('msg')
+            task_result += " | msg: " + to_text(result._result.get('msg'))
 
         if result._result.get('stdout'):
             task_result += " | stdout: " + result._result.get('stdout')

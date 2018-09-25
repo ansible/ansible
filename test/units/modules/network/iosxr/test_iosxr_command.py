@@ -49,7 +49,7 @@ class TestIosxrCommandModule(TestIosxrModule):
             for item in commands:
                 try:
                     command = item['command']
-                except ValueError:
+                except Exception:
                     command = item
                 filename = str(command).replace(' ', '_')
                 output.append(load_fixture(filename))

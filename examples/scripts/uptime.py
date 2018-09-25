@@ -35,10 +35,15 @@ def main():
                                      'private_key_file', 'ssh_common_args', 'ssh_extra_args', 'sftp_extra_args',
                                      'scp_extra_args', 'become', 'become_method', 'become_user', 'verbosity', 'check',
                                      'diff'])
+    # required for
+    # https://github.com/ansible/ansible/blob/devel/lib/ansible/inventory/manager.py#L204
+    sources = ','.join(host_list)
+    if len(host_list) == 1:
+        sources += ','
 
     # initialize needed objects
     loader = DataLoader()
-    options = Options(connection='smart', module_path='/usr/share/ansible', forks=100,
+    options = Options(connection='smart', module_path=['/usr/share/ansible'], forks=100,
                       remote_user=None, private_key_file=None, ssh_common_args=None, ssh_extra_args=None,
                       sftp_extra_args=None, scp_extra_args=None, become=None, become_method=None,
                       become_user=None, verbosity=None, check=False, diff=False)
@@ -46,7 +51,7 @@ def main():
     passwords = dict()
 
     # create inventory and pass to var manager
-    inventory = InventoryManager(loader=loader, sources=','.join(host_list))
+    inventory = InventoryManager(loader=loader, sources=sources)
     variable_manager = VariableManager(loader=loader, inventory=inventory)
 
     # create play with tasks
@@ -77,15 +82,16 @@ def main():
 
     print("UP ***********")
     for host, result in callback.host_ok.items():
-        print('{} >>> {}'.format(host, result._result['stdout']))
+        print('{0} >>> {1}'.format(host, result._result['stdout']))
 
     print("FAILED *******")
     for host, result in callback.host_failed.items():
-        print('{} >>> {}'.format(host, result._result['msg']))
+        print('{0} >>> {1}'.format(host, result._result['msg']))
 
     print("DOWN *********")
     for host, result in callback.host_unreachable.items():
-        print('{} >>> {}'.format(host, result._result['msg']))
+        print('{0} >>> {1}'.format(host, result._result['msg']))
+
 
 if __name__ == '__main__':
     main()

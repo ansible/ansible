@@ -26,14 +26,12 @@ options:
         description:
             - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
               group that contains resources.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     location:
         description:
             - Azure location for the resource group. Required when creating a new resource group. Cannot
               be changed once resource group is created.
-        required: false
-        default: null
     name:
         description:
             - Name of the resource group.
@@ -47,7 +45,6 @@ options:
         choices:
             - absent
             - present
-        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -96,11 +93,10 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.resource.resources.models import ResourceGroup
 except ImportError:
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 
 
 def resource_group_to_dict(rg):
@@ -166,7 +162,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                if self.location and self.location != results['location']:
+                if self.location and normalize_location_name(self.location) != results['location']:
                     self.fail("Resource group '{0}' already exists in location '{1}' and cannot be "
                               "moved.".format(self.name, results['location']))
         except CloudError:
@@ -193,13 +189,13 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                     if self.name_exists():
                         self.fail("Error: a resource group with the name {0} already exists in your subscription."
                                   .format(self.name))
-                    params = ResourceGroup(
+                    params = self.rm_models.ResourceGroup(
                         location=self.location,
                         tags=self.tags
                     )
                 else:
                     # Update resource group
-                    params = ResourceGroup(
+                    params = self.rm_models.ResourceGroup(
                         location=results['location'],
                         tags=results['tags']
                     )
@@ -254,6 +250,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
 
 def main():
     AzureRMResourceGroup()
+
 
 if __name__ == '__main__':
     main()

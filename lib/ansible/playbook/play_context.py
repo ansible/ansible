@@ -49,7 +49,6 @@ except ImportError:
 
 __all__ = ['PlayContext']
 
-
 # TODO: needs to be configurable
 b_SU_PROMPT_LOCALIZATIONS = [
     to_bytes('Password'),
@@ -136,7 +135,6 @@ class PlayContext(Base):
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
     _remote_addr = FieldAttribute(isa='string')
-    _remote_tmp_dir = FieldAttribute(isa='string', default=C.DEFAULT_REMOTE_TMP)
     _password = FieldAttribute(isa='string')
     _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _connection_user = FieldAttribute(isa='string')
@@ -333,7 +331,7 @@ class PlayContext(Base):
             # address, otherwise we default to connecting to it by name. This
             # may happen when users put an IP entry into their inventory, or if
             # they rely on DNS for a non-inventory hostname
-            for address_var in ('ansible_%s_host' % transport_var,) + C.MAGIC_VARIABLE_MAPPING.get('remote_addr'):
+            for address_var in ('ansible_%s_host' % delegated_transport,) + C.MAGIC_VARIABLE_MAPPING.get('remote_addr'):
                 if address_var in delegated_vars:
                     break
             else:
@@ -342,7 +340,7 @@ class PlayContext(Base):
 
             # reset the port back to the default if none was specified, to prevent
             # the delegated host from inheriting the original host's setting
-            for port_var in ('ansible_%s_port' % transport_var,) + C.MAGIC_VARIABLE_MAPPING.get('port'):
+            for port_var in ('ansible_%s_port' % delegated_transport,) + C.MAGIC_VARIABLE_MAPPING.get('port'):
                 if port_var in delegated_vars:
                     break
             else:
@@ -352,7 +350,7 @@ class PlayContext(Base):
                     delegated_vars['ansible_port'] = C.DEFAULT_REMOTE_PORT
 
             # and likewise for the remote user
-            for user_var in ('ansible_%s_user' % transport_var,) + C.MAGIC_VARIABLE_MAPPING.get('remote_user'):
+            for user_var in ('ansible_%s_user' % delegated_transport,) + C.MAGIC_VARIABLE_MAPPING.get('remote_user'):
                 if user_var in delegated_vars and delegated_vars[user_var]:
                     break
             else:
@@ -438,11 +436,6 @@ class PlayContext(Base):
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
 
-        if task.always_run:
-            display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
-            new_info.check_mode = False
-
-        # check_mode replaces always_run, overwrite always_run if both are given
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
 
@@ -546,16 +539,16 @@ class PlayContext(Base):
                     flags += ' -u %s ' % self.become_user
 
                 # FIXME: make shell independent
-                becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, executable, success_cmd)
 
             elif self.become_method == 'dzdo':
 
                 exe = self.become_exe or 'dzdo'
                 if self.become_pass:
                     prompt = '[dzdo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s -p %s -u %s %s' % (exe, shlex_quote(prompt), self.become_user, command)
+                    becomecmd = '%s %s -p %s -u %s %s' % (exe, flags, shlex_quote(prompt), self.become_user, command)
                 else:
-                    becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
+                    becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
 
             elif self.become_method == 'pmrun':
 
@@ -563,6 +556,11 @@ class PlayContext(Base):
 
                 prompt = 'Enter UPM user password:'
                 becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
+
+            elif self.become_method == 'machinectl':
+
+                exe = self.become_exe or 'machinectl'
+                becomecmd = '%s shell -q %s %s@ %s' % (exe, flags, self.become_user, command)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)

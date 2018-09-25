@@ -1,0 +1,47 @@
+---
+- debug: msg="START iosxr netconf/net_interface.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Setup interface
+  net_interface:
+    name: GigabitEthernet0/0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+
+- name: Confgure interface using platform agnostic module
+  net_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test-interface-initial
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+
+- name: Confgure interface parameters using platform agnostic module
+  net_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test-interface
+    speed: 100
+    duplex: half
+    mtu: 512
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"test-interface" in result.xml[0]'
+      - '"100" in result.xml[0]'
+      - '"512" in result.xml[0]'
+
+- debug: msg="END iosxr netconf/net_interface.yaml on connection={{ ansible_connection }}"

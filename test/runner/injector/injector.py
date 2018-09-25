@@ -25,7 +25,6 @@ NOTE: Running ansible-test with the --tox option or inside a virtual environment
 
 from __future__ import absolute_import, print_function
 
-import errno
 import json
 import os
 import sys
@@ -103,35 +102,14 @@ def main():
         logger.debug('Remote interpreter: %s', config.remote_interpreter)
         logger.debug('Coverage file: %s', config.coverage_file)
 
-        require_cwd = False
-
         if os.path.basename(__file__) == 'injector.py':
-            if config.coverage_file:
-                args, env, require_cwd = cover()
-            else:
-                args, env = runner()
+            args, env = runner()  # code coverage collection is baked into the AnsiballZ wrapper when needed
+        elif os.path.basename(__file__) == 'python.py':
+            args, env = python()  # run arbitrary python commands using the correct python and with optional code coverage
         else:
             args, env = injector()
 
         logger.debug('Run command: %s', ' '.join(pipes.quote(c) for c in args))
-
-        altered_cwd = False
-
-        try:
-            cwd = os.getcwd()
-        except OSError as ex:
-            # some platforms, such as OS X, may not allow querying the working directory when using become to drop privileges
-            if ex.errno != errno.EACCES:
-                raise
-            if require_cwd:
-                # make sure the program we execute can determine the working directory if it's required
-                cwd = '/'
-                os.chdir(cwd)
-                altered_cwd = True
-            else:
-                cwd = None
-
-        logger.debug('Working directory: %s%s', cwd or '?', ' (altered)' if altered_cwd else '')
 
         for key in sorted(env.keys()):
             logger.debug('%s=%s', key, env[key])
@@ -140,6 +118,20 @@ def main():
     except Exception as ex:
         logger.fatal(ex)
         raise
+
+
+def python():
+    """
+    :rtype: list[str], dict[str, str]
+    """
+    if config.coverage_file:
+        args, env = coverage_command()
+    else:
+        args, env = [config.python_interpreter], os.environ.copy()
+
+    args += config.arguments[1:]
+
+    return args, env
 
 
 def injector():
@@ -183,29 +175,6 @@ def runner():
     return args, env
 
 
-def cover():
-    """
-    :rtype: list[str], dict[str, str], bool
-    """
-    if len(config.arguments) > 1:
-        executable = config.arguments[1]
-    else:
-        executable = ''
-
-    require_cwd = False
-
-    if os.path.basename(executable).startswith('ansible_module_'):
-        args, env = coverage_command()
-        # coverage requires knowing the working directory
-        require_cwd = True
-    else:
-        args, env = [config.python_interpreter], os.environ.copy()
-
-    args += config.arguments[1:]
-
-    return args, env, require_cwd
-
-
 def coverage_command():
     """
     :rtype: list[str], dict[str, str]
@@ -233,10 +202,10 @@ def find_executable(executable):
     :rtype: str
     """
     self = os.path.abspath(__file__)
-    path = os.environ.get('PATH', os.defpath)
+    path = os.environ.get('PATH', os.path.defpath)
     seen_dirs = set()
 
-    for path_dir in path.split(os.pathsep):
+    for path_dir in path.split(os.path.pathsep):
         if path_dir in seen_dirs:
             continue
 

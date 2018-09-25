@@ -93,9 +93,9 @@
 
 - assert:
     that:
-        - not start_equal_end| skipped
-        - count_of_zero | skipped
-        - not count_of_one | skipped
+        - start_equal_end is not skipped
+        - count_of_zero is skipped
+        - count_of_one is not skipped
 
 - name: test with_sequence shortcut syntax (end)
   set_fact: "{{ 'ws_z_' + item }}={{ item }}"

@@ -1,0 +1,8 @@
+user_name: mytestuser
+user_email: mytestuser@example.com
+user_password: aP4ssw0rd!
+user_acls:
+  - upgrade
+  - dns
+  - manage_users
+  - subscriptions

@@ -49,11 +49,29 @@ options:
       - List of prompts expected before sending next command
     required: False
     default: ['$']
+  login_prompt:
+    description:
+      - Login or username prompt to expect
+    required: False
+    default: 'login: '
+  password_prompt:
+    description:
+      - Login or username prompt to expect
+    required: False
+    default: 'Password: '
   pause:
     description:
         - Seconds to pause between each command issued
     required: False
     default: 1
+  send_newline:
+    description:
+      - Sends a newline character upon successful connection to start the
+        terminal session.
+    required: False
+    default: False
+    type: bool
+    version_added: "2.7"
 notes:
     - The C(environment) keyword does not work with this task
 author:

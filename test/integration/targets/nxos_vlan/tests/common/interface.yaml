@@ -1,0 +1,135 @@
+---
+- set_fact: testint1="{{ nxos_int1 }}"
+- set_fact: testint2="{{ nxos_int2 }}"
+
+- name: setup - remove vlan used in test
+  nxos_config:
+    lines:
+      - no vlan 100
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: setup - remove vlan from interfaces used in test(part1)
+  nxos_config:
+    lines:
+      - no switchport access vlan 100
+    parents: switchport
+    before: "interface {{ testint1 }}"
+    provider: "{{ connection }}"
+
+- name: setup - remove vlan from interfaces used in test(part2)
+  nxos_config:
+    lines:
+      - no switchport access vlan 100
+    parents: switchport
+    before: "interface {{ testint2 }}"
+    provider: "{{ connection }}"
+
+- name: create vlan
+  nxos_vlan:
+    vlan_id: 100
+    provider: "{{ connection }}"
+
+- name: Add interfaces to vlan and check intent (config + intent)
+  nxos_vlan: &interfaces
+    vlan_id: 100
+    interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    associated_interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ testint1 }}" in result.commands'
+      - '"switchport" in result.commands'
+      - '"switchport mode access" in result.commands'
+      - '"switchport access vlan 100" in result.commands'
+      - '"interface {{ testint2 }}" in result.commands'
+      - '"switchport" in result.commands'
+      - '"switchport mode access" in result.commands'
+      - '"switchport access vlan 100" in result.commands'
+
+- name: Add interfaces to vlan(idempotence)
+  nxos_vlan: *interfaces
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Check interfaces intent
+  nxos_vlan:
+    vlan_id: 100
+    associated_interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check interfaces intent fail
+  nxos_vlan:
+    vlan_id: 100
+    associated_interfaces:
+      - test
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
+
+- name: Remove interface from vlan
+  nxos_vlan: &single_int
+    vlan_id: 100
+    interfaces:
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ testint1 }}" in result.commands'
+      - '"switchport" in result.commands'
+      - '"switchport mode access" in result.commands'
+      - '"no switchport access vlan 100" in result.commands'
+
+- name: Remove interface from vlan(idempotence)
+  nxos_vlan: *single_int
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: teardown(part1)
+  nxos_config:
+    lines:
+      - no vlan 100
+    provider: "{{ connection }}"
+
+- name: teardown - remove vlan from interfaces used in test(part1)
+  nxos_config:
+    lines:
+      - no switchport access vlan 100
+    parents: switchport
+    before: "interface {{ testint1 }}"
+    provider: "{{ connection }}"
+
+- name: teardown - remove vlan from interfaces used in test(part2)
+  nxos_config:
+    lines:
+      - no switchport access vlan 100
+    parents: switchport
+    before: "interface {{ testint2 }}"
+    provider: "{{ connection }}"

@@ -36,7 +36,7 @@ options:
         description:
             - Identifies a network flow by the local IP address.
         required: false
-    remove_ip:
+    remote_ip:
         description:
             - Identifies a network flow by the remote IP address.
         required: false
@@ -75,7 +75,7 @@ options:
               flows do not persist across reboots.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
     state:
         description:
             - Create/delete/enable/disable an IP address on the network interface.

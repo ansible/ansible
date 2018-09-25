@@ -67,7 +67,7 @@ options:
        on personally controlled devices using self-signed certificates.
     required: false
     default: true
-    choices: [true, false]
+    type: bool
   access_token:
     description:
      - Bigmon access token. If this isn't set, the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
@@ -92,7 +92,7 @@ import os
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.bigswitch_utils import Rest
+from ansible.module_utils.network.bigswitch.bigswitch import Rest
 from ansible.module_utils._text import to_native
 
 
@@ -113,8 +113,8 @@ def policy(module):
     controller = module.params['controller']
 
     rest = Rest(module,
-                {'content-type': 'application/json', 'Cookie': 'session_cookie='+access_token},
-                'https://'+controller+':8443/api/v1/data/controller/applications/bigtap')
+                {'content-type': 'application/json', 'Cookie': 'session_cookie=' + access_token},
+                'https://' + controller + ':8443/api/v1/data/controller/applications/bigtap')
 
     if name is None:
         module.fail_json(msg='parameter `name` is missing')
@@ -127,11 +127,11 @@ def policy(module):
 
     matching = [policy for policy in response.json
                 if policy['name'] == name and
-                   policy['duration'] == duration and
-                   policy['delivery-packet-count'] == delivery_packet_count and
-                   policy['policy-description'] == policy_description and
-                   policy['action'] == action and
-                   policy['priority'] == priority]
+                policy['duration'] == duration and
+                policy['delivery-packet-count'] == delivery_packet_count and
+                policy['policy-description'] == policy_description and
+                policy['action'] == action and
+                policy['priority'] == priority]
 
     if matching:
         config_present = True
@@ -143,9 +143,9 @@ def policy(module):
         module.exit_json(changed=False)
 
     if state in ('present'):
-        data={'name': name, 'action': action, 'policy-description': policy_description,
-              'priority': priority, 'duration': duration, 'start-time': start_time,
-              'delivery-packet-count': delivery_packet_count }
+        data = {'name': name, 'action': action, 'policy-description': policy_description,
+                'priority': priority, 'duration': duration, 'start-time': start_time,
+                'delivery-packet-count': delivery_packet_count}
 
         response = rest.put('policy[name="%s"]' % name, data=data)
         if response.status_code == 204:
@@ -160,6 +160,7 @@ def policy(module):
         else:
             module.fail_json(msg="error deleting policy '{}': {}".format(name, response.json['description']))
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -168,7 +169,7 @@ def main():
             action=dict(choices=['forward', 'drop', 'capture', 'flow-gen'], default='forward'),
             priority=dict(type='int', default=100),
             duration=dict(type='int', default=0),
-            start_time=dict(type='str', default=datetime.datetime.now().isoformat()+'+00:00'),
+            start_time=dict(type='str', default=datetime.datetime.now().isoformat() + '+00:00'),
             delivery_packet_count=dict(type='int', default=0),
             controller=dict(type='str', required=True),
             state=dict(choices=['present', 'absent'], default='present'),
@@ -181,6 +182,7 @@ def main():
         policy(module)
     except Exception as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

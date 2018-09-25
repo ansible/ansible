@@ -24,9 +24,7 @@ options:
     description:
       - Optionally clear existing metadata when applying metadata to existing containers.
         Selecting this option is only appropriate when setting type=meta
-    choices:
-      - "yes"
-      - "no"
+    type: bool
     default: "no"
   container:
     description:
@@ -70,7 +68,9 @@ options:
     description:
        - Sets an object to be presented as the HTTP index page when accessed by the CDN URL
 author: "Paul Durivage (@angstwad)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_snapshot_volume
-short_description: Manage E/EF-Series snapshot volumes.
+short_description: NetApp E-Series manage snapshot volumes.
 description:
     - Create, update, remove snapshot volumes for NetApp E/EF-Series storage arrays.
 version_added: '2.2'
@@ -111,7 +111,6 @@ import json
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -124,8 +123,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
                      force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
+    except HTTPError as err:
         r = err.fp
 
     try:

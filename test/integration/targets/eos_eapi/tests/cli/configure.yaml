@@ -6,17 +6,17 @@
     http_port: 81
     https_port: 4443
     enable_local_http: yes
+    enable_https: yes
     local_http_port: 8181
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
 
 - eos_command:
     commands:
       - show management api http-commands | json
     provider: "{{ cli }}"
   register: http_config
-  connection: local
 
 - name: Expect endpoint ports to be set
   assert:
@@ -32,8 +32,8 @@
     enable_local_http: yes
     local_http_port: 8181
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
 
 - name: Expect action to be idempotent
   assert:

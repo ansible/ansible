@@ -1,0 +1,4 @@
+# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_compute
+
+- include_tasks: state.yml
+- include_tasks: ip.yml

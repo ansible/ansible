@@ -120,3 +120,48 @@ class TestInversePower:
 
     def test_cube_root(self):
         assert ms.inversepower(27, 3) == 3
+
+
+class TestRekeyOnMember():
+    # (Input data structure, member to rekey on, expected return)
+    VALID_ENTRIES = (
+        ([{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}],
+         'proto',
+         {'eigrp': {'state': 'enabled', 'proto': 'eigrp'}, 'ospf': {'state': 'enabled', 'proto': 'ospf'}}),
+        ({'eigrp': {"proto": "eigrp", "state": "enabled"}, 'ospf': {"proto": "ospf", "state": "enabled"}},
+         'proto',
+         {'eigrp': {'state': 'enabled', 'proto': 'eigrp'}, 'ospf': {'state': 'enabled', 'proto': 'ospf'}}),
+    )
+
+    # (Input data structure, member to rekey on, expected error message)
+    INVALID_ENTRIES = (
+        # Fail when key is not found
+        ([{"proto": "eigrp", "state": "enabled"}], 'invalid_key', "Key invalid_key was not found"),
+        ({"eigrp": {"proto": "eigrp", "state": "enabled"}}, 'invalid_key', "Key invalid_key was not found"),
+        # Fail when key is duplicated
+        ([{"proto": "eigrp"}, {"proto": "ospf"}, {"proto": "ospf"}],
+         'proto', 'Key ospf is not unique, cannot correctly turn into dict'),
+        # Fail when value is not a dict
+        (["string"], 'proto', "List item is not a valid dict"),
+        ([123], 'proto', "List item is not a valid dict"),
+        ([[{'proto': 1}]], 'proto', "List item is not a valid dict"),
+        # Fail when we do not send a dict or list
+        ("string", 'proto', "Type is not a valid list, set, or dict"),
+        (123, 'proto', "Type is not a valid list, set, or dict"),
+    )
+
+    @pytest.mark.parametrize("list_original, key, expected", VALID_ENTRIES)
+    def test_rekey_on_member_success(self, list_original, key, expected):
+        assert ms.rekey_on_member(list_original, key) == expected
+
+    @pytest.mark.parametrize("list_original, key, expected", INVALID_ENTRIES)
+    def test_fail_rekey_on_member(self, list_original, key, expected):
+        with pytest.raises(AnsibleFilterError) as err:
+            ms.rekey_on_member(list_original, key)
+
+        assert err.value.message == expected
+
+    def test_duplicate_strategy_overwrite(self):
+        list_original = ({'proto': 'eigrp', 'id': 1}, {'proto': 'ospf', 'id': 2}, {'proto': 'eigrp', 'id': 3})
+        expected = {'eigrp': {'proto': 'eigrp', 'id': 3}, 'ospf': {'proto': 'ospf', 'id': 2}}
+        assert ms.rekey_on_member(list_original, 'proto', duplicates='overwrite') == expected

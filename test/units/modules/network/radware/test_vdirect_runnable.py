@@ -261,6 +261,10 @@ class TestManager(unittest.TestCase):
             res = vdirectRunnable.run()
             assert res == MODULE_RESULT
 
+            RUN_RESULT[self.module_mock.rest_client.RESP_DATA]['status'] = 404
+            vdirectRunnable.run()
+            assert res == MODULE_RESULT
+
             RUN_RESULT[self.module_mock.rest_client.RESP_STATUS] = 400
             RUN_RESULT[self.module_mock.rest_client.RESP_REASON] = "Reason"
             RUN_RESULT[self.module_mock.rest_client.RESP_STR] = "Details"

@@ -1,5 +1,8 @@
-Windows Ansible Module Development Walkthrough
-==============================================
+.. _developing_modules_general_windows:
+
+**************************************
+Windows module development walkthrough
+**************************************
 
 In this section, we will walk through developing, testing, and debugging an
 Ansible Windows module.
@@ -9,14 +12,153 @@ Windows host, this guide differs from the usual development walkthrough guide.
 
 What's covered in this section:
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 
 Windows environment setup
 =========================
 
-TODO: Add in more information on how to use Vagrant to setup a Windows host.
+Unlike Python module development which can be run on the host that runs
+Ansible, Windows modules need to be written and tested for Windows hosts.
+While evaluation editions of Windows can be downloaded from
+Microsoft, these images are usually not ready to be used by Ansible without
+further modification. The easiest way to set up a Windows host so that it is
+ready to by used by Ansible is to set up a virtual machine using Vagrant.
+Vagrant can be used to download existing OS images called *boxes* that are then
+deployed to a hypervisor like VirtualBox. These boxes can either be created and
+stored offline or they can be downloaded from a central repository called
+Vagrant Cloud.
 
+This guide will use the Vagrant boxes created by the `packer-windoze <https://github.com/jborean93/packer-windoze>`_
+repository which have also been uploaded to `Vagrant Cloud <https://app.vagrantup.com/boxes/search?utf8=%E2%9C%93&sort=downloads&provider=&q=jborean93>`_.
+To find out more info on how these images are created, please go to the Github
+repo and look at the ``README`` file.
+
+Before you can get started, the following programs must be installed (please consult the Vagrant and
+VirtualBox documentation for installation instructions):
+
+- Vagrant
+- VirtualBox
+
+Create a Windows server in a VM
+===============================
+
+To create a single Windows Server 2016 instance, run the following:
+
+.. code-block:: shell
+
+    vagrant init jborean93/WindowsServer2016
+    vagrant up
+
+This will download the Vagrant box from Vagrant Cloud and add it to the local
+boxes on your host and then start up that instance in VirtualBox. When starting
+for the first time, the Windows VM will run through the sysprep process and
+then create a HTTP and HTTPS WinRM listener automatically. Vagrant will finish
+its process once the listeners are onlinem, after which the VM can be used by Ansible.
+
+Create an Ansible inventory
+===========================
+
+The following Ansible inventory file can be used to connect to the newly
+created Windows VM:
+
+.. code-block:: ini
+
+    [windows]
+    WindowsServer  ansible_host=127.0.0.1
+
+    [windows:vars]
+    ansible_user=vagrant
+    ansible_password=vagrant
+    ansible_port=55986
+    ansible_connection=winrm
+    ansible_winrm_transport=ntlm
+    ansible_winrm_server_cert_validation=ignore
+
+.. note:: The port ``55986`` is automatically forwarded by Vagrant to the
+    Windows host that was created, if this conflicts with an existing local
+    port then Vagrant will automatically use another one at random and display
+    show that in the output.
+
+The OS that is created is based on the image set. The following
+images can be used:
+
+- `jborean93/WindowsServer2008-x86 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2008-x86>`_
+- `jborean93/WindowsServer2008-x64 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2008-x64>`_
+- `jborean93/WindowsServer2008R2 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2008R2>`_
+- `jborean93/WindowsServer2012 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2012>`_
+- `jborean93/WindowsServer2012R2 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2012R2>`_
+- `jborean93/WindowsServer2016 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2016>`_
+
+When the host is online, it can accessible by RDP on ``127.0.0.1:3389`` but the
+port may differ depending if there was a conflict. To get rid of the host, run
+``vagrant destroy --force`` and Vagrant will automatically remove the VM and
+any other files associated with that VM.
+
+While this is useful when testing modules on a single Windows instance, these
+host won't work without modification with domain based modules. The Vagrantfile
+at `ansible-windows <https://github.com/jborean93/ansible-windows/tree/master/vagrant>`_
+can be used to create a test domain environment to be used in Ansible. This
+repo contains three files which are used by both Ansible and Vagrant to create
+multiple Windows hosts in a domain environment. These files are:
+
+- ``Vagrantfile``: The Vagrant file that reads the inventory setup of ``inventory.yml`` and provisions the hosts that are required
+- ``inventory.yml``: Contains the hosts that are required and other connection information such as IP addresses and forwarded ports
+- ``main.yml``: Ansible playbook called by Vagrant to provision the domain controller and join the child hosts to the domain
+
+By default, these files will create the following environment:
+
+- A single domain controller running on Windows Server 2016
+- Five child hosts for each major Windows Server version joined to that domain
+- A domain with the DNS name ``domain.local``
+- A local administrator account on each host with the username ``vagrant`` and password ``vagrant``
+- A domain admin account ``vagrant-domain@domain.local`` with the password ``VagrantPass1``
+
+The domain name and accounts can be modified by changing the variables
+``domain_*`` in the ``inventory.yml`` file if it is required. The inventory
+file can also be modified to provision more or less servers by changing the
+hosts that are defined under the ``domain_children`` key. The host variable
+``ansible_host`` is the private IP that will be assigned to the VirtualBox host
+only network adapter while ``vagrant_box`` is the box that will be used to
+create the VM.
+
+Provisioning the environment
+============================
+
+To provision the environment as is, run the following:
+
+.. code-block:: shell
+
+    git clone https://github.com/jborean93/ansible-windows.git
+    cd vagrant
+    vagrant up
+
+.. note:: Vagrant provisions each host sequentially so this can take some time
+    to complete. If any errors occur during the Ansible phase of setting up the
+    domain, run ``vagrant provision`` to rerun just that step.
+
+Unlike setting up a single Windows instance with Vagrant, these hosts can also
+be accessed using the IP address directly as well as through the forwarded
+ports. It is easier to access it over the host only network adapter as the
+normal protocol ports are used, e.g. RDP is still over ``3389``. In cases where
+the host cannot be resolved using the host only network IP, the following
+protocols can be access over ``127.0.0.1`` using these forwarded ports:
+
+- ``RDP``: 295xx
+- ``SSH``: 296xx
+- ``WinRM HTTP``: 297xx
+- ``WinRM HTTPS``: 298xx
+- ``SMB``: 299xx
+
+Replace ``xx`` with the entry number in the inventory file where the domain
+controller started with ``00`` and is incremented from there. For example, in
+the default ``inventory.yml`` file, WinRM over HTTPS for ``SERVER2012R2`` is
+forwarded over port ``29804`` as it's the fourth entry in ``domain_children``.
+
+.. note:: While an SSH server is available on all Windows hosts but Server
+    2008 (non R2), it is not a support connection for Ansible managing Windows
+    hosts and should not be used with Ansible.
 
 Windows new module development
 ==============================
@@ -66,7 +208,7 @@ into PowerShell as well as some Ansible-specific requirements specified by
 but are most commonly near the top. They are used to make it easier to state the
 requirements of the module without writing any of the checks. Each ``requires``
 statement must be on its own line, but there can be multiple requires statements
-in one script. 
+in one script.
 
 These are the checks that can be used within Ansible modules:
 
@@ -88,7 +230,7 @@ can be imported by adding the following line to a PowerShell module:
     #Requires -Module Ansible.ModuleUtils.Legacy
 
 This will import the module_util at ``./lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1``
-and enable calling all of its functions. 
+and enable calling all of its functions.
 
 The following is a list of module_utils that are packaged with Ansible and a general description of what
 they do:
@@ -96,10 +238,12 @@ they do:
 - ArgvParser: Utiliy used to convert a list of arguments to an escaped string compliant with the Windows argument parsing rules.
 - CamelConversion: Utility used to convert camelCase strings/lists/dicts to snake_case.
 - CommandUtil: Utility used to execute a Windows process and return the stdout/stderr and rc as separate objects.
+- FileUtil: Utility that expands on the ``Get-ChildItem`` and ``Test-Path`` to work with special files like ``C:\pagefile.sys``.
 - Legacy: General definitions and helper utilities for Ansible module.
+- LinkUtil: Utility to create, remove, and get information about symbolic links, junction points and hard inks.
 - SID: Utilities used to convert a user or group to a Windows SID and vice versa.
 
-For more details on any specific module utility and their requirements, please see the `Ansible 
+For more details on any specific module utility and their requirements, please see the `Ansible
 module utilities source code <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils/powershell>`_.
 
 PowerShell module utilities can be stored outside of the standard Ansible
@@ -194,13 +338,13 @@ the most popular are
 - `Powershell ISE`_
 - `Visual Studio Code`_
 
-.. _Powershell ISE: https://msdn.microsoft.com/en-us/powershell/scripting/core-powershell/ise/how-to-debug-scripts-in-windows-powershell-ise
+.. _Powershell ISE: https://docs.microsoft.com/en-us/powershell/scripting/core-powershell/ise/how-to-debug-scripts-in-windows-powershell-ise
 .. _Visual Studio Code: https://blogs.technet.microsoft.com/heyscriptingguy/2017/02/06/debugging-powershell-script-in-visual-studio-code-part-1/
 
 To be able to view the arguments as passed by Ansible to the module follow
 these steps.
 
-- Prefix the Ansible command with :envvar:`ANSIBLE_KEEP_REMOTE_FILES=1` to specify that Ansible should keep the exec files on the server.
+- Prefix the Ansible command with :envvar:`ANSIBLE_KEEP_REMOTE_FILES=1<ANSIBLE_KEEP_REMOTE_FILES>` to specify that Ansible should keep the exec files on the server.
 - Log onto the Windows server using the same user account that Ansible used to execute the module.
 - Navigate to ``%TEMP%\..``. It should contain a folder starting with ``ansible-tmp-``.
 - Inside this folder, open the PowerShell script for the module.
@@ -218,7 +362,7 @@ Windows integration testing
 
 Integration tests for Ansible modules are typically written as Ansible roles. These test
 roles are located in ``./test/integration/targets``. You must first set up your testing
-environment, and configure a test inventory for Ansible to connect to. 
+environment, and configure a test inventory for Ansible to connect to.
 
 In this example we will set up a test inventory to connect to two hosts and run the integration
 tests for win_stat:
@@ -244,15 +388,15 @@ idempotent and does not report changes. For example:
         state: absent
       register: remove_file_check
       check_mode: yes
-    
+
     - name: get result of remove a file (check mode)
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
       register: remove_file_actual_check
-    
+
     - name: assert remove a file (check mode)
       assert:
         that:
-        - remove_file_check|changed
+        - remove_file_check is changed
         - remove_file_actual_check.stdout == 'true\r\n'
 
     - name: remove a file
@@ -260,15 +404,15 @@ idempotent and does not report changes. For example:
         path: C:\temp
         state: absent
       register: remove_file
-    
+
     - name: get result of remove a file
       win_command: powershell.exe "if (Test-Path -Path 'C:\temp') { 'true' } else { 'false' }"
       register: remove_file_actual
-    
+
     - name: assert remove a file
       assert:
         that:
-        - remove_file|changed
+        - remove_file is changed
         - remove_file_actual.stdout == 'false\r\n'
 
     - name: remove a file (idempotent)
@@ -276,11 +420,11 @@ idempotent and does not report changes. For example:
         path: C:\temp
         state: absent
       register: remove_file_again
-    
+
     - name: assert remove a file (idempotent)
       assert:
         that:
-        - not remove_file_again|changed
+        - not remove_file_again is changed
 
 
 Windows communication and development support

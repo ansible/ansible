@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -30,7 +30,7 @@ description:
     existing services are changed to consume that new template. As such,
     the ability to update templates in-place requires the C(force) option
     to be used.
-version_added: "2.4"
+version_added: 2.4
 options:
   force:
     description:
@@ -39,9 +39,7 @@ options:
         using it. This will not update the running service though. Use
         C(bigip_iapp_service) to do that. When C(no), will update the iApp
         only if there are no iApp services using the template.
-    choices:
-      - yes
-      - no
+    type: bool
   name:
     description:
       - The name of the iApp template that you want to delete. This option
@@ -65,9 +63,6 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -110,18 +105,35 @@ RETURN = r'''
 import re
 import uuid
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-    from f5.utils.iapp_parser import NonextantTemplateNameException
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import fq_name
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.utils.iapp_parser import NonextantTemplateNameException
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import fq_name
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.utils.iapp_parser import NonextantTemplateNameException
+    except ImportError:
+        HAS_F5SDK = False
 
 try:
     from StringIO import StringIO
@@ -131,35 +143,8 @@ except ImportError:
 
 class Parameters(AnsibleF5Parameters):
     api_attributes = []
+
     returnables = []
-
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
 
     @property
     def name(self):
@@ -180,8 +165,7 @@ class Parameters(AnsibleF5Parameters):
         if self._values['content'] is None:
             return None
         result = self._squash_template_name_prefix()
-        if self._values['name']:
-            result = self._replace_template_name(result)
+        result = self._replace_template_name(result)
         return result
 
     @property
@@ -196,16 +180,6 @@ class Parameters(AnsibleF5Parameters):
             result = self._filter_params(result)
         except Exception:
             pass
-        return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
         return result
 
     def _squash_template_name_prefix(self):
@@ -233,17 +207,23 @@ class Parameters(AnsibleF5Parameters):
         :return string
         """
         pattern = r'sys\s+application\s+template\s+[^ ]+'
-        replace = 'sys application template {0}'.format(self._values['name'])
+
+        if self._values['name']:
+            name = self._values['name']
+        else:
+            name = self._get_template_name()
+
+        replace = 'sys application template {0}'.format(fq_name(self.partition, name))
         return re.sub(pattern, replace, template)
 
     def _get_template_name(self):
         # There is a bug in the iApp parser in the F5 SDK that prevents us from
         # using it in all cases to get the name of an iApp. So we'll use this
         # pattern for now and file a bug with the F5 SDK
-        pattern = r'sys\s+application\s+template\s+(?P<path>\/\w+\/)?(?P<name>[\w.]+)'
-        matches = re.search(pattern, self.content)
+        pattern = r'sys\s+application\s+template\s+(?P<path>\/[^\{}"\'*?|#]+\/)?(?P<name>[^\{}"\'*?|#]+)'
+        matches = re.search(pattern, self._values['content'])
         try:
-            result = matches.group('name')
+            result = matches.group('name').strip()
         except IndexError:
             result = None
         if result:
@@ -252,9 +232,11 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.have = None
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def exec_module(self):
@@ -290,7 +272,7 @@ class ModuleManager(object):
         if not self.want.force and self.template_in_use():
             return False
 
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         self._remove_iapp_checksum()
@@ -314,7 +296,7 @@ class ModuleManager(object):
             partition=self.want.partition
         )
         result = resource.attrs
-        return Parameters(result)
+        return Parameters(params=result)
 
     def absent(self):
         changed = False
@@ -392,7 +374,7 @@ class ModuleManager(object):
         )
 
     def create(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         if self.exists():
@@ -417,9 +399,11 @@ class ModuleManager(object):
             result = output.commandResult
             if 'Syntax Error' in result:
                 raise F5ModuleError(output.commandResult)
+            if 'ERROR' in result:
+                raise F5ModuleError(output.commandResult)
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -437,7 +421,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(),
             state=dict(
                 default='present',
@@ -446,29 +430,37 @@ class ArgumentSpec(object):
             force=dict(
                 type='bool'
             ),
-            content=dict()
+            content=dict(),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
+        cleanup_tokens(client)
+        module.exit_json(**results)
     except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

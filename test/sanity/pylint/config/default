@@ -93,10 +93,8 @@ disable=
     unused-argument,
     unused-import,
     unused-variable,
-    unused-wildcard-import,
     used-before-assignment,
     useless-super-delegation,
-    wildcard-import,
     wrong-import-order,
     wrong-import-position,
 

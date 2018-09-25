@@ -26,32 +26,25 @@ options:
     description:
       - Name of the component of which the parameter is being set
     required: true
-    default: null
   name:
     description:
       - Name of the parameter being set
     required: true
-    default: null
   value:
     description:
       - Value of the parameter, as a JSON term
-    required: false
-    default: null
   vhost:
     description:
       - vhost to apply access privileges.
-    required: false
     default: /
   node:
     description:
       - erlang node name of the rabbit we wish to configure
-    required: false
     default: rabbit
     version_added: "1.2"
   state:
     description:
       - Specify if user is to be added or removed
-    required: false
     default: present
     choices: [ 'present', 'absent']
 '''
@@ -157,6 +150,7 @@ def main():
     result['vhost'] = vhost
     result['state'] = state
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

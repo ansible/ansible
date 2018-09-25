@@ -106,7 +106,7 @@
     - name: assert 
       assert:
         that:
-          - bad_uri_result|failed
+          - bad_uri_result is failed
 
     # ============================================================
 

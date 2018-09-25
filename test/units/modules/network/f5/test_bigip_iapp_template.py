@@ -15,21 +15,25 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from units.modules.utils import set_module_args
+from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import patch
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_iapp_template import Parameters
-    from library.bigip_iapp_template import ModuleManager
-    from library.bigip_iapp_template import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.modules.bigip_iapp_template import Parameters
+    from library.modules.bigip_iapp_template import ModuleManager
+    from library.modules.bigip_iapp_template import ArgumentSpec
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_iapp_template import Parameters
         from ansible.modules.network.f5.bigip_iapp_template import ArgumentSpec
         from ansible.modules.network.f5.bigip_iapp_template import ModuleManager
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
@@ -61,12 +65,30 @@ class TestParameters(unittest.TestCase):
         args = dict(
             content=iapp
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.name == 'foo.iapp'
 
+    def test_module_parameters_custom_name(self):
+        iapp = load_fixture('create_iapp_template.iapp')
+        args = dict(
+            content=iapp,
+            name='foobar'
+        )
+        p = Parameters(params=args)
+        assert p.name == 'foobar'
+        assert 'sys application template /Common/foobar' in p.content
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
+    def test_module_parameters_custom_partition(self):
+        iapp = load_fixture('create_iapp_template.iapp')
+        args = dict(
+            content=iapp,
+            partition='foobar'
+        )
+        p = Parameters(params=args)
+        assert p.name == 'foo.iapp'
+        assert 'sys application template /foobar/foo.iapp' in p.content
+
+
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -76,17 +98,16 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[False, True])
@@ -100,19 +121,18 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
 
-        current1 = Parameters(load_fixture('load_sys_application_template_w_new_checksum.json'))
-        current2 = Parameters(load_fixture('load_sys_application_template_w_old_checksum.json'))
-        client = AnsibleF5Client(
+        current1 = Parameters(params=load_fixture('load_sys_application_template_w_new_checksum.json'))
+        current2 = Parameters(params=load_fixture('load_sys_application_template_w_old_checksum.json'))
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[True, True])
@@ -130,18 +150,17 @@ class TestManager(unittest.TestCase):
     def test_delete_iapp_template(self, *args):
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin',
             state='absent'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[True, False])
@@ -154,18 +173,17 @@ class TestManager(unittest.TestCase):
     def test_delete_iapp_template_idempotent(self, *args):
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin',
             state='absent'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[False, False])

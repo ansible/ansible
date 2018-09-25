@@ -1,0 +1,93 @@
+- name: reboot before feature install to ensure server is in clean state
+  win_reboot:
+
+- name: ensure IIS features are installed
+  win_feature:
+    name: Web-Server
+    state: present
+    includ_sub_features: True
+    include_management_tools: True
+  register: feature_install
+
+- name: reboot after feature install
+  win_reboot:
+  when: feature_install.reboot_required
+
+- name: get all websites from server
+  raw: powershell.exe "(get-website).name"
+  register: existing_sites
+
+- name: ensure all sites are removed for clean testing
+  win_iis_website:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ existing_sites.stdout_lines }}"
+
+- name: add testing site {{ test_iis_site_name }}
+  win_iis_website:
+    name: "{{ test_iis_site_name }}"
+    physical_path: c:\inetpub\wwwroot
+
+- name: ensure all bindings are removed prior to starting testing
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: "{{ item.protocol }}"
+    port: "{{ item.port }}"
+  with_items:
+    - {protocol: http, port: 80}
+    - {protocol: https, port: 443}
+
+- name: copy certreq file
+  win_copy:
+    content: |-
+      [NewRequest]
+      Subject = "CN={{ item.name }}"
+      KeyLength = 2048
+      KeyAlgorithm = RSA
+      MachineKeySet = true
+      RequestType = Cert
+    dest: "{{ item.dest }}"
+  with_items:
+    - {name: test.com, dest: 'c:\windows\temp\certreq1.txt'}
+    - {name: test1.com, dest: 'c:\windows\temp\certreq2.txt'}
+    - {name: '*.test.com', dest: 'c:\windows\temp\certreqwc.txt'}
+
+- name: make sure response files are absent
+  win_file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+  - 'c:\windows\temp\certreqresp1.txt'
+  - 'c:\windows\temp\certreqresp2.txt'
+  - 'c:\windows\temp\certreqrespwc.txt'
+
+- name: create self signed cert from certreq
+  win_command: certreq -new -machine {{ item.req }} {{ item.resp }}
+  with_items:
+    - {req: 'c:\windows\temp\certreq1.txt', resp: 'c:\windows\temp\certreqresp1.txt'}
+    - {req: 'c:\windows\temp\certreq2.txt', resp: 'c:\windows\temp\certreqresp2.txt'}
+    - {req: 'c:\windows\temp\certreqwc.txt', resp: 'c:\windows\temp\certreqrespwc.txt'}
+
+- name: register certificate thumbprint1
+  raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN=test.com"})[0].Thumbprint'
+  register: thumbprint1
+
+- name: register certificate thumbprint2
+  raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN=test1.com"})[0].Thumbprint'
+  register: thumbprint2
+
+- name: register certificate thumbprint_wc
+  raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN=*.test.com"})[0].Thumbprint'
+  register: thumbprint_wc
+
+- debug: 
+    var: thumbprint1.stdout
+    verbosity: 1
+- debug: 
+    var: thumbprint2.stdout
+    verbosity: 1
+- debug: 
+    var: thumbprint_wc.stdout
+    verbosity: 1

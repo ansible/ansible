@@ -25,24 +25,17 @@ description:
     - Add or remove Zypper repositories on SUSE and openSUSE
 options:
     name:
-        required: false
-        default: none
         description:
             - A name for the repository. Not required when adding repofiles.
     repo:
-        required: false
-        default: none
         description:
             - URI of the repository or .repo file. Required when state=present.
     state:
-        required: false
-        choices: [ "absent", "present" ]
-        default: "present"
         description:
             - A source string state.
+        choices: [ "absent", "present" ]
+        default: "present"
     description:
-        required: false
-        default: none
         description:
             - A description of the repository
     disable_gpg_check:
@@ -51,54 +44,48 @@ options:
               all packages. Has an effect only if state is
               I(present).
             - Needs zypper version >= 1.6.2.
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
     autorefresh:
         description:
             - Enable autorefresh of the repository.
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'yes'
         aliases: [ "refresh" ]
     priority:
         description:
             - Set priority of repository. Packages will always be installed
               from the repository with the smallest priority number.
             - Needs zypper version >= 1.12.25.
-        required: false
         version_added: "2.1"
     overwrite_multiple:
         description:
             - Overwrite multiple repository entries, if repositories with both name and
               URL already exist.
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         version_added: "2.1"
     auto_import_keys:
         description:
             - Automatically import the gpg signing key of the new or changed repository.
             - Has an effect only if state is I(present). Has no effect on existing (unchanged) repositories or in combination with I(absent).
             - Implies runrefresh.
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
+            - Only works with C(.repo) files if `name` is given explicitly.
+        type: bool
+        default: 'no'
         version_added: "2.2"
     runrefresh:
         description:
             - Refresh the package list of the given repository.
             - Can be used with repo=* to refresh all repositories.
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
+        type: bool
+        default: 'no'
         version_added: "2.2"
     enabled:
         description:
             - Set repository to enabled (or disabled).
-        required: false
-        default: "yes"
-        choices: ["yes", "no"]
+        type: bool
+        default: 'yes'
         version_added: "2.2"
 
 
@@ -142,9 +129,13 @@ EXAMPLES = '''
     runrefresh: yes
 '''
 
+from distutils.version import LooseVersion
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
 
-from distutils.version import LooseVersion
 
 def _get_cmd(*args):
     """Combines the non-interactive zypper command with arguments/subcommands"""
@@ -178,6 +169,7 @@ def _parse_repos(module):
     else:
         module.fail_json(msg='Failed to execute "%s"' % " ".join(cmd), rc=rc, stdout=stdout, stderr=stderr)
 
+
 def _repo_changes(realrepo, repocmp):
     "Check whether the 2 given repos have different settings."
     for k in repocmp:
@@ -193,6 +185,7 @@ def _repo_changes(realrepo, repocmp):
             if valold != valnew:
                 return True
     return False
+
 
 def repo_exists(module, repodata, overwrite_multiple):
     """Check whether the repository already exists.
@@ -288,6 +281,7 @@ def get_zypper_version(module):
         return LooseVersion('1.0')
     return LooseVersion(stdout.split()[1])
 
+
 def runrefreshrepo(module, auto_import_keys=False, shortname=None):
     "Forces zypper to refresh repo metadata."
     if auto_import_keys:
@@ -309,15 +303,15 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             runrefresh=dict(required=False, default='no', type='bool'),
             description=dict(required=False),
-            disable_gpg_check = dict(required=False, default=False, type='bool'),
-            autorefresh = dict(required=False, default=True, type='bool', aliases=['refresh']),
-            priority = dict(required=False, type='int'),
-            enabled = dict(required=False, default=True, type='bool'),
-            overwrite_multiple = dict(required=False, default=False, type='bool'),
-            auto_import_keys = dict(required=False, default=False, type='bool'),
+            disable_gpg_check=dict(required=False, default=False, type='bool'),
+            autorefresh=dict(required=False, default=True, type='bool', aliases=['refresh']),
+            priority=dict(required=False, type='int'),
+            enabled=dict(required=False, default=True, type='bool'),
+            overwrite_multiple=dict(required=False, default=False, type='bool'),
+            auto_import_keys=dict(required=False, default=False, type='bool'),
         ),
         supports_check_mode=False,
-        required_one_of = [['state','runrefresh']],
+        required_one_of=[['state', 'runrefresh']],
     )
 
     repo = module.params['repo']
@@ -398,8 +392,6 @@ def main():
     else:
         module.fail_json(msg="Zypper failed with rc %s" % rc, rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, state=state, warnings=warnings)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

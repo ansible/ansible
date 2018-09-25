@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Daniele Lazzari <lazzari@mailup.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -29,38 +15,36 @@ DOCUMENTATION = r'''
 ---
 module: win_psmodule
 version_added: "2.4"
-short_description: Adds or removes a Powershell Module.
+short_description: Adds or removes a Powershell Module
 description:
     - This module helps to install Powershell modules and register custom modules repository on Windows Server.
 options:
   name:
     description:
       - Name of the powershell module that has to be installed.
-    required: true
+    required: yes
   allow_clobber:
     description:
-      - If yes imports all commands, even if they have the same names as commands that already exists. Available only in Powershell 5.1 or higher.
-    default: no
-    choices:
-      - no
-      - yes
+      - If C(yes) imports all commands, even if they have the same names as commands that already exists. Available only in Powershell 5.1 or higher.
+    type: bool
+    default: 'no'
   repository:
     description:
-      - Name of the custom repository to register.
+      - Name of the custom repository to register or use.
   url:
     description:
-      - Url of the custom repository.
+      - URL of the custom repository to register.
   state:
     description:
-      - If present a new module is installed. If absent a module is removed.
+      - If C(present) a new module is installed.
+      - If C(absent) a module is removed.
+    choices: [ absent, present ]
     default: present
-    choices:
-      - present
-      - absent
 notes:
-   -  Powershell 5.0 or higer is needed.
+   -  Powershell 5.0 or higher is needed.
 
-author: Daniele Lazzari
+author:
+- Daniele Lazzari
 '''
 
 EXAMPLES = '''
@@ -75,6 +59,12 @@ EXAMPLES = '''
     name: MyCustomModule
     repository: MyRepository
     url: https://myrepo.com
+    state: present
+
+- name: Add a powershell module from a specific repository
+  win_psmodule:
+    name: PowershellModule
+    repository: MyRepository
     state: present
 
 - name: Remove a powershell module

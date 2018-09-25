@@ -81,6 +81,9 @@ class FakeCloud (object):
     def get_network(self, name):
         return self._find(self.networks, name)
 
+    def get_openstack_vars(self, server):
+        return server
+
     create_server = mock.MagicMock()
 
 

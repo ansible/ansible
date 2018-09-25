@@ -23,6 +23,7 @@ __metaclass__ = type
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_config
 from units.modules.utils import set_module_args
+from ansible.module_utils._text import to_text
 from .junos_module import TestJunosModule, load_fixture
 
 
@@ -42,10 +43,10 @@ class TestJunosConfigModule(TestJunosModule):
         self.mock_load_configuration = patch('ansible.modules.network.junos.junos_config.load_configuration')
         self.load_configuration = self.mock_load_configuration.start()
 
-        self.mock_lock_configuration = patch('ansible.module_utils.junos.lock_configuration')
+        self.mock_lock_configuration = patch('ansible.module_utils.network.junos.junos.lock_configuration')
         self.lock_configuration = self.mock_lock_configuration.start()
 
-        self.mock_unlock_configuration = patch('ansible.module_utils.junos.unlock_configuration')
+        self.mock_unlock_configuration = patch('ansible.module_utils.network.junos.junos.unlock_configuration')
         self.unlock_configuration = self.mock_unlock_configuration.start()
 
         self.mock_commit_configuration = patch('ansible.modules.network.junos.junos_config.commit_configuration')
@@ -57,13 +58,13 @@ class TestJunosConfigModule(TestJunosModule):
         self.mock_conn = patch('ansible.module_utils.connection.Connection')
         self.conn = self.mock_conn.start()
 
-        self.mock_netconf = patch('ansible.module_utils.junos.NetconfConnection')
+        self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
         self.netconf_conn = self.mock_netconf.start()
 
         self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_config.exec_rpc')
         self.exec_rpc = self.mock_exec_rpc.start()
 
-        self.mock_netconf_rpc = patch('ansible.module_utils.netconf.NetconfConnection')
+        self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
         self.netconf_rpc = self.mock_netconf_rpc.start()
 
     def tearDown(self):
@@ -118,7 +119,7 @@ class TestJunosConfigModule(TestJunosModule):
         set_module_args(dict(src=src, confirm=40))
         self.execute_module(changed=True)
         args, kwargs = self.commit_configuration.call_args
-        self.assertEqual(kwargs['confirm_timeout'], 40)
+        self.assertEqual(kwargs['confirm_timeout'], to_text(40))
 
     def test_junos_config_rollback(self):
         rollback = 10

@@ -25,36 +25,9 @@ options:
     description:
       - Defines a value the variable specified using I(variable) should be set
         to.
-  save_to_disk:
-    description:
-      - Save mysql host config to sqlite db on disk to persist the
-        configuration.
-    default: True
-  load_to_runtime:
-    description:
-      - Dynamically load mysql host config to runtime memory.
-    default: True
-  login_user:
-    description:
-      - The username used to authenticate to ProxySQL admin interface.
-    default: None
-  login_password:
-    description:
-      - The password used to authenticate to ProxySQL admin interface.
-    default: None
-  login_host:
-    description:
-      - The host used to connect to ProxySQL admin interface.
-    default: '127.0.0.1'
-  login_port:
-    description:
-      - The port used to connect to ProxySQL admin interface.
-    default: 6032
-  config_file:
-    description:
-      - Specify a config file from which login_user and login_password are to
-        be read.
-    default: ''
+extends_documentation_fragment:
+  - proxysql.managing_config
+  - proxysql.connectivity
 '''
 
 EXAMPLES = '''
@@ -100,16 +73,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
-
-try:
-    import MySQLdb
-    import MySQLdb.cursors
-except ImportError:
-    MYSQLDB_FOUND = False
-else:
-    MYSQLDB_FOUND = True
 
 # ===========================================
 # proxysql module specific support methods.
@@ -123,10 +88,8 @@ def perform_checks(module):
             msg="login_port must be a valid unix port number (0-65535)"
         )
 
-    if not MYSQLDB_FOUND:
-        module.fail_json(
-            msg="the python mysqldb module is required"
-        )
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
 
 
 def save_config_to_disk(variable, cursor):
@@ -238,8 +201,8 @@ def main():
                                login_user,
                                login_password,
                                config_file,
-                               cursor_class=MySQLdb.cursors.DictCursor)
-    except MySQLdb.Error as e:
+                               cursor_class=mysql_driver.cursors.DictCursor)
+    except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
@@ -258,7 +221,7 @@ def main():
                     msg="The variable \"%s\" was not found" % variable
                 )
 
-        except MySQLdb.Error as e:
+        except mysql_driver.Error as e:
             module.fail_json(
                 msg="unable to get config.. %s" % to_native(e)
             )
@@ -291,12 +254,13 @@ def main():
                     msg="The variable \"%s\" was not found" % variable
                 )
 
-        except MySQLdb.Error as e:
+        except mysql_driver.Error as e:
             module.fail_json(
                 msg="unable to set config.. %s" % to_native(e)
             )
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

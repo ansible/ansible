@@ -47,6 +47,12 @@ options:
         required: false
         choices: ['present', 'absent']
         default: "present"
+    force:
+        description:
+            - Only updates an existing macro if set to C(yes).
+        default: 'yes'
+        type: bool
+        version_added: 2.5
 
 extends_documentation_fragment:
     - zabbix
@@ -157,7 +163,8 @@ def main():
             macro_name=dict(type='str', required=True),
             macro_value=dict(type='str', required=True),
             state=dict(default="present", choices=['present', 'absent']),
-            timeout=dict(type='int', default=10)
+            timeout=dict(type='int', default=10),
+            force=dict(type='bool', default=True)
         ),
         supports_check_mode=True
     )
@@ -176,6 +183,7 @@ def main():
     macro_value = module.params['macro_value']
     state = module.params['state']
     timeout = module.params['timeout']
+    force = module.params['force']
 
     zbx = None
     # login to zabbix
@@ -202,9 +210,11 @@ def main():
         if not host_macro_obj:
             # create host macro
             host_macro_class_obj.create_host_macro(macro_name, macro_value, host_id)
-        else:
+        elif force:
             # update host macro
             host_macro_class_obj.update_host_macro(host_macro_obj, macro_name, macro_value)
+        else:
+            module.exit_json(changed=False, result="Host macro %s already exists and force is set to no" % macro_name)
 
 
 if __name__ == '__main__':

@@ -59,4 +59,4 @@ passwordstore_privkey: |
 passwordstore_skip_os:
   Ubuntu: ['12.04']
   RedHat: ['7.4']
-  CentOS: ['6.9']
+  CentOS: ['6.9', '6.10']

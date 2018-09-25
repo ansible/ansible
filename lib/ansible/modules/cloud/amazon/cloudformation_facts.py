@@ -26,33 +26,26 @@ options:
     stack_name:
         description:
           - The name or id of the CloudFormation stack. Gathers facts for all stacks by default.
-        required: false
-        default: null
     all_facts:
         description:
             - Get all stack information for the stack
-        required: false
-        default: false
+        default: 'no'
     stack_events:
         description:
             - Get stack events for the stack
-        required: false
-        default: false
+        default: 'no'
     stack_template:
         description:
             - Get stack template body for the stack
-        required: false
-        default: false
+        default: 'no'
     stack_resources:
         description:
             - Get stack resources for the stack
-        required: false
-        default: false
+        default: 'no'
     stack_policy:
         description:
             - Get stack policy for the stack
-        required: false
-        default: false
+        default: 'no'
 extends_documentation_fragment:
     - aws
     - ec2

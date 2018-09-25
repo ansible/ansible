@@ -35,8 +35,8 @@
       - "test_script_result.stdout"
       - "'Woohoo' in test_script_result.stdout"
       - "not test_script_result.stderr"
-      - "not test_script_result | failed"
-      - "test_script_result | changed"
+      - "test_script_result is not failed"
+      - "test_script_result is changed"
 
 - name: run test script that takes arguments including a unicode char
   script: test_script_with_args.ps1 /this /that /Ӧther
@@ -51,8 +51,26 @@
       - "test_script_with_args_result.stdout_lines[1] == '/that'"
       - "test_script_with_args_result.stdout_lines[2] == '/Ӧther'"
       - "not test_script_with_args_result.stderr"
-      - "not test_script_with_args_result | failed"
-      - "test_script_with_args_result | changed"
+      - "test_script_with_args_result is not failed"
+      - "test_script_with_args_result is changed"
+
+# Bug: https://github.com/ansible/ansible/issues/32850
+- name: set fact of long string
+  set_fact:
+    long_string: "{{ lookup('pipe', 'printf \"a%.0s\" {1..1000}') }}"
+
+- name: run test script with args that exceed the stdin buffer
+  script: test_script_with_args.ps1 {{ long_string }}
+  register: test_script_with_large_args_result
+
+- name: check that script ran and received arguments correctly
+  assert:
+    that:
+    - test_script_with_large_args_result.rc == 0
+    - test_script_with_large_args_result.stdout == long_string + "\r\n"
+    - not test_script_with_large_args_result.stderr
+    - test_script_with_large_args_result is not failed
+    - test_script_with_large_args_result is changed
 
 - name: run test script that takes parameters passed via splatting
   script: test_script_with_splatting.ps1 @{ This = 'this'; That = '{{ test_win_script_value }}'; Other = 'other'}
@@ -67,8 +85,8 @@
       - "test_script_with_splatting_result.stdout_lines[1] == test_win_script_value"
       - "test_script_with_splatting_result.stdout_lines[2] == 'other'"
       - "not test_script_with_splatting_result.stderr"
-      - "not test_script_with_splatting_result | failed"
-      - "test_script_with_splatting_result | changed"
+      - "test_script_with_splatting_result is not failed"
+      - "test_script_with_splatting_result is changed"
 
 - name: run test script that takes splatted parameters from a variable
   script: test_script_with_splatting.ps1 {{ test_win_script_splat }}
@@ -83,8 +101,8 @@
       - "test_script_with_splatting2_result.stdout_lines[1] == 'THAT'"
       - "test_script_with_splatting2_result.stdout_lines[2] == 'OTHER'"
       - "not test_script_with_splatting2_result.stderr"
-      - "not test_script_with_splatting2_result | failed"
-      - "test_script_with_splatting2_result | changed"
+      - "test_script_with_splatting2_result is not failed"
+      - "test_script_with_splatting2_result is changed"
 
 - name: run test script that has errors
   script: test_script_with_errors.ps1
@@ -97,8 +115,8 @@
       - "test_script_with_errors_result.rc != 0"
       - "not test_script_with_errors_result.stdout"
       - "test_script_with_errors_result.stderr"
-      - "test_script_with_errors_result | failed"
-      - "test_script_with_errors_result | changed"
+      - "test_script_with_errors_result is failed"
+      - "test_script_with_errors_result is changed"
 
 - name: cleanup test file if it exists
   raw: Remove-Item "{{ test_win_script_filename }}" -Force
@@ -116,8 +134,8 @@
       - "test_script_creates_file_result.rc == 0"
       - "not test_script_creates_file_result.stdout"
       - "not test_script_creates_file_result.stderr"
-      - "not test_script_creates_file_result | failed"
-      - "test_script_creates_file_result | changed"
+      - "test_script_creates_file_result is not failed"
+      - "test_script_creates_file_result is changed"
 
 - name: run test script that creates a file again
   script: test_script_creates_file.ps1 {{ test_win_script_filename }}
@@ -128,9 +146,9 @@
 - name: check that the script did not run since the remote file exists
   assert:
     that:
-      - "not test_script_creates_file_again_result | failed"
-      - "not test_script_creates_file_again_result | changed"
-      - "test_script_creates_file_again_result | skipped"
+      - "test_script_creates_file_again_result is not failed"
+      - "test_script_creates_file_again_result is not changed"
+      - "test_script_creates_file_again_result is skipped"
 
 - name: run test script that removes a file
   script: test_script_removes_file.ps1 {{ test_win_script_filename }}
@@ -144,8 +162,8 @@
       - "test_script_removes_file_result.rc == 0"
       - "not test_script_removes_file_result.stdout"
       - "not test_script_removes_file_result.stderr"
-      - "not test_script_removes_file_result | failed"
-      - "test_script_removes_file_result | changed"
+      - "test_script_removes_file_result is not failed"
+      - "test_script_removes_file_result is changed"
 
 - name: run test script that removes a file again
   script: test_script_removes_file.ps1 {{ test_win_script_filename }}
@@ -156,9 +174,9 @@
 - name: check that the script did not run since the remote file does not exist
   assert:
     that:
-      - "not test_script_removes_file_again_result | failed"
-      - "not test_script_removes_file_again_result | changed"
-      - "test_script_removes_file_again_result | skipped"
+      - "test_script_removes_file_again_result is not failed"
+      - "test_script_removes_file_again_result is not changed"
+      - "test_script_removes_file_again_result is skipped"
 
 # TODO: these tests fail on 2008 (not even R2) with no output. It's related to the default codepage being UTF8- if we force it back to 437, it works fine.
 # Need to figure out a sane place to do that under the new exec wrapper.
@@ -173,8 +191,8 @@
 #      - "test_batch_result.stdout"
 #      - "'batch' in test_batch_result.stdout"
 #      - "not test_batch_result.stderr"
-#      - "not test_batch_result | failed"
-#      - "test_batch_result | changed"
+#      - "test_batch_result is not failed"
+#      - "test_batch_result is changed"
 
 
 #- name: run simple batch file with .cmd extension
@@ -188,33 +206,30 @@
 #      - "test_cmd_result.stdout"
 #      - "'cmd extension' in test_cmd_result.stdout"
 #      - "not test_cmd_result.stderr"
-#      - "not test_cmd_result | failed"
-#      - "test_cmd_result | changed"
+#      - "test_cmd_result is not failed"
+#      - "test_cmd_result is changed"
 
 - name: run test script that takes a boolean parameter
-  script: test_script_bool.ps1 $true
+  script: test_script_bool.ps1 $false  # use false as that can pick up more errors
   register: test_script_bool_result
 
 - name: check that the script ran and the parameter was treated as a boolean
   assert:
     that:
-      - "test_script_bool_result.stdout_lines[0] == 'System.Boolean'"
-      - "test_script_bool_result.stdout_lines[1] == 'True'"
+      - test_script_bool_result.stdout_lines[0] == 'System.Boolean'
+      - test_script_bool_result.stdout_lines[1] == 'False'
 
-# FIXME: re-enable this test once script can run under the wrapper with powershell
-#- name: run test script that uses envvars
-#  script: test_script_with_env.ps1
-#  environment:
-#    taskenv: task
-#  register: test_script_env_result
-#
-#- name: ensure that script ran and that environment var was passed
-#  assert:
-#    that:
-#    - test_script_env_result | succeeded
-#    - test_script_env_result.stdout_lines[0] == 'task'
-#
+- name: run test script that uses envvars
+  script: test_script_with_env.ps1
+  environment:
+    taskenv: task
+  register: test_script_env_result
 
+- name: ensure that script ran and that environment var was passed
+  assert:
+    that:
+    - test_script_env_result is successful
+    - test_script_env_result.stdout_lines[0] == 'task'
 
 # check mode
 - name: Run test script that creates a file in check mode
@@ -232,7 +247,7 @@
 - name: Assert that a change was reported but the script did not make changes
   assert:
     that:
-      - test_script_creates_file_check_mode | changed
+      - test_script_creates_file_check_mode is changed
       - not create_file_stat.stat.exists
 
 - name: Run test script that creates a file
@@ -255,5 +270,18 @@
 - name: Assert that a change was reported but the script did not make changes
   assert:
     that:
-      - test_script_removes_file_check_mode | changed
+      - test_script_removes_file_check_mode is changed
       - remove_file_stat.stat.exists
+
+- name: run test script with become that outputs 2 lines
+  script: test_script_whoami.ps1
+  register: test_script_result_become
+  become: yes
+  become_user: SYSTEM
+  become_method: runas
+
+- name: check that the script ran and we get both outputs on new lines
+  assert:
+    that:
+    - test_script_result_become.stdout_lines[0]|lower == 'nt authority\\system'
+    - test_script_result_become.stdout_lines[1] == 'finished'

@@ -1,0 +1,124 @@
+!Current Configuration:
+!System Description "Dell Networking N4064F, 6.3.3.10, Linux 3.7.10-e54850e7"
+!System Software Version 6.3.3.10
+!Cut-through mode is configured as disabled
+!
+configure
+hostname "os6"
+slot 1/0 5    ! Dell Networking N4064F
+slot 1/1 8    ! Dell 10GBase-T Card
+stack
+member 1 4    ! N4064F
+exit
+interface out-of-band
+ip address 10.16.148.73 255.255.0.0 10.16.144.254
+exit
+no logging console
+interface vlan 1
+ip address dhcp
+exit
+no passwords min-length
+username "admin" password 21232f297a57a5a743894a0e4a801fc3 privilege 1 encrypted
+line telnet
+exec-timeout 0
+exit
+ip ssh server
+application install SupportAssist auto-restart start-on-boot
+!
+interface Te1/0/1
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/2
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/3
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/4
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/5
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/6
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/7
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/8
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/9
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/10
+no switchport port-security violation protect
+exit
+!
+interface Te1/0/11
+no switchport port-security violation protect
+exit
+!
+interface port-channel 1
+no switchport port-security violation protect
+exit
+!
+interface port-channel 2
+no switchport port-security violation protect
+exit
+!
+interface port-channel 3
+no switchport port-security violation protect
+exit
+!
+interface port-channel 4
+no switchport port-security violation protect
+exit
+!
+interface port-channel 5
+no switchport port-security violation protect
+exit
+!
+snmp-server enable traps dvmrp
+snmp-server enable traps pim
+no snmp-server enable traps vrrp
+no snmp-server enable traps acl
+snmp-server enable traps captive-portal
+snmp-server enable traps captive-portal client-auth-failure
+snmp-server enable traps captive-portal client-connect
+snmp-server enable traps captive-portal client-db-full
+snmp-server enable traps captive-portal client-disconnect
+router bgp 11
+bgp router-id 192.0.2.1
+maximum-paths 2
+maximum-paths ibgp 2
+network 101.1.2.0 mask 255.255.255.0
+template peer MUX_HNV_ACCESS
+remote-as 64918
+exit
+neighbor 10.10.234.16 remote-as 64818
+neighbor 10.10.234.16 default-originate
+neighbor 10.10.234.16 timers 2 5
+neighbor 2001:4898:5808:ffa2::1 remote-as 64818
+neighbor 2001:4898:5808:ffa2::1 default-originate
+neighbor 2001:4898:5808:ffa2::1 timers 2 4
+address-family ipv6
+network 2001:4898:5808:ffa0::/126
+redistribute connected
+exit
+exit
+enable password c4f25f005187e9a85ad6480d3507a541 encrypted
+openflow
+exit
+eula-consent support-assist reject
+exit

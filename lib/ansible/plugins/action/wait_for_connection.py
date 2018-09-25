@@ -37,6 +37,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
+    _VALID_ARGS = frozenset(('connect_timeout', 'delay', 'sleep', 'timeout'))
 
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_DELAY = 0
@@ -54,11 +55,12 @@ class ActionModule(ActionBase):
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
             except Exception as e:
+                error = e  # PY3 compatibility to store exception for use outside of this block
                 if what_desc:
                     display.debug("wait_for_connection: %s fail (expected), retrying in %d seconds..." % (what_desc, sleep))
                 time.sleep(sleep)
 
-        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, e))
+        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, error))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -74,21 +76,22 @@ class ActionModule(ActionBase):
             return dict(skipped=True)
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         def ping_module_test(connect_timeout):
             ''' Test ping module, if available '''
             display.vvv("wait_for_connection: attempting ping module test")
             # call connection reset between runs if it's there
             try:
-                self._connection._reset()
+                self._connection.reset()
             except AttributeError:
                 pass
 
             # Use win_ping on winrm/powershell, else use ping
             if hasattr(self._connection, '_shell_type') and self._connection._shell_type == 'powershell':
-                ping_result = self._execute_module(module_name='win_ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
+                ping_result = self._execute_module(module_name='win_ping', module_args=dict(), task_vars=task_vars)
             else:
-                ping_result = self._execute_module(module_name='ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
+                ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
 
             # Test module output
             if ping_result['ping'] != 'pong':

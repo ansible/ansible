@@ -22,8 +22,7 @@ short_description: Generate an OpenSSL public key from its private key.
 description:
     - "This module allows one to (re)generate OpenSSL public keys from their private keys.
        It uses the pyOpenSSL python library to interact with openssl. Keys are generated
-       in PEM format. This module works only if the version of PyOpenSSL is recent enough (> 16.0.0).
-       This module uses file common arguments to specify generated file permissions."
+       in PEM format. This module works only if the version of PyOpenSSL is recent enough (> 16.0.0)."
 requirements:
     - "python-pyOpenSSL"
 options:
@@ -36,7 +35,7 @@ options:
     force:
         required: false
         default: False
-        choices: [ True, False ]
+        type: bool
         description:
             - Should the key be regenerated even it it already exists
     format:
@@ -59,6 +58,7 @@ options:
         description:
             - The passphrase for the privatekey.
         version_added: "2.4"
+extends_documentation_fragment: files
 '''
 
 EXAMPLES = '''
@@ -211,17 +211,25 @@ class PublicKey(crypto_utils.OpenSSLObject):
             if not os.path.exists(self.privatekey_path):
                 return False
 
-            current_publickey = crypto.dump_publickey(
-                crypto.FILETYPE_ASN1,
-                crypto.load_publickey(crypto.FILETYPE_PEM, open(self.path, 'rb').read())
-            )
+            try:
+                publickey_content = open(self.path, 'rb').read()
+                if self.format == 'OpenSSH':
+                    current_publickey = crypto_serialization.load_ssh_public_key(publickey_content, backend=default_backend())
+                    publickey_content = current_publickey.public_bytes(crypto_serialization.Encoding.PEM,
+                                                                       crypto_serialization.PublicFormat.SubjectPublicKeyInfo)
+                current_publickey = crypto.dump_publickey(
+                    crypto.FILETYPE_ASN1,
+                    crypto.load_publickey(crypto.FILETYPE_PEM, publickey_content)
+                )
+            except (crypto.Error, ValueError):
+                return False
 
             desired_publickey = crypto.dump_publickey(
                 crypto.FILETYPE_ASN1,
                 crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
             )
 
-            return hashlib.md5(current_publickey).hexdigest() == hashlib.md5(desired_publickey).hexdigest()
+            return current_publickey == desired_publickey
 
         if not state_and_perms:
             return state_and_perms
@@ -251,7 +259,7 @@ def main():
             path=dict(required=True, type='path'),
             privatekey_path=dict(type='path'),
             format=dict(type='str', choices=['PEM', 'OpenSSH'], default='PEM'),
-            privatekey_passphrase=dict(type='path', no_log=True),
+            privatekey_passphrase=dict(type='str', no_log=True),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

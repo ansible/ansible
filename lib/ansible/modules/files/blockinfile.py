@@ -41,7 +41,8 @@ options:
   marker:
     description:
       - The marker line template.
-        "{mark}" will be replaced with "BEGIN" or "END".
+        "{mark}" will be replaced with the values in marker_begin
+        (default="BEGIN") and marker_end (default="END").
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
     description:
@@ -77,11 +78,24 @@ options:
         get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: 'no'
+  marker_begin:
+    description:
+      - This will be inserted at {mark} in the opening ansible block marker.
+    default: 'BEGIN'
+    version_added: "2.5"
+  marker_end:
+    required: false
+    description:
+      - This will be inserted at {mark} in the closing ansible block marker.
+    default: 'END'
+    version_added: "2.5"
+
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
   - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
+  - When more then one block should be handled in **one** file you **must** change the I(marker) per task
 """
 
 EXAMPLES = r"""
@@ -146,7 +160,7 @@ from ansible.module_utils._text import to_bytes
 
 def write_changes(module, contents, path):
 
-    tmpfd, tmpfile = tempfile.mkstemp()
+    tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
     f = os.fdopen(tmpfd, 'wb')
     f.write(contents)
     f.close()
@@ -190,6 +204,8 @@ def main():
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
             validate=dict(type='str'),
+            marker_begin=dict(type='str', default='BEGIN'),
+            marker_end=dict(type='str', default='END'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -208,6 +224,12 @@ def main():
         if not module.boolean(params['create']):
             module.fail_json(rc=257,
                              msg='Path %s does not exist !' % path)
+        destpath = os.path.dirname(path)
+        if not os.path.exists(destpath) and not module.check_mode:
+            try:
+                os.makedirs(destpath)
+            except Exception as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (destpath, e[0], e[1]))
         original = None
         lines = []
     else:
@@ -243,8 +265,8 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(b(r'{mark}'), b('BEGIN'), marker)
-    marker1 = re.sub(b(r'{mark}'), b('END'), marker)
+    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker)
+    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker)
     if present and block:
         # Escape seqeuences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):

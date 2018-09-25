@@ -6,16 +6,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: dense
-    type: stdout
-    short_description: minimal stdout output
-    extends_documentation_fragment:
-      - default_callback
-    description:
-      - When in verbose mode it will act the same as the default callback
-    version_added: "2.3"
-    requirements:
-      - set as stdout in configuation
+callback: dense
+type: stdout
+short_description: minimal stdout output
+extends_documentation_fragment:
+- default_callback
+description:
+- When in verbose mode it will act the same as the default callback
+author:
+- Dag Wieers (@dagwieers)
+version_added: "2.3"
+requirements:
+- set as stdout in configuation
 '''
 
 from collections import MutableMapping, MutableSequence
@@ -490,6 +492,7 @@ class CallbackModule_dense(CallbackModule_default):
                 colorize(u'failed', t['failures'], C.COLOR_ERROR)),
                 screen_only=True
             )
+
 
 # When using -vv or higher, simply do the default action
 if display.verbosity >= 2 or not HAS_OD:

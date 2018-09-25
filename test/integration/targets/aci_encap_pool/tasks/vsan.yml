@@ -1,0 +1,14 @@
+---
+- name: ensure vlan pool does not exist for tests to kick off
+  aci_encap_pool: &aci_pool_absent_static
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    pool: anstest
+    pool_type: vsan
+    pool_allocation_mode: static
+    state: absent

@@ -10,4 +10,4 @@
 
 - assert:
     that:
-      - git_result | changed
+      - git_result is changed

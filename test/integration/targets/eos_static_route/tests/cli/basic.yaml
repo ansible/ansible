@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/basic.yaml"
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove config used in test
   eos_config:
@@ -9,6 +9,7 @@
     - no ip route 192.168.5.0/24 192.168.0.1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: configure static route
   eos_static_route: &single_route
@@ -17,6 +18,7 @@
     admin_distance: 2
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -26,6 +28,7 @@
 
 - name: configure static route(Idempotence)
   eos_static_route: *single_route
+  become: yes
   register: result
 
 - assert:
@@ -40,6 +43,7 @@
     authorize: yes
     provider: "{{ cli }}"
     state: absent
+  become: yes
   register: result
 
 - assert:
@@ -49,6 +53,7 @@
 
 - name: delete static route
   eos_static_route: *delete_single
+  become: yes
   register: result
 
 - assert:
@@ -60,8 +65,9 @@
     aggregate:
       - { address: 192.168.4.0/24, next_hop: 192.168.0.1 }
       - { address: 192.168.5.0/24, next_hop: 192.168.0.1 }
-  authorize: yes
-  provider: "{{ cli }}"
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -72,6 +78,7 @@
 
 - name: configure static routes using aggregate(Idemporence)
   eos_static_route: *configure_aggregate
+  become: yes
   register: result
 
 - assert:
@@ -86,6 +93,7 @@
     authorize: yes
     state: absent
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -96,6 +104,7 @@
 
 - name: delete static routes using aggregate(Idempotence)
   eos_static_route: *delete_aggregate
+  become: yes
   register: result
 
 - assert:
@@ -110,5 +119,6 @@
     - no ip route 192.168.5.0/24 192.168.0.1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
-- debug: msg="END cli/basic.yaml"
+- debug: msg="END cli/basic.yaml on connection={{ ansible_connection }}"

@@ -1,10 +1,10 @@
 #!powershell
-# Copyright (c) 2017 Artem Zinenko <zinenkoartem@gmail.com>
-# Copyright (c) 2014 Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+
+# Copyright: (c) 2014, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+# Copyright: (c) 2017, Artem Zinenko <zinenkoartem@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 function Parse-ProtocolType {
     param($protocol)
@@ -137,7 +137,8 @@ function New-FWRule
     if ($remoteAddresses -and $remoteAddresses -ne "any") { $rule.RemoteAddresses = $remoteAddresses }
     if ($direction) { $rule.Direction = Parse-Direction -directionStr $direction }
     if ($action) { $rule.Action = Parse-Action -actionStr $action }
-    if ($profiles) { $rule.Profiles = Parse-Profiles -profilesList $profiles }
+    # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
+    if ($profiles) { $rule.Profiles = [int](Parse-Profiles -profilesList $profiles) }
     if ($interfaceTypes -and @(Compare-Object $interfaceTypes @("any")).Count -ne 0) { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypes $interfaceTypes }
     if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
         # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
@@ -260,7 +261,14 @@ try {
                     }
 
                     if (-not $check_mode) {
-                        $existingRule.$prop = $rule.$prop
+                        # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
+                        # to prevent InvalidCastException under PS5+
+                        If($prop -eq 'Profiles') {
+                            $existingRule.Profiles = [int] $rule.$prop
+                        }
+                        Else {
+                            $existingRule.$prop = $rule.$prop
+                        }
                     }
                     $result.changed = $true
                 }
@@ -274,7 +282,9 @@ try {
         }
     }
 } catch [Exception] {
-    Fail-Json $result $_.Exception.Message
+    $ex = $_
+    $result['exception'] = $($ex | Out-String)
+    Fail-Json $result $ex.Exception.Message
 }
 
 Exit-Json $result

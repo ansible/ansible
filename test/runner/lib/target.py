@@ -12,6 +12,7 @@ import sys
 
 from lib.util import (
     ApplicationError,
+    read_lines_without_comments,
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
@@ -319,7 +320,9 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
             file_path = os.path.join(root, file_name)
 
             if os.path.islink(file_path):
-                continue
+                # special case to allow a symlink of ansible_release.py -> ../release.py
+                if file_path != 'lib/ansible/module_utils/ansible_release.py':
+                    continue
 
             yield TestTarget(file_path, module_path, prefix, path)
 
@@ -509,8 +512,8 @@ class IntegrationTarget(CompletionTarget):
         # static_aliases
 
         try:
-            with open(os.path.join(path, 'aliases'), 'r') as aliases_file:
-                static_aliases = tuple(aliases_file.read().splitlines())
+            aliases_path = os.path.join(path, 'aliases')
+            static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
         except IOError as ex:
             if ex.errno != errno.ENOENT:
                 raise

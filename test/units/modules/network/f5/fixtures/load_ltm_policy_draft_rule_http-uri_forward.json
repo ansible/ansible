@@ -1,0 +1,60 @@
+{
+    "kind": "tm:ltm:policy:rules:rulesstate",
+    "name": "foo",
+    "fullPath": "foo",
+    "generation": 739,
+    "selfLink": "https://localhost/mgmt/tm/ltm/policy/~Common~Drafts~Bondticker-DRN/rules/foo?expandSubcollections=true&ver=13.0.0",
+    "ordinal": 0,
+    "actionsReference": {
+        "link": "https://localhost/mgmt/tm/ltm/policy/~Common~Drafts~Bondticker-DRN/rules/foo/actions?ver=13.0.0",
+        "isSubcollection": true,
+        "items": [
+            {
+                "kind": "tm:ltm:policy:rules:actions:actionsstate",
+                "name": "0",
+                "fullPath": "0",
+                "generation": 739,
+                "selfLink": "https://localhost/mgmt/tm/ltm/policy/~Common~Drafts~Bondticker-DRN/rules/foo/actions/0?ver=13.0.0",
+                "code": 0,
+                "expirySecs": 0,
+                "forward": true,
+                "length": 0,
+                "node": "1.1.1.1",
+                "offset": 0,
+                "port": 0,
+                "request": true,
+                "select": true,
+                "snat": "disable",
+                "status": 0,
+                "timeout": 0,
+                "vlan": "/Common/net1",
+                "vlanId": 0
+            }
+        ]
+    },
+    "conditionsReference": {
+        "link": "https://localhost/mgmt/tm/ltm/policy/~Common~Drafts~Bondticker-DRN/rules/foo/conditions?ver=13.0.0",
+        "isSubcollection": true,
+        "items": [
+            {
+                "kind": "tm:ltm:policy:rules:conditions:conditionsstate",
+                "name": "0",
+                "fullPath": "0",
+                "generation": 739,
+                "selfLink": "https://localhost/mgmt/tm/ltm/policy/~Common~Drafts~Bondticker-DRN/rules/foo/conditions/0?ver=13.0.0",
+                "caseInsensitive": true,
+                "external": true,
+                "httpUri": true,
+                "index": 0,
+                "path": true,
+                "present": true,
+                "remote": true,
+                "request": true,
+                "startsWith": true,
+                "values": [
+                    "foo"
+                ]
+            }
+        ]
+    }
+}

@@ -58,8 +58,8 @@ options:
             - purge
     state:
         description:
-            - Assert the state of the record set. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the record set. Use C(present) to create or update and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -90,6 +90,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Obezimnaka Boms (@ozboms)"
@@ -174,7 +175,7 @@ import sys
 
 from ansible.module_utils.basic import _load_params
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, HAS_AZURE
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -183,9 +184,6 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-base_record = dict(
-    entry=dict(type='str', required=True)
-)
 
 RECORD_ARGSPECS = dict(
     A=dict(
@@ -214,7 +212,7 @@ RECORD_ARGSPECS = dict(
         target=dict(type='str', required=True, aliases=['entry'])
     ),
     TXT=dict(
-        value=dict(type='str', required=True, aliases=['entry'])
+        value=dict(type='list', required=True, aliases=['entry'])
     ),
     # FUTURE: ensure all record types are supported (see https://github.com/Azure/azure-sdk-for-python/tree/master/azure-mgmt-dns/azure/mgmt/dns/models)
 )
@@ -229,7 +227,7 @@ RECORDSET_VALUE_MAP = dict(
     SRV=dict(attrname='srv_records', classobj=SrvRecord, is_list=True),
     TXT=dict(attrname='txt_records', classobj=TxtRecord, is_list=True),
     # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
-)
+) if HAS_AZURE else {}
 
 
 class AzureRMRecordSet(AzureRMModuleBase):
@@ -279,8 +277,8 @@ class AzureRMRecordSet(AzureRMModuleBase):
         for key in self.module_arg_spec.keys():
             setattr(self, key, kwargs[key])
 
-        # get resource group and zone
-        resource_group = self.get_resource_group(self.resource_group)
+        # retrieve resource group to make sure it exists
+        self.get_resource_group(self.resource_group)
         zone = self.dns_client.zones.get(self.resource_group, self.zone_name)
         if not zone:
             self.fail('The zone {0} does not exist in the resource group {1}'.format(self.zone_name, self.resource_group))
@@ -378,13 +376,18 @@ class AzureRMRecordSet(AzureRMModuleBase):
 def gethash(self):
     if not getattr(self, '_cachedhash', None):
         spec = inspect.getargspec(self.__init__)
-        valuetuple = tuple([getattr(self, x, None) for x in spec.args if x != 'self'])
+        valuetuple = tuple(
+            map(lambda v: v if not isinstance(v, list) else str(v), [
+                getattr(self, x, None) for x in spec.args if x != 'self'
+            ])
+        )
         self._cachedhash = hash(valuetuple)
     return self._cachedhash
 
 
 def main():
     AzureRMRecordSet()
+
 
 if __name__ == '__main__':
     main()

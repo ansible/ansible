@@ -1,11 +1,11 @@
 ---
-- debug: msg='START {{ connection.transport }}/toplevel.yaml'
+- debug: msg='START common/toplevel.yaml on connection={{ ansible_connection }}'
 
 - name: setup
   nxos_config:
     lines: hostname switch
-    provider: "{{ connection }}"
     match: none
+    provider: "{{ connection }}"
 
 - name: configure top level command
   nxos_config:
@@ -31,7 +31,7 @@
 - name: teardown
   nxos_config:
     lines: hostname switch
-    provider: "{{ connection }}"
     match: none
+    provider: "{{ connection }}"
 
-- debug: msg='END {{ connection.transport }}/toplevel.yaml'
+- debug: msg='END common/toplevel.yaml on connection={{ ansible_connection }}'

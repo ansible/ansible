@@ -23,7 +23,7 @@
 - name: metadata from the kv store gets added to the facts for a host
   assert:
     that:
-        - clearance | match('top_secret')
+        - clearance is match('top_secret')
   when: inventory_hostname == '11.0.0.2'
 
 - name: extra groups a host should be added to can be loaded from kv

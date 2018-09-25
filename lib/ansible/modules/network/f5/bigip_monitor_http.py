@@ -8,31 +8,31 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'metadata_version': '1.1'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: bigip_monitor_http
 short_description: Manages F5 BIG-IP LTM http monitors
 description: Manages F5 BIG-IP LTM http monitors.
-version_added: "2.5"
+version_added: 2.5
 options:
   name:
     description:
       - Monitor name.
     required: True
-    aliases:
-      - monitor
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(http)
         parent on the C(Common) partition.
-    default: "/Common/http"
+    default: /Common/http
+  description:
+    description:
+      - The description of the monitor.
+    version_added: 2.7
   send:
     description:
       - The send string for the monitor call. When creating a new monitor, if
@@ -90,15 +90,21 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
+  state:
+    description:
+      - When C(present), ensures that the monitor exists.
+      - When C(absent), ensures the monitor is removed.
+    default: present
+    choices:
+      - present
+      - absent
+    version_added: 2.5
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires BIG-IP software version >= 12
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -139,6 +145,11 @@ parent:
   returned: changed
   type: string
   sample: http
+description:
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important_Monitor
 ip:
   description: The new IP of IP/port definition.
   returned: changed
@@ -161,106 +172,55 @@ time_until_up:
   sample: 2
 '''
 
-import os
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 
 try:
-    import netaddr
-    HAS_NETADDR = True
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
-    HAS_NETADDR = False
-
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
-
-try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'timeUntilUp': 'time_until_up',
         'defaultsFrom': 'parent',
-        'recv': 'receive'
+        'recv': 'receive',
+        'recvDisable': 'receive_disable',
     }
 
     api_attributes = [
         'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'recv', 'send',
-        'destination', 'username', 'password'
+        'destination', 'username', 'password', 'recvDisable', 'description',
     ]
 
     returnables = [
         'parent', 'send', 'receive', 'ip', 'port', 'interval', 'timeout',
-        'time_until_up'
+        'time_until_up', 'receive_disable', 'description',
     ]
 
     updatables = [
         'destination', 'send', 'receive', 'interval', 'timeout', 'time_until_up',
-        'target_username', 'target_password'
+        'target_username', 'target_password', 'receive_disable', 'description',
     ]
-
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        self._values['__warnings'] = []
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
-    def to_return(self):
-        result = {}
-        try:
-            for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
-            result = self._filter_params(result)
-            return result
-        except Exception:
-            return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
-    @property
-    def username(self):
-        return self._values['target_username']
-
-    @property
-    def password(self):
-        return self._values['target_password']
 
     @property
     def destination(self):
@@ -298,12 +258,11 @@ class Parameters(AnsibleF5Parameters):
     def ip(self):
         if self._values['ip'] is None:
             return None
-        try:
-            if self._values['ip'] in ['*', '0.0.0.0']:
-                return '*'
-            result = str(netaddr.IPAddress(self._values['ip']))
-            return result
-        except netaddr.core.AddrFormatError:
+        if self._values['ip'] in ['*', '0.0.0.0']:
+            return '*'
+        elif is_valid_ip(self._values['ip']):
+            return self._values['ip']
+        else:
             raise F5ModuleError(
                 "The provided 'ip' parameter is not an IP address."
             )
@@ -326,16 +285,48 @@ class Parameters(AnsibleF5Parameters):
     def parent(self):
         if self._values['parent'] is None:
             return None
-        if self._values['parent'].startswith('/'):
-            parent = os.path.basename(self._values['parent'])
-            result = '/{0}/{1}'.format(self.partition, parent)
-        else:
-            result = '/{0}/{1}'.format(self.partition, self._values['parent'])
+        result = fq_name(self.partition, self._values['parent'])
         return result
 
     @property
     def type(self):
         return 'http'
+
+    @property
+    def username(self):
+        return self._values['target_username']
+
+    @property
+    def password(self):
+        return self._values['target_password']
+
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
 
 
 class Difference(object):
@@ -353,7 +344,7 @@ class Difference(object):
 
     @property
     def parent(self):
-        if self.want.parent != self.want.parent:
+        if self.want.parent != self.have.parent:
             raise F5ModuleError(
                 "The parent monitor cannot be changed"
             )
@@ -406,11 +397,12 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -418,7 +410,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -429,42 +421,45 @@ class ModuleManager(object):
             if change is None:
                 continue
             else:
-                changed[k] = change
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
-    def _announce_deprecations(self):
-        warnings = []
-        if self.want:
-            warnings += self.want._values.get('__warnings', [])
-        if self.have:
-            warnings += self.have._values.get('__warnings', [])
-        for warning in warnings:
-            self.client.module.deprecate(
-                msg=warning['msg'],
-                version=warning['version']
-            )
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
     def exec_module(self):
         changed = False
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
-        self._announce_deprecations()
+        self._announce_deprecations(result)
         return result
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def present(self):
         if self.exists():
@@ -472,8 +467,47 @@ class ModuleManager(object):
         else:
             return self.create()
 
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the monitor.")
+        return True
+
     def create(self):
         self._set_changed_options()
+        self._set_default_creation_values()
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        return True
+
+    def _set_default_creation_values(self):
         if self.want.timeout is None:
             self.want.update({'timeout': 16})
         if self.want.interval is None:
@@ -486,85 +520,88 @@ class ModuleManager(object):
             self.want.update({'port': '*'})
         if self.want.send is None:
             self.want.update({'send': 'GET /\r\n'})
-        if self.client.check_mode:
-            return True
-        self.create_on_device()
-        return True
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def update(self):
-        self.have = self.read_current_from_device()
-        if not self.should_update():
-            return False
-        if self.client.check_mode:
-            return True
-        self.update_on_device()
-        return True
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def absent(self):
         if self.exists():
             return self.remove()
         return False
 
-    def remove(self):
-        if self.client.check_mode:
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
             return True
-        self.remove_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the monitor.")
-        return True
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.monitor.https.http.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return Parameters(result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def exists(self):
-        result = self.client.api.tm.ltm.monitor.https.http.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
-
-    def update_on_device(self):
-        params = self.want.api_params()
-        result = self.client.api.tm.ltm.monitor.https.http.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        result.modify(**params)
-
-    def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.ltm.monitor.https.http.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
-        )
-
-    def remove_from_device(self):
-        result = self.client.api.tm.ltm.monitor.https.http.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        if result:
-            result.delete()
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(required=True),
-            parent=dict(default='http'),
+            parent=dict(default='/Common/http'),
+            description=dict(),
             send=dict(),
             receive=dict(),
             receive_disable=dict(required=False),
@@ -575,35 +612,36 @@ class ArgumentSpec(object):
             time_until_up=dict(type='int'),
             target_username=dict(),
             target_password=dict(no_log=True),
-
-            # Deprecated params
-            parent_partition=dict(
-                removed_in_version='2.4'
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
     )
+    client = F5RestClient(**module.params)
     try:
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
-        if not HAS_NETADDR:
-            raise F5ModuleError("The python netaddr module is required")
-
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

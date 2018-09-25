@@ -29,9 +29,14 @@
 import os
 import re
 
+from ansible.module_utils.ansible_release import __version__
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.six import string_types, binary_type, text_type
+from ansible.module_utils.common.dict_transformations import (
+    camel_dict_to_snake_dict, snake_dict_to_camel_dict,
+    _camel_to_snake, _snake_to_camel,
+)
 
 try:
     import boto
@@ -105,8 +110,8 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
     try:
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError as e:
-        module.fail_json(msg="Couldn't connect to AWS: " % to_native(e))
-    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+        module.fail_json(msg="Couldn't connect to AWS: %s" % to_native(e))
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError, botocore.exceptions.NoCredentialsError) as e:
         module.fail_json(msg=to_native(e))
     except botocore.exceptions.NoRegionError as e:
         module.fail_json(msg="The %s module requires a region and none was found in configuration, "
@@ -122,15 +127,24 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'the conn_type parameter in the boto3_conn function '
                          'call')
 
-    if conn_type == 'resource':
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
-        return resource
-    elif conn_type == 'client':
-        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
-        return client
+    if params.get('config'):
+        config = params.pop('config')
+        config.user_agent_extra = 'Ansible/{0}'.format(__version__)
     else:
-        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        config = botocore.config.Config(
+            user_agent_extra='Ansible/{0}'.format(__version__),
+        )
+    session = boto3.session.Session(
+        profile_name=profile,
+    )
+
+    if conn_type == 'resource':
+        return session.resource(resource, config=config, region_name=region, endpoint_url=endpoint, **params)
+    elif conn_type == 'client':
+        return session.client(resource, config=config, region_name=region, endpoint_url=endpoint, **params)
+    else:
+        client = session.client(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = session.resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
 
@@ -242,7 +256,10 @@ def get_aws_connection_info(module, boto3=False):
                     module.fail_json(msg="boto is required for this module. Please install boto and try again")
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
-                region = botocore.session.Session(profile=profile_name).get_config_variable('region')
+                try:
+                    region = botocore.session.Session(profile=profile_name).get_config_variable('region')
+                except botocore.exceptions.ProfileNotFound as e:
+                    pass
             else:
                 module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
@@ -343,82 +360,13 @@ def ec2_connect(module):
     return ec2
 
 
-def _camel_to_snake(name):
-
-    def prepend_underscore_and_lower(m):
-        return '_' + m.group(0).lower()
-
-    import re
-    # Cope with pluralized abbreviations such as TargetGroupARNs
-    # that would otherwise be rendered target_group_ar_ns
-    plural_pattern = r'[A-Z]{3,}s$'
-    s1 = re.sub(plural_pattern, prepend_underscore_and_lower, name)
-    # Handle when there was nothing before the plural_pattern
-    if s1.startswith("_") and not name.startswith("_"):
-        s1 = s1[1:]
-    # Remainder of solution seems to be https://stackoverflow.com/a/1176023
-    first_cap_pattern = r'(.)([A-Z][a-z]+)'
-    all_cap_pattern = r'([a-z0-9])([A-Z]+)'
-    s2 = re.sub(first_cap_pattern, r'\1_\2', s1)
-    return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
-
-
-def camel_dict_to_snake_dict(camel_dict):
-
-    def value_is_list(camel_list):
-
-        checked_list = []
-        for item in camel_list:
-            if isinstance(item, dict):
-                checked_list.append(camel_dict_to_snake_dict(item))
-            elif isinstance(item, list):
-                checked_list.append(value_is_list(item))
-            else:
-                checked_list.append(item)
-
-        return checked_list
-
-    snake_dict = {}
-    for k, v in camel_dict.items():
-        if isinstance(v, dict):
-            snake_dict[_camel_to_snake(k)] = camel_dict_to_snake_dict(v)
-        elif isinstance(v, list):
-            snake_dict[_camel_to_snake(k)] = value_is_list(v)
-        else:
-            snake_dict[_camel_to_snake(k)] = v
-
-    return snake_dict
-
-
-def snake_dict_to_camel_dict(snake_dict):
-
-    def camelize(complex_type):
-        if complex_type is None:
-            return
-        new_type = type(complex_type)()
-        if isinstance(complex_type, dict):
-            for key in complex_type:
-                new_type[camel(key)] = camelize(complex_type[key])
-        elif isinstance(complex_type, list):
-            for i in range(len(complex_type)):
-                new_type.append(camelize(complex_type[i]))
-        else:
-            return complex_type
-        return new_type
-
-    def camel(words):
-        return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
-
-    return camelize(snake_dict)
-
-
 def ansible_dict_to_boto3_filter_list(filters_dict):
 
     """ Convert an Ansible dict of filters to list of dicts that boto3 can use
     Args:
         filters_dict (dict): Dict of AWS filters.
     Basic Usage:
-        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> filters = {'some-aws-id': 'i-01234567'}
         >>> ansible_dict_to_boto3_filter_list(filters)
         {
             'some-aws-id': 'i-01234567'
@@ -603,7 +551,10 @@ def _hashable_policy(policy, policy_list):
             if isinstance(tupleified, list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
-    elif isinstance(policy, string_types):
+    elif isinstance(policy, string_types) or isinstance(policy, binary_type):
+        # convert root account ARNs to just account IDs
+        if policy.startswith('arn:aws:iam::') and policy.endswith(':root'):
+            policy = policy.split(':')[4]
         return [(to_text(policy))]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
@@ -745,8 +696,8 @@ def map_complex_type(complex_type, type_map):
 def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     """
     Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
-    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ t
-hese may not be able to be used out of the box.
+    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ
+    these may not be able to be used out of the box.
 
     :param current_tags_dict:
     :param new_tags_dict:
@@ -763,7 +714,7 @@ hese may not be able to be used out of the box.
             tag_keys_to_unset.append(key)
 
     for key in set(new_tags_dict.keys()) - set(tag_keys_to_unset):
-        if new_tags_dict[key] != current_tags_dict.get(key):
+        if to_text(new_tags_dict[key]) != current_tags_dict.get(key):
             tag_key_value_pairs_to_set[key] = new_tags_dict[key]
 
     return tag_key_value_pairs_to_set, tag_keys_to_unset

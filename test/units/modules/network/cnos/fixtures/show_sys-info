@@ -1,0 +1,62 @@
+*** show boot ***
+Current ZTP State: Enable
+Current FLASH software:
+  active image: version 10.8.0.42, downloaded 09:40:15 EDT Mon May  7 2018
+  standby image: version 10.7.0.6, downloaded 11:02:12 EDT Thu Mar 29 2018
+  Uboot: version 10.7.0.6, downloaded 11:02:14 EDT Thu Mar 29 2018
+  ONIE: empty
+Currently set to boot software active image
+Current port mode: default mode
+Next boot port mode: default mode
+
+Currently scheduled reboot time: none
+
+
+*** show env fan detail ***
+Total Fan: 8
++--------+-----+-----------------+---------------+-------+--------+
+| Module | Fan | Name            | Air-Flow      | Speed | Speed  |
+| Number | ID  |                 | Direction     | (%)   | (RPM)  |
++--------+-----+-----------------+---------------+-------+--------+
+  01       01    Fan1              Front-to-Back   23      4023
+  01       02    Fan2              Front-to-Back   23      4285
+  02       03    Fan3              Front-to-Back   23      4032
+  02       04    Fan4              Front-to-Back   23      4147
+  03       05    Fan5              Front-to-Back   23      4192
+  03       06    Fan6              Front-to-Back   23      4397
+  04       07    Fan7              Front-to-Back   23      4153
+  04       08    Fan8              Front-to-Back   23      4451
+
+
+*** show env power ***
+Total Power Supplies: 2
++----+-----------------+----------------+-----------------+------------------+
+| ID | Name            | Manufacturer   | Model           | State            |
++----+-----------------+----------------+-----------------+------------------+
+  01   Power Supply 1    DELTA            XXXXXXXXXX        Normal ON
+  02   Power Supply 2    DELTA            XXXXXXXXXX        12V Output Fault
+
+
+*** show env temperature ***
++----+------------------+----------+--------+
+| ID | Name             | Temp     | State  |
+|    |                  | (Celsius)|        |
++----+------------------+----------+--------+
+  01   CPU Local          32         OK
+  02   Ambient            31         OK
+  03   Hot Spot           47         OK
+
+System Name                       : G8272
+System Description                : G8272 ("48x10GE + 6x40GE")
+System Model                      : Lenovo RackSwitch G8272
+System VPD Version                : 3
+System Manufacture Date           : 1542 (YYWW)
+System Part Number                : 00CJ066
+System Serial Number              : Y052MV59Y052
+System FRU Number                 : 00FM430
+System Machine Type Model         : 7159-HCV
+System Machine Serial Number      : MM11945
+System Hardware Revision          : 1
+System Management MAC             : A4:8C:DB:33:BC:00
+System Software Revision          : 10.8.0.42
+

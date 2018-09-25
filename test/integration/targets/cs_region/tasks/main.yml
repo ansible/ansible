@@ -7,7 +7,7 @@
 - name: verify setup
   assert:
     that:
-    - region|success
+    - region is successful
 
 - name: test fail if missing params
   cs_region:
@@ -16,7 +16,7 @@
 - name: verify results of fail if missing name
   assert:
     that:
-    - region|failed
+    - region is failed
     - "region.msg.startswith('missing required arguments: ')"
 
 - name: test create region in check mode
@@ -29,7 +29,7 @@
 - name: verify test create region in check mode
   assert:
     that:
-    - region|changed
+    - region is changed
 
 - name: test create region in check mode
   cs_region:
@@ -40,7 +40,7 @@
 - name: verify test create region in check mode
   assert:
     that:
-    - region|changed
+    - region is changed
     - region.name == 'geneva'
     - region.id == 2
     - region.endpoint == 'https://cloud.gva.example.com'
@@ -56,7 +56,7 @@
 - name: verify test create region idempotence
   assert:
     that:
-    - not region|changed
+    - region is not changed
     - region.name == 'geneva'
     - region.id == 2
     - region.endpoint == 'https://cloud.gva.example.com'
@@ -73,7 +73,7 @@
 - name: verify test update region in check mode
   assert:
     that:
-    - region|changed
+    - region is changed
     - region.name == 'geneva'
     - region.id == 2
     - region.endpoint == 'https://cloud.gva.example.com'
@@ -89,7 +89,7 @@
 - name: verify test update region
   assert:
     that:
-    - region|changed
+    - region is changed
     - region.name == 'zuerich'
     - region.id == 2
     - region.endpoint == 'https://cloud.zrh.example.com'
@@ -105,7 +105,7 @@
 - name: verify test update region idempotence
   assert:
     that:
-    - not region|changed
+    - region is not changed
     - region.name == 'zuerich'
     - region.id == 2
     - region.endpoint == 'https://cloud.zrh.example.com'
@@ -121,7 +121,7 @@
 - name: verify test remove region in check mode
   assert:
     that:
-    - region|changed
+    - region is changed
     - region.name == 'zuerich'
     - region.id == 2
     - region.endpoint == 'https://cloud.zrh.example.com'
@@ -136,7 +136,7 @@
 - name: verify test remove region
   assert:
     that:
-    - region|changed
+    - region is changed
     - region.name == 'zuerich'
     - region.id == 2
     - region.endpoint == 'https://cloud.zrh.example.com'
@@ -151,4 +151,4 @@
 - name: verify test remove region idempotence
   assert:
     that:
-    - not region|changed
+    - region is not changed

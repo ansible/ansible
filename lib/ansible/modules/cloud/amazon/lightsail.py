@@ -29,37 +29,26 @@ options:
     description:
       - Name of the instance
     required: true
-    default : null
   zone:
     description:
       - AWS availability zone in which to launch the instance. Required when state='present'
-    required: false
-    default: null
   blueprint_id:
     description:
       - ID of the instance blueprint image. Required when state='present'
-    required: false
-    default: null
   bundle_id:
     description:
       - Bundle of specification info for the instance. Required when state='present'
-    required: false
-    default: null
   user_data:
     description:
       - Launch script that can configure the instance with additional data
-    required: false
-    default: null
   key_pair_name:
     description:
       - Name of the key pair to use with the instance
-    required: false
-    default: null
   wait:
     description:
       - Wait for the instance to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait_timeout:
     description:
       - How long before wait gives up, in seconds.
@@ -69,7 +58,9 @@ requirements:
   - "python >= 2.6"
   - boto3
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 
@@ -91,7 +82,7 @@ EXAMPLES = '''
     msg: "Name is {{ my_instance.instance.name }}"
 
 - debug:
-    msg: "IP is {{ my_instance.instance.publicIpAddress }}"
+    msg: "IP is {{ my_instance.instance.public_ip_address }}"
 
 # Delete an instance if present
 - lightsail:
@@ -413,7 +404,7 @@ def core(module):
         client = boto3_conn(module, conn_type='client', resource='lightsail',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json('Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
+        module.fail_json(msg='Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
 
     changed = False
     state = module.params['state']
@@ -467,6 +458,7 @@ def main():
         core(module)
     except (botocore.exceptions.ClientError, Exception) as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

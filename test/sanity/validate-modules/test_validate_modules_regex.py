@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This is a standalone test for the regex inside validate-modules
 # It is not suitable to add to the make tests target because the
 # file under test is outside the test's sys.path AND has a hyphen

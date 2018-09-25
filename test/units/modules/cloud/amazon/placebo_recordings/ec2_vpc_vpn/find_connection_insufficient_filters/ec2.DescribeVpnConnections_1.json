@@ -1,41 +1,48 @@
 {
-    "status_code": 200, 
     "data": {
         "VpnConnections": [
             {
-                "VpnConnectionId": "vpn-d6d1cac4", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-6a06e27f",
+                "Category": "VPN",
+                "Tags": [
+                    {
+                        "Key": "Wrong",
+                        "Value": "Tag"
+                    }
+                ],
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-d4d1cac6", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-6f06e27a",
+                "Category": "VPN",
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
             }
-        ], 
+        ],
         "ResponseMetadata": {
-            "RetryAttempts": 0, 
-            "HTTPStatusCode": 200, 
-            "RequestId": "98700ca4-7ab6-484f-ac58-63413c89ca71", 
+            "HTTPStatusCode": 200,
+            "RequestId": "22e251ed-4e2b-49a4-8747-fcc9c39ad99e",
             "HTTPHeaders": {
-                "transfer-encoding": "chunked", 
-                "vary": "Accept-Encoding", 
-                "server": "AmazonEC2", 
-                "content-type": "text/xml;charset=UTF-8", 
-                "date": "Mon, 12 Jun 2017 20:22:23 GMT"
-            }
+                "content-length": "1310",
+                "server": "AmazonEC2",
+                "content-type": "text/xml;charset=UTF-8",
+                "date": "Mon, 16 Apr 2018 12:48:12 GMT"
+            },
+            "RetryAttempts": 0
         }
-    }
+    },
+    "status_code": 200
 }

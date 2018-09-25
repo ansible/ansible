@@ -7,7 +7,7 @@
 - name: verify setup
   assert:
     that:
-    - ag|success
+    - ag is successful
 
 - name: test fail if missing name
   cs_affinitygroup:
@@ -16,19 +16,19 @@
 - name: verify results of fail if missing name
   assert:
     that:
-    - ag|failed
+    - ag is failed
     - "ag.msg == 'missing required arguments: name'"
 
 - name: test fail unknown affinity type
   cs_affinitygroup:
     name: "{{ cs_resource_prefix }}_ag"
-    affinty_type: unexistent affinity type
+    affinity_type: unexistent affinity type
   register: ag
   ignore_errors: true
 - name: verify test fail unknown affinity type
   assert:
     that:
-    - ag|failed
+    - ag is failed
     - "ag.msg == 'affinity group type not found: unexistent affinity type'"
 
 - name: test present affinity group in check mode
@@ -38,8 +38,8 @@
 - name: verify results of create affinity group in check mode
   assert:
     that:
-    - ag|success
-    - ag|changed
+    - ag is successful
+    - ag is changed
 
 - name: test present affinity group
   cs_affinitygroup: name={{ cs_resource_prefix }}_ag
@@ -47,8 +47,8 @@
 - name: verify results of create affinity group
   assert:
     that:
-    - ag|success
-    - ag|changed
+    - ag is successful
+    - ag is changed
     - ag.name == "{{ cs_resource_prefix }}_ag"
 
 - name: test present affinity group is idempotence
@@ -57,8 +57,8 @@
 - name: verify results present affinity group is idempotence
   assert:
     that:
-    - ag|success
-    - not ag|changed
+    - ag is successful
+    - ag is not changed
     - ag.name == "{{ cs_resource_prefix }}_ag"
 
 - name: test absent affinity group in check mode
@@ -68,8 +68,8 @@
 - name: verify results of absent affinity group in check mode
   assert:
     that:
-    - ag|success
-    - ag|changed
+    - ag is successful
+    - ag is changed
     - ag.name == "{{ cs_resource_prefix }}_ag"
 
 - name: test absent affinity group
@@ -78,8 +78,8 @@
 - name: verify results of absent affinity group
   assert:
     that:
-    - ag|success
-    - ag|changed
+    - ag is successful
+    - ag is changed
     - ag.name == "{{ cs_resource_prefix }}_ag"
 
 - name: test absent affinity group is idempotence
@@ -88,6 +88,6 @@
 - name: verify results of absent affinity group is idempotence
   assert:
     that:
-    - ag|success
-    - not ag|changed
+    - ag is successful
+    - ag is not changed
     - ag.name is undefined

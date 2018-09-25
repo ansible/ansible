@@ -22,10 +22,8 @@ class ModuleDocFragment(object):
     DOCUMENTATION = '''
 options:
     validate:
-      required: false
       description:
        - The validation command to run before copying into place. The path to the file to
          validate is passed in via '%s' which must be present as in the example below.
          The command is passed securely so shell features like expansion and pipes won't work.
-      default: None
 '''

@@ -179,8 +179,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
-        boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-        ec2_argument_spec, get_aws_connection_info)
+                                      boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
+                                      ec2_argument_spec, get_aws_connection_info)
 
 
 def list_ec2_snapshots(connection, module):

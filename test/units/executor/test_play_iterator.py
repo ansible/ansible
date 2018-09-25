@@ -155,16 +155,6 @@ class TestPlayIterator(unittest.TestCase):
             all_vars=dict(),
         )
 
-        # lookup up an original task
-        target_task = p._entries[0].tasks[0].block[0]
-        task_copy = target_task.copy(exclude_parent=True)
-        found_task = itr.get_original_task(hosts[0], task_copy)
-        self.assertEqual(target_task, found_task)
-
-        bad_task = Task()
-        found_task = itr.get_original_task(hosts[0], bad_task)
-        self.assertIsNone(found_task)
-
         # pre task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)

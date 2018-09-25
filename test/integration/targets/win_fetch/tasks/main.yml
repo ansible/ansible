@@ -46,7 +46,7 @@
     that:
       - "fetch_small_stat.stat.exists"
       - "fetch_small_stat.stat.isreg"
-      - "fetch_small_stat.stat.md5 == fetch_small.md5sum"
+      - "fetch_small_stat.stat.checksum == fetch_small.checksum"
 
 - name: fetch the same small file
   fetch: src="C:/Windows/win.ini" dest={{ host_output_dir }}
@@ -75,7 +75,7 @@
     that:
       - "fetch_flat_stat.stat.exists"
       - "fetch_flat_stat.stat.isreg"
-      - "fetch_flat_stat.stat.md5 == fetch_flat.md5sum"
+      - "fetch_flat_stat.stat.checksum == fetch_flat.checksum"
 
 #- name: fetch a small file to flat directory (without trailing slash)
 #  fetch: src="C:/Windows/win.ini" dest="{{ host_output_dir }}" flat=yes
@@ -84,7 +84,7 @@
 #- name: check fetch flat to directory result
 #  assert:
 #    that:
-#      - "not fetch_flat_dir|changed"
+#      - "fetch_flat_dir is not changed"
 
 - name: fetch a large binary file
   fetch: src="C:/Windows/explorer.exe" dest={{ host_output_dir }}
@@ -104,7 +104,7 @@
     that:
       - "fetch_large_stat.stat.exists"
       - "fetch_large_stat.stat.isreg"
-      - "fetch_large_stat.stat.md5 == fetch_large.md5sum"
+      - "fetch_large_stat.stat.checksum == fetch_large.checksum"
 
 - name: fetch a large binary file again
   fetch: src="C:/Windows/explorer.exe" dest={{ host_output_dir }}
@@ -133,18 +133,18 @@
     that:
       - "fetch_small_bs_stat.stat.exists"
       - "fetch_small_bs_stat.stat.isreg"
-      - "fetch_small_bs_stat.stat.md5 == fetch_small_bs.md5sum"
+      - "fetch_small_bs_stat.stat.checksum == fetch_small_bs.checksum"
 
 - name: attempt to fetch a non-existent file - do not fail on missing
-  fetch: src="C:/this_file_should_not_exist.txt" dest={{ host_output_dir }}
+  fetch: src="C:/this_file_should_not_exist.txt" dest={{ host_output_dir }} fail_on_missing=no
   register: fetch_missing_nofail
 
 - name: check fetch missing no fail result
   assert:
     that:
-      - "not fetch_missing_nofail|failed"
+      - "fetch_missing_nofail is not failed"
       - "fetch_missing_nofail.msg"
-      - "not fetch_missing_nofail|changed"
+      - "fetch_missing_nofail is not changed"
 
 - name: attempt to fetch a non-existent file - fail on missing
   fetch: src="~/this_file_should_not_exist.txt" dest={{ host_output_dir }} fail_on_missing=yes
@@ -154,9 +154,21 @@
 - name: check fetch missing with failure
   assert:
     that:
-      - "fetch_missing|failed"
+      - "fetch_missing is failed"
       - "fetch_missing.msg"
-      - "not fetch_missing|changed"
+      - "fetch_missing is not changed"
+
+- name: attempt to fetch a non-existent file - fail on missing implicit
+  fetch: src="~/this_file_should_not_exist.txt" dest={{ host_output_dir }}
+  register: fetch_missing_implicit
+  ignore_errors: true
+
+- name: check fetch missing with failure on implicit
+  assert:
+    that:
+      - "fetch_missing_implicit is failed"
+      - "fetch_missing_implicit.msg"
+      - "fetch_missing_implicit is not changed"
 
 - name: attempt to fetch a directory
   fetch: src="C:\\Windows" dest={{ host_output_dir }}
@@ -167,5 +179,5 @@
   assert:
     that:
       # Doesn't fail anymore, only returns a message.
-      - "not fetch_dir|changed"
+      - "fetch_dir is not changed"
       - "fetch_dir.msg"

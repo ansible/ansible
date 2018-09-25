@@ -25,22 +25,18 @@ options:
     description:
       - The name of the I(monit) program/process to manage
     required: true
-    default: null
   state:
     description:
       - The state of service
     required: true
-    default: null
     choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded" ]
   timeout:
     description:
       - If there are pending actions for the service monitored by monit, then Ansible will check
         for up to this many seconds to verify the requested action has been performed.
         Ansible will sleep for five seconds between each check.
-    required: false
     default: 300
     version_added: "2.1"
-requirements: [ ]
 author: "Darryl Stoflet (@dstoflet)"
 '''
 
@@ -100,7 +96,7 @@ def main():
         else:
             return ''
 
-    def status():
+    def get_status():
         """Return the status of the process in monit, or the empty string if not present."""
         rc, out, err = module.run_command('%s %s' % (MONIT, SUMMARY_COMMAND), check_rc=True)
         for line in out.split('\n'):
@@ -116,14 +112,14 @@ def main():
     def run_command(command):
         """Runs a monit command, and returns the new status."""
         module.run_command('%s %s %s' % (MONIT, command, name), check_rc=True)
-        return status()
+        return get_status()
 
     def wait_for_monit_to_stop_pending():
         """Fails this run if there is no status or it's pending/initializing for timeout"""
         timeout_time = time.time() + timeout
         sleep_time = 5
 
-        running_status = status()
+        running_status = get_status()
         while running_status == '' or 'pending' in running_status or 'initializing' in running_status:
             if time.time() >= timeout_time:
                 module.fail_json(
@@ -134,7 +130,7 @@ def main():
                 )
 
             time.sleep(sleep_time)
-            running_status = status()
+            running_status = get_status()
 
     MONIT_MAJOR_VERSION, MONIT_MINOR_VERSION = monit_version()
 
@@ -149,7 +145,7 @@ def main():
         wait_for_monit_to_stop_pending()
         module.exit_json(changed=True, name=name, state=state)
 
-    present = status() != ''
+    present = get_status() != ''
 
     if not present and not state == 'present':
         module.fail_json(msg='%s process not presently configured with monit' % name, name=name, state=state)
@@ -165,7 +161,7 @@ def main():
         module.exit_json(changed=False, name=name, state=state)
 
     wait_for_monit_to_stop_pending()
-    running = 'running' in status()
+    running = 'running' in get_status()
 
     if running and state in ['started', 'monitored']:
         module.exit_json(changed=False, name=name, state=state)

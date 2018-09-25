@@ -1,5 +1,5 @@
 ---
-- debug: msg="START {{ connection.transport }}/configure.yaml"
+- debug: msg="START connection={{ ansible_connection }}/configure.yaml"
 
 - name: setup
   nxos_config:
@@ -10,8 +10,8 @@
 - name: enable bgp
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   register: result
 
 - assert:
@@ -21,8 +21,8 @@
 - name: verify bgp
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   register: result
 
 - assert:
@@ -32,8 +32,8 @@
 - name: disable bgp
   nxos_feature:
     feature: bgp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   register: result
 
 - assert:
@@ -43,8 +43,8 @@
 - name: verify bgp
   nxos_feature:
     feature: bgp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   register: result
 
 - assert:
@@ -57,4 +57,4 @@
     match: none
     provider: "{{ connection }}"
 
-- debug: msg="END {{ connection.transport }}/configure.yaml"
+- debug: msg="END connection={{ ansible_connection }}/configure.yaml"

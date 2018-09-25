@@ -1,32 +1,18 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
 
-# this is a windows documentation stub, actual code lives in the .ps1
-# file of the same name
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_domain_group
 version_added: '2.4'
-short_description: creates, modifies or removes domain groups
+short_description: Creates, modifies or removes domain groups
 description:
 - Creates, modifies or removes groups in Active Directory.
 - For local groups, use the M(win_group) module instead.
@@ -57,12 +43,19 @@ options:
   domain_password:
     description:
     - The password for C(username).
+  domain_server:
+    description:
+    - Specifies the Active Directory Domain Services instance to connect to.
+    - Can be in the form of an FQDN or NetBIOS name.
+    - If not specified then the value is based on the domain of the computer
+      running PowerShell.
+    version_added: '2.5'
   ignore_protection:
     description:
     - Will ignore the C(ProtectedFromAccidentalDeletion) flag when deleting or
       moving a group.
     - The module will fail if one of these actions need to occur and this value
-      is set to no.
+      is set to C(no).
     type: bool
     default: 'no'
   managed_by:
@@ -99,8 +92,8 @@ options:
     - If C(state=present) this module will ensure the group is created and is
       configured accordingly.
     - If C(state=absent) this module will delete the group if it exists
-    default: present
     choices: [ absent, present ]
+    default: present
 notes:
 - This must be run on a host that has the ActiveDirectory powershell module
   installed.
@@ -109,24 +102,24 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: ensure the group Cow exists using sAMAccountName
+- name: Ensure the group Cow exists using sAMAccountName
   win_domain_group:
     name: Cow
     scope: global
     path: OU=groups,DC=ansible,DC=local
 
-- name: ensure the group Cow does't exist using the Distinguished Name
+- name: Ensure the group Cow does't exist using the Distinguished Name
   win_domain_group:
     name: CN=Cow,OU=groups,DC=ansible,DC=local
     state: absent
 
-- name: delete group ignoring the protection flag
+- name: Delete group ignoring the protection flag
   win_domain_group:
     name: Cow
     state: absent
     ignore_protection: yes
 
-- name: create group with delete protection enabled and custom attributes
+- name: Create group with delete protection enabled and custom attributes
   win_domain_group:
     name: Ansible Users
     scope: domainlocal
@@ -136,17 +129,25 @@ EXAMPLES = r'''
       wWWHomePage: www.ansible.com
     ignore_protection: yes
 
-- name: change the OU of a group using the SID and ignore the protection flag
+- name: Change the OU of a group using the SID and ignore the protection flag
   win_domain_group:
     name: S-1-5-21-2171456218-3732823212-122182344-1189
     scope: global
     organizational_unit: OU=groups,DC=ansible,DC=local
-    ignore_protection: True
+    ignore_protection: yes
 
-- name: add managed_by user
+- name: Add managed_by user
   win_domain_group:
     name: Group Name Here
     managed_by: Domain Admins
+
+- name: Add group and specify the AD domain services to use for the create
+  win_domain_group:
+    name: Test Group
+    domain_username: user@CORP.ANSIBLE.COM
+    domain_password: Password01!
+    domain_server: corp-DC12.corp.ansible.com
+    scope: domainlocal
 '''
 
 RETURN = r'''

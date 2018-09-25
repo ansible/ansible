@@ -23,17 +23,13 @@ options:
     description:
       - The device path to attach the volume to, e.g. /dev/xvde.
       - Before 2.4 this was a required field. Now it can be left to null to auto assign the device name.
-    default: null
-    required: false
   volume:
     description:
       - Name or id of the volume to attach/detach
-    default: null
     required: true
   server:
     description:
       - Name or id of the server to attach/detach
-    default: null
     required: true
   state:
     description:
@@ -46,10 +42,8 @@ options:
   wait:
     description:
       - wait for the volume to be in 'in-use'/'available' state before returning
-    default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -93,7 +87,7 @@ from ansible.module_utils.rax import (NON_CALLABLES,
                                       rax_required_together,
                                       rax_to_dict,
                                       setup_rax_module,
-                                     )
+                                      )
 
 
 def cloud_block_storage_attachments(module, state, volume, server, device,

@@ -1,0 +1,62 @@
+- block:
+    # This block can be removed once we have a mechanism in ansible-test to separate
+    # the control node from the managed node.
+    - block:
+        - name: Write temp file for sanity checking this is not the controller
+          copy:
+            content: 'I am the control node'
+            dest: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+          delegate_to: localhost
+
+        - name: See if the temp file exists on the managed node
+          stat:
+            path: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+          register: controller_temp_file
+
+        - name: EXPECT FAILURE | Check if the managed node is the control node
+          assert:
+            msg: >
+              This test must be run manually by modifying the inventory file to point
+              "{{ inventory_hostname }}" at a remote host rather than "{{ ansible_host }}".
+              Skipping reboot test.
+            that:
+              - not controller_temp_file.stat.exists
+
+    - name: Get current boot time
+      command: who -b
+      register: before_boot_time
+
+    - name: Reboot with default settings
+      reboot:
+      register: reboot_result
+
+    - name: Get current boot time
+      command: who -b
+      register: after_boot_time
+
+    - name: Ensure system was actually rebooted
+      assert:
+        that:
+          - reboot_result is changed
+          - reboot_result.elapsed > 10
+          - before_boot_time.stdout != after_boot_time.stdout
+
+    - name: Use invalid parameter
+      reboot:
+        foo: bar
+      ignore_errors: yes
+      register: invalid_parameter
+
+    - name: Ensure task fails with error
+      assert:
+        that:
+        - invalid_parameter is failed
+        - "invalid_parameter.msg == 'Invalid options for reboot: foo'"
+
+  always:
+    - name: Cleanup temp file
+      file:
+        path: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+        state: absent
+
+  when: ansible_virtualization_type | default('') != 'docker'

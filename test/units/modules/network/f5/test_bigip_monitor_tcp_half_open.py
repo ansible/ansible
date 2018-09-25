@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public Liccense for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -30,21 +16,27 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import F5ModuleError
-from units.modules.utils import set_module_args
+from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import patch
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_monitor_tcp_half_open import Parameters
-    from library.bigip_monitor_tcp_half_open import ModuleManager
-    from library.bigip_monitor_tcp_half_open import ArgumentSpec
+    from library.modules.bigip_monitor_tcp_half_open import Parameters
+    from library.modules.bigip_monitor_tcp_half_open import ModuleManager
+    from library.modules.bigip_monitor_tcp_half_open import ArgumentSpec
+    from library.modules.bigip_monitor_tcp_half_open import HAS_F5SDK
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_monitor_tcp_half_open import Parameters
         from ansible.modules.network.f5.bigip_monitor_tcp_half_open import ModuleManager
         from ansible.modules.network.f5.bigip_monitor_tcp_half_open import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.modules.network.f5.bigip_monitor_tcp_half_open import HAS_F5SDK
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
@@ -83,7 +75,7 @@ class TestParameters(unittest.TestCase):
             partition='Common'
         )
 
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.name == 'foo'
         assert p.parent == '/Common/parent'
         assert p.ip == '10.10.10.10'
@@ -106,7 +98,7 @@ class TestParameters(unittest.TestCase):
             partition='Common'
         )
 
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.name == 'foo'
         assert p.parent == '/Common/parent'
         assert p.ip == '10.10.10.10'
@@ -127,7 +119,7 @@ class TestParameters(unittest.TestCase):
             timeUntilUp=60
         )
 
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.name == 'foo'
         assert p.parent == '/Common/parent'
         assert p.ip == '10.10.10.10'
@@ -139,8 +131,6 @@ class TestParameters(unittest.TestCase):
         assert p.time_until_up == 60
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -159,14 +149,13 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(side_effect=[False, True])
         mm.create_on_device = Mock(return_value=True)
 
@@ -187,15 +176,14 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = Parameters(load_fixture('load_ltm_monitor_tcp_half_open.json'))
-        client = AnsibleF5Client(
+        current = Parameters(params=load_fixture('load_ltm_monitor_tcp_half_open.json'))
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=True)
         mm.read_current_from_device = Mock(return_value=current)
 
@@ -212,15 +200,14 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = Parameters(load_fixture('load_ltm_monitor_tcp_half_open.json'))
-        client = AnsibleF5Client(
+        current = Parameters(params=load_fixture('load_ltm_monitor_tcp_half_open.json'))
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=True)
         mm.read_current_from_device = Mock(return_value=current)
         mm.update_on_device = Mock(return_value=True)
@@ -239,15 +226,14 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = Parameters(load_fixture('load_ltm_monitor_tcp_half_open.json'))
-        client = AnsibleF5Client(
+        current = Parameters(params=load_fixture('load_ltm_monitor_tcp_half_open.json'))
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=True)
         mm.read_current_from_device = Mock(return_value=current)
         mm.update_on_device = Mock(return_value=True)
@@ -267,15 +253,14 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = Parameters(load_fixture('load_ltm_monitor_tcp_half_open.json'))
-        client = AnsibleF5Client(
+        current = Parameters(params=load_fixture('load_ltm_monitor_tcp_half_open.json'))
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=True)
         mm.read_current_from_device = Mock(return_value=current)
         mm.update_on_device = Mock(return_value=True)
@@ -294,15 +279,14 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = Parameters(load_fixture('load_ltm_monitor_tcp_half_open.json'))
-        client = AnsibleF5Client(
+        current = Parameters(params=load_fixture('load_ltm_monitor_tcp_half_open.json'))
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=True)
         mm.read_current_from_device = Mock(return_value=current)
         mm.update_on_device = Mock(return_value=True)
@@ -320,15 +304,14 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = Parameters(load_fixture('load_ltm_monitor_tcp_half_open.json'))
-        client = AnsibleF5Client(
+        current = Parameters(params=load_fixture('load_ltm_monitor_tcp_half_open.json'))
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=True)
         mm.read_current_from_device = Mock(return_value=current)
         mm.update_on_device = Mock(return_value=True)

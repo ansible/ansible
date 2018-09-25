@@ -8,7 +8,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_audit_rule
@@ -28,12 +27,13 @@ options:
       - Path to the file, folder, or registry key.
       - Registry paths should be in Powershell format, beginning with an abbreviation for the root
         such as, 'hklm:\software'.
-    required: true
+    required: yes
+    type: path
     aliases: [ dest, destination ]
   user:
     description:
       - The user or group to adjust rules for.
-    required: true
+    required: yes
   rights:
     description:
       - Comma seperated list of the rights desired. Only required for adding a rule.
@@ -41,13 +41,15 @@ options:
         FileSystemRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.filesystemrights.aspx).
       - If I(path) is a registry key, rights can be any right under MSDN
         RegistryRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights.aspx).
-    required: true
+    required: yes
+    type: list
   inheritance_flags:
     description:
       - Defines what objects inside of a folder or registry key will inherit the settings.
       - If you are setting a rule on a file, this value has to be changed to C(none).
       - For more information on the choices see MSDN PropagationFlags enumeration
         at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx).
+    type: list
     default: "ContainerInherit,ObjectInherit"
     choices: [ ContainerInherit, ObjectInherit ]
   propagation_flags:
@@ -62,51 +64,52 @@ options:
     description:
       - Defines whether to log on failure, success, or both.
       - To log both define as comma seperated list "Success, Failure".
-    required: true
-    choices: [ Success, Failure ]
+    required: yes
+    type: list
+    choices: [ Failure, Success ]
   state:
     description:
       - Whether the rule should be C(present) or C(absent).
       - For absent, only I(path), I(user), and I(state) are required.
       - Specifying C(absent) will remove all rules matching the defined I(user).
+    choices: [ absent, present ]
     default: present
-    choices: [ present, absent ]
 '''
 
 EXAMPLES = r'''
 - name: add filesystem audit rule for a folder
   win_audit_rule:
-    path: 'c:\inetpub\wwwroot\website'
-    user: 'BUILTIN\Users'
-    rights: 'write,delete,changepermissions'
-    audit_flags: 'success,failure'
-    inheritance_flags: 'ContainerInherit,ObjectInherit'
+    path: C:\inetpub\wwwroot\website
+    user: BUILTIN\Users
+    rights: write,delete,changepermissions
+    audit_flags: success,failure
+    inheritance_flags: ContainerInherit,ObjectInherit
 
 - name: add filesystem audit rule for a file
   win_audit_rule:
-    path: 'c:\inetpub\wwwroot\website\web.config'
-    user: 'BUILTIN\Users'
+    path: C:\inetpub\wwwroot\website\web.config
+    user: BUILTIN\Users
     rights: write,delete,changepermissions
     audit_flags: success,failure
     inheritance_flags: None
 
 - name: add registry audit rule
   win_audit_rule:
-    path: 'hklm:\software'
-    user: 'BUILTIN\Users'
-    rights: 'delete'
+    path: HKLM:\software
+    user: BUILTIN\Users
+    rights: delete
     audit_flags: 'success'
 
 - name: remove filesystem audit rule
   win_audit_rule:
-    path: 'c:\inetpub\wwwroot\website'
-    user: 'BUILTIN\Users'
+    path: C:\inetpub\wwwroot\website
+    user: BUILTIN\Users
     state: absent
 
 - name: remove registry audit rule
   win_audit_rule:
-    path: 'hklm:\software'
-    user: 'BUILTIN\Users'
+    path: HKLM:\software
+    user: BUILTIN\Users
     state: absent
 '''
 

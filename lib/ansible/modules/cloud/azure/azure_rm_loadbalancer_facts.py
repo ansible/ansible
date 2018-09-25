@@ -41,18 +41,12 @@ options:
     name:
         description:
             - Limit results to a specific resource group.
-        required: false
-        default: null
     resource_group:
         description:
             - The resource group to search for the desired load balancer
-        required: false
-        default: null
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure
@@ -69,6 +63,10 @@ EXAMPLES = '''
 
     - name: Get facts for all load balancers
       azure_rm_loadbalancer_facts:
+
+    - name: Get facts for all load balancers in a specific resource group
+      azure_rm_loadbalancer_facts:
+        resource_group: TestRG
 
     - name: Get facts by tags
       azure_rm_loadbalancer_facts:
@@ -158,10 +156,16 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
 
         self.log('List all load balancers')
 
-        try:
-            response = self.network_client.load_balancers.list()
-        except AzureHttpError as exc:
-            self.fail('Failed to list all items - {}'.format(str(exc)))
+        if self.resource_group:
+            try:
+                response = self.network_client.load_balancers.list(self.resource_group)
+            except AzureHttpError as exc:
+                self.fail('Failed to list items in resource group {} - {}'.format(self.resource_group, str(exc)))
+        else:
+            try:
+                response = self.network_client.load_balancers.list_all()
+            except AzureHttpError as exc:
+                self.fail('Failed to list all items - {}'.format(str(exc)))
 
         results = []
         for item in response:
@@ -175,6 +179,7 @@ def main():
     """Main module execution code path"""
 
     AzureRMLoadBalancerFacts()
+
 
 if __name__ == '__main__':
     main()

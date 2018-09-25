@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: rabbitmq_policy
 short_description: Manage the state of policies in RabbitMQ.
 description:
-  - Manage the state of a virtual host in RabbitMQ.
+  - Manage the state of a policy in RabbitMQ.
 version_added: "1.5"
 author: "John Dewey (@retr0h)"
 options:
@@ -26,16 +26,13 @@ options:
     description:
       - The name of the policy to manage.
     required: true
-    default: null
   vhost:
     description:
       - The name of the vhost to apply to.
-    required: false
     default: /
   apply_to:
     description:
       - What the policy applies to. Requires RabbitMQ 3.2.0 or later.
-    required: false
     default: all
     choices: [all, exchanges, queues]
     version_added: "2.1"
@@ -43,21 +40,17 @@ options:
     description:
       - A regex of queues to apply the policy to.
     required: true
-    default: null
   tags:
     description:
       - A dict or string describing the policy.
     required: true
-    default: null
   priority:
     description:
       - The priority of the policy.
-    required: false
     default: 0
   node:
     description:
       - Erlang node name of the rabbit we wish to configure.
-    required: false
     default: rabbit
   state:
     description:
@@ -113,6 +106,8 @@ class RabbitMqPolicy(object):
         policies = self._exec(['list_policies'], True)
 
         for policy in policies:
+            if not policy:
+                continue
             policy_name = policy.split('\t')[1]
             if policy_name == self._name:
                 return True
@@ -167,6 +162,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

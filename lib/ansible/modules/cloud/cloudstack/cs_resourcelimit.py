@@ -53,42 +53,35 @@ options:
     description:
       - Maximum number of the resource.
       - Default is unlimited C(-1).
-    required: false
     default: -1
     aliases: [ 'max' ]
   domain:
     description:
       - Domain the resource is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the resource is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the resource is related to.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 # Update a resource limit for instances of a domain
-local_action:
-  module: cs_resourcelimit
-  type: instance
-  limit: 10
-  domain: customers
+- local_action:
+    module: cs_resourcelimit
+    type: instance
+    limit: 10
+    domain: customers
 
 # Update a resource limit for instances of an account
-local_action:
-  module: cs_resourcelimit
-  type: instance
-  limit: 12
-  account: moserre
-  domain: customers
+- local_action:
+    module: cs_resourcelimit
+    type: instance
+    limit: 12
+    account: moserre
+    domain: customers
 '''
 
 RETURN = '''

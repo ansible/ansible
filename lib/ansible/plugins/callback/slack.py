@@ -76,6 +76,8 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__(display=display)
 
+        self._options = cli.options
+
         if not HAS_PRETTYTABLE:
             self.disabled = True
             self._display.warning('The `prettytable` python module is not '
@@ -93,9 +95,9 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        self.webhook_url = self._plugin_options['webhook_url']
-        self.channel = self._plugin_options['channel']
-        self.username = self._plugin_options['username']
+        self.webhook_url = self.get_option('webhook_url')
+        self.channel = self.get_option('channel')
+        self.username = self.get_option('username')
         self.show_invocation = (self._display.verbosity > 1)
 
         if self.webhook_url is None:
@@ -132,27 +134,25 @@ class CallbackModule(CallbackBase):
             '*Playbook initiated* (_%s_)' % self.guid
         ]
         invocation_items = []
-        if self._plugin_options and self.show_invocation:
-            tags = self._plugin_options.tags
-            skip_tags = self._plugin_options.skip_tags
-            extra_vars = self._plugin_options.extra_vars
-            subset = self._plugin_options.subset
-            inventory = os.path.basename(
-                os.path.realpath(self._plugin_options.inventory)
-            )
+        if self._options and self.show_invocation:
+            tags = self._options.tags
+            skip_tags = self._options.skip_tags
+            extra_vars = self._options.extra_vars
+            subset = self._options.subset
+            inventory = [os.path.abspath(i) for i in self._options.inventory]
 
-            invocation_items.append('Inventory:  %s' % inventory)
-            if tags and tags != 'all':
-                invocation_items.append('Tags:       %s' % tags)
+            invocation_items.append('Inventory:  %s' % ', '.join(inventory))
+            if tags and tags != ['all']:
+                invocation_items.append('Tags:       %s' % ', '.join(tags))
             if skip_tags:
-                invocation_items.append('Skip Tags:  %s' % skip_tags)
+                invocation_items.append('Skip Tags:  %s' % ', '.join(skip_tags))
             if subset:
                 invocation_items.append('Limit:      %s' % subset)
             if extra_vars:
                 invocation_items.append('Extra Vars: %s' %
                                         ' '.join(extra_vars))
 
-            title.append('by *%s*' % self._plugin_options.remote_user)
+            title.append('by *%s*' % self._options.remote_user)
 
         title.append('\n\n*%s*' % self.playbook_name)
         msg_items = [' '.join(title)]

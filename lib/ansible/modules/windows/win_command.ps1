@@ -1,7 +1,6 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -28,11 +27,11 @@ $result = @{
     cmd = $raw_command_line
 }
 
-if ($creates -and $(Test-FilePath -path $creates)) {
+if ($creates -and $(Test-AnsiblePath -Path $creates)) {
     Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
-if ($removes -and -not $(Test-FilePath -path $removes)) {
+if ($removes -and -not $(Test-AnsiblePath -Path $removes)) {
     Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 

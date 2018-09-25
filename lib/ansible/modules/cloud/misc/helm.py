@@ -18,58 +18,44 @@ short_description: Manages Kubernetes packages with the Helm package manager
 version_added: "2.4"
 author: "Flavio Percoco (flaper87)"
 description:
-   - Install, upgrade, delete and list packages with the Helm package manage
+   - Install, upgrade, delete and list packages with the Helm package manager.
 requirements:
   - "pyhelm"
   - "grpcio"
 options:
   host:
     description:
-      - Tiller's server host
-    required: false
+      - Tiller's server host.
     default: "localhost"
   port:
     description:
-      - Tiller's server port
-    required: false
+      - Tiller's server port.
     default: 44134
   namespace:
     description:
-      - Kubernetes namespace where the chart should be installed
-    required: false
+      - Kubernetes namespace where the chart should be installed.
     default: "default"
   name:
     description:
-      - Release name to manage
-    required: false
-    default: null
+      - Release name to manage.
   state:
     description:
       - Whether to install C(present), remove C(absent), or purge C(purged) a package.
-    required: false
     choices: ['absent', 'purged', 'present']
-    default: "installed"
+    default: "present"
   chart:
     description: |
-      A map describing the chart to install. For example:
-      chart:
-        name: memcached
-        version: 0.4.0
-        source:
-          type: repo
-          location: https://kubernetes-charts.storage.googleapis.com
-    required: false
+      A map describing the chart to install. See examples for available options.
     default: {}
   values:
     description:
       - A map of value options for the chart.
-    required: false
     default: {}
   disable_hooks:
     description:
-      - Whether to disable hooks during the uninstall process
-    required: false
-    default: false
+      - Whether to disable hooks during the uninstall process.
+    type: bool
+    default: 'no'
 '''
 
 RETURN = ''' # '''
@@ -84,7 +70,7 @@ EXAMPLES = '''
       source:
         type: repo
         location: https://kubernetes-charts.storage.googleapis.com
-    state: installed
+    state: present
     name: my-memcached
     namespace: default
 

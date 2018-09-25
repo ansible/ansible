@@ -79,7 +79,7 @@ class AwsCloudProvider(CloudProvider):
         """
         :rtype: AnsibleCoreCI
         """
-        return AnsibleCoreCI(self.args, 'aws', 'sts', persist=False, stage=self.args.remote_stage)
+        return AnsibleCoreCI(self.args, 'aws', 'sts', persist=False, stage=self.args.remote_stage, provider=self.args.remote_provider)
 
 
 class AwsCloudEnvironment(CloudEnvironment):

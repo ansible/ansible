@@ -4,7 +4,7 @@ PORTNAME=	ansible
 PORTVERSION=	2.1
 PORTREVISION=	1
 CATEGORIES=	python net-mgmt sysutils
-MASTER_SITES=	http://releases.ansible.com/ansible/
+MASTER_SITES=	https://releases.ansible.com/ansible/
 DISTNAME=	${PORTNAME}-${PORTVERSION}
 
 MAINTAINER=	bcoca@ansible.com
@@ -13,11 +13,10 @@ COMMENT=	Ansible ssh based config management framework
 LICENSE=	GPLv3
 LICENSE_FILE=	${WRKSRC}/COPYING
 
-RUN_DEPENDS=	python>2.5:${PORTSDIR}/lang/python \
+RUN_DEPENDS=	python>2.7:${PORTSDIR}/lang/python \
                ${PORTSDIR}/devel/py-Jinja2 \
                ${PORTSDIR}/devel/py-yaml \
                ${PORTSDIR}/security/py-paramiko \
-               ${PORTSDIR}/devel/py-simplejson \
                ${PORTSDIR}/security/py-pycrypto
 
 OPTIONS_DEFINE=	EXAMPLES

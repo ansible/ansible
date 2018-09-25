@@ -21,8 +21,8 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about one or more networks from OpenStack.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "sdk"
 options:
    name:
      description:
@@ -44,7 +44,7 @@ EXAMPLES = '''
 - name: Gather facts about previously created networks
   os_networks_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
@@ -56,7 +56,7 @@ EXAMPLES = '''
 - name: Gather facts about a previously created network by name
   os_networks_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
@@ -70,7 +70,7 @@ EXAMPLES = '''
   # Note: name and filters parameters are Not mutually exclusive
   os_networks_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
@@ -117,14 +117,8 @@ openstack_networks:
             type: boolean
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_cloud_from_module
 
 
 def main():
@@ -135,17 +129,14 @@ def main():
     )
     module = AnsibleModule(argument_spec)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         networks = cloud.search_networks(module.params['name'],
                                          module.params['filters'])
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_networks=networks))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

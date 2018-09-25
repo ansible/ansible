@@ -31,26 +31,18 @@ options:
      description:
         - Zone type
      choices: [primary, secondary]
-     default: None
    email:
      description:
         - Email of the zone owner (only applies if zone_type is primary)
-     required: false
    description:
      description:
         - Zone description
-     required: false
-     default: None
    ttl:
      description:
         -  TTL (Time To Live) value in seconds
-     required: false
-     default: None
    masters:
      description:
         - Master nameservers (only applies if zone_type is secondary)
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -59,10 +51,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -126,16 +117,8 @@ zone:
             sample: []
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(state, email, description, ttl, masters, zone):
@@ -171,17 +154,11 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.8.0'):
-        module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.8.0")
-
     name = module.params.get('name')
     state = module.params.get('state')
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         zone = cloud.get_zone(name)
 
         if state == 'present':
@@ -229,7 +206,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ipa_subca
-author: Abhijeet Kasurde (@akasurde)
+author: Abhijeet Kasurde (@Akasurde)
 short_description: Manage FreeIPA Lightweight Sub Certificate Authorities.
 description:
 - Add, modify, enable, disable and delete an IPA Lightweight Sub Certificate Authorities using IPA API.
@@ -24,6 +24,7 @@ options:
     description:
     - The Sub Certificate Authority name which needs to be managed.
     required: true
+    aliases: ["name"]
   subca_subject:
     description:
     - The Sub Certificate Authority's Subject. e.g., 'CN=SampleSubCA1,O=testrelm.test'
@@ -38,7 +39,7 @@ options:
     - State 'disable' and 'enable' is available for FreeIPA 4.4.2 version and onwards
     required: false
     default: present
-    choices: ["present", "absent", "enable", "disable"]
+    choices: ["present", "absent", "enabled", "disabled"]
 extends_documentation_fragment: ipa.documentation
 '''
 

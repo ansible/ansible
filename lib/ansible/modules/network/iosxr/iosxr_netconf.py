@@ -38,7 +38,8 @@ options:
     description:
       - netconf vrf name
     required: false
-    default: none
+    default: default
+    aliases: ['vrf']
   state:
     description:
       - Specifies the state of the C(iosxr_netconf) resource on
@@ -74,15 +75,14 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
-from ansible.module_utils.iosxr import get_config, load_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates):
     want, have = updates
     commands = list()
 
@@ -90,16 +90,12 @@ def map_obj_to_commands(updates, module):
         if have['state'] == 'present':
             commands.append('no netconf-yang agent ssh')
 
-            if 'netconf_port' in have:
-                commands.append('no ssh server netconf port %s' % have['netconf_port'])
+        if 'netconf_port' in have:
+            commands.append('no ssh server netconf port %s' % have['netconf_port'])
 
-            if want['netconf_vrf']:
-                for vrf in have['netconf_vrf']:
-                    if vrf == want['netconf_vrf']:
-                        commands.append('no ssh server netconf vrf %s' % vrf)
-            else:
-                for vrf in have['netconf_vrf']:
-                    commands.append('no ssh server netconf vrf %s' % vrf)
+        if have['netconf_vrf']:
+            for vrf in have['netconf_vrf']:
+                commands.append('no ssh server netconf vrf %s' % vrf)
     else:
         if have['state'] == 'absent':
             commands.append('netconf-yang agent ssh')
@@ -131,9 +127,9 @@ def parse_port(config):
 def map_config_to_obj(module):
     obj = {'state': 'absent'}
 
-    netconf_config = get_config(module, flags=['netconf-yang agent'])
+    netconf_config = get_config(module, config_filter='netconf-yang agent')
 
-    ssh_config = get_config(module, flags=['ssh server'])
+    ssh_config = get_config(module, config_filter='ssh server')
     ssh_config = [config_line for config_line in (line.strip() for line in ssh_config.splitlines()) if config_line]
     obj['netconf_vrf'] = []
     for config in ssh_config:
@@ -141,7 +137,7 @@ def map_config_to_obj(module):
             obj.update({'netconf_port': parse_port(config)})
         if 'netconf vrf' in config:
             obj['netconf_vrf'].append(parse_vrf(config))
-    if 'ssh' in netconf_config or 'netconf_port' in obj or obj['netconf_vrf']:
+    if 'ssh' in netconf_config and ('netconf_port' in obj or obj['netconf_vrf']):
         obj.update({'state': 'present'})
 
     if 'ssh' in netconf_config and 'netconf_port' not in obj:
@@ -176,7 +172,7 @@ def main():
     """
     argument_spec = dict(
         netconf_port=dict(type='int', default=830, aliases=['listens_on']),
-        netconf_vrf=dict(aliases=['vrf']),
+        netconf_vrf=dict(aliases=['vrf'], default='default'),
         state=dict(default='present', choices=['present', 'absent']),
     )
     argument_spec.update(iosxr_argument_spec)
@@ -185,22 +181,19 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands((want, have))
     result['commands'] = commands
 
     if commands:
-        if not module.check_mode:
-            diff = load_config(module, commands, result['warnings'], commit=True)
-            if diff:
-                if module._diff:
-                    result['diff'] = {'prepared': diff}
-            exec_command(module, 'exit')
+        commit = not module.check_mode
+        diff = load_config(module, commands, commit=commit)
+        if diff:
+            result['diff'] = dict(prepared=diff)
         result['changed'] = True
 
     module.exit_json(**result)

@@ -66,7 +66,7 @@ options:
     description:
     - >
       Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
-      For example C({".txt": "application/text", ".yml": "appication/text"})
+      For example C({".txt": "application/text", ".yml": "application/text"})
     required: false
   include:
     description:
@@ -101,7 +101,7 @@ requirements:
   - botocore
   - python-dateutil
 
-author: tedder
+author: Ted Timmons (@tedder)
 extends_documentation_fragment:
 - aws
 - ec2
@@ -256,7 +256,6 @@ DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024
 
 
 def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
-
     """
     calculates a multipart upload etag for amazon s3
 

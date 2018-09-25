@@ -62,12 +62,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 
-HALL_API_ENDPOINT  = 'https://hall.com/api/1/services/generic/%s'
+HALL_API_ENDPOINT = 'https://hall.com/api/1/services/generic/%s'
 
 
 def send_request_to_hall(module, room_token, payload):
     headers = {'Content-Type': 'application/json'}
-    payload=module.jsonify(payload)
+    payload = module.jsonify(payload)
     api_endpoint = HALL_API_ENDPOINT % (room_token)
     response, info = fetch_url(module, api_endpoint, data=payload, headers=headers)
     if info['status'] != 200:

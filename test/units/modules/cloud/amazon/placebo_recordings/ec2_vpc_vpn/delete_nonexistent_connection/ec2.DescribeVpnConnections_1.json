@@ -1,18 +1,17 @@
 {
-    "status_code": 200, 
     "data": {
-        "VpnConnections": [], 
+        "VpnConnections": [],
         "ResponseMetadata": {
-            "RetryAttempts": 0, 
-            "HTTPStatusCode": 200, 
-            "RequestId": "907abc1f-5f95-44ca-b5f2-f5151cda3f7a", 
+            "HTTPStatusCode": 200,
+            "RequestId": "8218208e-030d-4aea-9ae5-6e8534efe1ef",
             "HTTPHeaders": {
-                "transfer-encoding": "chunked", 
-                "vary": "Accept-Encoding", 
-                "server": "AmazonEC2", 
-                "content-type": "text/xml;charset=UTF-8", 
-                "date": "Mon, 12 Jun 2017 20:22:58 GMT"
-            }
+                "content-length": "243",
+                "server": "AmazonEC2",
+                "content-type": "text/xml;charset=UTF-8",
+                "date": "Mon, 16 Apr 2018 13:04:32 GMT"
+            },
+            "RetryAttempts": 0
         }
-    }
+    },
+    "status_code": 200
 }

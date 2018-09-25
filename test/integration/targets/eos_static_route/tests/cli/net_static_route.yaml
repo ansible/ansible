@@ -1,0 +1,38 @@
+---
+- debug: msg="START eos cli/net_static_route.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove config used in test
+  eos_config:
+    lines:
+    - no ip route 192.168.3.0/24 192.168.0.1
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- name: configure static route using platform agnostic module
+  net_static_route:
+    address: 192.168.3.0/24
+    next_hop: 192.168.0.1
+    admin_distance: 2
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip route 192.168.3.0/24 192.168.0.1 2' in result.commands"
+
+- name: teardown - remove config used in test
+  eos_config:
+    lines:
+    - no ip route 192.168.3.0/24 192.168.0.1
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- debug: msg="END eos cli/net_static_route.yaml on connection={{ ansible_connection }}"

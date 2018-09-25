@@ -51,71 +51,54 @@ options:
   handler:
     description:
       - The function within your code that Lambda calls to begin execution
-    default: null
   zip_file:
     description:
       - A .zip file containing your deployment package
       - If C(state=present) then either zip_file or s3_bucket must be present.
-    required: false
-    default: null
     aliases: [ 'src' ]
   s3_bucket:
     description:
       - Amazon S3 bucket name where the .zip file containing your deployment package is stored
       - If C(state=present) then either zip_file or s3_bucket must be present.
       - s3_bucket and s3_key are required together
-    required: false
-    default: null
   s3_key:
     description:
       - The Amazon S3 object (the deployment package) key name you want to upload
       - s3_bucket and s3_key are required together
-    required: false
-    default: null
   s3_object_version:
     description:
       - The Amazon S3 object (the deployment package) version you want to upload.
-    required: false
-    default: null
   description:
     description:
       - A short, user-defined function description. Lambda does not use this value. Assign a meaningful description as you see fit.
-    required: false
-    default: null
   timeout:
     description:
-      - The function execution time at which Lambda should terminate the function.
-    required: false
+      - The function maximum execution time in seconds after which Lambda should terminate the function.
     default: 3
   memory_size:
     description:
       - The amount of memory, in MB, your Lambda function is given
-    required: false
     default: 128
   vpc_subnet_ids:
     description:
       - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. Leave empty if you don't want to run
         the function in a VPC.
-    required: false
-    default: None
   vpc_security_group_ids:
     description:
       - List of VPC security group IDs to associate with the Lambda function. Required when vpc_subnet_ids is used.
-    required: false
-    default: None
   environment_variables:
     description:
       - A dictionary of environment variables the Lambda function is given.
-    required: false
-    default: None
     aliases: [ 'environment' ]
     version_added: "2.3"
   dead_letter_arn:
     description:
       - The parent object that contains the target Amazon Resource Name (ARN) of an Amazon SQS queue or Amazon SNS topic.
-    required: false
-    default: None
     version_added: "2.3"
+  tags:
+    description:
+      - tag dict to apply to the function (requires botocore 1.5.40 or above)
+    version_added: "2.5"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -125,7 +108,6 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Create Lambda functions
-tasks:
 - name: looped creation
   lambda:
     name: '{{ item.name }}'
@@ -141,6 +123,8 @@ tasks:
     - sg-123abcde
     - sg-edcba321
     environment_variables: '{{ item.env_vars }}'
+    tags:
+      key1: 'value1'
   with_items:
     - name: HelloWorld
       zip_file: hello-code.zip
@@ -153,8 +137,18 @@ tasks:
         key1: "1"
         key2: "2"
 
+# To remove previously added tags pass a empty dict
+- name: remove tags
+  lambda:
+    name: 'Lambda function'
+    state: present
+    zip_file: 'code.zip'
+    runtime: 'python2.7'
+    role: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
+    handler: 'hello_python.my_handler'
+    tags: {}
+
 # Basic Lambda function deletion
-tasks:
 - name: Delete Lambda functions HelloWorld and ByeBye
   lambda:
     name: '{{ item }}'
@@ -207,12 +201,13 @@ configuration:
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import compare_aws_tags
 import base64
 import hashlib
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ValidationError, ParamValidationError
+    from botocore.exceptions import ClientError, BotoCoreError, ValidationError, ParamValidationError
 except ImportError:
     pass  # protected by AnsibleAWSModule
 
@@ -272,6 +267,47 @@ def sha256sum(filename):
     return hex_digest
 
 
+def set_tag(client, module, tags, function):
+    if not hasattr(client, "list_tags"):
+        module.fail_json(msg="Using tags requires botocore 1.5.40 or above")
+
+    changed = False
+    arn = function['Configuration']['FunctionArn']
+
+    try:
+        current_tags = client.list_tags(Resource=arn).get('Tags', {})
+    except ClientError as e:
+        module.fail_json(msg="Unable to list tags: {0}".format(to_native(e)),
+                         exception=traceback.format_exc())
+
+    tags_to_add, tags_to_remove = compare_aws_tags(current_tags, tags, purge_tags=True)
+
+    try:
+        if tags_to_remove:
+            client.untag_resource(
+                Resource=arn,
+                TagKeys=tags_to_remove
+            )
+            changed = True
+
+        if tags_to_add:
+            client.tag_resource(
+                Resource=arn,
+                Tags=tags_to_add
+            )
+            changed = True
+
+    except ClientError as e:
+        module.fail_json(msg="Unable to tag resource {0}: {1}".format(arn,
+                         to_native(e)), exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+    except BotoCoreError as e:
+        module.fail_json(msg="Unable to tag resource {0}: {1}".format(arn,
+                         to_native(e)), exception=traceback.format_exc())
+
+    return changed
+
+
 def main():
     argument_spec = dict(
         name=dict(required=True),
@@ -290,6 +326,7 @@ def main():
         vpc_security_group_ids=dict(type='list'),
         environment_variables=dict(type='dict'),
         dead_letter_arn=dict(),
+        tags=dict(type='dict'),
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -323,6 +360,7 @@ def main():
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
     dead_letter_arn = module.params.get('dead_letter_arn')
+    tags = module.params.get('tags')
 
     check_mode = module.check_mode
     changed = False
@@ -442,6 +480,11 @@ def main():
                 except IOError as e:
                     module.fail_json(msg=str(e), exception=traceback.format_exc())
 
+        # Tag Function
+        if tags is not None:
+            if set_tag(client, module, tags, current_function):
+                changed = True
+
         # Upload new code if needed (e.g. code checksum has changed)
         if len(code_kwargs) > 2:
             try:
@@ -518,6 +561,11 @@ def main():
             changed = True
         except (ParamValidationError, ClientError) as e:
             module.fail_json_aws(e, msg="Trying to create function")
+
+        # Tag Function
+        if tags is not None:
+            if set_tag(client, module, tags, get_current_function(client, name)):
+                changed = True
 
         response = get_current_function(client, name, qualifier=current_version)
         if not response:

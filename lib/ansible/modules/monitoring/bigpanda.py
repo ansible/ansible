@@ -68,7 +68,7 @@ options:
         on personally controlled sites using self-signed certificates.
     required: false
     default: 'yes'
-    choices: ['yes', 'no']
+    type: bool
 
 # informational: requirements for nodes
 requirements: [ ]
@@ -135,7 +135,6 @@ def main():
             url=dict(required=False, default='https://api.bigpanda.io'),
         ),
         supports_check_mode=True,
-        check_invalid_arguments=False,
     )
 
     token = module.params['token']
@@ -185,7 +184,7 @@ def main():
 
     # Send the data to bigpanda
     data = json.dumps(body)
-    headers = {'Authorization':'Bearer %s' % token, 'Content-Type':'application/json'}
+    headers = {'Authorization': 'Bearer %s' % token, 'Content-Type': 'application/json'}
     try:
         response, info = fetch_url(module, request_url, data=data, headers=headers)
         if info['status'] == 200:

@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -18,7 +18,7 @@ module: bigip_irule
 short_description: Manage iRules across different modules on a BIG-IP
 description:
   - Manage iRules across different modules on a BIG-IP.
-version_added: "2.2"
+version_added: 2.2
 options:
   content:
     description:
@@ -54,12 +54,7 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as
-    pip install f5-sdk.
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -108,15 +103,31 @@ content:
 
 import os
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -146,16 +157,6 @@ class Parameters(AnsibleF5Parameters):
             pass
         return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
     @property
     def content(self):
         if self._values['content'] is None:
@@ -183,13 +184,15 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        self.kwargs = kwargs
 
     def exec_module(self):
-        if self.client.module.params['module'] == 'ltm':
+        if self.module.params['module'] == 'ltm':
             manager = self.get_manager('ltm')
-        elif self.client.module.params['module'] == 'gtm':
+        elif self.module.params['module'] == 'gtm':
             manager = self.get_manager('gtm')
         else:
             raise F5ModuleError(
@@ -199,15 +202,16 @@ class ModuleManager(object):
 
     def get_manager(self, type):
         if type == 'ltm':
-            return LtmManager(self.client)
+            return LtmManager(**self.kwargs)
         elif type == 'gtm':
-            return GtmManager(self.client)
+            return GtmManager(**self.kwargs)
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def exec_module(self):
@@ -234,7 +238,7 @@ class BaseManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
 
     def _update_changed_options(self):
         changed = {}
@@ -245,7 +249,7 @@ class BaseManager(object):
                 if attr1 != attr2:
                     changed[key] = attr1
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
             return True
         return False
 
@@ -261,7 +265,7 @@ class BaseManager(object):
 
     def create(self):
         self._set_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         if not self.exists():
@@ -278,7 +282,7 @@ class BaseManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -289,7 +293,7 @@ class BaseManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -328,7 +332,7 @@ class LtmManager(BaseManager):
             partition=self.want.partition
         )
         result = resource.attrs
-        return Parameters(result)
+        return Parameters(params=result)
 
     def remove_from_device(self):
         resource = self.client.api.tm.ltm.rules.rule.load(
@@ -345,7 +349,7 @@ class GtmManager(BaseManager):
             partition=self.want.partition
         )
         result = resource.attrs
-        return Parameters(result)
+        return Parameters(params=result)
 
     def remove_from_device(self):
         resource = self.client.api.tm.gtm.rules.rule.load(
@@ -382,7 +386,7 @@ class GtmManager(BaseManager):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             content=dict(
                 required=False,
                 default=None
@@ -395,33 +399,44 @@ class ArgumentSpec(object):
             module=dict(
                 required=True,
                 choices=['gtm', 'ltm']
+            ),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.mutually_exclusive = [
             ['content', 'src']
         ]
-        self.f5_product_name = 'bigip'
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        mutually_exclusive=spec.mutually_exclusive,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        mutually_exclusive=spec.mutually_exclusive
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
+        cleanup_tokens(client)
+        module.exit_json(**results)
     except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.fail_json(msg=str(e))
 
 
 if __name__ == '__main__':

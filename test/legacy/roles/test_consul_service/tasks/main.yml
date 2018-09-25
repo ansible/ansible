@@ -56,7 +56,7 @@
 - name: verify registering service without name fails
   assert:
     that:
-        - noname_result | failed
+        - noname_result is failed
 
 - name: register very basic service without service_port
   consul:

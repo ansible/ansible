@@ -1,0 +1,213 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Bruno Calogero <brunocalogero@hotmail.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+# CLEAN ENVIRONMENT
+- name: Remove vpc protection group
+  aci_switch_policy_vpc_protection_group: &aci_switch_policy_vpc_protection_group_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    protection_group: ansible_test
+    state: absent
+
+
+# ADD VPC PROTECTION GROUP
+- name: Add vpc protection group (check_mode)
+  aci_switch_policy_vpc_protection_group: &aci_switch_policy_vpc_protection_group_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    protection_group: ansible_test
+    protection_group_id: 6
+    switch_1_id: 3811
+    switch_2_id: 3812
+    state: present
+  check_mode: yes
+  register: cm_add_vpc_prot_grp
+
+- name: Add vpc protection group (normal mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_present
+  register: nm_add_vpc_prot_grp
+
+- name: Add vpc protection group again (check_mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_present
+  check_mode: yes
+  register: cm_add_vpc_prot_grp_again
+
+- name: Add vpc protection group again (normal mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_present
+  register: nm_add_vpc_prot_grp_again
+
+- name: Verify add_vpc_prot_grp_again
+  assert:
+    that:
+    - cm_add_vpc_prot_grp is changed
+    - nm_add_vpc_prot_grp is changed
+    - cm_add_vpc_prot_grp_again is not changed
+    - nm_add_vpc_prot_grp_again is not changed
+
+
+# CHANGE VPC PROTECTION GROUP
+- name: Change vpc domain policy of vpc protection group (check_mode)
+  aci_switch_policy_vpc_protection_group:
+    <<: *aci_switch_policy_vpc_protection_group_present
+    vpc_domain_policy: ansible_test_pol
+  check_mode: yes
+  register: cm_add_vpc_prot_grp_pol
+
+- name: Change vpc domain policy of vpc protection group (normal mode)
+  aci_switch_policy_vpc_protection_group:
+    <<: *aci_switch_policy_vpc_protection_group_present
+    vpc_domain_policy: ansible_test_pol
+  register: nm_add_vpc_prot_grp_pol
+
+- name: Change vpc domain policy of vpc protection group again (check_mode)
+  aci_switch_policy_vpc_protection_group:
+    <<: *aci_switch_policy_vpc_protection_group_present
+    vpc_domain_policy: ansible_test_pol
+  check_mode: yes
+  register: cm_add_vpc_prot_grp_pol_again
+
+- name: Change vpc domain policy of vpc protection group again (normal mode)
+  aci_switch_policy_vpc_protection_group:
+    <<: *aci_switch_policy_vpc_protection_group_present
+    vpc_domain_policy: ansible_test_pol
+  register: nm_add_vpc_prot_grp_pol_again
+
+- name: Verify add_vpc_prot_grp_pol
+  assert:
+    that:
+    - cm_add_vpc_prot_grp_pol is changed
+    - nm_add_vpc_prot_grp_pol is changed
+    - cm_add_vpc_prot_grp_pol_again is not changed
+    - nm_add_vpc_prot_grp_pol_again is not changed
+
+
+# ADD FABRIC NODE AGAIN
+- name: Add vpc protection group again with no domain policy (check_mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_present
+  check_mode: yes
+  register: cm_add_vpc_prot_grp_again_no_pol
+
+- name: Add vpc protection group again with no domain policy (normal mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_present
+  register: nm_add_vpc_prot_grp_again_no_pol
+
+- name: Verify add_vpc_prot_grp_again_no_pol
+  assert:
+    that:
+    - cm_add_vpc_prot_grp_again_no_pol is not changed
+    - nm_add_vpc_prot_grp_again_no_pol is not changed
+
+
+# QUERY ALL VPC PROTECTION GROUPS
+- name: Query vpc protection groups (check_mode)
+  aci_switch_policy_vpc_protection_group: &aci_switch_policy_vpc_protection_group_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_vpc_prot_grps
+
+- name: Query all vpc protection groups (normal mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_query
+  register: nm_query_all_vpc_prot_grps
+
+- name: Verify query_all_vpc_prot_grps
+  assert:
+    that:
+    - cm_query_all_vpc_prot_grps is not changed
+    - nm_query_all_vpc_prot_grps is not changed
+    - cm_query_all_vpc_prot_grps == nm_query_all_vpc_prot_grps
+
+
+# QUERY A VPC PROTECTION GROUP
+- name: Query our vpc protection group
+  aci_switch_policy_vpc_protection_group:
+    <<: *aci_switch_policy_vpc_protection_group_query
+    protection_group: ansible_test # might need node_id too
+  check_mode: yes
+  register: cm_query_vpc_prot_grp
+
+- name: Query our vpc protection group
+  aci_switch_policy_vpc_protection_group:
+    <<: *aci_switch_policy_vpc_protection_group_query
+    protection_group: ansible_test
+  register: nm_query_vpc_prot_grp
+
+- name: Verify query_vpc_prot_grp
+  assert:
+    that:
+    - cm_query_vpc_prot_grp is not changed
+    - nm_query_vpc_prot_grp is not changed
+    - cm_query_vpc_prot_grp == nm_query_vpc_prot_grp
+
+
+# REMOVE FABRIC NODE
+- name: Remove vpc protection group (check_mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_absent
+  check_mode: yes
+  register: cm_remove_vpc_prot_grp
+
+- name: Remove vpc protection group (normal mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_absent
+  register: nm_remove_vpc_prot_grp
+
+- name: Remove vpc protection group again (check_mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_absent
+  check_mode: yes
+  register: cm_remove_vpc_prot_grp_again
+
+- name: Remove vpc protection group again (normal mode)
+  aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_absent
+  register: nm_remove_vpc_prot_grp_again
+
+- name: Verify remove_vpc_prot_grp
+  assert:
+    that:
+    - cm_remove_vpc_prot_grp is changed
+    - nm_remove_vpc_prot_grp is changed
+    - cm_remove_vpc_prot_grp_again is not changed
+    - nm_remove_vpc_prot_grp_again is not changed
+
+
+# QUERY NON-EXISTING LEAF PROFILE
+- name: Query non-existing vpc protection group (check_mode)
+  aci_switch_policy_vpc_protection_group:
+    <<: *aci_switch_policy_vpc_protection_group_query
+    protection_group: ansible_test
+  check_mode: yes
+  register: cm_query_non_vpc_prot_grp
+
+- name: Query non-existing vpc protection group (normal mode)
+  aci_switch_policy_vpc_protection_group:
+    <<: *aci_switch_policy_vpc_protection_group_query
+    protection_group: ansible_test
+  register: nm_query_non_vpc_prot_grp
+
+- name: Verify query_non_vpc_prot_grp
+  assert:
+    that:
+    - cm_query_non_vpc_prot_grp is not changed
+    - nm_query_non_vpc_prot_grp is not changed
+    - cm_query_non_vpc_prot_grp == nm_query_non_vpc_prot_grp

@@ -19,7 +19,7 @@ short_description: Manage OVH IP LoadBalancing backends
 description:
     - Manage OVH (French European hosting provider) LoadBalancing IP backends
 version_added: "2.2"
-author: Pascal HERAUD @pascalheraud
+author: Pascal Heraud (@pascalheraud)
 notes:
     - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
       You have to create an application (a key and secret) with a consummer
@@ -36,20 +36,17 @@ options:
         description:
             - The IP address of the backend to update / modify / delete
     state:
-        required: false
         default: present
         choices: ['present', 'absent']
         description:
             - Determines whether the backend is to be created/modified
               or deleted
     probe:
-        required: false
-        default: none
+        default: 'none'
         choices: ['none', 'http', 'icmp' , 'oco']
         description:
             - Determines the type of probe to use for this backend
     weight:
-        required: false
         default: 8
         description:
             - Determines the weight for this backend
@@ -70,7 +67,6 @@ options:
         description:
             - The consumer key to use
     timeout:
-        required: false
         default: 120
         description:
             - The timeout in seconds used to wait for a task to be
@@ -162,7 +158,7 @@ def main():
 
     if not HAS_OVH:
         module.fail_json(msg='ovh-api python module'
-           'is required to run this module ')
+                         'is required to run this module ')
 
     # Get parameters
     name = module.params.get('name')

@@ -6,15 +6,13 @@
     lines:
       - no ip domain lookup source-interface
       - vrf definition ansible
-    timeout: 30
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure lookup_source
   eos_system:
     lookup_source: Management1
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -25,8 +23,7 @@
 - name: verify lookup_source
   eos_system:
     lookup_source: Management1
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -38,8 +35,7 @@
     lookup_source:
       - interface: Management1
         vrf: ansible
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -54,8 +50,7 @@
     lookup_source:
       - interface: Management1
         vrf: ansible
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -67,8 +62,7 @@
     lines:
       - no ip domain lookup source-interface
       - no vrf definition ansible
-    timeout: 30
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END eapi/set_lookup_source.yaml"

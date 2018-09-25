@@ -33,6 +33,11 @@ options:
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
         type: bool
+    force:
+        description:
+            - Whether to override existing symlinks.
+        type: bool
+        version_added: 2.6
     masked:
         description:
             - Whether the unit should be masked or not, a masked unit is impossible to start.
@@ -43,12 +48,27 @@ options:
         type: bool
         default: 'no'
         aliases: [ daemon-reload ]
-    user:
+    daemon_reexec:
         description:
-            - run systemctl talking to the service manager of the calling user, rather than the service manager
-              of the system.
+            - run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
         type: bool
         default: 'no'
+        aliases: [ daemon-reexec ]
+        version_added: "2.8"
+    user:
+        description:
+            - (deprecated) run ``systemctl`` talking to the service manager of the calling user, rather than the service manager
+              of the system.
+            - This option is deprecated and will eventually be removed in 2.11. The ``scope`` option should be used instead.
+        type: bool
+        default: 'no'
+    scope:
+        description:
+            - run systemctl within a given service manager scope, either as the default system scope (system),
+              the current user's scope (user), or the scope of all users (global).
+        choices: [ system, user, global ]
+        default: 'system'
+        version_added: "2.7"
     no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
@@ -65,10 +85,14 @@ requirements:
 
 EXAMPLES = '''
 - name: Make sure a service is running
-  systemd: state=started name=httpd
+  systemd:
+    state: started
+    name: httpd
 
 - name: stop service cron on debian, if running
-  systemd: name=cron state=stopped
+  systemd:
+    name: cron
+    state: stopped
 
 - name: restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
   systemd:
@@ -91,10 +115,11 @@ EXAMPLES = '''
   systemd:
     name: dnf-automatic.timer
     state: started
-    enabled: True
+    enabled: yes
 
 - name: just force systemd to reread configs (2.4 and above)
-  systemd: daemon_reload=yes
+  systemd:
+    daemon_reload: yes
 '''
 
 RETURN = '''
@@ -285,20 +310,41 @@ def main():
             name=dict(type='str', aliases=['service', 'unit']),
             state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
             enabled=dict(type='bool'),
+            force=dict(type='bool'),
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
-            user=dict(type='bool', default=False),
+            daemon_reexec=dict(type='bool', default=False, aliases=['daemon-reexec']),
+            user=dict(type='bool'),
+            scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
+        mutually_exclusive=[['scope', 'user']],
     )
 
     systemctl = module.get_bin_path('systemctl', True)
-    if module.params['user']:
-        systemctl = systemctl + " --user"
+
+    ''' Set CLI options depending on params '''
+    if module.params['user'] is not None:
+        # handle user deprecation, mutually exclusive with scope
+        module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11')
+        if module.params['user']:
+            module.params['scope'] = 'user'
+        else:
+            module.params['scope'] = 'system'
+
+    # if scope is 'system' or None, we can ignore as there is no extra switch.
+    # The other choices match the corresponding switch
+    if module.params['scope'] not in (None, 'system'):
+        systemctl += " --%s" % module.params['scope']
+
     if module.params['no_block']:
-        systemctl = systemctl + " --no-block"
+        systemctl += " --no-block"
+
+    if module.params['force']:
+        systemctl += " --force"
+
     unit = module.params['name']
     rc = 0
     out = err = ''
@@ -317,6 +363,12 @@ def main():
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+
+    # Run daemon-reexec
+    if module.params['daemon_reexec'] and not module.check_mode:
+        (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
+        if rc != 0:
+            module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
     if unit:
         found = False
@@ -340,8 +392,10 @@ def main():
 
                 is_systemd = 'LoadState' in result['status'] and result['status']['LoadState'] != 'not-found'
 
+                is_masked = 'LoadState' in result['status'] and result['status']['LoadState'] == 'masked'
+
                 # Check for loading error
-                if is_systemd and 'LoadError' in result['status']:
+                if is_systemd and not is_masked and 'LoadError' in result['status']:
                     module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
         else:
             # Check for systemctl command
@@ -388,8 +442,9 @@ def main():
             if rc == 0:
                 enabled = True
             elif rc == 1:
-                # if not a user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-                if not module.params['user'] and \
+                # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
+                if module.params['scope'] == 'system' and \
+                        not module.params['user'] and \
                         is_initd and \
                         (not out.strip().endswith('disabled') or sysv_is_enabled(unit)):
                     enabled = True

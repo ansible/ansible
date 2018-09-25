@@ -49,10 +49,10 @@ class TestJunosCommandModule(TestJunosModule):
         self.mock_conn = patch('ansible.module_utils.connection.Connection')
         self.conn = self.mock_conn.start()
 
-        self.mock_netconf = patch('ansible.module_utils.junos.NetconfConnection')
+        self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
         self.netconf_conn = self.mock_netconf.start()
 
-        self.mock_netconf_rpc = patch('ansible.module_utils.netconf.NetconfConnection')
+        self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
         self.netconf_rpc = self.mock_netconf_rpc.start()
 
         self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_rpc.exec_rpc')
@@ -103,7 +103,7 @@ class TestJunosCommandModule(TestJunosModule):
         result = self.execute_module(format='xml')
         args, kwargs = self.exec_rpc.call_args
         reply = args[1]
-        self.assertTrue(reply.find(b'<interface>em0</interface><media /></get-software-information>'))
+        self.assertTrue(reply.find('<interface>em0</interface><media /></get-software-information>'))
 
     def test_junos_rpc_attrs(self):
         set_module_args(dict(rpc='load-configuration', output='xml', attrs={'url': '/var/tmp/config.conf'}))

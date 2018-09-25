@@ -1,16 +1,16 @@
 ---
-- debug: msg="START cli/set_domain_name.yaml"
+- debug: msg="START cli/set_domain_name.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
     lines: no ip domain-name
     match: none
-    provider: "{{ cli }}"
+  become: yes
 
 - name: configure domain_name
   eos_system:
     domain_name: eng.ansible.com
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -20,7 +20,7 @@
 - name: verify domain_name
   eos_system:
     domain_name: eng.ansible.com
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -31,6 +31,6 @@
   eos_config:
     lines: no ip domain-name
     match: none
-    provider: "{{ cli }}"
+  become: yes
 
-- debug: msg="END cli/set_domain_name.yaml"
+- debug: msg="END cli/set_domain_name.yaml on connection={{ ansible_connection }}"

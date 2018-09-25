@@ -54,6 +54,7 @@ class Connection(ConnectionBase):
     # checksums (so copy, for instance, doesn't work right)
     # Have to look into that before re-enabling this
     become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    default_user = 'root'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -137,8 +138,12 @@ class Connection(ConnectionBase):
         out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
+                if not os.fstat(in_file.fileno()).st_size:
+                    count = ' count=0'
+                else:
+                    count = ''
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), stdin=in_file)
                 except OSError:
                     raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:

@@ -1,0 +1,5 @@
+user_home_prefix:
+  Linux: '/home'
+  FreeBSD: '/home'
+  SunOS: '/home'
+  Darwin: '/Users'

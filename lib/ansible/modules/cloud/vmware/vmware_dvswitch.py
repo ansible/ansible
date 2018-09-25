@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -20,7 +18,8 @@ short_description: Create or remove a distributed vSwitch
 description:
     - Create or remove a distributed vSwitch
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac)"
+author:
+- Joseph Callen (@jcpowermac)
 notes:
     - Tested on vSphere 6.5
 requirements:
@@ -76,11 +75,10 @@ extends_documentation_fragment: vmware.documentation
 '''
 EXAMPLES = '''
 - name: Create dvswitch
-  local_action:
-    module: vmware_dvswitch
-    hostname: vcenter_ip_or_hostname
-    username: vcenter_username
-    password: vcenter_password
+  vmware_dvswitch:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     datacenter_name: datacenter
     switch_name: dvSwitch
     switch_version: 6.0.0
@@ -89,6 +87,7 @@ EXAMPLES = '''
     discovery_proto: lldp
     discovery_operation: both
     state: present
+  delegate_to: localhost
 '''
 
 try:

@@ -15,7 +15,7 @@ DOCUMENTATION = '''
       - "TODO: make this configurable"
     requirements:
      - Whitelist in configuration
-     - A writeable /var/log/ansible/hosts directory by the user executing Ansbile on the controller
+     - A writeable /var/log/ansible/hosts directory by the user executing Ansible on the controller
 '''
 
 import os

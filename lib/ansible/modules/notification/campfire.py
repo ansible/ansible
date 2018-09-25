@@ -122,21 +122,21 @@ def main():
 
     target_url = '%s/room/%s/speak.xml' % (URI, room)
     headers = {'Content-Type': 'application/xml',
-            'User-agent': AGENT}
+               'User-agent': AGENT}
 
     # Send some audible notification if requested
     if notify:
         response, info = fetch_url(module, target_url, data=NSTR % cgi.escape(notify), headers=headers)
         if info['status'] not in [200, 201]:
             module.fail_json(msg="unable to send msg: '%s', campfire api"
-                                " returned error code: '%s'" %
+                             " returned error code: '%s'" %
                                  (notify, info['status']))
 
     # Send the message
-    response, info = fetch_url(module, target_url, data=MSTR %cgi.escape(msg), headers=headers)
+    response, info = fetch_url(module, target_url, data=MSTR % cgi.escape(msg), headers=headers)
     if info['status'] not in [200, 201]:
         module.fail_json(msg="unable to send msg: '%s', campfire api"
-                            " returned error code: '%s'" %
+                         " returned error code: '%s'" %
                              (msg, info['status']))
 
     module.exit_json(changed=True, room=room, msg=msg, notify=notify)

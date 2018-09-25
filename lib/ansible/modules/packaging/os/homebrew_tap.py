@@ -70,6 +70,8 @@ EXAMPLES = '''
 
 import re
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def a_valid_tap(tap):
     '''Returns True if the tap is valid.'''
@@ -109,7 +111,7 @@ def add_tap(module, brew_path, tap, url=None):
             tap,
             url,
         ])
-        if already_tapped(module, brew_path, tap):
+        if rc == 0:
             changed = True
             msg = 'successfully tapped: %s' % tap
         else:
@@ -248,8 +250,6 @@ def main():
         else:
             module.exit_json(changed=changed, msg=msg)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

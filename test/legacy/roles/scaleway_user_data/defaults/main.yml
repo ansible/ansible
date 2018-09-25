@@ -1,0 +1,11 @@
+---
+
+cloud_init_script: '''
+#cloud-config
+
+# final_message
+# default: cloud-init boot finished at $TIMESTAMP. Up $UPTIME seconds
+# this message is written by cloud-final when the system is finished
+# its first boot
+final_message: "The system is finally up, after $UPTIME seconds"
+'''

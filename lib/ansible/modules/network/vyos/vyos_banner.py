@@ -41,20 +41,19 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
     choices: ['pre-login', 'post-login']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration. This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is present in the current
         devices active running configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -87,8 +86,8 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vyos import get_config, load_config
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.vyos.vyos import get_config, load_config
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def spec_to_commands(updates, module):
@@ -173,6 +172,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -57,7 +57,7 @@
 - name: assert install hotfix check
   assert:
     that:
-    - install_hotfix_check|changed
+    - install_hotfix_check is changed
     - install_hotfix_check.kb == test_win_hotfix_kb
     - install_hotfix_check.identifier == test_win_hotfix_identifier
     - install_hotfix_actual_check.rc != 0
@@ -75,7 +75,7 @@
 - name: assert install hotfix
   assert:
     that:
-    - install_hotfix|changed
+    - install_hotfix is changed
     - install_hotfix.kb == test_win_hotfix_kb
     - install_hotfix.identifier == test_win_hotfix_identifier
     - install_hotfix.reboot_required == False
@@ -90,7 +90,7 @@
 - name: assert install hotfix again
   assert:
     that:
-    - not install_hotfix_again|changed
+    - install_hotfix_again is not changed
     - install_hotfix_again.kb == test_win_hotfix_kb
     - install_hotfix_again.identifier == test_win_hotfix_identifier
     - install_hotfix_again.reboot_required == False
@@ -109,7 +109,7 @@
 - name: assert uninstall hotfix check
   assert:
     that:
-    - uninstall_hotfix_check|changed
+    - uninstall_hotfix_check is changed
     - uninstall_hotfix_check.kb == test_win_hotfix_kb
     - uninstall_hotfix_check.identifier == test_win_hotfix_identifier
     - uninstall_hotfix_actual_check.rc == 0
@@ -128,7 +128,7 @@
 - name: assert uninstall hotfix
   assert:
     that:
-    - uninstall_hotfix|changed
+    - uninstall_hotfix is changed
     - uninstall_hotfix.kb == test_win_hotfix_kb
     - uninstall_hotfix.identifier == test_win_hotfix_identifier
     - uninstall_hotfix.reboot_required == False
@@ -143,7 +143,7 @@
 - name: assert uninstall hotfix again
   assert:
     that:
-    - not uninstall_hotfix_again|changed
+    - uninstall_hotfix_again is not changed
     - uninstall_hotfix_again.reboot_required == False
 
 - name: install reboot hotfix
@@ -160,7 +160,7 @@
 - name: assert install reboot hotfix
   assert:
     that:
-    - install_reboot_hotfix|changed
+    - install_reboot_hotfix is changed
     - install_reboot_hotfix.kb == test_win_hotfix_reboot_kb
     - install_reboot_hotfix.identifier == test_win_hotfix_reboot_identifier
     - install_reboot_hotfix.reboot_required == True
@@ -175,7 +175,7 @@
 - name: assert install reboot again before rebooting
   assert:
     that:
-    - not install_before_rebooting|changed
+    - install_before_rebooting is not changed
     - install_before_rebooting.reboot_required == True
 
 - win_reboot:
@@ -190,7 +190,7 @@
 - name: assert install reboot hotfix again
   assert:
     that:
-    - not install_reboot_hotfix_again|changed
+    - install_reboot_hotfix_again is not changed
     - install_reboot_hotfix_again.reboot_required == False
 
 - name: uninstall hotfix with kb check
@@ -207,7 +207,7 @@
 - name: assert uninstall hotfix with kb check
   assert:
     that:
-    - uninstall_hotfix_kb_check|changed
+    - uninstall_hotfix_kb_check is changed
     - uninstall_hotfix_kb_check.kb == test_win_hotfix_reboot_kb
     - uninstall_hotfix_kb_check.identifier == test_win_hotfix_reboot_identifier
     - uninstall_hotfix_kb_check.reboot_required == False
@@ -227,7 +227,7 @@
 - name: assert uninstall hotfix with kb
   assert:
     that:
-    - uninstall_hotfix_kb|changed
+    - uninstall_hotfix_kb is changed
     - uninstall_hotfix_kb.kb == test_win_hotfix_reboot_kb
     - uninstall_hotfix_kb.identifier == test_win_hotfix_reboot_identifier
     - uninstall_hotfix_kb.reboot_required == True
@@ -244,7 +244,7 @@
 - name: assert uninstall hotfix with kb again
   assert:
     that:
-    - not uninstall_hotfix_kb_again|changed
+    - uninstall_hotfix_kb_again is not changed
     - uninstall_hotfix_kb_again.reboot_required == False
 
 - name: remove test staging folder

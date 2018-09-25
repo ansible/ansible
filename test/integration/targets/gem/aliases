@@ -1,2 +1,3 @@
 destructive
-posix/ci/group1
+shippable/posix/group1
+skip/osx

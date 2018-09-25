@@ -52,6 +52,15 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         re.compile(br'\x08.')
     ]
 
+    #: terminal initial prompt
+    terminal_initial_prompt = None
+
+    #: terminal initial answer
+    terminal_initial_answer = None
+
+    #: Send newline after prompt match
+    terminal_inital_prompt_newline = True
+
     def __init__(self, connection):
         self._connection = connection
 
@@ -69,8 +78,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
         :returns: A byte string of the prompt
         """
-        self._exec_cli_command(b'\n')
-        return self._connection._matched_prompt
+        return self._connection.get_prompt()
 
     def on_open_shell(self):
         """Called after the SSH session is established
@@ -91,7 +99,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         """Called when privilege escalation is requested
 
         :kwarg passwd: String containing the password
@@ -103,7 +111,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         """Called when privilege deescalation is requested
 
         This method is called when the privilege changed from escalated
@@ -111,3 +119,15 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         of this method to actually perform the deauthorization procedure
         """
         pass
+
+    def on_authorize(self, passwd=None):
+        """Deprecated method for privilege escalation
+
+        :kwarg passwd: String containing the password
+        """
+        return self.on_become(passwd)
+
+    def on_deauthorize(self):
+        """Deprecated method for privilege deescalation
+        """
+        return self.on_unbecome()

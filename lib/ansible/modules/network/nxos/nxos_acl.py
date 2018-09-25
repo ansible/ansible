@@ -50,8 +50,6 @@ options:
   seq:
     description:
       - Sequence number of the entry (ACE).
-    required: false
-    default: null
   name:
     description:
       - Case sensitive name of the access list (ACL).
@@ -59,143 +57,96 @@ options:
   action:
     description:
       - Action of the ACE.
-    required: false
-    default: null
     choices: ['permit', 'deny', 'remark']
   remark:
     description:
       - If action is set to remark, this is the description.
-    required: false
-    default: null
   proto:
     description:
       - Port number or protocol (as supported by the switch).
-    required: false
-    default: null
   src:
     description:
       - Source ip and mask using IP/MASK notation and
         supports keyword 'any'.
-    required: false
-    default: null
   src_port_op:
     description:
       - Source port operands such as eq, neq, gt, lt, range.
-    required: false
-    default: null
     choices: ['any', 'eq', 'gt', 'lt', 'neq', 'range']
   src_port1:
     description:
       - Port/protocol and also first (lower) port when using range
         operand.
-    required: false
-    default: null
   src_port2:
     description:
       - Second (end) port when using range operand.
-    required: false
-    default: null
   dest:
     description:
       - Destination ip and mask using IP/MASK notation and supports the
         keyword 'any'.
-    required: false
-    default: null
   dest_port_op:
     description:
       - Destination port operands such as eq, neq, gt, lt, range.
-    required: false
-    default: null
     choices: ['any', 'eq', 'gt', 'lt', 'neq', 'range']
   dest_port1:
     description:
       - Port/protocol and also first (lower) port when using range
         operand.
-    required: false
-    default: null
   dest_port2:
     description:
       - Second (end) port when using range operand.
-    required: false
-    default: null
   log:
     description:
       - Log matches against this entry.
-    required: false
-    default: null
     choices: ['enable']
   urg:
     description:
       - Match on the URG bit.
-    required: false
-    default: null
     choices: ['enable']
   ack:
     description:
       - Match on the ACK bit.
-    required: false
-    default: null
     choices: ['enable']
   psh:
     description:
       - Match on the PSH bit.
-    required: false
-    default: null
     choices: ['enable']
   rst:
     description:
       - Match on the RST bit.
-    required: false
-    default: null
     choices: ['enable']
   syn:
     description:
       - Match on the SYN bit.
-    required: false
-    default: null
     choices: ['enable']
   fin:
     description:
       - Match on the FIN bit.
-    required: false
-    default: null
     choices: ['enable']
   established:
     description:
       - Match established connections.
-    required: false
-    default: null
     choices: ['enable']
   fragments:
     description:
       - Check non-initial fragments.
-    required: false
-    default: null
     choices: ['enable']
-  time-range:
+  time_range:
     description:
       - Name of time-range to apply.
-    required: false
-    default: null
   precedence:
     description:
       - Match packets with given precedence.
-    required: false
-    default: null
     choices: ['critical', 'flash', 'flash-override', 'immediate',
               'internet', 'network', 'priority', 'routine']
   dscp:
     description:
       - Match packets with given dscp value.
-    required: false
-    default: null
     choices: ['af11', 'af12', 'af13', 'af21', 'af22', 'af23','af31','af32',
               'af33', 'af41', 'af42', 'af43', 'cs1', 'cs2', 'cs3', 'cs4',
               'cs5', 'cs6', 'cs7', 'default', 'ef']
   state:
     description:
       - Specify desired state of the resource.
-    required: false
     default: present
     choices: ['present','absent','delete_acl']
 '''
@@ -207,10 +158,9 @@ EXAMPLES = '''
     seq: 10
     action: permit
     proto: tcp
-    src: 1.1.1.1/24
+    src: 192.0.2.1/24
     dest: any
     state: present
-    provider: "{{ nxos_provider }}"
 '''
 
 RETURN = '''
@@ -218,10 +168,10 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["ip access-list ANSIBLE", "10 permit tcp 1.1.1.1/24 any"]
+    sample: ["ip access-list ANSIBLE", "10 permit tcp 192.0.2.1/24 any"]
 '''
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -253,6 +203,7 @@ def get_acl(module, acl_name, seq_number):
         for acl in all_acl_body:
             if acl.get('acl_name') == acl_name:
                 acl_body = acl
+                break
 
     try:
         acl_entries = acl_body['TABLE_seqno']['ROW_seqno']
@@ -276,7 +227,7 @@ def get_acl(module, acl_name, seq_number):
             temp['action'] = 'remark'
         else:
             temp['action'] = each.get('permitdeny')
-            temp['proto'] = each.get('proto', each.get('proto_str', each.get('ip')))
+            temp['proto'] = str(each.get('proto', each.get('proto_str', each.get('ip'))))
             temp['src'] = each.get('src_any', each.get('src_ip_prefix'))
             temp['src_port_op'] = each.get('src_port_op')
             temp['src_port1'] = each.get('src_port1_num')
@@ -428,14 +379,7 @@ def main():
                                            'cs1', 'cs2', 'cs3', 'cs4',
                                            'cs5', 'cs6', 'cs7', 'default',
                                            'ef']),
-        state=dict(choices=['absent', 'present', 'delete_acl'], default='present'),
-        protocol=dict(choices=['http', 'https'], default='http'),
-        host=dict(required=True),
-        username=dict(type='str'),
-        password=dict(no_log=True, type='str'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present', 'delete_acl'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -515,13 +459,35 @@ def main():
     delta_options = {}
 
     if not existing_core.get('remark'):
-        delta_core = dict(
+        dcore = dict(
             set(proposed_core.items()).difference(
                 existing_core.items())
         )
-        delta_options = dict(
-            set(proposed_options.items()).difference(
-                existing_options.items())
+        if not dcore:
+            # check the diff in the other way just in case
+            dcore = dict(
+                set(existing_core.items()).difference(
+                    proposed_core.items())
+            )
+        delta_core = dcore
+        if delta_core:
+            delta_options = proposed_options
+        else:
+            doptions = dict(
+                set(proposed_options.items()).difference(
+                    existing_options.items())
+            )
+            # check the diff in the other way just in case
+            if not doptions:
+                doptions = dict(
+                    set(existing_options.items()).difference(
+                        proposed_options.items())
+                )
+            delta_options = doptions
+    else:
+        delta_core = dict(
+            set(proposed_core.items()).difference(
+                existing_core.items())
         )
 
     if state == 'present':

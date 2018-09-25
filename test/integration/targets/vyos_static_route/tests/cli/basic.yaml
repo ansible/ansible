@@ -1,4 +1,6 @@
 ---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: create static route
   vyos_static_route:
     prefix: 172.24.0.0/24

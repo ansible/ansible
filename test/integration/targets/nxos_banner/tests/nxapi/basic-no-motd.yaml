@@ -1,0 +1,25 @@
+---
+- debug: msg="START nxapi/nxos_banner no-motd test"
+
+- name: Setup
+  nxos_banner:
+    banner: motd
+    text: |
+      Junk motd banner
+      over multiple lines
+    provider: "{{ connection }}"
+    state: present
+
+- name: remove motd
+  nxos_banner: &rm-motd
+    banner: motd
+    provider: "{{ connection }}"
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no banner motd' in result.commands"
+
+- debug: msg="END nxapi/nxos_banner no-motd test"

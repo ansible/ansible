@@ -33,40 +33,32 @@ options:
           - Define the backend to use for the container
         required: True
         choices: ["docker", "ostree"]
-        default: None
     name:
         description:
           - Name of the container
         required: True
-        default: null
     image:
         description:
           - The image to use to install the container
         required: True
-        default: null
     rootfs:
         description:
           - Define the rootfs of the image
-        required: False
-        default: null
     state:
         description:
           - State of the container
         required: True
-        choices: ["latest", "absent", "rollback"]
+        choices: ["latest", "present", "absent", "rollback"]
         default: "latest"
     mode:
         description:
           - Define if it is an user or a system container
         required: True
         choices: ["user", "system"]
-        default: None
     values:
         description:
             - Values for the installation of the container.  This option is permitted only with mode 'user' or 'system'.
               The values specified here will be used at installation time as --set arguments for atomic install.
-        required: False
-        default: None
 '''
 
 EXAMPLES = '''
@@ -77,7 +69,7 @@ EXAMPLES = '''
     image: rhel/etcd
     backend: ostree
     state: latest
-    system: True
+    mode: system
     values:
         - ETCD_NAME=etcd.server
 
@@ -87,7 +79,7 @@ EXAMPLES = '''
     image: rhel/etcd
     backend: ostree
     state: absent
-    system: True
+    mode: system
 '''
 
 RETURN = '''

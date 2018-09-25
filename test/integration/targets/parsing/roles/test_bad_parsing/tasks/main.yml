@@ -57,4 +57,4 @@
 
 - assert:
     that:
-     - filter_fail|failed
+     - filter_fail is failed

@@ -88,7 +88,7 @@ def create_scaling_policy(connection, module):
     min_adjustment_step = module.params.get('min_adjustment_step')
     cooldown = module.params.get('cooldown')
 
-    scalingPolicies = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])
+    scalingPolicies = connection.get_all_policies(as_group=asg_name, policy_names=[sp_name])
 
     if not scalingPolicies:
         sp = ScalingPolicy(
@@ -101,7 +101,7 @@ def create_scaling_policy(connection, module):
 
         try:
             connection.create_scaling_policy(sp)
-            policy = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])[0]
+            policy = connection.get_all_policies(as_group=asg_name, policy_names=[sp_name])[0]
             module.exit_json(changed=True, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment,
                              cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
         except BotoServerError as e:
@@ -121,7 +121,7 @@ def create_scaling_policy(connection, module):
         setattr(policy, 'min_adjustment_step', module.params.get('min_adjustment_step'))
 
         # check the remaining attributes
-        for attr in ('adjustment_type','scaling_adjustment','cooldown'):
+        for attr in ('adjustment_type', 'scaling_adjustment', 'cooldown'):
             if getattr(policy, attr) != module.params.get(attr):
                 changed = True
                 setattr(policy, attr, module.params.get(attr))
@@ -129,7 +129,7 @@ def create_scaling_policy(connection, module):
         try:
             if changed:
                 connection.create_scaling_policy(policy)
-                policy = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])[0]
+                policy = connection.get_all_policies(as_group=asg_name, policy_names=[sp_name])[0]
             module.exit_json(changed=changed, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment,
                              cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
         except BotoServerError as e:
@@ -140,7 +140,7 @@ def delete_scaling_policy(connection, module):
     sp_name = module.params.get('name')
     asg_name = module.params.get('asg_name')
 
-    scalingPolicies = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])
+    scalingPolicies = connection.get_all_policies(as_group=asg_name, policy_names=[sp_name])
 
     if scalingPolicies:
         try:
@@ -156,12 +156,12 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(required=True, type='str'),
-            adjustment_type = dict(type='str', choices=['ChangeInCapacity','ExactCapacity','PercentChangeInCapacity']),
-            asg_name = dict(required=True, type='str'),
-            scaling_adjustment = dict(type='int'),
-            min_adjustment_step = dict(type='int'),
-            cooldown = dict(type='int'),
+            name=dict(required=True, type='str'),
+            adjustment_type=dict(type='str', choices=['ChangeInCapacity', 'ExactCapacity', 'PercentChangeInCapacity']),
+            asg_name=dict(required=True, type='str'),
+            scaling_adjustment=dict(type='int'),
+            min_adjustment_step=dict(type='int'),
+            cooldown=dict(type='int'),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
@@ -178,7 +178,7 @@ def main():
     try:
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
     except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-        module.fail_json(msg = str(e))
+        module.fail_json(msg=str(e))
 
     if state == 'present':
         create_scaling_policy(connection, module)

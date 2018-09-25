@@ -1,0 +1,36 @@
+---
+- debug: msg="START eos cli/net_logging.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Delete/disable host logging- setup
+  net_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+  become: yes
+  register: result
+
+- name: Set up host logging using platform agnostic module
+  net_logging:
+    dest: host
+    name: 172.16.0.1
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging host 172.16.0.1" in result.commands'
+
+- name: Delete/disable host logging- teardown
+  net_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+  become: yes
+  register: result
+
+- debug: msg="END eos cli/net_logging.yaml on connection={{ ansible_connection }}"

@@ -1,0 +1,241 @@
+# Test code for the vmware_local_role_manager module
+# Copyright: (c) 2017-2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?esx=1
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- debug: var=vcsim_instance
+
+- name: Create a role without privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation_0001
+
+- name: Verify if role is created
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+      - "{{ role_creation_0001.local_role_name is defined }}"
+
+- name: Again create a role without privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation_0001
+
+- name: verify if role is not created again
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == false }}"
+
+- name: Delete a role
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: absent
+  register: role_creation_0001
+
+- name: Verify if role is not present
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+
+- name: Delete role again
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: absent
+  register: role_creation_0001
+
+- name: Verify if role is absent again
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == false }}"
+
+- name: Create a role with privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['VirtualMachine.State.RenameSnapshot']
+    state: present
+  register: role_creation_0001
+
+- name: Verify if role is created with privileges
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+
+- name: Add a privilege to existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: add
+    state: present
+  register: role_creation_0001
+
+- name: Verify if role is updated with updated privileges
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+      - "{{ role_creation_0001.old_privileges is defined }}"
+      - "{{ role_creation_0001.new_privileges is defined }}"
+
+- name: Again add a privilege to existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: add
+    state: present
+  register: role_creation_0001
+
+- name: Verify if role is not updated
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == false }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+      - "{{ role_creation_0001.old_privileges is defined }}"
+      - "{{ role_creation_0001.new_privileges is defined }}"
+
+- name: Remove a privilege from existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: remove
+  register: role_creation_0001
+
+- name: verify if role is updated with privileges
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+      - "{{ role_creation_0001.old_privileges is defined }}"
+      - "{{ role_creation_0001.new_privileges is defined }}"
+      - "{{ 'Folder.Create' not in role_creation_0001.new_privileges }}"
+
+- name: Again remove a privilege from existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: remove
+  register: role_creation_0001
+
+- name: Verify if role is not updated
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == false }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+      - "{{ role_creation_0001.old_privileges is defined }}"
+      - "{{ role_creation_0001.new_privileges is defined }}"
+      - "{{ 'Folder.Create' not in role_creation_0001.new_privileges }}"
+      - "{{ 'Folder.Create' not in role_creation_0001.old_privileges }}"
+
+- name: Set a privilege to an existing role
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: set
+  register: role_creation_0001
+
+- name: Verify if role is updated with privileges
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == true }}"
+      - "{{ role_creation_0001.role_id is defined }}"
+      - "{{ role_creation_0001.old_privileges is defined }}"
+      - "{{ role_creation_0001.new_privileges is defined }}"
+      - "{{ 'Folder.Create' in role_creation_0001.new_privileges }}"
+      - "{{ 'System.Anonymous' in role_creation_0001.new_privileges }}"
+      - "{{ 'System.Read' in role_creation_0001.new_privileges }}"
+      - "{{ 'System.View' in role_creation_0001.new_privileges }}"
+      - "{{ 'System.Anonymous' in role_creation_0001.old_privileges }}"
+      - "{{ 'System.Read' in role_creation_0001.old_privileges }}"
+      - "{{ 'System.View' in role_creation_0001.old_privileges }}"
+
+- name: Again set a privilege to an existing role
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: set
+  register: role_creation_0001
+
+- name: verify if role is not updated
+  assert:
+    that:
+      - "{{ role_creation_0001.changed == false }}"
+      - "{{ 'Folder.Create' in role_creation_0001.new_privileges }}"
+      - "{{ 'System.Anonymous' in role_creation_0001.new_privileges }}"
+      - "{{ 'System.Read' in role_creation_0001.new_privileges }}"
+      - "{{ 'System.View' in role_creation_0001.new_privileges }}"
+      - "{{ 'Folder.Create' in role_creation_0001.old_privileges }}"
+      - "{{ 'System.Anonymous' in role_creation_0001.old_privileges }}"
+      - "{{ 'System.Read' in role_creation_0001.old_privileges }}"
+      - "{{ 'System.View' in role_creation_0001.old_privileges }}"

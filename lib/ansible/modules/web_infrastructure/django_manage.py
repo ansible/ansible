@@ -45,7 +45,7 @@ options:
   virtualenv:
     description:
       - An optional path to a I(virtualenv) installation to use while running the manage application.
-    required: false
+    aliases: [virtualenv]
   apps:
     description:
       - A list of space-delimited apps to target. Used by the 'test' command.
@@ -54,6 +54,13 @@ options:
     description:
       - The name of the table used for database-backed caching. Used by the 'createcachetable' command.
     required: false
+  clear:
+    description:
+      - Clear the existing files before trying to copy or link the original file.
+      - Used only with the 'collectstatic' command. The C(--noinput) argument will be added automatically.
+    required: false
+    default: no
+    type: bool
   database:
     description:
       - The database to target. Used by the 'createcachetable', 'flush', 'loaddata', and 'syncdb' commands.
@@ -63,7 +70,7 @@ options:
       - Fail the command immediately if a test fails. Used by the 'test' command.
     required: false
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   fixtures:
     description:
       - A space-delimited list of fixture file names to load in the database. B(Required) by the 'loaddata' command.

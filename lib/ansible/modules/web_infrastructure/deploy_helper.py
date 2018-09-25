@@ -45,9 +45,6 @@ options:
         Returned in the C(deploy_helper.project_path) fact.
 
   state:
-    required: False
-    choices: [ present, finalize, absent, clean, query ]
-    default: present
     description:
       - the state of the project.
         C(query) will only gather facts,
@@ -56,57 +53,52 @@ options:
           deployed release and optionally clean old releases,
         C(clean) will remove failed & old releases,
         C(absent) will remove the project folder (synonymous to the M(file) module with C(state=absent))
+    choices: [ present, finalize, absent, clean, query ]
+    default: present
 
   release:
-    required: False
-    default: None
     description:
       - the release version that is being deployed. Defaults to a timestamp format %Y%m%d%H%M%S (i.e. '20141119223359').
         This parameter is optional during C(state=present), but needs to be set explicitly for C(state=finalize).
         You can use the generated fact C(release={{ deploy_helper.new_release }}).
 
   releases_path:
-    required: False
-    default: releases
     description:
       - the name of the folder that will hold the releases. This can be relative to C(path) or absolute.
         Returned in the C(deploy_helper.releases_path) fact.
+    default: releases
 
   shared_path:
-    required: False
-    default: shared
     description:
       - the name of the folder that will hold the shared resources. This can be relative to C(path) or absolute.
         If this is set to an empty string, no shared folder will be created.
         Returned in the C(deploy_helper.shared_path) fact.
+    default: shared
 
   current_path:
-    required: False
-    default: current
     description:
       - the name of the symlink that is created when the deploy is finalized. Used in C(finalize) and C(clean).
         Returned in the C(deploy_helper.current_path) fact.
+    default: current
 
   unfinished_filename:
-    required: False
-    default: DEPLOY_UNFINISHED
     description:
       - the name of the file that indicates a deploy has not finished. All folders in the releases_path that
         contain this file will be deleted on C(state=finalize) with clean=True, or C(state=clean). This file is
         automatically deleted from the I(new_release_path) during C(state=finalize).
+    default: DEPLOY_UNFINISHED
 
   clean:
-    required: False
-    default: True
     description:
       - Whether to run the clean procedure in case of C(state=finalize).
+    type: bool
+    default: 'yes'
 
   keep_releases:
-    required: False
-    default: 5
     description:
       - the number of old releases to keep when cleaning. Used in C(finalize) and C(clean). Any unfinished builds
         will be deleted first, so only correct releases will count. The current version will not count.
+    default: 5
 
 notes:
   - Facts are only returned for C(state=query) and C(state=present). If you use both, you should pass any overridden

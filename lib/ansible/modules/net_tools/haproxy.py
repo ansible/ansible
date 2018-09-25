@@ -27,13 +27,12 @@ notes:
       sockets configured for level 'admin'. For example, you can add the line
       'stats socket /var/run/haproxy.sock level admin' to the general section of
       haproxy.cfg. See U(http://haproxy.1wt.eu/download/1.5/doc/configuration.txt).
-    - Depends on netcat (nc) being available; you need to install the appriate
+    - Depends on netcat (nc) being available; you need to install the appropriate
       package for your operating system before this module can be used.
 options:
   backend:
     description:
       - Name of the HAProxy backend pool.
-    required: false
     default: auto-detected
   drain:
     description:
@@ -41,25 +40,22 @@ options:
         determined by wait_interval and wait_retries is reached.  Continue only
         after the status changes to 'MAINT'.  This overrides the
         shutdown_sessions option.
-    default: false
     version_added: "2.4"
   host:
     description:
       - Name of the backend host to change.
     required: true
-    default: null
   shutdown_sessions:
     description:
       - When disabling a server, immediately terminate all the sessions attached
         to the specified server. This can be used to terminate long-running
         sessions after a server is put into maintenance mode. Overridden by the
         drain option.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   socket:
     description:
       - Path to the HAProxy socket file.
-    required: false
     default: /var/run/haproxy.sock
   state:
     description:
@@ -67,31 +63,28 @@ options:
       - Note that C(drain) state was added in version 2.4. It is supported only by HAProxy version 1.5 or later,
         if used on versions < 1.5, it will be ignored.
     required: true
-    default: null
     choices: [ "enabled", "disabled", "drain" ]
   fail_on_not_found:
     description:
       - Fail whenever trying to enable/disable a backend host that does not exist
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.2"
   wait:
     description:
       - Wait until the server reports a status of 'UP' when `state=enabled`,
         status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drain`
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.0"
   wait_interval:
     description:
       - Number of seconds to wait between retries.
-    required: false
     default: 5
     version_added: "2.0"
   wait_retries:
     description:
       - Number of times to check for status after changing the state.
-    required: false
     default: 25
     version_added: "2.0"
   weight:
@@ -100,8 +93,6 @@ options:
         the new weight will be relative to the initially configured weight.
         Relative weights are only permitted between 0 and 100% and absolute
         weights are permitted between 0 and 256.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''
@@ -202,6 +193,7 @@ import time
 from string import Template
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_text
 
 
 DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
@@ -251,13 +243,16 @@ class HAProxy(object):
         """
         self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.client.connect(self.socket)
-        self.client.sendall('%s\n' % cmd)
-        result = ''
-        buf = ''
+        self.client.sendall(to_bytes('%s\n' % cmd))
+
+        result = b''
+        buf = b''
         buf = self.client.recv(RECV_SIZE)
         while buf:
             result += buf
             buf = self.client.recv(RECV_SIZE)
+        result = to_text(result, errors='surrogate_or_strict')
+
         if capture_output:
             self.capture_command_output(cmd, result.strip())
         self.client.close()

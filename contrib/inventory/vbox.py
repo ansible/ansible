@@ -18,10 +18,7 @@
 import sys
 from subprocess import Popen, PIPE
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 class SetEncoder(json.JSONEncoder):
@@ -29,6 +26,7 @@ class SetEncoder(json.JSONEncoder):
         if isinstance(obj, set):
             return list(obj)
         return json.JSONEncoder.default(self, obj)
+
 
 VBOX = "VBoxManage"
 

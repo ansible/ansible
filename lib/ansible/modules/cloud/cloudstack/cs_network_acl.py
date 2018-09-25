@@ -39,8 +39,6 @@ options:
     description:
       - Description of the network ACL.
       - If not set, identical to C(name).
-    required: false
-    default: null
   vpc:
     description:
       - VPC the network ACL is related to.
@@ -48,52 +46,43 @@ options:
   state:
     description:
       - State of the network ACL.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the network ACL rule is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the network ACL rule is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the network ACL is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone the VPC is related to.
       - If not set, default zone is used.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 # create a network ACL
-local_action:
-  module: cs_network_acl
-  name: Webserver ACL
-  description: a more detailed description of the ACL
-  vpc: customers
+- local_action:
+    module: cs_network_acl
+    name: Webserver ACL
+    description: a more detailed description of the ACL
+    vpc: customers
 
 # remove a network ACL
-local_action:
-  module: cs_network_acl
-  name: Webserver ACL
-  vpc: customers
-  state: absent
+- local_action:
+    module: cs_network_acl
+    name: Webserver ACL
+    vpc: customers
+    state: absent
 '''
 
 RETURN = '''

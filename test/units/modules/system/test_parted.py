@@ -237,4 +237,4 @@ class TestParted(ModuleTestCase):
             '_ansible_check_mode': True,
         })
         with patch('ansible.modules.system.parted.get_device_info', return_value=parted_dict2):
-            self.execute_module(changed=True, script='unit KiB mklabel gpt mkpart primary 0% 100% unit KiB name 1 lvmpartition set 1 lvm on')
+            self.execute_module(changed=True, script='unit KiB mklabel gpt mkpart primary 0% 100% unit KiB name 1 \'"lvmpartition"\' set 1 lvm on')

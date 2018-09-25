@@ -1,11 +1,12 @@
 ---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: Set up host logging
   eos_logging:
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -18,8 +19,7 @@
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -31,8 +31,7 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -45,8 +44,7 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -58,8 +56,7 @@
     dest: console
     level: warnings
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -67,12 +64,12 @@
       - 'result.changed == true'
       - '"logging console warnings" in result.commands'
 
+
 - name: Configure buffer size
   eos_logging:
     dest: buffered
     size: 480000
-    authorize: yes
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -80,13 +77,43 @@
       - 'result.changed == true'
       - '"logging buffered 480000" in result.commands'
 
+- name: Set up logging destination and facility at the same time
+  eos_logging:
+    dest: buffered
+    size: 4096
+    facility: local7
+    level: informational
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging buffered 4096 informational" in result.commands'
+      - '"logging facility local7" in result.commands'
+
+- name: Set up logging destination and facility at the same time again (idempotent)
+  eos_logging:
+    dest: buffered
+    size: 4096
+    facility: local7
+    level: informational
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
 - name: remove logging as collection tearDown
   eos_logging:
     aggregate:
       - { dest: console, level: warnings, state: absent }
-      - { dest: buffered, size: 480000, state: absent }
-    authorize: yes
-    provider: "{{ cli }}"
+      - { dest: buffered, level: informational, size: 4096, state: absent }
+      - { facility: local7, state: absent }
+  become: yes
   register: result
 
 - assert:
@@ -94,3 +121,4 @@
       - 'result.changed == true'
       - '"no logging console" in result.commands'
       - '"no logging buffered" in result.commands'
+      - '"no logging facility local7" in result.commands'

@@ -38,11 +38,12 @@ options:
     description:
       the body of the text message
     required: true
-  to_number:
+  to_numbers:
     description:
       one or more phone numbers to send the text message to,
       format +15551112222
     required: true
+    aliases: [ to_number ]
   from_number:
     description:
       the Twilio number to send the text message from, format +15551112222
@@ -76,7 +77,7 @@ EXAMPLES = '''
     account_sid: ACXXXXXXXXXXXXXXXXX
     auth_token: ACXXXXXXXXXXXXXXXXX
     from_number: +15553258899
-    to_number:
+    to_numbers:
       - +15551113232
       - +12025551235
       - +19735559010
@@ -99,8 +100,6 @@ EXAMPLES = '''
 # =======================================
 # twilio module support methods
 #
-import json
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
@@ -112,15 +111,15 @@ def post_twilio_api(module, account_sid, auth_token, msg, from_number,
         % (account_sid,)
     AGENT = "Ansible"
 
-    data = {'From':from_number, 'To':to_number, 'Body':msg}
+    data = {'From': from_number, 'To': to_number, 'Body': msg}
     if media_url:
         data['MediaUrl'] = media_url
     encoded_data = urlencode(data)
 
     headers = {'User-Agent': AGENT,
-            'Content-type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json',
-            }
+               'Content-type': 'application/x-www-form-urlencoded',
+               'Accept': 'application/json',
+               }
 
     # Hack module params to have the Basic auth params that fetch_url expects
     module.params['url_username'] = account_sid.replace('\n', '')
@@ -141,7 +140,7 @@ def main():
             auth_token=dict(required=True, no_log=True),
             msg=dict(required=True),
             from_number=dict(required=True),
-            to_number=dict(required=True),
+            to_numbers=dict(required=True, aliases=['to_number'], type='list'),
             media_url=dict(default=None, required=False),
         ),
         supports_check_mode=True
@@ -151,19 +150,16 @@ def main():
     auth_token = module.params['auth_token']
     msg = module.params['msg']
     from_number = module.params['from_number']
-    to_number = module.params['to_number']
+    to_numbers = module.params['to_numbers']
     media_url = module.params['media_url']
 
-    if not isinstance(to_number, list):
-        to_number = [to_number]
-
-    for number in to_number:
+    for number in to_numbers:
         r, info = post_twilio_api(module, account_sid, auth_token, msg,
-                from_number, number, media_url)
+                                  from_number, number, media_url)
         if info['status'] not in [200, 201]:
             body_message = "unknown error"
             if 'body' in info:
-                body = json.loads(info['body'])
+                body = module.from_json(info['body'])
                 body_message = body['message']
             module.fail_json(msg="unable to send message to %s: %s" % (number, body_message))
 

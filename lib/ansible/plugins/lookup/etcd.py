@@ -24,7 +24,7 @@ DOCUMENTATION = '''
         - Jan-Piet Mens (@jpmens)
     lookup: etcd
     version_added: "2.1"
-    short_description: get info from etcd server
+    short_description: get info from an etcd server
     description:
         - Retrieves data from an etcd server
     options:
@@ -48,7 +48,7 @@ DOCUMENTATION = '''
               - name: ANSIBLE_ETCD_VERSION
         validate_certs:
             description:
-                - toggle checking that the ssl ceritificates are valid, you normally only want to turn this off with self-signed certs.
+                - toggle checking that the ssl certificates are valid, you normally only want to turn this off with self-signed certs.
             default: True
             type: boolean
 '''
@@ -164,9 +164,9 @@ class LookupModule(LookupBase):
 
         self.set_options(var_options=variables, direct=kwargs)
 
-        validate_certs = self._options['validate_certs']
-        url = self._options['url']
-        version = self._options['version']
+        validate_certs = self.get_option('validate_certs')
+        url = self.get_option('url')
+        version = self.get_option('version')
 
         etcd = Etcd(url=url, version=version, validate_certs=validate_certs)
 

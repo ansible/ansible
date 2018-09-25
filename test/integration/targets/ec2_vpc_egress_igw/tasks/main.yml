@@ -1,0 +1,112 @@
+---
+- block:
+
+  # ============================================================
+  - name: test failure with no parameters
+    ec2_vpc_egress_igw:
+    register: result
+    ignore_errors: true
+
+  - name: assert failure with no parameters
+    assert:
+      that:
+        - 'result.failed'
+        - 'result.msg == "missing required arguments: vpc_id"'
+
+  # ============================================================
+  - name: set up aws connection info
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  # ============================================================
+  - name: test failure with non-existent VPC ID
+    ec2_vpc_egress_igw:
+      state: present
+      vpc_id: vpc-012345678
+      <<: *aws_connection_info
+    register: result
+    ignore_errors: true
+
+  - name: assert failure with non-existent VPC ID
+    assert:
+      that:
+        - 'result.failed'
+        - 'result.error.code == "InvalidVpcID.NotFound"'
+        - '"invalid vpc ID" in result.msg'
+
+  # ============================================================
+  - name: create a VPC
+    ec2_vpc_net:
+      name: "{{ resource_prefix }}-vpc"
+      state: present
+      cidr_block: "10.232.232.128/26"
+      <<: *aws_connection_info
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+    register: vpc_result
+
+  # ============================================================
+  - name: create egress-only internet gateway (expected changed=true)
+    ec2_vpc_egress_igw:
+      state: present
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_eigw_create
+
+  - name: assert creation happened (expected changed=true)
+    assert:
+      that:
+          - 'vpc_eigw_create'
+          - 'vpc_eigw_create.gateway_id.startswith("eigw-")'
+          - 'vpc_eigw_create.vpc_id == vpc_result.vpc.id'
+
+  # ============================================================
+  - name: attempt to recreate egress-only internet gateway on VPC (expected changed=false)
+    ec2_vpc_egress_igw:
+      state: present
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_eigw_recreate
+
+  - name: assert recreation did nothing (expected changed=false)
+    assert:
+      that:
+          - 'vpc_eigw_recreate.changed == False'
+          - 'vpc_eigw_recreate.gateway_id == vpc_eigw_create.gateway_id'
+          - 'vpc_eigw_recreate.vpc_id == vpc_eigw_create.vpc_id'
+
+  # ============================================================
+  - name: test state=absent (expected changed=true)
+    ec2_vpc_egress_igw:
+      state: absent
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_eigw_delete
+
+  - name: assert state=absent (expected changed=true)
+    assert:
+      that:
+          - 'vpc_eigw_delete.changed'
+
+  always:
+    # ============================================================
+    - name: tidy up EIGW
+      ec2_vpc_egress_igw:
+        state: absent
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        <<: *aws_connection_info
+      ignore_errors: true
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        <<: *aws_connection_info
+      ignore_errors: true

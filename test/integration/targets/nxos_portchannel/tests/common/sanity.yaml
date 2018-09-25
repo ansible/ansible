@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_portchannel sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_portchannel sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: testint1="{{ nxos_int1 }}"
 - set_fact: testint2="{{ nxos_int2 }}"
@@ -7,8 +9,8 @@
 - name: "Enable feature LACP"
   nxos_feature:
     feature: lacp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - name: "Put interface {{testint1}} into default state"
@@ -30,9 +32,8 @@
     group: 99
     members: ["{{ testint1 }}", "{{ testint2 }}"]
     force: 'true'
-    state: absent
-    timeout: 60
     provider: "{{ connection }}"
+    state: absent
 
 - block:
   - name: Configure port-channel mode active
@@ -41,9 +42,8 @@
       members: ["{{ testint1 }}", "{{ testint2 }}"]
       mode: active
       force: 'true'
-      state: present
-      timeout: 60
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -64,9 +64,8 @@
       members: ["{{ testint1 }}", "{{ testint2 }}"]
       mode: passive
       force: 'true'
-      state: present
-      timeout: 60
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -87,13 +86,12 @@
   - name: "Disable feature LACP"
     nxos_feature:
       feature: lacp
-      state: disabled
-      timeout: 60
       provider: "{{ connection }}"
+      state: disabled
 
   always:
   - name: Delete port-channel
     nxos_portchannel: *delpc
     register: result
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_portchannel sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_portchannel sanity test"

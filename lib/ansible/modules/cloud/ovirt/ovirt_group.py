@@ -59,20 +59,20 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Add group group1 from authorization provider example.com-authz
-ovirt_group:
+- ovirt_group:
     name: group1
     domain: example.com-authz
 
 # Add group group1 from authorization provider example.com-authz
 # In case of multi-domain Active Directory setup, you should pass
 # also namespace, so it adds correct group:
-ovirt_group:
+- ovirt_group:
     name: group1
     namespace: dc=ad2,dc=example,dc=com
     domain: example.com-authz
 
 # Remove group group1 with authorization provider example.com-authz
-ovirt_group:
+- ovirt_group:
     state: absent
     name: group1
     domain: example.com-authz
@@ -154,9 +154,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_groups':
-        module.deprecate("The 'ovirt_groups' module is being renamed 'ovirt_group'", version=2.8)
 
     check_sdk(module)
     check_params(module)

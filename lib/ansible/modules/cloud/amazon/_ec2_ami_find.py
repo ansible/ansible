@@ -16,7 +16,10 @@ DOCUMENTATION = r'''
 module: ec2_ami_find
 version_added: '2.0'
 short_description: Searches for AMIs to obtain the AMI ID and other information
-deprecated: Deprecated in 2.5. Use M(ec2_ami_facts) instead.
+deprecated:
+  removed_in: "2.9"
+  why: Various AWS modules have been combined and replaced with M(ec2_ami_facts).
+  alternative: Use M(ec2_ami_facts) instead.
 description:
   - Returns list of matching AMIs with AMI ID, along with other useful information
   - Can search AMIs with different owners
@@ -41,49 +44,31 @@ options:
       - You can include wildcards in many of the search options. An asterisk (*) matches zero or more characters, and a question mark (?) matches exactly one
         character. You can escape special characters using a backslash (\) before the character. For example, a value of \*amazon\?\\ searches for the
         literal string *amazon?\.
-    required: false
-    default: null
   ami_id:
     description:
       - An AMI ID to match.
-    default: null
-    required: false
   ami_tags:
     description:
       - A hash/dictionary of tags to match for the AMI.
-    default: null
-    required: false
   architecture:
     description:
       - An architecture type to match (e.g. x86_64).
-    default: null
-    required: false
   hypervisor:
     description:
       - A hypervisor type type to match (e.g. xen).
-    default: null
-    required: false
   is_public:
     description:
       - Whether or not the image(s) are public.
-    choices: ['yes', 'no']
-    default: null
-    required: false
+    type: bool
   name:
     description:
       - An AMI name to match.
-    default: null
-    required: false
   platform:
     description:
       - Platform type to match.
-    default: null
-    required: false
   product_code:
     description:
       - Marketplace product code to match.
-    default: null
-    required: false
     version_added: "2.3"
   sort:
     description:
@@ -107,48 +92,34 @@ options:
         - 'root_device_type'
         - 'state'
         - 'virtualization_type'
-    default: null
-    required: false
   sort_tag:
     description:
       - Tag name with which to sort results.
       - Required when specifying 'sort=tag'.
-    default: null
-    required: false
   sort_order:
     description:
       - Order in which to sort results.
       - Only used when the 'sort' parameter is specified.
     choices: ['ascending', 'descending']
     default: 'ascending'
-    required: false
   sort_start:
     description:
       - Which result to start with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
   sort_end:
     description:
       - Which result to end with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
   state:
     description:
       - AMI state to match.
     default: 'available'
-    required: false
   virtualization_type:
     description:
       - Virtualization type to match (e.g. hvm).
-    default: null
-    required: false
   root_device_type:
     description:
       - Root device type to match (e.g. ebs, instance-store).
-    default: null
-    required: false
     version_added: "2.5"
   no_result_action:
     description:
@@ -157,7 +128,8 @@ options:
       - "'fail' causes the module to report failure"
     choices: ['success', 'fail']
     default: 'success'
-    required: false
+extends_documentation_fragment:
+    - aws
 requirements:
   - "python >= 2.6"
   - boto
@@ -198,11 +170,6 @@ ami_id:
     returned: when AMI found
     type: string
     sample: "ami-e9095e8c"
-architecture:
-    description: architecture of image
-    returned: when AMI found
-    type: string
-    sample: "x86_64"
 architecture:
     description: architecture of image
     returned: when AMI found
@@ -303,7 +270,7 @@ def get_block_device_mapping(image):
     """
 
     bdm_dict = dict()
-    bdm = getattr(image,'block_device_mapping')
+    bdm = getattr(image, 'block_device_mapping')
     for device_name in bdm.keys():
         bdm_dict[device_name] = {
             'size': bdm[device_name].size,
@@ -319,28 +286,28 @@ def get_block_device_mapping(image):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        owner = dict(required=False, default=None),
-        ami_id = dict(required=False),
-        ami_tags = dict(required=False, type='dict',
-                aliases = ['search_tags', 'image_tags']),
-        architecture = dict(required=False),
-        hypervisor = dict(required=False),
-        is_public = dict(required=False, type='bool'),
-        name = dict(required=False),
-        platform = dict(required=False),
-        product_code = dict(required=False),
-        sort = dict(required=False, default=None,
-                    choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location',
-                             'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
-        sort_tag = dict(required=False),
-        sort_order = dict(required=False, default='ascending',
-                choices=['ascending', 'descending']),
-        sort_start = dict(required=False),
-        sort_end = dict(required=False),
-        state = dict(required=False, default='available'),
-        virtualization_type = dict(required=False),
-        no_result_action = dict(required=False, default='success',
-                choices = ['success', 'fail']),
+        owner=dict(required=False, default=None),
+        ami_id=dict(required=False),
+        ami_tags=dict(required=False, type='dict',
+                      aliases=['search_tags', 'image_tags']),
+        architecture=dict(required=False),
+        hypervisor=dict(required=False),
+        is_public=dict(required=False, type='bool'),
+        name=dict(required=False),
+        platform=dict(required=False),
+        product_code=dict(required=False),
+        sort=dict(required=False, default=None,
+                  choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location',
+                           'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
+        sort_tag=dict(required=False),
+        sort_order=dict(required=False, default='ascending',
+                        choices=['ascending', 'descending']),
+        sort_start=dict(required=False),
+        sort_end=dict(required=False),
+        state=dict(required=False, default='available'),
+        virtualization_type=dict(required=False),
+        no_result_action=dict(required=False, default='success',
+                              choices=['success', 'fail']),
     )
     )
 
@@ -379,7 +346,7 @@ def main():
         filter['image_id'] = ami_id
     if ami_tags:
         for tag in ami_tags:
-            filter['tag:'+tag] = ami_tags[tag]
+            filter['tag:' + tag] = ami_tags[tag]
     if architecture:
         filter['architecture'] = architecture
     if hypervisor:
@@ -435,9 +402,9 @@ def main():
     if sort == 'tag':
         if not sort_tag:
             module.fail_json(msg="'sort_tag' option must be given with 'sort=tag'")
-        results.sort(key=lambda e: e['tags'][sort_tag], reverse=(sort_order=='descending'))
+        results.sort(key=lambda e: e['tags'][sort_tag], reverse=(sort_order == 'descending'))
     elif sort:
-        results.sort(key=lambda e: e[sort], reverse=(sort_order=='descending'))
+        results.sort(key=lambda e: e[sort], reverse=(sort_order == 'descending'))
 
     try:
         if sort and sort_start and sort_end:

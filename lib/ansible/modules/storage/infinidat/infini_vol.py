@@ -126,10 +126,10 @@ def main():
     argument_spec = infinibox_argument_spec()
     argument_spec.update(
         dict(
-            name  = dict(required=True),
-            state = dict(default='present', choices=['present', 'absent']),
-            pool  = dict(required=True),
-            size  = dict()
+            name=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            pool=dict(required=True),
+            size=dict()
         )
     )
 
@@ -144,9 +144,9 @@ def main():
         except:
             module.fail_json(msg='size (Physical Capacity) should be defined in MB, GB, TB or PB units')
 
-    state  = module.params['state']
+    state = module.params['state']
     system = get_system(module)
-    pool   = get_pool(module, system)
+    pool = get_pool(module, system)
     volume = get_volume(module, system)
 
     if pool is None:

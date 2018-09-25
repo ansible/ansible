@@ -62,9 +62,7 @@ options:
   wait:
     required: false
     default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
     description:
       - Wait for the load balancer to become active before returning
   wait_timeout:
@@ -77,7 +75,9 @@ options:
     description:
       - Weight of node
 author: "Lukasz Kawczynski (@neuroid)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

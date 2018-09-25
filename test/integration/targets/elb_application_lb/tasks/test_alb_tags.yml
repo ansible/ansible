@@ -1,0 +1,93 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: create ALB with no listeners
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+
+  - name: re-create ALB with no listeners
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - not alb.changed
+
+  - name: add tags to ALB
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      tags:
+        created_by: "ALB test {{ resource_prefix }}"
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+        - 'alb.tags == {"created_by": "ALB test {{ resource_prefix }}"}'
+
+  - name: remove tags from ALB
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      tags: {}
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+        - not alb.tags
+
+  - name: test idempotence
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      tags: {}
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - not alb.changed
+        - not alb.tags
+
+  - name: destroy ALB with no listeners
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      state: absent
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed

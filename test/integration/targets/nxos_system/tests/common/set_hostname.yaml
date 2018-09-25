@@ -1,36 +1,41 @@
 ---
-- debug: msg="START {{ connection.transport }}/set_hostname.yaml"
+- debug: msg="START connection={{ ansible_connection }}/set_hostname.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
-- name: setup
-  nxos_config:
-    lines: hostname switch
-    match: none
-    provider: "{{ connection }}"
+- block:
+  - name: setup
+    nxos_config:
+      lines: "hostname switch"
+      match: none
+      provider: "{{ connection }}"
 
-- name: configure hostname
-  nxos_system:
-    hostname: foo
-    provider: "{{ connection }}"
-  register: result
+  - name: configure hostname
+    nxos_system:
+      hostname: foo
+      provider: "{{ connection }}"
+    register: result
 
-- assert:
-    that:
-      - "result.changed == true"
+  - assert:
+      that:
+        - "result.changed == true"
 
-- name: verify hostname
-  nxos_system:
-    hostname: foo
-    provider: "{{ connection }}"
-  register: result
+  - name: verify hostname
+    nxos_system:
+      hostname: foo
+      provider: "{{ connection }}"
+    register: result
 
-- assert:
-    that:
-      - "result.changed == false"
+  - assert:
+      that:
+        - "result.changed == false"
 
-- name: teardown
-  nxos_config:
-    lines: hostname switch
-    match: none
-    provider: "{{ connection }}"
+  always:
+  - name: teardown
+    nxos_config:
+      lines: "hostname switch"
+      match: none
+      provider: "{{ connection }}"
 
-- debug: msg="END {{ connection.transport }}/set_hostname.yaml"
+
+  - debug: msg="END connection={{ ansible_connection }}/set_hostname.yaml"

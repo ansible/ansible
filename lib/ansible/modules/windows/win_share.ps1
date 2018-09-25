@@ -1,5 +1,6 @@
 #!powershell
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -57,7 +58,7 @@ Try {
         If ($share) {
             # See message around -WhatIf where $check_mode is defined
             if (-not $check_mode) {
-                Remove-SmbShare -Force -Name $name
+                Remove-SmbShare -Force -Name $name | Out-Null
             }
             $result.actions += "Remove-SmbShare -Force -Name $name"
             $result.changed = $true
@@ -87,7 +88,7 @@ Try {
         # need to (re-)create share
         If (-not $share) {
             if (-not $check_mode) {
-                New-SmbShare -Name $name -Path $path
+                New-SmbShare -Name $name -Path $path | Out-Null
             }
             $share = Get-SmbShare -Name $name -ErrorAction SilentlyContinue
 
@@ -96,8 +97,8 @@ Try {
         }
         If ($share.Path -ne $path) {
             if (-not $check_mode) {
-                Remove-SmbShare -Force -Name $name
-                New-SmbShare -Name $name -Path $path
+                Remove-SmbShare -Force -Name $name | Out-Null
+                New-SmbShare -Name $name -Path $path | Out-Null
             }
             $share = Get-SmbShare -Name $name -ErrorAction SilentlyContinue
             $result.changed = $true
@@ -108,28 +109,28 @@ Try {
         # updates
         If ($share.Description -ne $description) {
             if (-not $check_mode) {
-                Set-SmbShare -Force -Name $name -Description $description
+                Set-SmbShare -Force -Name $name -Description $description | Out-Null
             }
             $result.changed = $true
             $result.actions += "Set-SmbShare -Force -Name $name -Description $description"
         }
         If ($share.FolderEnumerationMode -ne $folderEnum) {
             if (-not $check_mode) {
-                Set-SmbShare -Force -Name $name -FolderEnumerationMode $folderEnum
+                Set-SmbShare -Force -Name $name -FolderEnumerationMode $folderEnum | Out-Null
             }
             $result.changed = $true
             $result.actions += "Set-SmbShare -Force -Name $name -FolderEnumerationMode $folderEnum"
         }
         if ($share.CachingMode -ne $cachingMode) {
             if (-not $check_mode) {
-                Set-SmbShare -Force -Name $name -CachingMode $cachingMode
+                Set-SmbShare -Force -Name $name -CachingMode $cachingMode | Out-Null
             }
             $result.changed = $true
             $result.actions += "Set-SmbShare -Force -Name $name -CachingMode $cachingMode"
         }
         if ($share.EncryptData -ne $encrypt) {
             if (-not $check_mode) {
-                Set-SmbShare -Force -Name $name -EncryptData $encrypt
+                Set-SmbShare -Force -Name $name -EncryptData $encrypt | Out-Null
             }
             $result.changed = $true
             $result.actions += "Set-SmbShare -Force -Name $name -EncryptData $encrypt"
@@ -137,11 +138,11 @@ Try {
 
         # clean permissions that imply others
         ForEach ($user in $permissionFull) {
-            $permissionChange.remove($user)
-            $permissionRead.remove($user)
+            $permissionChange.remove($user) | Out-Null
+            $permissionRead.remove($user) | Out-Null
         }
         ForEach ($user in $permissionChange) {
-            $permissionRead.remove($user)
+            $permissionRead.remove($user) | Out-Null
         }
 
         # remove permissions
@@ -156,20 +157,20 @@ Try {
                 if (-not ($permission.AccountName -eq 'Everyone' -and $cim_count -eq 1)) {
                     If (-not ($permissionDeny.Contains($permission.AccountName))) {
                         if (-not $check_mode) {
-                            Unblock-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName
+                            Unblock-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
                         }
                         $result.changed = $true
                         $result.actions += "Unblock-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
                     } else {
                         # Remove from the deny list as it already has the permissions
-                        $permissionDeny.remove($permission.AccountName)
+                        $permissionDeny.remove($permission.AccountName) | Out-Null
                     }
                 }
             } ElseIf ($permission.AccessControlType -eq "Allow") {
                 If ($permission.AccessRight -eq "Full") {
                     If (-not ($permissionFull.Contains($permission.AccountName))) {
                         if (-not $check_mode) {
-                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName
+                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
                         }
                         $result.changed = $true
                         $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
@@ -178,11 +179,11 @@ Try {
                     }
 
                     # user got requested permissions
-                    $permissionFull.remove($permission.AccountName)
+                    $permissionFull.remove($permission.AccountName) | Out-Null
                 } ElseIf ($permission.AccessRight -eq "Change") {
                     If (-not ($permissionChange.Contains($permission.AccountName))) {
                         if (-not $check_mode) {
-                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName
+                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
                         }
                         $result.changed = $true
                         $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
@@ -191,11 +192,11 @@ Try {
                     }
 
                     # user got requested permissions
-                    $permissionChange.remove($permission.AccountName)
+                    $permissionChange.remove($permission.AccountName) | Out-Null
                 } ElseIf ($permission.AccessRight -eq "Read") {
                     If (-not ($permissionRead.Contains($permission.AccountName))) {
                         if (-not $check_mode) {
-                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName
+                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
                         }
                         $result.changed = $true
                         $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
@@ -204,7 +205,7 @@ Try {
                     }
 
                     # user got requested permissions
-                    $permissionRead.Remove($permission.AccountName)
+                    $permissionRead.Remove($permission.AccountName) | Out-Null
                 }
             }
         }
@@ -212,28 +213,28 @@ Try {
         # add missing permissions
         ForEach ($user in $permissionRead) {
             if (-not $check_mode) {
-                Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Read"
+                Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Read" | Out-Null
             }
             $result.changed = $true
             $result.actions += "Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight Read"
         }
         ForEach ($user in $permissionChange) {
             if (-not $check_mode) {
-                Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Change"
+                Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Change" | Out-Null
             }
             $result.changed = $true
             $result.actions += "Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight Change"
         }
         ForEach ($user in $permissionFull) {
             if (-not $check_mode) {
-                Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Full"
+                Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Full" | Out-Null
             }
             $result.changed = $true
             $result.actions += "Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight Full"
         }
         ForEach ($user in $permissionDeny) {
             if (-not $check_mode) {
-                Block-SmbShareAccess -Force -Name $name -AccountName $user
+                Block-SmbShareAccess -Force -Name $name -AccountName $user | Out-Null
             }
             $result.changed = $true
             $result.actions += "Block-SmbShareAccess -Force -Name $name -AccountName $user"

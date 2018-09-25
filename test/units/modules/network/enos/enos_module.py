@@ -1,4 +1,4 @@
-# (c) 2016 Red Hat Inc.
+# Copyright (C) 2017 Lenovo, Inc.
 #
 # This file is part of Ansible
 #
@@ -22,7 +22,10 @@ __metaclass__ = type
 import os
 import json
 
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
+from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import patch
+from ansible.module_utils import basic
+from ansible.module_utils._text import to_bytes
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -47,9 +50,18 @@ def load_fixture(name):
     return data
 
 
-class TestEnosModule(ModuleTestCase):
+class AnsibleExitJson(Exception):
+    pass
 
-    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
+
+class AnsibleFailJson(Exception):
+    pass
+
+
+class TestEnosModule(unittest.TestCase):
+
+    def execute_module(self, failed=False, changed=False, commands=None,
+                       sort=True, defaults=False):
 
         self.load_fixtures(commands)
 
@@ -62,23 +74,36 @@ class TestEnosModule(ModuleTestCase):
 
         if commands is not None:
             if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
+                self.assertEqual(sorted(commands), sorted(result['commands']),
+                                 result['commands'])
             else:
-                self.assertEqual(commands, result['commands'], result['commands'])
+                self.assertEqual(commands, result['commands'],
+                                 result['commands'])
 
         return result
 
     def failed(self):
-        with self.assertRaises(AnsibleFailJson) as exc:
-            self.module.main()
+        def fail_json(*args, **kwargs):
+            kwargs['failed'] = True
+            raise AnsibleFailJson(kwargs)
+
+        with patch.object(basic.AnsibleModule, 'fail_json', fail_json):
+            with self.assertRaises(AnsibleFailJson) as exc:
+                self.module.main()
 
         result = exc.exception.args[0]
         self.assertTrue(result['failed'], result)
         return result
 
     def changed(self, changed=False):
-        with self.assertRaises(AnsibleExitJson) as exc:
-            self.module.main()
+        def exit_json(*args, **kwargs):
+            if 'changed' not in kwargs:
+                kwargs['changed'] = False
+            raise AnsibleExitJson(kwargs)
+
+        with patch.object(basic.AnsibleModule, 'exit_json', exit_json):
+            with self.assertRaises(AnsibleExitJson) as exc:
+                self.module.main()
 
         result = exc.exception.args[0]
         self.assertEqual(result['changed'], changed, result)

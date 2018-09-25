@@ -1,14 +1,16 @@
 ---
-- name: collect common cli test cases
+- name: collect common test cases
   find:
     paths: "{{ role_path }}/tests/common"
     patterns: "{{ testcase }}.yaml"
+  connection: local
   register: test_cases
 
 - name: collect cli test cases
   find:
     paths: "{{ role_path }}/tests/cli"
     patterns: "{{ testcase }}.yaml"
+  connection: local
   register: cli_cases
 
 - set_fact:
@@ -18,8 +20,8 @@
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
-- name: run test case
-  include: "{{ test_case_to_run }} connection={{ cli }}"
+- name: run test cases (connection=network_cli)
+  include: "{{ test_case_to_run }} ansible_connection=network_cli connection={{ cli }}"
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run

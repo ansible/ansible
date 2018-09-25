@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -61,20 +46,18 @@ options:
     port:
         description:
             - "Power management interface port."
-    slot:
-        description:
-            - "Power management slot."
     options:
         description:
-            - "Dictionary of additional fence agent options."
-            - "Additional information about options can be found at U(https://fedorahosted.org/cluster/wiki/FenceArguments)."
+            - "Dictionary of additional fence agent options (including Power Management slot)."
+            - "Additional information about options can be found at U(https://github.com/ClusterLabs/fence-agents/blob/master/doc/FenceAgentAPI.md)."
     encrypt_options:
         description:
-            - "If (true) options will be encrypted when send to agent."
+            - "If I(true) options will be encrypted when send to agent."
         aliases: ['encrypt']
     order:
         description:
             - "Integer value specifying, by default it's added at the end."
+        version_added: "2.5"
 extends_documentation_fragment: ovirt
 '''
 
@@ -93,6 +76,20 @@ EXAMPLES = '''
     password: admin
     port: 3333
     type: ipmilan
+
+# Add fence agent to host 'myhost' using 'slot' option
+- ovirt_host_pm:
+    name: myhost
+    address: 1.2.3.4
+    options:
+      myoption1: x
+      myoption2: y
+      slot: myslot
+    username: admin
+    password: admin
+    port: 3333
+    type: ipmilan
+
 
 # Remove ipmilan fence agent with address 1.2.3.4 on host 'myhost'
 - ovirt_host_pm:
@@ -171,7 +168,8 @@ class HostPmModule(BaseModule):
             equal(self._module.params.get('password'), entity.password) and
             equal(self._module.params.get('username'), entity.username) and
             equal(self._module.params.get('port'), entity.port) and
-            equal(self._module.params.get('type'), entity.type)
+            equal(self._module.params.get('type'), entity.type) and
+            equal(self._module.params.get('order'), entity.order)
         )
 
 
@@ -187,7 +185,7 @@ def main():
         password=dict(default=None, no_log=True),
         type=dict(default=None),
         port=dict(default=None, type='int'),
-        slot=dict(default=None),
+        order=dict(default=None, type='int'),
         options=dict(default=None, type='dict'),
         encrypt_options=dict(default=None, type='bool', aliases=['encrypt']),
     )

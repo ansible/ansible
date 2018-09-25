@@ -84,6 +84,14 @@ options:
     type: bool
     default: 'yes'
     version_added: '2.2'
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    required: false
+    type: bool
+    default: "no"
+    version_added: '2.5'
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
@@ -96,7 +104,7 @@ EXAMPLES = '''
     path: /mnt/dvd
     src: /dev/sr0
     fstype: iso9660
-    opts: ro
+    opts: ro,noauto
     state: present
 
 - name: Mount up device by label
@@ -120,12 +128,14 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils.ismount import ismount
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 
-def write_fstab(lines, path):
+def write_fstab(module, lines, path):
+    if module.params['backup']:
+        module.backup_local(path)
+
     fs_w = open(path, 'w')
 
     for l in lines:
@@ -208,7 +218,13 @@ def set_mount(module, args):
             ) = line.split()
 
         # Check if we found the correct line
-        if ld['name'] != escaped_args['name']:
+        if (
+                ld['name'] != escaped_args['name'] or (
+                    # In the case of swap, check the src instead
+                    'src' in args and
+                    ld['name'] == 'none' and
+                    ld['fstype'] == 'swap' and
+                    ld['src'] != args['src'])):
             to_write.append(line)
 
             continue
@@ -236,7 +252,7 @@ def set_mount(module, args):
         changed = True
 
     if changed and not module.check_mode:
-        write_fstab(to_write, args['fstab'])
+        write_fstab(module, to_write, args['fstab'])
 
     return (args['name'], changed)
 
@@ -289,7 +305,13 @@ def unset_mount(module, args):
                 ld['passno']
             ) = line.split()
 
-        if ld['name'] != escaped_name:
+        if (
+                ld['name'] != escaped_name or (
+                    # In the case of swap, check the src instead
+                    'src' in args and
+                    ld['name'] == 'none' and
+                    ld['fstype'] == 'swap' and
+                    ld['src'] != args['src'])):
             to_write.append(line)
 
             continue
@@ -298,7 +320,7 @@ def unset_mount(module, args):
         changed = True
 
     if changed and not module.check_mode:
-        write_fstab(to_write, args['fstab'])
+        write_fstab(module, to_write, args['fstab'])
 
     return (args['name'], changed)
 
@@ -548,6 +570,7 @@ def main():
             opts=dict(type='str'),
             passno=dict(type='str'),
             src=dict(type='path'),
+            backup=dict(default=False, type='bool'),
             state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
         ),
         supports_check_mode=True,
@@ -641,9 +664,8 @@ def main():
             if os.path.exists(name):
                 try:
                     os.rmdir(name)
-                except (OSError, IOError):
-                    e = get_exception()
-                    module.fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
+                except (OSError, IOError) as e:
+                    module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
     elif state == 'unmounted':
         if ismount(name) or is_bind_mounted(module, linux_mounts, name):
             if not module.check_mode:
@@ -658,10 +680,9 @@ def main():
         if not os.path.exists(name) and not module.check_mode:
             try:
                 os.makedirs(name)
-            except (OSError, IOError):
-                e = get_exception()
+            except (OSError, IOError) as e:
                 module.fail_json(
-                    msg="Error making dir %s: %s" % (name, str(e)))
+                    msg="Error making dir %s: %s" % (name, to_native(e)))
 
         name, changed = set_mount(module, args)
         res = 0

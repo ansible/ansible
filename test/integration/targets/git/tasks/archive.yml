@@ -18,7 +18,7 @@
     that: (git_archive.results | map(attribute='changed') | unique | list)[0]
   when:
     - "ansible_os_family == 'RedHat'"
-    - ansible_distribution_major_version | version_compare('7', '>=')
+    - ansible_distribution_major_version is version('7', '>=')
 
 - name: ARCHIVE | Check if archive file is created or not
   stat:
@@ -31,7 +31,7 @@
     that: (archive_check.results | map(attribute='stat.exists') | unique | list)[0]
   when:
     - "ansible_os_family == 'RedHat'"
-    - ansible_distribution_major_version | version_compare('7', '>=')
+    - ansible_distribution_major_version is version('7', '>=')
 
 - name: ARCHIVE | Clear checkout_dir               
   file:                  
@@ -60,7 +60,7 @@
     that: (git_archive.results | map(attribute='changed') | unique | list)[0]
   when:
     - "ansible_os_family == 'RedHat'"
-    - ansible_distribution_major_version | version_compare('7', '>=')
+    - ansible_distribution_major_version is version('7', '>=')
 
 - name: ARCHIVE | Check if archive file is created or not
   stat:
@@ -73,4 +73,4 @@
     that: (archive_check.results | map(attribute='stat.exists') | unique | list)[0]
   when:
     - "ansible_os_family == 'RedHat'"
-    - ansible_distribution_major_version | version_compare('7', '>=')
+    - ansible_distribution_major_version is version('7', '>=')

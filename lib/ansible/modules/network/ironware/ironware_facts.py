@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: ironware_facts
 version_added: "2.5"
 author: "Paul Baker (@paulquack)"
-short_description: Collect facts from devices running Brocade Ironware
+short_description: Collect facts from devices running Extreme Ironware
 description:
   - Collects a base set of device facts from a remote device that
     is running Ironware.  This module prepends all of the
@@ -134,8 +134,8 @@ ansible_net_neighbors:
 """
 import re
 
-from ansible.module_utils.ironware import run_commands
-from ansible.module_utils.ironware import ironware_argument_spec, check_args
+from ansible.module_utils.network.ironware.ironware import run_commands
+from ansible.module_utils.network.ironware.ironware import ironware_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip

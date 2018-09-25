@@ -32,7 +32,7 @@ DOCUMENTATION = """
         default: ''
       remote_addr:
         description:
-            - The path of the chroot you want to access.
+            - The name of the container you want to access.
         default: inventory_hostname
         vars:
             - name: ansible_host
@@ -246,9 +246,13 @@ class Connection(ConnectionBase):
         # running containers, so we use docker exec to implement this
         # Although docker version 1.8 and later provide support, the
         # owner and group of the files are always set to root
-        args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s" % (out_path, BUFSIZE)])
-        args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
+            if not os.fstat(in_file.fileno()).st_size:
+                count = ' count=0'
+            else:
+                count = ''
+            args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s%s" % (out_path, BUFSIZE, count)])
+            args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
             try:
                 p = subprocess.Popen(args, stdin=in_file,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -277,8 +281,25 @@ class Connection(ConnectionBase):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
 
-        # Rename if needed
         actual_out_path = os.path.join(out_dir, os.path.basename(in_path))
+
+        if p.returncode != 0:
+            # Older docker doesn't have native support for fetching files command `cp`
+            # If `cp` fails, try to use `dd` instead
+            args = self._build_exec_cmd([self._play_context.executable, "-c", "dd if=%s bs=%s" % (in_path, BUFSIZE)])
+            args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
+            with open(to_bytes(actual_out_path, errors='surrogate_or_strict'), 'wb') as out_file:
+                try:
+                    p = subprocess.Popen(args, stdin=subprocess.PIPE,
+                                         stdout=out_file, stderr=subprocess.PIPE)
+                except OSError:
+                    raise AnsibleError("docker connection requires dd command in the container to put files")
+                stdout, stderr = p.communicate()
+
+                if p.returncode != 0:
+                    raise AnsibleError("failed to fetch file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+
+        # Rename if needed
         if actual_out_path != out_path:
             os.rename(to_bytes(actual_out_path, errors='strict'), to_bytes(out_path, errors='strict'))
 

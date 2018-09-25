@@ -21,18 +21,23 @@ from __future__ import (absolute_import, division, print_function)
 
 import copy
 
-from nose.plugins.skip import SkipTest
+import pytest
+
 from ansible.module_utils.aws.core import HAS_BOTO3
 from ansible.compat.tests.mock import MagicMock
 from units.modules.utils import set_module_args
 
 if not HAS_BOTO3:
-    raise SkipTest("test_api_gateway.py requires the `boto3` and `botocore` modules")
+    pytestmark = pytest.mark.skip("test_api_gateway.py requires the `boto3` and `botocore` modules")
 
 # these are here cause ... boto!
-from botocore.exceptions import ClientError
 import ansible.modules.cloud.amazon.lambda_policy as lambda_policy
 from ansible.modules.cloud.amazon.lambda_policy import setup_module_object
+try:
+    from botocore.exceptions import ClientError
+except ImportError:
+    pass
+
 
 base_module_args = {
     "region": "us-west-1",
@@ -99,13 +104,12 @@ fake_policy_return = {
 
 error_response = {'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Fake Testing Error'}}
 operation_name = 'FakeOperation'
-resource_not_found_e = ClientError(error_response, operation_name)
 
 
 def test_manage_state_adds_missing_permissions():
     lambda_client_double = MagicMock()
     # Policy actually: not present  Requested State: present  Should: create
-    lambda_client_double.get_policy.side_effect = resource_not_found_e
+    lambda_client_double.get_policy.side_effect = ClientError(error_response, operation_name)
     fake_module_params = copy.deepcopy(fake_module_params_present)
     module_double.params = fake_module_params
     lambda_policy.manage_state(module_double, lambda_client_double)
@@ -153,7 +157,7 @@ def test_manage_state_removes_unwanted_permissions():
 def test_manage_state_leaves_already_removed_permissions():
     lambda_client_double = MagicMock()
     # Policy actually: absent   Requested State: absent  Should: do nothing
-    lambda_client_double.get_policy.side_effect = resource_not_found_e
+    lambda_client_double.get_policy.side_effect = ClientError(error_response, operation_name)
     fake_module_params = copy.deepcopy(fake_module_params_absent)
     module_double.params = fake_module_params
     lambda_policy.manage_state(module_double, lambda_client_double)

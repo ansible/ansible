@@ -25,7 +25,7 @@ import json
 from itertools import chain
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
@@ -49,9 +49,9 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running', flags=None):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         if source == 'running':
             cmd = b'show running-config'
@@ -61,7 +61,7 @@ class Cliconf(CliconfBase):
         else:
             cmd = b'show configuration'
             if flags is not None:
-                return self.invalid_params("flags are only supported with running-config")
+                raise ValueError("flags are only supported with running-config")
 
         return self.send_command(cmd)
 
@@ -70,8 +70,8 @@ class Cliconf(CliconfBase):
         for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
             self.send_command(cmd)
 
-    def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+    def get(self, command, prompt=None, answer=None, sendonly=False):
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def get_capabilities(self):
         result = {}

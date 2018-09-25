@@ -1,4 +1,4 @@
-# (c) 2015, Jonathan Davila <jdavila(at)ansible.com>
+# (c) 2015, Jonathan Davila <jonathan(at)davila.io>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -9,11 +9,11 @@ DOCUMENTATION = """
   lookup: hashi_vault
   author: Jonathan Davila <jdavila(at)ansible.com>
   version_added: "2.0"
-  short_description: retrieve secrets from HasihCorp's vault
+  short_description: retrieve secrets from HashiCorp's vault
   requirements:
     - hvac (python library)
   description:
-    - retrieve secrets from HasihCorp's vault
+    - retrieve secrets from HashiCorp's vault
   notes:
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
   options:
@@ -33,6 +33,14 @@ DOCUMENTATION = """
       description: authentication user name
     password:
       description: authentication password
+    role_id:
+      description: Role id for a vault AppRole auth
+      env:
+        - name: VAULT_ROLE_ID
+    secret_id:
+      description: Secret id for a vault AppRole auth
+      env:
+        - name: VAULT_SECRET_ID
     auth_method:
       description: authentication method used
     mount_point:
@@ -65,6 +73,10 @@ EXAMPLES = """
 - name: using certificate auth
   debug:
       msg: "{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
+
+- name: authenticate with a Vault app role
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid secret_id=mysecretid url=http://myvault:8200')}}"
 """
 
 RETURN = """
@@ -103,12 +115,14 @@ class HashiVault:
         if s is None:
             raise AnsibleError("No secret specified for hashi_vault lookup")
 
-        s_f = s.split(':')
+        s_f = s.rsplit(':', 1)
         self.secret = s_f[0]
         if len(s_f) >= 2:
             self.secret_field = s_f[1]
         else:
             self.secret_field = ''
+
+        self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
 
         # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
         # token auth. This means if a particular auth backend is requested and a token is also given, then we
@@ -137,8 +151,6 @@ class HashiVault:
 
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
-
-            self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
 
             self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
 
@@ -184,6 +196,17 @@ class HashiVault:
                 return True
         else:
             return False
+
+    def auth_approle(self, **kwargs):
+        role_id = kwargs.get('role_id', os.environ.get('VAULT_ROLE_ID', None))
+        if role_id is None:
+            raise AnsibleError("Authentication method app role requires a role_id")
+
+        secret_id = kwargs.get('secret_id', os.environ.get('VAULT_SECRET_ID', None))
+        if secret_id is None:
+            raise AnsibleError("Authentication method app role requires a secret_id")
+
+        self.client.auth_approle(role_id, secret_id)
 
 
 class LookupModule(LookupBase):
