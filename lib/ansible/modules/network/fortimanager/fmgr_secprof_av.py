@@ -63,7 +63,7 @@ options:
       - Sets one of three modes for managing the object.
       - Mutually Exclusive with STATE parameter.
       - Allows use of soft-adds instead of overwriting existing values
-    choices: ['add', 'set', 'delete']
+    choices: ['add', 'set', 'delete', 'update']
     default: add
 
   scan_mode:
@@ -1117,7 +1117,7 @@ def main():
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True, required=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True, required=True),
-        mode=dict(choices=["add", "set", "delete"], type="str", default="add"),
+        mode=dict(choices=["add", "set", "delete", "update"], type="str", default="add"),
 
         scan_mode=dict(required=False, type="str", choices=["quick", "full"]),
         replacemsg_group=dict(required=False, type="dict"),
