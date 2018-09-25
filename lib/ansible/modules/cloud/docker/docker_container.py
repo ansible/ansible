@@ -69,6 +69,8 @@ options:
         options. If the option is specified for a dict, the container will only be updated
         or restarted if the module option contains a key which isn't present in the
         container's option, or if the value of a key present differs.
+      - The wildcard option C(*) can be used to set one of the default values C(strict)
+        or C(ignore) to I(all) comparisons.
       - See the examples for details.
     version_added: "2.8"
   cpu_period:
@@ -620,6 +622,17 @@ EXAMPLES = '''
       image: ignore   # don't restart containers with older versions of the image
       env: strict   # we want precisely this environment
       volumes: allow_more_present   # if there are more volumes, that's ok, as long as `/tmp:/tmp` is there
+
+- name: Finer container restart/update control II
+  docker_container:
+    name: test
+    image: ubuntu:18.04
+    env:
+      - arg1: true
+      - arg2: whatever
+    comparisons:
+      '*': ignore  # by default, ignore *all* options (including image)
+      env: strict   # except for environment variables; there, we want to be strict
 '''
 
 RETURN = '''
@@ -2207,8 +2220,18 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             comparisons['image']['comparison'] = 'ignore'
         # Process options
         if self.module.params.get('comparisons'):
+            # If '*' appears in comparisons, process it first
+            if '*' in self.module.params['comparisons']:
+                value = self.module.params['comparisons']['*']
+                if value not in ('strict', 'ignore'):
+                    self.fail("The wildcard can only be used with comparison modes 'strict' and 'ignore'!")
+                for dummy, v in comparisons.items():
+                    v['comparison'] = value
+            # Now process all other comparisons.
             comp_aliases_used = {}
-            for key, value in self.module.params.get('comparisons').items():
+            for key, value in self.module.params['comparisons'].items():
+                if key == '*':
+                    continue
                 # Find main key
                 key_main = comp_aliases.get(key)
                 if key_main is None:
