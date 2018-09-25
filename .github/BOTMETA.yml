@@ -553,6 +553,8 @@ files:
     maintainers: $team_onyx
   $module_utils/network/ordnance:
     maintainers: alexanderturner djh00t
+  $module_utils/network/panos:
+    maintainers: ivanbojer jtschichold shinmog
   $module_utils/network/routeros:
     maintainers: heuels
   $module_utils/network/slxos:
