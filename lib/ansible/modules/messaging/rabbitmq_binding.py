@@ -125,11 +125,11 @@ class RabbitMqBinding(object):
         self.base_url = 'http://{0}:{1}/api/bindings'.format(self.login_host,
                                                              self.login_port)
         self.url = '{0}/{1}/e/{2}/{3}/{4}/{5}'.format(self.base_url,
-                                                      urllib_parse.quote(self.vhost),
-                                                      urllib_parse.quote(self.name),
+                                                      urllib_parse.quote(self.vhost, safe=''),
+                                                      urllib_parse.quote(self.name, safe=''),
                                                       self.destination_type,
-                                                      self.destination,
-                                                      self.routing_key)
+                                                      urllib_parse.quote(self.destination, safe=''),
+                                                      urllib_parse.quote(self.routing_key))
         self.result = {
             'changed': False,
             'name': self.module.params['name'],
@@ -247,10 +247,10 @@ class RabbitMqBinding(object):
         :return:
         """
         self.url = '{0}/{1}/e/{2}/{3}/{4}'.format(self.base_url,
-                                                  urllib_parse.quote(self.vhost),
-                                                  urllib_parse.quote(self.name),
+                                                  urllib_parse.quote(self.vhost, safe=''),
+                                                  urllib_parse.quote(self.name, safe=''),
                                                   self.destination_type,
-                                                  urllib_parse.quote(self.destination))
+                                                  urllib_parse.quote(self.destination, safe=''))
         self.api_result = self.request.post(self.url,
                                             auth=self.authentication,
                                             headers={"content-type": "application/json"},
