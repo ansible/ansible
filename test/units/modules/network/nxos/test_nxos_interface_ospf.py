@@ -54,3 +54,5 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
     def test_loopback_interface_failed(self):
         set_module_args(dict(interface='loopback0', ospf=1, area=0, passive_interface=True))
         self.execute_module(failed=True, changed=False)
+        set_module_args(dict(interface='loopback0', ospf=1, area=0, network='broadcast'))
+        self.execute_module(failed=True, changed=False)
