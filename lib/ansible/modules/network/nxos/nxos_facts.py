@@ -179,6 +179,8 @@ from ansible.module_utils.six import string_types, iteritems
 
 
 g_config = None
+
+
 class FactsBase(object):
 
     def __init__(self, module):
@@ -307,7 +309,7 @@ class Features(FactsBase):
             features = []
             for line in data.splitlines():
                 if line.startswith('feature'):
-                    features.append(line.replace('feature','').strip())
+                    features.append(line.replace('feature', '').strip())
 
             self.facts['features_enabled'] = features
 
