@@ -241,7 +241,7 @@
 # https://github.com/ansible/ansible/issues/29614
 - name: Change mode on an already downloaded file and specify checksum
   get_url:
-    url: 'https://{{ httpbin_host }}/'
+    url: 'https://{{ httpbin_host }}/get'
     dest: '{{ output_dir }}/test'
     checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
     mode: '0775'
@@ -256,6 +256,17 @@
     that:
       - result is changed
       - "stat_result.stat.mode == '0775'"
+
+- name: Get a file that already exists
+  get_url:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '{{ output_dir }}/test'
+  register: result
+
+- name: Assert that we didn't re-download unnecessarily
+  assert:
+    that:
+      - result is not changed
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
