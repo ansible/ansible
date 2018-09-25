@@ -2,16 +2,6 @@
   shell: uname -r
   register: os_version
 
-- name: Install packages for Trusty
-  apt:
-    name: "{{ item }}"
-    state: present
-    update_cache: yes
-  with_items:
-  - "linux-image-extra-{{ os_version.stdout }}"
-  - linux-image-extra-virtual 
-  when: ansible_distribution_release == 'trusty'
-
 - name: Install pre-reqs
   apt:
     name: "{{ item }}"
