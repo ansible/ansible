@@ -649,6 +649,14 @@ class DnfModule(YumDnf):
         is_newer_version_installed = self._is_newer_version_installed(pkg_spec)
         is_installed = self._is_installed(pkg_spec)
         try:
+            if (pkg_spec in self.base.conf.exclude) or ('*' in self.base.conf.exclude):
+                return {
+                    'failed': False,
+                    'msg': 'Not installed due to excludes: {0}'.format(pkg_spec),
+                    'failure': '',
+                    'rc': 0
+                }
+
             if self.allow_downgrade:
                 # dnf only does allow_downgrade, we have to handle this ourselves
                 # because it allows a possibility for non-idempotent transactions
