@@ -840,7 +840,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 'hostid': self.get_host_id(),
             }
             if not self.module.check_mode:
-                res = self.query_api('migrateVirtualMachineWithVolume', **args_host)
+                res = self.query_api('migrateVirtualMachine', **args_host)
                 instance = self.poll_job(res, 'virtualmachine')
 
         return instance
