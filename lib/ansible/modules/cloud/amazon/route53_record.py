@@ -86,8 +86,8 @@ Status:
 SubmittedAt:
     description: The date and time that the change request was submitted.
     returned: changed
-    type: datetime
-    sample: 2018-09-25T02:03:51.365000+00:00
+    type: string
+    sample: '2018-09-25T02:03:51.365000+00:00'
 '''
 
 EXAMPLES = '''
