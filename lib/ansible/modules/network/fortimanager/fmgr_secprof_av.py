@@ -53,6 +53,11 @@ options:
       - The password associated with the username account.
     required: true
 
+  username:
+    description:
+      - The username associated with the account.
+    required: true
+
   mode:
     description:
       - Sets one of three modes for managing the object.
