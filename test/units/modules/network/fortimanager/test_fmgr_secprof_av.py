@@ -31,7 +31,8 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + \
+                   "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -57,20 +58,28 @@ def test_fmgr_antivirus_profile_addSetDelete(fixture_data, mocker):
     # analytics-db: None
     # analytics-wl-filetype: None
     # av-virus-log: None
-    # content-disarm: {'pdf-act-movie': None, 'pdf-act-gotor': None, 'pdf-act-java': None, 'original-file-destination': None, 'office-hylink': None, 'pdf-act-sound': None, 'detect-only': None, 'office-embed': None, 'office-linked': None, 'pdf-javacode': None, 'pdf-hyperlink': None, 'pdf-embedfile': None, 'office-macro': None, 'pdf-act-form': None, 'pdf-act-launch': None, 'cover-page': None}
+    # content-disarm: {'pdf-act-movie': None, 'pdf-act-gotor': None, 'pdf-act-java': None,
+    # 'original-file-destination': None, 'office-hylink': None, 'pdf-act-sound': None, 'detect-only': None,
+    # 'office-embed': None, 'office-linked': None, 'pdf-javacode': None, 'pdf-hyperlink': None, 'pdf-embedfile': None,
+    #  'office-macro': None, 'pdf-act-form': None, 'pdf-act-launch': None, 'cover-page': None}
     # ftp: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
-    # mapi: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'options': None}
+    # mapi: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'options': None}
     # analytics-max-upload: None
     # nntp: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
     # smb: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
     # analytics-bl-filetype: None
-    # http: {'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # http: {'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None,
+    #  'content-disarm': None, 'options': None}
     # adom: root
-    # smtp: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
-    # pop3: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # smtp: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
+    # pop3: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
     # inspection-mode: None
     # ftgd-analytics: None
-    # imap: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # imap: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
     # name: Ansible_AV_Profile
     # replacemsg-group: None
     # scan-mode: None
@@ -97,20 +106,28 @@ def test_fmgr_antivirus_profile_addSetDelete(fixture_data, mocker):
     # analytics-db: None
     # analytics-wl-filetype: None
     # av-virus-log: None
-    # content-disarm: {'pdf-act-movie': None, 'pdf-act-gotor': None, 'office-macro': None, 'pdf-act-java': None, 'original-file-destination': None, 'office-hylink': None, 'pdf-act-sound': None, 'detect-only': None, 'office-embed': None, 'office-linked': None, 'pdf-javacode': None, 'pdf-hyperlink': None, 'cover-page': None, 'pdf-embedfile': None, 'pdf-act-form': None, 'pdf-act-launch': None}
+    # content-disarm: {'pdf-act-movie': None, 'pdf-act-gotor': None, 'office-macro': None, 'pdf-act-java': None,
+    #  'original-file-destination': None, 'office-hylink': None, 'pdf-act-sound': None, 'detect-only': None,
+    #  'office-embed': None, 'office-linked': None, 'pdf-javacode': None, 'pdf-hyperlink': None, 'cover-page': None,
+    #  'pdf-embedfile': None, 'pdf-act-form': None, 'pdf-act-launch': None}
     # ftp: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
-    # mapi: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'options': None}
+    # mapi: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'options': None}
     # analytics-max-upload: None
     # nntp: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
     # smb: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
     # analytics-bl-filetype: None
-    # http: {'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # http: {'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None,
+    #  'content-disarm': None, 'options': None}
     # adom: root
-    # smtp: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
-    # pop3: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # smtp: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
+    # pop3: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
     # inspection-mode: None
     # ftgd-analytics: None
-    # imap: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # imap: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
     # name: Ansible_AV_Profile
     # replacemsg-group: None
     # scan-mode: None
@@ -137,21 +154,29 @@ def test_fmgr_antivirus_profile_addSetDelete(fixture_data, mocker):
     # analytics-db: None
     # analytics-wl-filetype: None
     # av-virus-log: None
-    # content-disarm: {'pdf-act-movie': None, 'pdf-act-gotor': None, 'pdf-act-java': None, 'original-file-destination': None, 'cover-page': None, 'pdf-act-sound': None, 'detect-only': None, 'office-embed': None, 'pdf-embedfile': None, 'office-linked': None, 'pdf-javacode': None, 'pdf-hyperlink': None, 'office-hylink': None, 'office-macro': None, 'pdf-act-form': None, 'pdf-act-launch': None}
+    # content-disarm: {'pdf-act-movie': None, 'pdf-act-gotor': None, 'pdf-act-java': None,
+    #  'original-file-destination': None, 'cover-page': None, 'pdf-act-sound': None, 'detect-only': None,
+    #  'office-embed': None, 'pdf-embedfile': None, 'office-linked': None, 'pdf-javacode': None, 'pdf-hyperlink': None,
+    #  'office-hylink': None, 'office-macro': None, 'pdf-act-form': None, 'pdf-act-launch': None}
     # ftp: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
-    # smtp: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
-    # mapi: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'options': None}
+    # smtp: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
+    # mapi: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'options': None}
     # analytics-max-upload: None
     # nntp: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
     # smb: {'outbreak-prevention': None, 'options': None, 'archive-log': None, 'emulator': None, 'archive-block': None}
     # analytics-bl-filetype: None
-    # http: {'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # http: {'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None,
+    #  'content-disarm': None, 'options': None}
     # adom: root
     # scan-mode: None
-    # pop3: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # pop3: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
     # inspection-mode: None
     # ftgd-analytics: None
-    # imap: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None, 'archive-block': None, 'content-disarm': None, 'options': None}
+    # imap: {'executables': None, 'archive-log': None, 'outbreak-prevention': None, 'emulator': None,
+    #  'archive-block': None, 'content-disarm': None, 'options': None}
     # name: Ansible_AV_Profile
     # replacemsg-group: None
     # nac-quar: {'infected': None, 'log': None, 'expiry': None}

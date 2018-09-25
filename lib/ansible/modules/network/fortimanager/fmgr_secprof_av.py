@@ -64,7 +64,7 @@ options:
     type: str
     description:
       - Choose between full scan mode and quick scan mode.
-      - choice | quick | Use quick mode scanning. Quick mode uses a smaller database and may be less accurate. 
+      - choice | quick | Use quick mode scanning. Quick mode uses a smaller database and may be less accurate.
       - choice | full | Full mode virus scanning. More accurate than quick mode with similar performance.
     required: false
     choices: ["quick", "full"]
@@ -329,7 +329,7 @@ options:
       - flag | fileslimit | Block exceeded archive files limit.
       - flag | timeout | Block scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   ftp_archive_log:
@@ -347,7 +347,7 @@ options:
       - flag | fileslimit | Log exceeded archive files limit.
       - flag | timeout | Log scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   ftp_emulator:
@@ -395,7 +395,7 @@ options:
       - flag | fileslimit | Block exceeded archive files limit.
       - flag | timeout | Block scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   http_archive_log:
@@ -413,7 +413,7 @@ options:
       - flag | fileslimit | Log exceeded archive files limit.
       - flag | timeout | Log scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     partiallycorrupted", "fileslimit", "timeout"]
 
   http_content_disarm:
@@ -470,7 +470,7 @@ options:
       - flag | fileslimit | Block exceeded archive files limit.
       - flag | timeout | Block scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   imap_archive_log:
@@ -488,7 +488,7 @@ options:
       - flag | fileslimit | Log exceeded archive files limit.
       - flag | timeout | Log scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   imap_content_disarm:
@@ -554,7 +554,7 @@ options:
       - flag | fileslimit | Block exceeded archive files limit.
       - flag | timeout | Block scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   mapi_archive_log:
@@ -572,7 +572,7 @@ options:
       - flag | fileslimit | Log exceeded archive files limit.
       - flag | timeout | Log scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   mapi_emulator:
@@ -653,7 +653,7 @@ options:
       - flag | fileslimit | Block exceeded archive files limit.
       - flag | timeout | Block scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   nntp_archive_log:
@@ -671,7 +671,7 @@ options:
       - flag | fileslimit | Log exceeded archive files limit.
       - flag | timeout | Log scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   nntp_emulator:
@@ -719,7 +719,7 @@ options:
       - flag | fileslimit | Block exceeded archive files limit.
       - flag | timeout | Block scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   pop3_archive_log:
@@ -737,7 +737,7 @@ options:
       - flag | fileslimit | Log exceeded archive files limit.
       - flag | timeout | Log scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   pop3_content_disarm:
@@ -803,7 +803,7 @@ options:
       - flag | fileslimit | Block exceeded archive files limit.
       - flag | timeout | Block scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   smb_archive_log:
@@ -821,7 +821,7 @@ options:
       - flag | fileslimit | Log exceeded archive files limit.
       - flag | timeout | Log scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   smb_emulator:
@@ -869,7 +869,7 @@ options:
       - flag | fileslimit | Block exceeded archive files limit.
       - flag | timeout | Block scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   smtp_archive_log:
@@ -887,7 +887,7 @@ options:
       - flag | fileslimit | Log exceeded archive files limit.
       - flag | timeout | Log scan timeout.
     required: false
-    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled", 
+    choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
     "partiallycorrupted", "fileslimit", "timeout"]
 
   smtp_content_disarm:
@@ -942,7 +942,33 @@ options:
 '''
 
 EXAMPLES = '''
-%%MASTER_PLAYBOOK_INSERT%%
+  - name: DELETE Profile
+    fmgr_secprof_av:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_AV_Profile"
+      mode: "delete"
+
+  - name: CREATE Profile
+    fmgr_secprof_av:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_AV_Profile"
+      comment: "Created by Ansible Module TEST"
+      mode: "set"
+      inspection_mode: "proxy"
+      ftgd_analytics: "everything"
+      av_block_log: "enable"
+      av_virus_log: "enable"
+      scan_mode: "full"
+      mobile_malware_db: "enable"
+      ftp_archive_block: "encrypted"
+      ftp_outbreak_prevention: "files"
+      ftp_archive_log: "timeout"
+      ftp_emulator: "disable"
+      ftp_options: "scan"
 '''
 
 RETURN = """
