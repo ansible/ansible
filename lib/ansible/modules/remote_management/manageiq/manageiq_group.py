@@ -55,7 +55,7 @@ options:
   role:
     description:
     - The the group role name
-    - The C(role_id) has president over the C(role) when supplied.
+    - The C(role_id) has precedence over the C(role) when supplied.
     required: false
     default: null
   tenant_id:
@@ -66,7 +66,7 @@ options:
   tenant:
     description:
     - The tenant for the group identified by the tenant name.
-    - The C(tenant_id) has president over the C(tenant) when supplied.
+    - The C(tenant_id) has precedence over the C(tenant) when supplied.
     - Tenant names are case sensitive.
     required: false
     default: null
@@ -117,7 +117,10 @@ EXAMPLES = '''
       password: 'smartvm'
       verify_ssl: False
 
-- name: Create or update a group in ManageIQ with the role EvmRole-user and tenant my_tenant, prov_max_cpu tags, limit access to a cluster
+- name:
+  - Create or update a group in ManageIQ with the role EvmRole-user and tenant my_tenant.
+  - Apply 3 prov_max_cpu and 2 department tags to the group.
+  - Limit access to a cluster for the group.
   manageiq_group:
     description: 'MyGroup-user'
     role: 'EvmRole-user'
@@ -126,6 +129,8 @@ EXAMPLES = '''
     - - "/managed/prov_max_cpu/1"
       - "/managed/prov_max_cpu/3"
       - "/managed/prov_max_cpu/4"
+    - - "/managed/department/defense"
+      - "/managed/department/engineering"
     managed_filters_merge_mode: replace
     belongsto_filters:
     - "/belongsto/ExtManagementSystem|ProviderName/EmsFolder|Datacenters/EmsFolder|dc_name/EmsFolder|host/EmsCluster|Cluster name"
@@ -183,7 +188,7 @@ group:
     created_on:
       description: Group creation date
       returned: success
-      type: int
+      type: string
       example: 2018-08-12T08:37:55+00:00
     updated_on:
       description: Group update date
