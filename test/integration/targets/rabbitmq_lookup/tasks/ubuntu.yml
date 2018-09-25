@@ -127,13 +127,12 @@
       - "'NOT_ALLOWED' in rabbitmq_vhost_error.msg"
 
 # Tidy up
-- name: Uninstall pika
+- name: Uninstall pika and requests
   pip:
-    name: pika
+    name: pika,requests
     state: absent
 
 - name: Disable the rabbitmq_management plugin
   rabbitmq_plugin:
     names: rabbitmq_management
     state: disabled
-#
