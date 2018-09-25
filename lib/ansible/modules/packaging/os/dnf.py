@@ -505,13 +505,26 @@ class DnfModule(YumDnf):
         # Set installroot
         conf.installroot = installroot
 
+        # Handle different DNF versions immutable mutable datatypes and
+        # dnf v1/v2/v3
+        #
+        # In DNF < 3.0 are lists, and modifying them works
+        # In DNF >= 3.0 < 3.6 are lists, but modifying them doesn't work
+        # In DNF >= 3.6 have been turned into tuples, to communicate that modifying them doesn't work
+        #
+        # https://www.happyassassin.net/2018/06/27/adams-debugging-adventures-the-immutable-mutable-object/
+        #
         # Set excludes
         if self.exclude:
-            conf.exclude(self.exclude)
-
+            _excludes = list(conf.exclude)
+            _excludes.extend(self.exclude)
+            conf.exclude = _excludes
         # Set disable_excludes
         if self.disable_excludes:
-            conf.disable_excludes.append(self.disable_excludes)
+            _disable_excludes = list(conf.disable_excludes)
+            if self.disable_excludes not in _disable_excludes:
+                _disable_excludes.append(self.disable_excludes)
+                conf.disable_excludes = _disable_excludes
 
         # Set releasever
         if self.releasever is not None:
