@@ -911,7 +911,6 @@ lib/ansible/modules/network/panos/panos_security_rule.py E324
 lib/ansible/modules/network/panos/panos_security_rule.py E325
 lib/ansible/modules/network/panos/panos_security_rule.py E326
 lib/ansible/modules/network/sros/sros_config.py E323
-lib/ansible/modules/network/sros/sros_config.py E326
 lib/ansible/modules/network/vyos/vyos_interface.py E324
 lib/ansible/modules/network/vyos/vyos_interface.py E325
 lib/ansible/modules/network/vyos/vyos_linkagg.py E324
