@@ -12,6 +12,9 @@ ANSIBLE_PLAYBOOK=${ANSIBLE_PLAYBOOK:-"ansible-playbook"}
 # test with valid arg specs
 "$ANSIBLE_PLAYBOOK" -i ../../inventory -v "$@" test_include_role.yml
 
+# test with valid arg specs and using tasks_from and a matching argument_spec_name
+"$ANSIBLE_PLAYBOOK" -i ../../inventory -v "$@" test_include_role_nested.yml
+
 # not sure what is going on here, multiple import_role tasks seem to clobber each others vars:
 # "$ANSIBLE_PLAYBOOK" -i ../../inventory -v "$@" -e @../../integration_config.yml test_import_role.yml
 "$ANSIBLE_PLAYBOOK" -i ../../inventory -v "$@" -e @../../integration_config.yml test_play_level_role.yml

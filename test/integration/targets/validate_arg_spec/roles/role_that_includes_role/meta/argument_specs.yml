@@ -1,0 +1,41 @@
+---
+main:
+  description: "EXPECTED FAILURE Validate the argument spec for the 'role_includes_nested_role' role"
+  argument_spec:
+    ip_address:
+      type: "str"
+    hostname:
+      type: "str"
+    secret_choices:
+      choices:
+        - "secret_ballot_choice1"
+        - "secret_ballot_choice2"
+      required: false
+      type: "str"
+      no_log: true
+    some_tmp_path:
+      type: "path"
+
+  check_invalid_arguments: true
+  required_one_of:
+    - ["hostname", "ip_address"]
+  add_file_common_args: false
+
+other.yml:
+  name: "role_that_includes_role_simple_preset_arg_spec_other"
+  description: "A simpler set of required args for other tasks"
+  argument_spec:
+    test1_var1:
+      default: "This the default value for the other set of arg specs for  test1 test1_var1"
+      type: "str"
+
+test1_other.yml:
+  name: "test1_other for role_that_includes_role"
+  description: "blippy foo"
+  argument_spec:
+    some_test1_other_arg:
+      default: "The some_test1_other_arg default value"
+      type: str
+    some_required_str:
+      type: str
+      required: true

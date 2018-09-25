@@ -36,6 +36,7 @@ from ansible.utils.vars import combine_vars
 
 __all__ = ['Role', 'hash_params']
 
+
 # TODO: this should be a utility function, but can't be a member of
 #       the role due to the fact that it would require the use of self
 #       in a static method. This is also used in the base class for
@@ -132,7 +133,6 @@ class Role(Base, Become, Conditional, Taggable):
 
     @staticmethod
     def load(role_include, play, parent_role=None, from_files=None, from_include=False):
-
         if from_files is None:
             from_files = {}
         try:
@@ -240,10 +240,20 @@ class Role(Base, Become, Conditional, Taggable):
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
 
-        argument_spec_name = 'main'
+        # If the the include role is from a task in a from_tasks file,
+        # try to use the argument_spec named based on the from_tasks file file name
+        # first, then fallback to trying 'main'
+        argument_spec_names = []
+        if self._from_files.get('tasks'):
+            argument_spec_names.append(self._from_files.get('tasks'))
+        argument_spec_names.append('main')
+
         argument_spec = None
         if argument_specs:
-            argument_spec = argument_specs.get(argument_spec_name, None)
+            for argument_spec_name in argument_spec_names:
+                argument_spec = argument_specs.get(argument_spec_name, None)
+                if argument_spec:
+                    break
 
         if argument_spec:
             arg_spec_validation_task = \

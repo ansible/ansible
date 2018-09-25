@@ -1,0 +1,5 @@
+---
+- name: "OTHER include the test1 role"
+  include_role:
+    name: test1
+    tasks_from: test1_other.yml
