@@ -892,12 +892,6 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/lookup/onepassword.py:
-    maintainers: samdoran
-    ignored: azenk
-  lib/ansible/plugins/lookup/onepassword_raw.py:
-    maintainers: samdoran
-    ignored: azenk
   lib/ansible/plugins/lookup/rabbitmq.py:
     maintainers: Im0
     support: community
