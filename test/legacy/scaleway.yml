@@ -18,3 +18,4 @@
     - { role: scaleway_user_data, tags: test_scaleway_user_data }
     - { role: scaleway_volume, tags: test_scaleway_volume }
     - { role: scaleway_volume_facts, tags: test_scaleway_volume_facts }
+    - { role: scaleway_security_group, tags: test_scaleway_security_group }
