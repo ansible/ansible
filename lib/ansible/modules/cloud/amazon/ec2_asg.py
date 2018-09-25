@@ -1625,7 +1625,9 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[['replace_all_instances', 'replace_instances']]
+        mutually_exclusive=[
+            ['replace_all_instances', 'replace_instances'],
+            ['launch_config_name', 'launch_template']]
     )
 
     if not HAS_BOTO3:
