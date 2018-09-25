@@ -1,0 +1,55 @@
+---
+- name: "Running play level roles test1 providing all args via vars"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    some_json: "from-vars not really json but it doesnt matter"
+    # some_jsonarg is a required arg but is only provided below
+    hostname:
+      - hostname_isnt_supposed_to_be_a_list
+      - yet_it_is
+    test1_var1: "value from providing all args via vars"
+  roles:
+    - name: test1
+      hostname: "blip"
+      some_jsonarg: someroleparam
+      vars:
+        some_other_thing: "blippy"
+
+- name: "Running include_role test1 providing all args via vars"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    some_json: "from-vars not really json but it doesnt matter"
+    some_jsonarg: "from-vars not really jsonargs either"
+    hostname: "test_vars_play2.example.com"
+    test1_var1: "value from providing all args via vars"
+  tasks:
+    - name: "include the role 'test1'"
+      block:
+        - include_role:
+            name: test1
+      rescue:
+        - name: show ansible_failed_result
+          debug:
+            var: ansible_failed_result
+
+- name: "Running include_role test1 providing some but not all args via vars"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    some_json: "from-vars not really json but it doesnt matter"
+    # some_jsonarg: "from-vars not really jsonargs either"
+    hostname: "test_vars_play1.example.com"
+    bust_some_stuff: "foo"
+    tidy_expected: "bar"
+    test1_var1: "value from providing some but not all args via vars"
+  tasks:
+    - name: "include the role 'test1'"
+      block:
+        - include_role:
+            name: test1
+      rescue:
+        - name: show ansible_failed_result
+          debug:
+            var: ansible_failed_result
