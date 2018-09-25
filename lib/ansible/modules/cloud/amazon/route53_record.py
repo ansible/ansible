@@ -66,40 +66,49 @@ extends_documentation_fragment:
 '''
 
 RETURN = '''
-Name:
-    description: record_set_name
-    returned: always
-    type: string
-    sample: "sample.example.com"
+ChangeInfo:
+    description: A complex type that contains information about changes made to your hosted zone.
+    returned: changed
+    type: dict
 
-ResourceRecords:
-    description: record_set_name
-    returned: always
-    type: list
-    sample: ['Value': 192.0.2.1, 'Value': 192.0.2.2]
-
-TTL:
-    description: record_set_name
-    returned: always
+Id:
+    description: The ID of the request.
+    returned: changed
     type: string
-    sample: "300"
+    sample: '/change/C1YS9TBVNAO5WC'
 
-Type:
-    description: record_set_name
-    returned: always
+Status:
+    description: The current state of the request.
+    returned: changed
     type: string
-    sample: "A"
+    sample: 'PENDING'|'INSYNC'
+
+SubmittedAt:
+    description: The date and time that the change request was submitted.
+    returned: changed
+    type: datetime
+    sample: "2018-09-25T02:03:51.365000+00:00"
 '''
 
 EXAMPLES = '''
-# Add new A record and wait until the changes replicated
+# Create new A record and wait untill the change is applied to all Amazon Route 53 DNS servers.
 - route53_record:
     state: present
     hosted_zone: example.com
-    record_set_name: sample.example.com
+    record_set_name: test.example.com
     record_set_type: A
     record_set_ttl: 300
-    record_set_value: 192.0.2.1
+    record_set_value: 192.0.2.37
+    wait: yes
+
+# Delete  A record and wait untill the change is applied to all Amazon Route 53 DNS servers.
+- route53_record:
+    state: absent
+    hosted_zone: example.com
+    record_set_name: test.example.com
+    record_set_type: A
+    record_set_ttl: 300
+    record_set_value: 192.0.2.37
     wait: yes
 '''
 
@@ -108,7 +117,7 @@ try:
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
-# import time
+import time
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     # AWSRetry,
@@ -120,6 +129,12 @@ from ansible.module_utils.ec2 import (
     # camel_dict_to_snake_dict
 )
 
+WAIT_RETRY_SLEEP = 3  # how many seconds to wait between propagation status polls
+
+
+class TimeoutError(Exception):
+    pass
+
 
 class AWSRoute53Record(object):
     def __init__(self, module=None):
@@ -128,7 +143,8 @@ class AWSRoute53Record(object):
         self._check_mode = self._module.check_mode
 
     def process(self):
-
+        results = dict(changed=False)
+        changed = False
         if self._module.params['hosted_zone_id'] is not None:
             hosted_zone_id = self._module.params['hosted_zone_id']
             hosted_zone = self._connection.get_hosted_zone(Id=hosted_zone_id)
@@ -140,18 +156,74 @@ class AWSRoute53Record(object):
                 self._module.fail_json(msg="hosted_zone_id not matches hosted_zone_name")
 
         record_exists = self._record_exists()
-        if self._module.params['state'] == 'present' and record_exists:
-            results = dict(changed=False)
+
         if self._module.params['state'] == 'present' and not record_exists:
             if not self._module.check_mode:
-                results = self._create_record()
-            results = dict(changed=True)
+                results = self._change_resource_record_sets()
+                changed = True
         if self._module.params['state'] == 'absent' and record_exists:
             if not self._module.check_mode:
-                results = self._delete_record()
-            results = dict(changed=True)
-        if self._module.params['state'] == 'absent' and not record_exists:
-            results = dict(changed=False)
+                results = self._change_resource_record_sets()
+                changed = True
+
+        wait = self._module.params['wait']
+        wait_timeout = self._module.params['wait_timeout']
+        if wait and changed:
+            timeout_time = time.time() + wait_timeout
+            results_status = results['ChangeInfo']['Status']
+            results_id = results['ChangeInfo']['Id']
+            while results_status != 'INSYNC' and time.time() < timeout_time:
+                time.sleep(WAIT_RETRY_SLEEP)
+                results_status = self._connection.get_change(Id=results_id)['ChangeInfo']['Status']
+                results['ChangeInfo']['Status'] = results_status
+            if time.time() >= timeout_time:
+                raise TimeoutError()
+
+        return changed, results
+
+    def _change_resource_record_sets(self):
+        if self._module.params['state'] == 'present':
+            Action = 'CREATE'
+        if self._module.params['state'] == 'absent':
+            Action = 'DELETE'
+        hosted_zone_id = self._get_hosted_zone_id(hosted_zone_name=self._module.params['hosted_zone_name'])
+        record_set_value = self._module.params['record_set_value']
+        list_record_set_value = [{'Value': value} for value in record_set_value]
+        results = self._connection.change_resource_record_sets(
+            HostedZoneId=hosted_zone_id,
+            # todo: expand ChangeBatch
+            ChangeBatch={
+                # 'Comment': 'testfromsoou',
+                'Changes': [
+                    {
+                        'Action': Action,
+                        'ResourceRecordSet': {
+                            'Name': self._module.params['record_set_name'],
+                            'Type': self._module.params['record_set_type'],
+                            # 'SetIdentifier': 'string',
+                            # 'Weight': 123,
+                            # 'Region': 'us-east-1' | 'us-east-2' | 'us-west-1' | 'us-west-2' | 'ca-central-1' | 'eu-west-1' | 'eu-west-2' | 'eu-west-3' | 'eu-central-1' | 'ap-southeast-1' | 'ap-southeast-2' | 'ap-northeast-1' | 'ap-northeast-2' | 'ap-northeast-3' | 'sa-east-1' | 'cn-north-1' | 'cn-northwest-1' | 'ap-south-1',
+                            # 'GeoLocation': {
+                            # 'ContinentCode': 'string',
+                            # 'CountryCode': 'string',
+                            # 'SubdivisionCode': 'string'
+                            # },
+                            # 'Failover': 'PRIMARY' | 'SECONDARY',
+                            # 'MultiValueAnswer': True | False,
+                            'TTL': self._module.params['record_set_ttl'],
+                            'ResourceRecords': list_record_set_value,
+                            # 'AliasTarget': {
+                            #     'HostedZoneId': 'string',
+                            #     'DNSName': 'string',
+                            #     'EvaluateTargetHealth': True | False
+                            # },
+                            # 'HealthCheckId': 'string',
+                            # 'TrafficPolicyInstanceId': 'string'
+                        }
+                    },
+                ]
+            }
+        )
         return results
 
     def _record_exists(self):
@@ -200,13 +272,6 @@ class AWSRoute53Record(object):
         resource_record_sets = self._connection.list_resource_record_sets(HostedZoneId=hosted_zone_id)['ResourceRecordSets']
         return resource_record_sets
 
-    def _create_record(self):
-        #      self._connection.change_resource_record_sets(**kwargs)
-        pass
-
-    def _delete_record(self):
-        pass
-
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -231,8 +296,8 @@ def main():
         supports_check_mode=True
     )
     aws_route53_record = AWSRoute53Record(module=ansible_aws_module)
-    results = aws_route53_record.process()
-    ansible_aws_module.exit_json(**results)
+    changed, results = aws_route53_record.process()
+    ansible_aws_module.exit_json(changed=changed, results=results)
 
 
 if __name__ == '__main__':
