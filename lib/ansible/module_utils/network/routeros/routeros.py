@@ -71,6 +71,10 @@ def get_capabilities(module):
     return module._routeros_capabilities
 
 
+def check_args(module, warnings):
+    pass
+
+
 def get_defaults_flag(module):
     connection = get_connection(module)
 
