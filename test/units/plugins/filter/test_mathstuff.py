@@ -4,8 +4,9 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
 import pytest
+
+from jinja2 import Environment
 
 import ansible.plugins.filter.mathstuff as ms
 from ansible.errors import AnsibleFilterError
@@ -22,41 +23,43 @@ TWO_SETS_DATA = (([1, 2], [3, 4], ([], sorted([1, 2]), sorted([1, 2, 3, 4]), sor
                  (['a', 'b', 'c'], ['d', 'c', 'e'], (['c'], sorted(['a', 'b']), sorted(['a', 'b', 'd', 'e']), sorted(['a', 'b', 'c', 'e', 'd']))),
                  )
 
+env = Environment()
+
 
 @pytest.mark.parametrize('data, expected', UNIQUE_DATA)
 class TestUnique:
     def test_unhashable(self, data, expected):
-        assert sorted(ms.unique(list(data))) == expected
+        assert sorted(ms.unique(env, list(data))) == expected
 
     def test_hashable(self, data, expected):
-        assert sorted(ms.unique(tuple(data))) == expected
+        assert sorted(ms.unique(env, tuple(data))) == expected
 
 
 @pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA)
 class TestIntersect:
     def test_unhashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.intersect(list(dataset1), list(dataset2))) == expected[0]
+        assert sorted(ms.intersect(env, list(dataset1), list(dataset2))) == expected[0]
 
     def test_hashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.intersect(tuple(dataset1), tuple(dataset2))) == expected[0]
+        assert sorted(ms.intersect(env, tuple(dataset1), tuple(dataset2))) == expected[0]
 
 
 @pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA)
 class TestDifference:
     def test_unhashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.difference(list(dataset1), list(dataset2))) == expected[1]
+        assert sorted(ms.difference(env, list(dataset1), list(dataset2))) == expected[1]
 
     def test_hashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.difference(tuple(dataset1), tuple(dataset2))) == expected[1]
+        assert sorted(ms.difference(env, tuple(dataset1), tuple(dataset2))) == expected[1]
 
 
 @pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA)
 class TestSymmetricDifference:
     def test_unhashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.symmetric_difference(list(dataset1), list(dataset2))) == expected[2]
+        assert sorted(ms.symmetric_difference(env, list(dataset1), list(dataset2))) == expected[2]
 
     def test_hashable(self, dataset1, dataset2, expected):
-        assert sorted(ms.symmetric_difference(tuple(dataset1), tuple(dataset2))) == expected[2]
+        assert sorted(ms.symmetric_difference(env, tuple(dataset1), tuple(dataset2))) == expected[2]
 
 
 class TestMin:
