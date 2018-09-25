@@ -1,6 +1,8 @@
 import json
+import re
 import sys
 
+from ansible.errors import AnsibleError
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
 
@@ -13,6 +15,25 @@ def scaleway_argument_spec():
         api_timeout=dict(type='int', default=30, aliases=['timeout']),
         validate_certs=dict(default=True, type='bool'),
     )
+
+
+def parse_pagination_link(header):
+    r_link_header = r'</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>; rel="(first|previous|next|last)"(,</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>; rel="(first|previous|next|last))*"'
+    r_relation = r'<(?P<target_IRI>/[a-z]+\?page=(?P<page>[0-9]+)&per_page=([0-9]+)&)>; rel="(?P<relation>first|previous|next|last)"'
+    if re.match(r_link_header, header):
+        relations = header.split(',')
+        parsed_relations = {}
+        rc_relation = re.compile(r_relation)
+        for relation in relations:
+            match = rc_relation.match(relation)
+            if match:
+                data = match.groupdict()
+                parsed_relations[data['relation']] = data['target_IRI']
+            else:
+                raise AnsibleError('Scaleway API answered with an invalid relation in the Link pagination header')
+        return parsed_relations
+    else:
+        raise AnsibleError('Scaleway API answered with an invalid Link pagination header')
 
 
 class ScalewayException(Exception):

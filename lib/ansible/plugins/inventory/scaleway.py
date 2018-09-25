@@ -83,33 +83,14 @@ variables:
 '''
 
 import json
-import re
 
 from ansible.errors import AnsibleError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
-from ansible.module_utils.scaleway import SCALEWAY_LOCATION
+from ansible.module_utils.scaleway import SCALEWAY_LOCATION, parse_pagination_link
 from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_native
 
 import ansible.module_utils.six.moves.urllib.parse as urllib_parse
-
-def _parse_pagination_link(header):
-    r_link_header = r'</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>; rel="(first|previous|next|last)"(,</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>; rel="(first|previous|next|last))*"'
-    r_relation = r'<(?P<target_IRI>/[a-z]+\?page=(?P<page>[0-9]+)&per_page=([0-9]+)&)>; rel="(?P<relation>first|previous|next|last)"'
-    if re.match(r_link_header, header):
-        relations = header.split(',')
-        parsed_relations = {}
-        rc_relation = re.compile(r_relation)
-        for relation in relations:
-            match = rc_relation.match(relation)
-            if match:
-                data = match.groupdict()
-                parsed_relations[data['relation']] = data['target_IRI']
-            else:
-                raise AnsibleError('Scaleway API answered with an invalid relation in the Link pagination header')
-        return parsed_relations
-    else:
-        raise AnsibleError('Scaleway API answered with an invalid Link pagination header')
 
 def _fetch_information(token, url):
     last = False
@@ -134,7 +115,7 @@ def _fetch_information(token, url):
 
         link = response.getheader('Link')
         if link:
-            relations = _parse_pagination_link(link)
+            relations = parse_pagination_link(link)
             if not 'next' in relations:
                 last = True
             else:
