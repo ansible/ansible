@@ -71,9 +71,15 @@ Function Get-BecomeFlags($flags) {
 }
 
 Write-AnsibleLog "INFO - loading C# become code" "become_wrapper"
-$become_def = $Payload.csharp_utils["Ansible.Become"]
+$become_def = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.csharp_utils["Ansible.Become"]))
+
+# set the TMP env var to _ansible_remote_tmp to ensure the tmp binaries are
+# compiled to that location
 $new_tmp = [System.Environment]::ExpandEnvironmentVariables($Payload.module_args["_ansible_remote_tmp"])
-Add-CSharpType -References $become_def -TempPath $new_tmp
+$old_tmp = $env:TMP
+$env:TMP = $new_tmp
+Add-Type -TypeDefinition $become_def -Debug:$false
+$env:TMP = $old_tmp
 
 $username = $Payload.become_user
 $password = $Payload.become_password

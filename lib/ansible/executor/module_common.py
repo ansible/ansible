@@ -461,6 +461,7 @@ class PSModuleDepFinder():
         self._re_cs_module = re.compile(to_bytes(r'(?i)^using\s(Ansible\..+);$'))
         self._re_cs_in_ps_module = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+(Ansible\..+)'))
         self._re_module = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
+        self._re_wrapper = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-wrapper\s+(\w*)'))
         self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
         self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
         self._re_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
@@ -496,19 +497,25 @@ class PSModuleDepFinder():
                     if module_util_name not in check[1].keys():
                         module_utils.add((module_util_name, check[2]))
 
-            ps_version_match = self._re_ps_version.match(line)
-            if ps_version_match:
-                self._parse_version_match(ps_version_match, "ps_version")
+            if powershell:
+                ps_version_match = self._re_ps_version.match(line)
+                if ps_version_match:
+                    self._parse_version_match(ps_version_match, "ps_version")
 
-            os_version_match = self._re_os_version.match(line)
-            if os_version_match:
-                self._parse_version_match(os_version_match, "os_version")
+                os_version_match = self._re_os_version.match(line)
+                if os_version_match:
+                    self._parse_version_match(os_version_match, "os_version")
 
-            # once become is set, no need to keep on checking recursively
-            if not self.become:
-                become_match = self._re_become.match(line)
-                if become_match:
-                    self.become = True
+                # once become is set, no need to keep on checking recursively
+                if not self.become:
+                    become_match = self._re_become.match(line)
+                    if become_match:
+                        self.become = True
+
+            if wrapper:
+                wrapper_match = self._re_wrapper.match(line)
+                if wrapper_match:
+                    self.scan_exec_script(to_text(wrapper_match.group(1).rstrip()))
 
         # recursively drill into each Requires to see if there are any more
         # requirements
@@ -778,18 +785,19 @@ def _create_powershell_wrapper(b_module_data, module_args, environment,
         # flags if the substyle is script which is set by action/script
         finder.scan_module(b_module_data, powershell=(substyle == "powershell"))
 
+    module_wrapper = "module_%s_wrapper" % substyle
     exec_manifest = dict(
         module_entry=to_text(base64.b64encode(b_module_data)),
         powershell_modules=dict(),
         csharp_utils=dict(),
         csharp_utils_module=list(),  # csharp_utils only required by a module
         module_args=module_args,
-        actions=['module_wrapper'],
+        actions=[module_wrapper],
         environment=environment,
         substyle=substyle,
         encoded_output=False
     )
-    finder.scan_exec_script('module_wrapper')
+    finder.scan_exec_script(module_wrapper)
 
     if async_timeout > 0:
         finder.scan_exec_script('exec_wrapper')
@@ -820,6 +828,10 @@ def _create_powershell_wrapper(b_module_data, module_args, environment,
         exec_manifest['become_user'] = 'SYSTEM'
         exec_manifest['become_password'] = None
         exec_manifest['become_flags'] = None
+
+    # make sure Ansible.ModuleUtils.AddType is added if any C# utils are used
+    if len(finder.cs_utils_wrapper) > 0 or len(finder.cs_utils_module) > 0:
+        finder._add_module((b"Ansible.ModuleUtils.AddType", ".psm1"), wrapper=False)
 
     # exec_wrapper is only required to be part of the payload if using
     # become or async, to save on payload space we check if exec_wrapper has
