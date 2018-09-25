@@ -40,7 +40,7 @@ options:
   adom:
     description:
       - The ADOM the configuration should belong to.
-    required: true
+    required: false
     default: root
 
   host:
@@ -63,7 +63,8 @@ options:
       - Sets one of three modes for managing the object.
       - Mutually Exclusive with STATE parameter.
       - Allows use of soft-adds instead of overwriting existing values
-    choices: ['add', 'set', 'delete', 'update']
+    choices: ['add', 'set', 'delete']
+    default: add
 
   scan_mode:
     type: str
@@ -419,7 +420,7 @@ options:
       - flag | timeout | Log scan timeout.
     required: false
     choices: ["encrypted", "corrupted", "multipart", "nested", "mailbomb", "unhandled",
-    partiallycorrupted", "fileslimit", "timeout"]
+    "partiallycorrupted", "fileslimit", "timeout"]
 
   http_content_disarm:
     type: str
@@ -1112,7 +1113,7 @@ def fmgr_prepare_dict(obj):
 
 def main():
     argument_spec = dict(
-        adom=dict(type="str", default="root"),
+        adom=dict(required=False, type="str", default="root"),
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True, required=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True, required=True),

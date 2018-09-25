@@ -253,28 +253,6 @@
             "post_method": "delete"
         },
         {
-            "paramgram_used": {
-                "comment": "Created by Ansible Module TEST",
-                "name": "Ansible_AV_Profile",
-                "scan-mode": "full",
-                "av-block-log": "enable",
-                "inspection-mode": "proxy",
-                "av-virus-log": "enable",
-                "ftgd-analytics": "everything",
-                "mobile-malware-db": "enable",
-                "mode": "delete",
-                "adom": "root"
-            },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/root/obj/antivirus/profile"
-            },
-            "post_method": "set"
-        },
-        {
             "raw_response": {
                 "status": {
                     "message": "used",

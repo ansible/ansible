@@ -135,18 +135,7 @@ def test_fmgr_antivirus_profile_addSetDelete(fixture_data, mocker):
     # mode: delete
     # mobile-malware-db: None
     ##################################################
-    ##################################################
-    # comment: Created by Ansible Module TEST
-    # name: Ansible_AV_Profile
-    # scan-mode: full
-    # av-block-log: enable
-    # inspection-mode: proxy
-    # av-virus-log: enable
-    # ftgd-analytics: everything
-    # mobile-malware-db: enable
-    # mode: set
-    # adom: root
-    ##################################################
+
     ##################################################
     # comment: None
     # av-block-log: None
@@ -185,17 +174,15 @@ def test_fmgr_antivirus_profile_addSetDelete(fixture_data, mocker):
     ##################################################
 
     # Test using fixture 1 #
-    output = fmgr_secprof_av.fmgr_antivirus_profile_addSetDelete(fmg_instance, fixture_data[0]['paramgram_used'])
+    output = fmgr_secprof_av.fmgr_antivirus_profile_addsetdelete(fmg_instance, fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -3
     # Test using fixture 2 #
-    output = fmgr_secprof_av.fmgr_antivirus_profile_addSetDelete(fmg_instance, fixture_data[1]['paramgram_used'])
+    output = fmgr_secprof_av.fmgr_antivirus_profile_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 3 #
-    output = fmgr_secprof_av.fmgr_antivirus_profile_addSetDelete(fmg_instance, fixture_data[2]['paramgram_used'])
+    output = fmgr_secprof_av.fmgr_antivirus_profile_addsetdelete(fmg_instance, fixture_data[2]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 4 #
-    output = fmgr_secprof_av.fmgr_antivirus_profile_addSetDelete(fmg_instance, fixture_data[3]['paramgram_used'])
-    assert output['raw_response']['status']['code'] == 0
-    # Test using fixture 5 #
-    output = fmgr_secprof_av.fmgr_antivirus_profile_addSetDelete(fmg_instance, fixture_data[4]['paramgram_used'])
+    output = fmgr_secprof_av.fmgr_antivirus_profile_addsetdelete(fmg_instance, fixture_data[3]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -10015
+
