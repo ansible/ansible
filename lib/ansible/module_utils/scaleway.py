@@ -2,7 +2,6 @@ import json
 import re
 import sys
 
-from ansible.errors import AnsibleError
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
 
@@ -15,6 +14,12 @@ def scaleway_argument_spec():
         api_timeout=dict(type='int', default=30, aliases=['timeout']),
         validate_certs=dict(default=True, type='bool'),
     )
+
+
+class ScalewayException(Exception):
+
+    def __init__(self, message):
+        self.message = message
 
 
 # Specify a complete Link header, for validation purposes
@@ -37,16 +42,10 @@ def parse_pagination_link(header):
                 data = match.groupdict()
                 parsed_relations[data['relation']] = data['target_IRI']
             else:
-                raise AnsibleError('Scaleway API answered with an invalid relation in the Link pagination header')
+                raise ScalewayException('Scaleway API answered with an invalid relation in the Link pagination header')
         return parsed_relations
     else:
-        raise AnsibleError('Scaleway API answered with an invalid Link pagination header')
-
-
-class ScalewayException(Exception):
-
-    def __init__(self, message):
-        self.message = message
+        raise ScalewayException('Scaleway API answered with an invalid Link pagination header')
 
 
 class Response(object):
