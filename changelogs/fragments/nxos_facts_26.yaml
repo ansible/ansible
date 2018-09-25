@@ -1,0 +1,2 @@
+bugfixes:
+- fix nxos_facts indefinite hang for text based output (https://github.com/ansible/ansible/pull/45845).
