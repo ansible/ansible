@@ -1102,7 +1102,7 @@ def fmgr_del_none(obj):
 def fmgr_prepare_dict(obj):
     list_of_elems = ["mode", "adom", "host", "username", "password"]
     if isinstance(obj, dict):
-        obj = {key: fmgr_prepare_dict(obj[key]) for key in obj.keys() if key not in list_of_elems}
+        obj = dict((key, fmgr_prepare_dict(value)) for (key, value) in obj.items() if key not in list_of_elems)
     return obj
 
 
