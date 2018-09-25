@@ -105,7 +105,7 @@ class CallbackModule(CallbackBase):
 
         if self.get_option('show_custom_stats') and stats.custom:
 
-            for k in sorted(stats.custom.keys()):
+            for k in stats.custom.keys():
                 if k == '_run':
                     custom_stats_global = stats.custom[k]
                     continue
