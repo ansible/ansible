@@ -192,7 +192,10 @@ def traverse_objects(module, ucs, managed_object, mo=''):
         if existing_mo:
             # check mo props
             kwargs = dict(managed_object['properties'])
+            # remove parent info and passwords because those aren't presented in the actual props
             kwargs.pop('parent_mo_or_dn', None)
+            kwargs.pop('pwd', None)
+            kwargs.pop('password', None)
             if existing_mo.check_prop_match(**kwargs):
                 props_match = True
 
