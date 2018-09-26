@@ -145,15 +145,11 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import PY3
 
-if PY3:
-    try:
-        import lzma
-        HAS_LZMA = True
-    except ImportError:
-        HAS_LZMA = False
-else:
+try:
+    import lzma
+    HAS_LZMA = True
+except ImportError:
     try:
         from backports import lzma
         HAS_LZMA = True
