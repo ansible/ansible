@@ -13,6 +13,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default
 $dest = Get-AnsibleParam -obj $params -name "destination" -type "str" -failifempty $true
 $gateway = Get-AnsibleParam -obj $params -name "gateway" -type "str"
 $metric = Get-AnsibleParam -obj $params -name "metric" -type "int" -default 1
+$interface = Get-AnsibleParam -obj $params -name "interface" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateSet "present","absent"
 $result = @{
              "changed" = $false
@@ -28,9 +29,10 @@ Function Add-Route {
     [Parameter(Mandatory=$true)]
     [int]$Metric,
     [Parameter(Mandatory=$true)]
+    [string]$Interface,
+    [Parameter(Mandatory=$true)]
     [bool]$CheckMode
-    )
-
+  )
 
   $IpAddress = $Destination.split('/')[0]
 
@@ -39,10 +41,10 @@ Function Add-Route {
   if (!($Route)){
     try {
       # Find Interface Index
-      $InterfaceIndex = Find-NetRoute -RemoteIPAddress $IpAddress | Select -First 1 -ExpandProperty InterfaceIndex
+      $InterfaceIndex = Get-NetAdapter -Name $Interface | Select -First 1 -ExpandProperty InterfaceIndex
 
       # Add network route
-      New-NetRoute -DestinationPrefix $Destination -NextHop $Gateway -InterfaceIndex $InterfaceIndex -RouteMetric $Metric -ErrorAction Stop -WhatIf:$CheckMode|out-null 
+      New-NetRoute -DestinationPrefix $Destination -NextHop $Gateway -InterfaceIndex $InterfaceIndex -RouteMetric $Metric -ErrorAction Stop -WhatIf:$CheckMode|out-null
       $result.changed = $true
       $result.output = "Route added"
       
@@ -62,14 +64,19 @@ Function Remove-Route {
   Param (
     [Parameter(Mandatory=$true)]
     [string]$Destination,
+    [Parameter(Mandatory=$true)]
+    [string]$Interface,
     [bool]$CheckMode
-    )
+  )
+
   $IpAddress = $Destination.split('/')[0]
+
   $Route = Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '$($IpAddress)'"
   if ($Route){
     try {
+      $InterfaceIndex = Get-NetAdapter -Name $Interface | Select -First 1 -ExpandProperty InterfaceIndex
 
-      Remove-NetRoute -DestinationPrefix $Destination -Confirm:$false -ErrorAction Stop -WhatIf:$CheckMode 
+      Remove-NetRoute -DestinationPrefix $Destination -InterfaceIndex $InterfaceIndex -Confirm:$false -ErrorAction Stop -WhatIf:$CheckMode
       $result.changed = $true
       $result.output = "Route removed"
     }
@@ -92,12 +99,12 @@ if(!($gateway)){
 
 if ($state -eq "present"){
 
-  Add-Route -Destination $dest -Gateway $gateway -Metric $metric -CheckMode $check_mode
+  Add-Route -Destination $dest -Gateway $gateway -Metric $metric -Interface $interface -CheckMode $check_mode
 
 }
 else {
 
-  Remove-Route -Destination $dest -CheckMode $check_mode
+  Remove-Route -Destination $dest -Interface $interface -CheckMode $check_mode
 
 }
 

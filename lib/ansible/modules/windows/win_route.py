@@ -7,7 +7,7 @@
 # This is a windows documentation stub.  Actual code lives in the .ps1
 # file of the same name.
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -32,6 +32,11 @@ options:
         - Metric used by the static route.
     type: int
     default: 1
+  interface:
+    description:
+        - The network interface name by the static route.
+    required: yes
+    version_added: '2.7'
   state:
     description:
       - If C(absent), it removes a network static route.
@@ -51,11 +56,13 @@ EXAMPLES = r'''
     destination: 192.168.2.10/32
     gateway: 192.168.1.1
     metric: 1
+    interface: Ethernet0
     state: present
 
 - name: Remove a network static route
   win_route:
     destination: 192.168.2.10/32
+    interface: Ethernet1
     state: absent
 '''
 RETURN = r'''
