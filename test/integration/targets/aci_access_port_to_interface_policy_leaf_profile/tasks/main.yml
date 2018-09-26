@@ -27,9 +27,6 @@
   aci_access_port_to_interface_policy_leaf_profile: &aci_access_port_to_interface_policy_leaf_profile_present
     <<: *aci_interface_policy_leaf_profile_present
     access_port_selector: anstest_accessportselector
-    leaf_port_blk: anstest_leafportblkname
-    fromPort: 13
-    toPort: 16
   check_mode: yes
   register: accessport_to_intf_check_mode_present
 
@@ -56,7 +53,7 @@
     - accessport_to_intf_check_mode_present is changed
     - accessport_to_intf_present is changed
     - accessport_to_intf_present.previous == []
-    - 'accessport_to_intf_present.sent == {"infraHPortS": {"attributes": {"name": "anstest_accessportselector"}, "children": [{"infraPortBlk": {"attributes": {"fromPort": "13", "name": "anstest_leafportblkname", "toPort": "16"}}}, {"infraRsAccBaseGrp": {"attributes": {"tDn": "uni/infra/funcprof/accportgrp-None"}}}]}}'
+    - 'accessport_to_intf_present.sent == {"infraHPortS": {"attributes": {"name": "anstest_accessportselector"}, "children": [{"infraRsAccBaseGrp": {"attributes": {"tDn": "uni/infra/funcprof/accportgrp-None"}}}]}}'
     - accessport_to_intf_idempotent is not changed
     - accessport_to_intf_idempotent.sent == {}
     - accessport_to_intf_update is changed

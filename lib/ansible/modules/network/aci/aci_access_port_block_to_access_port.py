@@ -250,11 +250,11 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        leaf_interface_profile=dict(type='str', aliases=['leaf_interface_profile_name']), # Not required for querying all objects 
-        access_port_selector=dict(type='str', aliases=['name', 'access_port_selector_name']), # Not required for querying all objects
-        leaf_port_blk=dict(type='str', aliases=['leaf_port_blk_name']), # Not required for querying all objects
-        from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']), # Not required for querying all objects and deleting port blocks
-        to_port=dict(type='str', aliases=['to', 'toPort', 'to_port_range']), # Not required for querying all objects and deleting port blocks
+        leaf_interface_profile=dict(type='str', aliases=['leaf_interface_profile_name']),  # Not required for querying all objects
+        access_port_selector=dict(type='str', aliases=['name', 'access_port_selector_name']),  # Not required for querying all objects
+        leaf_port_blk=dict(type='str', aliases=['leaf_port_blk_name']),  # Not required for querying all objects
+        from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']),  # Not required for querying all objects and deleting port blocks
+        to_port=dict(type='str', aliases=['to', 'toPort', 'to_port_range']),  # Not required for querying all objects and deleting port blocks
         from_card=dict(type='str', aliases=['from_card_range']),
         to_card=dict(type='str', aliases=['to_card_range']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -264,8 +264,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['access_port_selector', 'leaf_port_blk', 'leaf_interface_profile' ]],
-            ['state', 'present', ['access_port_selector', 'leaf_port_blk', 'from_port', 'to_port', 'leaf_interface_profile' ]],
+            ['state', 'absent', ['access_port_selector', 'leaf_port_blk', 'leaf_interface_profile']],
+            ['state', 'present', ['access_port_selector', 'leaf_port_blk', 'from_port', 'to_port', 'leaf_interface_profile']],
         ],
     )
 
