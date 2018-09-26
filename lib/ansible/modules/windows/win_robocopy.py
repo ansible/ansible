@@ -17,9 +17,9 @@ module: win_robocopy
 version_added: '2.2'
 short_description: Synchronizes the contents of two directories using Robocopy
 description:
-- Synchronizes the contents of two directories on the remote machine.
+- Synchronizes the contents of files/directories from a source to destination.
 - Under the hood this just calls out to RoboCopy, since that should be available
-  on most modern Windows Systems.
+  on most modern Windows systems.
 options:
   src:
     description:
@@ -84,6 +84,12 @@ EXAMPLES = r'''
     src: C:\DirectoryOne
     dest: C:\DirectoryTwo
     flags: /E /PURGE /XD SOME_DIR /XF SOME_FILE /MT:32
+
+- name: Sync one file from a remote UNC path in recursive and purging mode, specifying additional special flags
+  win_robocopy:
+    src: \\Server1\Directory One
+    dest: C:\DirectoryTwo
+    flags: file.zip /E /PURGE /XD SOME_DIR /XF SOME_FILE /MT:32
 '''
 
 RETURN = r'''
