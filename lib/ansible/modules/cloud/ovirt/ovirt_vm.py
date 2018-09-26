@@ -1082,7 +1082,7 @@ class VmsModule(BaseModule):
                         otypes.BootDevice(dev) for dev in self.param('boot_devices')
                     ],
                 ) if self.param('boot_devices') else None,
-                cmdline=self.param('kernel_params'),
+                cmdline=self.param('kernel_params') if self.param('kernel_params_persist') else None,
                 initrd=self.param('initrd_path') if self.param('kernel_params_persist') else None,
                 kernel=self.param('kernel_path') if self.param('kernel_params_persist') else None,
             ) if (
