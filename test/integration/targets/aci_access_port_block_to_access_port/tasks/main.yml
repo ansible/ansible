@@ -32,6 +32,7 @@
   aci_access_port_block_to_access_port: &aci_access_port_block_to_access_port_present
     <<: *aci_access_port_to_interface_policy_leaf_profile_present
     leaf_port_blk: anstest_leafportblkname
+    leaf_port_blk_description: anstest_leafportblkdesc
     fromPort: 13
     toPort: 16
   check_mode: yes
@@ -62,14 +63,12 @@
     - accessportblock_to_accessport_check_mode_present is changed
     - accessportblock_to_accessport_present is changed
     - accessportblock_to_accessport_present.previous == []
-    - 'accessportblock_to_accessport_present.sent == {"infraPortBlk": {"attributes": {"name": "anstest_leafportblkname", "fromPort": "16", "toPort": "16"}}}'
+    - 'accessportblock_to_accessport_present.sent == {"infraPortBlk": {"attributes": {"descr": "anstest_leafportblkdesc", "name": "anstest_leafportblkname", "fromPort": "16", "toPort": "16"}}}'
     - accessportblock_to_accessport_idempotent is not changed
     - accessportblock_to_accessport_idempotent.sent == {}
     - accessportblock_to_accessport_update is changed
     - 'accessportblock_to_accessport_update.sent == {"infraPortBlk": {"attributes": {"name": "anstest_leafportblkname", "fromPort": "15", "toPort": "15"}}}'
 
-
-# TODO FROM HERE
 
 - name: Query Specific port block and access_port_selector binding
   aci_access_port_block_to_access_port:
@@ -105,8 +104,6 @@
   aci_access_port_block_to_access_port:
     <<: *aci_access_port_to_interface_policy_leaf_profile_present
     #leaf_port_blk: anstest_leafportblkname
-    #fromPort: 13
-    #toPort: 16
     state: absent
   ignore_errors: yes
   register: accessportblock_to_accessport_absent_missing_param
@@ -121,7 +118,7 @@
       - accessportblock_to_accessport_absent_idempotent is not changed
       - accessportblock_to_accessport_absent_idempotent.previous == []
       - accessportblock_to_accessport_absent_missing_param is failed
-      - 'accessportblock_to_accessport_absent_missing_param.msg == "state is absent but all of the following are missing: leaf_port_blk, fromPort, toPort"'
+      - 'accessportblock_to_accessport_absent_missing_param.msg == "state is absent but all of the following are missing: leaf_port_blk"'
 
 
 - name: Remove binding of Access Port Block and Interface Access Port Selector - Clean up
