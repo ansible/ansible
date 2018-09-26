@@ -404,7 +404,8 @@ if($gather_subset.Contains('windows_domain')) {
 
 if($gather_subset.Contains('winrm')) {
 
-    $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse | Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
+    $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse -ErrorAction SilentlyContinue | `
+        Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
     if ($winrm_https_listener_parent_paths -isnot [array]) {
        $winrm_https_listener_parent_paths = @($winrm_https_listener_parent_paths)
     }
