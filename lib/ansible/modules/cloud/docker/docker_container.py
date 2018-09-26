@@ -156,6 +156,7 @@ options:
         container to requested configuration. The evaluation includes the image version. If
         the image version in the registry does not match the container, the container will be
         recreated. Stop this behavior by setting C(ignore_image) to I(True).
+      - I(Warning:) This option is ignored if C(image) or C(*) is used for the C(comparisons) option.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -2251,6 +2252,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                     comparisons[key_main]['comparison'] = value
                 else:
                     self.fail("Unknown comparison mode '%s'!" % value)
+        # Check legacy values
+        if self.module.params['ignore_image'] and comparisons['image']['comparison'] != 'ignore':
+            self.module.warn('The ignore_image option has been overridden by the comparisons option!')
         self.comparisons = comparisons
 
     def __init__(self, **kwargs):
