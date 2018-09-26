@@ -206,7 +206,7 @@ class InventoryCLI(CLI):
                     'The python "toml" library is required when using the TOML output format'
                 )
             if AnsibleTomlEncoder:
-                results = toml.dumps(stuff, encoder=encoder)
+                results = toml.dumps(stuff, encoder=AnsibleTomlEncoder())
             else:
                 results = toml.dumps(convert_yaml_objects_to_native(stuff))
         else:
