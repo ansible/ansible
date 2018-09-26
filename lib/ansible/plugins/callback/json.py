@@ -101,22 +101,17 @@ class CallbackModule(CallbackBase):
             summary[h] = s
 
         custom_stats = {}
-        custom_stats_global = {}
+        global_custom_stats  = {}
 
         if self.get_option('show_custom_stats') and stats.custom:
-
-            for k in stats.custom.keys():
-                if k == '_run':
-                    custom_stats_global = stats.custom[k]
-                    continue
-
-                custom_stats.update({self._convert_host_to_name(k): stats.custom[k]})
+            custom_stats.update(dict((self._convert_host_to_name(k), v) for k, v in stats.custom.items()))	
+            global_custom_stats.update(custom_stats.pop('_run', {}))
 
         output = {
             'plays': self.results,
             'stats': summary,
             'custom_stats': custom_stats,
-            'custom_stats_global': custom_stats_global,
+            'global_custom_stats ': global_custom_stats ,
         }
 
         self._display.display(json.dumps(output, indent=4, sort_keys=True))
