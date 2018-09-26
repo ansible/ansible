@@ -4,14 +4,15 @@
     destination: "{{ destination_ip_address }}/32"
     gateway: "{{ default_gateway }}"
     metric: 1
+    interface: "{{ interface_name }}"
     state: present
   register: route
 
-- name: check if route successfully addedd
+- name: check if route successfully added
   win_shell: (Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '{{ destination_ip_address }}'").Caption
   register: route_added
 
-- name: test if route successfully addedd
+- name: test if route successfully added
   assert:
     that:
       - route is changed
@@ -22,6 +23,7 @@
     destination: "{{ destination_ip_address }}/32"
     gateway: "{{ default_gateway }}"
     metric: 1
+    interface: "{{ interface_name }}"
     state: present
   register: idempotent_route
 
@@ -34,6 +36,7 @@
 - name: remove route
   win_route:
     destination: "{{ destination_ip_address }}/32"
+    interface: "{{ interface_name }}"
     state: absent
   register: route_removed
 
@@ -50,6 +53,7 @@
 - name: remove static route to test idempotency
   win_route:
     destination: "{{ destination_ip_address }}/32"
+    interface: "{{ interface_name }}"
     state: absent
   register: idempotent_route_removed
 
@@ -64,6 +68,7 @@
     destination: "715.18.0.0/32"
     gateway: "{{ default_gateway }}"
     metric: 1
+    interface: "{{ interface_name }}"
     state: present
   ignore_errors: yes
   register: wrong_ip
