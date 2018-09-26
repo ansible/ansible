@@ -24,13 +24,11 @@ options:
   src:
     description:
     - Source file/directory to sync.
-    - Currently requires trailing \ for UNC path
     required: yes
     type: path
   dest:
     description:
     - Destination file/directory to sync (Will receive contents of src).
-    - Currently requires trailing \ for UNC path
     required: yes
     type: path
   recurse:
@@ -89,7 +87,7 @@ EXAMPLES = r'''
 
 - name: Sync one file from a remote UNC path in recursive and purging mode, specifying additional special flags
   win_robocopy:
-    src: \\Server1\Directory One\
+    src: \\Server1\Directory One
     dest: C:\DirectoryTwo
     flags: file.zip /E /PURGE /XD SOME_DIR /XF SOME_FILE /MT:32
 '''
