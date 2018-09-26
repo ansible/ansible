@@ -59,24 +59,18 @@ def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
     else:
         pattern = re.compile(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+(Ansible\..+)')
 
-    with open(path, 'r') as module_fd:
-        code = module_fd.read()
-
-        lines = code.splitlines()
-        line_number = 0
-
-        for line in lines:
-            line_number += 1
+    with open(path, 'r') as module_file:
+        for line_number, line in enumerate(module_file, 1):
             match = re.search(pattern, line)
 
             if not match:
                 continue
 
             import_name = match.group(1)
-
-            if import_name in module_utils:
-                imports.add(import_name)
-            else:
+            if import_name not in module_utils:
                 display.warning('%s:%d Invalid module_utils import: %s' % (path, line_number, import_name))
+                continue
+
+            imports.add(import_name)
 
     return imports
