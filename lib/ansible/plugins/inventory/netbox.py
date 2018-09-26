@@ -10,6 +10,7 @@ DOCUMENTATION = '''
     plugin_type: inventory
     author:
         - Remy Leone (@sieben)
+        - Anthony Ruhier (@Anthony25)
     short_description: NetBox inventory source
     description:
         - Get inventory hosts from NetBox
@@ -133,7 +134,6 @@ class InventoryModule(BaseInventoryPlugin):
     NAME = 'netbox'
 
     def _fetch_information(self, url):
-
         response = open_url(url, headers=self.headers, timeout=self.timeout)
 
         try:
@@ -146,22 +146,15 @@ class InventoryModule(BaseInventoryPlugin):
         except ValueError:
             raise AnsibleError("Incorrect JSON payload: %s" % raw_data)
 
-    def get_resource_list(self, api_url, api_token=None, specific_host=None):
+    def get_resource_list(self, api_url):
         """Retrieves resource list from netbox API.
          Returns:
             A list of all resource from netbox API.
         """
         if not api_url:
             raise AnsibleError("Please check API URL in script configuration file.")
-        api_url_headers = {}
-        api_url_params = {}
-        if api_token:
-            api_url_headers.update({"Authorization": "Token %s" % api_token})
-        if specific_host:
-            api_url_params.update({"name": specific_host})
 
         hosts_list = []
-
         # Pagination.
         while api_url:
             self.display.v("Fetching: " + api_url)
@@ -301,8 +294,8 @@ class InventoryModule(BaseInventoryPlugin):
             self.display.warning("Warning query parameters %s not a dict with a single key." % x)
             return
 
-        k = x.keys()[0]
-        v = x.values()[0]
+        k = tuple(x.keys())[0]
+        v = tuple(x.values())[0]
 
         if not (k in ALLOWED_DEVICE_QUERY_PARAMETERS or k.startswith("cf_")):
             self.display.warning("Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS))
@@ -370,7 +363,7 @@ class InventoryModule(BaseInventoryPlugin):
         self.api_endpoint = self.get_option("api_endpoint")
         self.timeout = self.get_option("timeout")
         self.headers = {
-            'Authorization': "Bearer %s" % token,
+            'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
             'Content-type': 'application/json'
         }
