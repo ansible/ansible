@@ -39,6 +39,9 @@ options:
     - The name of the Fabric access policy leaf interface profile access port block.
     required: yes
     aliases: [ leaf_port_blk_name ]
+  leaf_port_blk_description:
+    description:
+    - The description to assign to the C(leaf_port_blk)
   from_port:
     description:
     - The beginning (from-range) of the port range block for the leaf access port block.
@@ -253,6 +256,7 @@ def main():
         leaf_interface_profile=dict(type='str', aliases=['leaf_interface_profile_name']),  # Not required for querying all objects
         access_port_selector=dict(type='str', aliases=['name', 'access_port_selector_name']),  # Not required for querying all objects
         leaf_port_blk=dict(type='str', aliases=['leaf_port_blk_name']),  # Not required for querying all objects
+        leaf_port_blk_description=dict(type='str'),
         from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']),  # Not required for querying all objects and deleting port blocks
         to_port=dict(type='str', aliases=['to', 'toPort', 'to_port_range']),  # Not required for querying all objects and deleting port blocks
         from_card=dict(type='str', aliases=['from_card_range']),
@@ -272,6 +276,7 @@ def main():
     leaf_interface_profile = module.params['leaf_interface_profile']
     access_port_selector = module.params['access_port_selector']
     leaf_port_blk = module.params['leaf_port_blk']
+    leaf_port_blk_description = module.params['leaf_port_blk_description']
     from_port = module.params['from_port']
     to_port = module.params['to_port']
     from_card = module.params['from_card']
@@ -307,6 +312,7 @@ def main():
         aci.payload(
             aci_class='infraPortBlk',
             class_config=dict(
+                descr=leaf_port_blk_description,
                 name=leaf_port_blk,
                 fromPort=from_port,
                 toPort=to_port,
