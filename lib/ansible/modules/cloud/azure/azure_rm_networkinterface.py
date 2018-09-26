@@ -563,7 +563,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
                 if self.create_with_security_group and not bool(results.get('network_security_group')):
                     self.log(
-                        "CHANGED: add or remove network interface {0} network security group".format(self.name))
+                        "CHANGED: add network interface {0} network security group".format(self.name))
                     changed = True
 
                 if self.enable_accelerated_networking != bool(results.get('enable_accelerated_networking')):
@@ -591,18 +591,28 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         ", ".join(_dns_servers_res)))
                     changed = True
 
-                if nsg:
-                    # If my Nic doesn't have an NSG or the NSG on the NIC is not the same ID as the once creates
-                    nic_already_has_nsg = bool(
-                        results.get('network_security_group'))
+                nic_already_has_nsg = bool(
+                    results.get('network_security_group'))
 
-                    nic_specified_new_nsg = nic_already_has_nsg and results['network_security_group'].get(
-                        'id') != nsg.id
+                nic_specified_new_nsg = nic_already_has_nsg and (nsg and results['network_security_group'].get(
+                    'id') != nsg.id)
 
-                    if not nic_already_has_nsg or nic_specified_new_nsg:
-                        self.log(
-                            "CHANGED: network interface {0} network security group".format(self.name))
-                        changed = True
+                nic_remove_nsg = nic_already_has_nsg and not nsg
+
+                if not nic_already_has_nsg and nsg:
+                    self.log(
+                        "CHANGED: add network interface {0} network security group".format(self.name))
+                    changed = True
+
+                if nic_specified_new_nsg:
+                    self.log(
+                        "CHANGED: update network interface {0} network security group".format(self.name))
+                    changed = True
+
+                if nic_remove_nsg:
+                    self.log(
+                        "CHANGED: remove network interface {0} network security group".format(self.name))
+                    changed = True
 
                 if results['ip_configurations'][0]['subnet']['virtual_network_name'] != self.virtual_network['name']:
                     self.log(

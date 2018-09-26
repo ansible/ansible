@@ -546,7 +546,7 @@
     that:
       - output.changed
 
-- name: create a NIC to add an existing NSG to
+- name: add an existing NSG to an existing NIC
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}nsgadd"
@@ -562,7 +562,7 @@
       - output.changed
       - output.state.network_security_group.name == 'nsg{{ rpfx }}'
 
-- name: create a NIC to add an existing NSG to (idempotent)
+- name: add an existing NSG to an existing NIC (idempotent)
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}nsgadd"
@@ -577,6 +577,32 @@
     that:
       - not output.changed
       - output.state.network_security_group.name == 'nsg{{ rpfx }}'
+
+- name: disassociate an NSG from a NIC
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}nsg"
+    virtual_network: "{{ vn.state.id }}"
+    subnet: "tn{{ rpfx }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - not output.state.network_security_group
+
+- name: disassociate an NSG from a NIC (idempotent)
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}nsg"
+    virtual_network: "{{ vn.state.id }}"
+    subnet: "tn{{ rpfx }}"
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+      - not output.state.network_security_group
 
 - name: Delete the NICs
   azure_rm_networkinterface:
