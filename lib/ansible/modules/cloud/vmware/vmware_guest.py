@@ -2034,6 +2034,12 @@ class PyVmomiHelper(PyVmomi):
                 if self.params['esxi_hostname']:
                     relospec.host = self.select_host()
                 relospec.datastore = datastore
+                
+                if self.params['convert']:
+                    if self.params['convert'] not in ['flat', 'sparse']:
+                         self.module.fail_json(msg="Parameter 'convert' accept only value flat or sparse ")
+                    else:
+                         relospec.transform = self.params['convert']
 
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
@@ -2305,6 +2311,7 @@ def main():
         customization_spec=dict(type='str', default=None),
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
+        convert=dict(type='str'),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
