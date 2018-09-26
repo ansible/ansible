@@ -178,6 +178,9 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.six import string_types, iteritems
 
 
+g_config = None
+
+
 class FactsBase(object):
 
     def __init__(self, module):
@@ -200,6 +203,12 @@ class FactsBase(object):
         except IndexError:
             self.warnings.append('command %s failed, facts for this command will not be populated' % command_string)
             return None
+
+    def get_config(self):
+        global g_config
+        if not g_config:
+            g_config = get_config(self.module)
+        return g_config
 
     def transform_dict(self, data, keymap):
         transform = dict()
@@ -287,7 +296,22 @@ class Config(FactsBase):
 
     def populate(self):
         super(Config, self).populate()
-        self.facts['config'] = get_config(self.module)
+        self.facts['config'] = self.get_config()
+
+
+class Features(FactsBase):
+
+    def populate(self):
+        super(Features, self).populate()
+        data = self.get_config()
+
+        if data:
+            features = []
+            for line in data.splitlines():
+                if line.startswith('feature'):
+                    features.append(line.replace('feature', '').strip())
+
+            self.facts['features_enabled'] = features
 
 
 class Hardware(FactsBase):
@@ -903,6 +927,7 @@ FACT_SUBSETS = dict(
     hardware=Hardware,
     interfaces=Interfaces,
     config=Config,
+    features=Features
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
