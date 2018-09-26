@@ -65,14 +65,12 @@ options:
     description:
       - Instructs the module on the way to perform the matching of
         the set of commands against the current device config.  If
-        match is set to I(line), commands are matched line by line.  If
-        match is set to I(strict), command lines are matched with respect
-        to position.  If match is set to I(exact), command lines
-        must be an equal match.  Finally, if match is set to I(none), the
+        match is set to I(line), commands are matched line by line.
+        If match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
     default: line
-    choices: ['line', 'strict', 'exact', 'none']
+    choices: ['line', 'none']
   replace:
     description:
       - Instructs the module on the way to perform the configuration
