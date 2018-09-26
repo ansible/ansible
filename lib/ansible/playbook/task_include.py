@@ -85,7 +85,8 @@ class TaskInclude(Task):
 
         diff = set(ds.keys()).difference(TaskInclude.VALID_INCLUDE_KEYWORDS)
         for k in diff:
-            if ds[k] is not None and not self.statically_loaded:
+            # This check doesn't handle ``include`` as we have no idea at this point if it is static or not
+            if ds[k] is not None and ds['action'] in ('include_tasks', 'include_role'):
                 if C.INVALID_TASK_ATTRIBUTE_FAILED:
                     raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
                 else:
