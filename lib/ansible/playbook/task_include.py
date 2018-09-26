@@ -44,8 +44,8 @@ class TaskInclude(Task):
     BASE = frozenset(('file', '_raw_params'))  # directly assigned
     OTHER_ARGS = frozenset(('apply',))  # assigned to matching property
     VALID_ARGS = BASE.union(OTHER_ARGS)  # all valid args
-    INCLUDE_KEYWORDS = frozenset(('no_log', 'ignore_errors', 'debugger', 'register', 'args', 'vars', 'tags',
-                                  'name', 'when', 'loop', 'loop_with', 'loop_control', 'action'))
+    VALID_INCLUDE_KEYWORDS = frozenset(('no_log', 'ignore_errors', 'debugger', 'register', 'args', 'vars', 'tags',
+                                        'name', 'when', 'loop', 'loop_with', 'loop_control', 'action'))
 
     # =================================================================================
     # ATTRIBUTES
@@ -83,7 +83,7 @@ class TaskInclude(Task):
     def preprocess_data(self, ds):
         ds = super(TaskInclude, self).preprocess_data(ds)
 
-        diff = set(ds.keys()).difference(TaskInclude.INCLUDE_KEYWORDS)
+        diff = set(ds.keys()).difference(TaskInclude.VALID_INCLUDE_KEYWORDS)
         for k in list(diff):
             if ds[k] is not None and not self.statically_loaded:
                 if C.INVALID_TASK_ATTRIBUTE_FAILED:
