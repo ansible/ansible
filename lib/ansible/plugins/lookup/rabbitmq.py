@@ -35,6 +35,7 @@ DOCUMENTATION = """
         - This plugin is tested against RabbitMQ.  Other AMQP 0.9.1 protocol based servers may work but not tested/guaranteed.
         - Assigning the return messages to a variable under C(vars) may result in unexpected results as the lookup is evaluated every time the
           variable is referenced.
+        - Currently this plugin only handles text based messages from a queue. Unexpected results may occur when retrieving binary data.
 """
 
 
@@ -95,7 +96,7 @@ RETURN = """
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 import json
 
 try:
@@ -149,9 +150,9 @@ class LookupModule(LookupBase):
         while True:
             method_frame, properties, body = conn_channel.basic_get(queue=channel)
             if method_frame:
-                display.vvv(u"%s, %s, %s " % (method_frame, properties, to_native(body)))
+                display.vvv(u"%s, %s, %s " % (method_frame, properties, to_text(body)))
                 msg_details = dict({
-                                   'msg': to_native(body),
+                                   'msg': to_text(body),
                                    'message_count': method_frame.message_count,
                                    'routing_key': method_frame.routing_key,
                                    'delivery_tag': method_frame.delivery_tag,
