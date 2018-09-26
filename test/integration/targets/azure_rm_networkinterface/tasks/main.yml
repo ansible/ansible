@@ -498,7 +498,7 @@
 
 - name: create a network security group
   azure_rm_securitygroup:
-    name: "nsg{{ rpx }}"
+    name: "nsg{{ rpfx }}"
     resource_group: '{{ resource_group }}'
 
 - name: create a NIC with an existing NSG
@@ -508,14 +508,14 @@
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
       security_group:
-        name: "nsg{{ rpx }}"
+        name: "nsg{{ rpfx }}"
         resource_group: "{{ resource_group }}"
   register: output
 
 - assert:
     that:
       - output.changed
-      - output.state.network_security_group.name == 'nsg{{ rpx }}'
+      - output.state.network_security_group.name == 'nsg{{ rpfx }}'
       
 
 - name: create a NIC with an existing NSG (idempotent)
@@ -525,14 +525,14 @@
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
       security_group:
-        name: "nsg{{ rpx }}"
+        name: "nsg{{ rpfx }}"
         resource_group: "{{ resource_group }}"
   register: output
 
 - assert:
     that:
       - not output.changed
-      - output.state.network_security_group.name == 'nsg{{ rpx }}'
+      - output.state.network_security_group.name == 'nsg{{ rpfx }}'
 
 - name: create a NIC to add an existing NSG to
   azure_rm_networkinterface:
@@ -553,14 +553,14 @@
     virtual_network: "{{ vn.state.id }}"
     subnet: "tn{{ rpfx }}"
     security_group:
-      name: "nsg{{ rpx }}"
+      name: "nsg{{ rpfx }}"
       resource_group: "{{ resource_group }}"
   register: output
 
 - assert:
     that:
       - output.changed
-      - output.state.network_security_group.name == 'nsg{{ rpx }}'
+      - output.state.network_security_group.name == 'nsg{{ rpfx }}'
 
 - name: create a NIC to add an existing NSG to (idempotent)
   azure_rm_networkinterface:
@@ -569,14 +569,14 @@
     virtual_network: "{{ vn.state.id }}"
     subnet: "tn{{ rpfx }}"
     security_group:
-      name: "nsg{{ rpx }}"
+      name: "nsg{{ rpfx }}"
       resource_group: "{{ resource_group }}"
   register: output
 
 - assert:
     that:
       - not output.changed
-      - output.state.network_security_group.name == 'nsg{{ rpx }}'
+      - output.state.network_security_group.name == 'nsg{{ rpfx }}'
 
 - name: Delete the NICs
   azure_rm_networkinterface:
@@ -594,6 +594,6 @@
 
 - name: Delete the NSG
   azure_rm_securitygroup:
-    name: "nsg{{ rpx }}"
+    name: "nsg{{ rpfx }}"
     resource_group: '{{ resource_group }}'
     state: absent
