@@ -23,12 +23,10 @@ class ScalewayException(Exception):
 
 
 # Specify a complete Link header, for validation purposes
-R_LINK_HEADER = r'''</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>;
-    \srel="(first|previous|next|last)"
-    (,</[a-z]+\?page=[0-9]+&per_page=[0-9]+&>;
-    \srel="(first|previous|next|last))*"'''
+R_LINK_HEADER = r'''<[^>]+>;\srel="(first|previous|next|last)"
+    (,<[^>]+>;\srel="(first|previous|next|last))*"'''
 # Specify a single relation, for iteration and string extraction purposes
-R_RELATION = r'<(?P<target_IRI>/[a-z]+\?page=(?P<page>[0-9]+)&per_page=([0-9]+)&)>; rel="(?P<relation>first|previous|next|last)"'
+R_RELATION = r'<(?P<target_IRI>[^>]+)>; rel="(?P<relation>first|previous|next|last)"'
 
 
 def parse_pagination_link(header):
