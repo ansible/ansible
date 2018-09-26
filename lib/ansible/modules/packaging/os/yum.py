@@ -1461,6 +1461,23 @@ class YumModule(YumDnf):
         if error_msgs:
             self.module.fail_json(msg='. '.join(error_msgs))
 
+        if self.update_cache and not self.names and not self.list:
+            rc, stdout, stderr = self.module.run_command(self.yum_basecmd + ['clean', 'expire-cache'])
+            if rc == 0:
+                self.module.exit_json(
+                    changed=False,
+                    msg="Cache updated",
+                    rc=rc,
+                    results=[]
+                )
+            else:
+                self.module.exit_json(
+                    changed=False,
+                    msg="Failed to update cache",
+                    rc=rc,
+                    results=[stderr],
+                )
+
         # fedora will redirect yum to dnf, which has incompatibilities
         # with how this module expects yum to operate. If yum-deprecated
         # is available, use that instead to emulate the old behaviors.
