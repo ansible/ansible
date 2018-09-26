@@ -1,3 +1,6 @@
+# (c) 2018 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 param(
     [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
 )
@@ -86,7 +89,7 @@ $password = $Payload.become_password
 try {
     $logon_type, $logon_flags = Get-BecomeFlags -flags $Payload.become_flags
 } catch {
-    Write-AnsibleError -Message "failed to parse become_flags '$($Payload.become_flags)'" -ErrorRecord $_
+    Write-AnsibleError -Message "internal error: failed to parse become_flags '$($Payload.become_flags)'" -ErrorRecord $_
     $host.SetShouldExit(1)
     return
 }
@@ -132,7 +135,7 @@ try {
     $host.UI.WriteErrorLine($result.StandardError.Trim())
     $host.SetShouldExit($result.ExitCode)
 } catch {
-    Write-AnsibleError -Message "failed to become user '$username'" -ErrorRecord $_
+    Write-AnsibleError -Message "internal error: failed to become user '$username'" -ErrorRecord $_
     $host.SetShouldExit(1)
 }
 

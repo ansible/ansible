@@ -1,3 +1,6 @@
+# (c) 2018 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 param(
     [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
 )
@@ -7,7 +10,7 @@ $ErrorActionPreference = "Stop"
 Write-AnsibleLog "INFO - starting async_wrapper" "async_wrapper"
 
 if (-not $Payload.environment.ContainsKey("ANSIBLE_ASYNC_DIR")) {
-    Write-AnsibleError -Message "the environment variable ANSIBLE_ASYNC_DIR is not set and is required for an async task"
+    Write-AnsibleError -Message "internal error: the environment variable ANSIBLE_ASYNC_DIR is not set and is required for an async task"
     $host.SetShouldExit(1)
     return
 }

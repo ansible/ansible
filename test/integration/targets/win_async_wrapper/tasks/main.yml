@@ -146,7 +146,7 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult is finished
-    - asyncresult is changed
+    - asyncresult is not changed
     - asyncresult is failed
     - 'asyncresult.msg == "Unhandled exception while executing module: failing via exception"'
 

@@ -1,3 +1,6 @@
+# (c) 2018 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 begin {
     $DebugPreference = "Continue"
     $ProgressPreference = "SilentlyContinue"
@@ -108,7 +111,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
                 [System.Management.Automation.ErrorRecord]$ErrorRecord = $null
             )
             $result = @{
-                msg = "internal error: $Message"
+                msg = $Message
                 failed = $true
             }
             if ($null -ne $ErrorRecord) {
@@ -164,7 +167,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
 } end {
     Write-AnsibleLog "INFO - starting exec_wrapper" "exec_wrapper"
     if (-not $json_raw) {
-        Write-AnsibleError -Message "no input given to PowerShell exec wrapper"
+        Write-AnsibleError -Message "internal error: no input given to PowerShell exec wrapper"
         exit 1
     }
 
@@ -182,7 +185,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
 
         Write-AnsibleLog "INFO - checking if actual os version '$actual_os_version' is less than the min os version '$min_os_version'" "exec_wrapper"
         if ($actual_os_version -lt $min_os_version) {
-            Write-AnsibleError -Message "This module cannot run on this OS as it requires a minimum version of $min_os_version, actual was $actual_os_version"
+            Write-AnsibleError -Message "internal error: This module cannot run on this OS as it requires a minimum version of $min_os_version, actual was $actual_os_version"
             exit 1
         }
     }
@@ -192,7 +195,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
 
         Write-AnsibleLog "INFO - checking if actual PS version '$actual_ps_version' is less than the min PS version '$min_ps_version'" "exec_wrapper"
         if ($actual_ps_version -lt $min_ps_version) {
-            Write-AnsibleError -Message "This module cannot run as it requires a minimum PowerShell version of $min_ps_version, actual was $actual_ps_version"
+            Write-AnsibleError -Message "internal error: This module cannot run as it requires a minimum PowerShell version of $min_ps_version, actual was $actual_ps_version"
             exit 1
         }
     }
@@ -218,7 +221,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
             Write-Output -InputObject $output
         }
     } catch {
-        Write-AnsibleError -Message "failed to run exec_wrapper action $action" -ErrorRecord $_
+        Write-AnsibleError -Message "internal error: failed to run exec_wrapper action $action" -ErrorRecord $_
         exit 1
     }
     Write-AnsibleLog "INFO - ending exec_wrapper" "exec_wrapper"

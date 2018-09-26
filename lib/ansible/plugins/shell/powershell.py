@@ -118,7 +118,7 @@ class ShellModule(ShellBase):
         # powershell requires that script files end with .ps1
         base_name = os.path.basename(pathname.strip())
         name, ext = os.path.splitext(base_name.strip())
-        if ext.lower() not in ['.cs', '.ps1', '.exe']:
+        if ext.lower() not in ['.ps1', '.exe']:
             return name + '.ps1'
 
         return base_name.strip()

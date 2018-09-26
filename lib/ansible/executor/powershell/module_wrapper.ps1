@@ -1,3 +1,6 @@
+# (c) 2018 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 <#
 .SYNOPSIS
 Invokes an Ansible module in a new Runspace. This cmdlet will output the
@@ -35,113 +38,128 @@ param(
     [String]$ModuleName
 )
 
-Write-AnsibleLog "INFO - creating new Runspace for $ModuleName" "module_wrapper"
-$rs = [RunspaceFactory]::CreateRunspace()
-$rs.Open()
+Write-AnsibleLog "INFO - creating new PowerShell pipeline for $ModuleName" "module_wrapper"
+$ps = [PowerShell]::Create()
 
+# do not set ErrorActionPreference for script
+if ($ModuleName -ne "script") {
+    $ps.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
+}
+
+# force input encoding to preamble-free UTF8 so PS sub-processes (eg,
+# Start-Job) don't blow up. This is only required for WinRM, a PSRP
+# runspace doesn't have a host console and this will bomb out
+if ($host.Name -eq "ConsoleHost") {
+    Write-AnsibleLog "INFO - setting console input encoding to UTF8 for $ModuleName" "module_wrapper"
+    $ps.AddScript('[Console]::InputEncoding = New-Object Text.UTF8Encoding $false').AddStatement() > $null
+}
+
+# set the variables
+foreach ($variable in $Variables) {
+    Write-AnsibleLog "INFO - setting variable '$($variable.Name)' for $ModuleName" "module_wrapper"
+    $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement() > $null
+}
+
+# set the environment vars
+if ($Environment) {
+    foreach ($env_kv in $Environment.GetEnumerator()) {
+        Write-AnsibleLog "INFO - setting environment '$($env_kv.Key)' for $ModuleName" "module_wrapper"
+        $env_key = $env_kv.Key.Replace("'", "''")
+        $env_value = $env_kv.Value.ToString().Replace("'", "''")
+        $escaped_env_set = "[System.Environment]::SetEnvironmentVariable('$env_key', '$env_value')"
+        $ps.AddScript($escaped_env_set).AddStatement() > $null
+    }
+}
+
+# import the PS modules
+if ($Modules) {
+    foreach ($module in $Modules.GetEnumerator()) {
+        Write-AnsibleLog "INFO - create module util '$($module.Key)' for $ModuleName" "module_wrapper"
+        $module_name = $module.Key
+        $module_code = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($module.Value))
+        $ps.AddCommand("New-Module").AddParameters(@{Name=$module_name; ScriptBlock=[ScriptBlock]::Create($module_code)}) > $null
+        $ps.AddCommand("Import-Module").AddParameter("WarningAction", "SilentlyContinue") > $null
+        $ps.AddCommand("Out-Null").AddStatement() > $null
+    }
+}
+
+# redefine Write-Host to dump to output instead of failing
+# lots of scripts still use it
+$ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').AddStatement() > $null
+
+# add the scripts and run
+foreach ($script in $Scripts) {
+    $ps.AddScript($script).AddStatement() > $null
+}
+
+Write-AnsibleLog "INFO - start module exec with Invoke() - $ModuleName" "module_wrapper"
 try {
-    Write-AnsibleLog "INFO - creating new PowerShell pipeline for $ModuleName" "module_wrapper"
-    $ps = [PowerShell]::Create()
-    $ps.Runspace = $rs
-
-    # force input encoding to preamble-free UTF8 so PS sub-processes (eg,
-    # Start-Job) don't blow up. This is only required for WinRM, a PSRP
-    # runspace doesn't have a host console and this will bomb out
-    if ($host.Name -eq "ConsoleHost") {
-        Write-AnsibleLog "INFO - setting console input encoding to UTF8 for $ModuleName" "module_wrapper"
-        $ps.AddScript('[Console]::InputEncoding = New-Object Text.UTF8Encoding $false').AddStatement() > $null
-    }
-
-    # set the variables
-    foreach ($variable in $Variables) {
-        Write-AnsibleLog "INFO - setting variable '$($variable.Name)' for $ModuleName" "module_wrapper"
-        $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement() > $null
-    }
-
-    # set the environment vars
-    if ($Environment) {
-        foreach ($env_kv in $Environment.GetEnumerator()) {
-            Write-AnsibleLog "INFO - setting environment '$($env_kv.Key)' for $ModuleName" "module_wrapper"
-            $env_key = $env_kv.Key.Replace("'", "''")
-            $env_value = $env_kv.Value.ToString().Replace("'", "''")
-            $escaped_env_set = "[System.Environment]::SetEnvironmentVariable('$env_key', '$env_value')"
-            $ps.AddScript($escaped_env_set).AddStatement() > $null
-        }
-    }
-
-    # import the PS modules
-    if ($Modules) {
-        foreach ($module in $Modules.GetEnumerator()) {
-            Write-AnsibleLog "INFO - create module util '$($module.Key)' for $ModuleName" "module_wrapper"
-            $module_name = $module.Key
-            $module_code = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($module.Value))
-            $ps.AddCommand("New-Module").AddParameters(@{Name=$module_name; ScriptBlock=[ScriptBlock]::Create($module_code)}) > $null
-            $ps.AddCommand("Import-Module").AddParameter("WarningAction", "SilentlyContinue") > $null
-            $ps.AddCommand("Out-Null").AddStatement() > $null
-        }
-    }
-
-    # redefine Write-Host to dump to output instead of failing
-    # lots of scripts still use it
-    $ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').AddStatement() > $null
-
-    # add the scripts and run
-    foreach ($script in $Scripts) {
-        $ps.AddScript($script).AddStatement() > $null
-    }
-
-    Write-AnsibleLog "INFO - start module exec with Invoke() - $ModuleName" "module_wrapper"
     $module_output = $ps.Invoke()
-    Write-AnsibleLog "INFO - module exec ended $ModuleName" "module_wrapper"
-    $ansible_output = $rs.SessionStateProxy.GetVariable("_ansible_output")
+} catch {
+    # uncaught exception while executing module, present a prettier error for
+    # Ansible to parse
+    Write-AnsibleError -Message "Unhandled exception while executing module" `
+        -ErrorRecord $_.Exception.InnerException.ErrorRecord
+    $host.SetShouldExit(1)
+    return
+}
 
-    # _ansible_output is a special var used by new modules to store the
-    # output JSON. If set, we consider the ExitJson and FailJson methods
-    # called and assume it contains the JSON we want and the pipeline
-    # output won't contain anything of note
-    # TODO: should we validate it or use a random variable name?
-    # TODO: should we use this behaviour for all new modules and not just
-    # ones running under psrp
-    if ($null -ne $ansible_output) {
-        Write-AnsibleLog "INFO - using the _ansible_output variable for module output - $ModuleName" "module_wrapper"
-        Write-Output -InputObject $ansible_output.ToString()
-    } elseif ($module_output.Count -gt 0) {
-        # do not output if empty collection
-        Write-AnsibleLog "INFO - using the output stream for module output - $ModuleName" "module_wrapper"
-        Write-Output -InputObject ($module_output -join "`r`n")
+# other types of errors may not throw an exception in Invoke but rather just
+# set the pipeline state to failed
+if ($ps.InvocationStateInfo.State -eq "Failed" -and $ModuleName -ne "script") {
+    Write-AnsibleError -Message "Unhandled exception while executing module" `
+        -ErrorRecord $ps.InvocationStateInfo.Reason.ErrorRecord
+    $host.SetShouldExit(1)
+    return
+}
+
+Write-AnsibleLog "INFO - module exec ended $ModuleName" "module_wrapper"
+$ansible_output = $ps.Runspace.SessionStateProxy.GetVariable("_ansible_output")
+
+# _ansible_output is a special var used by new modules to store the
+# output JSON. If set, we consider the ExitJson and FailJson methods
+# called and assume it contains the JSON we want and the pipeline
+# output won't contain anything of note
+# TODO: should we validate it or use a random variable name?
+# TODO: should we use this behaviour for all new modules and not just
+# ones running under psrp
+if ($null -ne $ansible_output) {
+    Write-AnsibleLog "INFO - using the _ansible_output variable for module output - $ModuleName" "module_wrapper"
+    Write-Output -InputObject $ansible_output.ToString()
+} elseif ($module_output.Count -gt 0) {
+    # do not output if empty collection
+    Write-AnsibleLog "INFO - using the output stream for module output - $ModuleName" "module_wrapper"
+    Write-Output -InputObject ($module_output -join "`r`n")
+}
+
+# we attempt to get the return code from the LASTEXITCODE variable
+# this is set explicitly in newer style variables when calling
+# ExitJson and FailJson. If set we set the current hosts' exit code
+# to that same value
+$rc = $ps.Runspace.SessionStateProxy.GetVariable("LASTEXITCODE")
+if ($null -ne $rc) {
+    Write-AnsibleLog "INFO - got an rc of $rc from $ModuleName exec" "module_wrapper"
+    $host.SetShouldExit($rc)
+}
+
+# PS3 doesn't properly set HadErrors in many cases, inspect the error stream as a fallback
+# with the trap handler that's now in place, this should only write to the output if
+# $ErrorActionPreference != "Stop", that's ok because this is sent to the stderr output
+# for a user to manually debug if something went horribly wrong
+if ($ps.HadErrors -or ($PSVersionTable.PSVersion.Major -lt 4 -and $ps.Streams.Error.Count -gt 0)) {
+    Write-AnsibleLog "WARN - module had errors, outputting error info $ModuleName" "module_wrapper"
+    # if the rc wasn't explicitly set, we return an exit code of 1
+    if ($null -eq $rc) {
+        $host.SetShouldExit(1)
     }
 
-    # we attempt to get the return code from the LASTEXITCODE variable
-    # this is set explicitly in newer style variables when calling
-    # ExitJson and FailJson. If set we set the current hosts' exit code
-    # to that same value
-    $rc = $rs.SessionStateProxy.GetVariable("LASTEXITCODE")
-    if ($null -ne $rc) {
-        Write-AnsibleLog "INFO - got an rc of $rc from $ModuleName exec" "module_wrapper"
-        $host.SetShouldExit($rc)
+    # output each error to the error stream of the current pipeline
+    foreach ($err in $ps.Streams.Error) {
+        $error_msg = Format-AnsibleException -ErrorRecord $err
+
+        # need to use the current hosts's UI class as we may not have
+        # a console to write the stderr to, e.g. psrp
+        Write-AnsibleLog "WARN - error msg for for $($ModuleName):`r`n$error_msg" "module_wrapper"
+        $host.UI.WriteErrorLine($error_msg)
     }
-
-    # PS3 doesn't properly set HadErrors in many cases, inspect the error stream as a fallback
-    # with the trap handler that's now in place, this should only write to the output if
-    # $ErrorActionPreference != "Stop", that's ok because this is sent to the stderr output
-    # for a user to manually debug if something went horribly wrong
-    if ($ps.HadErrors -or ($PSVersionTable.PSVersion.Major -lt 4 -and $ps.Streams.Error.Count -gt 0)) {
-        Write-AnsibleLog "WARN - module had errors, outputting error info $ModuleName" "module_wrapper"
-        # if the rc wasn't explicitly set, we return an exit code of 1
-        if ($null -eq $rc) {
-            $host.SetShouldExit(1)
-        }
-
-        # output each error to the error stream of the current pipeline
-        foreach ($err in $ps.Streams.Error) {
-            $error_msg = Format-AnsibleException -ErrorRecord $err
-
-            # need to use the current hosts's UI class as we may not have
-            # a console to write the stderr to, e.g. psrp
-            Write-AnsibleLog "WARN - error msg for for $($ModuleName):`r`n$error_msg" "module_wrapper"
-            $host.UI.WriteErrorLine($error_msg)
-        }
-    }
-} finally {
-    $rs.Close()
 }

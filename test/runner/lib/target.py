@@ -15,7 +15,7 @@ from lib.util import (
     read_lines_without_comments,
 )
 
-MODULE_EXTENSIONS = '.py', '.ps1', '.cs'
+MODULE_EXTENSIONS = '.py', '.ps1'
 
 
 def find_target_completion(target_func, prefix):

@@ -70,7 +70,7 @@
   assert:
     that:
     - dotnet_exception is failed
-    - 'dotnet_exception.msg == "Unhandled exception while executing module: The path is not of a legal form."'
+    - 'dotnet_exception.msg == "Unhandled exception while executing module: Exception calling \"GetFullPath\" with \"1\" argument(s): \"The path is not of a legal form.\""'
     - '"[System.IO.Path]::GetFullPath($null)" in dotnet_exception.exception'
 
 - name: test module with function exception

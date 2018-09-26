@@ -29,8 +29,6 @@ Function Test-ThrowException {
     throw "exception in function"
 }
 
-$ErrorActionPreference = "Stop"
-
 if ($data -eq "normal") {
     Exit-Json -obj $result
 } elseif ($data -eq "fail") {
