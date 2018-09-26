@@ -1,5 +1,5 @@
-<!--- Describe the change below, including rationale and design decisions -->
 
+<!--- Describe the change above, including rationale and design decisions -->
 <!--- HINT: Include "Fixes #nnn" if you are fixing an existing issue -->
 
 ### Type of pull request
@@ -8,9 +8,6 @@
 - Documentation
 - Feature
 - New Module
-
-### Component name
-<!--- Write the short name of the module, plugin, task or feature below -->
 
 ### Additional information
 <!--- Include additional information to help people understand the change here -->
