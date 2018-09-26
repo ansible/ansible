@@ -126,24 +126,13 @@ def convert_yaml_objects_to_native(obj):
     the data before we hand it over to ``toml``
     """
     if isinstance(obj, dict):
-        new_obj = {}
-        items = obj.items()
+        return {k: convert_yaml_objects_to_native(v) for k, v in obj.items()}
     elif isinstance(obj, list):
-        new_obj = []
-        items = enumerate(obj)
+        return [convert_yaml_objects_to_native(v) for v in obj]
     elif isinstance(obj, text_type):
         return text_type(obj)
     else:
         return obj
-
-    for k, v in items:
-        casted_v = convert_yaml_objects_to_native(v)
-        try:
-            new_obj[k] = casted_v
-        except IndexError:
-            new_obj.append(casted_v)
-
-    return new_obj
 
 
 class InventoryModule(BaseFileInventoryPlugin):
