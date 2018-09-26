@@ -856,6 +856,12 @@ files:
     support: core
   lib/ansible/plugins/inventory/ini.py:
     support: core
+  lib/ansible/plugins/inventory/k8s.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+  lib/ansible/plugins/inventory/openshift.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
   lib/ansible/plugins/inventory/openstack.py:
     maintainers: $team_openstack
     keywords:
@@ -884,6 +890,9 @@ files:
     labels: community
   lib/ansible/plugins/lookup/cyberarkpassword.py:
     notified: cyberark-bizdev
+  lib/ansible/plugins/lookup/k8s.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
   lib/ansible/plugins/lookup/nios:
     support: core
     maintainers: $team_networking sganesh-infoblox
