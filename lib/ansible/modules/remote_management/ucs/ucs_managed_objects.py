@@ -53,7 +53,7 @@ requirements:
 author:
 - David Soper (@dsoper2)
 - CiscoUcs (@CiscoUcs)
-version_added: '2.7'
+version_added: '2.8'
 '''
 
 EXAMPLES = r'''
