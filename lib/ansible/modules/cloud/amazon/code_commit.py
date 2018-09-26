@@ -69,13 +69,24 @@ class AWSRoute53Record(object):
     def process(self):
         results = dict(changed=False)
         changed = False
+
+        results = self._connection.create_repository(
+        repositoryName=self._module['name'],
+        repositoryDescription=self._module['description']
+        )
         return changed, results
 
+    def _exists(self):
+        exists = False
+        repositories = self._connection.list_repositories()['repositories']
+
+        return exists
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
+        description=dict(default=''),
         state=dict(choices=['present', 'absent'], required=True)
     ))
 
