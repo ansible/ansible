@@ -75,7 +75,7 @@ extends_documentation_fragment:
     - docker
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.7.0"
+    - "docker-py >= 1.8.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
