@@ -7,7 +7,7 @@
 # This is a windows documentation stub.  Actual code lives in the .ps1
 # file of the same name.
 
-ANSIBLE_METADATA = {'metadata_version': '1.2',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -36,7 +36,7 @@ options:
     description:
         - The network interface name by the static route.
     required: yes
-    version_added: '2.7'
+    version_added: '2.8'
   state:
     description:
       - If C(absent), it removes a network static route.
