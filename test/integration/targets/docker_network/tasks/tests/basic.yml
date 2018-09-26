@@ -1,12 +1,12 @@
 ---
-- name: Registering container name
+- name: Registering container and network names
   set_fact:
     cname_1: "{{ name_prefix ~ '-container-1' }}"
     cname_2: "{{ name_prefix ~ '-container-2' }}"
     cname_3: "{{ name_prefix ~ '-container-3' }}"
     nname_1: "{{ name_prefix ~ '-network-1' }}"
     nname_2: "{{ name_prefix ~ '-network-2' }}"
-- name: Registering container name
+- name: Registering container and network names
   set_fact:
     cnames: "{{ cnames }} + [cname_1, cname_2, cname_3]"
     dnetworks: "{{ dnetworks }} + [nname_1, nname_2]"

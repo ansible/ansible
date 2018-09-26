@@ -19,13 +19,13 @@
       name: "{{ item }}"
       state: absent
       stop_timeout: 1
-    with_items: "{{ cnames }}"
+    loop: "{{ cnames }}"
   - name: "Make sure all networks are removed"
     docker_network:
       name: "{{ item }}"
       state: absent
       force: yes
-    with_items: "{{ dnetworks }}"
+    loop: "{{ dnetworks }}"
 
   # Skip for CentOS 6
   when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6
