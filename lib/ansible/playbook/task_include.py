@@ -84,7 +84,7 @@ class TaskInclude(Task):
         ds = super(TaskInclude, self).preprocess_data(ds)
 
         diff = set(ds.keys()).difference(TaskInclude.VALID_INCLUDE_KEYWORDS)
-        for k in list(diff):
+        for k in diff:
             if ds[k] is not None and not self.statically_loaded:
                 if C.INVALID_TASK_ATTRIBUTE_FAILED:
                     raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
