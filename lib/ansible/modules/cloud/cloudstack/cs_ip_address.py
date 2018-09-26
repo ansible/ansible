@@ -166,7 +166,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'vpcid': self.get_vpc(key='id'),
         }
-        ip_addresses = self.cs.listPublicIpAddresses(**args)
+        ip_addresses = self.query_api('listPublicIpAddresses', **args)
 
         if ip_addresses:
             tags = self.module.params.get('tags')
@@ -201,7 +201,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
         }
         ip_address = None
         if not self.module.check_mode:
-            res = self.cs.associateIpAddress(**args)
+            res = self.query_api('associateIpAddress', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -220,7 +220,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             self.module.params['tags'] = []
             ip_address = self.ensure_tags(resource=ip_address, resource_type='publicipaddress')
 
-            res = self.cs.disassociateIpAddress(id=ip_address['id'])
+            res = self.query_api('disassociateIpAddress', id=ip_address['id'])
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
