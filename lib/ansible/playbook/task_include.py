@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
@@ -43,6 +44,8 @@ class TaskInclude(Task):
     BASE = frozenset(('file', '_raw_params'))  # directly assigned
     OTHER_ARGS = frozenset(('apply',))  # assigned to matching property
     VALID_ARGS = BASE.union(OTHER_ARGS)  # all valid args
+    INCLUDE_KEYWORDS = frozenset(('no_log', 'ignore_errors', 'debugger', 'register', 'args', 'vars', 'tags',
+                                  'name', 'when', 'loop', 'loop_with', 'loop_control', 'action'))
 
     # =================================================================================
     # ATTRIBUTES
@@ -76,6 +79,19 @@ class TaskInclude(Task):
             raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
 
         return task
+
+    def preprocess_data(self, ds):
+        ds = super(TaskInclude, self).preprocess_data(ds)
+
+        diff = set(ds.keys()).difference(TaskInclude.INCLUDE_KEYWORDS)
+        for k in list(diff):
+            if ds[k] is not None and not self.statically_loaded:
+                if C.INVALID_TASK_ATTRIBUTE_FAILED:
+                    raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
+                else:
+                    display.warning("Ignoring invalid attribute: %s" % k)
+
+        return ds
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
         new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
