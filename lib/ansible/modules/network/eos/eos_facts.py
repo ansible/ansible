@@ -263,28 +263,29 @@ class Interfaces(FactsBase):
 
     def populate_interfaces(self, data):
         facts = dict()
-        for key, value in iteritems(data['interfaces']):
-            intf = dict()
+        if data and 'interfaces' in data:
+            for key, value in iteritems(data['interfaces']):
+                intf = dict()
 
-            for remote, local in iteritems(self.INTERFACE_MAP):
-                if remote in value:
-                    intf[local] = value[remote]
+                for remote, local in iteritems(self.INTERFACE_MAP):
+                    if remote in value:
+                        intf[local] = value[remote]
 
-            if 'interfaceAddress' in value:
-                intf['ipv4'] = dict()
-                for entry in value['interfaceAddress']:
-                    intf['ipv4']['address'] = entry['primaryIp']['address']
-                    intf['ipv4']['masklen'] = entry['primaryIp']['maskLen']
-                    self.add_ip_address(entry['primaryIp']['address'], 'ipv4')
+                if 'interfaceAddress' in value:
+                    intf['ipv4'] = dict()
+                    for entry in value['interfaceAddress']:
+                        intf['ipv4']['address'] = entry['primaryIp']['address']
+                        intf['ipv4']['masklen'] = entry['primaryIp']['maskLen']
+                        self.add_ip_address(entry['primaryIp']['address'], 'ipv4')
 
-            if 'interfaceAddressIp6' in value:
-                intf['ipv6'] = dict()
-                for entry in value['interfaceAddressIp6']['globalUnicastIp6s']:
-                    intf['ipv6']['address'] = entry['address']
-                    intf['ipv6']['subnet'] = entry['subnet']
-                    self.add_ip_address(entry['address'], 'ipv6')
+                if 'interfaceAddressIp6' in value:
+                    intf['ipv6'] = dict()
+                    for entry in value['interfaceAddressIp6']['globalUnicastIp6s']:
+                        intf['ipv6']['address'] = entry['address']
+                        intf['ipv6']['subnet'] = entry['subnet']
+                        self.add_ip_address(entry['address'], 'ipv6')
 
-            facts[key] = intf
+                facts[key] = intf
 
         return facts
 
