@@ -120,7 +120,7 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.network.routeros.routeros import run_commands
-from ansible.module_utils.network.routeros.routeros import routeros_argument_spec, check_args
+from ansible.module_utils.network.routeros.routeros import routeros_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -424,8 +424,6 @@ def main():
     for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
-
-    check_args(module, warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
