@@ -689,7 +689,7 @@ def main():
             display.vv(key)
             display.vvvvv(pp.pformat(('record', record)))
             if record.get('doc', None):
-                short_desc = record['doc']['short_description']
+                short_desc = record['doc']['short_description'].rstrip('.')
                 if short_desc is None:
                     display.warning('short_description for %s is None' % key)
                     short_desc = ''
