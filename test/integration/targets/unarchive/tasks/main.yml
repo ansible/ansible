@@ -50,7 +50,7 @@
 # Run tests only in case we have unzip -P (password modifier) and zip is installed
 - name: Run tests with protected zip
   include: protected_zip_tests.yml
-  when: zip_is_installed.failed != true and "'must give decryption password with -P' in unzip_has_modifier_P.stderr"
+  when: zip_is_installed.failed != true and 'must give decryption password with -P' in unzip_has_modifier_P.stderr
 - name: prep our file
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
 
