@@ -580,7 +580,7 @@ class DnfModule(YumDnf):
             base.fill_sack(load_system_repo='auto')
         except dnf.exceptions.RepoError as e:
             self.module.fail_json(
-                msg="{}".format(to_text(e)),
+                msg="{0}".format(to_text(e)),
                 results=[],
                 rc=1
             )
@@ -595,7 +595,7 @@ class DnfModule(YumDnf):
                 base.update_cache()
             except dnf.exceptions.RepoError as e:
                 self.module.fail_json(
-                    msg="{}".format(to_text(e)),
+                    msg="{0}".format(to_text(e)),
                     results=[],
                     rc=1
                 )
