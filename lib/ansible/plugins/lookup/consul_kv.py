@@ -8,7 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = """
     lookup: consul_kv
     version_added: "1.9"
-    short_description: Fetch  metadata from a Consul key value store.
+    short_description: Fetch metadata from a Consul key value store.
     description:
       - Lookup metadata for a playbook from the key value store in a Consul cluster.
         Values can be easily set in the kv store with simple rest commands
@@ -25,21 +25,22 @@ DOCUMENTATION = """
         description: If true, will retrieve all the values that have the given key as prefix.
         default: False
       index:
-        description: If the key has a value with the specified index then this is returned allowing access to historical values.
+        description: 
+          - If the key has a value with the specified index then this is returned allowing access to historical values.
       token:
         description: The acl token to allow access to restricted values.
       host:
         default: localhost
         description:
           - The target to connect to, must be a resolvable address.
-            Will be determined from C(ANSIBLE_CONSUL_URL) if that is set
+            Will be determined from C(ANSIBLE_CONSUL_URL) if that is set.
           - C(ANSIBLE_CONSUL_URL) should look like this: C(https://my.consul.server:8500)
         env:
           - name: ANSIBLE_CONSUL_URL
         ini:
           - section: lookup_consul
             key: host
-        version_added: '2.7'
+        version_added: "2.8"
       port:
         description:
           - The port of the target host to connect to.
@@ -50,25 +51,25 @@ DOCUMENTATION = """
         description:
           - Whether to use http or https.
           - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there.
-        version_added: '2.7'
+        version_added: "2.8"
       validate_certs:
         default: True
-        description: Whether to verify the ssl connection or not
+        description: Whether to verify the ssl connection or not.
         env:
           - name: ANSIBLE_CONSUL_VALIDATE_CERTS
         ini:
           - section: lookup_consul
             key: validate_certs
-        version_added: '2.7'
+        version_added: "2.8"
       client_cert:
         default: None
-        description: The client cert to verify the ssl connection
+        description: The client cert to verify the ssl connection.
         env:
           - name: ANSIBLE_CONSUL_CLIENT_CERT
         ini:
           - section: lookup_consul
             key: client_cert
-        version_added: '2.7'
+        version_added: "2.8"
 """
 
 EXAMPLES = """
