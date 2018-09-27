@@ -126,7 +126,7 @@ def convert_yaml_objects_to_native(obj):
     the data before we hand it over to ``toml``
     """
     if isinstance(obj, dict):
-        return {k: convert_yaml_objects_to_native(v) for k, v in obj.items()}
+        return dict((k, convert_yaml_objects_to_native(v)) for k, v in obj.items())
     elif isinstance(obj, list):
         return [convert_yaml_objects_to_native(v) for v in obj]
     elif isinstance(obj, text_type):
