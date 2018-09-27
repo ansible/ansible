@@ -5,6 +5,21 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.0rc4
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-09-27
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Change the pypi metadata to specify that Python-2.7 or greater is needed on the controller.  This will prevent pip from installing or upgrading to Ansible-2.7 when run under Python-2.6.  Python-2.6 users will get Ansible-2.6.x updates instead.
+
 v2.7.0rc3
 =========
 
@@ -250,14 +265,14 @@ netapp
 - na_elementsw_admin_users - NetApp Element Software Manage Admin Users
 - na_elementsw_check_connections - NetApp Element Software Check connectivity to MVIP and SVIP.
 - na_elementsw_cluster - NetApp Element Software Create Cluster
-- na_elementsw_drive - NetApp Element Software ManageNetApp Element Software Node Drives
+- na_elementsw_drive - NetApp Element Software Manage Node Drives
 - na_elementsw_ldap - NetApp Element Software Manage ldap admin users
 - na_elementsw_network_interfaces - NetApp Element Software Configure Node Network Interfaces
 - na_elementsw_node - NetApp Element Software Node Operation
 - na_elementsw_snapshot - NetApp Element Software Manage Snapshots
 - na_elementsw_snapshot_restore - NetApp Element Software Restore Snapshot
 - na_elementsw_volume_clone - NetApp Element Software Create Volume Clone
-- na_ontap_autosupport - Manage NetApp Autosupport
+- na_ontap_autosupport - NetApp ONTAP manage Autosupport
 - na_ontap_cluster_peer - NetApp ONTAP Manage Cluster peering
 - na_ontap_command - NetApp ONTAP Run any cli command
 - na_ontap_disks - NetApp ONTAP Assign disks to nodes
@@ -266,7 +281,7 @@ netapp
 - na_ontap_motd - Setup motd on cDOT
 - na_ontap_node - NetApp ONTAP Rename a node.
 - netapp_e_alerts - NetApp E-Series manage email notification settings
-- netapp_e_asup - manage E-Series auto-support settings
+- netapp_e_asup - NetApp E-Series manage auto-support settings
 - netapp_e_auditlog - NetApp E-Series manage audit-log configuration
 - netapp_e_global - NetApp E-Series manage global settings configuration
 - netapp_e_iscsi_interface - NetApp E-Series manage iSCSI interface configuration
@@ -816,13 +831,13 @@ netapp
 - na_elementsw_vlan - NetApp Element Software Manage VLAN
 - na_elementsw_volume - NetApp Element Software Manage Volumes
 - na_elementsw_volume_pair - NetApp Element Software Volume Pair
-- na_ontap_cg_snapshot - Create consistency group snapshot
+- na_ontap_cg_snapshot - NetApp ONTAP manage consistency group snapshot
 - na_ontap_dns - NetApp ONTAP Create, delete, modify DNS servers.
 - na_ontap_fcp - NetApp ONTAP Start, Stop and Enable FCP services.
 - na_ontap_snapmirror - NetApp ONTAP Manage SnapMirror
-- na_ontap_software_update - NetApp ONTAP Update software
-- na_ontap_svm_options - NetApp ONTAP Modify Options
-- na_ontap_vserver_peer - Manage NetApp Vserver peering
+- na_ontap_software_update - NetApp ONTAP Update Software
+- na_ontap_svm_options - NetApp ONTAP Modify SVM Options
+- na_ontap_vserver_peer - NetApp ONTAP Vserver peering
 
 System
 ~~~~~~

@@ -437,3 +437,8 @@ releases:
     - fix_nxos_facts_indefinite_hang.yaml
     - v2.7.0rc3_summary.yaml
     release_date: '2018-09-20'
+  2.7.0rc4:
+    codename: In the Light
+    fragments:
+    - v2.7.0rc4_summary.yaml
+    release_date: '2018-09-27'
