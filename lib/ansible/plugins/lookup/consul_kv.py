@@ -25,7 +25,7 @@ DOCUMENTATION = """
         description: If true, will retrieve all the values that have the given key as prefix.
         default: False
       index:
-        description: 
+        description:
           - If the key has a value with the specified index then this is returned allowing access to historical values.
       token:
         description: The acl token to allow access to restricted values.
