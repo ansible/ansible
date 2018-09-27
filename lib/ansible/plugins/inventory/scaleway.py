@@ -94,10 +94,9 @@ import ansible.module_utils.six.moves.urllib.parse as urllib_parse
 
 
 def _fetch_information(token, url):
-    last = False
     results = []
     paginated_url = url
-    while not last:
+    while True:
         try:
             response = open_url(paginated_url,
                                 headers={'X-Auth-Token': token,
@@ -115,15 +114,14 @@ def _fetch_information(token, url):
             raise AnsibleError("Incorrect format from the Scaleway API response")
 
         link = response.getheader('Link')
-        if link:
+        if not link:
+            return results
+        else:
             relations = parse_pagination_link(link)
             if 'next' not in relations:
-                last = True
+                return results
             else:
                 paginated_url = urllib_parse.urljoin(paginated_url, relations['next'])
-        else:
-            last = True
-    return results
 
 
 def _build_server_url(api_endpoint):
