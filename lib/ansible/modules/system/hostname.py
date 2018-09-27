@@ -48,6 +48,7 @@ from ansible.module_utils.basic import (
     load_platform_subclass,
 )
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
+from ansible.module_utils.facts.virtual.linux import LinuxVirtualCollector
 from ansible.module_utils._text import to_native
 
 
@@ -107,7 +108,10 @@ class Hostname(object):
     def __init__(self, module):
         self.module = module
         self.name = module.params['name']
-        if self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
+        if (self.platform == 'Linux'
+            and ServiceMgrFactCollector.is_systemd_managed(module)
+            and LinuxVirtualCollector.virtualization_type(module) != lxc
+            ):
             self.strategy = SystemdStrategy(module)
         else:
             self.strategy = self.strategy_class(module)
