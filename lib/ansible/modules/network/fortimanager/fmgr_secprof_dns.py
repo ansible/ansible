@@ -33,7 +33,7 @@ author:
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
 short_description: Manage DNS security profiles in FortiManager
-description: 
+description:
   -  Manage DNS security profiles in FortiManager
 
 options:
