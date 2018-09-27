@@ -51,7 +51,12 @@ except ImportError:
 @environmentfilter
 def unique(environment, a, case_sensitive=False, attribute=None):
 
-    error = None
+    def _do_fail(e):
+        if case_sensitive or attribute:
+            raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
+                                     "as it does not support the parameters supplied", orig_exc=e)
+
+    error = e = None
     try:
         if HAS_UNIQUE:
             c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
@@ -59,14 +64,13 @@ def unique(environment, a, case_sensitive=False, attribute=None):
                 c = set(c)
             else:
                 c = list(c)
-
+    except TypeError as e:
+        _do_fail(e)
     except Exception as e:
-        if case_sensitive or attribute:
-            raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
-                                     "as it does not support the parameters supplied", orig_exc=e)
-        else:
-            display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
-            error = e
+        _do_fail(e)
+        display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
+    finally:
+        error = e
 
     if not HAS_UNIQUE or error:
 

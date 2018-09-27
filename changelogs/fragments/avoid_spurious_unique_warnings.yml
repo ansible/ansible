@@ -1,0 +1,2 @@
+bugfixes:
+    - Narrow the cases in which we warn about Jinja2 unique filters https://github.com/ansible/ansible/issues/46189
