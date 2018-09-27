@@ -574,6 +574,13 @@ def main():
         else:
             wanted_rset.add_value(v)
 
+    need_to_sort_records = (type_in == 'CAA')
+
+    # Sort records for wanted_rset if necessary (keep original list)
+    unsorted_records = wanted_rset.resource_records
+    if need_to_sort_records:
+        wanted_rset.resource_records = sorted(unsorted_records)
+
     sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
                                           type=type_in, identifier=identifier_in)
     sets_iter = iter(sets)
@@ -593,13 +600,14 @@ def main():
             identifier_in = str(identifier_in)
 
         if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == identifier_in:
+            if need_to_sort_records:
+                # Sort records
+                rset.resource_records = sorted(rset.resource_records)
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
             record['record'] = decoded_name
             record['ttl'] = rset.ttl
-            record['value'] = ','.join(sorted(rset.resource_records))
-            record['values'] = sorted(rset.resource_records)
             if hosted_zone_id_in:
                 record['hosted_zone_id'] = hosted_zone_id_in
             record['identifier'] = rset.identifier
@@ -652,6 +660,8 @@ def main():
             command = 'UPSERT'
         else:
             command = command_in.upper()
+        # Restore original order of records
+        wanted_rset.resource_records = unsorted_records
         changes.add_change_record(command, wanted_rset)
 
     if not module.check_mode:
