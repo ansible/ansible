@@ -188,18 +188,20 @@ $update_script_block = {
                 continue
             }
 
-            $post_cat_matched = $False
-            If ($post_categories.Count -eq 0) {
-                # There are no additional categories to check
-                $post_cat_matched = $True
-            }
+            # Treat post-categories as matched if there are no post-categories
+            # to check
+            $post_cat_matched = ($post_categories.Count -eq 0)
 
             ForEach ($update_cat in $update.Categories) {
                 $update_info.categories.Add($update_cat.Name) | Out-Null
                 ForEach ($match_cat in $post_categories) {
                     If ($update_cat.Name -Match $match_cat) {
                         $post_cat_matched = $True
+                        break
                     }
+                }
+                If ($post_cat_matched) {
+                    break
                 }
             }
 
