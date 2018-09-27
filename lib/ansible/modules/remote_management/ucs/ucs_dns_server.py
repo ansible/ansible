@@ -26,13 +26,14 @@ options:
     - If C(present), will add or update a DNS server.
     choices: [absent, present]
     default: present
+    type: str
 
   dns_server:
     description:
     - DNS server IP address.
     - Enter a valid IPV4 Address.
     aliases: [ name ]
-    default: ""
+    type: str
 
   description:
     description:
@@ -41,14 +42,20 @@ options:
     - "You can use any characters or spaces except the following:"
     - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
     aliases: [ descr ]
-    default: ""
+    type: str
+
+  delegate_to:
+    description:
+    - Where the module will be run
+    default: localhost
+    type: str
 
 requirements:
 - ucsmsdk
 author:
 - John McDonough (@movinalot)
 - CiscoUcs (@CiscoUcs)
-version_added: "2.7"
+version_added: "2.8"
 '''
 
 EXAMPLES = r'''
@@ -60,6 +67,7 @@ EXAMPLES = r'''
     dns_server: 10.10.10.10
     description: DNS Server IP address
     state: present
+    delegate_to: localhost
 
 - name: Remove DNS server
   ucs_dns_server:
@@ -68,6 +76,7 @@ EXAMPLES = r'''
     password: password
     dns_server: 10.10.10.10
     state: absent
+    delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -84,6 +93,7 @@ def run_module():
         dns_server=dict(type='str', aliases=['name']),
         description=dict(type='str', aliases=['descr'], default=''),
         state=dict(type='str', default='present', choices=['present', 'absent']),
+        delegate_to=dict(type='str', default='localhost'),
     )
 
     module = AnsibleModule(
@@ -93,7 +103,8 @@ def run_module():
             ['state', 'present', ['dns_server']],
         ],
     )
-    # UCSModule verifies ucsmsdk is present and exits on failure.  Imports are below ucs object creation.
+    # UCSModule verifies ucsmsdk is present and exits on failure.
+    # Imports are below for UCS object creation.
     ucs = UCSModule(module)
 
     err = False
