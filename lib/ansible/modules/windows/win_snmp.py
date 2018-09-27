@@ -22,12 +22,12 @@ description:
 options:
     permitted_managers:
         description:
-        - The list of permitted SNMP managers
+        - The list of permitted SNMP managers.
         required: false
         type: list
     community_strings:
         description:
-        - The list of read-only SNMP community strings
+        - The list of read-only SNMP community strings.
         required: false
         type: list
     replace:
