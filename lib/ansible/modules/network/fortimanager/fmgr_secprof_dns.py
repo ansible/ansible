@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: fmgr_dnsfilter_profile
+module: fmgr_secprof_dns
 version_added: "2.8"
 author:
     - Luke Weighall (@lweighall)
