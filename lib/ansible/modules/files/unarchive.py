@@ -588,12 +588,10 @@ class ZipArchive(object):
         if self.password:
             if not HAS_PEXPECT:
                 self.module.fail_json(msg="The pexpect python module is required for password option")
-            out = ""
-            rc = 0
             try:
                 (out, rc) = pexpect.run(" ".join(cmd), withexitstatus=1, events={'(?i)password': self.password + '\n'})
             except OSError as e:
-                return dict(cmd=cmd, rc=e.errno, out=out, err='failed to unzip package')
+                return dict(cmd=cmd, rc=e.errno, out='', err='failed to unzip package')
             return dict(cmd=cmd, rc=rc, out=out, err='')
         else:
             rc, out, err = self.module.run_command(cmd)
