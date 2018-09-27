@@ -29,6 +29,7 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
 
 
 class UTMModuleConfigurationError(Exception):
@@ -102,7 +103,7 @@ class UTM:
             else:
                 self.remove()
         except Exception as e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json(msg=to_native(e))
 
     def add(self):
         """
