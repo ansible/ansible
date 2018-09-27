@@ -240,7 +240,7 @@ static_setup_params = dict(
     license='GPLv3+',
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
-    python_requires='>=2.6,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     package_dir={'': 'lib'},
     packages=find_packages('lib'),
     package_data={
@@ -266,8 +266,9 @@ static_setup_params = dict(
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Natural Language :: English',
         'Operating System :: POSIX',
-        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
