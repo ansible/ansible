@@ -350,7 +350,7 @@ For example::
     $ANSIBLE_VAULT;1.1;AES256
 
 
-The header contains the vault format id, the vault format version, and a cipher id, seperated by semi-colons ';'
+The header contains the vault format id, the vault format version, and a cipher id, separated by semi-colons ';'
 
 The first field ``$ANSIBLE_VAULT`` is the format id. Currently ``$ANSIBLE_VAULT`` is the only valid file format id. This is used to identify files that are vault encrypted (via vault.is_encrypted_file()).
 
