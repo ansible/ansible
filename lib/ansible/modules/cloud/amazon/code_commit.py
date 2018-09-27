@@ -21,6 +21,14 @@ requirements:
   - python >= 2.6
 
 options:
+  name:
+    description:
+      - name of repository.
+    required: true
+  comment:
+    description:
+      - description or comment of repository.
+    required: false
   state:
     description:
       - Specifies the state of repository.
@@ -60,7 +68,7 @@ from ansible.module_utils.ec2 import (
 )
 
 
-class AWSRoute53Record(object):
+class CodeCommit(object):
     def __init__(self, module=None):
         self._module = module
         self._connection = self._module.client('codecommit')
@@ -69,31 +77,64 @@ class AWSRoute53Record(object):
     def process(self):
         results = dict(changed=False)
         changed = False
+        repository_exists = self._repository_exists()
 
-        results = self._connection.create_repository(
-        repositoryName=self._module['name'],
-        repositoryDescription=self._module['description']
-        )
+        if self._module.params['state'] == 'present' and not repository_exists:
+            changed = True
+            if not self._module.check_mode:
+                changed, results = self._create_repository()
+        if self._module.params['state'] == 'absent' and repository_exists:
+            changed = True
+            if not self._module.check_mode:
+                changed, results = self._delete_repository()
         return changed, results
 
-    def _exists(self):
-        exists = False
-        repositories = self._connection.list_repositories()['repositories']
+    def _repository_exists(self):
+        try:
+            repository_exists = False
+            repositories = self._connection.list_repositories()['repositories']
+            for item in repositories:
+                if not repository_exists:
+                    repository_exists = self._module.params['name'] in item.values()
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="couldn't get repository")
+        return repository_exists
 
-        return exists
+    def _create_repository(self):
+        try:
+            results = self._connection.create_repository(
+                repositoryName=self._module.params['name'],
+                repositoryDescription=self._module.params['comment']
+            )
+            changed = True
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="couldn't create repository")
+        return changed, results
+
+    def _delete_repository(self):
+        try:
+            results = self._connection.delete_repository(
+                repositoryName=self._module.params['name']
+            )
+            changed = True
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="couldn't delete repository")
+        return changed, results
+
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        description=dict(default=''),
-        state=dict(choices=['present', 'absent'], required=True)
+        state=dict(choices=['present', 'absent'], required=True),
+        comment=dict(default='')
     ))
 
     ansible_aws_module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
+
     code_commit = CodeCommit(module=ansible_aws_module)
     changed, results = code_commit.process()
     ansible_aws_module.exit_json(changed=changed, results=results)
