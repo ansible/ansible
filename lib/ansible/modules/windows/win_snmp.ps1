@@ -18,11 +18,11 @@ $result = @{failed = $False; changed = $False;}
 [System.Collections.ArrayList]$communities = $communities
 
 # Type checking
-If ($managers.Count -gt 0 -And $managers[0].GetType().Name -ne 'String') {
+If ($managers.Count -gt 0 -And $managers[0] -IsNot [String]) {
   Fail-Json $result "Permitted managers must be an array of strings"
 }
 
-If ($communities.Count -gt 0 -And $communities[0].GetType().Name -ne 'String') {
+If ($communities.Count -gt 0 -And $communities[0] -IsNot [String]) {
   Fail-Json $result "SNMP communities must be an array of strings"
 }
 
@@ -68,7 +68,7 @@ ForEach ($community in (Get-Item $Communities_reg_key).Property) {
 # Get used manager indexes as integers
 [System.Collections.ArrayList]$indexes=@()
 ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
-  $indexes.Add([int]$idx)
+  $indexes.Add([int]$idx) | Out-Null
 }
 
 # Add managers that don't already exist
