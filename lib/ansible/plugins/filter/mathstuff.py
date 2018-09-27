@@ -60,7 +60,7 @@ def unique(environment, a, case_sensitive=False, attribute=None):
             raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
                                      "as it does not support the parameters supplied", orig_exc=e)
         else:
-            display.warning('Falling back to Ansible unique filter as Jinaj2 one failed: %s' % to_text(e))
+            display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
             error = e
 
     if not HAS_UNIQUE or error:
