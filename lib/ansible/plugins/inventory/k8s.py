@@ -223,17 +223,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
         for pod in obj.items:
             pod_name = pod.metadata.name
             pod_groups = []
-            pod_labels = {} if not pod.metadata.labels else pod.metadata.labels
-            pod_annotations = {} if not pod.metadata.annotations else pod.metadata.annotations
+            pod_annotations = {} if not pod.metadata.annotations else dict(pod.metadata.annotations)
 
             if pod.metadata.labels:
-                pod_labels = pod.metadata.labels
                 # create a group for each label_value
                 for key, value in pod.metadata.labels:
                     group_name = 'label_{0}_{1}'.format(key, value)
                     if group_name not in pod_groups:
                         pod_groups.append(group_name)
                     self.inventory.add_group(group_name)
+                pod_labels = dict(pod.metadata.labels)
+            else:
+                pod_labels = {}
 
             for container in pod.status.containerStatuses:
                 # add each pod_container to the namespace group, and to each label_value group
@@ -294,8 +295,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
 
         for service in obj.items:
             service_name = service.metadata.name
-            service_labels = {} if not service.metadata.labels else service.metadata.labels
-            service_annotations = {} if not service.metadata.annotations else service.metadata.annotations
+            service_labels = {} if not service.metadata.labels else dict(service.metadata.labels)
+            service_annotations = {} if not service.metadata.annotations else dict(service.metadata.annotations)
 
             self.inventory.add_host(service_name)
 
@@ -344,7 +345,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
                 self.inventory.set_variable(service_name, 'load_balancer_ip',
                                             service.spec.loadBalancerIP)
             if service.spec.selector:
-                self.inventory.set_variable(service_name, 'selector', service.spec.selector)
+                self.inventory.set_variable(service_name, 'selector', dict(service.spec.selector))
 
             if hasattr(service.status.loadBalancer, 'ingress') and service.status.loadBalancer.ingress:
                 load_balancer = [{'hostname': ingress.hostname,
