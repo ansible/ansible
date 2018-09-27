@@ -142,6 +142,7 @@ options:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
         will be pulled from the registry. If no tag is included, 'latest' will be used.
+      - Must be specified if C(state) is not I(absent).
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
@@ -2288,8 +2289,12 @@ def main():
         working_dir=dict(type='str'),
     )
 
+    # If state is not absent, image must be there since docker_container
+    # must be able to create the container.
     required_if = [
-        ('state', 'present', ['image'])
+        ('state', 'present', ['image']),
+        ('state', 'started', ['image']),
+        ('state', 'stopped', ['image']),
     ]
 
     client = AnsibleDockerClientContainer(
