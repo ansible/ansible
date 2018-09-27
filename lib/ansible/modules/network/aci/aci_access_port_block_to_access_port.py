@@ -41,7 +41,7 @@ options:
     aliases: [ leaf_port_blk_name ]
   leaf_port_blk_description:
     description:
-    - The description to assign to the C(leaf_port_blk)
+    - The description to assign to the C(leaf_port_blk).
   from_port:
     description:
     - The beginning (from-range) of the port range block for the leaf access port block.
