@@ -10,7 +10,7 @@ Improving the documentation is an easy way to make your first contribution to th
 
 If you find a typo, a broken example, a missing topic, or any other error or omission on docs.ansible.com, let us know. Here are some ways to support Ansible documentation:
 
-.. contents:: Topics
+.. contents:: Ways to contribute
    :local:
 
 Editing docs directly on GitHub
@@ -43,12 +43,26 @@ A great documentation GitHub issue or PR includes:
 Before you open a complex documentation PR
 ==========================================
 
-If you make changes to the documentation, we recommend you build and test your branch locally before you open a pull request.
+If you make multiple changes to the documentation or add more than a line to it, before you open a pull request, please:
+
+#. Follow our :ref:`style_guide`.
+#. Build the page, and preferably the entire documentation site, locally.
+#. Test your branch locally.
 
 Building the documentation locally
 ----------------------------------
 
-To build the documentation on your local machine, you need a few packages installed:
+To build the documentation on your local machine, you need the following packages installed:
+
+- libyaml
+- pyyaml
+- nose
+- six
+- tornado
+- pyparsing
+- gcc
+- jinja2
+- sphinx
 
 Once you have the required packages, navigate to ``ansible/docs/docsite`` and then select the build command you prefer:
 
