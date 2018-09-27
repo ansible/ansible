@@ -31,7 +31,8 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + \
+                   "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -90,10 +91,10 @@ def test_fmgr_firewall_profile_group_addsetdelete(fixture_data, mocker):
     ##################################################
 
     # Test using fixture 1 #
-    output = fmgr_secprof_profile_group.fmgr_firewall_profile_group_addsetdelete(fmg_instance, fixture_data[0]['paramgram_used'])
+    output = fmgr_secprof_profile_group.fmgr_firewall_profile_group_addsetdelete(fmg_instance,
+                                                                                 fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 2 #
-    output = fmgr_secprof_profile_group.fmgr_firewall_profile_group_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
+    output = fmgr_secprof_profile_group.fmgr_firewall_profile_group_addsetdelete(fmg_instance,
+                                                                                 fixture_data[1]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
-
-
