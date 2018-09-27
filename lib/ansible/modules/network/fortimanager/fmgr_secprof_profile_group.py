@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: fmgr_firewall_profile_group
+module: fmgr_secprof_profile_group
 version_added: "2.8"
 author:
     - Luke Weighall (@lweighall)
