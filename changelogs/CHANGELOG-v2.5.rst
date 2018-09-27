@@ -2,10 +2,70 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.10:
+
+v2.5.10
+=======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.10_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-09-27
+| **Final scheduled release in 2.5 series**; future releases will be for critical security fixes only
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.10_Bugfixes:
+
+Bugfixes
+--------
+
+- docker connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+
+- chroot connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+
+- jail connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+
+- kubectl connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+
+- libvirt_lxc connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+
+- zone connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+
+- cloudfront - fix bug when CloudFrontOriginAccessIdentityList is missing (https://github.com/ansible/ansible/pull/44984)
+
+- vyos_facts - fix vyos_facts not returning version number issue (https://github.com/ansible/ansible/pull/39115)
+
+- get_url - Don't re-download files unnecessarily when force=no (https://github.com/ansible/ansible/issues/45491)
+
+- loop - Ensure that a loop with a when condition that evaluates to false and delegate_to, will short circuit if the loop references an undefined variable. This matches the behavior in the same scenario without delegate_to (https://github.com/ansible/ansible/issues/45189)
+
+- mysql_*, proxysql_* - PyMySQL (a pure-Python MySQL driver) is now a preferred dependency also supporting Python 3.X.
+
+- nxos terminal plugin - fix python2.6 `nothing to repeat` bug (https://github.com/ansible/ansible/pull/45271).
+
+- ssh connection - Support empty files with piped transfer_method (https://github.com/ansible/ansible/issues/45426)
+
+- PLUGIN_FILTERS_CFG - Ensure that the value is treated as type=path, and that we use the standard section of ``defaults`` instead of ``default`` (https://github.com/ansible/ansible/pull/45994)
+
+- script inventory plugin - Don't pass file_name to DataLoader.load, which will prevent misleading error messages (https://github.com/ansible/ansible/issues/34164)
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.9:
 
 v2.5.9
 ======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.9_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-09-10
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
 
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.9_Minor Changes:
 
