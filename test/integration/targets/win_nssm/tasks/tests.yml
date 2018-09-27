@@ -1,0 +1,256 @@
+---
+- name: get register cmd that will get service info
+  set_fact:
+    test_service_cmd: |
+      $res = @{}
+      $srvobj = Get-WmiObject Win32_Service -Filter "Name=""$service""" | Select Name,PathName,StartMode,StartName,State
+      if ($srvobj) {
+        $srvobj | Get-Member -MemberType *Property | % { $res.($_.name) = $srvobj.($_.name) }
+        $res.Exists = $true
+        $res.Dependencies = Get-WmiObject -Query "Associators of {Win32_Service.Name=""$service""} Where AssocClass=Win32_DependentService" | select -ExpandProperty Name
+        $res.Parameters = @{}
+        $srvkey = "HKLM:\SYSTEM\CurrentControlSet\Services\$service\Parameters"
+        Get-Item "$srvkey" | Select-Object -ExpandProperty property | % { $res.Parameters.$_ = (Get-ItemProperty -Path "$srvkey" -Name $_).$_}
+      } else {
+        $res.Exists = $false
+      }
+      ConvertTo-Json -InputObject $res -Compress
+
+- name: install service
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    state: present
+  register: install_service
+
+- name: get result of install service
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: install_service_actual
+
+- name: assert results of install service
+  assert:
+    that:
+    - install_service.changed == true
+    - (install_service_actual.stdout|from_json).Exists == true
+    - (install_service_actual.stdout|from_json).State == 'Stopped'
+    - (install_service_actual.stdout|from_json).StartMode == 'Auto'
+    - (install_service_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+
+- name: test install service (idempotent)
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    state: present
+  register: install_service_again
+
+- name: get result of install service (idempotent)
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: install_service_again_actual
+
+- name: assert results of install service (idempotent)
+  assert:
+    that:
+    - install_service_again.changed == false
+    - (install_service_again_actual.stdout|from_json).Exists == true
+    - (install_service_again_actual.stdout|from_json).State == 'Stopped'
+    - (install_service_again_actual.stdout|from_json).StartMode == 'Auto'
+    - (install_service_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+
+- name: install and start service
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    state: started
+  register: install_start_service
+
+- name: get result of install and start service
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: install_start_service_actual
+
+- name: assert results of install and start service
+  assert:
+    that:
+    - install_start_service.changed == true
+    - (install_start_service_actual.stdout|from_json).Exists == true
+    - (install_start_service_actual.stdout|from_json).State == 'Running'
+    - (install_start_service_actual.stdout|from_json).StartMode == 'Auto'
+    - (install_start_service_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+
+- name: install and start service with more parameters
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    start_mode: manual
+    dependencies: 'tcpip,dnscache'
+    user: '{{ test_win_nssm_username }}'
+    password: '{{ test_win_nssm_password }}'
+    stdout_file: '{{ test_win_nssm_path }}\log.txt'
+    stderr_file: '{{ test_win_nssm_path }}\error.txt'
+    state: started
+  register: install_service_complex
+
+- name: get result of install and start service with more parameters
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: install_service_complex_actual
+
+- name: assert results of install and start service with more parameters
+  assert:
+    that:
+    - install_service_complex.changed == true
+    - (install_service_complex_actual.stdout|from_json).Exists == true
+    - (install_service_complex_actual.stdout|from_json).State == 'Running'
+    - (install_service_complex_actual.stdout|from_json).StartMode == 'Manual'
+    - (install_service_complex_actual.stdout|from_json).StartName == '.\\' + test_win_nssm_username
+    - (install_service_complex_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    - (install_service_complex_actual.stdout|from_json).Parameters.AppStdout == test_win_nssm_path + '\\log.txt'
+    - (install_service_complex_actual.stdout|from_json).Parameters.AppStderr == test_win_nssm_path + '\\error.txt'
+    - (install_service_complex_actual.stdout|from_json).Dependencies|length == 2
+    - '"Tcpip" in (install_service_complex_actual.stdout|from_json).Dependencies'
+    - '"Dnscache" in (install_service_complex_actual.stdout|from_json).Dependencies'
+
+- name: install and start service with more parameters (idempotent)
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    start_mode: manual
+    # Dependencies order should not trigger a change
+    dependencies: 'dnscache,tcpip'
+    user: '{{ test_win_nssm_username }}'
+    password: '{{ test_win_nssm_password }}'
+    stdout_file: '{{ test_win_nssm_path }}\log.txt'
+    stderr_file: '{{ test_win_nssm_path }}\error.txt'
+    state: started
+  register: install_service_complex_again
+
+- name: get result of install and start service with more parameters (idempotent)
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: install_service_complex_again_actual
+
+- name: assert results of install and start service with more parameters (idempotent)
+  assert:
+    that:
+    - install_service_complex_again.changed == false
+    - (install_service_complex_again_actual.stdout|from_json).Exists == true
+    - (install_service_complex_again_actual.stdout|from_json).State == 'Running'
+    - (install_service_complex_again_actual.stdout|from_json).StartMode == 'Manual'
+    - (install_service_complex_again_actual.stdout|from_json).StartName == '.\\' + test_win_nssm_username
+    - (install_service_complex_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    - (install_service_complex_again_actual.stdout|from_json).Parameters.AppStdout == test_win_nssm_path + '\\log.txt'
+    - (install_service_complex_again_actual.stdout|from_json).Parameters.AppStderr == test_win_nssm_path + '\\error.txt'
+    - (install_service_complex_again_actual.stdout|from_json).Dependencies|length == 2
+    - '"Tcpip" in (install_service_complex_again_actual.stdout|from_json).Dependencies'
+    - '"Dnscache" in (install_service_complex_again_actual.stdout|from_json).Dependencies'
+
+- name: install service with free form parameters
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    app_parameters_free_form: '-v -Dcom.test.string=value "C:\with space\\"'
+    state: present
+  register: free_params
+
+- name: get result of install service with free form parameters
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: free_params_actual
+
+- name: assert results of install service with free form parameters
+  assert:
+    that:
+    - free_params.changed == true
+    - (free_params_actual.stdout|from_json).Exists == true
+    - (free_params_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    # Expected value: -v -Dcom.test.string=value "C:\with space\\" (backslashes doubled for jinja)
+    - (free_params_actual.stdout|from_json).Parameters.AppParameters == '-v -Dcom.test.string=value "C:\\with space\\\\"'
+
+- name: install service with free form parameters (idempotent)
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    app_parameters_free_form: '-v -Dcom.test.string=value "C:\with space\\"'
+    state: present
+  register: free_params_again
+
+- name: get result of install service with free form parameters (idempotent)
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: free_params_again_actual
+
+- name: assert results of install service with free form parameters (idempotent)
+  assert:
+    that:
+    - free_params_again.changed == false
+    - (free_params_again_actual.stdout|from_json).Exists == true
+    - (free_params_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    # Expected value: -v -Dcom.test.string=value "C:\with space\\" (backslashes doubled for jinja)
+    - (free_params_again_actual.stdout|from_json).Parameters.AppParameters == '-v -Dcom.test.string=value "C:\\with space\\\\"'
+
+- name: install service with dict parameters
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    app_parameters: foo=true; -file.out=output.bat; -path=C:\with space\; -str=test"quotes; _=bar
+  register: mixed_params
+
+- name: get result of install service with dict parameters
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: mixed_params_actual
+
+- name: assert results of install service with dict parameters
+  assert:
+    that:
+    - mixed_params.changed == true
+    - (mixed_params_actual.stdout|from_json).Exists == true
+    - (mixed_params_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    # Expected value: bar -file.out output.bat -str "test\"quotes" foo true -path "C:\with space\\" (backslashes doubled for jinja)
+    - (mixed_params_actual.stdout|from_json).Parameters.AppParameters == 'bar -file.out output.bat -str "test\\"quotes" foo true -path "C:\\with space\\\\"'
+
+- name: install service with dict parameters (idempotent)
+  win_nssm:
+    name: '{{ test_service_name }}'
+    application: C:\Windows\System32\cmd.exe
+    app_parameters: foo=true; -file.out=output.bat; -path=C:\with space\; -str=test"quotes; _=bar
+  register: mixed_params_again
+
+- name: get result of install service with dict parameters (idempotent)
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: mixed_params_again_actual
+
+- name: assert results of install service with dict parameters (idempotent)
+  assert:
+    that:
+    - mixed_params_again.changed == false
+    - (mixed_params_again_actual.stdout|from_json).Exists == true
+    - (mixed_params_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
+    # Expected value: bar -file.out output.bat -str "test\"quotes" foo true -path "C:\with space\\" (backslashes doubled for jinja)
+    - (mixed_params_again_actual.stdout|from_json).Parameters.AppParameters == 'bar -file.out output.bat -str "test\\"quotes" foo true -path "C:\\with space\\\\"'
+
+- name: remove service
+  win_nssm:
+    name: '{{ test_service_name }}'
+    state: absent
+  register: remove_service
+
+- name: get result of remove service
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: remove_service_actual
+
+- name: assert results of remove service
+  assert:
+    that:
+    - remove_service.changed == true
+    - (remove_service_actual.stdout|from_json).Exists == false
+
+- name: remove service (idempotent)
+  win_nssm:
+    name: '{{ test_service_name }}'
+    state: absent
+  register: remove_service_again
+
+- name: get result of remove service (idempotent)
+  win_shell: '$service = ''{{ test_service_name }}''; {{ test_service_cmd }}'
+  register: remove_service_again_actual
+
+- name: assert results of remove service (idempotent)
+  assert:
+    that:
+    - remove_service_again.changed == false
+    - (remove_service_again_actual.stdout|from_json).Exists == false

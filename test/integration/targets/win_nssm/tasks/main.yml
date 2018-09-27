@@ -1,0 +1,44 @@
+---
+- name: install NSSM
+  win_chocolatey:
+    name: NSSM
+    state: present
+
+- name: ensure testing folder exists
+  win_file:
+    path: '{{test_win_nssm_path}}'
+    state: directory
+
+- name: create test user for service execution
+  win_user:
+    name: '{{test_win_nssm_username}}'
+    password: '{{test_win_nssm_password}}'
+    state: present
+    groups:
+    - Users
+
+# Run actual tests
+- block:
+  - include_tasks: tests.yml
+
+  always:
+    - name: ensure test service is absent
+      win_service:
+        name: '{{ test_service_name }}'
+        state: absent
+
+    - name: remove test user
+      win_user:
+        name: '{{test_win_nssm_username}}'
+        state: absent
+
+    - name: cleanup test folder
+      win_file:
+        path: '{{test_win_nssm_path}}'
+        state: absent
+
+    - name: uninstall NSSM
+      win_chocolatey:
+        name: NSSM
+        state: absent
+      failed_when: false
