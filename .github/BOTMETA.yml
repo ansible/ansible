@@ -308,6 +308,7 @@ files:
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
   $modules/storage/purestorage/: sdodsley
+  $modules/storage/glusterfs/: devyanikota
   $modules/system/at.py: $team_ansible
   $modules/system/authorized_key.py: $team_ansible
   $modules/system/facter.py: $team_ansible
