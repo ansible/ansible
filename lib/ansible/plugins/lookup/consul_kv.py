@@ -34,7 +34,7 @@ DOCUMENTATION = """
         description:
           - The target to connect to, must be a resolvable address.
             Will be determined from C(ANSIBLE_CONSUL_URL) if that is set.
-          - C(ANSIBLE_CONSUL_URL) should look like this: C(https://my.consul.server:8500)
+          - "C(ANSIBLE_CONSUL_URL) should look like this: C(https://my.consul.server:8500)"
         env:
           - name: ANSIBLE_CONSUL_URL
         ini:
