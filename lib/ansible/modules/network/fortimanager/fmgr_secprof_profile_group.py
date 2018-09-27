@@ -167,7 +167,6 @@ EXAMPLES = '''
       name: "Ansible_TEST_Profile_Group"
       mode: "delete"
 
-
   - name: CREATE Profile
     fmgr_secprof_profile_group:
       host: "{{inventory_hostname}}"
