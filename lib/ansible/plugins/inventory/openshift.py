@@ -159,8 +159,7 @@ class InventoryModule(K8sInventoryModule):
         self.inventory.add_child(namespace_group, namespace_routes_group)
         for route in obj.items:
             route_name = route.metadata.name
-            route_labels = {} if not route.metadata.labels else route.metadata.labels
-            route_annotations = {} if not route.metadata.annotations else route.metadata.annotations
+            route_annotations = {} if not route.metadata.annotations else dict(route.metadata.annotations)
 
             self.inventory.add_host(route_name)
 
@@ -170,6 +169,9 @@ class InventoryModule(K8sInventoryModule):
                     group_name = 'label_{0}_{1}'.format(key, value)
                     self.inventory.add_group(group_name)
                     self.inventory.add_child(group_name, route_name)
+                route_labels = dict(route.metadata.labels)
+            else:
+                route_labels = {}
 
             self.inventory.add_child(namespace_routes_group, route_name)
 
@@ -189,4 +191,4 @@ class InventoryModule(K8sInventoryModule):
                 self.inventory.set_variable(route_name, 'path', route.spec.path)
 
             if hasattr(route.spec.port, 'targetPort') and route.spec.port.targetPort:
-                self.inventory.set_variable(route_name, 'port', route.spec.port)
+                self.inventory.set_variable(route_name, 'port', dict(route.spec.port))
