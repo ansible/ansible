@@ -159,28 +159,24 @@ options:
 '''
 
 EXAMPLES = '''
-- name: EDIT FMGR_FIREWALL_PROFILE_GROUP
-  fmgr_firewall_profile_group:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    mode:
-    adom:
-    webfilter_profile:
-    waf_profile:
-    voip_profile:
-    ssl_ssh_profile:
-    ssh_filter_profile:
-    spamfilter_profile:
-    profile_protocol_options:
-    name:
-    mms_profile:
-    ips_sensor:
-    icap_profile:
-    dnsfilter_profile:
-    dlp_sensor:
-    av_profile:
-    application_list:
+  - name: DELETE Profile
+    fmgr_secprof_profile_group:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_TEST_Profile_Group"
+      mode: "delete"
+
+
+  - name: CREATE Profile
+    fmgr_secprof_profile_group:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_TEST_Profile_Group"
+      mode: "set"
+      av_profile: "Ansible_AV_Profile"
+      profile_protocol_options: "default"
 '''
 
 RETURN = """
