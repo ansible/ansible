@@ -67,7 +67,7 @@ options:
   password:
     description:
       - Add password for unarchive password protected file.
-    version_added: "2.7"
+    version_added: "2.8"
   extra_opts:
     description:
       - Specify additional options by passing in an array.
