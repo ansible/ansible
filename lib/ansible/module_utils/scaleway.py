@@ -30,20 +30,20 @@ R_RELATION = r'<(?P<target_IRI>[^>]+)>; rel="(?P<relation>first|previous|next|la
 
 
 def parse_pagination_link(header):
-    if re.match(R_LINK_HEADER, header, re.VERBOSE):
+    if not re.match(R_LINK_HEADER, header, re.VERBOSE):
+        raise ScalewayException('Scaleway API answered with an invalid Link pagination header')
+    else:
         relations = header.split(',')
         parsed_relations = {}
         rc_relation = re.compile(R_RELATION)
         for relation in relations:
             match = rc_relation.match(relation)
-            if match:
+            if not match:
+                raise ScalewayException('Scaleway API answered with an invalid relation in the Link pagination header')
+            else:
                 data = match.groupdict()
                 parsed_relations[data['relation']] = data['target_IRI']
-            else:
-                raise ScalewayException('Scaleway API answered with an invalid relation in the Link pagination header')
         return parsed_relations
-    else:
-        raise ScalewayException('Scaleway API answered with an invalid Link pagination header')
 
 
 class Response(object):
