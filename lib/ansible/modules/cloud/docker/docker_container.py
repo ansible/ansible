@@ -1506,7 +1506,7 @@ class Container(DockerBaseClass):
 
         if self.parameters.client.HAS_STOP_TIMEOUT_OPT:
             # stop_timeout is only supported in docker>=2.1
-            config_mapping['stop_timeout'] = host_config.get('StopTimeout')
+            config_mapping['stop_timeout'] = config.get('StopTimeout')
 
         if HAS_DOCKER_PY_3:
             # volume_driver moved to create_host_config in > 3
