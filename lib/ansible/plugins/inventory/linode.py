@@ -13,7 +13,7 @@ DOCUMENTATION = r'''
     version_added: "2.8"
     requirements:
         - python >= 2.7
-        - linode_api4 >= 1.0.3
+        - linode_api4 >= 2.0.0
     description:
         - Reads inventories from the Linode API v4.
         - Uses a <name>.linode.yaml (or <name>.linode.yml) YAML configuration file.
@@ -132,21 +132,13 @@ class InventoryModule(BaseInventoryPlugin):
 
     def _add_hostvars_for_instances(self):
         """Add hostvars for instances in the dynamic inventory."""
-
         for instance in self.instances:
-            hostvars = [
-                {'name': 'id', 'value': instance.id},
-                {'name': 'ipv4', 'value': instance.ipv4},
-                {'name': 'ipv6', 'value': instance.ipv6},
-                {'name': 'region', 'value': instance.region.id},
-                {'name': 'type', 'value': instance.type.id},
-            ]
-
-            for hostvar in hostvars:
+            hostvars = instance._raw_json
+            for hostvar_key in hostvars:
                 self.inventory.set_variable(
                     instance.label,
-                    hostvar['name'],
-                    hostvar['value'],
+                    hostvar_key,
+                    hostvars[hostvar_key]
                 )
 
     def _validate_option(self, name, desired_type, option_value):
