@@ -370,7 +370,7 @@ Vault Payload Format 1.1
 
 The vaulttext is a concatenation of the ciphertext and a SHA256 digest with the result 'hexlifyied'.
 
-'hexlify' refers to the hexlify() method of the Python Standard Library's `binascii <https://docs.python.org/3/library/binascii.html>` module.
+'hexlify' refers to the ``hexlify()`` method of the Python Standard Library's `binascii <https://docs.python.org/3/library/binascii.html>`_ module.
 
 hexlify()'ed result of:
 
@@ -395,7 +395,7 @@ hexlify()'ed result of:
 
   - AES256 encrypted data. The data is encrypted using:
 
-    - AES-CTR stream cipher
+    - AES-CTR stream cipher
     - cipher key
     - IV
     - a 128 bit counter block seeded from an integer IV
