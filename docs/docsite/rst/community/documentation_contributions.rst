@@ -64,6 +64,10 @@ To build the documentation on your local machine, you need the following package
 - jinja2
 - sphinx
 
+.. note::
+
+    On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work wth ``sphinx``.
+
 Once you have the required packages, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review.
 
 Building a single rST page
@@ -98,8 +102,12 @@ To build all the rST files without any module documentation:
 
 ``MODULES=none make webdocs``
 
-Building all the documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Building module docs and rST pages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To build documentation for a few modules plus all the rST files, us a comma-separated list:
+
+``MODULES=one_module,another_module make webdocs``
 
 To build all the module documentation plus all the rST files:
 
@@ -135,5 +143,5 @@ Joining the documentation working group
 The Documentation Working Group is just getting started, please visit the community repo for more information.
 
 .. seealso::
-   :ref:`testing_documentation`
-   :ref:`module_documenting`
+   :ref:`More about testing module documentation <testing_documentation>`
+   :ref:`More about documenting modules <module_documenting>`
