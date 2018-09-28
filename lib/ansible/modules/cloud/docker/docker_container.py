@@ -52,6 +52,27 @@ options:
       - Command to execute when the container starts.
         A command may be either a string or a list.
         Prior to version 2.4, strings were split on commas.
+  comparisons:
+    type: dict
+    description:
+      - Allows to specify how properties of existing containers are compared with
+        module options to decide whether the container should be recreated / updated
+        or not. Only options which correspond to the state of a container as handled
+        by the Docker daemon can be specified.
+      - Must be a dictionary specifying for an option one of the keys C(strict), C(ignore)
+        and C(allow_more_present).
+      - If C(strict) is specified, values are tested for equality, and changes always
+        result in updating or restarting. If C(ignore) is specified, changes are ignored.
+      - C(allow_more_present) is allowed only for lists, sets and dicts. If it is
+        specified for lists or sets, the container will only be updated or restarted if
+        the module option contains a value which is not present in the container's
+        options. If the option is specified for a dict, the container will only be updated
+        or restarted if the module option contains a key which isn't present in the
+        container's option, or if the value of a key present differs.
+      - The wildcard option C(*) can be used to set one of the default values C(strict)
+        or C(ignore) to I(all) comparisons.
+      - See the examples for details.
+    version_added: "2.8"
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
@@ -135,6 +156,7 @@ options:
         container to requested configuration. The evaluation includes the image version. If
         the image version in the registry does not match the container, the container will be
         recreated. Stop this behavior by setting C(ignore_image) to I(True).
+      - I(Warning:) This option is ignored if C(image) or C(*) is used for the C(comparisons) option.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -587,6 +609,31 @@ EXAMPLES = '''
       - sys_time
     cap_drop:
       - all
+
+- name: Finer container restart/update control
+  docker_container:
+    name: test
+    image: ubuntu:18.04
+    env:
+      - arg1: true
+      - arg2: whatever
+    volumes:
+      - /tmp:/tmp
+    comparisons:
+      image: ignore   # don't restart containers with older versions of the image
+      env: strict   # we want precisely this environment
+      volumes: allow_more_present   # if there are more volumes, that's ok, as long as `/tmp:/tmp` is there
+
+- name: Finer container restart/update control II
+  docker_container:
+    name: test
+    image: ubuntu:18.04
+    env:
+      - arg1: true
+      - arg2: whatever
+    comparisons:
+      '*': ignore  # by default, ignore *all* options (including image)
+      env: strict   # except for environment variables; there, we want to be strict
 '''
 
 RETURN = '''
@@ -649,7 +696,7 @@ try:
     else:
         from docker.utils.types import Ulimit, LogConfig
     from ansible.module_utils.docker_common import docker_version
-except:
+except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
@@ -2125,7 +2172,7 @@ class ContainerManager(DockerBaseClass):
 
 class AnsibleDockerClientContainer(AnsibleDockerClient):
 
-    def _setup_comparisons(self):
+    def _parse_comparisons(self):
         comparisons = {}
         comp_aliases = {}
         # Put in defaults
@@ -2139,7 +2186,11 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             etc_hosts='set',
             ulimits='set(dict)',
         )
+        all_options = set()  # this is for improving user feedback when a wrong option was specified for comparison
         for option, data in self.module.argument_spec.items():
+            all_options.add(option)
+            for alias in data.get('aliases', []):
+                all_options.add(alias)
             # Ignore options which aren't used as container properties
             if option in ('docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
                           'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
@@ -2168,6 +2219,42 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Process legacy ignore options
         if self.module.params['ignore_image']:
             comparisons['image']['comparison'] = 'ignore'
+        # Process options
+        if self.module.params.get('comparisons'):
+            # If '*' appears in comparisons, process it first
+            if '*' in self.module.params['comparisons']:
+                value = self.module.params['comparisons']['*']
+                if value not in ('strict', 'ignore'):
+                    self.fail("The wildcard can only be used with comparison modes 'strict' and 'ignore'!")
+                for dummy, v in comparisons.items():
+                    v['comparison'] = value
+            # Now process all other comparisons.
+            comp_aliases_used = {}
+            for key, value in self.module.params['comparisons'].items():
+                if key == '*':
+                    continue
+                # Find main key
+                key_main = comp_aliases.get(key)
+                if key_main is None:
+                    if key_main in all_options:
+                        self.fail(("The module option '%s' cannot be specified in the comparisons dict," +
+                                   " since it does not correspond to container's state!") % key)
+                    self.fail("Unknown module option '%s' in comparisons dict!" % key)
+                if key_main in comp_aliases_used:
+                    self.fail("Both '%s' and '%s' (aliases of %s) are specified in comparisons dict!" % (key, comp_aliases_used[key_main], key_main))
+                comp_aliases_used[key_main] = key
+                # Check value and update accordingly
+                if value in ('strict', 'ignore'):
+                    comparisons[key_main]['comparison'] = value
+                elif value == 'allow_more_present':
+                    if comparisons[key_main]['type'] == 'value':
+                        self.fail("Option '%s' is a value and not a set/list/dict, so its comparison cannot be %s" % (key, value))
+                    comparisons[key_main]['comparison'] = value
+                else:
+                    self.fail("Unknown comparison mode '%s'!" % value)
+        # Check legacy values
+        if self.module.params['ignore_image'] and comparisons['image']['comparison'] != 'ignore':
+            self.module.warn('The ignore_image option has been overridden by the comparisons option!')
         self.comparisons = comparisons
 
     def __init__(self, **kwargs):
@@ -2205,7 +2292,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
             self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
-        self._setup_comparisons()
+        self._parse_comparisons()
 
 
 def main():
@@ -2216,6 +2303,7 @@ def main():
         cap_drop=dict(type='list'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
+        comparisons=dict(type='dict'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),

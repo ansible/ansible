@@ -1,0 +1,2 @@
+minor_changes:
+- "The restart/idempotency behavior of docker_container can now be controlled with the new comparisons parameter."
