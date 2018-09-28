@@ -515,7 +515,16 @@ def main():
                 action_condition=lambda h: h.update_available,
                 wait_condition=lambda h: h.status == result_state,
                 post_action=lambda h: time.sleep(module.params['poll_interval']),
-                fail_condition=hosts_module.failed_state_after_reinstall,
+                fail_condition=lambda h: hosts_module.failed_state_after_reinstall(h) or (
+                    len([
+                        event
+                        for event in events_service.list(
+                            from_=int(last_event.id),
+                            # Fail upgrade if migration fails.
+                            search='type=65 or type=140',
+                        )
+                    ]) > 0
+                ),
                 reboot=module.params['reboot_after_upgrade'],
             )
         elif state == 'iscsidiscover':
