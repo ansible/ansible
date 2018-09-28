@@ -715,20 +715,27 @@ class YumModule(YumDnf):
         # setting system proxy environment and saving old, if exists
         my = self.yum_base()
         namepass = ""
+        proxy_url = ""
         scheme = ["http", "https"]
         old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
         try:
             if my.conf.proxy:
                 if my.conf.proxy_username:
                     namepass = namepass + my.conf.proxy_username
+                    proxy_url = my.conf.proxy
                     if my.conf.proxy_password:
                         namepass = namepass + ":" + my.conf.proxy_password
-                namepass = namepass + '@'
-                for item in scheme:
-                    os.environ[item + "_proxy"] = re.sub(
-                        r"(http://)",
-                        r"\1" + namepass, my.conf.proxy
-                    )
+                elif '@' in my.conf.proxy:
+                    namepass = my.conf.proxy.split('@')[0].split('//')[-1]
+                    proxy_url = my.conf.proxy.replace("{0}@".format(namepass), "")
+
+                if namepass:
+                    namepass = namepass + '@'
+                    for item in scheme:
+                        os.environ[item + "_proxy"] = re.sub(
+                            r"(http://)",
+                            r"\1" + namepass, proxy_url
+                        )
             yield
         except yum.Errors.YumBaseError:
             raise
