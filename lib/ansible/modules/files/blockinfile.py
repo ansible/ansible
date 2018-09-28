@@ -309,7 +309,7 @@ def main():
         if original is None or original.endswith(b('\n')):
             result += b('\n')
     else:
-        result = ''
+        result = b''
 
     if module._diff:
         diff['after'] = result
