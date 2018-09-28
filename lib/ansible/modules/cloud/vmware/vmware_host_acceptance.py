@@ -17,9 +17,10 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_host_acceptance
-short_description: Manage acceptance level of ESXi host
+short_description: Manage the host acceptance level of an ESXi host
 description:
-- This module can be used to manage acceptance level of an ESXi host.
+- This module can be used to manage the host acceptance level of an ESXi host.
+- The host acceptance level controls the acceptance level of each VIB on a ESXi host.
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
