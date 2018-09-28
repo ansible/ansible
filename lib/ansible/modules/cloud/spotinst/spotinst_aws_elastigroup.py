@@ -23,6 +23,7 @@ description:
 requirements:
   - spotinst >= 1.0.21
   - python >= 2.7
+  - spotinst_sdk >= 1.0.38
 options:
 
   credentials_path:
