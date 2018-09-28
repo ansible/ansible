@@ -451,73 +451,74 @@ def main():
         "https": {"required": False, "type": "bool", "default": "False"},
         "system_sdn_connector": {
             "required": False, "type": "dict",
-            "options": {"state": {"required": True, "type": "str",
-                                  "choices": ["present", "absent"]},
-                        "access-key": {"required": False, "type": "str"},
-                        "azure-region": {"required": False, "type": "str",
-                                         "choices": ["global", "china", "germany",
-                                                     "usgov"]},
-                        "client-id": {"required": False, "type": "str"},
-                        "client-secret": {"required": False, "type": "str"},
-                        "compartment-id": {"required": False, "type": "str"},
-                        "external-ip": {"required": False, "type": "list",
-                                        "options": {
-                                            "name": {"required": True, "type": "str"}
-                                        }},
-                        "gcp-project": {"required": False, "type": "str"},
-                        "key-passwd": {"required": False, "type": "str"},
-                        "name": {"required": True, "type": "str"},
-                        "nic": {"required": False, "type": "list",
+            "options": {
+                "state": {"required": True, "type": "str",
+                          "choices": ["present", "absent"]},
+                "access-key": {"required": False, "type": "str"},
+                "azure-region": {"required": False, "type": "str",
+                                 "choices": ["global", "china", "germany",
+                                             "usgov"]},
+                "client-id": {"required": False, "type": "str"},
+                "client-secret": {"required": False, "type": "str"},
+                "compartment-id": {"required": False, "type": "str"},
+                "external-ip": {"required": False, "type": "list",
                                 "options": {
-                                    "ip": {"required": False, "type": "list",
-                                           "options": {
-                                               "name": {"required": True, "type": "str"},
-                                               "public-ip": {"required": False, "type": "str"}
-                                           }},
                                     "name": {"required": True, "type": "str"}
                                 }},
-                        "oci-cert": {"required": False, "type": "str"},
-                        "oci-fingerprint": {"required": False, "type": "str"},
-                        "oci-region": {"required": False, "type": "str",
-                                       "choices": ["phoenix", "ashburn", "frankfurt",
-                                                   "london"]},
-                        "password": {"required": False, "type": "str"},
-                        "private-key": {"required": False, "type": "str"},
-                        "region": {"required": False, "type": "str"},
-                        "resource-group": {"required": False, "type": "str"},
-                        "route": {"required": False, "type": "list",
-                                  "options": {
-                                      "name": {"required": True, "type": "str"}
-                                  }},
-                        "route-table": {"required": False, "type": "list",
-                                        "options": {
-                                            "name": {"required": True, "type": "str"},
-                                            "route": {"required": False, "type": "list",
-                                                      "options": {
-                                                          "name": {"required": True, "type": "str"},
-                                                          "next-hop": {"required": False, "type": "str"}
-                                                      }}
-                                        }},
-                        "secret-key": {"required": False, "type": "str"},
-                        "server": {"required": False, "type": "str"},
-                        "server-port": {"required": False, "type": "int"},
-                        "service-account": {"required": False, "type": "str"},
-                        "status": {"required": False, "type": "str",
-                                   "choices": ["disable", "enable"]},
-                        "subscription-id": {"required": False, "type": "str"},
-                        "tenant-id": {"required": False, "type": "str"},
-                        "type": {"required": False, "type": "str",
-                                 "choices": ["aci", "aws", "azure",
-                                             "nsx", "nuage", "oci",
-                                             "gcp"]},
-                        "update-interval": {"required": False, "type": "int"},
-                        "use-metadata-iam": {"required": False, "type": "str",
-                                             "choices": ["disable", "enable"]},
-                        "user-id": {"required": False, "type": "str"},
-                        "username": {"required": False, "type": "str"},
-                        "vpc-id": {"required": False, "type": "str"}
+                "gcp-project": {"required": False, "type": "str"},
+                "key-passwd": {"required": False, "type": "str"},
+                "name": {"required": True, "type": "str"},
+                "nic": {"required": False, "type": "list",
+                        "options": {
+                            "ip": {"required": False, "type": "list",
+                                   "options": {
+                                       "name": {"required": True, "type": "str"},
+                                       "public-ip": {"required": False, "type": "str"}
+                                   }},
+                            "name": {"required": True, "type": "str"}
+                        }},
+                "oci-cert": {"required": False, "type": "str"},
+                "oci-fingerprint": {"required": False, "type": "str"},
+                "oci-region": {"required": False, "type": "str",
+                               "choices": ["phoenix", "ashburn", "frankfurt",
+                                           "london"]},
+                "password": {"required": False, "type": "str"},
+                "private-key": {"required": False, "type": "str"},
+                "region": {"required": False, "type": "str"},
+                "resource-group": {"required": False, "type": "str"},
+                "route": {"required": False, "type": "list",
+                          "options": {
+                              "name": {"required": True, "type": "str"}
+                          }},
+                "route-table": {"required": False, "type": "list",
+                                "options": {
+                                    "name": {"required": True, "type": "str"},
+                                    "route": {"required": False, "type": "list",
+                                              "options": {
+                                                  "name": {"required": True, "type": "str"},
+                                                  "next-hop": {"required": False, "type": "str"}
+                                              }}
+                                }},
+                "secret-key": {"required": False, "type": "str"},
+                "server": {"required": False, "type": "str"},
+                "server-port": {"required": False, "type": "int"},
+                "service-account": {"required": False, "type": "str"},
+                "status": {"required": False, "type": "str",
+                           "choices": ["disable", "enable"]},
+                "subscription-id": {"required": False, "type": "str"},
+                "tenant-id": {"required": False, "type": "str"},
+                "type": {"required": False, "type": "str",
+                         "choices": ["aci", "aws", "azure",
+                                     "nsx", "nuage", "oci",
+                                     "gcp"]},
+                "update-interval": {"required": False, "type": "int"},
+                "use-metadata-iam": {"required": False, "type": "str",
+                                     "choices": ["disable", "enable"]},
+                "user-id": {"required": False, "type": "str"},
+                "username": {"required": False, "type": "str"},
+                "vpc-id": {"required": False, "type": "str"}
 
-                        }
+            }
         }
     }
 
