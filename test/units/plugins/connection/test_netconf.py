@@ -23,6 +23,7 @@ __metaclass__ = type
 import sys
 import re
 import json
+import pytest
 
 from io import StringIO
 
@@ -30,6 +31,8 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
+
+pytest.importorskip("ncclient")
 
 PY3 = sys.version_info[0] == 3
 
