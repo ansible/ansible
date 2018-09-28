@@ -43,6 +43,14 @@ options:
       - State of the user.
     choices: [ present, absent ]
     default: present
+  grants:
+    description:
+      - Privileges to grant to this user. Takes a list of dicts containing the
+        "database" and "privilege" keys.
+      - If this argument is not provided, the current grants will be left alone.
+        If an empty list is provided, all grants for the user will be removed.
+    default: None
+    version_added: 2.8
 extends_documentation_fragment: influxdb
 '''
 
@@ -67,6 +75,18 @@ EXAMPLES = '''
     hostname: "{{ influxdb_hostname }}"
     login_username: "{{ influxdb_username }}"
     login_password: "{{ influxdb_password }}"
+
+- name: Create a user on localhost with privileges
+  influxdb_user:
+    user_name: john
+    user_password: s3cr3t
+    login_username: "{{ influxdb_username }}"
+    login_password: "{{ influxdb_password }}"
+    grants:
+      - database: 'collectd'
+        privilege: 'WRITE'
+      - database: 'graphite'
+        privilege: 'READ'
 
 - name: Destroy a user using custom login credentials
   influxdb_user:
