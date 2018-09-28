@@ -391,10 +391,14 @@ options:
   stop_timeout:
     description:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
-        When C(state) is I(present), set container's C(StopTimeout) configuration (in seconds). This only applies on container creation time.
-        C(StopTimeout) won't be updated on existing containers.
-        When C(state) is I(stopped), set timeout (in seconds) to stop a container.
-        This ignores default or custom C(StopTimeout) configuration of the container.
+        When C(state) is not I(absent) and the container is (re-)created, set container's
+        C(StopTimeout) configuration (in seconds). C(StopTimeout) won't be updated on
+        existing containers.
+      - When the container is stopped, will be used as a timeout for stopping the
+        container. In case the container has a custom C(StopTimeout) configuration,
+        the behavior depends on the version of docker. New versions of docker will
+        always use the container's configured C(StopTimeout) value if it has been
+        configured.
   trust_image_content:
     description:
       - If C(yes), skip image verification.
