@@ -456,3 +456,34 @@ releases:
     - win_wait_for-timeout.yaml
     - zypper-on-ubuntu.yaml
     release_date: '2018-09-06'
+  2.6.5:
+    codename: Heartbreaker
+    fragments:
+    - 45203-sysvinit-fix-unassigned-variable.yml
+    - 45628-fetch_url-error-headers.yaml
+    - 45700-docker_container-dont-parse-absent.yml
+    - ajson-nested-decode.yaml
+    - azure_rm_deployment_fix_45941.yaml
+    - dd-put-empty-files.yaml
+    - docker_container-idempotency.yaml
+    - ec2_group_fix_target_containing_list_within_list.yaml
+    - fix_44984.yaml
+    - fix_ec2_group_target_vpc_precedence.yaml
+    - fix_ec2_group_vpc_precedence_classic.yaml
+    - fix_vyos_facts.yaml
+    - get-url-fix-idempotency.yaml
+    - loop_undefined_delegate_to.yaml
+    - mysql-migrate_to_pymysql.yaml
+    - nxos_ambiguous_command_check.yaml
+    - nxos_facts_26.yaml
+    - nxos_terminal_plugin.yaml
+    - piped-transfer-empty-files.yaml
+    - plugin-filters-cfg.yaml
+    - script-module-no-file-path.yaml
+    - v2.6.5_summary.yaml
+    - win_copy-dest-quote.yaml
+    - win_group_membership-com-marshal.yaml
+    - win_keep_remote_file_python26.yaml
+    - win_say-fix.yaml
+    - winrm_pexpect.yaml
+    release_date: '2018-09-28'

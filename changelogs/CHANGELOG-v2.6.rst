@@ -2,6 +2,54 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.5
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-09-28
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Bugfixes
+--------
+
+- Add ambiguous command check as the error message is not persistent on nexus devices (https://github.com/ansible/ansible/pull/45337).
+- Ansible JSON Decoder - Switch from decode to object_hook to support nested use of __ansible_vault and __ansible_unsafe (https://github.com/ansible/ansible/pull/45514)
+- Don't parse parameters and options when ``state`` is ``absent`` (https://github.com/ansible/ansible/pull/45700).
+- Fix python2.6 `nothing to repeat` nxos terminal plugin bug (https://github.com/ansible/ansible/pull/45271).
+- Fix referenced before assignment in sysvinit module
+- PLUGIN_FILTERS_CFG - Ensure that the value is treated as type=path, and that we use the standard section of ``defaults`` instead of ``default`` (https://github.com/ansible/ansible/pull/45994)
+- The patch fixing the regression of no longer preferring matching security groups in the same VPC https://github.com/ansible/ansible/pull/45787 (which was also backported to 2.6) broke EC2-Classic accounts. https://github.com/ansible/ansible/pull/46242 removes the assumption that security groups must be in a VPC.
+- azure_rm_deployment - fixed regression that prevents resource group from being created (https://github.com/ansible/ansible/issues/45941)
+- chroot connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- cloudfront - fix bug when CloudFrontOriginAccessIdentityList is missing (https://github.com/ansible/ansible/pull/44984)
+- docker connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- docker_container - Fix idempotency problems with ``cap_drop`` and ``groups`` (when numeric group IDs were used).
+- docker_container - Fix type conversion errors for ``log_options``.
+- docker_container - Fixing various comparison/idempotency problems related to wrong comparisons. In particular, comparisons for ``command`` and ``entrypoint`` (both lists) no longer ignore missing elements during idempotency checks.
+- docker_container - Makes ``blkio_weight``, ``cpuset_mems``, ``dns_opts`` and ``uts`` options actually work.
+- ec2_group - Sanitize the ingress and egress rules before operating on them by flattening any lists within lists describing the target CIDR(s) into a list of strings. Prior to Ansible 2.6 the ec2_group module accepted a list of strings, a list of lists, or a combination of strings and lists within a list. https://github.com/ansible/ansible/pull/45594
+- ec2_group - There can be multiple security groups with the same name in different VPCs. Prior to 2.6 if a target group name was provided, the group matching the name and VPC had highest precedence. Restore this behavior by updated the dictionary with the groups matching the VPC last.
+- fetch_url did not always return lower-case header names in case of HTTP errors (https://github.com/ansible/ansible/pull/45628).
+- fix nxos_facts indefinite hang for text based output (https://github.com/ansible/ansible/pull/45845).
+- get_url - Don't re-download files unnecessarily when force=no (https://github.com/ansible/ansible/issues/45491)
+- jail connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- kubectl connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- libvirt_lxc connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- loop - Ensure that a loop with a when condition that evaluates to false and delegate_to, will short circuit if the loop references an undefined variable. This matches the behavior in the same scenario without delegate_to (https://github.com/ansible/ansible/issues/45189)
+- mysql_*, proxysql_* - PyMySQL (a pure-Python MySQL driver) is now a preferred dependency also supporting Python 3.X.
+- powershell - Fix issue where setting ANSIBLE_KEEP_REMOTE_FILES fails when using Python 2.6 - https://github.com/ansible/ansible/issues/45490
+- script inventory plugin - Don't pass file_name to DataLoader.load, which will prevent misleading error messages (https://github.com/ansible/ansible/issues/34164)
+- ssh connection - Support empty files with piped transfer_method (https://github.com/ansible/ansible/issues/45426)
+- vyos_facts - fix vyos_facts not returning version number issue (https://github.com/ansible/ansible/pull/39115)
+- win_copy - Fix issue where the dest return value would be enclosed in single quote when dest is a folder - https://github.com/ansible/ansible/issues/45281
+- win_group_membership - fix intermittent issue where it failed to convert the ADSI object to the .NET object after using it once
+- win_say - fix syntax error in module and get tests working
+- winrm - Only use pexpect for auto kerb auth if it is installed and contains the required kwargs - https://github.com/ansible/ansible/issues/43462
+- zone connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+
 v2.6.4
 ======
 
