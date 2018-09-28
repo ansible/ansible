@@ -169,7 +169,7 @@ class VmwareFolderManager(PyVmomi):
                                                folder_type=folder_type)
 
                 if not p_folder_obj:
-                    self.module.fail_json(msg="Parent folder %s does not exists" % parent_folder)
+                    self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
 
                 # Check if folder exists under parent folder
                 child_folder_obj = self.get_folder(folder_name=folder_name,
