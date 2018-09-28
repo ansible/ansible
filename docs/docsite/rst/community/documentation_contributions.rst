@@ -37,7 +37,7 @@ If the problem you've noticed is too complex to fix with the ``Edit on GitHub`` 
 A great documentation GitHub issue or PR includes:
 
 - a specific title
-- a detailed description of the problem (even for a PR - it's hard to evaluate a suggested change if we don't know what problem it's meant to solve)
+- a detailed description of the problem (even for a PR - it's hard to evaluate a suggested change unless we know what problem it's meant to solve)
 - links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, etc.)
 
 Before you open a complex documentation PR
@@ -46,7 +46,7 @@ Before you open a complex documentation PR
 If you make multiple changes to the documentation, or add more than a line to it, before you open a pull request, please:
 
 #. Check that your text follows our :ref:`style_guide`.
-#. Test your changes for rST errors
+#. Test your changes for rST errors.
 #. Build the page, and preferably the entire documentation site, locally.
 
 To work with documentation on your local machine, you need the following packages installed:
@@ -70,12 +70,6 @@ To work with documentation on your local machine, you need the following package
 
 Testing the documentation locally
 ---------------------------------
-
-To test your branch for rST errors, you need the ``rstcheck`` library. To install it:
-
-.. code-block:: bash
-
-   pip install rstcheck
 
 To test an individual file for rST errors:
 
@@ -152,9 +146,9 @@ Reviewing open PRs and issues
 
 You can also contribute by reviewing open documentation issues and PRs. To add a helpful review, please:
 
-- include a comment - "looks good to me" only helps if we know why
-- for issues, reproduce the problem
-- for PRs, test the change
+- Include a comment - "looks good to me" only helps if we know why.
+- For issues, reproduce the problem.
+- For PRs, test the change.
 
 Joining the documentation working group
 =======================================
