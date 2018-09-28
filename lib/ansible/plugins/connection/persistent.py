@@ -91,7 +91,7 @@ class Connection(ConnectionBase):
         '''
         Starts the persistent connection
         '''
-        candidate_paths = [C.ANSIBLE_CONNECTION_LOCATION or os.path.dirname(sys.argv[0])]
+        candidate_paths = [C.ANSIBLE_CONNECTION_PATH or os.path.dirname(sys.argv[0])]
         candidate_paths.extend(os.environ['PATH'].split(os.pathsep))
         for dirname in candidate_paths:
             ansible_connection = os.path.join(dirname, 'ansible-connection')
@@ -99,7 +99,7 @@ class Connection(ConnectionBase):
                 break
         else:
             raise AnsibleError("Unable to find location of 'ansible-connection'. "
-                               "Please set or check the value of ANSIBLE_CONNECTION_LOCATION")
+                               "Please set or check the value of ANSIBLE_CONNECTION_PATH")
 
         python = sys.executable
         master, slave = pty.openpty()
