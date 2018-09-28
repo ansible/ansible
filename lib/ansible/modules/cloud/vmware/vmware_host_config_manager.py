@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_host_config_manager
-short_description: Manage advance configurations about an ESXi host
+short_description: Manage advanced system settings of an ESXi host
 description:
-- This module can be used to manage advance configuration information about an ESXi host when ESXi hostname or Cluster name is given.
+- This module can be used to manage advanced system settings of an ESXi host when ESXi hostname or Cluster name is given.
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -31,23 +31,23 @@ options:
   cluster_name:
     description:
     - Name of the cluster.
-    - Settings are applied to every ESXi host system in given cluster.
+    - Settings are applied to every ESXi host in given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
   esxi_hostname:
     description:
     - ESXi hostname.
-    - Settings are applied to this ESXi host system.
+    - Settings are applied to this ESXi host.
     - If C(cluster_name) is not given, this parameter is required.
   options:
     description:
-    - A dictionary of advance configuration parameters.
+    - A dictionary of advanced system settings.
     - Invalid options will cause module to error.
     default: {}
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
-- name: Manage Log level setting for all ESXi Host in given Cluster
+- name: Manage Log level setting for all ESXi hosts in given Cluster
   vmware_host_config_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -57,7 +57,7 @@ EXAMPLES = r'''
         'Config.HostAgent.log.level': 'info'
   delegate_to: localhost
 
-- name: Manage Log level setting for an ESXi Host
+- name: Manage Log level setting for an ESXi host
   vmware_host_config_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -67,7 +67,7 @@ EXAMPLES = r'''
         'Config.HostAgent.log.level': 'verbose'
   delegate_to: localhost
 
-- name: Manage multiple settings for an ESXi Host
+- name: Manage multiple settings for an ESXi host
   vmware_host_config_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
