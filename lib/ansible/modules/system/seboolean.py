@@ -97,60 +97,149 @@ def get_boolean_value(module, name):
         return False
 
 
+def semanage_get_handle(module):
+    handle = semanage.semanage_handle_create()
+    if not handle:
+        module.fail_json(msg="Failed to create semanage library handle")
+
+    managed = semanage.semanage_is_managed(handle)
+    if managed <= 0:
+        semanage.semanage_handle_destroy(handle)
+    if managed < 0:
+        module.fail_json(msg="Failed to determine whether policy is manage")
+    if managed == 0:
+        if os.getuid() == 0:
+            module.fail_json(msg="Cannot set persistent booleans without managed policy")
+        else:
+            module.fail_json(msg="Cannot set persistent booleans; please try as root")
+
+    if semanage.semanage_connect(handle) < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to connect to semanage")
+
+    return handle
+
+
+def semanage_begin_transaction(module, handle):
+    if semanage.semanage_begin_transaction(handle) < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to begin semanage transaction")
+
+
+def semanage_set_boolean_value(module, handle, name, value):
+    rc, t_b = semanage.semanage_bool_create(handle)
+    if rc < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to create seboolean with semanage")
+
+    if semanage.semanage_bool_set_name(handle, t_b, name) < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to set seboolean name with semanage")
+
+    rc, boolkey = semanage.semanage_bool_key_extract(handle, t_b)
+    if rc < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to extract boolean key with semanage")
+
+    rc, exists = semanage.semanage_bool_exists(handle, boolkey)
+    if rc < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to check if boolean is defined")
+    if not exists:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="SELinux boolean %s is not defined in persistent policy" % name)
+
+    rc, sebool = semanage.semanage_bool_query(handle, boolkey)
+    if rc < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to query boolean in persistent policy")
+
+    semanage.semanage_bool_set_value(sebool, value)
+
+    if semanage.semanage_bool_modify_local(handle, boolkey, sebool) < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to modify boolean key with semanage")
+
+    if semanage.semanage_bool_set_active(handle, boolkey, sebool) < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to set boolean key active with semanage")
+
+    semanage.semanage_bool_key_free(boolkey)
+    semanage.semanage_bool_free(t_b)
+    semanage.semanage_bool_free(sebool)
+
+
+def semanage_get_boolean_value(module, handle, name):
+    rc, t_b = semanage.semanage_bool_create(handle)
+    if rc < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to create seboolean with semanage")
+
+    if semanage.semanage_bool_set_name(handle, t_b, name) < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to set seboolean name with semanage")
+
+    rc, boolkey = semanage.semanage_bool_key_extract(handle, t_b)
+    if rc < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to extract boolean key with semanage")
+
+    rc, exists = semanage.semanage_bool_exists(handle, boolkey)
+    if rc < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to check if boolean is defined")
+    if not exists:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="SELinux boolean %s is not defined in persistent policy" % name)
+
+    rc, sebool = semanage.semanage_bool_query(handle, boolkey)
+    if rc < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to query boolean in persistent policy")
+
+    value = semanage.semanage_bool_get_value(sebool)
+
+    semanage.semanage_bool_key_free(boolkey)
+    semanage.semanage_bool_free(t_b)
+    semanage.semanage_bool_free(sebool)
+
+    return value
+
+
+def semanage_commit(module, handle, load=0):
+    semanage.semanage_set_reload(handle, load)
+    if semanage.semanage_commit(handle) < 0:
+        semanage.semanage_handle_destroy(handle)
+        module.fail_json(msg="Failed to commit changes to semanage")
+
+
+def semanage_destroy_handle(module, handle):
+    rc = semanage.semanage_disconnect(handle)
+    semanage.semanage_handle_destroy(handle)
+    if rc < 0:
+        module.fail_json(msg="Failed to disconnect from semanage")
+
+
 # The following method implements what setsebool.c does to change
 # a boolean and make it persist after reboot..
 def semanage_boolean_value(module, name, state):
-    rc = 0
     value = 0
+    changed = False
     if state:
         value = 1
-    handle = semanage.semanage_handle_create()
-    if handle is None:
-        module.fail_json(msg="Failed to create semanage library handle")
     try:
-        managed = semanage.semanage_is_managed(handle)
-        if managed < 0:
-            module.fail_json(msg="Failed to determine whether policy is manage")
-        if managed == 0:
-            if os.getuid() == 0:
-                module.fail_json(msg="Cannot set persistent booleans without managed policy")
-            else:
-                module.fail_json(msg="Cannot set persistent booleans; please try as root")
-        if semanage.semanage_connect(handle) < 0:
-            module.fail_json(msg="Failed to connect to semanage")
-
-        if semanage.semanage_begin_transaction(handle) < 0:
-            module.fail_json(msg="Failed to begin semanage transaction")
-
-        rc, sebool = semanage.semanage_bool_create(handle)
-        if rc < 0:
-            module.fail_json(msg="Failed to create seboolean with semanage")
-        if semanage.semanage_bool_set_name(handle, sebool, name) < 0:
-            module.fail_json(msg="Failed to set seboolean name with semanage")
-        semanage.semanage_bool_set_value(sebool, value)
-
-        rc, boolkey = semanage.semanage_bool_key_extract(handle, sebool)
-        if rc < 0:
-            module.fail_json(msg="Failed to extract boolean key with semanage")
-
-        if semanage.semanage_bool_modify_local(handle, boolkey, sebool) < 0:
-            module.fail_json(msg="Failed to modify boolean key with semanage")
-
-        if semanage.semanage_bool_set_active(handle, boolkey, sebool) < 0:
-            module.fail_json(msg="Failed to set boolean key active with semanage")
-
-        semanage.semanage_bool_key_free(boolkey)
-        semanage.semanage_bool_free(sebool)
-
-        semanage.semanage_set_reload(handle, 0)
-        if semanage.semanage_commit(handle) < 0:
-            module.fail_json(msg="Failed to commit changes to semanage")
-
-        semanage.semanage_disconnect(handle)
-        semanage.semanage_handle_destroy(handle)
+        handle = semanage_get_handle(module)
+        semanage_begin_transaction(module, handle)
+        cur_value = semanage_get_boolean_value(module, handle, name)
+        if cur_value != value:
+            changed = True
+            if not module.check_mode:
+                semanage_set_boolean_value(module, handle, name, value)
+                semanage_commit(module, handle)
+        semanage_destroy_handle(module, handle)
     except Exception as e:
         module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
-    return True
+    return changed
 
 
 def set_boolean_value(module, name, state):
@@ -193,7 +282,10 @@ def main():
 
     result = dict(
         name=name,
+        persistent=persistent,
+        state=state
     )
+    changed = False
 
     if hasattr(selinux, 'selinux_boolean_sub'):
         # selinux_boolean_sub allows sites to rename a boolean and alias the old name
@@ -203,26 +295,22 @@ def main():
     if not has_boolean_value(module, name):
         module.fail_json(msg="SELinux boolean %s does not exist." % name)
 
-    cur_value = get_boolean_value(module, name)
-
-    if cur_value == state:
-        module.exit_json(changed=False, state=cur_value, **result)
-
-    if module.check_mode:
-        module.exit_json(changed=True)
-
     if persistent:
-        r = semanage_boolean_value(module, name, state)
+        changed = semanage_boolean_value(module, name, state)
     else:
-        r = set_boolean_value(module, name, state)
+        cur_value = get_boolean_value(module, name)
+        if cur_value != state:
+            changed = True
+            if not module.check_mode:
+                changed = set_boolean_value(module, name, state)
+                if not changed:
+                    module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
+                try:
+                    selinux.security_commit_booleans()
+                except:
+                    module.fail_json(msg="Failed to commit pending boolean %s value" % name)
 
-    result['changed'] = r
-    if not r:
-        module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
-    try:
-        selinux.security_commit_booleans()
-    except:
-        module.fail_json(msg="Failed to commit pending boolean %s value" % name)
+    result['changed'] = changed
 
     module.exit_json(**result)
 
