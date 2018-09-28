@@ -10,7 +10,7 @@ Improving the documentation is an easy way to make your first contribution to th
 
 If you find a typo, a broken example, a missing topic, or any other error or omission on docs.ansible.com, let us know. Here are some ways to support Ansible documentation:
 
-.. contents:: Ways to contribute
+.. contents::
    :local:
 
 Editing docs directly on GitHub
@@ -43,90 +43,109 @@ A great documentation GitHub issue or PR includes:
 Before you open a complex documentation PR
 ==========================================
 
-If you make multiple changes to the documentation or add more than a line to it, before you open a pull request, please:
+If you make multiple changes to the documentation, or add more than a line to it, before you open a pull request, please:
 
-#. Follow our :ref:`style_guide`.
+#. Check that your text follows our :ref:`style_guide`.
+#. Test your changes for rST errors
 #. Build the page, and preferably the entire documentation site, locally.
-#. Test your branch locally.
 
-Building the documentation locally
-----------------------------------
+To work with documentation on your local machine, you need the following packages installed:
 
-To build the documentation on your local machine, you need the following packages installed:
+.. code-block:: none
 
-- libyaml
-- pyyaml
-- nose
-- six
-- tornado
-- pyparsing
-- gcc
-- jinja2
-- sphinx
+   - libyaml
+   - pyyaml
+   - nose
+   - six
+   - tornado
+   - pyparsing
+   - gcc
+   - jinja2
+   - rstcheck
+   - sphinx
 
 .. note::
 
     On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work wth ``sphinx``.
 
-Once you have the required packages, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review.
+Testing the documentation locally
+---------------------------------
+
+To test your branch for rST errors, you need the ``rstcheck`` library. To install it:
+
+.. code-block:: bash
+
+   pip install rstcheck
+
+To test an individual file for rST errors:
+
+.. code-block:: bash
+
+   rstcheck changed_file.rst
+
+Building the documentation locally
+----------------------------------
+
+Building the documentation is the best way to check for errors and review your changes. Once `rstcheck` runs with no errors, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review.
 
 Building a single rST page
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To build a single rST file, you have two options:
 
-1. You can use the make utility:
+1. Building an rST file with the make utility:
 
-``make htmlsingle rst=<relative/path/to/your_file.rst>``
+.. code-block:: bash
+
+   make htmlsingle rst=<relative/path/to/your_file.rst>
 
 For example:
 
-``make htmlsingle rst=dev_guide/developing_modules_documenting.rst``
+.. code-block:: bash
+
+   make htmlsingle rst=dev_guide/developing_modules_documenting.rst
 
 This method compiles all the links but provides minimal log output.
 
-2. You can use sphinx-build:
+2. Building an rST file with sphinx-build:
 
-``sphinx-build [options] sourcedir outdir [filenames...]``
+.. code-block:: bash
+
+   sphinx-build [options] sourcedir outdir [filenames...]
+
+You can specify filenames, or ``–a`` for all files, or omit both to compile only new/changed files.
 
 For example:
 
-``sphinx-build -b html -c rst/ rst/dev_guide/ _build/html/dev_guide/ rst/dev_guide/developing_modules_documenting.rst``
+.. code-block:: bash
 
-This command doesn't incorporate other directories or files, so Sphinx won’t create reference links and you’ll get bogus ``undefined label`` warnings. But ``sphinx-build`` provides good syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings. You can pass –a for all files, pass filenames to specify, or omit both to compile only new/changed files.
+   sphinx-build -b html -c rst/ rst/dev_guide/ _build/html/dev_guide/ rst/dev_guide/developing_modules_documenting.rst
+
+If you build a single file, Sphinx won’t create reference links and you’ll get bogus ``undefined label`` warnings. But ``sphinx-build`` provides good syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings.
 
 Building all the rST pages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To build all the rST files without any module documentation:
 
-``MODULES=none make webdocs``
+.. code-block:: bash
+
+   MODULES=none make webdocs
 
 Building module docs and rST pages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To build documentation for a few modules plus all the rST files, us a comma-separated list:
+To build documentation for a few modules plus all the rST files, use a comma-separated list:
 
-``MODULES=one_module,another_module make webdocs``
+.. code-block:: bash
+
+   MODULES=one_module,another_module make webdocs
 
 To build all the module documentation plus all the rST files:
 
-``make webdocs``
+.. code-block:: bash
 
-Testing the documentation locally
----------------------------------
-
-To test your branch for rST errors, you need the ``rstcheck`` library:
-
-``pip install rstcheck``
-
-To test an individual file for rST errors:
-
-``rstcheck myfile.rst``
-
-To test a branch locally, move up to the top-level dir of the project and run:
-
-``test/runner/ansible-test sanity docs/docsite/rst/dir/my_file.rst``
+   make webdocs
 
 Reviewing open PRs and issues
 =============================
