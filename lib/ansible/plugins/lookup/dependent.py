@@ -65,10 +65,10 @@ EXAMPLES = """
   loop_control:
     # Makes the output readable, so that it doesn't contain the whole subdictionaries and lists
     label: "{{ [item.0.key, item.1.key, item.2.key, item.2.value.get('ttl', 3600), item.2.value.get('absent', False), item.2.value.value] }}"
-  with_dependent:
-  - "dns_setup"
-  - "item.0.value"
-  - "item.1.value"
+  loop: "{{ lookup('dependent', dns_setup, 'item.0.value', 'item.1.value') }}"
+  # Alternatively, you can also do:
+  #   loop: "{{ lookup('dependent', 'dns_setup', 'item.0.value', 'item.1.value') }}"
+  # the dependent lookup will evaluate 'dns_setup'.
   vars:
     dns_setup:
       example.com:
