@@ -129,24 +129,24 @@ def get_master_status(cursor):
     return masterstatus
 
 
-def get_slave_status(cursor):
-    cursor.execute("SHOW SLAVE STATUS")
+def get_slave_status(cursor, connection_name=''):
+    cursor.execute("SHOW SLAVE %s STATUS" % connection_name)
     slavestatus = cursor.fetchone()
     return slavestatus
 
 
-def stop_slave(cursor):
+def stop_slave(cursor, connection_name=''):
     try:
-        cursor.execute("STOP SLAVE")
+        cursor.execute("STOP SLAVE %s" % connection_name)
         stopped = True
     except:
         stopped = False
     return stopped
 
 
-def reset_slave(cursor):
+def reset_slave(cursor, connection_name=''):
     try:
-        cursor.execute("RESET SLAVE")
+        cursor.execute("RESET SLAVE %s" % connection_name)
         reset = True
     except:
         reset = False
@@ -162,18 +162,18 @@ def reset_slave_all(cursor):
     return reset
 
 
-def start_slave(cursor):
+def start_slave(cursor, connection_name=''):
     try:
-        cursor.execute("START SLAVE")
+        cursor.execute("START SLAVE %s" % connection_name)
         started = True
     except:
         started = False
     return started
 
 
-def changemaster(cursor, chm, chm_params):
+def changemaster(cursor, chm, chm_params, connection_name=''):
     sql_param = ",".join(chm)
-    query = 'CHANGE MASTER TO %s' % sql_param
+    query = 'CHANGE MASTER %s TO %s' % (connection_name, sql_param)
     cursor.execute(query, chm_params)
 
 
@@ -207,6 +207,7 @@ def main():
             ssl_cert=dict(default=None),
             ssl_key=dict(default=None),
             ssl_ca=dict(default=None),
+            connection_name=dict(default=''),
         )
     )
     mode = module.params["mode"]
@@ -231,6 +232,7 @@ def main():
     ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
+    connection_name = module.params['connection_name']
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -259,7 +261,7 @@ def main():
         module.exit_json(**status)
 
     elif mode in "getslave":
-        status = get_slave_status(cursor)
+        status = get_slave_status(cursor, connection_name)
         if not isinstance(status, dict):
             status = dict(Is_Slave=False, msg="Server is not configured as mysql slave")
         else:
@@ -317,7 +319,7 @@ def main():
         if master_auto_position:
             chm.append("MASTER_AUTO_POSITION = 1")
         try:
-            changemaster(cursor, chm, chm_params)
+            changemaster(cursor, chm, chm_params, connection_name)
         except mysql_driver.Warning as e:
             result['warning'] = to_native(e)
         except Exception as e:
@@ -325,19 +327,19 @@ def main():
         result['changed'] = True
         module.exit_json(**result)
     elif mode in "startslave":
-        started = start_slave(cursor)
+        started = start_slave(cursor, connection_name)
         if started is True:
             module.exit_json(msg="Slave started ", changed=True)
         else:
             module.exit_json(msg="Slave already started (Or cannot be started)", changed=False)
     elif mode in "stopslave":
-        stopped = stop_slave(cursor)
+        stopped = stop_slave(cursor, connection_name)
         if stopped is True:
             module.exit_json(msg="Slave stopped", changed=True)
         else:
             module.exit_json(msg="Slave already stopped", changed=False)
     elif mode in "resetslave":
-        reset = reset_slave(cursor)
+        reset = reset_slave(cursor, connection_name)
         if reset is True:
             module.exit_json(msg="Slave reset", changed=True)
         else:
