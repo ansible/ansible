@@ -20,10 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import argparse
 import mmap
 import os
 import re
+import sys
 
 import yaml
 
@@ -71,31 +71,16 @@ def find_deprecations(o, path=None):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'path',
-        help='Path to a directory that will be recursively walked. All .py files will be evaluated '
-             'and any containing DOCUMENTATION will be checked for scheduled deprecations. Default: %(default)s',
-        default=os.path.abspath('ansible/lib'),
-        nargs='?',
-    )
-    args = parser.parse_args()
-
     plugins = []
-    for root, dirs, filenames in os.walk(args.path):
-        for name in filenames:
-            if os.path.splitext(name)[1] not in ('.py',):
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
+        with open(path, 'rb') as f:
+            try:
+                mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+            except ValueError:
                 continue
-            path = os.path.abspath(os.path.join(root, name))
-
-            with open(path, 'rb') as f:
-                try:
-                    mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-                except ValueError:
-                    continue
-                if DOC_RE.search(mm):
-                    plugins.append(path)
-                mm.close()
+            if DOC_RE.search(mm):
+                plugins.append(path)
+            mm.close()
 
     for plugin in plugins:
         data = {}

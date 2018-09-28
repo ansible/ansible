@@ -1,5 +1,11 @@
 {
     "disabled": true,
     "always": true,
-    "output": "path-message"
+    "output": "path-message",
+    "extensions": [
+        ".py"
+    ],
+    "prefixes": [
+        "lib/ansible/"
+    ]
 }
