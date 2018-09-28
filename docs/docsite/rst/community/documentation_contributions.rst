@@ -64,15 +64,10 @@ To build the documentation on your local machine, you need the following package
 - jinja2
 - sphinx
 
-Once you have the required packages, navigate to ``ansible/docs/docsite`` and then select the build command you prefer:
+Once you have the required packages, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review.
 
-To build all module documentation plus the rST files:
-
-``make webdocs``
-
-To build only the rST files:
-
-``MODULES=none make webdocs``
+Building a single rST page
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To build a single rST file, you have two options:
 
@@ -96,14 +91,28 @@ For example:
 
 This command doesn't incorporate other directories or files, so Sphinx won’t create reference links and you’ll get bogus ``undefined label`` warnings. But ``sphinx-build`` provides good syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings. You can pass –a for all files, pass filenames to specify, or omit both to compile only new/changed files.
 
+Building all the rST pages
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To build all the rST files without any module documentation:
+
+``MODULES=none make webdocs``
+
+Building all the documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To build all the module documentation plus all the rST files:
+
+``make webdocs``
+
 Testing the documentation locally
 ---------------------------------
 
-To test your branch for rst errors, you need the ``rstcheck`` library:
+To test your branch for rST errors, you need the ``rstcheck`` library:
 
 ``pip install rstcheck``
 
-To test an individual file for rst errors:
+To test an individual file for rST errors:
 
 ``rstcheck myfile.rst``
 
@@ -124,3 +133,7 @@ Joining the documentation working group
 =======================================
 
 The Documentation Working Group is just getting started, please visit the community repo for more information.
+
+.. seealso::
+   :ref:`testing_documentation`
+   :ref:`module_documenting`
