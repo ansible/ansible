@@ -112,6 +112,12 @@ items:
                 - The unique identifier for the resource.
             returned: success
             type: int
+        fingerprint:
+            description:
+                - Fingerprint of this resource. This field is used internally during updates of this
+                  resource.
+            returned: success
+            type: str
         name:
             description:
                 - Name of the resource. Provided by the client when the resource is created. The name
