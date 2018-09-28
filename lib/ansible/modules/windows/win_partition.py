@@ -18,8 +18,9 @@ description:
 options:
   state:
     description:
-      - Used to specify the state of the partition. Use C(absent) to specify if a partition should be removed and C(present) to specify if the partition should be created or updated.
-    type: string
+      - Used to specify the state of the partition. Use C(absent) to specify if a partition should be removed
+        and C(present) to specify if the partition should be created or updated.
+    type: str
     choices: [ absent, present]
     default: present
   drive_letter:
@@ -27,7 +28,7 @@ options:
       - Used for accessing partitions if I(disk_number) and I(partition_number) are not provided.
       - Use C(auto) for automatically assigning a drive letter, or a letter A-Z for manually assigning a drive letter to a new partition.
         If not specified, no drive letter is assigned when creating a new partition.
-    type: string
+    type: str
   disk_number:
     description:
       - Disk number is mandatory for creating new partitions.
@@ -64,13 +65,13 @@ options:
     description:
       - Specify the partition's MBR type if the disk's partition style is MBR.
       - This only applies to new partitions.
-    type: string
+    type: str
     choices: [ FAT12, FAT16, Extended, Huge, IFS, FAT32 ]
   gpt_type:
     description:
       - Specify the partition's GPT type if the disk's partition style is GPT.
       - This only applies to new partitions.
-    type: string
+    type: str
     choices: [ SystemPartition, MicrosoftReserved, BasicData, MicrosoftRecovery ]
 
 notes:
