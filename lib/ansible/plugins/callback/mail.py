@@ -72,6 +72,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
 
+FACTS_NOT_GATHERED_MSG = 'unknown'
 
 class CallbackModule(CallbackBase):
     ''' This Ansible callback plugin mails errors to interested parties. '''
@@ -88,6 +89,9 @@ class CallbackModule(CallbackBase):
         self.smtpport = 25
         self.cc = None
         self.bcc = None
+
+        self.host_fqdn = None
+        self.host_private_ip = None
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
@@ -150,6 +154,9 @@ class CallbackModule(CallbackBase):
         if not self.sender:
             self.sender = '"Ansible: %s" <root>' % host
 
+        fqdn = self.host_fqdn or FACTS_NOT_GATHERED_MSG
+        private_ip = self.host_private_ip or FACTS_NOT_GATHERED_MSG
+
         # Add subject
         if self.itembody:
             subject = self.itemsubject
@@ -166,12 +173,19 @@ class CallbackModule(CallbackBase):
         else:
             subject = '%s: %s' % (failtype, result._task.name or result._task.action)
 
+        if self.host_fqdn:
+            subject = '[{fqdn}] {subject}'.format(fqdn=fqdn, subject=subject)
+        elif self.host_private_ip:
+            subject = '[{ip}] {subject}'.format(ip=private_ip, subject=subject)
+
         # Make playbook name visible (e.g. in Outlook/Gmail condensed view)
         body = 'Playbook: %s\n' % os.path.basename(self.playbook._file_name)
         if result._task.name:
             body += 'Task: %s\n' % result._task.name
         body += 'Module: %s\n' % result._task.action
         body += 'Host: %s\n' % host
+        body += 'Hostname (from facter): %s\n' % fqdn
+        body += 'Host private IP (from facter): %s\n' % private_ip
         body += '\n'
 
         # Add task information (as much as possible)
@@ -231,3 +245,17 @@ class CallbackModule(CallbackBase):
         # Pass item information to task failure
         self.itemsubject = result._result['msg']
         self.itembody += self.body_blob(json.dumps(result._result, indent=4), "failed item dump '%(item)s'" % result._result)
+
+    def runner_on_ok(self, host, result):
+        if type(result) == dict:
+            facts = result.get('ansible_facts', None)
+            if not facts:
+                return
+
+            ansible_fqdn_fact = facts.get('ansible_fqdn', None)
+            if ansible_fqdn_fact:
+                self.host_fqdn = ansible_fqdn_fact
+
+            ansible_default_ipv4_address_fact = facts.get('ansible_default_ipv4', {}).get('address', None)
+            if ansible_default_ipv4_address_fact:
+                self.host_private_ip = ansible_default_ipv4_address_fact
