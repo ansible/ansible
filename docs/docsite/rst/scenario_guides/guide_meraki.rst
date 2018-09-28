@@ -4,13 +4,16 @@
 Cisco Meraki Guide
 ******************
 
+.. contents::
+   :local:
+
 
 .. _meraki_guide_intro:
 
 What is Cisco Meraki?
 =====================
 
-Cisco Meraki is an easy to use, cloud-based, network infrastructure platform for enterprise environments. While most network hardware uses command-line interfaces (CLIs) for configuration, Meraki uses an easy-to-use Dashboard hosted in the Meraki cloud. No on-premises management hardware or software is required - only the network infrastructure to run your business.
+Cisco Meraki is an easy-to-use, cloud-based, network infrastructure platform for enterprise environments. While most network hardware uses command-line interfaces (CLIs) for configuration, Meraki uses an easy-to-use Dashboard hosted in the Meraki cloud. No on-premises management hardware or software is required - only the network infrastructure to run your business.
 
 MS Switches
 -----------
