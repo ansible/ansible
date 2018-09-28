@@ -1,0 +1,3 @@
+bugfixes:
+  - reboot - use unicode instead of bytes for stdout and stderr to match the
+    type returned from low_level_execute()
