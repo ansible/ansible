@@ -123,6 +123,7 @@ class VmwareConfigManager(PyVmomi):
         return False
 
     def set_host_configuration_facts(self):
+        changed_list = []
         changed = False
         for host in self.hosts:
             option_manager = host.configManager.advancedOption
@@ -164,19 +165,34 @@ class VmwareConfigManager(PyVmomi):
                     if option_value != host_facts[option_key]['value']:
                         change_option_list.append(vim.option.OptionValue(key=option_key, value=option_value))
                         changed = True
+                        changed_list.append(option_key)
                 else:  # Don't silently drop unknown options. This prevents typos from falling through the cracks.
                     self.module.fail_json(msg="Unknown option %s" % option_key)
             if changed:
-                try:
-                    option_manager.UpdateOptions(changedValue=change_option_list)
-                except (vmodl.fault.SystemError, vmodl.fault.InvalidArgument) as e:
-                    self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
-                                              "contains an invalid value: %s" % to_native(e.msg))
-                except vim.fault.InvalidName as e:
-                    self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
-                                              "objects refers to a non-existent option : %s" % to_native(e.msg))
+                if self.module.check_mode:
+                    changed_suffix = ' would be changed.'
+                else:
+                    changed_suffix = ' changed.'
+                if len(changed_list) > 2:
+                    message = ', '.join(changed_list[:-1]) + ', and ' + str(changed_list[-1])
+                elif len(changed_list) == 2:
+                    message = ' and '.join(changed_list)
+                elif len(changed_list) == 1:
+                    message = changed_list[0]
+                message += changed_suffix
+                if self.module.check_mode is False:
+                    try:
+                        option_manager.UpdateOptions(changedValue=change_option_list)
+                    except (vmodl.fault.SystemError, vmodl.fault.InvalidArgument) as e:
+                        self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
+                                                  "contains an invalid value: %s" % to_native(e.msg))
+                    except vim.fault.InvalidName as e:
+                        self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
+                                                  "objects refers to a non-existent option : %s" % to_native(e.msg))
+            else:
+                message = 'All settings are already configured.'
 
-        self.module.exit_json(changed=changed)
+        self.module.exit_json(changed=changed, msg=message)
 
 
 def main():
@@ -189,6 +205,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
         ]
