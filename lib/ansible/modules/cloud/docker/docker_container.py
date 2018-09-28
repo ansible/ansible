@@ -391,9 +391,8 @@ options:
   stop_timeout:
     description:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
-        When C(state) is not I(absent) and the container is (re-)created, set container's
-        C(StopTimeout) configuration (in seconds). C(StopTimeout) won't be updated on
-        existing containers.
+        When the container is created by this module, its C(StopTimeout) configuration
+        will be set to this value.
       - When the container is stopped, will be used as a timeout for stopping the
         container. In case the container has a custom C(StopTimeout) configuration,
         the behavior depends on the version of docker. New versions of docker will
@@ -1505,6 +1504,10 @@ class Container(DockerBaseClass):
             # auto_remove is only supported in docker>=2
             config_mapping['auto_remove'] = host_config.get('AutoRemove')
 
+        if self.parameters.client.HAS_STOP_TIMEOUT_OPT:
+            # stop_timeout is only supported in docker>=2.1
+            config_mapping['stop_timeout'] = host_config.get('StopTimeout')
+
         if HAS_DOCKER_PY_3:
             # volume_driver moved to create_host_config in > 3
             config_mapping['volume_driver'] = host_config.get('VolumeDriver')
@@ -2198,6 +2201,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             ulimits='set(dict)',
         )
         all_options = set()  # this is for improving user feedback when a wrong option was specified for comparison
+        default_values = dict(
+            stop_timeout='ignore',
+        )
         for option, data in self.module.argument_spec.items():
             all_options.add(option)
             for alias in data.get('aliases', []):
@@ -2206,7 +2212,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             if option in ('docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
                           'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
                           'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks', 'recreate',
-                          'restart', 'state', 'stop_timeout', 'trust_image_content', 'networks'):
+                          'restart', 'state', 'trust_image_content', 'networks'):
                 continue
             # Determine option type
             if option in explicit_types:
@@ -2218,7 +2224,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             else:
                 type = 'value'
             # Determine comparison type
-            if type in ('list', 'value'):
+            if option in default_values:
+                comparison = default_values[option]
+            elif type in ('list', 'value'):
                 comparison = 'strict'
             else:
                 comparison = 'allow_more_present'
