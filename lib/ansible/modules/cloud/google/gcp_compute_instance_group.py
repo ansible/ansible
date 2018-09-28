@@ -273,6 +273,8 @@ def main():
         if state == 'present':
             fetch = create(module, collection(module), kind)
             changed = True
+        else:
+            fetch = {}
 
     if fetch:
         instance = InstanceLogic(module)

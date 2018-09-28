@@ -316,6 +316,8 @@ def main():
             fetch = create(module, collection(module), kind)
             labels_update(module, module.params, fetch)
             changed = True
+        else:
+            fetch = {}
 
     fetch.update({'changed': changed})
 

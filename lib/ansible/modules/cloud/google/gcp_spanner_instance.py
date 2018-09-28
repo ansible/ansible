@@ -200,6 +200,8 @@ def main():
         if state == 'present':
             fetch = create(module, collection(module))
             changed = True
+        else:
+            fetch = {}
 
     fetch.update({'changed': changed})
 
