@@ -267,6 +267,7 @@ EXAMPLES = '''
 import os
 import re
 import tempfile
+import itertools
 
 try:
     import dnf
@@ -303,6 +304,30 @@ class DnfModule(YumDnf):
         self._ensure_dnf()
         self.lockfile = "/var/cache/dnf/*_lock.pid"
         self.pkg_mgr_name = "dnf"
+        self.base = self._base()
+        self.exclude_pkgnames = self._get_exclude_pkgnames()
+
+    def _pattern_to_pkgname(self, base, pattern):
+        if dnf.util.is_glob_pattern(pattern):
+            q = base.sack.query().filter(name__glob=pattern)
+            return map(lambda p: p.name, q)
+        else:
+            return (pattern.name,)
+
+    def _get_exclude_pkgnames(self):
+        orig_disable_excludes = self.base.conf.disable_excludes
+        self.base.conf.disable_excludes = ['all']
+        self.base.fill_sack()
+
+        expanded_excludes = [self._pattern_to_pkgname(self.base, p) for p in self.base.conf.exclude]
+
+        if orig_disable_excludes:
+            self.base.conf.disable_excludes = orig_disable_excludes
+        else:
+            self.base.conf.disable_excludes = []
+        self.base.fill_sack()
+
+        return itertools.chain.from_iterable(expanded_excludes)
 
     def _sanitize_dnf_error_msg(self, spec, error):
         """
@@ -481,7 +506,7 @@ class DnfModule(YumDnf):
                     results=[],
                 )
 
-    def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):
+    def _configure_base(self, base):
         """Configure the dnf Base object."""
 
         if self.enable_plugin and self.disable_plugin:
@@ -497,13 +522,13 @@ class DnfModule(YumDnf):
         conf.debuglevel = 0
 
         # Set whether to check gpg signatures
-        conf.gpgcheck = not disable_gpg_check
+        conf.gpgcheck = not self.disable_gpg_check
 
         # Don't prompt for user confirmations
         conf.assumeyes = True
 
         # Set installroot
-        conf.installroot = installroot
+        conf.installroot = self.installroot
 
         # Handle different DNF versions immutable mutable datatypes and
         # dnf v1/v2/v3
@@ -538,15 +563,15 @@ class DnfModule(YumDnf):
             conf.downloadonly = True
 
         # Change the configuration file path if provided
-        if conf_file:
+        if self.conf_file:
             # Fail if we can't read the configuration file.
-            if not os.access(conf_file, os.R_OK):
+            if not os.access(self.conf_file, os.R_OK):
                 self.module.fail_json(
-                    msg="cannot read configuration file", conf_file=conf_file,
+                    msg="cannot read configuration file", conf_file=self.conf_file,
                     results=[],
                 )
             else:
-                conf.config_file_path = conf_file
+                conf.config_file_path = self.conf_file
 
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
@@ -554,28 +579,28 @@ class DnfModule(YumDnf):
         # Read the configuration file
         conf.read()
 
-    def _specify_repositories(self, base, disablerepo, enablerepo):
+    def _specify_repositories(self, base):
         """Enable and disable repositories matching the provided patterns."""
         base.read_all_repos()
         repos = base.repos
 
         # Disable repositories
-        for repo_pattern in disablerepo:
+        for repo_pattern in self.disablerepo:
             if repo_pattern:
                 for repo in repos.get_matching(repo_pattern):
                     repo.disable()
 
         # Enable repositories
-        for repo_pattern in enablerepo:
+        for repo_pattern in self.enablerepo:
             if repo_pattern:
                 for repo in repos.get_matching(repo_pattern):
                     repo.enable()
 
-    def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot):
+    def _base(self):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
-        self._configure_base(base, conf_file, disable_gpg_check, installroot)
-        self._specify_repositories(base, disablerepo, enablerepo)
+        self._configure_base(base)
+        self._specify_repositories(base)
         base.fill_sack(load_system_repo='auto')
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
@@ -649,6 +674,20 @@ class DnfModule(YumDnf):
         is_newer_version_installed = self._is_newer_version_installed(pkg_spec)
         is_installed = self._is_installed(pkg_spec)
         try:
+            candidate_pkg = self._packagename_dict(pkg_spec)
+            if candidate_pkg:
+                candidate_pkg = candidate_pkg['name']
+            else:
+                candidate_pkg = pkg_spec
+
+            if candidate_pkg in self.exclude_pkgnames:
+                return {
+                    'failed': False,
+                    'msg': 'Not installed due to excludes: {0}'.format(pkg_spec),
+                    'failure': '',
+                    'rc': 0
+                }
+
             if self.allow_downgrade:
                 # dnf only does allow_downgrade, we have to handle this ourselves
                 # because it allows a possibility for non-idempotent transactions
@@ -1048,10 +1087,6 @@ class DnfModule(YumDnf):
             self.state = 'installed'
 
         if self.list:
-            self.base = self._base(
-                self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot
-            )
             self.list_items(self.list)
         else:
             # Note: base takes a long time to run so we want to check for failure
@@ -1061,10 +1096,6 @@ class DnfModule(YumDnf):
                     msg="This command has to be run under the root user.",
                     results=[],
                 )
-            self.base = self._base(
-                self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot
-            )
 
             self.ensure()
 
