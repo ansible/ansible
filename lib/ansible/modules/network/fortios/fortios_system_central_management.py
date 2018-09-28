@@ -141,7 +141,8 @@ options:
                     - Serial number.
             server-list:
                 description:
-                    - Additional severs that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings) servers.
+                    - Additional severs that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings)
+                       servers.
                 suboptions:
                     addr-type:
                         description:
@@ -196,7 +197,6 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{  vdom }}"
       system_central_management:
-        state: "present"
         allow-monitor: "enable"
         allow-push-configuration: "enable"
         allow-push-firmware: "enable"
@@ -321,18 +321,10 @@ def system_central_management(data, fos):
     system_central_management_data = data['system_central_management']
     filtered_data = filter_system_central_management_data(
         system_central_management_data)
-
-    if system_central_management_data['state'] == "present":
-        return fos.set('system',
-                       'central-management',
-                       data=filtered_data,
-                       vdom=vdom)
-
-    elif system_central_management_data['state'] == "absent":
-        return fos.delete('system',
-                          'central-management',
-                          mkey=filtered_data['id'],
-                          vdom=vdom)
+    return fos.set('system',
+                   'central-management',
+                   data=filtered_data,
+                   vdom=vdom)
 
 
 def fortios_system(data, fos):
@@ -361,46 +353,44 @@ def main():
         "https": {"required": False, "type": "bool", "default": "False"},
         "system_central_management": {
             "required": False, "type": "dict",
-            "options": {
-                "state": {"required": True, "type": "str"},
-                "allow-monitor": {"required": False, "type": "str",
-                                  "choices": ["enable", "disable"]},
-                "allow-push-configuration": {"required": False, "type": "str",
-                                             "choices": ["enable", "disable"]},
-                "allow-push-firmware": {"required": False, "type": "str",
-                                        "choices": ["enable", "disable"]},
-                "allow-remote-firmware-upgrade": {"required": False, "type": "str",
-                                                  "choices": ["enable", "disable"]},
-                "enc-algorithm": {"required": False, "type": "str",
-                                  "choices": ["default", "high", "low"]},
-                "fmg": {"required": False, "type": "str"},
-                "fmg-source-ip": {"required": False, "type": "str"},
-                "fmg-source-ip6": {"required": False, "type": "str"},
-                "include-default-servers": {"required": False, "type": "str",
-                                            "choices": ["enable", "disable"]},
-                "mode": {"required": False, "type": "str",
-                         "choices": ["normal", "backup"]},
-                "schedule-config-restore": {"required": False, "type": "str",
-                                            "choices": ["enable", "disable"]},
-                "schedule-script-restore": {"required": False, "type": "str",
-                                            "choices": ["enable", "disable"]},
-                "serial-number": {"required": False, "type": "str"},
-                "server-list": {"required": False, "type": "list",
-                                "options": {
-                                    "addr-type": {"required": False, "type": "str",
-                                                  "choices": ["ipv4", "ipv6", "fqdn"]},
-                                    "fqdn": {"required": False, "type": "str"},
-                                    "id": {"required": True, "type": "int"},
-                                    "server-address": {"required": False, "type": "str"},
-                                    "server-address6": {"required": False, "type": "str"},
-                                    "server-type": {"required": False, "type": "str",
-                                                    "choices": ["update", "rating"]}
-                                }},
-                "type": {"required": False, "type": "str",
-                         "choices": ["fortimanager", "fortiguard", "none"]},
-                "vdom": {"required": False, "type": "str"}
+            "options": {"allow-monitor": {"required": False, "type": "str",
+                                          "choices": ["enable", "disable"]},
+                        "allow-push-configuration": {"required": False, "type": "str",
+                                                     "choices": ["enable", "disable"]},
+                        "allow-push-firmware": {"required": False, "type": "str",
+                                                "choices": ["enable", "disable"]},
+                        "allow-remote-firmware-upgrade": {"required": False, "type": "str",
+                                                          "choices": ["enable", "disable"]},
+                        "enc-algorithm": {"required": False, "type": "str",
+                                          "choices": ["default", "high", "low"]},
+                        "fmg": {"required": False, "type": "str"},
+                        "fmg-source-ip": {"required": False, "type": "str"},
+                        "fmg-source-ip6": {"required": False, "type": "str"},
+                        "include-default-servers": {"required": False, "type": "str",
+                                                    "choices": ["enable", "disable"]},
+                        "mode": {"required": False, "type": "str",
+                                 "choices": ["normal", "backup"]},
+                        "schedule-config-restore": {"required": False, "type": "str",
+                                                    "choices": ["enable", "disable"]},
+                        "schedule-script-restore": {"required": False, "type": "str",
+                                                    "choices": ["enable", "disable"]},
+                        "serial-number": {"required": False, "type": "str"},
+                        "server-list": {"required": False, "type": "list",
+                                        "options": {
+                                            "addr-type": {"required": False, "type": "str",
+                                                          "choices": ["ipv4", "ipv6", "fqdn"]},
+                                            "fqdn": {"required": False, "type": "str"},
+                                            "id": {"required": True, "type": "int"},
+                                            "server-address": {"required": False, "type": "str"},
+                                            "server-address6": {"required": False, "type": "str"},
+                                            "server-type": {"required": False, "type": "str",
+                                                            "choices": ["update", "rating"]}
+                                        }},
+                        "type": {"required": False, "type": "str",
+                                 "choices": ["fortimanager", "fortiguard", "none"]},
+                        "vdom": {"required": False, "type": "str"}
 
-            }
+                        }
         }
     }
 
