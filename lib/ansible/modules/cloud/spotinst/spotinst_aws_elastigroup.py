@@ -264,6 +264,7 @@ options:
     description:
       - (Object) The Rancher integration configuration.;
         Expects the following keys -
+        version (String),
         access_key (String),
         secret_key (String),
         master_host (String)
@@ -882,7 +883,8 @@ right_scale_fields = ('account_id',
 
 rancher_fields = ('access_key',
                   'secret_key',
-                  'master_host')
+                  'master_host',
+                  'version')
 
 chef_fields = ('chef_server',
                'organization',
