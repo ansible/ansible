@@ -2591,4 +2591,3 @@ def test_delete_devprof_faz(fixture_data, mocker):
     # Test using fixture 1 #
     output = fmgr_device_provision_template.delete_devprof_faz(fmg_instance, fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
-
