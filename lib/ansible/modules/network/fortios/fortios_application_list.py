@@ -455,7 +455,7 @@ def application_list(data, fos):
     elif application_list_data['state'] == "absent":
         return fos.delete('application',
                           'list',
-                          mkey=filtered_data['id'],
+                          mkey=filtered_data['name'],
                           vdom=vdom)
 
 
