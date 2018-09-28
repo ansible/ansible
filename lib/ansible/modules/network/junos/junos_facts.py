@@ -354,7 +354,7 @@ def main():
     runable_subsets.difference_update(exclude_subsets)
     runable_subsets.add('default')
 
-    # handle fetching old style facts seperately
+    # handle fetching old style facts separately
     runable_subsets.discard('ofacts')
 
     facts = dict()

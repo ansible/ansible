@@ -390,7 +390,7 @@ def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=No
     return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
 
 
-# TODO: mv these classes to a seperate file so we don't pollute vault with 'subprocess' etc
+# TODO: mv these classes to a separate file so we don't pollute vault with 'subprocess' etc
 class FileVaultSecret(VaultSecret):
     def __init__(self, filename=None, encoding=None, loader=None):
         super(FileVaultSecret, self).__init__()
