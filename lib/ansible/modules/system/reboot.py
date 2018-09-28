@@ -20,7 +20,7 @@ options:
   pre_reboot_delay:
     description:
       - Seconds for shutdown to wait before requesting reboot.
-      - On Linux and macOS, this is converted to minutes and rounded down. If less than 60, it will be set to 0.
+      - On Linux, macOS and OpenBSD, this is converted to minutes and rounded down. If less than 60, it will be set to 0.
       - On Solaris and FreeBSD, this will be seconds.
     default: 0
     type: int
