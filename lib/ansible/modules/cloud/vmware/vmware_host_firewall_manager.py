@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: vmware_host_firewall_manager
 short_description: Manage firewall configurations about an ESXi host
