@@ -484,6 +484,9 @@ def filter_options(args, argv, options, exclude, require):
 
         yield arg
 
+    for arg in args.delegate_args:
+        yield arg
+
     for target in exclude:
         yield '--exclude'
         yield target

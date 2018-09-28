@@ -651,6 +651,17 @@ def command_integration_filter(args, targets, init_callback=None):
     """
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
+
+    # special behavior when the --changed-all-target target is selected based on changes
+    if args.changed_all_target in changes:
+        # act as though the --changed-all-target target was in the include list
+        if args.changed_all_mode == 'include' and args.changed_all_target not in args.include:
+            args.include.append(args.changed_all_target)
+            args.delegate_args += ['--include', args.changed_all_target]
+        # act as though the --changed-all-target target was in the exclude list
+        elif args.changed_all_mode == 'exclude' and args.changed_all_target not in args.exclude:
+            args.exclude.append(args.changed_all_target)
+
     require = args.require + changes
     exclude = args.exclude
 
