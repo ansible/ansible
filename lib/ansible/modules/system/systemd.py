@@ -446,7 +446,8 @@ def main():
                 if module.params['scope'] in (None, 'system') and \
                         not module.params['user'] and \
                         is_initd and \
-                        (not out.strip().endswith('disabled') or sysv_is_enabled(unit)):
+                        not out.strip().endswith('disabled') and \
+                        sysv_is_enabled(unit):
                     enabled = True
 
             # default to current state
