@@ -283,11 +283,15 @@ def mandatory(a):
 
 def combine(*terms, **kwargs):
     recursive = kwargs.get('recursive', False)
-    if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
-        raise AnsibleFilterError("'recursive' is the only valid keyword argument")
+    reverse = kwargs.get('reverse', False)
+
+    for key in kwargs:
+        if key not in ('recursive', 'reverse'):
+            raise AnsibleFilterError(
+                "recursive and reverse are the only valid keyword arguments")
 
     dicts = []
-    for t in terms:
+    for t in (terms[::-1] if reverse else terms):
         if isinstance(t, MutableMapping):
             dicts.append(t)
         elif isinstance(t, list):
