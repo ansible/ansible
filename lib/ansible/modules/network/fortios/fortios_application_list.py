@@ -491,86 +491,87 @@ def main():
         "https": {"required": False, "type": "bool", "default": "False"},
         "application_list": {
             "required": False, "type": "dict",
-            "options": {"state": {"required": True, "type": "str",
-                                  "choices": ["present", "absent"]},
-                        "app-replacemsg": {"required": False, "type": "str",
-                                           "choices": ["disable", "enable"]},
-                        "comment": {"required": False, "type": "str"},
-                        "deep-app-inspection": {"required": False, "type": "str",
-                                                "choices": ["disable", "enable"]},
-                        "entries": {"required": False, "type": "list",
-                                    "options": {
-                                        "action": {"required": False, "type": "str",
-                                                   "choices": ["pass", "block", "reset"]},
-                                        "application": {"required": False, "type": "list",
-                                                        "options": {
-                                                            "id": {"required": True, "type": "int"}
-                                                        }},
-                                        "behavior": {"required": False, "type": "str"},
-                                        "category": {"required": False, "type": "list",
-                                                     "options": {
-                                                         "id": {"required": True, "type": "int"}
-                                                     }},
-                                        "id": {"required": True, "type": "int"},
-                                        "log": {"required": False, "type": "str",
-                                                "choices": ["disable", "enable"]},
-                                        "log-packet": {"required": False, "type": "str",
-                                                       "choices": ["disable", "enable"]},
-                                        "parameters": {"required": False, "type": "list",
-                                                       "options": {
-                                                           "id": {"required": True, "type": "int"},
-                                                           "value": {"required": False, "type": "str"}
-                                                       }},
-                                        "per-ip-shaper": {"required": False, "type": "str"},
-                                        "popularity": {"required": False, "type": "str",
-                                                       "choices": ["1", "2", "3",
-                                                                   "4", "5"]},
-                                        "protocols": {"required": False, "type": "str"},
-                                        "quarantine": {"required": False, "type": "str",
-                                                       "choices": ["none", "attacker"]},
-                                        "quarantine-expiry": {"required": False, "type": "str"},
-                                        "quarantine-log": {"required": False, "type": "str",
-                                                           "choices": ["disable", "enable"]},
-                                        "rate-count": {"required": False, "type": "int"},
-                                        "rate-duration": {"required": False, "type": "int"},
-                                        "rate-mode": {"required": False, "type": "str",
-                                                      "choices": ["periodical", "continuous"]},
-                                        "rate-track": {"required": False, "type": "str",
-                                                       "choices": ["none", "src-ip", "dest-ip",
-                                                                   "dhcp-client-mac", "dns-domain"]},
-                                        "risk": {"required": False, "type": "list",
+            "options": {
+                "state": {"required": True, "type": "str",
+                          "choices": ["present", "absent"]},
+                "app-replacemsg": {"required": False, "type": "str",
+                                   "choices": ["disable", "enable"]},
+                "comment": {"required": False, "type": "str"},
+                "deep-app-inspection": {"required": False, "type": "str",
+                                        "choices": ["disable", "enable"]},
+                "entries": {"required": False, "type": "list",
+                            "options": {
+                                "action": {"required": False, "type": "str",
+                                           "choices": ["pass", "block", "reset"]},
+                                "application": {"required": False, "type": "list",
+                                                "options": {
+                                                    "id": {"required": True, "type": "int"}
+                                                }},
+                                "behavior": {"required": False, "type": "str"},
+                                "category": {"required": False, "type": "list",
+                                             "options": {
+                                                 "id": {"required": True, "type": "int"}
+                                             }},
+                                "id": {"required": True, "type": "int"},
+                                "log": {"required": False, "type": "str",
+                                        "choices": ["disable", "enable"]},
+                                "log-packet": {"required": False, "type": "str",
+                                               "choices": ["disable", "enable"]},
+                                "parameters": {"required": False, "type": "list",
+                                               "options": {
+                                                   "id": {"required": True, "type": "int"},
+                                                   "value": {"required": False, "type": "str"}
+                                               }},
+                                "per-ip-shaper": {"required": False, "type": "str"},
+                                "popularity": {"required": False, "type": "str",
+                                               "choices": ["1", "2", "3",
+                                                           "4", "5"]},
+                                "protocols": {"required": False, "type": "str"},
+                                "quarantine": {"required": False, "type": "str",
+                                               "choices": ["none", "attacker"]},
+                                "quarantine-expiry": {"required": False, "type": "str"},
+                                "quarantine-log": {"required": False, "type": "str",
+                                                   "choices": ["disable", "enable"]},
+                                "rate-count": {"required": False, "type": "int"},
+                                "rate-duration": {"required": False, "type": "int"},
+                                "rate-mode": {"required": False, "type": "str",
+                                              "choices": ["periodical", "continuous"]},
+                                "rate-track": {"required": False, "type": "str",
+                                               "choices": ["none", "src-ip", "dest-ip",
+                                                           "dhcp-client-mac", "dns-domain"]},
+                                "risk": {"required": False, "type": "list",
+                                         "options": {
+                                             "level": {"required": True, "type": "int"}
+                                         }},
+                                "session-ttl": {"required": False, "type": "int"},
+                                "shaper": {"required": False, "type": "str"},
+                                "shaper-reverse": {"required": False, "type": "str"},
+                                "sub-category": {"required": False, "type": "list",
                                                  "options": {
-                                                     "level": {"required": True, "type": "int"}
+                                                     "id": {"required": True, "type": "int"}
                                                  }},
-                                        "session-ttl": {"required": False, "type": "int"},
-                                        "shaper": {"required": False, "type": "str"},
-                                        "shaper-reverse": {"required": False, "type": "str"},
-                                        "sub-category": {"required": False, "type": "list",
-                                                         "options": {
-                                                             "id": {"required": True, "type": "int"}
-                                                         }},
-                                        "technology": {"required": False, "type": "str"},
-                                        "vendor": {"required": False, "type": "str"}
-                                    }},
-                        "extended-log": {"required": False, "type": "str",
-                                         "choices": ["enable", "disable"]},
-                        "name": {"required": True, "type": "str"},
-                        "options": {"required": False, "type": "str",
-                                    "choices": ["allow-dns", "allow-icmp", "allow-http",
-                                                "allow-ssl", "allow-quic"]},
-                        "other-application-action": {"required": False, "type": "str",
-                                                     "choices": ["pass", "block"]},
-                        "other-application-log": {"required": False, "type": "str",
-                                                  "choices": ["disable", "enable"]},
-                        "p2p-black-list": {"required": False, "type": "str",
-                                           "choices": ["skype", "edonkey", "bittorrent"]},
-                        "replacemsg-group": {"required": False, "type": "str"},
-                        "unknown-application-action": {"required": False, "type": "str",
-                                                       "choices": ["pass", "block"]},
-                        "unknown-application-log": {"required": False, "type": "str",
-                                                    "choices": ["disable", "enable"]}
+                                "technology": {"required": False, "type": "str"},
+                                "vendor": {"required": False, "type": "str"}
+                            }},
+                "extended-log": {"required": False, "type": "str",
+                                 "choices": ["enable", "disable"]},
+                "name": {"required": True, "type": "str"},
+                "options": {"required": False, "type": "str",
+                            "choices": ["allow-dns", "allow-icmp", "allow-http",
+                                        "allow-ssl", "allow-quic"]},
+                "other-application-action": {"required": False, "type": "str",
+                                             "choices": ["pass", "block"]},
+                "other-application-log": {"required": False, "type": "str",
+                                          "choices": ["disable", "enable"]},
+                "p2p-black-list": {"required": False, "type": "str",
+                                   "choices": ["skype", "edonkey", "bittorrent"]},
+                "replacemsg-group": {"required": False, "type": "str"},
+                "unknown-application-action": {"required": False, "type": "str",
+                                               "choices": ["pass", "block"]},
+                "unknown-application-log": {"required": False, "type": "str",
+                                            "choices": ["disable", "enable"]}
 
-                        }
+            }
         }
     }
 
