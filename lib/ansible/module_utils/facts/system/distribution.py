@@ -88,7 +88,7 @@ class DistributionFiles:
     }
 
     # We can't include this in SEARCH_STRING because a name match on its keys
-    # causes a fallback to using the first whitespace seperated item from the file content
+    # causes a fallback to using the first whitespace separated item from the file content
     # as the name. For os-release, that is in form 'NAME=Arch'
     OS_RELEASE_ALIAS = {
         'Archlinux': 'Arch Linux'
