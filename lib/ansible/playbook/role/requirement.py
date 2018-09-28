@@ -112,7 +112,7 @@ class RoleRequirement(RoleDefinition):
         else:
             role = role.copy()
 
-            if 'src'in role:
+            if 'src' in role:
                 # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
                 if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
                     role["src"] = "git+" + role["src"]

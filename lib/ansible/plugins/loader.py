@@ -58,7 +58,7 @@ class PluginLoader:
         elif not config:
             config = []
 
-        self.config = config
+        self.config = self.expand_path_globs(config)
 
         if class_name not in MODULE_CACHE:
             MODULE_CACHE[class_name] = {}
@@ -110,6 +110,19 @@ class PluginLoader:
             PATH_CACHE=PATH_CACHE[self.class_name],
             PLUGIN_PATH_CACHE=PLUGIN_PATH_CACHE[self.class_name],
         )
+
+    def expand_path_globs(self, paths):
+        generated = []
+        for path in paths:
+            if 'content/*' not in path:
+                generated.append(path)
+                continue
+
+            dirs = glob.glob(path)
+            if dirs:
+                generated += dirs
+
+        return generated
 
     def format_paths(self, paths):
         ''' Returns a string suitable for printing of the search path '''
@@ -267,6 +280,7 @@ class PluginLoader:
         #       looks like _get_paths() never forces a cache refresh so if we expect
         #       additional directories to be added later, it is buggy.
         for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
+
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
@@ -300,6 +314,28 @@ class PluginLoader:
 
                 if full_name not in self._plugin_path_cache[extension]:
                     self._plugin_path_cache[extension][full_name] = full_path
+
+                # MAZER
+                if '/content/' in path:
+                    path_elements = path.split(os.path.sep)
+                    content_index = path_elements.index('content')
+                    user_namespace = path_elements[content_index + 1]
+                    repository_name = path_elements[content_index + 2]
+
+                    pyfqn = (user_namespace + '.' + repository_name + '.' + base_name).replace('-', '_')
+                    fqn = user_namespace + '.' + repository_name + '.' + base_name
+                    pyrqn = (repository_name + '.' + base_name).replace('-', '_')
+                    rqn = repository_name + '.' + base_name
+
+                    for ext in ['', extension]:
+                        for qn in [pyfqn, fqn, pyrqn, rqn]:
+                            self._plugin_path_cache[ext][qn] = full_path
+
+                            # not sure why this is necessary for lookups
+                            pull_cache[qn] = full_path
+                            if full_path.endswith('.py'):
+                                self._plugin_path_cache[ext][qn + '.py'] = full_path
+                                pull_cache[qn + '.py'] = full_path
 
             self._searched_paths.add(path)
             try:
@@ -523,6 +559,29 @@ class PluginLoader:
                 self._load_config_defs(basename, path)
 
             self._update_object(obj, basename, path)
+
+            # MAZER
+            if hasattr(obj, 'filters') and '/content/' in path:
+                path_elements = path.split(os.path.sep)
+                content_index = path_elements.index('content')
+                namespace = path_elements[content_index + 1]
+                repository = path_elements[content_index + 2]
+
+                filter_dict = obj.filters()
+                for key in filter_dict.keys():
+                    newkeys = [
+                        namespace + '.' + repository + '.' + key,
+                        repository + '.' + key
+                    ]
+                    for nk in newkeys:
+                        nk = nk.replace('-', '_')
+                        filter_dict[nk] = filter_dict[key]
+
+                def patch_filters():
+                    return  filter_dict
+
+                obj.filters = patch_filters
+
             yield obj
 
 
