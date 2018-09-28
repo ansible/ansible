@@ -88,6 +88,9 @@ options:
         description:
             - does the host uses GTID based replication or not
         version_added: "2.0"
+    connection_name:
+        description:
+            - support for connection_name on multi-source replication (https://mariadb.com/kb/en/library/multi-source-replication/)
 
 extends_documentation_fragment: mysql
 '''
