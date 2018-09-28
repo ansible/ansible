@@ -443,10 +443,11 @@ def main():
                 enabled = True
             elif rc == 1:
                 # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-                if module.params['scope'] == 'system' and \
+                if module.params['scope'] in (None, 'system') and \
                         not module.params['user'] and \
                         is_initd and \
-                        (not out.strip().endswith('disabled') or sysv_is_enabled(unit)):
+                        not out.strip().endswith('disabled') and \
+                        sysv_is_enabled(unit):
                     enabled = True
 
             # default to current state
