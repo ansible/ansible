@@ -17,7 +17,7 @@ To check the HTML output of your module documentation:
 
 To build the HTML documentation for multiple modules, use a comma-separated list of module names: ``MODULES=my_code,my_other_code make webdocs``.
 
-To ensure that your documentation matches your ``argument_spec``, run the ``validate-modules`` test. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
+To ensure that your documentation matches your ``argument_spec``, run the ``validate-modules`` test.
 
 .. code-block:: bash
 
