@@ -72,6 +72,12 @@ options:
             - Configure IPS sensor.
         default: null
         suboptions:
+            state:
+                description:
+                    - Indicates whether to create or remove the object
+                choices:
+                    - present
+                    - absent
             block-malicious-url:
                 description:
                     - Enable/disable malicious URL blocking.
@@ -329,6 +335,7 @@ options:
                     rule-id:
                         description:
                             - Override rule ID.
+                        required: true
                     status:
                         description:
                             - Enable/disable status of override rule.
@@ -516,7 +523,6 @@ def ips_sensor(data, fos):
     vdom = data['vdom']
     ips_sensor_data = data['ips_sensor']
     filtered_data = filter_ips_sensor_data(ips_sensor_data)
-
     if ips_sensor_data['state'] == "present":
         return fos.set('ips',
                        'sensor',
@@ -526,7 +532,7 @@ def ips_sensor(data, fos):
     elif ips_sensor_data['state'] == "absent":
         return fos.delete('ips',
                           'sensor',
-                          mkey=filtered_data['id'],
+                          mkey=filtered_data['name'],
                           vdom=vdom)
 
 
@@ -556,105 +562,105 @@ def main():
         "https": {"required": False, "type": "bool", "default": "False"},
         "ips_sensor": {
             "required": False, "type": "dict",
-            "options": {
-                "state": {"required": True, "type": "str"},
-                "block-malicious-url": {"required": False, "type": "str",
-                                        "choices": ["disable", "enable"]},
-                "comment": {"required": False, "type": "str"},
-                "entries": {"required": False, "type": "list",
-                            "options": {
-                                "action": {"required": False, "type": "str",
-                                           "choices": ["pass", "block", "reset",
-                                                       "default"]},
-                                "application": {"required": False, "type": "str"},
-                                "exempt-ip": {"required": False, "type": "list",
-                                              "options": {
-                                                  "dst-ip": {"required": False, "type": "ipv4-classnet"},
-                                                  "id": {"required": True, "type": "int"},
-                                                  "src-ip": {"required": False, "type": "ipv4-classnet"}
-                                              }},
-                                "id": {"required": True, "type": "int"},
-                                "location": {"required": False, "type": "str"},
-                                "log": {"required": False, "type": "str",
-                                        "choices": ["disable", "enable"]},
-                                "log-attack-context": {"required": False, "type": "str",
-                                                       "choices": ["disable", "enable"]},
-                                "log-packet": {"required": False, "type": "str",
-                                               "choices": ["disable", "enable"]},
-                                "os": {"required": False, "type": "str"},
-                                "protocol": {"required": False, "type": "str"},
-                                "quarantine": {"required": False, "type": "str",
-                                               "choices": ["none", "attacker"]},
-                                "quarantine-expiry": {"required": False, "type": "str"},
-                                "quarantine-log": {"required": False, "type": "str",
-                                                   "choices": ["disable", "enable"]},
-                                "rate-count": {"required": False, "type": "int"},
-                                "rate-duration": {"required": False, "type": "int"},
-                                "rate-mode": {"required": False, "type": "str",
-                                              "choices": ["periodical", "continuous"]},
-                                "rate-track": {"required": False, "type": "str",
-                                               "choices": ["none", "src-ip", "dest-ip",
-                                                           "dhcp-client-mac", "dns-domain"]},
-                                "rule": {"required": False, "type": "list",
-                                         "options": {
-                                             "id": {"required": True, "type": "int"}
-                                         }},
-                                "severity": {"required": False, "type": "str"},
-                                "status": {"required": False, "type": "str",
-                                           "choices": ["disable", "enable", "default"]}
-                            }},
-                "extended-log": {"required": False, "type": "str",
-                                 "choices": ["enable", "disable"]},
-                "filter": {"required": False, "type": "list",
-                           "options": {
-                               "action": {"required": False, "type": "str",
-                                          "choices": ["pass", "block", "reset",
-                                                      "default"]},
-                               "application": {"required": False, "type": "str"},
-                               "location": {"required": False, "type": "str"},
-                               "log": {"required": False, "type": "str",
-                                       "choices": ["disable", "enable"]},
-                               "log-packet": {"required": False, "type": "str",
-                                              "choices": ["disable", "enable"]},
-                               "name": {"required": True, "type": "str"},
-                               "os": {"required": False, "type": "str"},
-                               "protocol": {"required": False, "type": "str"},
-                               "quarantine": {"required": False, "type": "str",
-                                              "choices": ["none", "attacker"]},
-                               "quarantine-expiry": {"required": False, "type": "int"},
-                               "quarantine-log": {"required": False, "type": "str",
-                                                  "choices": ["disable", "enable"]},
-                               "severity": {"required": False, "type": "str"},
-                               "status": {"required": False, "type": "str",
-                                          "choices": ["disable", "enable", "default"]}
-                           }},
-                "name": {"required": True, "type": "str"},
-                "override": {"required": False, "type": "list",
-                             "options": {
-                                 "action": {"required": False, "type": "str",
-                                            "choices": ["pass", "block", "reset"]},
-                                 "exempt-ip": {"required": False, "type": "list",
-                                               "options": {
-                                                   "dst-ip": {"required": False, "type": "ipv4-classnet"},
-                                                   "id": {"required": True, "type": "int"},
-                                                   "src-ip": {"required": False, "type": "ipv4-classnet"}
-                                               }},
-                                 "log": {"required": False, "type": "str",
-                                         "choices": ["disable", "enable"]},
-                                 "log-packet": {"required": False, "type": "str",
+            "options": {"state": {"required": True, "type": "str",
+                                  "choices": ["present", "absent"]},
+                        "block-malicious-url": {"required": False, "type": "str",
                                                 "choices": ["disable", "enable"]},
-                                 "quarantine": {"required": False, "type": "str",
-                                                "choices": ["none", "attacker"]},
-                                 "quarantine-expiry": {"required": False, "type": "int"},
-                                 "quarantine-log": {"required": False, "type": "str",
-                                                    "choices": ["disable", "enable"]},
-                                 "rule-id": {"required": False, "type": "int"},
-                                 "status": {"required": False, "type": "str",
-                                            "choices": ["disable", "enable"]}
-                             }},
-                "replacemsg-group": {"required": False, "type": "str"}
+                        "comment": {"required": False, "type": "str"},
+                        "entries": {"required": False, "type": "list",
+                                    "options": {
+                                        "action": {"required": False, "type": "str",
+                                                   "choices": ["pass", "block", "reset",
+                                                               "default"]},
+                                        "application": {"required": False, "type": "str"},
+                                        "exempt-ip": {"required": False, "type": "list",
+                                                      "options": {
+                                                          "dst-ip": {"required": False, "type": "str"},
+                                                          "id": {"required": True, "type": "int"},
+                                                          "src-ip": {"required": False, "type": "str"}
+                                                      }},
+                                        "id": {"required": True, "type": "int"},
+                                        "location": {"required": False, "type": "str"},
+                                        "log": {"required": False, "type": "str",
+                                                "choices": ["disable", "enable"]},
+                                        "log-attack-context": {"required": False, "type": "str",
+                                                               "choices": ["disable", "enable"]},
+                                        "log-packet": {"required": False, "type": "str",
+                                                       "choices": ["disable", "enable"]},
+                                        "os": {"required": False, "type": "str"},
+                                        "protocol": {"required": False, "type": "str"},
+                                        "quarantine": {"required": False, "type": "str",
+                                                       "choices": ["none", "attacker"]},
+                                        "quarantine-expiry": {"required": False, "type": "str"},
+                                        "quarantine-log": {"required": False, "type": "str",
+                                                           "choices": ["disable", "enable"]},
+                                        "rate-count": {"required": False, "type": "int"},
+                                        "rate-duration": {"required": False, "type": "int"},
+                                        "rate-mode": {"required": False, "type": "str",
+                                                      "choices": ["periodical", "continuous"]},
+                                        "rate-track": {"required": False, "type": "str",
+                                                       "choices": ["none", "src-ip", "dest-ip",
+                                                                   "dhcp-client-mac", "dns-domain"]},
+                                        "rule": {"required": False, "type": "list",
+                                                 "options": {
+                                                     "id": {"required": True, "type": "int"}
+                                                 }},
+                                        "severity": {"required": False, "type": "str"},
+                                        "status": {"required": False, "type": "str",
+                                                   "choices": ["disable", "enable", "default"]}
+                                    }},
+                        "extended-log": {"required": False, "type": "str",
+                                         "choices": ["enable", "disable"]},
+                        "filter": {"required": False, "type": "list",
+                                   "options": {
+                                       "action": {"required": False, "type": "str",
+                                                  "choices": ["pass", "block", "reset",
+                                                              "default"]},
+                                       "application": {"required": False, "type": "str"},
+                                       "location": {"required": False, "type": "str"},
+                                       "log": {"required": False, "type": "str",
+                                               "choices": ["disable", "enable"]},
+                                       "log-packet": {"required": False, "type": "str",
+                                                      "choices": ["disable", "enable"]},
+                                       "name": {"required": True, "type": "str"},
+                                       "os": {"required": False, "type": "str"},
+                                       "protocol": {"required": False, "type": "str"},
+                                       "quarantine": {"required": False, "type": "str",
+                                                      "choices": ["none", "attacker"]},
+                                       "quarantine-expiry": {"required": False, "type": "int"},
+                                       "quarantine-log": {"required": False, "type": "str",
+                                                          "choices": ["disable", "enable"]},
+                                       "severity": {"required": False, "type": "str"},
+                                       "status": {"required": False, "type": "str",
+                                                  "choices": ["disable", "enable", "default"]}
+                                   }},
+                        "name": {"required": True, "type": "str"},
+                        "override": {"required": False, "type": "list",
+                                     "options": {
+                                         "action": {"required": False, "type": "str",
+                                                    "choices": ["pass", "block", "reset"]},
+                                         "exempt-ip": {"required": False, "type": "list",
+                                                       "options": {
+                                                           "dst-ip": {"required": False, "type": "str"},
+                                                           "id": {"required": True, "type": "int"},
+                                                           "src-ip": {"required": False, "type": "str"}
+                                                       }},
+                                         "log": {"required": False, "type": "str",
+                                                 "choices": ["disable", "enable"]},
+                                         "log-packet": {"required": False, "type": "str",
+                                                        "choices": ["disable", "enable"]},
+                                         "quarantine": {"required": False, "type": "str",
+                                                        "choices": ["none", "attacker"]},
+                                         "quarantine-expiry": {"required": False, "type": "int"},
+                                         "quarantine-log": {"required": False, "type": "str",
+                                                            "choices": ["disable", "enable"]},
+                                         "rule-id": {"required": True, "type": "int"},
+                                         "status": {"required": False, "type": "str",
+                                                    "choices": ["disable", "enable"]}
+                                     }},
+                        "replacemsg-group": {"required": False, "type": "str"}
 
-            }
+                        }
         }
     }
 
