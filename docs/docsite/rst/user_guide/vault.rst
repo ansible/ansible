@@ -343,14 +343,14 @@ Vault Format
 
 A vault encrypted file is a UTF-8 encoded txt file.
 
-The file format includes a new line terminated header.
+The file format includes a newline terminated header.
 
 For example::
 
     $ANSIBLE_VAULT;1.1;AES256
 
 
-The header contains the vault format id, the vault format version, and a cipher id, seperated by semi-colons ';'
+The header contains the vault format id, the vault format version, and a cipher id, separated by semi-colons ';'
 
 The first field ``$ANSIBLE_VAULT`` is the format id. Currently ``$ANSIBLE_VAULT`` is the only valid file format id. This is used to identify files that are vault encrypted (via vault.is_encrypted_file()).
 
@@ -358,7 +358,7 @@ The second field (`1.1`) is the vault format version. All supported versions of 
 
 The '1.0' format is supported for reading only (and will be converted automatically to the '1.1' format on write). The format version is currently used as an exact string compare only (version numbers are not currently 'compared').
 
-The third field (``AES256``) identifies the cipher algorithmn used to encrypt the data. Currently, the only supported cipher is 'AES256'. [vault format 1.0 used 'AES', but current code always uses 'AES256']
+The third field (``AES256``) identifies the cipher algorithm used to encrypt the data. Currently, the only supported cipher is 'AES256'. [vault format 1.0 used 'AES', but current code always uses 'AES256']
 
 Note: In the future, the header could change. Anything after the vault id and version can be considered to depend on the vault format version. This includes the cipher id, and any additional fields that could be after that.
 
@@ -370,11 +370,11 @@ Vault Payload Format 1.1
 
 The vaulttext is a concatenation of the ciphertext and a SHA256 digest with the result 'hexlifyied'.
 
-'hexlify' refers to the hexlify() method of pythons binascii module.
+'hexlify' refers to the ``hexlify()`` method of the Python Standard Library's `binascii <https://docs.python.org/3/library/binascii.html>`_ module.
 
-hexlify()'ied result of:
+hexlify()'ed result of:
 
-- hexlify()'ed string of the salt, followed by a newline ('\n')
+- hexlify()'ed string of the salt, followed by a newline (``0x0a``)
 - hexlify()'ed string of the crypted HMAC, followed by a newline. The HMAC is:
 
   - a `RFC2104 <https://www.ietf.org/rfc/rfc2104.txt>`_ style HMAC
@@ -382,26 +382,26 @@ hexlify()'ied result of:
     - inputs are:
 
       - The AES256 encrypted ciphertext
-      - A PBKDF2 key. This key, the cipher key, and the cipher iv are generated from:
+      - A PBKDF2 key. This key, the cipher key, and the cipher IV are generated from:
 
         - the salt, in bytes
         - 10000 iterations
-        - SHA256() algorithmn
+        - SHA256() algorithm
         - the first 32 bytes are the cipher key
         - the second 32 bytes are the HMAC key
-        - remaining 16 bytes are the cipher iv
+        - remaining 16 bytes are the cipher IV
 
-  -  hexlify()'ed string of the ciphertext. The ciphertext is:
+-  hexlify()'ed string of the ciphertext. The ciphertext is:
 
-    - AES256 encrypted data. The data is encrypted using:
+  - AES256 encrypted data. The data is encrypted using:
 
-      - AES-CTR stream cipher
-      - b_pkey1
-      - iv
-      - a 128 bit counter block seeded from an integer iv
-      - the plaintext
+    - AES-CTR stream cipher
+    - cipher key
+    - IV
+    - a 128 bit counter block seeded from an integer IV
+    - the plaintext
 
-        - the original plaintext
-        - padding up to the AES256 blocksize. (The data used for padding is based on `RFC5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`_)
+      - the original plaintext
+      - padding up to the AES256 blocksize. (The data used for padding is based on `RFC5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`_)
 
 
