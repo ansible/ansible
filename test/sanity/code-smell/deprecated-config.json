@@ -1,5 +1,4 @@
 {
-    "disabled": true,
     "always": true,
     "output": "path-message",
     "extensions": [
