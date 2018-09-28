@@ -140,9 +140,12 @@ class VMwareAccpetanceManager(PyVmomi):
                 host_image_config_mgr = host.configManager.imageConfigManager
                 if host_image_config_mgr:
                     try:
-                        host_image_config_mgr.UpdateHostImageAcceptanceLevel(newAcceptanceLevel=self.acceptance_level)
+                        if self.module.check_mode:
+                            self.hosts_facts[host.name]['level'] = self.acceptance_level
+                        else:
+                            host_image_config_mgr.UpdateHostImageAcceptanceLevel(newAcceptanceLevel=self.acceptance_level)
+                            self.hosts_facts[host.name]['level'] = host_image_config_mgr.HostImageConfigGetAcceptance()
                         host_changed = True
-                        self.hosts_facts[host.name]['level'] = host_image_config_mgr.HostImageConfigGetAcceptance()
                     except vim.fault.HostConfigFault as e:
                         self.hosts_facts[host.name]['error'] = to_native(e.msg)
 
@@ -177,6 +180,7 @@ def main():
         required_if=[
             ['state', 'present', ['acceptance_level']],
         ],
+        supports_check_mode=True
     )
 
     vmware_host_accept_config = VMwareAccpetanceManager(module)
