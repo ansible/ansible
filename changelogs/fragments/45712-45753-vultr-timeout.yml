@@ -1,0 +1,3 @@
+bugfixes:
+- Vultr - fix for unreliable API behaviors resulting in timeouts (https://github.com/ansible/ansible/pull/45712/).
+- vultr_server - fix diff for user data (https://github.com/ansible/ansible/pull/45753/).
