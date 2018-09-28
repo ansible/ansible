@@ -395,7 +395,7 @@ hexlify()'ed result of:
 
   - AES256 encrypted data. The data is encrypted using:
 
-    - AES-CTR stream cipher
+    - AES-CTR stream cipher
     - cipher key
     - IV
     - a 128 bit counter block seeded from an integer IV
