@@ -186,6 +186,8 @@ def install_plugin(module, plugin_bin, plugin_name, version, src, url, proxy_hos
     else:
         cmd_args.append(plugin_name)
 
+    cmd_args.append("--batch")    
+    
     cmd = " ".join(cmd_args)
 
     if module.check_mode:
