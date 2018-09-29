@@ -111,7 +111,7 @@ class CallbackModule(CallbackBase):
             if self.FOREMAN_URL.startswith('https://'):
                 if not os.path.exists(self.FOREMAN_SSL_CERT[0]):
                     self._disable_plugin('FOREMAN_SSL_CERT %s not found.' % self.FOREMAN_SSL_CERT[0])
-                
+
                 if not os.path.exists(self.FOREMAN_SSL_CERT[1]):
                     self._disable_plugin('FOREMAN_SSL_KEY %s not found.' % self.FOREMAN_SSL_CERT[1])
 
