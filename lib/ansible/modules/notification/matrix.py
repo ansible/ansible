@@ -4,6 +4,9 @@
 # (c) 2018, Jan Christian Grünhage <jan.christian@gruenhage.xyz>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -45,7 +48,7 @@ options:
     password:
         description:
             - The password to log in with
-notes: 
+notes:
     - Requires matrix-client on the executing host.
     - Install it with pip install matrix-client.
 '''
@@ -71,9 +74,6 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -127,7 +127,7 @@ def run_module():
 
     # make sure we are in a given room and return a room object for it
     room = client.join_room(module.params['room_id'])
-    #send an html formatted messages
+    # send an html formatted messages
     room.send_html(module.params['msg_html'], module.params['msg_plain'])
 
     module.exit_json(**result)
