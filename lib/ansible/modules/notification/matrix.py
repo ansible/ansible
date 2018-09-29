@@ -12,58 +12,55 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
+author: "Jan Christian Grünhage (@jcgruenhage)"
+requirements: [ matrix-client ]
 module: matrix
-
-short_description: This module can send notifications to matrix rooms
-
-version_added: "2.8"
-
+short_description: Send notifications to matrix
 description:
-    - "This module can send html formatted notifications to matrix rooms"
-
+    - This module sends html formatted notifications to matrix rooms.
+version_added: "2.8"
 options:
     msg_plain:
         description:
-            - This is the plain text form of the message to send to matrix, usually markdown
+            - Plain text form of the message to send to matrix, usually markdown
         required: true
     msg_html:
         description:
-            - This is the html form of the message to send to matrix
+            - HTML form of the message to send to matrix
         required: true
     room_id:
         description:
-            - The id of the room to send the notification to
+            - ID of the room to send the notification to
         required: true
     hs_url:
         description:
-            - The URL of the homeserver, where the CS-API is reachable
+            - URL of the homeserver, where the CS-API is reachable
         required: true
     token:
         description:
-            - The authentication token for the API call. If provided, user_id and password are not required
+            - Authentication token for the API call. If provided, user_id and password are not required
     user_id:
         description:
             - The user id of the user
     password:
         description:
             - The password to log in with
-
-
-author:
-    - Jan Christian Grünhage (@jcgruenhage)
+notes: 
+    - Requires matrix-client on the executing host.
+    - Install it with pip install matrix-client.
 '''
 
 EXAMPLES = '''
-- name: Send matrix notification with token
-  matrix:
+# Send matrix notification with token
+- matrix:
     msg_plain: "**hello world**"
     msg_html: "<b>hello world</b>"
     room_id: "!12345678:server.tld"
     hs_url: "https://matrix.org"
     token: "{{ matrix_auth_token }}"
 
-- name: Send matrix notification with user_id and password
-  matrix:
+# Send matrix notification with user_id and password
+- matrix:
     msg_plain: "**hello world**"
     msg_html: "<b>hello world</b>"
     room_id: "!12345678:server.tld"
@@ -74,6 +71,8 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -112,18 +111,23 @@ def run_module():
     if module.check_mode:
         return result
 
+    # create a client object
     client = MatrixClient(module.params['hs_url'])
+    # try to log in with a password
     if module.params['password'] is not None:
         if module.params['user_id'] is None:
             module.fail_json(msg='If you specify a password, you also need to specify a user_id.', **result)
         else:
             client.login(module.params['user_id'], module.params['password'], sync=False)
+    # use a token if password login isn't possible
     elif module.params['token'] is not None:
         client.api.token = module.params['token']
     else:
         module.fail_json(msg='You need to either specify a token, or a user_id and password.', **result)
 
+    # make sure we are in a given room and return a room object for it
     room = client.join_room(module.params['room_id'])
+    #send an html formatted messages
     room.send_html(module.params['msg_html'], module.params['msg_plain'])
 
     module.exit_json(**result)
