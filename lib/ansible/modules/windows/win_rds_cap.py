@@ -8,14 +8,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_rds_cap
 short_description: Manage Connection Authorization Policies (CAP) on a Remote Desktop Gateway server
 description:
   - Creates, removes and configures a Remote Desktop connection authorization policy (RD CAP).
   - A RD CAP allows you to specify the users who can connect to a Remote Desktop Gateway server.
-version_added: "2.7"
+version_added: "2.8"
 author:
   - Kevin Subileau (@ksubileau)
 options:
@@ -98,15 +98,16 @@ options:
       - Allow Plug and Play devices redirection.
     type: bool
 requirements:
-  - Windows Server 2008R2 (6.1) or higher with RDS features
+  - Windows Server 2008R2 (6.1) or higher.
+  - The Windows Feature "RDS-Gateway" must be enabled.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a new RDS CAP with a 30 minutes timeout and clipboard redirection enabled
   win_rds_cap:
     name: My CAP
     user_groups:
-      - BUILTIN\\users
+      - BUILTIN\users
     session_timeout: 30
     session_timeout_action: disconnect
     allow_only_sdrts_servers: true
@@ -118,5 +119,5 @@ EXAMPLES = '''
     state: enabled
 '''
 
-RETURN = '''
+RETURN = r'''
 '''

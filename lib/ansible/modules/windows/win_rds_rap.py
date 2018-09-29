@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_rds_rap
 short_description: Manage Resource Authorization Policies (RAP) on a Remote Desktop Gateway server
@@ -16,7 +16,7 @@ description:
   - Creates, removes and configures a Remote Desktop resource authorization policy (RD RAP).
   - A RD RAP allows you to specify the network resources (computers) that users can connect
     to remotely through a Remote Desktop Gateway server.
-version_added: "2.7"
+version_added: "2.8"
 author:
   - Kevin Subileau (@ksubileau)
 options:
@@ -59,16 +59,17 @@ options:
       - The computer group name that is associated with this resource authorization policy (RAP).
       - This is required when I(computer_group_type) is C(rdg_group) or C(ad_network_resource_group).
 requirements:
-  - Windows Server 2008R2 (6.1) or higher with RDS features
+  - Windows Server 2008R2 (6.1) or higher.
+  - The Windows Feature "RDS-Gateway" must be enabled.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a new RDS RAP
   win_rds_rap:
     name: My RAP
     description: 'Allow all users to connect to any resource through ports 3389 and 3390'
     user_groups:
-      - BUILTIN\\users
+      - BUILTIN\users
     computer_group_type: allow_any
     allowed_ports:
       - 3389
@@ -76,5 +77,5 @@ EXAMPLES = '''
     state: enabled
 '''
 
-RETURN = '''
+RETURN = r'''
 '''

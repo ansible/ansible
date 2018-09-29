@@ -8,13 +8,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_rds_settings
 short_description: Manage main settings of a Remote Desktop Gateway server
 description:
   - Configure general settings of a Remote Desktop Gateway server.
-version_added: "2.7"
+version_added: "2.8"
 author:
   - Kevin Subileau (@ksubileau)
 options:
@@ -38,10 +38,11 @@ options:
       - If enabled, only clients that support logon messages and administrator messages can connect.
     type: bool
 requirements:
-  - Windows Server 2008R2 (6.1) or higher with RDS features
+  - Windows Server 2008R2 (6.1) or higher.
+  - The Windows Feature "RDS-Gateway" must be enabled.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Configure the Remote Desktop Gateway
   win_rds_settings:
     certificate_hash: B0D0FA8408FC67B230338FCA584D03792DA73F4C
@@ -50,5 +51,5 @@ EXAMPLES = '''
     - Restart TSGateway service
 '''
 
-RETURN = '''
+RETURN = r'''
 '''

@@ -43,7 +43,7 @@ function Get-CAP([string] $name) {
     }
 
     # Fetch CAP properties
-    Get-ChildItem -Path "$cap_path" | foreach { $cap.Add($_.Name,$_.CurrentValue) }
+    Get-ChildItem -Path $cap_path | foreach { $cap.Add($_.Name,$_.CurrentValue) }
     # Convert boolean values
     $cap.Enabled = $cap.Status -eq 1
     $cap.Remove("Status")
@@ -308,9 +308,6 @@ if ($state -eq 'absent') {
                 $diff_text += "~ComputerGroups`n$computer_groups_diff"
             }
         }
-
-        # ASK Should we return the full updated CAP object even if the Get-CAP function is a little bit slow ?
-        # $result.cap = Get-CAP -Name $name
     }
 }
 

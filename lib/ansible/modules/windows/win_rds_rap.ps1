@@ -31,7 +31,7 @@ function Get-RAP([string] $name) {
     }
 
     # Fetch RAP properties
-    Get-ChildItem -Path "$rap_path" | foreach { $rap.Add($_.Name,$_.CurrentValue) }
+    Get-ChildItem -Path $rap_path | foreach { $rap.Add($_.Name,$_.CurrentValue) }
     # Convert boolean values
     $rap.Enabled = $rap.Status -eq 1
     $rap.Remove("Status")
@@ -95,7 +95,7 @@ if ($null -ne $user_groups) {
         # Test that the group is resolvable on the local machine
         $sid = Convert-ToSID -account_name $group
         if (!$sid) {
-            Fail-Json -obj $result -message "$group is not a valid user group on the host machine or domain"
+            Fail-Json -obj $result -message "$group is not a valid user group on the host machine or domain."
         }
 
         # Return the normalized group name in UPN format
@@ -113,7 +113,7 @@ if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {
 } elseif ($computer_group_type -eq "ad_network_resource_group") {
     $sid = Convert-ToSID -account_name $computer_group
     if (!$sid) {
-        Fail-Json -obj $result -message "$computer_group is not a valid computer group on the host machine or domain"
+        Fail-Json -obj $result -message "$computer_group is not a valid computer group on the host machine or domain."
     }
     # Ensure the group name is in UPN format
     $computer_group = Convert-FromSID -sid $sid
@@ -123,7 +123,7 @@ if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {
 # Validate port numbers
 if ($null -ne $allowed_ports) {
     foreach ($port in $allowed_ports) {
-        if ($port -notmatch "^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]|any)$") {
+        if (-not ($port -eq "any" -or ($port -is [int] -and $port -ge 1 -and $port -le 65535))) {
             Fail-Json -obj $result -message "$port is not a valid port number."
         }
     }
@@ -237,9 +237,6 @@ if ($state -eq 'absent') {
                 $diff_text += "~UserGroups`n$user_groups_diff"
             }
         }
-
-        # ASK Should we return the full RAP object?
-        # $result.rap = Get-RAP -Name $name
     }
 }
 
