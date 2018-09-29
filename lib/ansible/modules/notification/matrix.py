@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# coding: utf-8s
+# coding: utf-8
 
 # (c) 2018, Jan Christian Grünhage <jan.christian@gruenhage.xyz>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
