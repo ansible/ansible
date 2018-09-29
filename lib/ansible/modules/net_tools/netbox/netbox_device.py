@@ -18,11 +18,12 @@ short_description: Manage devices
 description:
 - Creates or removes devices from Netbox
 notes:
-- Place holder for notes once this module starts to get tested.
+- Tags should be defined as a YAML list
+- This should be ran with C(connection: local) and C(hosts: localhost)
 author:
 - Mikhail Yohman (@FragmentedPacket)
 requirements:
-- N/A
+- pynetbox
 version_added: '2.8'
 options:
   api_endpoint:
@@ -67,7 +68,31 @@ options:
 '''
 
 EXAMPLES = r'''
+- name: "Test Netbox modules"
+  connection: local
+  hosts: localhost
+  gather_facts: False
+
 name: Create device within Netbox with only required information
+netbox_device:
+  api_endpoint: http://netbox.local
+  api_token: thisIsMyToken
+  data:
+    name: Test (not really required, but helpful)
+    device_type: C9410R
+    device_role: Core Switch
+    site: Main
+  state: present
+
+name: Delete device within netbox
+netbox_device:
+  api_endpoint: http://netbox.local
+  api_token: thisIsMyToken
+  data:
+    name: Test
+  state: absent
+
+name: Create device with tags
 netbox_device:
   api_endpoint: http://netbox.local
   api_token: thisIsMyToken
@@ -76,13 +101,28 @@ netbox_device:
     device_type: C9410R
     device_role: Core Switch
     site: Main
+    tags:
+      - Schnozzberry
   state: present
 
-
+name: Create device and assign to rack and position
+netbox_device:
+  api_endpoint: http://netbox.local
+  api_token: thisIsMyToken
+  data:
+    name: Test
+    device_type: C9410R
+    device_role: Core Switch
+    site: Main
+    rack: Test Rack
+    position: 10
+    face: Front
 '''
 
 RETURN = r'''
-Placeholder
+meta:
+    description: Message indicating failure or returns results with the object created within Netbox
+    returned: always
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -111,7 +151,6 @@ def main():
                            supports_check_mode=False)
     if not HAS_PYNETBOX:
         module.fail_json(msg='pynetbox is required for this module')
-    changed=False
     app = 'dcim'
     endpoint = 'devices'
     url = module.params["netbox_url"]
@@ -126,7 +165,7 @@ def main():
         response = netbox_add(nb, nb_endpoint, data)
     else:
         response = netbox_delete(nb_endpoint, data)
-    module.exit_json(changed=changed, meta=response)
+    module.exit_json(changed=False, meta=response)
 
 
 if __name__ == "__main__":
