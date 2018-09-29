@@ -1,6 +1,6 @@
 - name: Test failure without pika installed
   set_fact:
-    rabbit_missing_pika: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F', channel='hello', count=3) }}"
+    rabbit_missing_pika: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F', queue='hello', count=3) }}"
   ignore_errors: yes
   register: rabbitmq_missing_pika_error
 
@@ -15,7 +15,7 @@
 
 - name: Test that giving an incorrect amqp protocol in URL will error
   set_fact:
-    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='zzzamqp://guest:guest@192.168.250.1:5672/%2F', channel='hello', count=3) }}"
+    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='zzzamqp://guest:guest@192.168.250.1:5672/%2F', queue='hello', count=3) }}"
   ignore_errors: yes
   register: rabbitmq_protocol_error
 
@@ -26,7 +26,7 @@
 
 - name: Test that giving an incorrect IP address in URL will error
   set_fact:
-    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@xxxxx192.112312368.250.1:5672/%2F', channel='hello', count=3) }}"
+    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@xxxxx192.112312368.250.1:5672/%2F', queue='hello', count=3) }}"
   ignore_errors: yes
   register: rabbitmq_ip_error
  
@@ -46,16 +46,16 @@
       - "rabbitmq_params_error is failed"
       - "'URL is required for rabbitmq lookup.' in rabbitmq_params_error.msg"
  
-- name: Test missing channel will error
+- name: Test missing queue will error
   set_fact:
-    rabbitmq_channel_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F') }}"
+    rabbitmq_queue_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F') }}"
   ignore_errors: yes
-  register: rabbitmq_channel_error
+  register: rabbitmq_queue_error
  
 - assert:
     that:
-      - "rabbitmq_channel_error is failed"
-      - "'Channel is required for rabbitmq lookup' in rabbitmq_channel_error.msg"
+      - "rabbitmq_queue_error is failed"
+      - "'Queue is required for rabbitmq lookup' in rabbitmq_queue_error.msg"
 
 - name: Enables the rabbitmq_management plugin
   rabbitmq_plugin:
@@ -95,7 +95,7 @@
 
 - name: Test retrieve messages
   set_fact:
-    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2f/hello', channel='hello') }}"
+    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2f/hello', queue='hello') }}"
   ignore_errors: yes
   register: rabbitmq_msg_error
 
@@ -117,7 +117,7 @@
 
 - name: Test missing vhost
   set_fact:
-    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/missing/', channel='hello') }}"
+    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/missing/', queue='hello') }}"
   ignore_errors: yes
   register: rabbitmq_vhost_error
 
