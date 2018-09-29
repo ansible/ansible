@@ -1,0 +1,10 @@
+bugfixes:
+- win_nssm - Fix several issues and idempotency problems (https://github.com/ansible/ansible/pull/44755)
+- win_nssm - Fix service not started when ``state=started`` (https://github.com/ansible/ansible/issues/35442)
+- win_nssm - Correctly escape argument line when a parameter contains spaces, quotes or backslashes
+- win_nssm - Add missing space between parameters with ``app_parameters``
+- win_nssm - Fix extra space added in argument line with ``app_parameters`` or ``app_parameters_free_form`` when a parameter start by a dash and is followed by a period (https://github.com/ansible/ansible/issues/44079)
+- win_nssm - Fix error when several services were given to the ``dependencies`` option
+
+minor_changes:
+- win_nssm - Drop support of literal YAML dictionnary for ``app_parameters`` option. Use the ``key=value;`` string form instead
