@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Mikhail Yohman (fragmentedpacket) <mikhail.yohman@gmail.com>
+# Copyright: (c) 2018, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -12,99 +12,121 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = r'''
-PLACEHOLDER FOR DOCUMENTATION
+---
+module: netbox_device
+short_description: Manage devices
+description:
+- Creates or removes devices from Netbox
+notes:
+- Place holder for notes once this module starts to get tested.
+author:
+- Mikhail Yohman (@FragmentedPacket)
+requirements:
+- N/A
+version_added: '2.8'
+options:
+  api_endpoint:
+    description:
+      - URL of the Netbox instance resolvable by Ansible control host
+    required: true
+  api_token:
+    description:
+      - The token created within Netbox to authorize API access
+    required: true
+  data:
+    description:
+      - Defines the device configuration
+    choices:
+      - name
+      - device_type (required if state is C(present))
+      - device_role (required if state is C(present))
+      - tenant
+      - platform
+      - serial
+      - asset_tag
+      - site (required if state is C(present)
+      - rack
+      - position
+      - face
+      - status
+      - cluster
+      - comments
+      - tags
+      - custom_fields (must exist in Netbox)
+    required: true
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    choices: [ absent, present ]
+    default: present
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+    default: 'yes'
+    type: boolean
 '''
 
+EXAMPLES = r'''
+name: Create device within Netbox with only required information
+netbox_device:
+  api_endpoint: http://netbox.local
+  api_token: thisIsMyToken
+  data:
+    name: Test
+    device_type: C9410R
+    device_role: Core Switch
+    site: Main
+  state: present
+
+
+'''
+
+RETURN = r'''
+Placeholder
+'''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.net_tools.netbox.netbox_utils import netbox_add, netbox_delete
+
 try:
     import pynetbox
     HAS_PYNETBOX = True
 except ImportError:
     HAS_PYNETBOX = False
 
-import json
-
-search_type = dict(
-    prefixes="q",
-    ip_addresses="q",
-    devices="name",
-    device_types="slug",
-    device_roles="slug",
-    sites="slug",
-)
-
-
-def find_id(nb_app, endpoint, search):
-    nb_endpoint = getattr(nb_app, endpoint)
-    results = nb_endpoint.get(**{search_type.get(endpoint, "q"): search})
-    if results:
-        return results.id
-    else:
-        return 1
-
-
-def netbox_add(nb_app, nb_endpoint, data):
-    clean_json = data.replace("'", '"')
-    data = json.loads(clean_json)
-    data = normalize_data(data)
-    site = find_id(nb_app, "sites", data.get("site"))
-    device_role = find_id(nb_app, "device_roles", data.get("device_role"))
-    device_type = find_id(nb_app, "device_types", data.get("device_type"))
-    data["status"] = 1 if data.get("status").lower() == "active" else 0
-    data["site"] = site
-    data["device_role"] = device_role
-    data["device_type"] = device_type
-    try:
-        return [nb_endpoint.create([data])]
-    except pynetbox.RequestError as e:
-        return e.error
-
-
-def normalize_data(data):
-    for k, v in data.items():
-        if 'device_role' in k:
-            if ' ' in v:
-                data[k] = v.replace(' ', '-').lower()
-        elif 'device_type' in k:
-            if ' ' in v:
-                data[k] = v.replace(' ', '-').lower()
-        elif 'site' in k:
-            if ' ' in v:
-                data[k] = v.replace(' ', '-').lower()
-        elif 'status' in k:
-                data[k] = v.lower()
-        elif 'tags' in k:
-            if not isinstance(v, list):
-                temp_list = []
-                temp_list.append(v)
-                v = temp_list
-                data[k] = v
-    return data
-
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            url=dict(type="str", required=True),
-            token=dict(type="str", required=True),
-            data=dict(type="str", required=True),
-        )
+    '''
+    Main entry point for module execution
+    '''
+    argument_spec = dict(
+        netbox_url=dict(type="str", required=True),
+        netbox_token=dict(type="str", required=True, no_log=True),
+        data=dict(type="str", required=True),
+        state=dict(required=False, default='present', choices=['present', 'absent']),
+        validate_certs=dict(type="bool", default=True)
     )
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False)
     if not HAS_PYNETBOX:
         module.fail_json(msg='pynetbox is required for this module')
-
+    changed=False
     app = 'dcim'
     endpoint = 'devices'
-    url = module.params["url"]
-    token = module.params["token"]
+    url = module.params["netbox_url"]
+    token = module.params["netbox_token"]
     data = module.params["data"]
-    nb = pynetbox.api(url, token=token)
+    state = module.params["state"]
+    validate_certs = module.params["validate_certs"]
+    nb = pynetbox.api(url, token=token, ssl_verify=validate_certs)
     nb_app = getattr(nb, app)
     nb_endpoint = getattr(nb_app, endpoint)
-    response = netbox_add(nb_app, nb_endpoint, data)
-
-    module.exit_json(changed=False, meta=response)
+    if 'present' in state:
+        response = netbox_add(nb, nb_endpoint, data)
+    else:
+        response = netbox_delete(nb_endpoint, data)
+    module.exit_json(changed=changed, meta=response)
 
 
 if __name__ == "__main__":
