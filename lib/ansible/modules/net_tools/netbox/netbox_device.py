@@ -16,14 +16,14 @@ DOCUMENTATION = r'''
 module: netbox_device
 short_description: Manage devices
 description:
-- Creates or removes devices from Netbox
+  - Creates or removes devices from Netbox
 notes:
-- Tags should be defined as a YAML list
-- This should be ran with C(connection: local) and C(hosts: localhost)
+  - Tags should be defined as a YAML list
+  - This should be ran with C(connection: local) and C(hosts: localhost)
 author:
-- Mikhail Yohman (@FragmentedPacket)
+  - Mikhail Yohman (@FragmentedPacket)
 requirements:
-- pynetbox
+  - pynetbox
 version_added: '2.8'
 options:
   api_endpoint:
@@ -57,7 +57,7 @@ options:
     required: true
   state:
     description:
-    - Use C(present) or C(absent) for adding or removing.
+      - Use C(present) or C(absent) for adding or removing.
     choices: [ absent, present ]
     default: present
   validate_certs:
@@ -73,56 +73,57 @@ EXAMPLES = r'''
   hosts: localhost
   gather_facts: False
 
-name: Create device within Netbox with only required information
-netbox_device:
-  api_endpoint: http://netbox.local
-  api_token: thisIsMyToken
-  data:
-    name: Test (not really required, but helpful)
-    device_type: C9410R
-    device_role: Core Switch
-    site: Main
-  state: present
+  tasks:
+    - name: Create device within Netbox with only required information
+      netbox_device:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          name: Test (not really required, but helpful)
+          device_type: C9410R
+          device_role: Core Switch
+          site: Main
+        state: present
 
-name: Delete device within netbox
-netbox_device:
-  api_endpoint: http://netbox.local
-  api_token: thisIsMyToken
-  data:
-    name: Test
-  state: absent
+    - name: Delete device within netbox
+      netbox_device:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          name: Test
+        state: absent
 
-name: Create device with tags
-netbox_device:
-  api_endpoint: http://netbox.local
-  api_token: thisIsMyToken
-  data:
-    name: Test
-    device_type: C9410R
-    device_role: Core Switch
-    site: Main
-    tags:
-      - Schnozzberry
-  state: present
+    - name: Create device with tags
+      netbox_device:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          name: Test
+          device_type: C9410R
+          device_role: Core Switch
+          site: Main
+          tags:
+            - Schnozzberry
+        state: present
 
-name: Create device and assign to rack and position
-netbox_device:
-  api_endpoint: http://netbox.local
-  api_token: thisIsMyToken
-  data:
-    name: Test
-    device_type: C9410R
-    device_role: Core Switch
-    site: Main
-    rack: Test Rack
-    position: 10
-    face: Front
+    - name: Create device and assign to rack and position
+      netbox_device:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          name: Test
+          device_type: C9410R
+          device_role: Core Switch
+          site: Main
+          rack: Test Rack
+          position: 10
+          face: Front
 '''
 
 RETURN = r'''
 meta:
-    description: Message indicating failure or returns results with the object created within Netbox
-    returned: always
+  description: Message indicating failure or returns results with the object created within Netbox
+  returned: always
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -149,8 +150,13 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)
+
+    # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
         module.fail_json(msg='pynetbox is required for this module')
+
+    # Assign variables to be used with module
+    changed = False
     app = 'dcim'
     endpoint = 'devices'
     url = module.params["netbox_url"]
@@ -158,14 +164,27 @@ def main():
     data = module.params["data"]
     state = module.params["state"]
     validate_certs = module.params["validate_certs"]
-    nb = pynetbox.api(url, token=token, ssl_verify=validate_certs)
-    nb_app = getattr(nb, app)
+
+    # Attempt to create Netbox API object
+    try:
+        nb = pynetbox.api(url, token=token, ssl_verify=validate_certs)
+    except:
+        module.fail_json(msg="Failed to establish connection to Netbox API")
+    try:
+        nb_app = getattr(nb, app)
+    except AttributeError:
+        module.fail_json(msg="Incorrect application specified: %s" % (app))
+
     nb_endpoint = getattr(nb_app, endpoint)
     if 'present' in state:
         response = netbox_add(nb, nb_endpoint, data)
+        if isinstance(response, list):
+            changed = True
     else:
         response = netbox_delete(nb_endpoint, data)
-    module.exit_json(changed=False, meta=response)
+        if 'SUCCESS' in response:
+            changed = True
+    module.exit_json(changed=changed, meta=response)
 
 
 if __name__ == "__main__":
