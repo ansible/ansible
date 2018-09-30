@@ -81,7 +81,7 @@ def find_ids(nb, data):
             nb_endpoint = getattr(nb_app, endpoint)
             try:
                 query_id = nb_endpoint.get(**{QUERY_TYPES.get(key, "q"): search})
-            except pynetbox.RequestError:
+            except pynetbox.RequestError as e:
                 return e.error
             if query_id:
                 data[key] = query_id.id
@@ -96,7 +96,7 @@ def netbox_add(nb, nb_endpoint, data):
     normalized_data = normalize_data(data)
     data = find_ids(nb, normalized_data)
     try:
-        return [nb_endpoint.create([data])]
+        return nb_endpoint.create([data])
     except pynetbox.RequestError as e:
         return e.error
 
@@ -107,7 +107,7 @@ def netbox_delete(nb_endpoint, data):
     try:
         results = endpoint.delete()
         if results:
-            return '%s successfully deleted from Netbox' % (data["name"])
+            return 'SUCCESS: %s deleted from Netbox' % (data["name"])
     except AttributeError:
         return 'Endpoint was not found - No changes occurred!'
 
