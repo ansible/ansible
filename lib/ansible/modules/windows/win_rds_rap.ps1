@@ -31,7 +31,7 @@ function Get-RAP([string] $name) {
     }
 
     # Fetch RAP properties
-    Get-ChildItem -Path $rap_path | foreach { $rap.Add($_.Name,$_.CurrentValue) }
+    Get-ChildItem -Path $rap_path | ForEach-Object { $rap.Add($_.Name,$_.CurrentValue) }
     # Convert boolean values
     $rap.Enabled = $rap.Status -eq 1
     $rap.Remove("Status")
@@ -47,7 +47,7 @@ function Get-RAP([string] $name) {
     }
 
     # Fetch RAP user groups
-    $rap.UserGroups = @(Get-ChildItem -Path "$rap_path\UserGroups" | Select -ExpandProperty Name)
+    $rap.UserGroups = @(Get-ChildItem -Path "$rap_path\UserGroups" | Select-Object -ExpandProperty Name)
 
     return $rap
 }
@@ -90,7 +90,7 @@ if ($null -ne $user_groups) {
         Fail-Json -obj $result -message "Parameter 'user_groups' cannot be an empty list."
     }
 
-    $user_groups = $user_groups | foreach {
+    $user_groups = $user_groups | ForEach-Object {
         $group = $_
         # Test that the group is resolvable on the local machine
         $sid = Convert-ToSID -account_name $group
@@ -217,8 +217,8 @@ if ($state -eq 'absent') {
         }
 
         if ($null -ne $user_groups) {
-            $groups_to_remove = @($rap.UserGroups | where { $user_groups -notcontains $_ })
-            $groups_to_add = @($user_groups | where { $rap.UserGroups -notcontains $_ })
+            $groups_to_remove = @($rap.UserGroups | Where-Object { $user_groups -notcontains $_ })
+            $groups_to_add = @($user_groups | Where-Object { $rap.UserGroups -notcontains $_ })
 
             $user_groups_diff = $null
             foreach($group in $groups_to_add) {

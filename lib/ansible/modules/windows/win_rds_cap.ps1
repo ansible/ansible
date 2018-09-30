@@ -43,7 +43,7 @@ function Get-CAP([string] $name) {
     }
 
     # Fetch CAP properties
-    Get-ChildItem -Path $cap_path | foreach { $cap.Add($_.Name,$_.CurrentValue) }
+    Get-ChildItem -Path $cap_path | ForEach-Object { $cap.Add($_.Name,$_.CurrentValue) }
     # Convert boolean values
     $cap.Enabled = $cap.Status -eq 1
     $cap.Remove("Status")
@@ -55,11 +55,11 @@ function Get-CAP([string] $name) {
 
     # Fetch CAP device redirection settings
     $cap.DeviceRedirection = @{}
-    Get-ChildItem -Path "$cap_path\DeviceRedirection" | foreach { $cap.DeviceRedirection.Add($_.Name, ($_.CurrentValue -eq 1)) }
+    Get-ChildItem -Path "$cap_path\DeviceRedirection" | ForEach-Object { $cap.DeviceRedirection.Add($_.Name, ($_.CurrentValue -eq 1)) }
 
     # Fetch CAP user and computer groups
-    $cap.UserGroups = @(Get-ChildItem -Path "$cap_path\UserGroups" | Select -ExpandProperty Name)
-    $cap.ComputerGroups = @(Get-ChildItem -Path "$cap_path\ComputerGroups" | Select -ExpandProperty Name)
+    $cap.UserGroups = @(Get-ChildItem -Path "$cap_path\UserGroups" | Select-Object -ExpandProperty Name)
+    $cap.ComputerGroups = @(Get-ChildItem -Path "$cap_path\ComputerGroups" | Select-Object -ExpandProperty Name)
 
     return $cap
 }
@@ -102,7 +102,7 @@ if ($null -ne $user_groups) {
         Fail-Json -obj $result -message "Parameter 'user_groups' cannot be an empty list."
     }
 
-    $user_groups = $user_groups | foreach {
+    $user_groups = $user_groups | ForEach-Object {
         $group = $_
         # Test that the group is resolvable on the local machine
         $sid = Convert-ToSID -account_name $group
@@ -119,7 +119,7 @@ if ($null -ne $user_groups) {
 
 # Validate computer groups
 if ($null -ne $computer_groups) {
-    $computer_groups = $computer_groups | foreach {
+    $computer_groups = $computer_groups | ForEach-Object {
         $group = $_
         # Test that the group is resolvable on the local machine
         $sid = Convert-ToSID -account_name $group
@@ -266,8 +266,8 @@ if ($state -eq 'absent') {
         }
 
         if ($null -ne $user_groups) {
-            $groups_to_remove = @($cap.UserGroups | where { $user_groups -notcontains $_ })
-            $groups_to_add = @($user_groups | where { $cap.UserGroups -notcontains $_ })
+            $groups_to_remove = @($cap.UserGroups | Where-Object { $user_groups -notcontains $_ })
+            $groups_to_add = @($user_groups | Where-Object { $cap.UserGroups -notcontains $_ })
 
             $user_groups_diff = $null
             foreach($group in $groups_to_add) {
@@ -288,8 +288,8 @@ if ($state -eq 'absent') {
         }
 
         if ($null -ne $computer_groups) {
-            $groups_to_remove = @($cap.ComputerGroups | where { $computer_groups -notcontains $_ })
-            $groups_to_add = @($computer_groups | where { $cap.ComputerGroups -notcontains $_ })
+            $groups_to_remove = @($cap.ComputerGroups | Where-Object { $computer_groups -notcontains $_ })
+            $groups_to_add = @($computer_groups | Where-Object { $cap.ComputerGroups -notcontains $_ })
 
             $computer_groups_diff = $null
             foreach($group in $groups_to_add) {
