@@ -381,6 +381,7 @@
     name: "{{ cname }}"
     state: started
     hostname: example.com
+    stop_timeout: 1
     labels:
       ansible.test.1: hello
       ansible.test.2: world
@@ -394,6 +395,7 @@
     name: "{{ cname }}"
     state: started
     hostname: example.org
+    stop_timeout: 2
     labels:
       ansible.test.1: hello
       ansible.test.4: ignore

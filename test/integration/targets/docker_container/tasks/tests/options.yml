@@ -2626,7 +2626,45 @@
 ## stop_timeout ####################################################
 ####################################################################
 
-# TODO: - stop_timeout
+- name: stop_timeout
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    stop_timeout: 2
+    state: started
+  register: stop_timeout_1
+
+- name: stop_timeout (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    stop_timeout: 2
+    state: started
+  register: stop_timeout_2
+
+- name: stop_timeout (no change)
+  # stop_timeout changes are ignored by default
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    stop_timeout: 1
+    state: started
+  register: stop_timeout_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - stop_timeout_1 is changed
+    - stop_timeout_2 is not changed
+    - stop_timeout_3 is not changed
 
 ####################################################################
 ## sysctls #########################################################
