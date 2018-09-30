@@ -1936,8 +1936,10 @@ class ContainerManager(DockerBaseClass):
                 self.log("differences")
                 self.log(differences, pretty_print=True)
                 image_to_use = self.parameters.image
+                if not image_to_use and container and container.Image:
+                    image_to_use = container.Image
                 if not image_to_use:
-                    self.fail('Cannot recreate container when image is not specified!')
+                    self.fail('Cannot recreate container when image is not specified or cannot be extracted from current container!')
                 if container.running:
                     self.container_stop(container.Id)
                 self.container_remove(container.Id)
