@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - ``image`` must be specified if ``state`` is not ``absent``."

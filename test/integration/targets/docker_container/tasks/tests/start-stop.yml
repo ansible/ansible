@@ -57,6 +57,7 @@
 
 - name: Start container (check)
   docker_container:
+    image: alpine:3.8
     name: "{{ cname }}"
     state: started
   check_mode: yes
@@ -64,18 +65,21 @@
 
 - name: Start container
   docker_container:
+    image: alpine:3.8
     name: "{{ cname }}"
     state: started
   register: start_2
 
 - name: Start container (idempotent)
   docker_container:
+    image: alpine:3.8
     name: "{{ cname }}"
     state: started
   register: start_3
 
 - name: Start container (idempotent check)
   docker_container:
+    image: alpine:3.8
     name: "{{ cname }}"
     state: started
   check_mode: yes

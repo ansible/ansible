@@ -447,6 +447,7 @@
 
 - name: debug (start)
   docker_container:
+    image: alpine:3.8
     name: "{{ cname }}"
     state: started
     debug: yes

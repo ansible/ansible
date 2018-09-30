@@ -162,8 +162,9 @@ options:
     version_added: "2.2"
   image:
     description:
-      - Repository path and tag used to create the container. If an image is not found or pull is true, the image
-        will be pulled from the registry. If no tag is included, 'latest' will be used.
+      - Repository path and tag used to create the container. If an image is not found or C(pull) is
+        I(true), the image will be pulled from the registry. If no tag is included, 'latest' will be used.
+      - Must be specified if C(state) is not I(absent).
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
@@ -360,25 +361,25 @@ options:
       - List of security options in the form of C("label:user:User")
   state:
     description:
-      - 'I(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
-         rather than stopping it. Use keep_volumes to retain volumes associated with the removed container.'
+      - 'I(absent) - A container matching the specified name will be stopped and removed. Use C(force_kill) to kill the container
+         rather than stopping it. Use C(keep_volumes) to retain volumes associated with the removed container.'
       - 'I(present) - Asserts the existence of a container matching the name and any provided configuration parameters. If no
         container matches the name, a container will be created. If a container matches the name but the provided configuration
         does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed and re-created
         with the requested config. Image version will be taken into account when comparing configuration. To ignore image
-        version use the ignore_image option. Use the recreate option to force the re-creation of the matching container. Use
-        force_kill to kill the container rather than stopping it. Use keep_volumes to retain volumes associated with a removed
+        version use the C(ignore_image) option. Use the C(recreate) option to force the re-creation of the matching container. Use
+        C(force_kill) to kill the container rather than stopping it. Use C(keep_volumes) to retain volumes associated with a removed
         container.'
       - 'I(started) - Asserts there is a running container matching the name and any provided configuration. If no container
         matches the name, a container will be created and started. If a container matching the name is found but the
         configuration does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed
         and a new container will be created with the requested configuration and started. Image version will be taken into
-        account when comparing configuration. To ignore image version use the ignore_image option. Use recreate to always
-        re-create a matching container, even if it is running. Use restart to force a matching container to be stopped and
-        restarted. Use force_kill to kill a container rather than stopping it. Use keep_volumes to retain volumes associated
+        account when comparing configuration. To ignore image version use the C(ignore_image) option. Use C(recreate) to always
+        re-create a matching container, even if it is running. Use C(restart) to force a matching container to be stopped and
+        restarted. Use C(force_kill) to kill a container rather than stopping it. Use C(keep_volumes) to retain volumes associated
         with a removed container.'
       - 'I(stopped) - Asserts that the container is first I(present), and then if the container is running moves it to a stopped
-        state. Use force_kill to kill a container rather than stopping it.'
+        state. Use C(force_kill) to kill a container rather than stopping it.'
     default: started
     choices:
       - absent
@@ -2414,8 +2415,12 @@ def main():
         working_dir=dict(type='str'),
     )
 
+    # If state is not absent, image must be there since docker_container
+    # must be able to create the container.
     required_if = [
-        ('state', 'present', ['image'])
+        ('state', 'present', ['image']),
+        ('state', 'started', ['image']),
+        ('state', 'stopped', ['image']),
     ]
 
     client = AnsibleDockerClientContainer(
