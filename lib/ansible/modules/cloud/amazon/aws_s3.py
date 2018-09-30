@@ -301,7 +301,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
 from ansible.module_utils.basic import to_text, to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
 try:
     import botocore
@@ -666,32 +666,29 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=F
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            bucket=dict(required=True),
-            dest=dict(default=None, type='path'),
-            encrypt=dict(default=True, type='bool'),
-            encryption_mode=dict(choices=['AES256', 'aws:kms'], default='AES256'),
-            expiry=dict(default=600, type='int', aliases=['expiration']),
-            headers=dict(type='dict'),
-            marker=dict(default=""),
-            max_keys=dict(default=1000, type='int'),
-            metadata=dict(type='dict'),
-            mode=dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
-            object=dict(),
-            permission=dict(type='list', default=['private']),
-            version=dict(default=None),
-            overwrite=dict(aliases=['force'], default='always'),
-            prefix=dict(default=""),
-            retries=dict(aliases=['retry'], type='int', default=0),
-            s3_url=dict(aliases=['S3_URL']),
-            dualstack=dict(default='no', type='bool'),
-            rgw=dict(default='no', type='bool'),
-            src=dict(),
-            ignore_nonexistent_bucket=dict(default=False, type='bool'),
-            encryption_kms_key_id=dict()
-        ),
+    argument_spec = dict(
+        bucket=dict(required=True),
+        dest=dict(default=None, type='path'),
+        encrypt=dict(default=True, type='bool'),
+        encryption_mode=dict(choices=['AES256', 'aws:kms'], default='AES256'),
+        expiry=dict(default=600, type='int', aliases=['expiration']),
+        headers=dict(type='dict'),
+        marker=dict(default=""),
+        max_keys=dict(default=1000, type='int'),
+        metadata=dict(type='dict'),
+        mode=dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
+        object=dict(),
+        permission=dict(type='list', default=['private']),
+        version=dict(default=None),
+        overwrite=dict(aliases=['force'], default='always'),
+        prefix=dict(default=""),
+        retries=dict(aliases=['retry'], type='int', default=0),
+        s3_url=dict(aliases=['S3_URL']),
+        dualstack=dict(default='no', type='bool'),
+        rgw=dict(default='no', type='bool'),
+        src=dict(),
+        ignore_nonexistent_bucket=dict(default=False, type='bool'),
+        encryption_kms_key_id=dict()
     )
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
