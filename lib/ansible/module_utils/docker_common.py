@@ -120,6 +120,13 @@ if not HAS_DOCKER_PY:
         pass
 
 
+def is_image_name_id(name):
+    """Checks whether the given image name is in fact an image ID (hash)."""
+    if re.fullmatch('sha256:[0-9a-fA-F]{64}', name):
+        return True
+    return False
+
+
 def sanitize_result(data):
     """Sanitize data object for return to Ansible.
 
@@ -428,7 +435,7 @@ class AnsibleDockerClient(Client):
 
     def find_image(self, name, tag):
         '''
-        Lookup an image and return the inspection results.
+        Lookup an image (by name and tag) and return the inspection results.
         '''
         if not name:
             return None
@@ -456,6 +463,20 @@ class AnsibleDockerClient(Client):
 
         self.log("Image %s:%s not found." % (name, tag))
         return None
+
+    def find_image_by_id(self, id):
+        '''
+        Lookup an image (by ID) and return the inspection results.
+        '''
+        if not id:
+            return None
+
+        self.log("Find image %s (by ID)" % id)
+        try:
+            inspection = self.inspect_image(id)
+        except Exception as exc:
+            self.fail("Error inspecting image ID %s - %s" % (id, str(exc)))
+        return inspection
 
     def _image_lookup(self, name, tag):
         '''
