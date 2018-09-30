@@ -391,6 +391,13 @@ options:
   stop_timeout:
     description:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
+        When the container is created by this module, its C(StopTimeout) configuration
+        will be set to this value.
+      - When the container is stopped, will be used as a timeout for stopping the
+        container. In case the container has a custom C(StopTimeout) configuration,
+        the behavior depends on the version of docker. New versions of docker will
+        always use the container's configured C(StopTimeout) value if it has been
+        configured.
   trust_image_content:
     description:
       - If C(yes), skip image verification.
@@ -929,6 +936,9 @@ class TaskParameters(DockerBaseClass):
         if not HAS_DOCKER_PY_3:
             create_params['cpu_shares'] = 'cpu_shares'
             create_params['volume_driver'] = 'volume_driver'
+
+        if self.client.HAS_STOP_TIMEOUT_OPT:
+            create_params['stop_timeout'] = 'stop_timeout'
 
         result = dict(
             host_config=self._host_config(),
@@ -1493,6 +1503,10 @@ class Container(DockerBaseClass):
         if self.parameters.client.HAS_AUTO_REMOVE_OPT:
             # auto_remove is only supported in docker>=2
             config_mapping['auto_remove'] = host_config.get('AutoRemove')
+
+        if self.parameters.client.HAS_STOP_TIMEOUT_OPT:
+            # stop_timeout is only supported in docker>=2.1
+            config_mapping['stop_timeout'] = config.get('StopTimeout')
 
         if HAS_DOCKER_PY_3:
             # volume_driver moved to create_host_config in > 3
@@ -2187,6 +2201,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             ulimits='set(dict)',
         )
         all_options = set()  # this is for improving user feedback when a wrong option was specified for comparison
+        default_values = dict(
+            stop_timeout='ignore',
+        )
         for option, data in self.module.argument_spec.items():
             all_options.add(option)
             for alias in data.get('aliases', []):
@@ -2195,7 +2212,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             if option in ('docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
                           'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
                           'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks', 'recreate',
-                          'restart', 'state', 'stop_timeout', 'trust_image_content', 'networks'):
+                          'restart', 'state', 'trust_image_content', 'networks'):
                 continue
             # Determine option type
             if option in explicit_types:
@@ -2207,7 +2224,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             else:
                 type = 'value'
             # Determine comparison type
-            if type in ('list', 'value'):
+            if option in default_values:
+                comparison = default_values[option]
+            elif type in ('list', 'value'):
                 comparison = 'strict'
             else:
                 comparison = 'allow_more_present'
@@ -2284,10 +2303,29 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             self.fail("docker or docker-py version is %s. Minimum version required is 2.3 to set cpuset_mems option. "
                       "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
 
+        stop_timeout_supported = LooseVersion(docker_api_version) >= LooseVersion('1.25')
+        stop_timeout_needed_for_update = self.module.params.get("stop_timeout") is not None and self.module.params.get('state') != 'absent'
+        if stop_timeout_supported:
+            stop_timeout_supported = LooseVersion(docker_version) >= LooseVersion('2.1')
+            if stop_timeout_needed_for_update and not stop_timeout_supported:
+                # We warn (instead of fail) since in older versions, stop_timeout was not used
+                # to update the container's configuration, but only when stopping a container.
+                self.module.warn("docker or docker-py version is %s. Minimum version required is 2.1 to update "
+                                 "the container's stop_timeout configuration. "
+                                 "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+        else:
+            if stop_timeout_needed_for_update and not stop_timeout_supported:
+                # We warn (instead of fail) since in older versions, stop_timeout was not used
+                # to update the container's configuration, but only when stopping a container.
+                self.module.warn("docker API version is %s. Minimum version required is 1.25 to set or "
+                                 "update the container's stop_timeout configuration." % (docker_api_version,))
+
         self.HAS_INIT_OPT = init_supported
         self.HAS_UTS_MODE_OPT = uts_mode_supported
         self.HAS_BLKIO_WEIGHT_OPT = blkio_weight_supported
         self.HAS_CPUSET_MEMS_OPT = cpuset_mems_supported
+        self.HAS_STOP_TIMEOUT_OPT = stop_timeout_supported
+
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
         if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
             self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
