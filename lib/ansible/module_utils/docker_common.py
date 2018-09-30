@@ -18,9 +18,6 @@
 
 import os
 import re
-import json
-import sys
-import copy
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -35,22 +32,23 @@ HAS_DOCKER_ERROR = None
 try:
     from requests.exceptions import SSLError
     from docker import __version__ as docker_version
-    from docker.errors import APIError, TLSParameterError, NotFound
+    from docker.errors import APIError, TLSParameterError
+    # from docker.errors import NotFound
     from docker.tls import TLSConfig
-    from docker.constants import DEFAULT_DOCKER_API_VERSION
+    # from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
 
     if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
         HAS_DOCKER_PY_3 = True
         from docker import APIClient as Client
-        from docker.types import Ulimit, LogConfig
+        # from docker.types import Ulimit, LogConfig
     elif LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         HAS_DOCKER_PY_2 = True
         from docker import APIClient as Client
-        from docker.types import Ulimit, LogConfig
+        # from docker.types import Ulimit, LogConfig
     else:
         from docker import Client
-        from docker.utils.types import Ulimit, LogConfig
+        # from docker.utils.types import Ulimit, LogConfig
 
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
@@ -62,14 +60,14 @@ except ImportError as exc:
 # installed, as they utilize the same namespace are are incompatible
 try:
     # docker
-    import docker.models
+    import docker.models  # noqa: F401
     HAS_DOCKER_MODELS = True
 except ImportError:
     HAS_DOCKER_MODELS = False
 
 try:
     # docker-py
-    import docker.ssladapter
+    import docker.ssladapter  # noqa: F401
     HAS_DOCKER_SSLADAPTER = True
 except ImportError:
     HAS_DOCKER_SSLADAPTER = False
@@ -112,11 +110,11 @@ BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 if not HAS_DOCKER_PY:
     # No docker-py. Create a place holder client to allow
     # instantiation of AnsibleModule and proper error handing
-    class Client(object):
+    class Client(object):  # noqa: F811
         def __init__(self, **kwargs):
             pass
 
-    class APIError(Exception):
+    class APIError(Exception):  # noqa: F811
         pass
 
 
