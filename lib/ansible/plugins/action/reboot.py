@@ -11,8 +11,8 @@ import time
 from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError
-from ansible.plugins.action import ActionBase
 from ansible.module_utils._text import to_native, to_text
+from ansible.plugins.action import ActionBase
 
 
 try:
@@ -230,7 +230,7 @@ class ActionModule(ActionBase):
         except AnsibleError:
             display.debug("%s: connect_timeout connection option has not been set" % self._task.action)
 
-        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self._task.args.get('post_reboot_delay_sec', self.DEFAULT_POST_REBOOT_DELAY)))
+        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self.DEFAULT_POST_REBOOT_DELAY))
         if post_reboot_delay < 0:
             post_reboot_delay = 0
 

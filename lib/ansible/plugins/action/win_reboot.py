@@ -4,11 +4,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import time
 from datetime import datetime
 
 from ansible.errors import AnsibleError
-from ansible.plugins.action import ActionBase
 from ansible.module_utils._text import to_native
+from ansible.plugins.action import ActionBase
 from ansible.plugins.action.reboot import ActionModule as RebootActionModule
 
 try:
@@ -29,9 +30,10 @@ class ActionModule(RebootActionModule, ActionBase):
         'reboot_timeout', 'reboot_timeout_sec', 'shutdown_timeout', 'shutdown_timeout_sec', 'test_command',
     ))
 
+    DEFAULT_BOOT_TIME_COMMAND = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_PRE_REBOOT_DELAY = 2
-    DEFAULT_BOOT_TIME_COMMAND = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
+    DEFAULT_POST_REBOOT_DELAY = 0
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '/r /t %d /c "%s"'
     DEFAULT_SUDOABLE = False
 
@@ -88,5 +90,13 @@ class ActionModule(RebootActionModule, ActionBase):
             self._original_connection_timeout = self._connection.get_option('connection_timeout')
         except AnsibleError:
             display.debug("%s: connect_timeout connection option has not been set" % self._task.action)
+
+        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self._task.args.get('post_reboot_delay_sec', self.DEFAULT_POST_REBOOT_DELAY)))
+        if post_reboot_delay < 0:
+            post_reboot_delay = 0
+
+        if post_reboot_delay != 0:
+            display.vvv("%s: waiting an additional %d seconds" % (self._task.action, post_reboot_delay))
+            time.sleep(post_reboot_delay)
 
         return result
