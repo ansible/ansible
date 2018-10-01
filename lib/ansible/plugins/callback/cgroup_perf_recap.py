@@ -97,7 +97,7 @@ class MemoryProf(BaseProf):
             self.max = val
         if self.csvwriter:
             try:
-                self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
+                self.csvwriter.writerow([time.time(), self.obj.get_name(), self.obj._uuid, val])
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
@@ -122,7 +122,7 @@ class CpuProf(BaseProf):
             self.max = val
         if self.csvwriter:
             try:
-                self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
+                self.csvwriter.writerow([time.time(), self.obj.get_name(), self.obj._uuid, val])
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
@@ -136,7 +136,7 @@ class PidsProf(BaseProf):
             self.max = val
         if self.csvwriter:
             try:
-                self.csvwriter.writerow([time.time(), self.obj.get_name(), val])
+                self.csvwriter.writerow([time.time(), self.obj.get_name(), self.obj._uuid, val])
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
