@@ -41,21 +41,17 @@ options:
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        required: false
     platform_update_domain_count:
         description:
             - Update domains indicate groups of virtual machines and underlying physical hardware that can be rebooted at the same time. Default is 5.
         default: 5
-        required: false
     platform_fault_domain_count:
         description:
             - Fault domains define the group of virtual machines that share a common power source and network switch. Should be between 1 and 3. Default is 3
         default: 3
-        required: false
     sku:
         description:
             - Define if the availability set supports managed disks.
@@ -63,7 +59,6 @@ options:
         choices:
             - Classic
             - Aligned
-        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -147,28 +142,23 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             platform_update_domain_count=dict(
                 type='int',
-                default=5,
-                required=False
+                default=5
             ),
             platform_fault_domain_count=dict(
                 type='int',
-                default=3,
-                required=False
+                default=3
             ),
             sku=dict(
                 type='str',
                 default='Classic',
-                required=False,
                 choices=['Classic', 'Aligned']
             )
         )
