@@ -303,7 +303,6 @@ options:
         choices:
             - absent
             - present
-        required: false
 
 extends_documentation_fragment:
     - azure
