@@ -181,10 +181,11 @@ class HashiVault:
             raise AnsibleError("Authentication method ldap requires a password")
 
         mount_point = kwargs.get('mount_point')
-        if mount_point is None:
-            mount_point = 'ldap'
 
-        self.client.auth_ldap(username, password, mount_point)
+        if not mount_point:
+            self.client.auth_ldap(username, password)
+        else:
+            self.client.auth_ldap(username, password, mount_point)
 
     def boolean_or_cacert(self, validate_certs, cacert):
         validate_certs = boolean(validate_certs, strict=False)
@@ -206,7 +207,12 @@ class HashiVault:
         if secret_id is None:
             raise AnsibleError("Authentication method app role requires a secret_id")
 
-        self.client.auth_approle(role_id, secret_id)
+        mount_point = kwargs.get('mount_point')
+
+        if not mount_point:
+            self.client.auth_approle(role_id, secret_id)
+        else:
+            self.client.auth_approle(role_id, secret_id, mount_point)
 
 
 class LookupModule(LookupBase):
