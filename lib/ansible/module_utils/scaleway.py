@@ -15,6 +15,14 @@ def scaleway_argument_spec():
     )
 
 
+def payload_from_object(scw_object):
+    return dict(
+        (k, v)
+        for k, v in scw_object.items()
+        if k != 'id' and v is not None
+    )
+
+
 class ScalewayException(Exception):
 
     def __init__(self, message):

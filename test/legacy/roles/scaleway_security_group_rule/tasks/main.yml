@@ -1,0 +1,226 @@
+# SCW_API_KEY='XXX' SCW_SG='GGG' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_security_group_rule
+
+- name: Set security group fact
+  set_fact:
+    security_group: "{{ lookup('env','SCW_SG') }}"
+
+- name: Check if SCW_SG is defined
+  debug:
+    msg: "SCW_SG env variable is required"
+  failed_when: security_group == ""
+
+- name: Create security_group_rule check
+  check_mode: true
+  scaleway_security_group_rule:
+    state: present
+    region: '{{ scaleway_region }}'
+    protocol: '{{ protocol }}'
+    port: '{{ port }}'
+    ip_range: '{{ ip_range }}'
+    direction: '{{ direction }}'
+    action: '{{ action }}'
+    security_group: '{{ security_group }}'
+  register: security_group_rule_creation_task
+
+- debug: var=security_group_rule_creation_task
+
+- assert:
+    that:
+      - security_group_rule_creation_task is success
+      - security_group_rule_creation_task is changed
+
+- block:
+  - name: Create security_group_rule check
+    scaleway_security_group_rule:
+      state: present
+      region: '{{ scaleway_region }}'
+      protocol: '{{ protocol }}'
+      port: '{{ port }}'
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
+      security_group: '{{ security_group }}'
+    register: security_group_rule_creation_task
+
+  - debug: var=security_group_rule_creation_task
+
+  - assert:
+      that:
+        - security_group_rule_creation_task is success
+        - security_group_rule_creation_task is changed
+
+  - name: Create security_group_rule duplicate
+    scaleway_security_group_rule:
+      state: present
+      region: '{{ scaleway_region }}'
+      protocol: '{{ protocol }}'
+      port: '{{ port }}'
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
+      security_group: '{{ security_group }}'
+    register: security_group_rule_creation_task
+
+  - debug: var=security_group_rule_creation_task
+
+  - assert:
+      that:
+        - security_group_rule_creation_task is success
+        - security_group_rule_creation_task is not changed
+
+  - name: Delete security_group_rule check
+    check_mode: true
+    scaleway_security_group_rule:
+      state: absent
+      region: '{{ scaleway_region }}'
+      protocol: '{{ protocol }}'
+      port: '{{ port }}'
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
+      security_group: '{{ security_group }}'
+    register: security_group_rule_deletion_task
+
+  - debug: var=security_group_rule_deletion_task
+
+  - assert:
+      that:
+        - security_group_rule_deletion_task is success
+        - security_group_rule_deletion_task is changed
+
+  always:
+  - name: Delete security_group_rule check
+    scaleway_security_group_rule:
+      state: absent
+      region: '{{ scaleway_region }}'
+      protocol: '{{ protocol }}'
+      port: '{{ port }}'
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
+      security_group: '{{ security_group }}'
+    register: security_group_rule_deletion_task
+
+  - debug: var=security_group_rule_deletion_task
+
+  - assert:
+      that:
+        - security_group_rule_deletion_task is success
+        - security_group_rule_deletion_task is changed
+
+- name: Delete security_group_rule check
+  scaleway_security_group_rule:
+    state: absent
+    region: '{{ scaleway_region }}'
+    protocol: '{{ protocol }}'
+    port: '{{ port }}'
+    ip_range: '{{ ip_range }}'
+    direction: '{{ direction }}'
+    action: '{{ action }}'
+    security_group: '{{ security_group }}'
+  register: security_group_rule_deletion_task
+
+- debug: var=security_group_rule_deletion_task
+
+- assert:
+    that:
+      - security_group_rule_deletion_task is success
+      - security_group_rule_deletion_task is not changed
+
+- block:
+  - name: Create security_group_rule with null check
+    scaleway_security_group_rule:
+      state: present
+      region: '{{ scaleway_region }}'
+      protocol: '{{ protocol }}'
+      port: null
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
+      security_group: '{{ security_group }}'
+    register: security_group_rule_creation_task
+
+  - debug: var=security_group_rule_creation_task
+
+  - assert:
+      that:
+        - security_group_rule_creation_task is success
+        - security_group_rule_creation_task is changed
+
+  - name: Create security_group_rule with null duplicate
+    scaleway_security_group_rule:
+      state: present
+      region: '{{ scaleway_region }}'
+      protocol: '{{ protocol }}'
+      port: null
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
+      security_group: '{{ security_group }}'
+    register: security_group_rule_creation_task
+
+  - debug: var=security_group_rule_creation_task
+
+  - assert:
+      that:
+        - security_group_rule_creation_task is success
+        - security_group_rule_creation_task is not changed
+
+  - name: Delete security_group_rule with null check
+    check_mode: true
+    scaleway_security_group_rule:
+      state: absent
+      region: '{{ scaleway_region }}'
+      protocol: '{{ protocol }}'
+      port: null
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
+      security_group: '{{ security_group }}'
+    register: security_group_rule_deletion_task
+
+  - debug: var=security_group_rule_deletion_task
+
+  - assert:
+      that:
+        - security_group_rule_deletion_task is success
+        - security_group_rule_deletion_task is changed
+
+  always:
+  - name: Delete security_group_rule with null check
+    scaleway_security_group_rule:
+      state: absent
+      region: '{{ scaleway_region }}'
+      protocol: '{{ protocol }}'
+      port: null
+      ip_range: '{{ ip_range }}'
+      direction: '{{ direction }}'
+      action: '{{ action }}'
+      security_group: '{{ security_group }}'
+    register: security_group_rule_deletion_task
+
+  - debug: var=security_group_rule_deletion_task
+
+  - assert:
+      that:
+        - security_group_rule_deletion_task is success
+        - security_group_rule_deletion_task is changed
+
+- name: Delete security_group_rule with null check
+  scaleway_security_group_rule:
+    state: absent
+    region: '{{ scaleway_region }}'
+    protocol: '{{ protocol }}'
+    port: null
+    ip_range: '{{ ip_range }}'
+    direction: '{{ direction }}'
+    action: '{{ action }}'
+    security_group: '{{ security_group }}'
+  register: security_group_rule_deletion_task
+
+- debug: var=security_group_rule_deletion_task
+
+- assert:
+    that:
+      - security_group_rule_deletion_task is success
+      - security_group_rule_deletion_task is not changed
