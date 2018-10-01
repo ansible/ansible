@@ -1,0 +1,8 @@
+---
+scaleway_organization: '{{ scw_org }}'
+scaleway_region: par1
+protocol: "TCP"
+port: 80
+ip_range: "0.0.0.0/0"
+direction: "inbound"
+action: "accept"
