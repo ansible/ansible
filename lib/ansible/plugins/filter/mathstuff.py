@@ -54,7 +54,12 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     error = None
     try:
         if HAS_UNIQUE:
-            c = set(do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute))
+            c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
+            if isinstance(a, collections.Hashable):
+                c = set(c)
+            else:
+                c = list(c)
+
     except Exception as e:
         if case_sensitive or attribute:
             raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "

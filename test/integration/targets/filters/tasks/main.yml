@@ -237,3 +237,19 @@
     that:
             - "'00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
             - "'00:00:00' | random_mac != '00:00:00' | random_mac"
+
+- name: Verify that union can be chained
+  vars:
+    unions: '{{ [1,2,3]|union([4,5])|union([6,7]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 7"
+
+- name: Test union with unhashable item
+  vars:
+    unions: '{{ [1,2,3]|union([{}]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 4"
