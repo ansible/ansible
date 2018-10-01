@@ -1,0 +1,58 @@
+---
+
+  - name: add X-Forwarded-For 'blah'
+    win_iis_logs:
+      configuration: site
+      site_name: blah
+      log_custom_fields: # Only available if format is W3C
+        - field_name: 'x-forwarded-for'
+          source_type: 'RequestHeader'
+          source_name:  'X-Forwarded-For'
+          state: present
+
+  - name: Ensure IIS Logging is configured
+    win_iis_logs:
+      configuration: server
+      central_log_file_mode: "Site" #Site, CentralBinary or CentralW3C are available
+      log_in_utf8: false # true / false.  Only available for configuration: server
+      log_directory: '%SystemDrive%\inetpub\logs'
+      use_local_time: true
+      log_ext_file_flags: all # Only available if format is CentralW3C
+      rotation_period: MaxSize
+      truncate_size: 8675309
+
+  - name: Ensure IIS Site defaults are correct
+    win_iis_logs:
+      configuration: siteDefaults # not available when central_log_file_mode is _not_ "Site"
+      site_log_format: "W3C"
+      log_directory: '%SystemDrive%\inetpub\logs\LogFiles'
+      use_local_time: true
+      log_ext_file_flags: all # Only available if format is W3C
+      rotation_period: MaxSize
+      truncate_size: 8675309
+      log_custom_fields: # Only available if format is W3C
+        - field_name: 'x-forwarded-for'
+          source_type: 'RequestHeader'
+          source_name:  'X-Forwarded-For'
+          state: present
+
+  - name: Remove BytesSent
+    win_iis_logs:
+      configuration: siteDefaults # not available when central_log_file_mode is _not_ "Site"
+      log_ext_file_flags: 
+        - field_name: BytesSent
+          state: absent
+
+  - name: Remove protocol substatus
+    win_iis_logs:
+      configuration: siteDefaults # not available when central_log_file_mode is _not_ "Site"
+      log_ext_file_flags: 
+        - field_name: ProtocolSubstatus  # This will show a warning, since this isn't recognized by IIS
+          state: absent
+
+  - name: Add protocol substatus
+    win_iis_logs:
+      configuration: siteDefaults # not available when central_log_file_mode is _not_ "Site"
+      log_ext_file_flags: 
+        - field_name: ProtocolSubstatus  # This will fail, since this isn't recognized by IIS
+          state: present
