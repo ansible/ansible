@@ -651,8 +651,8 @@ def command_integration_filter(args, targets, init_callback=None):
     """
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
-    exclude = (args.exclude or [])
+    require = args.require + changes
+    exclude = args.exclude
 
     internal_targets = walk_internal_targets(targets, args.include, exclude, require)
     environment_exclude = get_integration_filter(args, internal_targets)
@@ -1133,7 +1133,7 @@ def command_units(args):
     :type args: UnitsConfig
     """
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
+    require = args.require + changes
     include, exclude = walk_external_targets(walk_units_targets(), args.include, args.exclude, require)
 
     if not include:

@@ -104,9 +104,9 @@ class TestConfig(EnvironmentConfig):
 
         self.coverage = args.coverage  # type: bool
         self.coverage_label = args.coverage_label  # type: str
-        self.include = args.include  # type: list [str]
-        self.exclude = args.exclude  # type: list [str]
-        self.require = args.require  # type: list [str]
+        self.include = args.include or []  # type: list [str]
+        self.exclude = args.exclude or []  # type: list [str]
+        self.require = args.require or []  # type: list [str]
 
         self.changed = args.changed  # type: bool
         self.tracked = args.tracked  # type: bool
