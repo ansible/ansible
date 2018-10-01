@@ -1090,12 +1090,14 @@ def fmgr_cidr_to_netmask(cidr):
 
 
 # utility function: removing keys wih value of None, nothing in playbook for that key
-def fmgr_del_none(obj):
-    if isinstance(obj, dict):
-        return type(obj)((fmgr_del_none(k), fmgr_del_none(v))
-                         for k, v in obj.items() if k is not None and v is not None)
-    else:
-        return obj
+def fmgr_del_none(data):
+    new_dict = {}
+    for k, v in data.items():
+        if isinstance(v, dict):
+            v = fmgr_del_none(v)
+        if not v in (u'', None, {}):
+            new_dict[k] = v
+    return new_dict
 
 
 # utility function: remove keys that are need for the logic but the FMG API won't accept them
