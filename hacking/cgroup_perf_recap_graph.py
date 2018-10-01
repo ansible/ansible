@@ -53,7 +53,7 @@ def task_start_ticks(dates, names):
 def create_axis_data(filename, relative=False):
     x_base = None if relative else 0
 
-    axis_name, _ = os.path.splitext(os.path.basename(filename))
+    axis_name, dummy = os.path.splitext(os.path.basename(filename))
 
     dates = []
     names = []

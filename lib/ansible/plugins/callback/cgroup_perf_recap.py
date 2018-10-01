@@ -72,7 +72,7 @@ from ansible.plugins.callback import CallbackBase
 
 class BaseProf(with_metaclass(ABCMeta, threading.Thread)):
     def __init__(self, path, obj=None, csvwriter=None):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self)  # pylint: disable=non-parent-init-called
         self.obj = obj
         self.path = path
         self.max = 0
@@ -151,7 +151,6 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
-
 
         self._features = ('memory', 'cpu', 'pids')
 
@@ -250,7 +249,7 @@ class CallbackModule(CallbackBase):
             self._profilers['memory'] = MemoryProf(self.mem_current_file, obj=obj, csvwriter=self._csv_writers['memory'])
             self._profilers['cpu'] = CpuProf(self.cpu_usage_file, poll_interval=self._cpu_poll_interval, obj=obj,
                                              csvwriter=self._csv_writers['cpu'])
-            self._profilers['pids'] = PidsProf(self.pid_current_file,  obj=obj, csvwriter=self._csv_writers['pids'])
+            self._profilers['pids'] = PidsProf(self.pid_current_file, obj=obj, csvwriter=self._csv_writers['pids'])
             for name, prof in self._profilers.items():
                 prof.start()
 
