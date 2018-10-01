@@ -39,7 +39,7 @@ import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
 
-from jinja2.filters import environmentfilter, do_groupby as _do_groupby
+from jinja2.filters import environmentfilter, contextfilter, do_groupby as _do_groupby
 
 from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
@@ -60,6 +60,12 @@ except ImportError:
     display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
+
+@contextfilter
+def flip(context, value, name, *args, **kwargs):
+    args = args[::-1] + (value,)
+    return context.environment.call_filter(name, args[0], args[1:], kwargs=kwargs, context=context)
 
 
 def to_yaml(a, *args, **kw):
@@ -635,6 +641,9 @@ class FilterModule(object):
 
             # debug
             'type_debug': lambda o: o.__class__.__name__,
+
+            # functions
+            'flip': flip,
 
             # Data structures
             'combine': combine,

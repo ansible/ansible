@@ -1203,6 +1203,62 @@ To format a date using a string (like with the shell date command), use the "str
 
 .. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
 
+Filter-manipulating Filters
+```````````````````````````
+
+.. versionadded:: 2.8
+
+You can use the `flip` filter to apply a filter but with arguments flipped in
+reverse order. Example ::
+
+    {{ list1 | flip('difference', list2) }}
+
+… is the same as:
+
+    {{ list2 | difference(list1) }}
+
+This becomes useful with filters like `map` where you can't easily re-order the
+arguments yourself.
+
+Say that you have a role that takes a list of users to add to a system. You want
+to ensure some default values and apply some overrides before using the value in
+your role's task. You could do it like this:
+
+`roles/users/defaults/main.yml`:
+
+.. code-block:: yaml
+
+    ---
+    # A list of user objects
+    users: []
+
+`roles/users/vars/main.yml`:
+
+.. code-block:: yaml
+
+    ---
+    # Ensure we don't delete users and that we never overwrite passwords after
+    # creation
+    _users_overrides:
+      state: present
+      update_password: on_create
+
+    # Add users to `guest` by default and generate an ssh-key.
+    _users_defaults:
+      groups:
+        - guest
+      generate_ssh_key: true
+
+    # A list of users with overrides and defaults applied (this is what your
+    # tasks will use)
+    _users: >-
+      {{ users
+       | map('flip', 'combine', _users_defaults)
+       | map('combine', _users_overrides)
+       | list
+      }}
+
+
 Combination Filters
 ````````````````````
 

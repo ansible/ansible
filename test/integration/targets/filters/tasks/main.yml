@@ -144,6 +144,15 @@
       - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
       - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
 
+- name: Test flip filter
+  assert:
+    that:
+      - "'one-arg-identity' | upper == 'one-arg-identity' | flip('upper')"
+      - "'two-args' | hash('sha1') == 'sha1' | flip('hash', 'two-args')"
+      - "{'three-args': true, 'arg':1 } | combine({'arg':2}, {'arg':3}) == {'arg':3} | flip('combine', {'arg':2}, {'three-args': true, 'arg':1})"
+      - "{'test':{'kwargs':1}} | combine({'test':{'kwargs':2}}, recursive=True) == {'test':{'kwargs':2}} | flip('combine', {'test':{'kwargs':1}}, recursive=True)"
+      - "[{'a':'user-set'}, {'b':'user-set'}] | map('flip', 'combine', {'a':'default', 'b': 'default'}) | list == [{'a':'user-set', 'b':'default'}, {'a':'default', 'b':'user-set'}]"
+
 - debug:
     var: "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit"
     verbosity: 1
