@@ -77,19 +77,19 @@ ansible_net_hostname:
 
 # hardware
 ansible_net_spacefree_mb:
-  description: The available disk space on the remote device in Mb
+  description: The available disk space on the remote device in MiB
   returned: when hardware is configured
   type: dict
 ansible_net_spacetotal_mb:
-  description: The total disk space on the remote device in Mb
+  description: The total disk space on the remote device in MiB
   returned: when hardware is configured
   type: dict
 ansible_net_memfree_mb:
-  description: The available free memory on the remote device in Mb
+  description: The available free memory on the remote device in MiB
   returned: when hardware is configured
   type: int
 ansible_net_memtotal_mb:
-  description: The total memory on the remote device in Mb
+  description: The total memory on the remote device in MiB
   returned: when hardware is configured
   type: int
 
@@ -245,12 +245,15 @@ class Interfaces(FactsBase):
         '/ip neighbor print detail without-paging'
     ]
 
+    DETAIL_RE = re.compile(r'([\w\d\-]+)=\"?(\w{3}/\d{2}/\d{4}\s\d{2}:\d{2}:\d{2}|[\w\d\-\.:/]+)')
+
     def populate(self):
         super(Interfaces, self).populate()
 
         self.facts['interfaces'] = dict()
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
+        self.facts['neighbors'] = dict()
 
         data = self.responses[0]
         if data:
@@ -316,7 +319,7 @@ class Interfaces(FactsBase):
         for line in data:
             name = self.parse_name(line)
             facts[name] = dict()
-            for (key, value) in re.findall(r'([\w\d\-]+)=\"?(\w{3}/\d{2}/\d{4}\s\d{2}:\d{2}:\d{2}|[\w\d\-\.:/]+)', line):
+            for (key, value) in re.findall(self.DETAIL_RE, line):
                 facts[name][key] = value
         return facts
 
@@ -326,7 +329,7 @@ class Interfaces(FactsBase):
         for line in data:
             name = self.parse_interface(line)
             facts[name] = dict()
-            for (key, value) in re.findall(r'([\w\d\-]+)=\"?(\w{3}/\d{2}/\d{4}\s\d{2}:\d{2}:\d{2}|[\w\d\-\.:/]+)', line):
+            for (key, value) in re.findall(self.DETAIL_RE, line):
                 facts[name][key] = value
         return facts
 
@@ -336,7 +339,7 @@ class Interfaces(FactsBase):
         for line in data:
             name = self.parse_interface(line)
             facts[name] = dict()
-            for (key, value) in re.findall(r'([\w\d\-]+)=\"?(\w{3}/\d{2}/\d{4}\s\d{2}:\d{2}:\d{2}|[\w\d\-\.:/]+)', line):
+            for (key, value) in re.findall(self.DETAIL_RE, line):
                 facts[name][key] = value
         return facts
 
