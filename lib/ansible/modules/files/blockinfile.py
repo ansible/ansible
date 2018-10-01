@@ -12,102 +12,95 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: blockinfile
 author:
-    - YAEGASHI Takeshi (@yaegashi)
+- Yaegashi Takeshi (@yaegashi)
 extends_documentation_fragment:
-    - files
-    - validate
+- files
+- validate
 short_description: Insert/update/remove a text block surrounded by marker lines
 version_added: '2.0'
 description:
-  - This module will insert/update/remove a block of multi-line text
-    surrounded by customizable marker lines.
+- This module will insert/update/remove a block of multi-line text
+  surrounded by customizable marker lines.
 options:
   path:
     description:
-      - The file to modify.
-      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    - The file to modify.
+    - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
     aliases: [ dest, destfile, name ]
-    required: true
+    required: yes
   state:
     description:
-      - Whether the block should be there or not.
+    - Whether the block should be there or not.
     choices: [ absent, present ]
     default: present
   marker:
     description:
-      - The marker line template.
-        "{mark}" will be replaced with the values in marker_begin
-        (default="BEGIN") and marker_end (default="END").
+    - The marker line template.
+    - C({mark}) will be replaced with the values C(in marker_begin) (default="BEGIN") and C(marker_end) (default="END").
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
     description:
-      - The text to insert inside the marker lines.
-        If it's missing or an empty string,
-        the block will be removed as if C(state) were specified to C(absent).
+    - The text to insert inside the marker lines.
+    - If it is missing or an empty string, the block will be removed as if C(state) were specified to C(absent).
     aliases: [ content ]
     default: ''
   insertafter:
     description:
-      - If specified, the block will be inserted after the last match of
-        specified regular expression. A special value is available; C(EOF) for
-        inserting the block at the end of the file.  If specified regular
-        expression has no matches, C(EOF) will be used instead.
+    - If specified, the block will be inserted after the last match of specified regular expression.
+    - A special value is available; C(EOF) for inserting the block at the end of the file.
+    - If specified regular expression has no matches, C(EOF) will be used instead.
     default: EOF
     choices: [ EOF, '*regex*' ]
   insertbefore:
     description:
-      - If specified, the block will be inserted before the last match of
-        specified regular expression. A special value is available; C(BOF) for
-        inserting the block at the beginning of the file.  If specified regular
-        expression has no matches, the block will be inserted at the end of the
-        file.
+    - If specified, the block will be inserted before the last match of specified regular expression.
+    - A special value is available; C(BOF) for inserting the block at the beginning of the file.
+    - If specified regular expression has no matches, the block will be inserted at the end of the file.
     choices: [ BOF, '*regex*' ]
   create:
     description:
-      - Create a new file if it doesn't exist.
+    - Create a new file if it does not exist.
     type: bool
-    default: 'no'
+    default: no
   backup:
     description:
-      - Create a backup file including the timestamp information so you can
-        get the original file back if you somehow clobbered it incorrectly.
+    - Create a backup file including the timestamp information so you can
+      get the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: 'no'
+    default: no
   marker_begin:
     description:
-      - This will be inserted at {mark} in the opening ansible block marker.
-    default: 'BEGIN'
-    version_added: "2.5"
+    - This will be inserted at {mark} in the opening ansible block marker.
+    default: BEGIN
+    version_added: '2.5'
   marker_end:
     required: false
     description:
-      - This will be inserted at {mark} in the closing ansible block marker.
-    default: 'END'
-    version_added: "2.5"
-
+    - This will be inserted at {mark} in the closing ansible block marker.
+    default: END
+    version_added: '2.5'
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
   - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
   - When more then one block should be handled in **one** file you **must** change the I(marker) per task
-"""
+'''
 
-EXAMPLES = r"""
+EXAMPLES = r'''
 # Before 2.3, option 'dest' or 'name' was used instead of 'path'
-- name: insert/update "Match User" configuration block in /etc/ssh/sshd_config
+- name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
   blockinfile:
     path: /etc/ssh/sshd_config
     block: |
       Match User ansible-agent
       PasswordAuthentication no
 
-- name: insert/update eth0 configuration stanza in /etc/network/interfaces
+- name: Insert/Update eth0 configuration stanza in /etc/network/interfaces
         (it might be better to copy files into /etc/network/interfaces.d/)
   blockinfile:
     path: /etc/network/interfaces
@@ -116,14 +109,14 @@ EXAMPLES = r"""
           address 192.0.2.23
           netmask 255.255.255.0
 
-- name: insert/update configuration using a local file and validate it
+- name: Insert/Update configuration using a local file and validate it
   blockinfile:
     block: "{{ lookup('file', './local/ssh_config') }}"
-    dest: "/etc/ssh/ssh_config"
+    dest: /etc/ssh/ssh_config
     backup: yes
-    validate: "/usr/sbin/sshd -T -f %s"
+    validate: /usr/sbin/sshd -T -f %s
 
-- name: insert/update HTML surrounded by custom markers after <body> line
+- name: Insert/Update HTML surrounded by custom markers after <body> line
   blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
@@ -132,7 +125,7 @@ EXAMPLES = r"""
       <h1>Welcome to {{ ansible_hostname }}</h1>
       <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
 
-- name: remove HTML as well as surrounding markers
+- name: Remove HTML as well as surrounding markers
   blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
@@ -145,10 +138,10 @@ EXAMPLES = r"""
       {{ item.ip }} {{ item.name }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
   with_items:
-    - { name: host1, ip: 10.10.1.10 }
-    - { name: host2, ip: 10.10.1.11 }
-    - { name: host3, ip: 10.10.1.12 }
-"""
+  - { name: host1, ip: 10.10.1.10 }
+  - { name: host2, ip: 10.10.1.11 }
+  - { name: host3, ip: 10.10.1.12 }
+'''
 
 import re
 import os
