@@ -41,7 +41,6 @@ options:
         description:
             - Assert the state of the key. Use 'present' to create a key and
               'absent' to delete a key.
-        required: false
         default: present
         choices:
             - absent
