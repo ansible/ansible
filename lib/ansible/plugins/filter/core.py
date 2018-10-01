@@ -441,7 +441,7 @@ def flatten(mylist, levels=None):
                 ret.extend(flatten(element))
             elif levels >= 1:
                 # decrement as we go down the stack
-                ret.extend(flatten(element, levels=(int(levels) -1)))
+                ret.extend(flatten(element, levels=(int(levels) - 1)))
             else:
                 ret.append(element)
         else:
