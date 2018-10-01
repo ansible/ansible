@@ -539,19 +539,58 @@ class ELBListeners(object):
             modified_listener['Certificates'].append({})
             modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
 
-        # Default action
-        #   We wont worry about the Action Type because it is always 'forward'
-        if current_listener['DefaultActions'][0]['TargetGroupArn'] != new_listener['DefaultActions'][0]['TargetGroupArn']:
-            modified_listener['DefaultActions'] = []
-            modified_listener['DefaultActions'].append({})
-            modified_listener['DefaultActions'][0]['TargetGroupArn'] = new_listener['DefaultActions'][0]['TargetGroupArn']
-            modified_listener['DefaultActions'][0]['Type'] = 'forward'
+        modified_actions = self._compare_default_action(current_listener['DefaultActions'], new_listener['DefaultActions'])
+        if modified_actions:
+            modified_listener['DefaultActions'] = modified_actions
 
         if modified_listener:
             return modified_listener
         else:
             return None
 
+    def _compare_default_action(self, current_actions, new_actions):
+        """
+        Compare two default actions.
+
+        :param current_actions:
+        :param new_actions:
+        :return:
+        """
+        if current_actions[0]['Type'] != new_actions[0]['Type']:
+            return new_actions
+
+        if current_actions[0]['Type'] == 'forward':
+            if current_actions[0]['TargetGroupArn'] != new_actions[0]['TargetGroupArn']:
+                return new_actions
+
+        if current_actions[0]['Type'] == 'redirect':
+            if not self._is_config_equals(current_actions[0]['RedirectConfig'], new_actions[0]['RedirectConfig']):
+                return new_actions
+
+        if current_actions[0]['Type'] == 'authenticate-oidc':
+            current_authentication_params = current_actions[0]['AuthenticateOidcConfig'].get('AuthenticationRequestExtraParams', None)
+            new_authentication_params = new_actions[0]['AuthenticateOidcConfig'].get('AuthenticationRequestExtraParams', None)
+            if not self._is_config_equals(current_authentication_params, new_authentication_params):
+                return new_actions
+            if not self._is_config_equals(current_actions[0]['AuthenticateOidcConfig'], new_actions[0]['AuthenticateOidcConfig']):
+                return new_actions
+
+        if current_actions[0]['Type'] == 'authenticate-cognito':
+            current_authentication_params = current_actions[0]['AuthenticateCognitoConfig'].get('AuthenticationRequestExtraParams', None)
+            new_authentication_params = new_actions[0]['AuthenticateCognitoConfig'].get('AuthenticationRequestExtraParams', None)
+            if not self._is_config_equals(current_authentication_params, new_authentication_params):
+                return new_actions
+            if not self._is_config_equals(current_actions[0]['AuthenticateCognitoConfig'], new_actions[0]['AuthenticateCognitoConfig']):
+                return new_actions
+        return None
+
+    def _is_config_equals(self, first, second):
+        if len(first) != len(second):
+            return False
+        for config in first.keys():
+            if first.get(config) != second.get(config):
+                return False
+        return True
 
 class ELBListener(object):
 

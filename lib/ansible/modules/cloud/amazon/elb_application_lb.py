@@ -210,6 +210,29 @@ EXAMPLES = '''
                 Type: forward
     state: present
 
+# Create an ALB with listeners and redirect HTTP to HTTPS
+- elb_application_lb:
+    name: test-alb
+    subnets:
+      - subnet-12345678
+      - subnet-87654321
+    security_groups:
+      - sg-12345678
+    scheme: internal
+    listeners:
+      - Protocol: HTTP
+        Port: 80
+        DefaultActions:
+          - Type: redirect
+            RedirectConfig:
+              Protocol: HTTPS
+              Port: '443'
+              Host: '#{host}'
+              Path: '/#{path}'
+              Query: '#{query}'
+              StatusCode: "HTTP_302"
+    state: present
+
 # Remove an ELB
 - elb_application_lb:
     name: myelb
