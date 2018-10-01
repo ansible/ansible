@@ -16,33 +16,32 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: rabbitmq_basic_publish
-short_description: Publish a message on a rabbitmq queue
-version_added: "2.7"
+short_description: Publish a message on a RabbitMQ queue.
+version_added: "2.8"
 description:
-   - Publish a message on a rabbitmq queue using a blocking connection
+   - Publish a message on a rabbitmq queue using a blocking connection.
 options:
   url:
     description:
-      - An URL connection string to connect to the amqp/amqps rabbitmq server.
+      - An URL connection string to connect to the RabbitMQ server.
     default: amqp://guest:guest@127.0.0.1:5672/%2F
-    required: true
   queue:
     description:
-      - The channel/queue to get messages from
+      - The queue to publish a message to.
     required: true
   exchange:
     description:
-      - The exchange to post to
+      - The exchange to publish a message to.
   routing_key:
     description:
-      - The routing key
+      - The routing key.
   body:
     description:
-      - The body of the message
+      - The body of the message.
     required: true
   content_type:
     description:
-      - The content type of the body
+      - The content type of the body.
     default: text/plain
   durable:
     description:
@@ -54,14 +53,15 @@ options:
     default: False
   auto_delete:
     description:
-      - Set the queue to auto delete
+      - Set the queue to auto delete.
     default: False
 
 
 requirements: [ pika ]
 notes:
- - This module requires the pika python library U(https://pika.readthedocs.io/)
-author: "John Imison"
+  - This module requires the pika python library U(https://pika.readthedocs.io/).
+  - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library.
+author: "John Imison (@Im0)"
 '''
 
 EXAMPLES = '''
@@ -82,75 +82,32 @@ except ImportError:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.rabbitmq import RabbitClient
 
 
 def main():
+    argument_spec = RabbitClient.rabbitmq_argument_spec()
+    argument_spec.update(
+        exchange=dict(type='str', default=''),
+        routing_key=dict(type='str', required=False),
+        body=dict(type='str', required=True),
+        content_type=dict(default="text/plain", type='str'),
+        durable=dict(default=False, type='bool'),
+        exclusive=dict(default=False, type='bool'),
+        auto_delete=dict(default=False, type='bool')
+    )
     module = AnsibleModule(
-        argument_spec=dict(
-            url=dict(type='str', default='amqp://guest:guest@127.0.0.1:5672/%2F'),
-            queue=dict(type='str', required=True),
-            exchange=dict(type='str', default=''),
-            routing_key=dict(type='str', required=False),
-            body=dict(type='str', required=True),
-            content_type=dict(default="text/plain", type='str'),
-            durable=dict(default=False, type='bool'),
-            exclusive=dict(default=False, type='bool'),
-            auto_delete=dict(default=False, type='bool')
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=False
     )
 
-    if not HAS_PIKA:
-        module.fail_json(msg="pika is not installed")
+    rabbitmq = RabbitClient(module)
 
-    url = module.params.get("url")
-    queue = module.params.get("queue")
-    body = module.params.get("body")
-    exchange = module.params.get("exchange")
-    routing_key = module.params.get("routing_key")
-    content_type = module.params.get("content_type")
-    durable = module.params.get("durable")
-    exclusive = module.params.get("exclusive")
-    auto_delete = module.params.get("auto_delete")
-
-    # https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/cloudstack.py#L150
-    if exchange == None:
-        exchange = ''
-
-    if routing_key == None:
-        routing_key = queue
-
-    try:
-        parameters = pika.URLParameters(url)
-    except Exception as e:
-        module.fail_json(msg="url misformed: %s" % to_native(e))
-
-    try:
-        connection = pika.BlockingConnection(parameters)
-    except Exception as e:
-        module.fail_json(msg="connection issue: %s" % to_native(e))
-
-    try:
-        conn_channel = connection.channel()
-    except Exception as e:
-        module.fail_json(msg="connection issue: %s" % to_native(e))
-
-    try:
-        conn_channel.queue_declare(queue=queue, durable=durable, exclusive=exclusive, auto_delete=auto_delete)
-    except Exception as e:
-        module.fail_json(msg="channel: %s" % to_native(e))
-
-
-#    module.fail_json(msg="Testing: q:%s ex:%s rk:%s bdy:%s ct:%s" % (queue, exchange, routing_key, body, content_type))
-    if conn_channel.basic_publish(exchange=exchange,
-                         routing_key=routing_key,
-                         body=body,
-                         properties=pika.BasicProperties(content_type=content_type,
-                                                         delivery_mode=1)):
-        module.exit_json(changed=True, msg=body)
+    if rabbitmq.basic_publish():
+        module.exit_json(changed=True, msg=module.params.get("body"))
     else:
-        module.exit_json(changed=False, msg=body)
+        module.exit_json(changed=False, msg=module.params.get("body"))
 
 
 if __name__ == '__main__':

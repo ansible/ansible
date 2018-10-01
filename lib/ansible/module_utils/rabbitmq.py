@@ -1,8 +1,25 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright: (c) 2016, Jorge Rodriguez <jorge.rodriguez@tiriel.eu>
+# Copyright: (c) 2018, John Imison <john+github@imison.net>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.basic import env_fallback
+from mimetypes import MimeTypes
+
+import json
+
+try:
+    import pika
+    from pika import spec
+    HAS_PIKA = True
+except ImportError:
+    HAS_PIKA = False
 
 
 def rabbitmq_argument_spec():
@@ -17,3 +34,114 @@ def rabbitmq_argument_spec():
         key=dict(required=False, type='path', default=None),
         vhost=dict(default='/', type='str'),
     )
+
+
+# notification/rabbitmq_basic_publish.py
+class RabbitClient():
+    def __init__(self, module):
+        self.module = module
+        self.params = module.params
+        self.check_required_library()
+        self.url = self.params['url']
+        self.queue = self.params['queue']
+        self.conn_channel = self.connect_to_rabbitmq()
+
+    def check_required_library(self):
+        if not HAS_PIKA:
+            self.module.fail_json(msg="Unable to find 'pika' Python library which is required."
+                                      " Please install using 'pip install pika'")
+
+    @staticmethod
+    def rabbitmq_argument_spec():
+        return dict(
+            url=dict(default='amqp://guest:guest@127.0.0.1:5672/%2F', type='str'),
+            queue=dict(default=None, type='str', required=True)
+        )
+
+    def connect_to_rabbitmq(self):
+        """
+        Function to connect to rabbitmq using username and password
+        """
+        try:
+            parameters = pika.URLParameters(self.url)
+        except Exception as e:
+            self.module.fail_json(msg="URL malformed: %s" % to_native(e))
+
+        try:
+            connection = pika.BlockingConnection(parameters)
+        except Exception as e:
+            self.module.fail_json(msg="Connection issue: %s" % to_native(e))
+
+        try:
+            conn_channel = connection.channel()
+        except pika.exceptions.AMQPChannelError as e:
+            try:
+                connection.close()
+                self.module.fail_json(msg="Channel issue: %s" % to_native(e))
+            except pika.exceptions.AMQPConnectionError as ie:
+                self.module.fail_json(msg="Channel and connection closing issues: %s / %s" % (to_native(e), to_native(ie)))
+        return conn_channel
+
+    def close_connection(self):
+        self.connection.close()
+
+    def basic_get(self):
+        ret = []
+        idx = 0
+        self.count = self.params.get('count', None)
+
+        while True:
+            method_frame, properties, body = self.conn_channel.basic_get(queue=queue)
+            if method_frame:
+                msg_details = dict({
+                    'msg': body,
+                    'message_count': method_frame.message_count,
+                    'routing_key': method_frame.routing_key,
+                    'delivery_tag': method_frame.delivery_tag,
+                    'redelivered': method_frame.redelivered,
+                    'exchange': method_frame.exchange,
+                    'delivery_mode': properties.delivery_mode,
+                    'content_type': properties.content_type
+                })
+                if properties.content_type == 'application/json':
+                    try:
+                        msg_details['json'] = json.loads(body)
+                    except ValueError as e:
+                        raise AnsibleError("Unable to decode JSON for message %s" % method_frame.delivery_tag)
+
+                ret.append(msg_details)
+                self.conn_channel.basic_ack(method_frame.delivery_tag)
+                idx += 1
+                if method_frame.message_count == 0 or idx == count:
+                    break
+            # If we didn't get a method_frame, exit.
+            else:
+                break
+
+        return [ret]
+
+    def basic_publish(self):
+        args = dict(
+            body=self.params.get("body"),
+            exchange=self.params.get("exchange"),
+            routing_key=self.params.get("routing_key"),
+            properties=pika.BasicProperties(content_type=self.params.get("content_type"), delivery_mode=1))
+
+        self.conn_channel.queue_declare(queue=self.queue,
+                                        durable=self.params.get("durable"),
+                                        exclusive=self.params.get("exclusive"),
+                                        auto_delete=self.params.get("auto_delete"))
+
+        # https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/cloudstack.py#L150
+        if args['exchange'] is None:
+            args['exchange'] = ''
+
+        if args['routing_key'] is None:
+            args['routing_key'] = self.queue
+
+        return self.conn_channel.basic_publish(**args)
+
+    @staticmethod
+    def _check_file_mime_type(path):
+        mime = MimeTypes()
+        return mime.guess_type(path)
