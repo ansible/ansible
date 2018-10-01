@@ -151,7 +151,7 @@ EXAMPLES = '''
 
 RETURN = '''
 create_time:
-  description: The ISO 8601 date time formatin UTC.
+  description: The ISO 8601 date time format in UTC.
   returned: In all cases.
   type: string
   sample: "2016-03-05T05:19:20.282000+00:00'"
