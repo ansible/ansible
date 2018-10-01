@@ -26,9 +26,11 @@ EXAMPLES = """
     key: "{{ lookup('file', item.1.public_key) }}"
     state: "{{ 'present' if item.1.active else 'absent' }}"
   when: item.0.value.active
-  with_dependent:
-  - admin_user_data
-  - "admin_ssh_keys[item.0.key]"
+  loop: "{{ lookup('dependent', admin_user_data, 'admin_ssh_keys[item.0.key]') }}"
+  # Alternatively, you could also use the old with_* syntax:
+  #   with_dependent:
+  #   - admin_user_data
+  #   - "admin_ssh_keys[item.0.key]"
   loop_control:
     # Makes the output readable, so that it doesn't contain the whole subdictionaries and lists
     label: "{{ [item.0.key, 'active' if item.1.active else 'inactive', item.1.public_key] }}"
