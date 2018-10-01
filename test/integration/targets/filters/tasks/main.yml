@@ -131,6 +131,13 @@
     that:
       - "users | json_query('[*].hosts[].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
 
+- name: Test combine filter
+  assert:
+    that:
+      - "{'a':1, 'b':2} | combine({'b':3}) == {'a':1, 'b':3}"
+      - "{'b':3} | combine({'a':1, 'b':2}) == {'a':1, 'b':2}"
+      - "{'a':{'foo':1, 'bar':2}, 'b':2} | combine({'a':{'bar':3, 'baz':4}}, recursive=True) == {'a':{'foo':1, 'bar':3, 'baz':4}, 'b':2}"
+
 - name: Test hash filter
   assert:
     that:
