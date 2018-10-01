@@ -13,6 +13,18 @@ ALLOW_WORLD_READABLE_TMPFILES:
   type: boolean
   yaml: {key: defaults.allow_world_readable_tmpfiles}
   version_added: "2.1"
+ANSIBLE_CONNECTION_PATH:
+  name: Path of ansible-connection script
+  default: null
+  description:
+    - Specify where to look for the ansible-connection script. This location will be checked before searching $PATH.
+    - If null, ansible will start with the same directory as the ansible script.
+  type: path
+  env: [{name: ANSIBLE_CONNECTION_PATH}]
+  ini:
+  - {key: ansible_connection_path, section: persistent_connection}
+  yaml: {key: persistent_connection.ansible_connection_path}
+  version_added: "2.8"
 ANSIBLE_COW_SELECTION:
   name: Cowsay filter selection
   default: default
