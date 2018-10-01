@@ -458,6 +458,8 @@ def filter_options(args, argv, options, exclude, require):
             '--changed-from': 1,
             '--changed-path': 1,
             '--metadata': 1,
+            '--exclude': 1,
+            '--require': 1,
         })
     elif isinstance(args, SanityConfig):
         options.update({

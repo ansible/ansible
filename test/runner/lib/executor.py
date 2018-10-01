@@ -675,7 +675,7 @@ def command_integration_filter(args, targets, init_callback=None):
     cloud_init(args, internal_targets)
 
     if args.delegate:
-        raise Delegate(require=changes, exclude=exclude, integration_targets=internal_targets)
+        raise Delegate(require=require, exclude=exclude, integration_targets=internal_targets)
 
     install_command_requirements(args)
 
