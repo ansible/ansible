@@ -178,7 +178,7 @@ options:
     - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
-    - ' - C(filename) (string): Existing disk image to use. Must already exist on the datastore. String is in [datastore_name] path/to/file.vmdk format
+    - ' - C(filename) (string): Existing disk image to use. Must already exist on the datastore. String is in C([datastore_name] path/to/file.vmdk) format'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
     - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
     - '     - Available options are :'
