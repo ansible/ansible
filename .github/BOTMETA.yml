@@ -134,7 +134,9 @@ files:
   $modules/cloud/vmware/_vsphere_guest.py: dagwieers
   $modules/cloud/vultr/: $team_vultr
   $modules/cloud/webfaction/: quentinsf
-  $modules/clustering/k8s/: chouseknecht maxamillion fabianvf flaper87 willthames
+  $modules/clustering/k8s/:
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+    labels: k8s
   $modules/clustering/k8s/_kubernetes.py: supertom
   $modules/clustering/openshift/: chouseknecht maxamillion fabianvf flaper87
   $modules/commands/command.py: $team_ansible
@@ -465,7 +467,9 @@ files:
     maintainers: $team_ipa
   $module_utils/k8s:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-    labels: clustering
+    labels:
+      - clustering
+      - k8s
   $module_utils/keycloak.py:
     maintainers: eikef
   $module_utils/manageiq.py:
@@ -867,6 +871,7 @@ files:
   lib/ansible/plugins/inventory/k8s.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+    labels: k8s
   lib/ansible/plugins/inventory/openshift.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
@@ -901,6 +906,7 @@ files:
   lib/ansible/plugins/lookup/k8s.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+    labels: k8s
   lib/ansible/plugins/lookup/nios:
     support: core
     maintainers: $team_networking sganesh-infoblox
