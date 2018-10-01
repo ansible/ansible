@@ -310,19 +310,20 @@
 
 - name: Test dependent lookup
   debug: var=item
-  with_dependent:
-    - a:
+  loop: >
+    {{ lookup('dependent', dependent_lookup_index, 'item.0.value',
+              'dependent_lookup_test[item.0.key ~ "_" ~ item.1]') }}
+  loop_control:
+    label: "{{ [item.0.key, item.1, item.2] }}"
+  register: dependent
+  vars:
+    dependent_lookup_index:
+      a:
       - 1
       - 2
       b:
       - 3
       - 4
-    - 'item.0.value'
-    - 'dependent_lookup_test[item.0.key ~ "_" ~ item.1]'
-  loop_control:
-    label: "{{ [item.0.key, item.1, item.2] }}"
-  register: dependent
-  vars:
     dependent_lookup_test:
       a_1:
       - A
