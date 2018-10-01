@@ -37,6 +37,7 @@ DOCUMENTATION = '''
         name: JUnit Task relative path
         default: none
         description: Configure the output to use relative paths to given directory
+        version_added: "2.8"
         env:
           - name: JUNIT_TASK_RELATIVE_PATH
       fail_on_change:
