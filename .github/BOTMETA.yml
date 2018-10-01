@@ -693,6 +693,12 @@ files:
   lib/ansible/plugins/action/aruba:
     maintainers: jmighion
     labels: networking
+  lib/ansible/plugins/action/bigip:
+    maintainers: caphrim007
+    labels: networking
+  lib/ansible/plugins/action/bigiq:
+    maintainers: caphrim007
+    labels: networking
   lib/ansible/plugins/action/dellos:
     maintainers: skg-net
     labels: networking
