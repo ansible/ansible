@@ -1095,7 +1095,7 @@ def fmgr_del_none(data):
     for k, v in data.items():
         if isinstance(v, dict):
             v = fmgr_del_none(v)
-        if not v in (u'', None, {}):
+        if v not in (u'', None, {}):
             new_dict[k] = v
     return new_dict
 
