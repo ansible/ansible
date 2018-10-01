@@ -321,7 +321,11 @@ class Templar:
             self._filters[name] = tests_as_filters_warning(name, func)
 
         for fp in self._filter_loader.all():
-            self._filters.update(fp.filters())
+            filters = fp.filters()
+            self._filters.update(filters)
+            # Add namespaced aliases for ansible provided jinja fitlers
+            for k, v in filters.items():
+                self._filters['ansible.%s' % k] = v
 
         return self._filters.copy()
 
@@ -335,7 +339,11 @@ class Templar:
 
         self._tests = dict()
         for fp in self._test_loader.all():
-            self._tests.update(fp.tests())
+            tests = fp.tests()
+            self._tests.update(tests)
+            # Add namespaced aliases for ansible provided jinja tests
+            for k, v in tests.items():
+                self._tests['ansible.%s' % k] = v
 
         return self._tests.copy()
 
@@ -645,6 +653,14 @@ class Templar:
                     (key, val) = pair.split(':')
                     key = key.strip()
                     setattr(myenv, key, ast.literal_eval(val.strip()))
+
+            # Add namespaced aliases for jinja2 provided fitlers
+            for k, v in list(myenv.filters.items()):
+                myenv.filters['jinja2.%s' % k] = v
+
+            # Add namespaced aliases for jinja2 provided tests
+            for k, v in list(myenv.tests.items()):
+                myenv.tests['jinja2.%s' % k] = v
 
             # Adds Ansible custom filters and tests
             myenv.filters.update(self._get_filters(myenv.filters))
