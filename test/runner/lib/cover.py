@@ -76,7 +76,7 @@ def command_coverage_combine(args):
         try:
             original.read_file(coverage_file)
         except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-            display.error(str(ex))
+            display.error(u'%s' % ex)
             continue
 
         for filename in original.measured_files():

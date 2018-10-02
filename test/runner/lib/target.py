@@ -32,7 +32,7 @@ def find_target_completion(target_func, prefix):
         matches = walk_completion_targets(targets, prefix, short)
         return matches
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        return [str(ex)]
+        return [u'%s' % ex]
 
 
 def walk_completion_targets(targets, prefix, short=False):
