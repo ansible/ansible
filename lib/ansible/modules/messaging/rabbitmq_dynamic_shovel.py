@@ -124,33 +124,37 @@ EXAMPLES = """
     state: present
 """
 
-import requests
-import urllib
 import json
+import urllib
+import requests
 
 def main():
     arg_spec = dict(
-        state = dict(default='present', choices=['present', 'absent'], type='str'),
-        name = dict(required=True, type='str'),
-        login_user = dict(default='guest', type='str'),
-        login_password = dict(default='guest', type='str', no_log=True),
-        login_host = dict(default='localhost', type='str'),
-        login_port = dict(default='15672', type='str'),
-        vhost = dict(default='/', type='str'),
+        state=dict(default='present', choices=['present', 'absent'], type='str'),
+        name=dict(required=True, type='str'),
+        login_user=dict(default='guest', type='str'),
+        login_password=dict(default='guest', type='str', no_log=True),
+        login_host=dict(default='localhost', type='str'),
+        login_port=dict(default='15672', type='str'),
+        vhost=dict(default='/', type='str'),
 
-        source = dict(required=True, aliases=['src'], type='str'),
-        source_uri = dict(required=True, aliases=['src_uri'], type='str'),
-        source_type = dict(required=True, aliases=['src_type'], choices=['queue','exchange'], type='str'),
+        source=dict(required=True, aliases=['src'], type='str'),
+        source_uri=dict(required=True, aliases=['src_uri'], type='str'),
+        source_type=dict(required=True,
+                         aliases=['src_type'], choices=['queue', 'exchange'], type='str'),
 
-        destination = dict(required=True, aliases=['dst','dest'], type='str'),
-        destination_uri = dict(required=True, aliases=['dst_uri', 'dest_uri'], type='list'),
-        destination_type = dict(required=True, aliases=['dst_type', 'dest_type'], choices=['queue','exchange'], type='str'),
+        destination=dict(required=True, aliases=['dst', 'dest'], type='str'),
+        destination_uri=dict(required=True, aliases=['dst_uri', 'dest_uri'], type='list'),
+        destination_type=dict(required=True,
+                              aliases=['dst_type', 'dest_type'],
+                              choices=['queue', 'exchange'], type='str'),
 
-        prefetch_count = dict(default='1000', type='int'),
-        reconnect_delay = dict(default='1', type='int'),
-        add_forward_headers = dict(default=False, type='bool'),
-        ack_mode = dict(default='on_confirm',choices=["on_confirm","on_publish","no_ack"], type='str'),
-        delete_after = dict(default='never', choices=['never', 'queue_length'], type='str'),
+        prefetch_count=dict(default='1000', type='int'),
+        reconnect_delay=dict(default='1', type='int'),
+        add_forward_headers=dict(default=False, type='bool'),
+        ack_mode=dict(default='on_confirm',
+                      choices=["on_confirm", "on_publish", "no_ack"], type='str'),
+        delete_after=dict(default='never', choices=['never', 'queue_length'], type='str'),
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
@@ -160,26 +164,26 @@ def main():
     url = "http://{0}:{1}/api/parameters/shovel/{2}/{3}".format(
         module.params['login_host'],
         module.params['login_port'],
-        urllib.quote(module.params['vhost'],''),
-        urllib.quote(module.params['name'],'')
+        urllib.quote(module.params['vhost'], ''),
+        urllib.quote(module.params['name'], '')
     )
 
     # Check if shovel already exists
-    r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
+    r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']))
 
-    if r.status_code==200:
+    if r.status_code == 200:
         shovel_exists = True
         response = r.json()
-    elif r.status_code==404:
+    elif r.status_code == 404:
         shovel_exists = False
         response = r.json
     else:
         module.fail_json(
-            msg = "Invalid response from RESTAPI when trying to check if shovel exists",
-            details = r.text
+            msg="Invalid response from RESTAPI when trying to check if shovel exists",
+            details=r.text
         )
 
-    if module.params['state']=='present':
+    if module.params['state'] == 'present':
         # if the shovel exists, then a change isn't required
         # (unless the the shovel's attributes have changed, which we check below)
         change_required = not shovel_exists
@@ -187,49 +191,49 @@ def main():
         change_required = shovel_exists
 
     # Check if attributes change on existing shovel
-    if not change_required and r.status_code==200 and module.params['state'] == 'present':
+    if not change_required and r.status_code == 200 and module.params['state'] == 'present':
 
         if not (
-            response['value']['src-uri'] == module.params['source_uri'] and
-            response['value']['dest-uri'] == module.params['destination_uri'] and
-            response['value']['prefetch-count'] == module.params['prefetch_count'] and
-            response['value']['reconnect-delay'] == module.params['reconnect_delay'] and
-            response['value']['add-forward-headers'] == module.params['add_forward_headers'] and
-            response['value']['ack-mode'].replace('-','_')  == module.params['ack_mode'] and
-            response['value']['delete-after'] == module.params['delete_after'] and
-            (
+                response['value']['src-uri'] == module.params['source_uri'] and
+                response['value']['dest-uri'] == module.params['destination_uri'] and
+                response['value']['prefetch-count'] == module.params['prefetch_count'] and
+                response['value']['reconnect-delay'] == module.params['reconnect_delay'] and
+                response['value']['add-forward-headers'] == module.params['add_forward_headers'] and
+                response['value']['ack-mode'].replace('-', '_') == module.params['ack_mode'] and
+                response['value']['delete-after'] == module.params['delete_after'] and
                 (
-                    'src-queue' in response['value'] and
-                    response['value']['src-queue'] == module.params['source'] and
-                    module.params['source_type'] == 'queue'
-                ) or
+                    (
+                        'src-queue' in response['value'] and
+                        response['value']['src-queue'] == module.params['source'] and
+                        module.params['source_type'] == 'queue'
+                    ) or
+                    (
+                        'src-exchange' in response['value'] and
+                        response['value']['src-exchange'] == module.params['source'] and
+                        module.params['source_type'] == 'exchange'
+                    )
+                ) and
                 (
-                    'src-exchange' in response['value'] and
-                    response['value']['src-exchange'] == module.params['source'] and
-                    module.params['source_type'] == 'exchange'
+                    (
+                        'dest-queue' in response['value'] and
+                        response['value']['dest-queue'] == module.params['destination'] and
+                        module.params['destination_type'] == 'queue'
+                    ) or
+                    (
+                        'dest-exchange' in response['value'] and
+                        response['value']['dest-exchange'] == module.params['destination'] and
+                        module.params['destination_type'] == 'exchange'
+                    )
                 )
-            ) and
-            (
-                (
-                    'dest-queue' in response['value'] and
-                    response['value']['dest-queue'] == module.params['destination'] and
-                    module.params['destination_type'] == 'queue'
-                ) or
-                (
-                    'dest-exchange' in response['value'] and
-                    response['value']['dest-exchange'] == module.params['destination'] and
-                    module.params['destination_type'] == 'exchange'
-                )
-            )
-        ):
+            ):
             change_required = True
 
     # Exit if check_mode
     if module.check_mode:
         module.exit_json(
-            changed= change_required,
-            name = module.params['name'],
-            details = response
+            changed=change_required,
+            name=module.params['name'],
+            details=response
         )
 
     # Do changes
@@ -264,7 +268,7 @@ def main():
             "prefetch-count": module.params['prefetch_count'],
             "reconnect-delay": module.params['reconnect_delay'],
             "add-forward-headers": module.params['add_forward_headers'],
-            "ack-mode": module.params['ack_mode'].replace('_','-'),
+            "ack-mode": module.params['ack_mode'].replace('_', '-'),
             "delete-after": module.params['delete_after']
         }
 
@@ -278,40 +282,41 @@ def main():
         if module.params['state'] == 'present':
             r = requests.put(
                 url,
-                auth = (module.params['login_user'],module.params['login_password']),
-                headers = { "content-type": "application/json"},
-                data = json.dumps(payload)
+                auth=(module.params['login_user'], module.params['login_password']),
+                headers={"content-type": "application/json"},
+                data=json.dumps(payload)
             )
         elif module.params['state'] == 'absent':
-            r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
+            r = requests.delete(url,
+                                auth=(module.params['login_user'], module.params['login_password']))
 
         if r.status_code == 201 or r.status_code == 204:
             if shovel_exists:
                 module.exit_json(
-                    changed = True,
-                    old_shovel = response['value'],
-                    new_shovel = data_dict,
-                    name = module.params['name']
+                    changed=True,
+                    old_shovel=response['value'],
+                    new_shovel=data_dict,
+                    name=module.params['name']
                 )
             else:
                 module.exit_json(
-                    changed = True,
-                    shovel = data_dict,
-                    name = module.params['name']
+                    changed=True,
+                    shovel=data_dict,
+                    name=module.params['name']
                 )
         else:
             module.fail_json(
-                msg = "Error creating shovel",
-                status = r.status_code,
-                details = r.text,
-                rabbit_url = url,
-                payload = payload
+                msg="Error creating shovel",
+                status=r.status_code,
+                details=r.text,
+                rabbit_url=url,
+                payload=payload
             )
 
     else:
         module.exit_json(
-            changed = False,
-            name = module.params['name']
+            changed=False,
+            name=module.params['name']
         )
 
 # import module snippets
