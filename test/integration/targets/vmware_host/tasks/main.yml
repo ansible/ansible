@@ -54,6 +54,19 @@
 
 - debug: var=ccr1
 
+- name: get a list of hosts from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=H
+  register: hosts
+
+- name: get a host
+  set_fact:
+    host1: "{{ hosts.json[0] | basename }}"
+
+- debug: var=host1
+
+# fetch_ssl_thumbprint needs to be disabled because the host only exists in vcsim
+
 # Testcase: Add Host
 - name: add host
   vmware_host:
@@ -66,6 +79,7 @@
     esxi_password: "{{ vcsim_instance.json.password }}"
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
+    fetch_ssl_thumbprint: False
     state: present
   register: add_host_result
 
@@ -92,6 +106,7 @@
     esxi_password: "{{ vcsim_instance.json.password }}"
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
+    fetch_ssl_thumbprint: False
     state: present
   register: readd_host_result
 
@@ -112,6 +127,7 @@
     esxi_password: "{{ vcsim_instance.json.password }}"
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
+    fetch_ssl_thumbprint: False
     state: add_or_reconnect
   register: add_or_reconnect_host_result
 
@@ -125,6 +141,99 @@
     that:
         - add_or_reconnect_host_result is changed
         - "{% for host in host_list.json if ((host | basename) == 'test_host_system_0002') -%} True {%- else -%} False {%- endfor %}"
+
+## Testcase: Add Host to folder
+#
+# It's not possible to connect an ESXi host via vcsim.
+#
+# - name: Create host folder
+#   vcenter_folder:
+#     hostname: "{{ vcsim }}"
+#     username: "{{ vcsim_instance.json.username }}"
+#     password: "{{ vcsim_instance.json.password }}"
+#     validate_certs: no
+#     datacenter: "{{ dc1 }}"
+#     folder_name: "Staging"
+#     folder_type: host
+#     state: present
+#   register: folder_results
+#
+# - debug: msg="{{ folder_results }}"
+#
+# - name: ensure folder is present
+#   assert:
+#     that:
+#         - folder_results.changed
+#
+# - name: Create host folder again
+#   vcenter_folder:
+#     hostname: "{{ vcsim }}"
+#     username: "{{ vcsim_instance.json.username }}"
+#     password: "{{ vcsim_instance.json.password }}"
+#     validate_certs: no
+#     datacenter: "{{ dc1 }}"
+#     folder_name: "Staging"
+#     folder_type: host
+#     state: present
+#   register: folder_results
+#
+# - debug: msg="{{ folder_results }}"
+#
+# - name: ensure folder is present
+#   assert:
+#     that:
+#         - folder_results.changed == False
+#
+# - name: Add host to folder in check mode
+#   vmware_host:
+#     hostname: "{{ vcsim }}"
+#     username: "{{ vcsim_instance.json.username }}"
+#     password: "{{ vcsim_instance.json.password }}"
+#     validate_certs: no
+#     esxi_hostname: test_host_system_0003
+#     esxi_username: "{{ vcsim_instance.json.username }}"
+#     esxi_password: "{{ vcsim_instance.json.password }}"
+#     datacenter_name: "{{ dc1 }}"
+#     folder_name: "Staging"
+#     state: present
+#   register: add_host_to_folder_result
+#   check_mode: yes
+#
+# - name: get a list of host system from vcsim after adding host system
+#   uri:
+#     url: http://{{ vcsim }}:5000/govc_find?filter=H
+#   register: host_list
+#
+# - name: ensure host system is not present
+#   assert:
+#     that:
+#         - add_host_to_folder_result is changed
+#         - not ("{% for host in host_list.json if ((host | basename) == 'test_host_system_0003') -%} True {%- else -%} False {%- endfor %}")
+#
+# - name: Add host to folder
+#   vmware_host:
+#     hostname: "{{ vcsim }}"
+#     username: "{{ vcsim_instance.json.username }}"
+#     password: "{{ vcsim_instance.json.password }}"
+#     validate_certs: no
+#     esxi_hostname: test_host_system_0003
+#     esxi_username: "{{ vcsim_instance.json.username }}"
+#     esxi_password: "{{ vcsim_instance.json.password }}"
+#     datacenter_name: "{{ dc1 }}"
+#     folder_name: "Staging"
+#     state: present
+#   register: add_host_to_folder_result
+#
+# - name: get a list of host system from vcsim after adding host system
+#   uri:
+#     url: http://{{ vcsim }}:5000/govc_find?filter=H
+#   register: host_list
+#
+# - name: ensure host system is present
+#   assert:
+#     that:
+#         - add_host_to_folder_result is changed
+#         - "{% for host in host_list.json if ((host | basename) == 'test_host_system_0003') -%} True {%- else -%} False {%- endfor %}"
 
 ## Testcase: Reconnect Host
 #
