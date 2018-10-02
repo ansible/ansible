@@ -91,10 +91,10 @@ def main():
 
         display.review_warnings()
     except ApplicationWarning as ex:
-        display.warning(str(ex))
+        display.warning(u'%s' % ex)
         exit(0)
     except ApplicationError as ex:
-        display.error(str(ex))
+        display.error(u'%s' % ex)
         exit(1)
     except KeyboardInterrupt:
         exit(2)
