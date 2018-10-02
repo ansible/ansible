@@ -121,6 +121,19 @@ EXAMPLES = '''
     fstype: xfs
     opts: noatime
     state: present
+
+- name: Unmount a mounted volume
+  mount:
+    path: /tmp/mnt-pnt
+    state: unmounted
+
+- name: Mount and bind a volume
+  mount:
+    path: /system/new_volume/boot
+    src: /boot
+    opts: bind
+    state: mounted
+    fstype: none
 '''
 
 
