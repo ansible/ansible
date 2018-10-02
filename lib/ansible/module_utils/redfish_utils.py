@@ -507,14 +507,18 @@ class RedfishUtils(object):
     def get_manager_attributes(self):
         result = {}
         manager_attributes = {}
-        attributes_id = "Attributes"
+        key = "Attributes"
 
-        response = self.get_request(self.root_uri + self.manager_uri + "/" + attributes_id)
+        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
-        for attribute in data[u'Attributes'].items():
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        for attribute in data[key].items():
             manager_attributes[attribute[0]] = attribute[1]
         result["entries"] = manager_attributes
         return result
@@ -530,6 +534,10 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
         bios_uri = data[key]["@odata.id"]
 
         response = self.get_request(self.root_uri + bios_uri)
@@ -557,6 +565,10 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
         bios_uri = data[key]["@odata.id"]
 
         # Get boot mode first as it will determine what attribute to read
@@ -596,6 +608,10 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
         bios_uri = data[key]["@odata.id"]
 
         # Extract proper URI
@@ -621,6 +637,10 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
         bios_uri = data[key]["@odata.id"]
 
         response = self.get_request(self.root_uri + bios_uri)
@@ -665,6 +685,10 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
         bios_uri = data[key]["@odata.id"]
 
         # Extract proper URI
@@ -694,6 +718,10 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
         bios_uri = data[key]["@odata.id"]
 
         # Extract proper URI
@@ -763,6 +791,9 @@ class RedfishUtils(object):
         result['ret'] = True
         data = response['data']
 
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
         processors_uri = data[key]["@odata.id"]
 
         # Get a list of all CPUs and build respective URIs
@@ -808,6 +839,9 @@ class RedfishUtils(object):
         result['ret'] = True
         data = response['data']
 
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
         ethernetinterfaces_uri = data[key]["@odata.id"]
 
         # Get a list of all network controllers and build respective URIs
@@ -840,6 +874,7 @@ class RedfishUtils(object):
         result = {}
         psu_list = []
         psu_results = []
+        key = "PoweredBy"
         # Get these entries, but does not fail if not found
         properties = ['Name', 'Model', 'SerialNumber', 'PartNumber', 'Manufacturer',
                       'FirmwareVersion', 'PowerCapacityWatts', 'PowerSupplyType',
@@ -851,6 +886,11 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
+
+        if 'Links' not in data:
+            return {'ret': False, 'msg': "Property not found"}
+        if key not in data[u'Links']:
+            return {'ret': False, 'msg': "Key %s not found" % key}
 
         for psu in data[u'Links'][u'PoweredBy']:
             psu_list.append(psu[u'@odata.id'])
