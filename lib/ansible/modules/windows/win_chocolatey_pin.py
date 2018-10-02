@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: win_chocolatey_facts
+module: win_chocolatey_pin
 version_added: '2.8'
 short_description: Pin Chocolatey Packages
 description:
