@@ -91,10 +91,10 @@ def main():
 
         display.review_warnings()
     except ApplicationWarning as ex:
-        display.warning(str(ex))
+        display.warning(u'%s' % ex)
         exit(0)
     except ApplicationError as ex:
-        display.error(str(ex))
+        display.error(u'%s' % ex)
         exit(1)
     except KeyboardInterrupt:
         exit(2)
@@ -168,6 +168,11 @@ def parse_args():
                       metavar='TARGET',
                       nargs='*',
                       help='test the specified target').completer = complete_target
+
+    test.add_argument('--include',
+                      metavar='TARGET',
+                      action='append',
+                      help='include the specified target').completer = complete_target
 
     test.add_argument('--exclude',
                       metavar='TARGET',
@@ -260,6 +265,11 @@ def parse_args():
                              metavar='TARGET',
                              default='all',
                              help='target to run when all tests are needed')
+
+    integration.add_argument('--changed-all-mode',
+                             metavar='MODE',
+                             choices=('default', 'include', 'exclude'),
+                             help='include/exclude behavior with --changed-all-target: %(choices)s')
 
     integration.add_argument('--list-targets',
                              action='store_true',
