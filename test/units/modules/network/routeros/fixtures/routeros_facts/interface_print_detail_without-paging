@@ -1,0 +1,7 @@
+Flags: D - dynamic, X - disabled, R - running, S - slave
+ 0  R  name="ether1" default-name="ether1" type="ether" mtu=1500 actual-mtu=1500
+       mac-address=00:1C:42:36:52:90 last-link-up-time=sep/25/2018 06:30:04
+       link-downs=0
+ 1  R  name="ether2" default-name="ether2" type="ether" mtu=1500 actual-mtu=1500
+       mac-address=00:1C:42:36:52:90 last-link-up-time=sep/25/2018 06:30:04
+       link-downs=0
