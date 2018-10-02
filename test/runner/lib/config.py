@@ -71,6 +71,7 @@ class EnvironmentConfig(CommonConfig):
         self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
 
         self.delegate = self.tox or self.docker or self.remote
+        self.delegate_args = []  # type: list[str]
 
         if self.delegate:
             self.requirements = True
@@ -104,9 +105,9 @@ class TestConfig(EnvironmentConfig):
 
         self.coverage = args.coverage  # type: bool
         self.coverage_label = args.coverage_label  # type: str
-        self.include = args.include  # type: list [str]
-        self.exclude = args.exclude  # type: list [str]
-        self.require = args.require  # type: list [str]
+        self.include = args.include or []  # type: list [str]
+        self.exclude = args.exclude or []  # type: list [str]
+        self.require = args.require or []  # type: list [str]
 
         self.changed = args.changed  # type: bool
         self.tracked = args.tracked  # type: bool
@@ -179,6 +180,7 @@ class IntegrationConfig(TestConfig):
         self.continue_on_error = args.continue_on_error  # type: bool
         self.debug_strategy = args.debug_strategy  # type: bool
         self.changed_all_target = args.changed_all_target  # type: str
+        self.changed_all_mode = args.changed_all_mode  # type: str
         self.list_targets = args.list_targets  # type: bool
         self.tags = args.tags
         self.skip_tags = args.skip_tags

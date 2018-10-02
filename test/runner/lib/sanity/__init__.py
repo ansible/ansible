@@ -58,7 +58,7 @@ def command_sanity(args):
     :type args: SanityConfig
     """
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
+    require = args.require + changes
     targets = SanityTargets(args.include, args.exclude, require)
 
     if not targets.include:
