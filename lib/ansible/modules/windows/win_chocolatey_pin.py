@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2018, Ansible Project
 # Copyright: (c) 2018, Simon Baerlocher <s.baerlocher@sbaerlocher.ch>
 # Copyright: (c) 2018, ITIGO AG <opensource@itigo.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -12,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_chocolatey_facts
-version_added: '2.7'
+version_added: '2.8'
 short_description: Pin Chocolatey Packages
 description:
    - This module pins and unpins chocolatey packages.
