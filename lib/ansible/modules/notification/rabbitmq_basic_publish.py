@@ -37,24 +37,32 @@ options:
       - The routing key.
   body:
     description:
-      - The body of the message.
-    required: true
+      - The body of the message.  
+      - A C(body) cannot be provided if a C(src) is specified.
+  src:
+    description:
+      - A file to upload to the queue.  Automatic mime type detection is attempted if content_type is not defined.
+      - A C(src) cannot be provided if a C(body) is specified.
+    aliases: ['file']
   content_type:
     description:
       - The content type of the body.
     default: text/plain
   durable:
     description:
-      - Set the queue to be durable
+      - Set the queue to be durable.
     default: False
+    type: bool
   exclusive:
     description:
-      - Set the queue to be exclusive
+      - Set the queue to be exclusive.
     default: False
+    type: bool
   auto_delete:
     description:
       - Set the queue to auto delete.
     default: False
+    type: bool
 
 
 requirements: [ pika ]
@@ -71,6 +79,14 @@ EXAMPLES = '''
     body: "Hello world from ansible module rabitmq_basic_publish"
     content_type: "text/plain"
   delegate_to: localhost
+
+
+- rabbitmq_basic_publish:
+    url: "amqp://guest:guest@192.168.0.32:5672/%2F"
+    queue: 'images'
+    file: 'path/to/logo.gif'
+  delegate_to: localhost
+
 '''
 
 
@@ -91,7 +107,8 @@ def main():
     argument_spec.update(
         exchange=dict(type='str', default=''),
         routing_key=dict(type='str', required=False),
-        body=dict(type='str', required=True),
+        body=dict(type='str', required=False),
+        src=dict(aliases=['file'], type='str', required=False),
         content_type=dict(default="text/plain", type='str'),
         durable=dict(default=False, type='bool'),
         exclusive=dict(default=False, type='bool'),
@@ -104,10 +121,15 @@ def main():
 
     rabbitmq = RabbitClient(module)
 
+    if module.params['body'] is not None and module.params['src'] is not None:
+        module.fail_json(msg="src and body cannot be specified at the same time")
+
     if rabbitmq.basic_publish():
-        module.exit_json(changed=True, msg=module.params.get("body"))
+        rabbitmq.close_connection()
+        module.exit_json(changed=True, msg="Successfully published to queue %s" % rabbitmq.queue)
     else:
-        module.exit_json(changed=False, msg=module.params.get("body"))
+        rabbitmq.close_connection()
+        module.exit_json(changed=False, msg="Unsuccessful publishing to queue %s" % rabbitmq.queue)
 
 
 if __name__ == '__main__':

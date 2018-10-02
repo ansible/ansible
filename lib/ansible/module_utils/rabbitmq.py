@@ -48,8 +48,7 @@ class RabbitClient():
 
     def check_required_library(self):
         if not HAS_PIKA:
-            self.module.fail_json(msg="Unable to find 'pika' Python library which is required."
-                                      " Please install using 'pip install pika'")
+            self.module.fail_json(msg="Unable to find 'pika' Python library which is required.")
 
     @staticmethod
     def rabbitmq_argument_spec():
@@ -57,6 +56,16 @@ class RabbitClient():
             url=dict(default='amqp://guest:guest@127.0.0.1:5672/%2F', type='str'),
             queue=dict(default=None, type='str', required=True)
         )
+
+    ''' Consider some file size limits here '''
+    @staticmethod
+    def _read_file(path):
+        return open(path, "rb").read()
+
+    @staticmethod
+    def _check_file_mime_type(path):
+        mime = MimeTypes()
+        return mime.guess_type(path)
 
     def connect_to_rabbitmq(self):
         """
@@ -68,27 +77,31 @@ class RabbitClient():
             self.module.fail_json(msg="URL malformed: %s" % to_native(e))
 
         try:
-            connection = pika.BlockingConnection(parameters)
+            self.connection = pika.BlockingConnection(parameters)
         except Exception as e:
             self.module.fail_json(msg="Connection issue: %s" % to_native(e))
 
         try:
-            conn_channel = connection.channel()
+            conn_channel = self.connection.channel()
         except pika.exceptions.AMQPChannelError as e:
             try:
-                connection.close()
+                self.connection.close()
                 self.module.fail_json(msg="Channel issue: %s" % to_native(e))
             except pika.exceptions.AMQPConnectionError as ie:
                 self.module.fail_json(msg="Channel and connection closing issues: %s / %s" % (to_native(e), to_native(ie)))
         return conn_channel
 
     def close_connection(self):
-        self.connection.close()
+        try:
+            self.connection.close()
+        except pika.exceptions.AMQPConnectionError:
+            pass
 
     def basic_get(self):
         ret = []
         idx = 0
-        self.count = self.params.get('count', None)
+        count = self.params.get('count', None)
+        queue = self.params.get('queue', None)
 
         while True:
             method_frame, properties, body = self.conn_channel.basic_get(queue=queue)
@@ -107,7 +120,7 @@ class RabbitClient():
                     try:
                         msg_details['json'] = json.loads(body)
                     except ValueError as e:
-                        raise AnsibleError("Unable to decode JSON for message %s" % method_frame.delivery_tag)
+                        self.module.fail_json(msg="Unable to decode JSON for message %s" % method_frame.delivery_tag)
 
                 ret.append(msg_details)
                 self.conn_channel.basic_ack(method_frame.delivery_tag)
@@ -121,16 +134,27 @@ class RabbitClient():
         return [ret]
 
     def basic_publish(self):
-        args = dict(
-            body=self.params.get("body"),
-            exchange=self.params.get("exchange"),
-            routing_key=self.params.get("routing_key"),
-            properties=pika.BasicProperties(content_type=self.params.get("content_type"), delivery_mode=1))
+        if self.params.get("body") is not None:
+            args = dict(
+                body=self.params.get("body"),
+                exchange=self.params.get("exchange"),
+                routing_key=self.params.get("routing_key"),
+                properties=pika.BasicProperties(content_type=self.params.get("content_type"), delivery_mode=1))
 
-        self.conn_channel.queue_declare(queue=self.queue,
-                                        durable=self.params.get("durable"),
-                                        exclusive=self.params.get("exclusive"),
-                                        auto_delete=self.params.get("auto_delete"))
+        if self.params.get("src") is not None:
+            args = dict(
+                body=RabbitClient._read_file(self.params.get("src")),
+                exchange=self.params.get("exchange"),
+                routing_key=self.params.get("routing_key"),
+                properties=pika.BasicProperties(content_type=RabbitClient._check_file_mime_type(self.params.get("src"))[0], delivery_mode=1))
+
+        try:
+            self.conn_channel.queue_declare(queue=self.queue,
+                                            durable=self.params.get("durable"),
+                                            exclusive=self.params.get("exclusive"),
+                                            auto_delete=self.params.get("auto_delete"))
+        except Exception as e:
+            self.module.fail_json(msg="Queue declare issue: %s" % to_native(e))
 
         # https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/cloudstack.py#L150
         if args['exchange'] is None:
@@ -140,8 +164,3 @@ class RabbitClient():
             args['routing_key'] = self.queue
 
         return self.conn_channel.basic_publish(**args)
-
-    @staticmethod
-    def _check_file_mime_type(path):
-        mime = MimeTypes()
-        return mime.guess_type(path)
