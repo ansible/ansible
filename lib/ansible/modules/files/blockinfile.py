@@ -15,37 +15,38 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: blockinfile
-author:
-- Yaegashi Takeshi (@yaegashi)
-extends_documentation_fragment:
-- files
-- validate
 short_description: Insert/update/remove a text block surrounded by marker lines
 version_added: '2.0'
 description:
 - This module will insert/update/remove a block of multi-line text
   surrounded by customizable marker lines.
+author:
+- Yaegashi Takeshi (@yaegashi)
 options:
   path:
     description:
     - The file to modify.
     - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
-    aliases: [ dest, destfile, name ]
     required: yes
+    type: path
+    aliases: [ dest, destfile, name ]
   state:
     description:
     - Whether the block should be there or not.
+    type: str
     choices: [ absent, present ]
     default: present
   marker:
     description:
     - The marker line template.
     - C({mark}) will be replaced with the values C(in marker_begin) (default="BEGIN") and C(marker_end) (default="END").
+    type: str
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
     description:
     - The text to insert inside the marker lines.
     - If it is missing or an empty string, the block will be removed as if C(state) were specified to C(absent).
+    type: str
     aliases: [ content ]
     default: ''
   insertafter:
@@ -53,6 +54,7 @@ options:
     - If specified, the block will be inserted after the last match of specified regular expression.
     - A special value is available; C(EOF) for inserting the block at the end of the file.
     - If specified regular expression has no matches, C(EOF) will be used instead.
+    type: str
     default: EOF
     choices: [ EOF, '*regex*' ]
   insertbefore:
@@ -60,6 +62,7 @@ options:
     - If specified, the block will be inserted before the last match of specified regular expression.
     - A special value is available; C(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
+    type: str
     choices: [ BOF, '*regex*' ]
   create:
     description:
@@ -74,25 +77,30 @@ options:
     default: no
   marker_begin:
     description:
-    - This will be inserted at {mark} in the opening ansible block marker.
+    - This will be inserted at C({mark}) in the opening ansible block marker.
+    type: str
     default: BEGIN
     version_added: '2.5'
   marker_end:
     required: false
     description:
-    - This will be inserted at {mark} in the closing ansible block marker.
+    - This will be inserted at C({mark}) in the closing ansible block marker.
+    type: str
     default: END
     version_added: '2.5'
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-  - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
-  - When more then one block should be handled in **one** file you **must** change the I(marker) per task
+  - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
+  - When more then one block should be handled in one file you must change the I(marker) per task.
+extends_documentation_fragment:
+- files
+- validate
 '''
 
 EXAMPLES = r'''
-# Before 2.3, option 'dest' or 'name' was used instead of 'path'
+# Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
 - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
   blockinfile:
     path: /etc/ssh/sshd_config
