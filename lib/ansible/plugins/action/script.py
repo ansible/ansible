@@ -22,7 +22,7 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail, AnsibleActionSkip
-from ansible.executor.module_common import _create_powershell_wrapper
+from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 
@@ -129,10 +129,10 @@ class ActionModule(ActionBase):
             if self._connection._shell.SHELL_FAMILY == "powershell":
                 # FIXME: use a more public method to get the exec payload
                 pc = self._play_context
-                exec_data = _create_powershell_wrapper(
+                exec_data = ps_manifest._create_powershell_wrapper(
                     to_bytes(script_cmd), {}, env_dict, self._task.async_val,
                     pc.become, pc.become_method, pc.become_user,
-                    pc.become_pass, pc.become_flags, scan_dependencies=False
+                    pc.become_pass, pc.become_flags, substyle="script"
                 )
                 script_cmd = "-"
 

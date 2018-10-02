@@ -9,13 +9,6 @@
 
 $ErrorActionPreference = "Stop"
 
-# NOTE: Ensure we get proper debug information when things fall over
-trap {
-    if ($null -eq $result) { $result = @{} }
-    $result.exception = "$($_ | Out-String)`r`n$($_.ScriptStackTrace)"
-    Fail-Json -obj $result -message "Uncaught exception: $($_.Exception.Message)"
-}
-
 $params = Parse-Args -arguments $args -supports_check_mode $true
 
 $process_name_exact = Get-AnsibleParam -obj $params -name "process_name_exact" -type "list"

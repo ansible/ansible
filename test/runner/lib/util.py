@@ -489,6 +489,7 @@ def is_binary_file(path):
         '.cfg',
         '.conf',
         '.crt',
+        '.cs',
         '.css',
         '.html',
         '.ini',
