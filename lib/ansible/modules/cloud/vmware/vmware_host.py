@@ -288,7 +288,6 @@ class VMwareHost(PyVmomi):
         reconnecthost_args['reconnectSpec'].syncState = True
 
         if self.esxi_username is not None or self.esxi_password is not None:
-            reconnecthost_args['cnxSpec'] = self.get_host_connect_spec()
 
             for count in range(0, 2):
                 try:
