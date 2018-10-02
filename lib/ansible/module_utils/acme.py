@@ -540,6 +540,7 @@ class ACMEAccount(object):
         https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-6.2
 
         If payload is None, a POST-as-GET is performed.
+        (https://tools.ietf.org/html/draft-ietf-acme-acme-15#section-6.3)
         '''
         key_data = key_data or self.key_data
         jws_header = jws_header or self.jws_header
@@ -594,6 +595,7 @@ class ACMEAccount(object):
             content = info.get('body')
 
         if info['status'] == 405 and not get_only:
+            # Do POST-as-GET request (draft-15 or newer)
             content, info = self.send_signed_request(uri, None, parse_json_result=False)
 
         if parse_json_result:
@@ -676,10 +678,20 @@ class ACMEAccount(object):
         '''
         if self.uri is None:
             raise ModuleFailException("Account URI unknown")
-        data = {}
         if self.version == 1:
+            data = {}
             data['resource'] = 'reg'
-        result, info = self.send_signed_request(self.uri, data)
+            result, info = self.send_signed_request(self.uri, data)
+        else:
+            # try POST-as-GET first (draft-15 or newer)
+            data = None
+            result, info = self.send_signed_request(self.uri, data)
+            # check whether that failed with a malformedRequest error
+            if info['status'] >= 400 and result.get('type') in ('urn:ietf:params:acme:error:malformed',
+                                                                'urn:ietf:params:acme:error:malformedRequest'):
+                # retry as a regular POST (with no changed data) for pre-draft-15 ACME servers
+                data = {}
+                result, info = self.send_signed_request(self.uri, data)
         if info['status'] in (400, 403) and result.get('type') == 'urn:ietf:params:acme:error:unauthorized':
             # Returned when account is deactivated
             return None
