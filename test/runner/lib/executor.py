@@ -651,8 +651,19 @@ def command_integration_filter(args, targets, init_callback=None):
     """
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
-    exclude = (args.exclude or [])
+
+    # special behavior when the --changed-all-target target is selected based on changes
+    if args.changed_all_target in changes:
+        # act as though the --changed-all-target target was in the include list
+        if args.changed_all_mode == 'include' and args.changed_all_target not in args.include:
+            args.include.append(args.changed_all_target)
+            args.delegate_args += ['--include', args.changed_all_target]
+        # act as though the --changed-all-target target was in the exclude list
+        elif args.changed_all_mode == 'exclude' and args.changed_all_target not in args.exclude:
+            args.exclude.append(args.changed_all_target)
+
+    require = args.require + changes
+    exclude = args.exclude
 
     internal_targets = walk_internal_targets(targets, args.include, exclude, require)
     environment_exclude = get_integration_filter(args, internal_targets)
@@ -675,7 +686,7 @@ def command_integration_filter(args, targets, init_callback=None):
     cloud_init(args, internal_targets)
 
     if args.delegate:
-        raise Delegate(require=changes, exclude=exclude, integration_targets=internal_targets)
+        raise Delegate(require=require, exclude=exclude, integration_targets=internal_targets)
 
     install_command_requirements(args)
 
@@ -1133,7 +1144,7 @@ def command_units(args):
     :type args: UnitsConfig
     """
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
+    require = args.require + changes
     include, exclude = walk_external_targets(walk_units_targets(), args.include, args.exclude, require)
 
     if not include:
