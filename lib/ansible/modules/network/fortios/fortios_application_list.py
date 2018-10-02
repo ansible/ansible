@@ -466,11 +466,7 @@ def application_list(data, fos):
 
 
 def fortios_application(data, fos):
-    host = data['host']
-    username = data['username']
-    password = data['password']
-    fos.https('off')
-    fos.login(host, username, password)
+    login(data)
 
     methodlist = ['application_list']
     for method in methodlist:
@@ -582,6 +578,7 @@ def main():
     except ImportError:
         module.fail_json(msg="fortiosapi module is required")
 
+    global fos
     fos = FortiOSAPI()
 
     is_error, has_changed, result = fortios_application(module.params, fos)
