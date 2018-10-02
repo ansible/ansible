@@ -56,27 +56,27 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - debug:
-    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+    msg: "{{ lookup('hashi_vault', secret=secret/hello:value, token=c975b780-d1be-8016-866b-01d0f9b688a5, url=http://myvault:8200) }}"
 
 - name: Return all secrets from a path
   debug:
-    msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+    msg: "{{ lookup('hashi_vault', secret=secret/hello, token=c975b780-d1be-8016-866b-01d0f9b688a5, url=http://myvault:8200) }}"
 
 - name: Vault that requires authentication via LDAP
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypas url=http://myvault:8200')}}"
+    msg: "{{ lookup('hashi_vault', secret=secret/hello:value, auth_method=ldap, mount_point=ldap, username=myuser, password=mypas, url=http://myvault:8200) }}"
 
 - name: Using an ssl vault
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hola:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}"
+    msg: "{{ lookup('hashi_vault', secret=secret/hola:value, token=c975b780-d1be-8016-866b-01d0f9b688a5, url=https://myvault:8200, validate_certs=False) }}"
 
 - name: using certificate auth
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
+    msg: "{{ lookup('hashi_vault', secret=secret/hi:value, token=xxxx-xxx-xxx, url=https://myvault:8200, validate_certs=True, cacert=/cacert/path/ca.pem) }}"
 
 - name: authenticate with a Vault app role
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid secret_id=mysecretid url=http://myvault:8200')}}"
+    msg: "{{ lookup('hashi_vault', secret=secret/hello:value, auth_method=approle, role_id=myroleid, secret_id=mysecretid, url=http://myvault:8200) }}"
 """
 
 RETURN = """
