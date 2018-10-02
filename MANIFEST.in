@@ -6,6 +6,8 @@ include requirements.txt
 include .coveragerc
 include examples/hosts
 include examples/ansible.cfg
+recursive-include lib/ansible/executor/powershell *
+recursive-include lib/ansible/module_utils/csharp *
 recursive-include lib/ansible/module_utils/powershell *
 recursive-include lib/ansible/modules *
 recursive-include lib/ansible/galaxy/data *

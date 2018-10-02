@@ -249,6 +249,9 @@ static_setup_params = dict(
     packages=find_packages('lib'),
     package_data={
         '': [
+            'executor/powershell/*.ps1',
+            'module_utils/csharp/*.cs',
+            'module_utils/csharp/*/*.cs',
             'module_utils/powershell/*.psm1',
             'module_utils/powershell/*/*.psm1',
             'modules/windows/*.ps1',

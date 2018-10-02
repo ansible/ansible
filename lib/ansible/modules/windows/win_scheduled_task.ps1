@@ -10,49 +10,7 @@
 
 $ErrorActionPreference = "Stop"
 
-Function ConvertTo-Hashtable {
-    param([Object]$Value)
-
-    if ($null -eq $Value) {
-        return $null
-    }
-    $value_type = $Value.GetType()
-    if ($value_type.IsGenericType) {
-        $value_type = $value_type.GetGenericTypeDefinition()
-    }
-    if ($value_type -eq [System.Collections.Generic.Dictionary`2]) {
-        $new_value = @{}
-        foreach ($kv in $Value.GetEnumerator()) {
-            $new_value.Add($kv.Key, (ConvertTo-Hashtable -Value $kv.Value))
-        }
-        return ,$new_value
-    } elseif ($value_type -eq [System.Collections.ArrayList]) {
-        for ($i = 0; $i -lt $Value.Count; $i++) {
-            $Value[$i] = ConvertTo-Hashtable -Value $Value[$i]
-        }
-        return ,$Value.ToArray()
-    } else {
-        return ,$Value
-    }
-}
-
 $params = Parse-Args -arguments $args -supports_check_mode $true
-
-# FUTURE: remove this once exec_wrapper has this behaviour inbuilt with the new
-# json changes in the exec_wrapper.
-# Currently ConvertFrom-Json creates a PSObject for the deserialized JSON and the
-# exec_wrapper converts all dicts as Hashtable. Unfortunately it doesn't
-# convert any dict in lists leaving to some confusing behaviour. We manually
-# use JavaScriptSerializer to ensure we have the type of objects to simply the
-# code in the module when it comes to type checking
-$params_json = ConvertTo-Json -InputObject $params -Depth 99 -Compress
-
-Add-Type -AssemblyName System.Web.Extensions
-$json = New-Object -TypeName System.Web.Script.Serialization.JavaScriptSerializer
-$json.MaxJsonLength = [Int32]::MaxValue
-$json.RecursionLimit = [Int32]::MaxValue
-$params = ConvertTo-Hashtable -Value ($json.Deserialize($params_json, [System.Collections.Generic.Dictionary`2[[String], [Object]]]))
-
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 $_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
