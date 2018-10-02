@@ -1,0 +1,2 @@
+bugfixes:
+- Ignore empty result of rabbitmqctl list_user_permissions.
