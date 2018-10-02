@@ -33,6 +33,13 @@ DOCUMENTATION = '''
         description: Configure the output to be one class per yaml file
         env:
           - name: JUNIT_TASK_CLASS
+      task_relative_path:
+        name: JUnit Task relative path
+        default: none
+        description: Configure the output to use relative paths to given directory
+        version_added: "2.8"
+        env:
+          - name: JUNIT_TASK_RELATIVE_PATH
       fail_on_change:
         name: JUnit fail on change
         default: False
@@ -98,6 +105,8 @@ class CallbackModule(CallbackBase):
                                      Default: ~/.ansible.log
         JUNIT_TASK_CLASS (optional): Configure the output to be one class per yaml file
                                      Default: False
+        JUNIT_TASK_RELATIVE_PATH (optional): Configure the output to use relative paths to given directory
+                                     Default: none
         JUNIT_FAIL_ON_CHANGE (optional): Consider any tasks reporting "changed" as a junit test failure
                                      Default: False
         JUNIT_FAIL_ON_IGNORE (optional): Consider failed tasks as a junit test failure even if ignore_on_error is set
@@ -120,6 +129,7 @@ class CallbackModule(CallbackBase):
 
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
         self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
+        self._task_relative_path = os.getenv('JUNIT_TASK_RELATIVE_PATH', '')
         self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
         self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
         self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
@@ -143,7 +153,7 @@ class CallbackModule(CallbackBase):
                                   'Disabling the `junit` callback plugin.')
 
         if not os.path.exists(self._output_dir):
-            os.mkdir(self._output_dir)
+            os.makedirs(self._output_dir)
 
     def _start_task(self, task):
         """ record the start of a task for one or more hosts """
@@ -199,10 +209,13 @@ class CallbackModule(CallbackBase):
         name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
         duration = host_data.finish - task_data.start
 
-        if self._task_class == 'true':
-            junit_classname = re.sub(r'\.yml:[0-9]+$', '', task_data.path)
+        if self._task_relative_path:
+            junit_classname = os.path.relpath(task_data.path, self._task_relative_path)
         else:
             junit_classname = task_data.path
+
+        if self._task_class == 'true':
+            junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)
 
         if host_data.status == 'included':
             return TestCase(name, junit_classname, duration, host_data.result)
