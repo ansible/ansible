@@ -570,8 +570,8 @@ state_strategy = {
 def find(compute_api, wished_server, per_page=1):
     compute_api.module.debug("Getting inside find")
     # Only the name attribute is accepted in the Compute query API
-    url = 'servers?name=%s&per_page=%d' % (urlquote(wished_server["name"]), per_page)
-    response = compute_api.get(url)
+    response = compute_api.get("servers", params={"name": wished_server["name"],
+                                                  "per_page": per_page})
 
     if not response.ok:
         msg = 'Error during server search: (%s) %s' % (response.status_code, response.json)
