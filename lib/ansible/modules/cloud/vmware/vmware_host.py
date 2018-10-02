@@ -55,6 +55,7 @@ options:
     - "  - '/Site2/dc2/Asia-Cluster/host'"
     - "  - '/dc3/Asia-Cluster/host'"
     version_added: "2.6"
+    aliases: ['folder_name']
   add_connected:
     description:
     - If set to C(True), then the host should be connected as soon as it is added.
@@ -389,7 +390,7 @@ def main():
         state=dict(default='present',
                    choices=['present', 'absent', 'add_or_reconnect', 'reconnect'],
                    type='str'),
-        folder=dict(type='str'),
+        folder=dict(type='str', aliases=['folder_name']),
         add_connected=dict(type='bool', default=True),
     )
 
