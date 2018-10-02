@@ -116,12 +116,10 @@ def _fetch_information(token, url):
         link = response.getheader('Link')
         if not link:
             return results
-        else:
-            relations = parse_pagination_link(link)
-            if 'next' not in relations:
-                return results
-            else:
-                paginated_url = urllib_parse.urljoin(paginated_url, relations['next'])
+        relations = parse_pagination_link(link)
+        if 'next' not in relations:
+            return results
+        paginated_url = urllib_parse.urljoin(paginated_url, relations['next'])
 
 
 def _build_server_url(api_endpoint):
