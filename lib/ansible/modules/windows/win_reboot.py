@@ -13,7 +13,7 @@ module: win_reboot
 short_description: Reboot a windows machine
 description:
 - Reboot a Windows machine, wait for it to go down, come back up, and respond to commands.
-version_added: "2.1"
+version_added: '2.1'
 options:
   pre_reboot_delay:
     description:
@@ -70,7 +70,7 @@ author:
 '''
 
 EXAMPLES = r'''
-- name:Reboot the machine with all defaults
+- name: Reboot the machine with all defaults
   win_reboot:
 
 - name: Reboot a slow machine that might have lots of updates to apply
@@ -102,18 +102,6 @@ EXAMPLES = r'''
 - name: Validate that the netlogon service has started, before running the next task
   win_reboot:
     test_command: 'exit (Get-Service -Name Netlogon).Status -ne "Running"'
-
-
-# Or you can make the next task wait for a specific evento to happen
-- name: Reboot the machine
-  win_reboot:
-
-- name: Wait for the Netlogon service to be started
-  wait_for_event:
-    log_name: System
-    eid: 7036
-    param1: Netlogon
-    param2: running
 '''
 
 RETURN = r'''
