@@ -592,6 +592,7 @@ class ELBListeners(object):
                 return False
         return True
 
+
 class ELBListener(object):
 
     def __init__(self, connection, module, listener, elb_arn):
