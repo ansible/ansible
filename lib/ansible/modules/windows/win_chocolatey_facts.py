@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_chocolatey_facts
-version_added: '2.7'
+version_added: '2.8'
 short_description: Create a facts collection for chocolatey
 description:
    - This module shows information from chocolatey, such as installed packages, configuration, feature and sources.
