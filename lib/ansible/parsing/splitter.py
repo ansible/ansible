@@ -1,4 +1,4 @@
-# Copyright: (c) 2014 James Cammarata, <jcammarata@ansible.com>
+# Copyright: (c) 2014, James Cammarata <jcammarata@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -152,12 +152,9 @@ def split_args(args):
     how Ansible needs to use it.
     '''
 
-    # the list of params parsed out of the arg string
-    # this is going to be the result value when we are done
-    params = []
-
-    # Initial split on newlines
-    items = args.split('\n')
+    # If input is empty, don't bother
+    if len(args) == 0:
+        return []
 
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
@@ -172,6 +169,17 @@ def split_args(args):
     print_depth = 0  # used to count nested jinja2 {{ }} blocks
     block_depth = 0  # used to count nested jinja2 {% %} blocks
     comment_depth = 0  # used to count nested jinja2 {# #} blocks
+
+    # the list of params parsed out of the arg string
+    # this is going to be the result value when we are done
+    params = []
+
+    # Initial split on newlines
+    items = args.split('\n')
+
+    # If we start with a newline, ensure we have it preserved
+    if args.startswith('\n'):
+        params.append('')
 
     # now we loop over each split chunk, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
@@ -257,10 +265,7 @@ def split_args(args):
         # one item (meaning we split on newlines), add a newline back here
         # to preserve the original structure
         if len(items) > 1 and itemidx != len(items) - 1 and not line_continuation:
-            if len(params) > 0:
-                params[-1] += '\n'
-            else:
-                params.append('\n')
+            params[-1] += '\n'
 
         # always clear the line continuation flag
         line_continuation = False
