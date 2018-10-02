@@ -243,11 +243,7 @@ def webfilter_content_header(data, fos):
 
 
 def fortios_webfilter(data, fos):
-    host = data['host']
-    username = data['username']
-    password = data['password']
-    fos.https('off')
-    fos.login(host, username, password)
+    login(data)
 
     methodlist = ['webfilter_content_header']
     for method in methodlist:
@@ -293,6 +289,7 @@ def main():
     except ImportError:
         module.fail_json(msg="fortiosapi module is required")
 
+    global fos
     fos = FortiOSAPI()
 
     is_error, has_changed, result = fortios_webfilter(module.params, fos)
