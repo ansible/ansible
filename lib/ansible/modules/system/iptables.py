@@ -552,6 +552,11 @@ def construct_rule(params):
         append_match(rule, params['src_range'] or params['dst_range'], 'iprange')
         append_param(rule, params['src_range'], '--src-range', False)
         append_param(rule, params['dst_range'], '--dst-range', False)
+    if 'physdev' in params['match']:
+        append_physdev(rule, params['physdev'], '--physdev')
+    elif params['physdev']:
+        append_match(rule, params['physdev'], 'physdev')
+        append_physdev(rule, params['physdev'], '--physdev')
     append_match(rule, params['limit'] or params['limit_burst'], 'limit')
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
@@ -666,6 +671,7 @@ def main():
             ctstate=dict(type='list', default=[]),
             src_range=dict(type='str'),
             dst_range=dict(type='str'),
+            physdev=dict(type='dict', default={}),
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
