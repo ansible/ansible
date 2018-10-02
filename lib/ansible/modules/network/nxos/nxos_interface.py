@@ -557,6 +557,7 @@ def map_config_to_obj(want, module):
                                                             'nxapibug'))
                     obj['description'] = str(attributes.get('description',
                                                             'nxapi_bug'))
+                    obj['mtu'] = interface_table.get('svi_mtu')
 
                     command = 'show run interface {0}'.format(obj['name'])
                     body = execute_show_command(command, module)[0]
@@ -578,6 +579,7 @@ def map_config_to_obj(want, module):
                     obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
                     obj['description'] = interface_table.get('desc')
+                    obj['mtu'] = interface_table.get('eth_mtu')
                     mode = interface_table.get('eth_mode')
                     if mode == 'access':
                         obj['mode'] = 'layer2'
