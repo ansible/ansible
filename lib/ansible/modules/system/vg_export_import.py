@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: vg_exim
+module: vg_export_import
 author:
 - Court Campbell
 version_added: "2.7"
@@ -36,7 +36,7 @@ options:
 
 EXAMPLES = '''
 - name: Import vgtest
-  vg_exim:
+  vg_export_import:
     vg: vgtest
     state: imported
 
