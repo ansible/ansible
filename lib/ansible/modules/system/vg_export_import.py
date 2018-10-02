@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: vg_export_import
 author:
 - Court Campbell
-version_added: "2.7"
+version_added: "2.8"
 short_description: Export/Import Linux LVM2 Volume Groups
 description:
   - This module exports/imports volume group
