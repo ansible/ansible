@@ -18,21 +18,25 @@ $result = @{
         ansible_chocolatey =  @{
             config = @{}
             feature = @{}
-            sources = @{
-                admin_only = ""
-                allow_self_service = ""
-                bypass_proxy = ""
-                certificate = ""
-                disabled = ""
-                name = ""
-                priority = ""
-                source = ""
-                source_username = ""                
-            }
-            packages = @{
-                package = ""
-                name = ""
-            }
+            sources = @(
+                @{
+                    admin_only = ""
+                    allow_self_service = ""
+                    bypass_proxy = ""
+                    certificate = ""
+                    disabled = ""
+                    name = ""
+                    priority = ""
+                    source = ""
+                    source_username = ""                
+                }
+            )
+            packages = @(
+                @{
+                    package = ""
+                    name = ""
+                }
+            )
         }
     }
 }

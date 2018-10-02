@@ -63,7 +63,7 @@ ansible_facts:
                     returned: always
                     type: dict
                 sources:
-                    description: Detailed information about the deposited Chocolatey sources.
+                    description: List of Chocolatey sources.
                     returned: always
                     type: complex
                     admin_only:
@@ -94,7 +94,7 @@ ansible_facts:
                         returned: always
                         type: string
                 packages:
-                    description: Detailed information about the installed Packages.
+                    description: List of installed Packages.
                     returned: alway
                     type: complex
                     package:
@@ -104,5 +104,5 @@ ansible_facts:
                     version:
                         description: Returns version of Package.
                         returned: alway
-                        type: dict
+                        type: string
 '''
