@@ -115,6 +115,17 @@ options:
         flags_set:
             description:
                 - Flags to be set.
+  physdev:
+    description:
+      - Matches on the bridge port input and output devices enslaved to a bridge
+        device.
+      - "C(physdev) expects a dict with a key C(filter), which specifies the
+        filter option for the bridge interface. The value can be one of: 'in',
+        'out', 'is-in', 'is-out', 'is-bridged'."
+      - If the filter type is 'in' or 'out', an interface name C(device) is
+        required.
+    default: {}
+    version_added: "2.8"
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -397,6 +408,15 @@ def append_tcp_flags(rule, param, flag):
             rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
 
+def append_physdev(rule, param, flag):
+    if param:
+        if 'filter' in param:
+            rule.extend([flag + '-' + param['filter']])
+            if param['filter'] == 'in' or param['filter'] == 'out':
+                if 'device' in param:
+                    rule.extend([param['device']])
+
+
 def append_match_flag(rule, param, flag, negatable):
     if param == 'match':
         rule.extend([flag])
@@ -454,6 +474,11 @@ def construct_rule(params):
     elif params['ctstate']:
         append_match(rule, params['ctstate'], 'conntrack')
         append_csv(rule, params['ctstate'], '--ctstate')
+    if 'physdev' in params['match']:
+        append_physdev(rule, params['physdev'], '--physdev')
+    elif params['physdev']:
+        append_match(rule, params['physdev'], 'physdev')
+        append_physdev(rule, params['physdev'], '--physdev')
     append_match(rule, params['limit'] or params['limit_burst'], 'limit')
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
@@ -559,6 +584,7 @@ def main():
             set_dscp_mark_class=dict(type='str'),
             comment=dict(type='str'),
             ctstate=dict(type='list', default=[]),
+            physdev=dict(type='dict', default={}),
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
