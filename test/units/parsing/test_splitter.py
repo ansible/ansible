@@ -94,6 +94,12 @@ SPLIT_DATA = (
     (u'One\n  Two\n    Three\n',
         [u'One\n ', u'Two\n   ', u'Three\n'],
         {u'_raw_params': u'One\n  Two\n    Three\n'}),
+    (u'One\n  # Comment 1\n  Two\n    # Comment 2\n    Three\n',
+        [u'One\n ', u'#', u'Comment', u'1\n ', 'Two\n   ', u'#', u'Comment', u'2\n   ', u'Three\n'],
+        {u'_raw_params': u'One\n  # Comment 1\n  Two\n    # Comment 2\n    Three\n'}),
+    (u'\nOne\n  # Comment 1\n  Two\n    # Comment 2\n    Three\n',
+        [u'\n', u'One\n ', u'#', u'Comment', u'1\n ', 'Two\n   ', u'#', u'Comment', u'2\n   ', u'Three\n'],
+        {u'_raw_params': u'\nOne\n  # Comment 1\n  Two\n    # Comment 2\n    Three\n'}),
 )
 
 SPLIT_ARGS = ((test[0], test[1]) for test in SPLIT_DATA)
