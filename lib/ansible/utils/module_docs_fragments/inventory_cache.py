@@ -22,9 +22,12 @@ options:
       - Cache plugin to use for the inventory's source data.
     env:
       - name: ANSIBLE_INVENTORY_CACHE_PLUGIN
+      - name: ANSIBLE_CACHE_PLUGIN
     ini:
       - section: inventory
         key: cache_plugin
+      - section: defaults
+        key: fact_caching
   _timeout:
     aliases:
       - cache_timeout:
@@ -51,11 +54,12 @@ options:
     ini:
       - section: inventory
         key: cache_connection
-      - section: default
+      - section: defaults
         key: fact_caching_connection
   _prefix:
     description:
       - Prefix to use for cache plugin files/tables
+    default: ansible_inventory
     env:
       - name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX
       - name: ANSIBLE_CACHE_PLUGIN_PREFIX
