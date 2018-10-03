@@ -24,7 +24,7 @@ class ScalewayException(Exception):
 
 # Specify a complete Link header, for validation purposes
 R_LINK_HEADER = r'''<[^>]+>;\srel="(first|previous|next|last)"
-    (,<[^>]+>;\srel="(first|previous|next|last))*"'''
+    (,<[^>]+>;\srel="(first|previous|next|last)")*'''
 # Specify a single relation, for iteration and string extraction purposes
 R_RELATION = r'<(?P<target_IRI>[^>]+)>; rel="(?P<relation>first|previous|next|last)"'
 
