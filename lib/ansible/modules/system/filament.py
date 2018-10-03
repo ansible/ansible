@@ -6,7 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -16,6 +16,7 @@ module: filament
 short_description: just Tutorial
 description:
    - Tutorial module
+version_added: "2.8"
 notes:
    - Tutorial module
 options:
