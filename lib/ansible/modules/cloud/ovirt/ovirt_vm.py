@@ -2031,9 +2031,9 @@ def main():
             if state == 'running':
                 def kernel_persist_check():
                     return (module.params.get('kernel_params') or
-                        module.params.get('initrd_path') or
-                        module.params.get('kernel_path')
-                        and not module.params.get('cloud_init_persist'))
+                            module.params.get('initrd_path') or
+                            module.params.get('kernel_path')
+                            and not module.params.get('cloud_init_persist'))
                 initialization = vms_module.get_initialization()
                 ret = vms_module.action(
                     action='start',
