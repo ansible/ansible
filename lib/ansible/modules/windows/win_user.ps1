@@ -55,8 +55,6 @@ function Get-Group($grp) {
 }
 
 Function Test-LocalCredential {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the Win32 call, also the source isn't a secure string to using that is just a waste of time/code")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param([String]$Username, [String]$Password)
 
     $platform_util = @'
