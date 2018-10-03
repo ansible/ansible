@@ -376,6 +376,15 @@ class Ec2Inventory(object):
             self.destination_format = None
             self.destination_format_tags = None
 
+        # Destination Group Name
+        if config.has_option('ec2', 'destination_group_format') and \
+                config.has_option('ec2', 'destination_group_format_tags'):
+            self.destination_group_format = config.get('ec2', 'destination_group_format')
+            self.destination_group_format_tags = config.get('ec2', 'destination_group_format_tags').split(',')
+        else:
+            self.destination_group_format = None
+            self.destination_group_format_tags = None
+
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
         self.route53_hostnames = config.get('ec2', 'route53_hostnames')
@@ -1041,6 +1050,10 @@ class Ec2Inventory(object):
 
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
+            if self.destination_group_format and self.destination_group_format_tags:
+                key = self.destination_group_format.format(*[getattr(instance, 'tags').get(tag, '') for tag in self.destination_group_format_tags])
+            self.push(self.inventory, key, hostname)
+
             for k, v in instance.tags.items():
                 if self.expand_csv_tags and v and ',' in v:
                     values = map(lambda x: x.strip(), v.split(','))
