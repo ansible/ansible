@@ -75,7 +75,7 @@ class TestOnyxPtpModule(TestOnyxModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_ptp_disabled_no_change(self):
-        self._ptp_enabled=False
+        self._ptp_enabled = False
         set_module_args(dict(ptp_state='disabled'))
         self.execute_module(changed=False)
 
@@ -85,7 +85,7 @@ class TestOnyxPtpModule(TestOnyxModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_enabled_no_change(self):
-        self._ptp_enabled=False
+        self._ptp_enabled = False
         set_module_args(dict(ntp_state='enabled',
                              ptp_state='disabled'))
         self.execute_module(changed=False)
@@ -99,7 +99,7 @@ class TestOnyxPtpModule(TestOnyxModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_ntp_disabled_no_change(self):
-        self._ntp_enabled=False
+        self._ntp_enabled = False
         set_module_args(dict(ntp_state='disabled'))
         self.execute_module(changed=False)
 

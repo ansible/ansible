@@ -142,7 +142,7 @@ class OnyxPtpGlobalModule(BaseOnyxModule):
         ntp_config = self._show_ntp_config()
         self._set_ntp_config(ntp_config)
 
-        ptp_config=self._show_ptp_config()
+        ptp_config = self._show_ptp_config()
         self._set_ptp_config(ptp_config)
 
     def generate_commands(self):
