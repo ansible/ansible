@@ -348,9 +348,11 @@ class OnyxInterfaceModule(BaseOnyxModule):
         else:
             for if_config in config:
                 for if_name, if_data in iteritems(if_config):
-                    if_data = if_data[0]
+                    merged_data = dict()
+                    for if_data_part in if_data:
+                        merged_data.update(if_data_part)
                     self._current_config[if_name] = self._create_if_data(
-                        if_name, if_data)
+                        if_name, merged_data)
 
     def _generate_no_if_commands(self, req_if, curr_if):
         if self._interface_type == self.IF_TYPE_ETH:

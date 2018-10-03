@@ -21,7 +21,7 @@ description:
     on Mellanox ONYX network devices.
 notes:
   - Tested on ONYX 3.6.8130
-  - ptp and ntp protocols cannot be enabled at the same time
+    ptp and ntp protocols cannot be enabled at the same time
 options:
   ptp_state:
     description:
@@ -34,13 +34,13 @@ options:
     choices: ['enabled', 'disabled']
   domain:
     description:
-      - set PTP domain number <Range: 0-127>
+      - "set PTP domain number Range 0-127"
   primary_priority:
     description:
-      - set PTP primary priority <Range: 0-225>
+      - "set PTP primary priority Range 0-225"
   secondary_priority:
     description:
-      - set PTP secondary priority <Range: 0-225>
+      - "set PTP secondary priority Range 0-225"
 """
 
 EXAMPLES = """
