@@ -1543,10 +1543,8 @@ class EnvironmentDescription(object):
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
-        python_versions = dict((v, self.get_version([python_paths[v], '-V'], warnings)) for v in sorted(python_paths) if python_paths[v])
-
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
-        pip_versions = dict((v, self.get_version([pip_paths[v], '--version'], warnings)) for v in sorted(pip_paths) if pip_paths[v])
+        program_versions = dict((v, self.get_version([python_paths[v], 'test/runner/versions.py'], warnings)) for v in sorted(python_paths) if python_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
         known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
@@ -1558,9 +1556,8 @@ class EnvironmentDescription(object):
 
         self.data = dict(
             python_paths=python_paths,
-            python_versions=python_versions,
             pip_paths=pip_paths,
-            pip_versions=pip_versions,
+            program_versions=program_versions,
             pip_interpreters=pip_interpreters,
             known_hosts_hash=known_hosts_hash,
             warnings=warnings,
@@ -1678,7 +1675,7 @@ class EnvironmentDescription(object):
         """
         :type command: list[str]
         :type warnings: list[str]
-        :rtype: str
+        :rtype: list[str]
         """
         try:
             stdout, stderr = raw_command(command, capture=True, cmd_verbosity=2)
@@ -1686,7 +1683,7 @@ class EnvironmentDescription(object):
             warnings.append(u'%s' % ex)
             return None  # all failures are equal, we don't care why it failed, only that it did
 
-        return (stdout or '').strip() + (stderr or '').strip()
+        return [line.strip() for line in ((stdout or '').strip() + (stderr or '').strip()).splitlines()]
 
     @staticmethod
     def get_shebang(path):
