@@ -64,7 +64,7 @@ EXAMPLES = '''
     challenge: tls-alpn-01
     challenge_data: "{{ item.value['tls-alpn-01'] }}"
     private_key_src: /etc/pki/cert/key/sample.com.key
-  with_items: "{{ sample_com_challenge.challenge_data }}"
+  loop: "{{ sample_com_challenge.challenge_data | dictsort }}"
   register: sample_com_challenge_certs
 
 - name: Install challenge certificates
@@ -81,7 +81,7 @@ EXAMPLES = '''
     challenge_certificate: "{{ item.challenge_certificate }}"
     regular_certificate: "{{ item.regular_certificate }}"
     private_key: /etc/pki/cert/key/sample.com.key
-  with_items: "{{ sample_com_challenge_certs.results }}"
+  loop: "{{ sample_com_challenge_certs.results }}"
 
 - name: Create certificate for a given CSR for sample.com
   acme_certificate:
