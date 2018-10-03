@@ -1,0 +1,2 @@
+bugfixes:
+- Only delete host key from redis in-memory cache if present.
