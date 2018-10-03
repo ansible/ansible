@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - foreman inventory plugin - Enable caching via cache plugins by using self.cache instead of
+    self._cache. self.cache is a (user-specified) cache plugin when caching is enabled for
+    inventory, while self._cache is a dictionary that is unused after being populated since
+    it is not stored between uses.
