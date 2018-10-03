@@ -2029,6 +2029,11 @@ def main():
             vms_module.post_present(ret['id'])
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
+                def kernel_persist_check():
+                    return (module.params.get('kernel_params') or
+                        module.params.get('initrd_path') or
+                        module.params.get('kernel_path')
+                        and not module.params.get('cloud_init_persist'))
                 initialization = vms_module.get_initialization()
                 ret = vms_module.action(
                     action='start',
@@ -2056,20 +2061,12 @@ def main():
                             cmdline=module.params.get('kernel_params'),
                             initrd=module.params.get('initrd_path'),
                             kernel=module.params.get('kernel_path'),
-                        ) if ((
-                            module.params.get('kernel_params') or
-                            module.params.get('initrd_path') or
-                            module.params.get('kernel_path')) and not
-                            module.params.get('kernel_params_persist')
-                        ) else None,
+                        ) if (kernel_persist_check()) else None,
                     ) if (
-                        module.params.get('kernel_params') or
-                        module.params.get('initrd_path') or
-                        module.params.get('kernel_path') or
+                        kernel_persist_check() or
                         module.params.get('host') or
                         initialization is not None
                         and not module.params.get('cloud_init_persist')
-                        and not module.params.get('kernel_params_persist')
                     ) else None,
                 )
 
