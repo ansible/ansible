@@ -1195,7 +1195,7 @@ def main():
             hellotime=dict(required=False, default="2", type='str'),
             maxage=dict(required=False, default="20", type='str'),
             ageingtime=dict(required=False, default="300", type='str'),
-            hairpin=dict(required=False, default=True, type='str'),
+            hairpin=dict(required=False, default=True, type='bool'),
             path_cost=dict(required=False, default="100", type='str'),
             # vlan specific vars
             vlanid=dict(required=False, default=None, type='str'),

@@ -936,22 +936,20 @@ class TaskExecutor:
         '''
         Starts the persistent connection
         '''
-        master, slave = pty.openpty()
+        candidate_paths = [C.ANSIBLE_CONNECTION_PATH or os.path.dirname(sys.argv[0])]
+        candidate_paths.extend(os.environ['PATH'].split(os.pathsep))
+        for dirname in candidate_paths:
+            ansible_connection = os.path.join(dirname, 'ansible-connection')
+            if os.path.isfile(ansible_connection):
+                break
+        else:
+            raise AnsibleError("Unable to find location of 'ansible-connection'. "
+                               "Please set or check the value of ANSIBLE_CONNECTION_PATH")
 
         python = sys.executable
-
-        def find_file_in_path(filename):
-            # Check $PATH first, followed by same directory as sys.argv[0]
-            paths = os.environ['PATH'].split(os.pathsep) + [os.path.dirname(sys.argv[0])]
-            for dirname in paths:
-                fullpath = os.path.join(dirname, filename)
-                if os.path.isfile(fullpath):
-                    return fullpath
-
-            raise AnsibleError("Unable to find location of '%s'" % filename)
-
+        master, slave = pty.openpty()
         p = subprocess.Popen(
-            [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
+            [python, ansible_connection, to_text(os.getppid())],
             stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         os.close(slave)

@@ -449,10 +449,10 @@ class HomebrewCask(object):
         ]
         rc, out, err = self.module.run_command(cmd)
 
-        if re.search(r'Error: Cask .* is not installed.', err):
-            return False
-        else:
+        if rc == 0:
             return True
+        else:
+            return False
     # /checks ------------------------------------------------------ }}}
 
     # commands ----------------------------------------------------- {{{

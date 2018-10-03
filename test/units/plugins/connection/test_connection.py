@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from io import StringIO
 import sys
+import pytest
 
 from ansible.compat.tests import mock
 from ansible.compat.tests import unittest
@@ -43,8 +44,9 @@ from ansible.plugins.connection.docker import Connection as DockerConnection
 from ansible.plugins.connection.network_cli import Connection as NetworkCliConnection
 from ansible.plugins.connection.httpapi import Connection as HttpapiConnection
 
-PY3 = sys.version_info[0] == 3
+pytest.importorskip("ncclient")
 
+PY3 = sys.version_info[0] == 3
 builtin_import = __import__
 
 mock_ncclient = MagicMock(name='ncclient')

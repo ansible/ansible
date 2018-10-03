@@ -147,7 +147,6 @@ lib/ansible/modules/cloud/cloudscale/cloudscale_server.py E325
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_domain.py E325
 lib/ansible/modules/cloud/cloudstack/cs_host.py E326
-lib/ansible/modules/cloud/cloudstack/cs_instance.py E326
 lib/ansible/modules/cloud/cloudstack/cs_instance_nic_secondaryip.py E325
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E323
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E325
@@ -168,7 +167,6 @@ lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E322
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E323
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E325
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E326
-lib/ansible/modules/cloud/cloudstack/cs_staticnat.py E324
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E322
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E325
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E326
@@ -911,7 +909,6 @@ lib/ansible/modules/network/panos/panos_security_rule.py E324
 lib/ansible/modules/network/panos/panos_security_rule.py E325
 lib/ansible/modules/network/panos/panos_security_rule.py E326
 lib/ansible/modules/network/sros/sros_config.py E323
-lib/ansible/modules/network/sros/sros_config.py E326
 lib/ansible/modules/network/vyos/vyos_interface.py E324
 lib/ansible/modules/network/vyos/vyos_interface.py E325
 lib/ansible/modules/network/vyos/vyos_linkagg.py E324

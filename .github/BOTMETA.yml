@@ -134,7 +134,9 @@ files:
   $modules/cloud/vmware/_vsphere_guest.py: dagwieers
   $modules/cloud/vultr/: $team_vultr
   $modules/cloud/webfaction/: quentinsf
-  $modules/clustering/k8s/: chouseknecht maxamillion fabianvf flaper87 willthames
+  $modules/clustering/k8s/:
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+    labels: k8s
   $modules/clustering/k8s/_kubernetes.py: supertom
   $modules/clustering/openshift/: chouseknecht maxamillion fabianvf flaper87
   $modules/commands/command.py: $team_ansible
@@ -307,7 +309,10 @@ files:
     ignored: erydo
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
-  $modules/storage/purestorage/: sdodsley
+  $modules/storage/purestorage/:
+    maintainers: $team_purestorage
+    labels: pure_storage
+  $modules/storage/glusterfs/: devyanikota
   $modules/system/at.py: $team_ansible
   $modules/system/authorized_key.py: $team_ansible
   $modules/system/facter.py: $team_ansible
@@ -462,7 +467,9 @@ files:
     maintainers: $team_ipa
   $module_utils/k8s:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-    labels: clustering
+    labels:
+      - clustering
+      - k8s
   $module_utils/keycloak.py:
     maintainers: eikef
   $module_utils/manageiq.py:
@@ -553,6 +560,8 @@ files:
     maintainers: $team_onyx
   $module_utils/network/ordnance:
     maintainers: alexanderturner djh00t
+  $module_utils/network/panos:
+    maintainers: ivanbojer jtschichold shinmog
   $module_utils/network/routeros:
     maintainers: heuels
   $module_utils/network/slxos:
@@ -580,6 +589,9 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
+  $module_utils/pure.py:
+    maintainers: $team_purestorage
+    labels: pure_storage
   $module_utils/netapp:
     maintainers: $team_netapp
   $module_utils/vultr.py: &vultr
@@ -856,6 +868,13 @@ files:
     support: core
   lib/ansible/plugins/inventory/ini.py:
     support: core
+  lib/ansible/plugins/inventory/k8s.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+    labels: k8s
+  lib/ansible/plugins/inventory/openshift.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
   lib/ansible/plugins/inventory/openstack.py:
     maintainers: $team_openstack
     keywords:
@@ -863,7 +882,6 @@ files:
       - inventory
     labels:
       - cloud
-  lib/ansible/plugins/inventory/netbox.py: sieben
   lib/ansible/plugins/inventory/scaleway.py: *scaleway
   lib/ansible/plugins/inventory/vultr.py: *vultr
   lib/ansible/plugins/inventory/yaml.py:
@@ -885,6 +903,10 @@ files:
     labels: community
   lib/ansible/plugins/lookup/cyberarkpassword.py:
     notified: cyberark-bizdev
+  lib/ansible/plugins/lookup/k8s.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+    labels: k8s
   lib/ansible/plugins/lookup/nios:
     support: core
     maintainers: $team_networking sganesh-infoblox
@@ -1073,10 +1095,11 @@ macros:
   team_onyx: samerd
   team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gdpak
+  team_purestorage: sdodsley
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt flossware vritant
-  team_scaleway: sieben hekonsek Spredzy abarbare anthony25
+  team_scaleway: sieben hekonsek Spredzy abarbare anthony25 pilou-
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
   team_vmware: Akasurde dav1x warthog9

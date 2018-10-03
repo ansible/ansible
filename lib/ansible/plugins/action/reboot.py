@@ -42,18 +42,24 @@ class ActionModule(ActionBase):
 
     DEPRECATED_ARGS = {}
 
+    BOOT_TIME_COMMANDS = {
+        'openbsd': "/sbin/sysctl kern.boottime",
+    }
+
     SHUTDOWN_COMMANDS = {
         'linux': DEFAULT_SHUTDOWN_COMMAND,
         'freebsd': DEFAULT_SHUTDOWN_COMMAND,
         'sunos': '/usr/sbin/shutdown',
         'darwin': '/sbin/shutdown',
+        'openbsd': DEFAULT_SHUTDOWN_COMMAND,
     }
 
     SHUTDOWN_COMMAND_ARGS = {
         'linux': '-r {delay_min} "{message}"',
         'freebsd': '-r +{delay_sec}s "{message}"',
         'sunos': '-y -g {delay_sec} -r "{message}"',
-        'darwin': '-r +{delay_min_macos} "{message}"'
+        'darwin': '-r +{delay_min_macos} "{message}"',
+        'openbsd': '-r +{delay_min} "{message}"',
     }
 
     def __init__(self, *args, **kwargs):
@@ -94,9 +100,15 @@ class ActionModule(ActionBase):
         return reboot_command
 
     def get_system_boot_time(self):
-        stdout = b''
-        stderr = b''
-        command_result = self._low_level_execute_command(self.DEFAULT_BOOT_TIME_COMMAND, sudoable=self.DEFAULT_SUDOABLE)
+        stdout = u''
+        stderr = u''
+
+        # Determine the system distribution in order to use the correct shutdown command arguments
+        uname_result = self._low_level_execute_command('uname')
+        distribution = uname_result['stdout'].strip().lower()
+
+        boot_time_command = self.BOOT_TIME_COMMANDS.get(distribution, self.DEFAULT_BOOT_TIME_COMMAND)
+        command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
 
         # For single board computers, e.g., Raspberry Pi, that lack a real time clock and are using fake-hwclock
         # launched by systemd, the update of utmp/wtmp is not done correctly.
