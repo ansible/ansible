@@ -743,6 +743,8 @@ def command_integration_filtered(args, targets, all_targets):
 
     results = {}
 
+    current_environment = None  # type: EnvironmentDescription | None
+
     for target in targets_iter:
         if args.start_at and not found:
             found = target.name == args.start_at
@@ -759,7 +761,8 @@ def command_integration_filtered(args, targets, all_targets):
 
         cloud_environment = get_cloud_environment(args, target)
 
-        original_environment = EnvironmentDescription(args)
+        original_environment = current_environment if current_environment else EnvironmentDescription(args)
+        current_environment = None
 
         display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
 
@@ -818,8 +821,10 @@ def command_integration_filtered(args, targets, all_targets):
                     display.verbosity = args.verbosity = 6
 
             start_time = time.time()
-            original_environment.validate(target.name, throw=True)
+            current_environment = EnvironmentDescription(args)
             end_time = time.time()
+
+            EnvironmentDescription.check(original_environment, current_environment, target.name, throw=True)
 
             results[target.name]['validation_seconds'] = int(end_time - start_time)
 
