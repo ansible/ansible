@@ -20,37 +20,37 @@ short_description: Get token for the Itential Automation Platform
 description:
   - Checks the connection to IAP and retrieves a login token.
 options:
-  iap_port: 
-    description: 
-      - Provide the port number for the Itential Automation Platform  
+  iap_port:
+    description:
+      - Provide the port number for the Itential Automation Platform
     required: true
     default: null
 
-  iap_fqdn: 
-    description: 
-      - Provide the fqdn for the Itential Automation Platform  
-    required: true
-    default: null
-    
-  username: 
-    description: 
-      - Provide the username for the Itential Automation Platform  
-    required: true
-    default: null
-    
-  password: 
-    description: 
-      - Provide the password for the Itential Automation Platform 
+  iap_fqdn:
+    description:
+      - Provide the fqdn for the Itential Automation Platform
     required: true
     default: null
 
-  https: 
-    description: 
-      - The transport protocol is HyperText Transfer Protocol Secure (HTTPS) for the Itential Automation Platform 
+  username:
+    description:
+      - Provide the username for the Itential Automation Platform
+    required: true
+    default: null
+
+  password:
+    description:
+      - Provide the password for the Itential Automation Platform
+    required: true
+    default: null
+
+  https:
+    description:
+      - The transport protocol is HyperText Transfer Protocol Secure (HTTPS) for the Itential Automation Platform
       - By default using http
     type: bool
     default: False
-        
+
 requirements:
   - The Itential Automation Platform with relevant applications
 
@@ -59,25 +59,25 @@ notes:
 '''
 
 EXAMPLES = '''
-- name: Get token for the Itential Automation Platform 
-      iap_token:
-        iap_port: 3000
-        iap_fqdn: localhost
-        username: myusername
-        password: mypass
-      register: result
+- name: Get token for the Itential Automation Platform
+  iap_token:
+    iap_port: 3000
+    iap_fqdn: localhost
+    username: myusername
+    password: mypass
+  register: result
 
-    - debug: var=result.token
+- debug: var=result.token
 '''
 
 RETURN = '''
-token:
+result:
     description: The token acquired from the Itential Automation Platform
     type: str
 '''
 
 # Ansible imports
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 # Standard library imports
 import requests
@@ -128,7 +128,7 @@ def run_module():
     if module.params['https'] is True:
         transport_protocol = 'https'
 
-    url = transport_protocol+"://"+module.params['iap_fqdn'] + ":" + module.params['iap_port'] + "/login"
+    url = transport_protocol + "://" + module.params['iap_fqdn'] + ":" + module.params['iap_port'] + "/login"
     username = module.params['username']
     password = module.params['password']
 
@@ -164,11 +164,11 @@ def run_module():
     #     module.fail_json(msg="Something happened: " + format(err.message), **result)
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
-    module.exit_json(**result)
-
+    return result
 
 def main():
-    run_module()
+    result = run_module()
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
