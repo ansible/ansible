@@ -29,18 +29,25 @@ options:
         description:
             - A list of port names.
         aliases: ['port']
-        required: true
+    selfupdate:
+        description:
+            - Update Macports and the ports tree, either prior to installing ports or as a separate step.
+            - Equivalent to running C(port selfupdate).
+        aliases: ['update_cache', 'update_ports']
+        default: "no"
+        type: bool
     state:
         description:
             - Indicates the desired state of the port.
         choices: [ 'present', 'absent', 'active', 'inactive' ]
         default: present
-    update_ports:
+    upgrade:
         description:
-            - Update the ports tree first.
-        aliases: ['update_cache']
+            - Upgrade all outdated ports, either prior to installing ports or as a separate step.
+            - Equivalent to running C(port upgrade outdated).
         default: "no"
         type: bool
+        version_added: "2.8"
     variant:
         description:
             - A port variant specification.
@@ -66,10 +73,15 @@ EXAMPLES = '''
     - foo
     - foo-tools
 
-- name: Update the ports tree then install the foo port
+- name: Update Macports and the ports tree, then upgrade all outdated ports
+  macports:
+    selfupdate: yes
+    upgrade: yes
+
+- name: Update Macports and the ports tree, then install the foo port
   macports:
     name: foo
-    update_ports: yes
+    selfupdate: yes
 
 - name: Remove the foo port
   macports:
@@ -87,17 +99,52 @@ EXAMPLES = '''
     state: inactive
 '''
 
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import shlex_quote
 
 
-def sync_ports(module, port_path):
-    """ Sync ports tree. """
+def selfupdate(module, port_path):
+    """ Update Macports and the ports tree. """
 
-    rc, out, err = module.run_command("%s sync" % port_path)
+    rc, out, err = module.run_command("%s -v selfupdate" % port_path)
 
-    if rc != 0:
-        module.fail_json(msg="Could not update ports tree", stdout=out, stderr=err)
+    if rc == 0:
+        updated = any(
+            re.search(r'Total number of ports parsed:\s+[^0]', s.strip()) or
+            re.search(r'Installing new Macports release', s.strip())
+            for s in out.split('\n')
+            if s
+        )
+        if updated:
+            changed = True
+            msg = "Macports updated successfully"
+        else:
+            changed = False
+            msg = "Macports already up-to-date"
+
+        return (changed, msg)
+    else:
+        module.fail_json(msg="Failed to update Macports", stdout=out, stderr=err)
+
+
+def upgrade(module, port_path):
+    """ Upgrade outdated ports. """
+
+    rc, out, err = module.run_command("%s upgrade outdated" % port_path)
+
+    # rc is 1 when nothing to upgrade so check stdout first.
+    if out.strip() == "Nothing to upgrade.":
+        changed = False
+        msg = "Ports already upgraded"
+        return (changed, msg)
+    elif rc == 0:
+        changed = True
+        msg = "Outdated ports upgraded successfully"
+        return (changed, msg)
+    else:
+        module.fail_json(msg="Failed to upgrade outdated ports", stdout=out, stderr=err)
 
 
 def query_port(module, port_path, name, state="present"):
@@ -220,9 +267,10 @@ def deactivate_ports(module, port_path, ports):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=["port"], required=True, type='list'),
+            name=dict(aliases=["port"], type='list'),
+            selfupdate=dict(aliases=["update_cache", "update_ports"], default=False, type='bool'),
             state=dict(default="present", choices=["present", "installed", "absent", "removed", "active", "inactive"]),
-            update_ports=dict(aliases=["update_cache"], default="no", type='bool'),
+            upgrade=dict(default=False, type='bool'),
             variant=dict(aliases=["variants"], default=None, type='str')
         )
     )
@@ -231,8 +279,15 @@ def main():
 
     p = module.params
 
-    if p["update_ports"]:
-        sync_ports(module, port_path)
+    if p["selfupdate"]:
+        (changed, msg) = selfupdate(module, port_path)
+        if not (p["name"] or p["upgrade"]):
+            module.exit_json(changed=changed, msg=msg)
+
+    if p["upgrade"]:
+        (changed, msg) = upgrade(module, port_path)
+        if not p["name"]:
+            module.exit_json(changed=changed, msg=msg)
 
     pkgs = p["name"]
 
