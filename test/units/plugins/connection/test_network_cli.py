@@ -164,8 +164,8 @@ class TestConnectionClass(unittest.TestCase):
         signal.signal(signal.SIGALRM, timeout)
         pc = PlayContext()
         new_stdin = StringIO()
-        conn = network_cli.Connection(pc, new_stdin)
         pc.network_os = 'ios'
+        conn = connection_loader.get('network_cli', pc, new_stdin)
         timeout = 1
         conn.set_option('persistent_command_timeout', timeout)
 
