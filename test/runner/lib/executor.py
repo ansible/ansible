@@ -15,6 +15,7 @@ import pipes
 import sys
 import hashlib
 import difflib
+import filecmp
 
 import lib.pytar
 import lib.thread
@@ -1535,17 +1536,25 @@ class EnvironmentDescription(object):
             self.data = {}
             return
 
+        warnings = []
+
         versions = ['']
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
-        python_versions = dict((v, self.get_version([python_paths[v], '-V'])) for v in sorted(python_paths) if python_paths[v])
+        python_versions = dict((v, self.get_version([python_paths[v], '-V'], warnings)) for v in sorted(python_paths) if python_paths[v])
 
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
-        pip_versions = dict((v, self.get_version([pip_paths[v], '--version'])) for v in sorted(pip_paths) if pip_paths[v])
+        pip_versions = dict((v, self.get_version([pip_paths[v], '--version'], warnings)) for v in sorted(pip_paths) if pip_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
         known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
+
+        for version in sorted(versions):
+            self.check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings)
+
+        for warning in warnings:
+            display.warning(warning, unique=True)
 
         self.data = dict(
             python_paths=python_paths,
@@ -1554,7 +1563,59 @@ class EnvironmentDescription(object):
             pip_versions=pip_versions,
             pip_interpreters=pip_interpreters,
             known_hosts_hash=known_hosts_hash,
+            warnings=warnings,
         )
+
+    @staticmethod
+    def check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings):
+        """
+        :type version: str
+        :param python_paths: dict[str, str]
+        :param pip_paths:  dict[str, str]
+        :param pip_interpreters:  dict[str, str]
+        :param warnings: list[str]
+        """
+        python_label = 'Python%s' % (' %s' % version if version else '')
+
+        pip_path = pip_paths.get(version)
+        python_path = python_paths.get(version)
+
+        if not python_path and not pip_path:
+            # neither python or pip is present for this version
+            return
+
+        if not python_path:
+            warnings.append('A %s interpreter was not found, yet a matching pip was found at "%s".' % (python_label, pip_path))
+            return
+
+        if not pip_path:
+            warnings.append('A %s interpreter was found at "%s", yet a matching pip was not found.' % (python_label, python_path))
+            return
+
+        pip_shebang = pip_interpreters.get(version)
+
+        match = re.search(r'#!\s*(?P<command>[^\s]+)', pip_shebang)
+
+        if not match:
+            warnings.append('A %s pip was found at "%s", but it does not have a valid shebang: %s' % (python_label, pip_path, pip_shebang))
+            return
+
+        pip_interpreter = os.path.realpath(match.group('command'))
+        python_interpreter = os.path.realpath(python_path)
+
+        if pip_interpreter == python_interpreter:
+            return
+
+        try:
+            identical = filecmp.cmp(pip_interpreter, python_interpreter)
+        except OSError:
+            identical = False
+
+        if identical:
+            return
+
+        warnings.append('A %s pip was found at "%s", but it uses interpreter "%s" instead of "%s".' % (
+            python_label, pip_path, pip_interpreter, python_interpreter))
 
     def __str__(self):
         """
@@ -1613,14 +1674,16 @@ class EnvironmentDescription(object):
         return False
 
     @staticmethod
-    def get_version(command):
+    def get_version(command, warnings):
         """
         :type command: list[str]
+        :type warnings: list[str]
         :rtype: str
         """
         try:
             stdout, stderr = raw_command(command, capture=True, cmd_verbosity=2)
-        except SubprocessError:
+        except SubprocessError as ex:
+            warnings.append(u'%s' % ex)
             return None  # all failures are equal, we don't care why it failed, only that it did
 
         return (stdout or '').strip() + (stderr or '').strip()
@@ -1632,7 +1695,7 @@ class EnvironmentDescription(object):
         :rtype: str
         """
         with open(path) as script_fd:
-            return script_fd.readline()
+            return script_fd.readline().strip()
 
     @staticmethod
     def get_hash(path):
