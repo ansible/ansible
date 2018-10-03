@@ -91,6 +91,11 @@
     include_tasks: tests.yml
 
   always:
+  - name: ensure test package is uninstalled after tests
+    win_chocolatey:
+      name: '{{ test_choco_packages }}'
+      state: absent
+
   - name: remove test sources
     win_chocolatey_source:
       name: '{{ item }}'
