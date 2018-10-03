@@ -515,7 +515,7 @@ def map_config_to_obj(want, module):
 
                 if intf_type in ['portchannel', 'ethernet']:
                     mode = interface_table.get('eth_mode')
-                    if mode in ('access', 'trunk'):
+                    if mode in ('access', 'trunk', 'dot1q-tunnel'):
                         obj['mode'] = 'layer2'
                     elif mode in ('routed', 'layer3'):
                         obj['mode'] = 'layer3'
