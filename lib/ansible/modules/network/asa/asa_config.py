@@ -179,7 +179,7 @@ vars:
   register: bgp
   when: bgp_default_config is defined
 
-- name: configure ASA (>=9.2) BGP neighbor in default/singel context mode
+- name: configure ASA (>=9.2) BGP neighbor in default/single context mode
   asa_config:
     lines:
       - "bgp router-id {{ bgp_router_id }}"
