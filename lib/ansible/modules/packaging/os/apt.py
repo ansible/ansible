@@ -93,6 +93,7 @@ options:
      description:
        - Path to a .deb package on the remote machine.
        - If :// in the path, ansible will attempt to download deb before installing. (Version added 2.1)
+       - The deb parameter require xz-utils package in order to extract the control file of the deb package to install.
      required: false
      version_added: "1.6"
   autoremove:
@@ -124,7 +125,6 @@ requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
    - aptitude (before 2.4)
-   - xz-utils
 author: "Matthew Williams (@mgwilliams)"
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
@@ -134,7 +134,6 @@ notes:
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
      Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
    - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
-   - The deb parameter require xz-utils package in order to extract the control file of the deb package to install.
 '''
 
 EXAMPLES = '''
