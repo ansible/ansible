@@ -133,14 +133,14 @@ def get_master_status(cursor):
 
 
 def get_slave_status(cursor, connection_name=''):
-    cursor.execute("SHOW SLAVE %s STATUS" % connection_name)
+    cursor.execute("SHOW SLAVE '%s' STATUS" % connection_name)
     slavestatus = cursor.fetchone()
     return slavestatus
 
 
 def stop_slave(cursor, connection_name=''):
     try:
-        cursor.execute("STOP SLAVE %s" % connection_name)
+        cursor.execute("STOP SLAVE '%s'" % connection_name)
         stopped = True
     except:
         stopped = False
@@ -149,7 +149,7 @@ def stop_slave(cursor, connection_name=''):
 
 def reset_slave(cursor, connection_name=''):
     try:
-        cursor.execute("RESET SLAVE %s" % connection_name)
+        cursor.execute("RESET SLAVE '%s'" % connection_name)
         reset = True
     except:
         reset = False
@@ -167,7 +167,7 @@ def reset_slave_all(cursor):
 
 def start_slave(cursor, connection_name=''):
     try:
-        cursor.execute("START SLAVE %s" % connection_name)
+        cursor.execute("START SLAVE '%s'" % connection_name)
         started = True
     except:
         started = False
@@ -176,7 +176,7 @@ def start_slave(cursor, connection_name=''):
 
 def changemaster(cursor, chm, chm_params, connection_name=''):
     sql_param = ",".join(chm)
-    query = 'CHANGE MASTER %s TO %s' % (connection_name, sql_param)
+    query = "CHANGE MASTER '%s' TO %s" % (connection_name, sql_param)
     cursor.execute(query, chm_params)
 
 
