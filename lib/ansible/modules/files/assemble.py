@@ -76,6 +76,8 @@ author:
 extends_documentation_fragment:
     - files
     - decrypt
+notes:
+  - As of Ansible 2.6, this module supports check mode.
 '''
 
 EXAMPLES = '''
@@ -174,6 +176,7 @@ def main():
             validate=dict(required=False, type='str'),
         ),
         add_file_common_args=True,
+        supports_check_mode=True
     )
 
     changed = False
@@ -219,6 +222,18 @@ def main():
         dest_hash = module.sha1(dest)
 
     if path_hash != dest_hash:
+
+        if module._diff:
+            f = open(path, 'rb')
+            after_content = f.read()
+            f.close()
+            if os.path.exists(dest):
+                f = open(dest, 'rb')
+                before_content = f.read()
+                f.close()
+            else:
+                before_content = ""
+
         if validate:
             (rc, out, err) = module.run_command(validate % path)
             result['validation'] = dict(rc=rc, stdout=out, stderr=err)
@@ -228,17 +243,31 @@ def main():
         if backup and dest_hash is not None:
             result['backup_file'] = module.backup_local(dest)
 
-        module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
+        if not module.check_mode:
+            module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
         changed = True
 
     cleanup(path, result)
 
     # handle file permissions
-    file_args = module.load_file_common_arguments(module.params)
-    result['changed'] = module.set_fs_attributes_if_different(file_args, changed)
+    attr_diff = {}
+    if os.path.exists(dest):
+        file_args = module.load_file_common_arguments(module.params)
+        result['changed'] = module.set_fs_attributes_if_different(file_args, changed, diff=attr_diff)
+    else:
+        result['changed'] = True
 
     # Mission complete
     result['msg'] = "OK"
+
+    if module._diff:
+        content_diff = {'before': before_content,
+                        'after': after_content,
+                        'before_header': '%s (content)' % dest,
+                        'after_header': '%s (content)' % dest}
+
+        result['diff'] = [content_diff, attr_diff]
+
     module.exit_json(**result)
 
 
