@@ -12,155 +12,164 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: file
-version_added: "historical"
-short_description: Sets attributes of files
+version_added: historical
+short_description: Manage files and file properties
 extends_documentation_fragment: files
 description:
-     - Sets attributes of files, symlinks, and directories, or removes
-       files/symlinks/directories. Many other modules support the same options as
-       the C(file) module - including M(copy), M(template), and M(assemble).
-     - For Windows targets, use the M(win_file) module instead.
+- Set attributes of files, symlinks or directories.
+- Alternatively, remove files, symlinks or directories.
+- Many other modules support the same options as the C(file) module - including M(copy), M(template), and M(assemble).
+- For Windows targets, use the M(win_file) module instead.
 notes:
-    - For Windows targets, use the M(win_file) module instead.
-    - See also M(copy), M(template), M(assemble)
+- For Windows targets, use the M(win_file) module instead.
+- See also M(copy), M(template) and M(assemble).
 author:
-    - Ansible Core Team
-    - Michael DeHaan
+- Ansible Core Team
+- Michael DeHaan
 options:
   path:
     description:
-      - Path to the file being managed.
-    required: true
+    - Path to the file being managed.
+    required: yes
     aliases: [ dest, name ]
   state:
     description:
-      - If C(directory), all intermediate subdirectories will be created if they
-        do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
-        If C(file), the file will NOT be created if it does not exist; see the C(touch)
-        value or the M(copy) or M(template) module if you want that behavior.  If C(link), the
-        symbolic link will be created or changed. Use C(hard) for hardlinks. If C(absent),
-        directories will be recursively deleted, and files or symlinks will be unlinked.
-        Note that C(absent) will not cause C(file) to fail if the C(path) does not exist
-        as the state did not change.
-        If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
-        exist, while an existing file or directory will receive updated file access and
-        modification times (similar to the way `touch` works from the command line).
+    - If C(absent), directories will be recursively deleted, and files or symlinks will
+      be unlinked. Note that C(absent) will not cause C(file) to fail if the C(path) does
+      not exist as the state did not change.
+    - If C(directory), all intermediate subdirectories will be created if they
+      do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
+    - If C(file), the file will NOT be created if it does not exist; see the C(touch)
+      value or the M(copy) or M(template) module if you want that behavior.
+    - If C(hard), the hard link will be created or changed.
+    - If C(link), the symbolic link will be created or changed.
+    - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
+      exist, while an existing file or directory will receive updated file access and
+      modification times (similar to the way C(touch) works from the command line).
     default: file
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
-      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept
-        absolute, relative and nonexisting paths. Relative paths are relative to the file being
-        created (C(path)) which is how the UNIX command C(ln -s SRC DEST) treats relative paths.
+    - Path of the file to link to.
+    - This applies only to C(state=link) and C(state=hard).
+    - Will accept absolute, relative and non-existing paths.
+    - Relative paths are relative to the file being created (C(path)) which is how
+      the Unix command C(ln -s SRC DEST) treats relative paths.
   recurse:
     description:
-      - recursively set the specified file attributes (applies only to C(state=directory))
+    - Recursively set the specified file attributes.
+    - This applies only to C(state=directory).
     type: bool
-    default: 'no'
-    version_added: "1.1"
+    default: no
+    version_added: '1.1'
   force:
     description:
-      - 'force the creation of the symlinks in two cases: the source file does
-        not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
-        "path" file and create symlink to the "src" file in place of it).'
+    - >
+      Force the creation of the symlinks in two cases: the source file does
+      not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
+      C(path) file and create symlink to the C(src) file in place of it).
     type: bool
-    default: 'no'
+    default: no
   follow:
     description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
-      - 'Previous to Ansible 2.5, this was C(no) by default.'
+    - This flag indicates that filesystem links, if they exist, should be followed.
+    - Previous to Ansible 2.5, this was C(no) by default.
     type: bool
-    default: 'yes'
-    version_added: "1.8"
+    default: yes
+    version_added: '1.8'
   modification_time:
     description:
-      - This parameter indicates the time the file's modification time should be set to
-      - 'Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now)'
-      - 'Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch)'
+    - This parameter indicates the time the file's modification time should be set to.
+    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
+    - Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
     version_added: "2.7"
   modification_time_format:
     description:
-      - 'When used with C(modification_time), indicates the time format that must be used.'
-      - 'Based on default Python format (see time.strftime doc)'
+    - When used with C(modification_time), indicates the time format that must be used.
+    - Based on default Python format (see time.strftime doc).
     default: "%Y%m%d%H%M.%S"
-    version_added: "2.7"
+    version_added: '2.7'
   access_time:
     description:
-      - This parameter indicates the time the file's access time should be set to
-      - 'Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now)'
-      - 'Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch)'
-    version_added: "2.7"
+    - This parameter indicates the time the file's access time should be set to.
+    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
+    - Default is C(None) meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    version_added: '2.7'
   access_time_format:
     description:
-      - 'When used with C(access_time), indicates the time format that must be used.'
-      - 'Based on default Python format (see time.strftime doc)'
+    - When used with C(access_time), indicates the time format that must be used.
+    - Based on default Python format (see time.strftime doc).
     default: "%Y%m%d%H%M.%S"
-    version_added: "2.7"
+    version_added: '2.7'
 '''
 
 EXAMPLES = '''
-# change file ownership, group and mode
-- file:
+- name: Change file ownership, group and permissions
+  file:
     path: /etc/foo.conf
     owner: foo
     group: foo
-    # when specifying mode using octal numbers, add a leading 0
+    # When specifying mode using octal numbers, add a leading 0
     mode: 0644
-- file:
+
+- name: Create an insecure file
+  file:
     path: /work
     owner: root
     group: root
-    mode: 01777
-- file:
+    # Or use quotes instead
+    mode: '1777'
+
+- name: Create a symbolic link
+  file:
     src: /file/to/link/to
     dest: /path/to/symlink
     owner: foo
     group: foo
     state: link
-- file:
+
+- name: Create two hard links
+  file:
     src: '/tmp/{{ item.src }}'
     dest: '{{ item.dest }}'
     state: link
   with_items:
-    - { src: 'x', dest: 'y' }
-    - { src: 'z', dest: 'k' }
+    - { src: x, dest: y }
+    - { src: z, dest: k }
 
-# touch a file, using symbolic modes to set the permissions (equivalent to 0644)
-- file:
+- name: Touch a file, using symbolic modes to set the permissions (equivalent to 0644)
+  file:
     path: /etc/foo.conf
     state: touch
-    mode: "u=rw,g=r,o=r"
+    mode: u=rw,g=r,o=r
 
-# touch the same file, but add/remove some permissions
-- file:
+- name: Touch the same file, but add/remove some permissions
+  file:
     path: /etc/foo.conf
     state: touch
-    mode: "u+rw,g-wx,o-rwx"
+    mode: u+rw,g-wx,o-rwx
 
-# touch again the same file, but dont change times
-# this makes the task idempotents
-- file:
+- name: Touch again the same file, but dont change times this makes the task idempotent
+  file:
     path: /etc/foo.conf
     state: touch
-    mode: "u+rw,g-wx,o-rwx"
-    modification_time: "preserve"
-    access_time: "preserve"
+    mode: u+rw,g-wx,o-rwx
+    modification_time: preserve
+    access_time: preserve
 
-# create a directory if it doesn't exist
-- file:
+- name: Create a directory if it does not exist
+  file:
     path: /etc/some_directory
     state: directory
     mode: 0755
 
-# updates modification and access time of given file
-- file:
+- name: Update modification and access time of given file
+  file:
     path: /etc/some_file
     state: file
-    mode: 0755
     modification_time: now
     access_time: now
 '''
