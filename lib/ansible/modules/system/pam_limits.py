@@ -203,11 +203,14 @@ def main():
     nf = tempfile.NamedTemporaryFile(mode='w+')
 
     found = False
+    end_of_file_comment_found = False
     new_value = value
 
     for line in f:
         line = to_native(line, errors='surrogate_or_strict')
         if line.startswith('#'):
+            if line == '# End of file\n':
+                end_of_file_comment_found = True
             nf.write(line)
             continue
 
@@ -289,7 +292,18 @@ def main():
             new_comment = "\t#" + new_comment
         new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + new_value + new_comment + "\n"
         message = new_limit
-        nf.write(new_limit)
+
+        if end_of_file_comment_found:
+            nf.seek(0)
+            lines = nf.readlines()
+            for idx, line in enumerate(lines):
+                if line == '# End of file\n':
+                    lines.insert(idx, new_limit)
+                    break
+            nf.seek(0)
+            nf.writelines(lines)
+        else:
+            nf.write(new_limit)
 
     f.close()
     nf.flush()
