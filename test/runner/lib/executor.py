@@ -14,6 +14,7 @@ import functools
 import pipes
 import sys
 import hashlib
+import difflib
 
 import lib.pytar
 import lib.thread
@@ -1569,18 +1570,40 @@ class EnvironmentDescription(object):
         """
         current = EnvironmentDescription(self.args)
 
-        original_json = str(self)
+        return self.check(self, current, target_name, throw)
+
+    @staticmethod
+    def check(original, current, target_name, throw):
+        """
+        :type original: EnvironmentDescription
+        :type current: EnvironmentDescription
+        :type target_name: str
+        :type throw: bool
+        :rtype: bool
+        """
+        original_json = str(original)
         current_json = str(current)
 
         if original_json == current_json:
             return True
+
+        unified_diff = '\n'.join(difflib.unified_diff(
+            a=original_json.splitlines(),
+            b=current_json.splitlines(),
+            fromfile='original.json',
+            tofile='current.json',
+            lineterm='',
+        ))
 
         message = ('Test target "%s" has changed the test environment!\n'
                    'If these changes are necessary, they must be reverted before the test finishes.\n'
                    '>>> Original Environment\n'
                    '%s\n'
                    '>>> Current Environment\n'
-                   '%s' % (target_name, original_json, current_json))
+                   '%s\n'
+                   '>>> Environment Diff\n'
+                   '%s'
+                   % (target_name, original_json, current_json, unified_diff))
 
         if throw:
             raise ApplicationError(message)
