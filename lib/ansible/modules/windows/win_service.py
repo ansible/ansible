@@ -219,7 +219,9 @@ EXAMPLES = r'''
 - name: Remove dependencies from existing dependencies
   win_service:
     name: service name
-    dependencies: [ service1, service2 ]
+    dependencies:
+    - service1
+    - service2
     dependency_action: remove
 '''
 
