@@ -302,43 +302,45 @@ Produces a product of an object, and subelement values of that object, similar t
 Which turns::
 
     users:
-      - name: alice
-        authorized:
-          - /tmp/alice/onekey.pub
-          - /tmp/alice/twokey.pub
-        groups:
-          - wheel
-          - docker
-      - name: bob
-        authorized:
-          - /tmp/bob/id_rsa.pub
-        groups:
-          - docker
+    - name: alice
+      authorized:
+      - /tmp/alice/onekey.pub
+      - /tmp/alice/twokey.pub
+      groups:
+      - wheel
+      - docker
+    - name: bob
+      authorized:
+      - /tmp/bob/id_rsa.pub
+      groups:
+      - docker
 
 Into::
 
     -
       - name: alice
         groups:
-          - wheel
-          - docker
+        - wheel
+        - docker
         authorized:
-          - /tmp/alice/onekey.pub
+        - /tmp/alice/onekey.pub
+        - /tmp/alice/twokey.pub
       - wheel
     -
       - name: alice
         groups:
-          - wheel
-          - docker
+        - wheel
+        - docker
         authorized:
-          - /tmp/alice/twokey.pub
+        - /tmp/alice/onekey.pub
+        - /tmp/alice/twokey.pub
       - docker
     -
       - name: bob
         authorized:
-          - /tmp/bob/id_rsa.pub
+        - /tmp/bob/id_rsa.pub
         groups:
-          - docker
+        - docker
       - docker
 
 An example of using this filter with ``loop``::
