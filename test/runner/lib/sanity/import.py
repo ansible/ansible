@@ -20,6 +20,7 @@ from lib.util import (
     find_python,
     read_lines_without_comments,
     parse_to_list_of_dict,
+    make_dirs,
 )
 
 from lib.ansible_util import (
@@ -81,9 +82,24 @@ class ImportTest(SanityMultipleVersion):
         if not args.explain:
             os.symlink(os.path.abspath('test/sanity/import/importer.py'), importer_path)
 
+        # create a minimal python library
+        python_path = os.path.abspath('test/runner/.tox/import/lib')
+        ansible_path = os.path.join(python_path, 'ansible')
+        ansible_init = os.path.join(ansible_path, '__init__.py')
+        ansible_link = os.path.join(ansible_path, 'module_utils')
+
+        if not args.explain:
+            make_dirs(ansible_path)
+
+            with open(ansible_init, 'w'):
+                pass
+
+            if not os.path.exists(ansible_link):
+                os.symlink('../../../../../../lib/ansible/module_utils', ansible_link)
+
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
-        env['PYTHONPATH'] = os.path.abspath('test/sanity/import/lib')
+        env['PYTHONPATH'] = python_path
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
