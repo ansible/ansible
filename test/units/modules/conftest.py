@@ -26,3 +26,5 @@ def patch_ansible_module(request, mocker):
         raise Exception('Malformed data to the patch_ansible_module pytest fixture')
 
     mocker.patch('ansible.module_utils.basic._ANSIBLE_ARGS', to_bytes(args))
+
+    return args
