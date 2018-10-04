@@ -294,4 +294,3 @@ def test_fmgr_fwpol_package_install(fixture_data, mocker):
     # Test using fixture 2 #
     output = fmgr_fwpol_package.fmgr_fwpol_package_install(fmg_instance, fixture_data[1]['paramgram_used'])
     assert isinstance(output['raw_response'], dict) is True
-
