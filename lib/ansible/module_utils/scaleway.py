@@ -90,7 +90,7 @@ class Scaleway(object):
 
         if headers is not None:
             self.headers.update(headers)
-
+        self.warn(url)
         resp, info = fetch_url(
             self.module, url, data=data, headers=self.headers, method=method,
             timeout=self.module.params.get('api_timeout')
@@ -133,5 +133,7 @@ SCALEWAY_LOCATION = {
     'EMEA-FR-PAR1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
 
     'ams1': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
-    'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'}
+    'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
+
+    'kube': {'name': 'Kube', 'country': 'world', 'api_endpoint': "https://api-world.scaleway.com"}
 }

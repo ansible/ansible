@@ -1,0 +1,5 @@
+---
+scaleway_organization: '{{ scw_org }}'
+scaleway_region: kube
+scaleway_commerial_type: start1s
+scaleway_name: scaleway_kapsule_test

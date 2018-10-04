@@ -1,0 +1,126 @@
+# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_kapsule
+
+- name: Create a cluster (Check)
+  check_mode: yes
+  scaleway_kapsule:
+    name: '{{ scaleway_name }}'
+    state: present
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scaleway_organization }}'
+    version: "1.11.2"
+  register: kapsule_creation_check_task
+
+- debug: var=kapsule_creation_check_task
+
+- name: kapsule_creation_check_task is success
+  assert:
+    that:
+      - kapsule_creation_check_task is success
+
+- name: kapsule_creation_check_task is changed
+  assert:
+    that:
+      - kapsule_creation_check_task is changed
+
+- name: Create a cluster
+  scaleway_kapsule:
+    state: present
+    name: '{{ scaleway_name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scaleway_organization }}'
+    version: "1.11.2"
+  register: kapsule_creation_task
+
+- debug: var=kapsule_creation_task
+
+- name: kapsule_creation_task is success
+  assert:
+    that:
+      - kapsule_creation_task is success
+
+- name: kapsule_creation_task is changed
+  assert:
+    that:
+      - kapsule_creation_task is changed
+
+- name: Create a cluster (Confirmation)
+  scaleway_kapsule:
+    state: present
+    name: '{{ scaleway_name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scaleway_organization }}'
+    version: "1.11.2"
+  register: kapsule_creation_task
+
+- debug: var=kapsule_creation_confirmation_task
+
+- name: kapsule_creation_confirmation_task is success
+  assert:
+    that:
+      - kapsule_creation_confirmation_task is success
+
+- name: kapsule_creation_confirmation_task is not changed
+  assert:
+    that:
+      - kapsule_creation_confirmation_task is not changed
+
+- name: Delete a cluster (Check)
+  check_mode: yes
+  scaleway_kapsule:
+    name: '{{ scaleway_name }}'
+    state: absent
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scaleway_organization }}'
+  register: kapsule_deletion_check_task
+
+- debug: var=kapsule_deletion_check_task
+
+- name: kapsule_deletion_check_task is success
+  assert:
+    that:
+      - kapsule_deletion_check_task is success
+
+- name: kapsule_deletion_check_task is changed
+  assert:
+    that:
+      - kapsule_deletion_check_task is changed
+
+- name: Delete a cluster
+  scaleway_kapsule:
+    name: '{{ scaleway_name }}'
+    state: absent
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scaleway_organization }}'
+  register: kapsule_deletion_task
+
+- debug: var=kapsule_deletion_task
+
+- name: kapsule_deletion_task is success
+  assert:
+    that:
+      - kapsule_deletion_task is success
+
+- name: kapsule_deletion_task is changed
+  assert:
+    that:
+      - kapsule_deletion_task is changed
+
+- name: Delete a cluster (Confirmation)
+  scaleway_kapsule:
+    name: '{{ scaleway_name }}'
+    state: absent
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scaleway_organization }}'
+  register: kapsule_deletion_confirmation_task
+
+- debug: var=kapsule_deletion_confirmation_task
+
+- name: kapsule_deletion_confirmation_task is success
+  assert:
+    that:
+      - kapsule_deletion_confirmation_task is success
+
+- name: kapsule_deletion_confirmation_task is not changed
+  assert:
+    that:
+      - kapsule_deletion_confirmation_task is not changed
