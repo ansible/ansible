@@ -22,6 +22,15 @@ notes:
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
   - For Windows targets, use the M(win_user) module instead.
+  - On SunOS platforms, the shadow file is backed up automatically since this module edits it directly.
+    On other platforms, the shadow file is backed up by the underlying tools used by this module.
+  - On macOS, this module uses C(dscl) to create, modify, and delete accounts. C(dseditgroup) is used to
+    modify group membership. Accounts are hidden from the login window by modifying
+    C(/Library/Preferences/com.apple.loginwindow.plist).
+  - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
+    C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
+  - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
+    C(userdel) to remove accounts.
 description:
     - Manage user accounts and user attributes.
     - For Windows targets, use the M(win_user) module instead.
@@ -41,7 +50,7 @@ options:
         required: false
         type: bool
         description:
-            - Darwin/OS X only, optionally hide the user from the login window and system preferences.
+            - macOS only, optionally hide the user from the login window and system preferences.
             - The default will be 'True' if the I(system) option is used.
         version_added: "2.6"
     non_unique:
@@ -74,8 +83,10 @@ options:
     shell:
         description:
             - Optionally set the user's shell.
-            - On Mac OS X, before version 2.5, the default shell for non-system users was /usr/bin/false.
-              Since 2.5, the default shell for non-system users on Mac OS X is /bin/bash.
+            - On macOS, before version 2.5, the default shell for non-system users was /usr/bin/false.
+              Since 2.5, the default shell for non-system users on macOS is /bin/bash.
+            - On other operating systems, the default shell is determined by the underlying tool being
+              used. See Notes for details.
     home:
         description:
             - Optionally set the user's home directory.
@@ -86,7 +97,7 @@ options:
     password:
         description:
             - Optionally set the user's password to this crypted value.
-            - On Darwin/OS X systems, this value has to be cleartext. Beware of security issues.
+            - On macOS systems, this value has to be cleartext. Beware of security issues.
             - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
     state:
@@ -1704,7 +1715,7 @@ class SunOS(User):
 
 class DarwinUser(User):
     """
-    This is a Darwin Mac OS X User manipulation class.
+    This is a Darwin macOS User manipulation class.
     Main differences are that Darwin:-
       - Handles accounts in a database managed by dscl(1)
       - Has no useradd/groupadd
