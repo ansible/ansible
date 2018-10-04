@@ -33,22 +33,17 @@ try:
     from requests.exceptions import SSLError
     from docker import __version__ as docker_version
     from docker.errors import APIError, TLSParameterError
-    # from docker.errors import NotFound
     from docker.tls import TLSConfig
-    # from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
 
     if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
         HAS_DOCKER_PY_3 = True
         from docker import APIClient as Client
-        # from docker.types import Ulimit, LogConfig
     elif LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         HAS_DOCKER_PY_2 = True
         from docker import APIClient as Client
-        # from docker.types import Ulimit, LogConfig
     else:
         from docker import Client
-        # from docker.utils.types import Ulimit, LogConfig
 
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
