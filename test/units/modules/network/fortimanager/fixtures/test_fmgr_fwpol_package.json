@@ -1,0 +1,314 @@
+{
+   "fmgr_fwpol_package_folder": [
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/pkg/adom/ansible"
+         }, 
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestFolder1", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": null, 
+            "mode": "add", 
+            "parent_folder": null, 
+            "scope_members_vdom": "root", 
+            "type": "folder", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "post_method": "add"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/pkg/adom/ansible"
+         }, 
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestFolder2", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": null, 
+            "mode": "set", 
+            "parent_folder": "ansibleTestFolder1", 
+            "scope_members_vdom": "root", 
+            "type": "folder", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "scope_members_vdom": "root", 
+            "name": "ansibleTestFolder2", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "central-nat": "disable", 
+            "inspection-mode": "flow", 
+            "scope_members": null, 
+            "mode": "delete", 
+            "parent_folder": "ansibleTestFolder1", 
+            "package-folder": null, 
+            "type": "folder", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2"
+         }, 
+         "post_method": "delete"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1"
+         }, 
+         "paramgram_used": {
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "inspection-mode": "flow", 
+            "parent_folder": null, 
+            "ngfw-mode": "profile-based", 
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestFolder1", 
+            "central-nat": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "scope_members": null, 
+            "mode": "delete", 
+            "scope_members_vdom": "root", 
+            "type": "folder"
+         }, 
+         "post_method": "delete"
+      }
+   ], 
+   "fmgr_fwpol_package_install": [
+      {
+         "url": "/securityconsole/install/package", 
+         "raw_response": {
+            "task": 398
+         }, 
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestPackage1", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": "FGT2, FGT3", 
+            "mode": "set", 
+            "parent_folder": null, 
+            "scope_members_vdom": "root", 
+            "type": "install", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "post_method": "execute"
+      }, 
+      {
+         "url": "/securityconsole/install/package", 
+         "raw_response": {
+            "task": 399
+         }, 
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestPackage1", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": "FGT2, FGT3", 
+            "mode": "set", 
+            "parent_folder": null, 
+            "scope_members_vdom": "root", 
+            "type": "install", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "post_method": "execute"
+      }
+   ], 
+   "fmgr_fwpol_package": [
+      {
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestPackage1", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": "FGT2, FGT3", 
+            "mode": "add", 
+            "parent_folder": null, 
+            "scope_members_vdom": "root", 
+            "type": "pkg", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/pkg/adom/ansible"
+         }, 
+         "post_method": "add"
+      }, 
+      {
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestPackage2", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": null, 
+            "mode": "set", 
+            "parent_folder": "ansibleTestFolder1", 
+            "scope_members_vdom": "root", 
+            "type": "pkg", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/pkg/adom/ansible"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestPackage1", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": "FGT2, FGT3", 
+            "mode": "add", 
+            "parent_folder": null, 
+            "scope_members_vdom": "root", 
+            "type": "pkg", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "Object already exists", 
+               "code": -2
+            }, 
+            "url": "/pm/pkg/adom/ansible"
+         }, 
+         "post_method": "add"
+      }, 
+      {
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestPackage1", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": "FGT1", 
+            "mode": "add", 
+            "parent_folder": null, 
+            "scope_members_vdom": "ansible1", 
+            "type": "pkg", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "Object already exists", 
+               "code": -2
+            }, 
+            "url": "/pm/pkg/adom/ansible"
+         }, 
+         "post_method": "add"
+      }, 
+      {
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestPackage1", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": null, 
+            "mode": "delete", 
+            "parent_folder": null, 
+            "scope_members_vdom": "root", 
+            "type": "pkg", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/pkg/adom/ansible/ansibleTestPackage1"
+         }, 
+         "post_method": "delete"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestPackage2"
+         }, 
+         "paramgram_used": {
+            "ssl-ssh-profile": null, 
+            "name": "ansibleTestPackage2", 
+            "adom": "ansible", 
+            "fwpolicy6-implicit-log": "disable", 
+            "fwpolicy-implicit-log": "disable", 
+            "package-folder": null, 
+            "inspection-mode": "flow", 
+            "scope_members": null, 
+            "mode": "delete", 
+            "parent_folder": "ansibleTestFolder1", 
+            "scope_members_vdom": "root", 
+            "type": "pkg", 
+            "central-nat": "disable", 
+            "ngfw-mode": "profile-based"
+         }, 
+         "post_method": "delete"
+      }
+   ]
+}
