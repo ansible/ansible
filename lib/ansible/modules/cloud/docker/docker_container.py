@@ -1912,7 +1912,10 @@ class ContainerManager(DockerBaseClass):
         container = self._get_container(self.parameters.name)
 
         # If the image parameter was passed then we need to deal with the image
-        # version comparison, otherwise we should not care
+        # version comparison. Otherwise we handle this depending on whether
+        # the container already runs or not; in the former case, in case the
+        # container needs to be restarted, we use the existing container's
+        # image ID.
         image = self._get_image()
         self.log(image, pretty_print=True)
         if not container.exists:
