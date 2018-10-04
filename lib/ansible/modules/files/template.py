@@ -42,7 +42,7 @@ options:
     required: yes
   backup:
     description:
-    - Influence whether a backup should be created.
+    - Determine whether a backup should be created.
     - When set to C(yes), create a backup file including the timestamp information
       so you can get the original file back if you somehow clobbered it incorrectly.
     type: bool
@@ -75,14 +75,14 @@ options:
     version_added: '2.4'
   trim_blocks:
     description:
-    - Influence when newlines should be removed from blocks.
+    - Determine when newlines should be removed from blocks.
     - When set to C(yes) the first newline after a block is removed (block, not variable tag!).
     type: bool
     default: yes
     version_added: '2.4'
   lstrip_blocks:
     description:
-    - Influence when leading spaces and tabs should be stripped.
+    - Determine when leading spaces and tabs should be stripped.
     - When set to C(yes) leading spaces and tabs are stripped from the start of a line to a block.
     - This functionality requires Jinja v2.7 or newer.
     type: bool
@@ -90,14 +90,14 @@ options:
     version_added: '2.6'
   force:
     description:
-    - Influence when the file is being transferred if the destination already exists.
+    - Determine when the file is being transferred if the destination already exists.
     - When set to C(yes), replace the remote file when contents are different than the source.
     - When set to C(no), the file will only be transferred if the destination does not exist.
     type: bool
     default: yes
   follow:
     description:
-    - Influence whether symbolic links should be followed.
+    - Determine whether symbolic links should be followed.
     - When set to C(yes) symbolic links will be followed, if they exist.
     - When set to C(no) symbolic links will not be followed.
     - Previous to Ansible 2.4, this was hardcoded as C(yes).
