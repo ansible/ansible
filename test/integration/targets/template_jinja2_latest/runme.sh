@@ -18,4 +18,6 @@ source "${MYTMPDIR}/jinja2/bin/activate"
 
 pip install -U jinja2
 
+export ANSIBLE_ROLES_PATH="$(dirname "$(pwd)")"
+
 ansible-playbook -i ../../inventory main.yml -e @../../integration_config.yml -v "$@"
