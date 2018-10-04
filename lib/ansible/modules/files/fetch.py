@@ -13,10 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: fetch
-short_description: Fetche files from remote nodes
+short_description: Fetch files from remote nodes
 description:
 - This module works like M(copy), but in reverse.
 - It is used for fetching files from remote machines and storing them locally in a file tree, organized by hostname.
@@ -67,11 +67,12 @@ notes:
   depending on the file size can consume all available memory on the
   remote or local hosts causing a C(MemoryError). Due to this it is
   advisable to run this module without C(become) whenever possible.
-- Prior to Ansible-2.5 this module would not fail if reading the remote
+- Prior to Ansible 2.5 this module would not fail if reading the remote
   file was impossible unless C(fail_on_missing) was set.
-- In Ansible-2.5+, playbook authors are encouraged to use C(fail_when)
-  or C(ignore_errors) to get this ability. They may also explicitly set
-  C(fail_on_missing) to C(no) to get the non-failing behaviour.
+- In Ansible 2.5 or later, playbook authors are encouraged to use
+  C(fail_when) or C(ignore_errors) to get this ability. They may
+  also explicitly set C(fail_on_missing) to C(no) to get the
+  non-failing behaviour.
 - This module is also supported for Windows targets.
 '''
 
