@@ -926,6 +926,9 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/lookup/rabbitmq.py:
+    maintainers: Im0
+    support: community
   lib/ansible/plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
