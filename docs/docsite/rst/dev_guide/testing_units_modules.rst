@@ -165,7 +165,7 @@ simulating an API. As for 'six', the 'mock' python package is bundled with Ansib
 Ensuring failure cases are visible with mock objects
 ----------------------------------------------------
 
-Functions like :meth:`module.fail_json` are normally expected to terminate execution. When you
+Functions like :py:meth:`module.fail_json` are normally expected to terminate execution. When you
 run with a mock module object this doesn't happen since the mock always returns another mock
 from a function call. You can set up the mock to raise an exception as shown above, or you can
 assert that these functions have not been called in each test. For example::
@@ -278,8 +278,8 @@ There are two problems with running the main function of a module:
 
 * Since the module is supposed to accept arguments on ``STDIN`` it is a bit difficult to
   set up the arguments correctly so that the module will get them as parameters.
-* All modules should finish by calling either the :meth:`module.fail_json` or
-  :meth:`module.exit_json`, but these won't work correctly in a testing environment.
+* All modules should finish by calling either the :py:meth:`module.fail_json` or
+  :py:meth:`module.exit_json`, but these won't work correctly in a testing environment.
 
 Passing Arguments
 -----------------
@@ -289,7 +289,7 @@ Passing Arguments
 
 To pass arguments to a module correctly, use a function that stores the
 parameters in a special string variable.  Module creation and argument processing is
-handled through the :class:`AnsibleModule` object in the basic section of the utilities. Normally
+handled through the :py:class:`AnsibleModule` object in the basic section of the utilities. Normally
 this accepts input on ``STDIN``, which is not convenient for unit testing. When the special
 variable is set it will be treated as if the input came on ``STDIN`` to the module.::
 
@@ -315,9 +315,9 @@ Handling exit correctly
 .. This section should be updated once https://github.com/ansible/ansible/pull/31456 is
    closed since the exit and failure functions below will be provided in a library file.
 
-The :meth:`module.exit_json` function won't work properly in a testing environment since it
+The :py:meth:`module.exit_json` function won't work properly in a testing environment since it
 writes error information to ``STDOUT`` upon exit, where it
-is difficult to examine. This can be mitigated by replacing it (and :meth:`module.fail_json`) with
+is difficult to examine. This can be mitigated by replacing it (and :py:meth:`module.fail_json`) with
 a function that raises an exception::
 
     def exit_json(*args, **kwargs):
@@ -337,7 +337,7 @@ testing for the correct exception::
        with self.assertRaises(AnsibleExitJson) as result:
            my_module.main()
 
-The same technique can be used to replace :meth:`module.fail_json` (which is used for failure
+The same technique can be used to replace :py:meth:`module.fail_json` (which is used for failure
 returns from modules) and for the ``aws_module.fail_json_aws()`` (used in modules for Amazon
 Web Services).
 
@@ -364,10 +364,10 @@ the arguments as above, set up the appropriate exit exception and then run the m
 Handling calls to external executables
 --------------------------------------
 
-Module must use :meth:`AnsibleModule.run_command` in order to execute an external command. This
+Module must use :py:meth:`AnsibleModule.run_command` in order to execute an external command. This
 method needs to be mocked:
 
-Here is a simple mock of :meth:`AnsibleModule.run_command` (taken from :file:`test/units/modules/packaging/os/test_rhn_register.py`)::
+Here is a simple mock of :py:meth:`AnsibleModule.run_command` (taken from :file:`test/units/modules/packaging/os/test_rhn_register.py`)::
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
@@ -384,7 +384,7 @@ A Complete Example
 ------------------
 
 The following example is a complete skeleton that reuses the mocks explained above and adds a new
-mock for :meth:`Ansible.get_bin_path`::
+mock for :py:meth:`Ansible.get_bin_path`::
 
     import json
 
