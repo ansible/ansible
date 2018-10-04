@@ -71,7 +71,6 @@ options:
       option completely replaces the configuration in the C(target) datastore. If the value is none the C(target)
       datastore is unaffected by the configuration in the config option, unless and until the incoming configuration
       data uses the C(operation) operation to request a different operation.
-    default: merge
     choices: ['merge', 'replace', 'none']
     version_added: "2.7"
   confirm:
@@ -231,7 +230,7 @@ def main():
         source_datastore=dict(aliases=['source']),
         format=dict(choices=['xml', 'text'], default='xml'),
         lock=dict(choices=['never', 'always', 'if-supported'], default='always'),
-        default_operation=dict(choices=['merge', 'replace', 'none'], default='merge'),
+        default_operation=dict(choices=['merge', 'replace', 'none']),
         confirm=dict(type='int', default=0),
         confirm_commit=dict(type='bool', default=False),
         error_option=dict(choices=['stop-on-error', 'continue-on-error', 'rollback-on-error'], default='stop-on-error'),
