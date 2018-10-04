@@ -1,0 +1,104 @@
+{
+   "fmgr_application_list_addsetdelete": [
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible Module TEST", 
+            "other-application-log": null, 
+            "replacemsg-group": null, 
+            "adom": "root", 
+            "unknown-application-log": null, 
+            "p2p-black-list": null, 
+            "unknown-application-action": null, 
+            "extended-log": null, 
+            "options": null, 
+            "deep-app-inspection": null, 
+            "mode": "delete", 
+            "other-application-action": null, 
+            "entries": {
+               "behavior": null, 
+               "rate-duration": null, 
+               "sub-category": null, 
+               "session-ttl": null, 
+               "per-ip-shaper": null, 
+               "category": null, 
+               "log": null, 
+               "parameters": {
+                  "value": null
+               }, 
+               "technology": null, 
+               "quarantine-expiry": null, 
+               "application": null, 
+               "protocols": null, 
+               "log-packet": null, 
+               "quarantine-log": null, 
+               "vendor": null, 
+               "risk": null, 
+               "rate-count": null, 
+               "quarantine": null, 
+               "popularity": null, 
+               "shaper": null, 
+               "shaper-reverse": null, 
+               "rate-track": null, 
+               "rate-mode": null, 
+               "action": null
+            }, 
+            "app-replacemsg": null, 
+            "name": "Ansible_Application_Control_Profile"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/application/list/Ansible_Application_Control_Profile"
+         }, 
+         "post_method": "delete"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/application/list"
+         }, 
+         "paramgram_used": {
+            "comment": "Created by Ansible Module TEST", 
+            "adom": "root", 
+            "unknown-application-log": null, 
+            "extended-log": null, 
+            "other-application-action": null, 
+            "entries": [
+               {
+                  "quarantine-log": "enable", 
+                  "log": "enable", 
+                  "quarantine": "attacker", 
+                  "action": "block", 
+                  "log-packet": "enable", 
+                  "protocols": [
+                     "1"
+                  ]
+               }, 
+               {
+                  "action": "pass", 
+                  "category": [
+                     "2", 
+                     "3", 
+                     "4"
+                  ]
+               }
+            ], 
+            "replacemsg-group": null, 
+            "other-application-log": null, 
+            "name": "Ansible_Application_Control_Profile", 
+            "p2p-black-list": null, 
+            "unknown-application-action": null, 
+            "deep-app-inspection": null, 
+            "mode": "set", 
+            "app-replacemsg": null, 
+            "options": null
+         }, 
+         "post_method": "set"
+      }
+   ]
+}
