@@ -89,11 +89,12 @@ options:
     choices: [ auto, delayed, disabled, manual ]
   state:
     description:
-    - C(started)/C(stopped)/C(absent)/C(pause) are idempotent actions that will not run
+    - The desired state of the service.
+    - C(started)/C(stopped)/C(absent)/C(paused) are idempotent actions that will not run
       commands unless necessary.
     - C(restarted) will always bounce the service.
     - C(absent) was added in Ansible 2.3
-    - C(pause) was added in Ansible 2.4
+    - C(paused) was added in Ansible 2.4
     - Only services that support the paused state can be paused, you can
       check the return value C(can_pause_and_continue).
     - You can only pause a service that is already started.
