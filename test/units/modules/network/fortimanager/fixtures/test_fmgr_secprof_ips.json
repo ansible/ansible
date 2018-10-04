@@ -1,0 +1,135 @@
+{
+   "fmgr_ips_sensor_addsetdelete": [
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible Module TEST", 
+            "name": "Ansible_IPS_Profile", 
+            "adom": "root", 
+            "extended-log": null, 
+            "filter": {
+               "status": null, 
+               "quarantine-log": null, 
+               "protocol": null, 
+               "severity": null, 
+               "location": null, 
+               "quarantine": null, 
+               "quarantine-expiry": null, 
+               "application": null, 
+               "log": null, 
+               "action": null, 
+               "log-packet": null, 
+               "os": null, 
+               "name": null
+            }, 
+            "block-malicious-url": null, 
+            "mode": "delete", 
+            "entries": {
+               "status": null, 
+               "exempt-ip": {
+                  "src-ip": null, 
+                  "dst-ip": null
+               }, 
+               "quarantine-log": null, 
+               "protocol": null, 
+               "log": null, 
+               "quarantine": null, 
+               "log-attack-context": null, 
+               "quarantine-expiry": null, 
+               "rule": null, 
+               "application": null, 
+               "location": null, 
+               "rate-track": null, 
+               "rate-mode": null, 
+               "action": null, 
+               "log-packet": null, 
+               "os": null, 
+               "rate-duration": null, 
+               "rate-count": null, 
+               "severity": null
+            }, 
+            "override": {
+               "status": null, 
+               "exempt-ip": {
+                  "src-ip": null, 
+                  "dst-ip": null
+               }, 
+               "quarantine-log": null, 
+               "log": null, 
+               "quarantine": null, 
+               "quarantine-expiry": null, 
+               "rule-id": null, 
+               "action": null, 
+               "log-packet": null
+            }, 
+            "replacemsg-group": null
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/ips/sensor/Ansible_IPS_Profile"
+         }, 
+         "post_method": "delete"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/ips/sensor"
+         }, 
+         "paramgram_used": {
+            "comment": "Created by Ansible Module TEST", 
+            "block-malicious-url": "enable", 
+            "mode": "set", 
+            "name": "Ansible_IPS_Profile", 
+            "adom": "root", 
+            "override": {
+               "status": null, 
+               "exempt-ip": {
+                  "src-ip": null, 
+                  "dst-ip": null
+               }, 
+               "quarantine-log": null, 
+               "log": null, 
+               "action": null, 
+               "log-packet": null, 
+               "quarantine": null, 
+               "quarantine-expiry": null, 
+               "rule-id": null
+            }, 
+            "entries": [
+               {
+                  "action": "block", 
+                  "log-packet": "enable", 
+                  "severity": "high"
+               }, 
+               {
+                  "action": "pass", 
+                  "severity": "medium"
+               }
+            ], 
+            "filter": {
+               "status": null, 
+               "quarantine-log": null, 
+               "protocol": null, 
+               "severity": null, 
+               "log": null, 
+               "name": null, 
+               "quarantine": null, 
+               "quarantine-expiry": null, 
+               "application": null, 
+               "location": null, 
+               "action": null, 
+               "log-packet": null, 
+               "os": null
+            }, 
+            "extended-log": null, 
+            "replacemsg-group": null
+         }, 
+         "post_method": "set"
+      }
+   ]
+}
