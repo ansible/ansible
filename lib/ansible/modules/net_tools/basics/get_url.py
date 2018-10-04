@@ -179,7 +179,9 @@ EXAMPLES = r'''
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
-    headers: 'key:value,key:value'
+    headers:
+      Cookie: cookiename=value
+      Header-Field: value
 
 - name: Download file with check (sha256)
   get_url:
