@@ -1,6 +1,3 @@
-#!powershell
-# -*- coding: utf-8 -*-
-
 # Copyright: (c) 2018, Daniele Lazzari  <lazzari@mailup.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -24,13 +21,18 @@ Function Invoke-Query {
     $output = @()
     try {
         if (!($CheckMode)) {
-            if (!($ServerInstanceUser) -or !($ServerInstancePassword)) {
-                $res = Invoke-SqlCmd -ServerInstance $ServerInstance -Database $Database -Query $Query -QueryTimeout $QueryTimeout
+            $sql_params = @{
+                ServerInstance = $ServerInstance
+                Database = $Database
+                Query = $Query
+                QueryTimeout = $QueryTimeout
             }
-            else {
+            if ($ServerInstanceUser -and $ServerInstancePassword) {
                 $SQLCredentials = New-Object -TypeName System.Management.Automation.PSCredential ($ServerInstanceUser, $ServerInstancePassword)
-                $res = Invoke-SqlCmd -ServerInstance $ServerInstance -Query $Query -Database $Database -Credential $SQLCredentials -QueryTimeout $QueryTimeout
+                $sql_params["Credential"] = $SQLCredential
             }
+            $res = Invoke-SqlCmd @sql_params
+
         }
     }
     catch {
@@ -39,10 +41,13 @@ Function Invoke-Query {
         Fail-Json -obj $result -message "Error: $($_.exception.message)"
     }
     if ($res) {
-        Switch ($res.GetType()|Select-Object -ExpandProperty Name) {
-            "Object[]" {$Columns = $res[0].Table.Columns.Caption; $output = $res |Select-Object -Property $Columns}
-            "DataRow" {$Columns = $res.Table.Columns.Caption; $output = @($res |Select-Object -Property $Columns)}
+        if ($res -is [Array]){
+            $Columns = $res[0].Table.Columns.Caption
+        } 
+        else {
+            $Columns = $res.Table.Columns.Caption
         }
+        $output = @($res |Select-Object -Property $Columns)
     }
     $result.output = $output
     $result.changed = $true
