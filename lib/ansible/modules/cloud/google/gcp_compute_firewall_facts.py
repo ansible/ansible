@@ -135,6 +135,14 @@ items:
                   traffic, it is NOT supported to specify sourceRanges OR sourceTags.'
             returned: success
             type: str
+        disabled:
+            description:
+                - Denotes whether the firewall rule is disabled, i.e not applied to the network it
+                  is associated with. When set to true, the firewall rule is not enforced and the
+                  network behaves as if it did not exist. If this is unspecified, the firewall rule
+                  will be enabled.
+            returned: success
+            type: bool
         id:
             description:
                 - The unique identifier for the resource.
