@@ -105,6 +105,7 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
     def init_module(self):
         """ module initialization
         """
+        self._variables_value = open("/tmp/variables_value.txt", "w")
         element_spec = self._get_element_spec()
         aggregate_spec = self._get_aggregate_spec(element_spec)
         argument_spec = dict(
@@ -150,16 +151,26 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
     @classmethod
     def get_allowed_vlans(cls, if_data):
         allowed_vlans = cls.get_config_attr(if_data, 'Allowed vlans')
+        interface_allowed_vlans = []
         if allowed_vlans:
             vlans = allowed_vlans.split(',')
-            allowed_vlans = [int(vlan.strip()) for vlan in vlans]
+            for vlan in vlans:
+                if '-' not in vlan:
+                    interface_allowed_vlans.append(int(vlan))
+                else:
+                    vlan_range = vlan.split('-')
+                    min_number = int(vlan_range[0].strip())
+                    max_number = int(vlan_range[1].strip())
+                    interface_allowed_vlans.extend(range(min_number, max_number + 1))
         return allowed_vlans
 
     @classmethod
     def get_access_vlan(cls, if_data):
         access_vlan = cls.get_config_attr(if_data, 'Access vlan')
-        if access_vlan:
+        try:
             return int(access_vlan)
+        except ValueError:
+            return None
 
     def _create_switchport_data(self, if_name, if_data):
         if self._os_version >= self.ONYX_API_VERSION:
@@ -180,6 +191,7 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
         self._os_version = self._get_os_version()
         self._current_config = dict()
         switchports_config = self._get_switchport_config()
+
         if not switchports_config:
             return
         for if_name, if_data in iteritems(switchports_config):
