@@ -29,12 +29,12 @@ DOCUMENTATION = '''
 module: fmgr_secprof_ips
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
+  - Luke Weighall (@lweighall)
+  - Andrew Welsh (@Ghilli3)
+  - Jim Huber (@p4r4n0y1ng)
 short_description: Managing IPS security profiles in FortiManager
 description:
-  -  Managing IPS security profiles in FortiManager
+  - Managing IPS security profiles in FortiManager
 
 options:
   adom:
@@ -139,7 +139,7 @@ options:
 
   entries_log_attack_context:
     description:
-      - Enable/disable logging of attack context: URL buffer, header buffer, body buffer, packet buffer.
+      - Enable or disable logging of attack context, which are URL buffer, header buffer, body buffer, packet buffer.
       - choice | disable | Disable logging of detailed attack context.
       - choice | enable | Enable logging of detailed attack context.
     required: false
@@ -427,8 +427,6 @@ options:
     description:
       - Source IP address and netmask.
     required: false
-
-
 '''
 
 EXAMPLES = '''
