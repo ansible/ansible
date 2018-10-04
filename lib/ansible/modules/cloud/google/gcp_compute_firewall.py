@@ -112,6 +112,15 @@ options:
         required: false
         version_added: 2.8
         choices: ['INGRESS', 'EGRESS']
+    disabled:
+        description:
+            - Denotes whether the firewall rule is disabled, i.e not applied to the network it
+              is associated with. When set to true, the firewall rule is not enforced and the
+              network behaves as if it did not exist. If this is unspecified, the firewall rule
+              will be enabled.
+        required: false
+        type: bool
+        version_added: 2.8
     name:
         description:
             - Name of the resource. Provided by the client when the resource is created. The name
@@ -290,6 +299,14 @@ RETURN = '''
               traffic, it is NOT supported to specify sourceRanges OR sourceTags.'
         returned: success
         type: str
+    disabled:
+        description:
+            - Denotes whether the firewall rule is disabled, i.e not applied to the network it
+              is associated with. When set to true, the firewall rule is not enforced and the
+              network behaves as if it did not exist. If this is unspecified, the firewall rule
+              will be enabled.
+        returned: success
+        type: bool
     id:
         description:
             - The unique identifier for the resource.
@@ -409,6 +426,7 @@ def main():
             description=dict(type='str'),
             destination_ranges=dict(type='list', elements='str'),
             direction=dict(type='str', choices=['INGRESS', 'EGRESS']),
+            disabled=dict(type='bool'),
             name=dict(required=True, type='str'),
             network=dict(required=True, type='dict'),
             priority=dict(default=1000, type='int'),
@@ -474,6 +492,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'destinationRanges': module.params.get('destination_ranges'),
         u'direction': module.params.get('direction'),
+        u'disabled': module.params.get('disabled'),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'priority': module.params.get('priority'),
@@ -553,6 +572,7 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'destinationRanges': response.get(u'destinationRanges'),
         u'direction': response.get(u'direction'),
+        u'disabled': response.get(u'disabled'),
         u'id': response.get(u'id'),
         u'name': module.params.get('name'),
         u'network': response.get(u'network'),

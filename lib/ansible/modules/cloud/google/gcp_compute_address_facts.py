@@ -109,6 +109,13 @@ items:
                   except the last character, which cannot be a dash.
             returned: success
             type: str
+        networkTier:
+            description:
+                - 'The networking tier used for configuring this address. This field can take the
+                  following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+                  to be PREMIUM.'
+            returned: success
+            type: str
         subnetwork:
             description:
                 - The URL of the subnetwork in which to reserve the address. If an IP address is specified,

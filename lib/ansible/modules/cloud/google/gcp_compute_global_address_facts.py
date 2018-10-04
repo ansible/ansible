@@ -114,6 +114,13 @@ items:
                 - A reference to the region where the regional address resides.
             returned: success
             type: str
+        addressType:
+            description:
+                - The type of the address to reserve, default is EXTERNAL.
+                - "* EXTERNAL indicates public/external single IP address."
+                - "* INTERNAL indicates internal IP ranges belonging to some network."
+            returned: success
+            type: str
 '''
 
 ################################################################################

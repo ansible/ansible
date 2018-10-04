@@ -67,6 +67,15 @@ options:
               The default value is IPV4.
         required: false
         choices: ['IPV4', 'IPV6']
+    address_type:
+        description:
+            - The type of the address to reserve, default is EXTERNAL.
+            - "* EXTERNAL indicates public/external single IP address."
+            - "* INTERNAL indicates internal IP ranges belonging to some network."
+        required: false
+        default: EXTERNAL
+        version_added: 2.8
+        choices: ['EXTERNAL', 'INTERNAL']
 extends_documentation_fragment: gcp
 notes:
     - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/globalAddresses)"
@@ -132,6 +141,13 @@ RETURN = '''
             - A reference to the region where the regional address resides.
         returned: success
         type: str
+    addressType:
+        description:
+            - The type of the address to reserve, default is EXTERNAL.
+            - "* EXTERNAL indicates public/external single IP address."
+            - "* INTERNAL indicates internal IP ranges belonging to some network."
+        returned: success
+        type: str
 '''
 
 ################################################################################
@@ -156,7 +172,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            ip_version=dict(type='str', choices=['IPV4', 'IPV6'])
+            ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
+            address_type=dict(default='EXTERNAL', type='str', choices=['EXTERNAL', 'INTERNAL'])
         )
     )
 
@@ -229,7 +246,8 @@ def resource_to_request(module):
         u'kind': 'compute#address',
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
-        u'ipVersion': module.params.get('ip_version')
+        u'ipVersion': module.params.get('ip_version'),
+        u'addressType': module.params.get('address_type')
     }
     return_vals = {}
     for k, v in request.items():
@@ -302,7 +320,8 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'labelFingerprint': response.get(u'labelFingerprint'),
         u'ipVersion': response.get(u'ipVersion'),
-        u'region': response.get(u'region')
+        u'region': response.get(u'region'),
+        u'addressType': response.get(u'addressType')
     }
 
 

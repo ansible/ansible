@@ -81,6 +81,14 @@ options:
               letter, and all following characters must be a dash, lowercase letter, or digit,
               except the last character, which cannot be a dash.
         required: true
+    network_tier:
+        description:
+            - 'The networking tier used for configuring this address. This field can take the
+              following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+              to be PREMIUM.'
+        required: false
+        version_added: 2.8
+        choices: ['PREMIUM', 'STANDARD']
     subnetwork:
         description:
             - The URL of the subnetwork in which to reserve the address. If an IP address is specified,
@@ -154,6 +162,13 @@ RETURN = '''
               except the last character, which cannot be a dash.
         returned: success
         type: str
+    networkTier:
+        description:
+            - 'The networking tier used for configuring this address. This field can take the
+              following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+              to be PREMIUM.'
+        returned: success
+        type: str
     subnetwork:
         description:
             - The URL of the subnetwork in which to reserve the address. If an IP address is specified,
@@ -197,6 +212,7 @@ def main():
             address_type=dict(default='EXTERNAL', type='str', choices=['INTERNAL', 'EXTERNAL']),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
+            network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
             subnetwork=dict(type='dict'),
             region=dict(required=True, type='str')
         )
@@ -254,6 +270,7 @@ def resource_to_request(module):
         u'addressType': module.params.get('address_type'),
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
+        u'networkTier': module.params.get('network_tier'),
         u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
     }
     return_vals = {}
@@ -326,6 +343,7 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
+        u'networkTier': response.get(u'networkTier'),
         u'subnetwork': response.get(u'subnetwork'),
         u'users': response.get(u'users')
     }

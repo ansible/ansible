@@ -205,6 +205,13 @@ items:
                   updates.
             returned: success
             type: str
+        networkTier:
+            description:
+                - 'The networking tier used for configuring this address. This field can take the
+                  following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+                  to be PREMIUM.'
+            returned: success
+            type: str
         region:
             description:
                 - A reference to the region where the regional forwarding rule resides.
