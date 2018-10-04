@@ -20,7 +20,7 @@
     that:
       - route is changed
       - route_added.stdout_lines[0] == "{{ destination_ip_address }}"
-      - route_gateway.stdout_lines[0] == "{{ gateway }}"
+      - route_gateway.stdout_lines[0] == "{{ default_gateway }}"
 
 - name: add a static route to test idempotency
   win_route:
