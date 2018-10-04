@@ -21,12 +21,44 @@ description:
 options:
   name:
     description:
-      - Name of the powershell module that has to be installed.
+      - Name of the PowerShell module that has to be installed.
+    required: no
+state:
+    description:
+      - If C(present) a new module is installed.
+      - If C(absent) a module is removed.
+      - If C(latest) a module is updated.
+    choices: [ absent, present, latest ]
+    default: present
+  required_version:
+    description:
+      - The exact version of the PowerShell module that has to be installed.
     type: str
-    required: yes
+    required: no
+  minimum_version:
+    description:
+      - The minimum version of the PowerShell module that has to be installed.
+    type: str
+    required: no
+  maximum_version:
+    description:
+      - The maximum version of the PowerShell module that has to be installed.
+    type: str
+    required: no
   allow_clobber:
     description:
       - If C(yes) imports all commands, even if they have the same names as commands that already exists. Available only in Powershell 5.1 or higher.
+    type: bool
+    default: no
+  skip_publisher_check:
+    description:
+      - If C(yes) allows installs a newer version of a module that already exists on your computer in the case when a newer one is not digitally signed by a trusted publisher and the newest existing module is digitally signed by a trusted publisher.
+    type: bool
+    default: no
+  allow_prerelease:
+    description:
+      - If C(yes) installs modules marked as prereleases.
+      - It doesn't work with the parameters minimum_version and/or maximum_version.
     type: bool
     default: no
   repository:
@@ -36,20 +68,13 @@ options:
   url:
     description:
       - URL of the custom repository to register.
-    type: str
-  state:
-    description:
-      - If C(present) a new module is installed.
-      - If C(absent) a module is removed.
-    type: str
-    choices: [ absent, present ]
-    default: present
 notes:
    -  Powershell 5.0 or higher is needed.
 seealso:
 - module: win_psrepository
 author:
 - Daniele Lazzari (@dlazz)
+- Wojciech Sciesinski (@it-praktyk)
 '''
 
 EXAMPLES = r'''
@@ -100,5 +125,15 @@ repository_changed:
   description: True when a custom repository is installed or removed.
   returned: always
   type: bool
-  sample: true
+  sample: True
+powershellget_changed:
+  description: true when the PowerShellGet module is updated
+  returned: always
+  type: boolean
+  sample: True
+packagemanagement_changed:
+  description: true when the PackageManagement module is updated
+  returned: always
+  type: boolean
+  sample: True
 '''
