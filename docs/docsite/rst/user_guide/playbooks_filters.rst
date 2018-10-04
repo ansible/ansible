@@ -331,7 +331,7 @@ Into::
           - wheel
           - docker
         authorized:
-          - /tmp/alice/onekey.pub
+          - /tmp/alice/twokey.pub
       - docker
     -
       - name: bob
