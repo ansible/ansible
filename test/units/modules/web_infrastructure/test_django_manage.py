@@ -19,7 +19,6 @@ TESTCASE_NO_INPUT_COMMANDS = [
     "collectstatic",
 ]
 
-
 def base_test(mocker, module_arguments):
     arguments_as_dict = json.loads(module_arguments)['ANSIBLE_MODULE_ARGS']
 
@@ -76,4 +75,28 @@ def test_no_input_commands(mocker, patch_ansible_module):
     args, kwargs = arg_list[0]
 
     assert args[1] == './manage.py {} --noinput'.format(arguments["command"])
+    assert kwargs['cwd'] == arguments["app_path"]
+
+
+@pytest.mark.parametrize(argnames='patch_ansible_module',
+                         argvalues=[
+                             {
+                                 "command": "test --parallel",
+                                 "failfast": True,
+                                 "app_path": "dummy.path.to.module"
+                             }
+                         ],
+                         indirect=['patch_ansible_module'])
+def test_failfast_with_arguments(mocker, patch_ansible_module):
+    """
+    Tests that failfast does not break when passing arguments to the command as reported in #42027
+    """
+    arguments = base_test(mocker=mocker, module_arguments=patch_ansible_module)
+
+    assert django_manage.AnsibleModule.run_command.call_count == 1
+
+    arg_list = django_manage.AnsibleModule.run_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[1] == './manage.py {} --failfast'.format(arguments["command"])
     assert kwargs['cwd'] == arguments["app_path"]
