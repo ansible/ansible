@@ -16,6 +16,8 @@ DOCUMENTATION = '''
 module: iap_token
 version_added: "2.6"
 author: "Itential (opensource@itential.com)"
+requirements:
+  - requests
 short_description: Get token for the Itential Automation Platform
 description:
   - Checks the connection to IAP and retrieves a login token.
@@ -51,9 +53,6 @@ options:
     type: bool
     default: False
 
-requirements:
-  - The Itential Automation Platform with relevant applications
-
 notes:
   - This module is under construction
 '''
@@ -71,16 +70,22 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-result:
+token:
     description: The token acquired from the Itential Automation Platform
     type: str
+    returned: always
 '''
 
 # Ansible imports
 from ansible.module_utils.basic import AnsibleModule
 
 # Standard library imports
-import requests
+import ansible.module_utils.urls
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 
 def run_module():
@@ -153,22 +158,13 @@ def run_module():
         module.fail_json(msg="Timeout Error: {} ".format(errt), **result)
     except requests.exceptions.RequestException as err:
         module.fail_json(msg="Something happened: {} ".format(err), **result)
-
-    # except requests.ConnectionError as err:
-    #     module.fail_json(msg="Failed to connect to Itential Automation Platform : Connection Error " + format(err.message), **result)
-    # except requests.exceptions.HTTPError as errh:
-    #     module.fail_json(msg="Http Error: " + format(errh.message), **result)
-    # except requests.exceptions.Timeout as errt:
-    #     module.fail_json(msg="Timeout Error: " + format(errt.message), **result)
-    # except requests.exceptions.RequestException as err:
-    #     module.fail_json(msg="Something happened: " + format(err.message), **result)
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
-    return result
+    module.exit_json(**result)
+
 
 def main():
-    result = run_module()
-    module.exit_json(**result)
+    run_module()
 
 
 if __name__ == '__main__':
