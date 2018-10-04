@@ -38,6 +38,8 @@ STATIC_VARS = [
     'playbook_dir',
     'play_hosts',
     'role_names',
+    'play_role_names',
+    'dependent_role_names',
     'ungrouped',
 ]
 
