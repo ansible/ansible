@@ -105,7 +105,7 @@ options:
       - If submitted, all other prefixed sub-parameters ARE IGNORED. This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, OMIT THE USE OF THIS PARAMETER AND USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH
-        MULTIPLE TASKS
+      - MULTIPLE TASKS
     required: false
 
   entries_action:
@@ -121,7 +121,7 @@ options:
   entries_application:
     description:
       - Applications to be protected. set application ? lists available applications. all includes all applications.
-        Other includes all unlisted applications.
+      - Other includes all unlisted applications.
     required: false
 
   entries_location:
@@ -148,7 +148,7 @@ options:
   entries_log_packet:
     description:
       - Enable/disable packet logging. Enable to save the packet that triggers the filter. You can download the
-        packets in pcap format for diagnostic use.
+      - packets in pcap format for diagnostic use.
       - choice | disable | Disable packet logging of selected rules.
       - choice | enable | Enable packet logging of selected rules.
     required: false
@@ -157,13 +157,13 @@ options:
   entries_os:
     description:
       - Operating systems to be protected.  all includes all operating systems. other includes all unlisted
-        operating systems.
+      - operating systems.
     required: false
 
   entries_protocol:
     description:
       - Protocols to be examined. set protocol ? lists available protocols. all includes all protocols.
-        Other includes all unlisted protocols.
+      - Other includes all unlisted protocols.
     required: false
 
   entries_quarantine:
@@ -171,14 +171,14 @@ options:
       - Quarantine method.
       - choice | none | Quarantine is disabled.
       - choice | attacker | Block all traffic sent from attacker's IP address. The attacker's IP address is also added
-        to the banned user list. The target's address is not affected.
+      - to the banned user list. The target's address is not affected.
     required: false
     choices: ["none", "attacker"]
 
   entries_quarantine_expiry:
     description:
       - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m, default = 5m).
-        Requires quarantine set to attacker.
+      - Requires quarantine set to attacker.
     required: false
 
   entries_quarantine_log:
@@ -232,7 +232,7 @@ options:
   entries_status:
     description:
       - Status of the signatures included in filter. default enables the filter and only use filters with default
-        status of enable. Filters with default status of disable will not be used.
+      - status of enable. Filters with default status of disable will not be used.
       - choice | disable | Disable status of selected rules.
       - choice | enable | Enable status of selected rules.
       - choice | default | Default.
@@ -257,7 +257,7 @@ options:
       - If submitted, all other prefixed sub-parameters ARE IGNORED. This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, OMIT THE USE OF THIS PARAMETER AND USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS
-        WITH MULTIPLE TASKS
+      - WITH MULTIPLE TASKS
     required: false
 
   filter_action:
@@ -316,7 +316,7 @@ options:
       - Quarantine IP or interface.
       - choice | none | Quarantine is disabled.
       - choice | attacker | Block all traffic sent from attacker's IP address. The attacker's IP address is also
-        added to the banned user list. The target's address is not affected.
+      - added to the banned user list. The target's address is not affected.
     required: false
     choices: ["none", "attacker"]
 
@@ -355,7 +355,7 @@ options:
       - If submitted, all other prefixed sub-parameters ARE IGNORED. This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, OMIT THE USE OF THIS PARAMETER AND USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH
-        MULTIPLE TASKS
+      - MULTIPLE TASKS
     required: false
 
   override_action:
@@ -388,7 +388,7 @@ options:
       - Quarantine IP or interface.
       - choice | none | Quarantine is disabled.
       - choice | attacker | Block all traffic sent from attacker's IP address. The attacker's IP address is also
-        added to the banned user list. The target's address is not affected.
+      - added to the banned user list. The target's address is not affected.
     required: false
     choices: ["none", "attacker"]
 
