@@ -34,7 +34,8 @@ options:
       with msiexec.
   chdir:
     description:
-    - Set the specified path as the current working directory before installing a package.
+    - Set the specified path as the current working directory before installing
+      or uninstalling a package.
     type: path
     version_added: '2.8'
   creates_path:
