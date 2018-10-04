@@ -251,6 +251,8 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
+        if self.subnet_mappings is not None:
+            params['SubnetMappings'] = self.subnet_mappings
         if self.security_groups is not None:
             params['SecurityGroups'] = self.security_groups
         params['Scheme'] = self.scheme
