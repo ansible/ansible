@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_mssql_query
-version_added: '2.7'
+version_added: '2.8'
 short_description: invokes a query on a MSSQL Server
 description:
     - Invokes a query on a MSSQL Server. This module isn't idempotent, the query will be always executed.
@@ -26,13 +26,13 @@ options:
   server_instance:
     description:
       - Name of the sql server instance to query.
-    default: computername
+        If not specified, the remote host will be used.
   server_instance_user:
     description:
       - Name of a sql user with sufficient privileges.
   server_instance_password:
     description:
-      - Password for server_instance_user
+      - Password for I(server_instance_user)
   query:
     description:
       - Query to invoke.
@@ -46,10 +46,11 @@ options:
       - database where the query has to be executed
     default: master
 author:
-  - Daniele Lazzari
+  - Daniele Lazzari (@dlazz)
 notes:
   - If the user that runs ansible has the appropriated permission on the db,
-  - you don't need to set C(server_instance_user) and C(server_instance_password).
+    you don't need to set C(server_instance_user) and C(server_instance_password).
+    CredSSP, Kerb with cred delgation or become must be used for implicit auth to work.
 '''
 
 EXAMPLES = r'''
