@@ -162,7 +162,7 @@ Parameters
                         {% if 'ini' in value %}
                             <div> ini entries:
                                 {% for ini in value.ini %}
-                                    <p>[@{ ini.section }@ ]<br>@{ ini.key }@ = @{ value.default | default('VALUE') }@</p>
+                                    <p>[@{ ini.section }@]<br>@{ ini.key }@ = @{ value.default | default('VALUE') }@</p>
                                 {% endfor %}
                             </div>
                         {% endif %}
