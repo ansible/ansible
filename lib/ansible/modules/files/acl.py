@@ -103,9 +103,9 @@ EXAMPLES = r'''
     etype: user
     state: absent
 
-- name: Sets default ACL for joe on foo.d/
+- name: Sets default ACL for joe on /etc/foo.d/
   acl:
-    path: /etc/foo.d
+    path: /etc/foo.d/
     entity: joe
     etype: user
     permissions: rw
@@ -114,7 +114,7 @@ EXAMPLES = r'''
 
 - name: Same as previous but using entry shorthand
   acl:
-    path: /etc/foo.d
+    path: /etc/foo.d/
     entry: default:user:joe:rw-
     state: present
 
