@@ -1,0 +1,3 @@
+---
+minor_changes:
+- netconf_config - Make default_operation optional in netconf_config module (https://github.com/ansible/ansible/pull/46333)
