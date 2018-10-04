@@ -454,7 +454,7 @@ class User(object):
             maybe_invalid = False
 
             # Allow setting the password to * or ! in order to disable the account
-            if self.module.params['password'] in {'*', '!'}:
+            if self.module.params['password'] in set(['*', '!']):
                 maybe_invalid = False
             else:
                 # : for delimiter, * for disable user, ! for lock user
