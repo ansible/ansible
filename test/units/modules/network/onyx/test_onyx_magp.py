@@ -26,11 +26,15 @@ class TestOnyxMagpModule(TestOnyxModule):
         self.mock_load_config = patch(
             'ansible.module_utils.network.onyx.onyx.load_config')
         self.load_config = self.mock_load_config.start()
+        self.mock_get_version = patch.object(
+           onyx_magp.OnyxMagpModule, "_get_os_version")
+        self.get_version = self.mock_get_version.start()
 
     def tearDown(self):
         super(TestOnyxMagpModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_get_version.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
         config_file = 'onyx_magp_show.cfg'
