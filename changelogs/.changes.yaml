@@ -1,4 +1,9 @@
 releases:
+  2.7.0:
+    codename: In the Light
+    fragments:
+    - v2.7.0_summary.yaml
+    release_date: '2018-10-03'
   2.7.0.a1:
     codename: In the Light
     fragments:
