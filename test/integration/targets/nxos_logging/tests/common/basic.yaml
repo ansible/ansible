@@ -3,6 +3,11 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
+- name: Purge logging configuration first
+  nxos_logging:
+    purge: true
+    provider: "{{ connection }}"
+
 - name: Set up console logging
   nxos_logging: &clog
     dest: console
