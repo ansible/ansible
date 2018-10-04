@@ -27,9 +27,9 @@
 
 import json
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
 
 
 class UTMModuleConfigurationError(Exception):
@@ -60,7 +60,7 @@ class UTMModule(AnsibleModule):
             utm_token=dict(type='str', required=True, no_log=True),
             utm_protocol=dict(type='str', required=False, default="https", choices=["https", "http"]),
             validate_certs=dict(type='bool', required=False, default=True),
-            state=dict(default='present', choices=['present', 'absent'])
+            state=dict(default='present', choices=['present', 'absent', 'status'])
         )
         super(UTMModule, self).__init__(self._merge_specs(default_specs, argument_spec), bypass_checks, no_log,
                                         check_invalid_arguments, mutually_exclusive, required_together, required_one_of,
@@ -99,13 +99,25 @@ class UTM:
     def execute(self):
         try:
             if self.module.params.get('state') == 'present':
-                self.add()
-            else:
-                self.remove()
+                self._add()
+            elif self.module.params.get('state') == 'absent':
+                self._remove()
+            elif self.module.params.get('state') == 'status':
+                self._status()
         except Exception as e:
             self.module.fail_json(msg=to_native(e))
 
-    def add(self):
+    def _status(self):
+        """
+        queries a object on utm
+        """
+        info, result = self._lookup_entry(self.module, self.request_url)
+        if info["status"] >= 400:
+            self.module.fail_json(result=json.loads(info))
+        else:
+            self.module.exit_json(result=result, changed=False)
+
+    def _add(self):
         """
         adds or updates a host object on utm
         """
@@ -135,7 +147,7 @@ class UTM:
                     result = self._clean_result(json.loads(response.read()))
             self.module.exit_json(result=result, changed=is_changed)
 
-    def remove(self):
+    def _remove(self):
         """
         removes an object from utm
         """
