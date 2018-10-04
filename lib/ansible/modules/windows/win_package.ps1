@@ -357,7 +357,7 @@ if ($state -eq "absent") {
                 try {
                     $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run uninstall process ($command_args['command']): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run uninstall process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
@@ -443,7 +443,7 @@ if ($state -eq "absent") {
                 try {
                     $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run install process ($command_args['command']): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run install process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
