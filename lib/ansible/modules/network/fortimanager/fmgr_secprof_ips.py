@@ -502,9 +502,6 @@ def fmgr_ips_sensor_addsetdelete(fmg, paramgram):
             adom=adom, name=paramgram["name"])
         datagram = {}
 
-    # print(datagram)
-    # exit()
-
     # IF MODE = SET -- USE THE 'SET' API CALL MODE
     if mode == "set":
         response = fmg.set(url, datagram)
@@ -810,9 +807,6 @@ def main():
     for list_variable in list_overrides:
         override_data = list()
 
-        # print(module.params[list_variable])
-        # exit()
-
         try:
             override_data = module.params[list_variable]
         except BaseException:
@@ -823,9 +817,6 @@ def main():
                 paramgram[list_variable] = override_data
         except BaseException:
             pass
-
-    # print(paramgram)
-    # exit()
 
     # CHECK IF THE HOST/USERNAME/PW EXISTS, AND IF IT DOES, LOGIN.
     host = module.params["host"]
