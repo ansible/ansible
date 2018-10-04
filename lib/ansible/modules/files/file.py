@@ -68,8 +68,8 @@ options:
     description:
     - This parameter indicates the time the file's modification time should be set to.
     - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
-    - Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
-    version_added: "2.7"
+    - Default is C(None) meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    version_added: '2.7'
   modification_time_format:
     description:
     - When used with C(modification_time), indicates the time format that must be used.
@@ -79,7 +79,7 @@ options:
     description:
     - This parameter indicates the time the file's access time should be set to.
     - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
-    - Default is C(None) meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    - It defaults to C(preserve) when C(state=[file,directory,link,hard]) and it defaults to C(now) when C(state=touch).
     version_added: '2.7'
   access_time_format:
     description:
@@ -805,18 +805,18 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent'], default=None),
-            path=dict(aliases=['dest', 'name'], required=True, type='path'),
-            _original_basename=dict(required=False),  # Internal use only, for recursive ops
-            recurse=dict(default=False, type='bool'),
-            force=dict(required=False, default=False, type='bool'),  # Note: Should not be in file_common_args in future
-            follow=dict(required=False, default=True, type='bool'),  # Note: Different default than file_common_args
-            _diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
-            src=dict(required=False, default=None, type='path'),  # Note: Should not be in file_common_args in future
-            modification_time=dict(required=False, default=None),
-            modification_time_format=dict(required=False, default='%Y%m%d%H%M.%S'),
-            access_time=dict(required=False, default=None),
-            access_time_format=dict(required=False, default='%Y%m%d%H%M.%S'),
+            state=dict(type='str', choices=['file', 'directory', 'link', 'hard', 'touch', 'absent']),
+            path=dict(type='path', required=True, aliases=['dest', 'name']),
+            _original_basename=dict(),  # Internal use only, for recursive ops
+            recurse=dict(type='bool', default=False),
+            force=dict(type='bool', default=False),  # Note: Should not be in file_common_args in future
+            follow=dict(type='bool', default=True),  # Note: Different default than file_common_args
+            _diff_peek=dict(),  # Internal use only, for internal checks in the action plugins
+            src=dict(type='path'),  # Note: Should not be in file_common_args in future
+            modification_time=dict(type='str'),
+            modification_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),
+            access_time=dict(type='str'),
+            access_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),
         ),
         add_file_common_args=True,
         supports_check_mode=True

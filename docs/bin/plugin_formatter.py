@@ -515,6 +515,9 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         if 'options' in doc and doc['options']:
             for (k, v) in iteritems(doc['options']):
+                if k.startswith('_'):
+                    continue
+
                 # Error out if there's no description
                 if 'description' not in doc['options'][k]:
                     raise AnsibleError("Missing required description for parameter '%s' in '%s' " % (k, module))
