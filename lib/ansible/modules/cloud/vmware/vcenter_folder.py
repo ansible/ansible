@@ -32,6 +32,7 @@ options:
     description:
     - Name of the datacenter.
     required: True
+    aliases: ['datacenter_name']
   folder_name:
     description:
     - Name of folder to be managed.
@@ -74,7 +75,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter_name: datacenter_name
     folder_name: sample_vm_folder
     folder_type: vm
     state: present
@@ -86,7 +87,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter_name: datacenter_name
     folder_name: sample_datastore_folder
     folder_type: datastore
     state: present
@@ -98,7 +99,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter_name: datacenter_name
     folder_name: sample_sub_folder
     parent_folder: vm_folder
     state: present
@@ -110,7 +111,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter_name: datacenter_name
     folder_name: sample_vm_folder
     folder_type: vm
     state: absent
@@ -248,7 +249,7 @@ class VmwareFolderManager(PyVmomi):
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        datacenter=dict(type='str', required=True),
+        datacenter=dict(type='str', required=True, aliases=['datacenter_name']),
         folder_name=dict(type='str', required=True),
         parent_folder=dict(type='str', required=False),
         state=dict(type='str',
