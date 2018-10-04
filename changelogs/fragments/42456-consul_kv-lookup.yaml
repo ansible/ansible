@@ -1,0 +1,3 @@
+minor_changes:
+  - added capability to set the scheme for the consul_kv lookup.
+  - added optional certificate and certificate verification for consul_kv lookups
