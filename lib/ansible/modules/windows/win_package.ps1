@@ -344,15 +344,20 @@ if ($state -eq "absent") {
             }
 
             if (-not $check_mode) {
-                $uninstall_command = Argv-ToString -arguments $uninstall_arguments
+                $command_args = @{
+                    command = Argv-ToString -arguments $uninstall_arguments
+                }
                 if ($arguments -ne $null) {
-                    $uninstall_command += " $arguments"
+                    $command_args['command'] += " $arguments"
+                }
+                if ($chdir) {
+                    $command_args['working_directory'] = $chdir
                 }
 
                 try {
-                    $process_result = Run-Command -command $uninstall_command
+                    $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run uninstall process ($uninstall_command): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run uninstall process ($command_args['command']): $($_.Exception.Message)"
                 }
 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
