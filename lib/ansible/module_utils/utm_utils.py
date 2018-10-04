@@ -60,7 +60,7 @@ class UTMModule(AnsibleModule):
             utm_token=dict(type='str', required=True, no_log=True),
             utm_protocol=dict(type='str', required=False, default="https", choices=["https", "http"]),
             validate_certs=dict(type='bool', required=False, default=True),
-            state=dict(default='present', choices=['present', 'absent', 'status'])
+            state=dict(default='present', choices=['present', 'absent', 'info'])
         )
         super(UTMModule, self).__init__(self._merge_specs(default_specs, argument_spec), bypass_checks, no_log,
                                         check_invalid_arguments, mutually_exclusive, required_together, required_one_of,
@@ -102,14 +102,14 @@ class UTM:
                 self._add()
             elif self.module.params.get('state') == 'absent':
                 self._remove()
-            elif self.module.params.get('state') == 'status':
-                self._status()
+            elif self.module.params.get('state') == 'info':
+                self._info()
         except Exception as e:
             self.module.fail_json(msg=to_native(e))
 
-    def _status(self):
+    def _info(self):
         """
-        queries a object on utm
+        returns the info for an object in utm
         """
         info, result = self._lookup_entry(self.module, self.request_url)
         if info["status"] >= 400:

@@ -35,10 +35,10 @@ options:
           - The desired state of the object.
           - C(present) will create or update an object
           - C(absent) will delete an object if it was present
-          - C(status) will return the object details
+          - C(info) will return the object details
         choices:
           - present
           - absent
-          - status
+          - info
         default: present
 """
