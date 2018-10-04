@@ -58,6 +58,12 @@ Modules
 
 Major changes in popular modules are detailed here
 
+The exec wrapper that runs PowerShell modules has been changed to set ``$ErrorActionPreference = "Stop"`` globally.
+This may mean that custom modules can fail if they implicitly relied on this behaviour. To get the old behaviour back,
+add ``$ErrorActionPreference = "Continue"`` to the top of the module. This change was made to restore the old behaviour
+of the EAP that was accidentally removed in a previous release and ensure that modules are more resiliant to errors
+that may occur in execution.
+
 
 Modules removed
 ---------------
