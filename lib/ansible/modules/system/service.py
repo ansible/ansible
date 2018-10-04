@@ -535,6 +535,14 @@ class LinuxService(Service):
         else:
             return False
 
+    def is_systemd_service_static(self):
+        service_name = self.__systemd_unit
+        (rc, out, err) = self.execute_command("%s is-enabled %s" % (self.enable_cmd, service_name,))
+        if rc == 0:
+            return out.startswith('static')
+        else:
+            return False
+
     def get_systemd_status_dict(self):
 
         # Check status first as show will not fail if service does not exist
@@ -757,6 +765,10 @@ class LinuxService(Service):
 
             # Check if we're already in the correct state
             service_enabled = self.get_systemd_service_enabled()
+
+            if service_enabled and action == 'disable':
+                if self.is_systemd_service_static():
+                    self.module.fail_json(msg="static service %s can not be disabled" % self.name)
 
             # self.changed should already be true
             if self.enable == service_enabled:
