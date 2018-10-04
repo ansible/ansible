@@ -37,10 +37,11 @@ options:
   drain:
     description:
       - Wait until the server has no active connections or until the timeout
-        determined by wait_interval and wait_retries is reached.  Continue only
-        after the status changes to 'MAINT'.  This overrides the
-        shutdown_sessions option.
+        determined by wait_interval and wait_retries is reached.  After this
+        step, the server status is switch to 'MAINT'. This overrides shutdown_sessions
+        option (considered as "yes"). This option must be used only with state "disabled"
     version_added: "2.4"
+    default: 'no'
   host:
     description:
       - Name of the backend host to change.
@@ -124,7 +125,7 @@ EXAMPLES = '''
 
 # Place server in drain mode, providing a socket file.  Then check the server's
 # status every minute to see if it changes to maintenance mode, continuing if it
-# does in an hour and failing otherwise.
+# does in a minute and failing otherwise.
 - haproxy:
     state: disabled
     host: '{{ inventory_hostname }}'
@@ -344,15 +345,19 @@ class HAProxy(object):
         for i in range(1, self.wait_retries):
             state = self.get_state_for(pxname, svname)
 
-            # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
-            if state[0]['status'] == status:
-                if not self._drain or (state[0]['scur'] == '0' and state == 'MAINT'):
-                    return True
+            if self._drain and state[0]['scur'] == '0':
+                # We disable self.wait to avoid a recursive loop and waiting at each step
+                return self.disable_after_drain(pxname, svname)
             else:
+                if state[0]["status"] == status and not self._drain:
+                    return True
                 time.sleep(self.wait_interval)
 
-        self.module.fail_json(msg="server %s/%s not status '%s' after %d retries. Aborting." %
-                              (pxname, svname, status, self.wait_retries))
+        if self._drain:
+            return self.disable_after_drain(pxname, svname)
+
+        self.module.fail_json(msg="server %s/%s not status '%s' after %d retries. %d current sessions Aborting." %
+                              (pxname, svname, status, self.wait_retries, int(state[0]['scur'])))
 
     def enabled(self, host, backend, weight):
         """
@@ -389,6 +394,15 @@ class HAProxy(object):
             cmd = "set server $pxname/$svname state drain"
             self.execute_for_backends(cmd, backend, host, status)
 
+    def disable_after_drain(self, pxname, svname):
+        self.wait = False
+        self.disabled(self.host, self.backend, self.shutdown_sessions)
+        state = self.get_state_for(pxname, svname)
+        if state[0]["status"] == "MAINT":
+            return True
+        else:
+            return False
+
     def act(self):
         """
         Figure out what you want to do from ansible, and then do it.
@@ -396,6 +410,10 @@ class HAProxy(object):
         # Get the state before the run
         state_before = self.get_state_for(self.backend, self.host)
         self.command_results['state_before'] = state_before
+
+        # Validate input
+        if self._drain and self.state != "disabled":
+            self.module.fail_json(msg="drain should only be used with state \"disabled\"")
 
         # toggle enable/disbale server
         if self.state == 'enabled':
