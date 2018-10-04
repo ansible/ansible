@@ -345,9 +345,7 @@ files:
   $modules/utilities/logic/wait_for.py: gregswift
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/sophos_utm/:
-    maintainers:
-      - MatrixCrawler
-      - getjack
+    maintainers: $team_e-spirit
     keywords:
       - utm
       - sophos
@@ -585,6 +583,8 @@ files:
     maintainers: $team_vultr
     labels:
       - cloud
+  $module_utils/utm_utils.py:
+    maintainers: $team_e-spirit
   $module_utils/vmware:
     support: core
     maintainers: $team_vmware
@@ -1088,6 +1088,7 @@ macros:
   team_scaleway: sieben hekonsek Spredzy
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
+  team_e-spirit: MatrixCrawler getjack
   team_vmware: Akasurde dav1x warthog9
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
