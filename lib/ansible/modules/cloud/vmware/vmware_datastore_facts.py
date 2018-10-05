@@ -157,6 +157,7 @@ def main():
                            required_one_of=[
                                ['cluster', 'datacenter'],
                            ],
+                           supports_check_mode=True
                            )
     result = dict(changed=False)
 
