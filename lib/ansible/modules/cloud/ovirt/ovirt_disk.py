@@ -263,12 +263,10 @@ import ssl
 
 from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
 from ansible.module_utils.six.moves.urllib.parse import urlparse
-
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     BaseModule,
@@ -599,14 +597,11 @@ def main():
     host = module.params['host']
     # Fail when host is specified with the LUN id. Lun id is needed to identify
     # an existing disk if already available inthe environment.
-    if host and lun.get("id") is None:
+    if (host and lun is None) or (host and lun.get("id") is None ):
         module.fail_json(
             msg="Can not use parameter host ({0!s}) without "
             "specifying the logical_unit id".format(host)
         )
-
-    if module._name == 'ovirt_disks':
-        module.deprecate("The 'ovirt_disks' module is being renamed 'ovirt_disk'", version=2.8)
 
     check_sdk(module)
     check_params(module)
@@ -717,13 +712,8 @@ def main():
         # removed, refresh the information about the LUN.
         if state != 'absent' and host:
             hosts_service = connection.system_service().hosts_service()
-            hosts = hosts_service.list(search='name={0!s}'.format(host))
-            if len(hosts) > 0:
-                host_service = hosts[0]
-            else:
-                module.fail_json(msg='Host "{0!s}" does not exist'.format(host))
-
-            disks_service.disk_service(disk.id).refresh_lun(host_service)
+            host_id = get_id_by_name(hosts_service, host)
+            disks_service.disk_service(disk.id).refresh_lun(otypes.Host(id=host_id))
 
         module.exit_json(**ret)
     except Exception as e:
