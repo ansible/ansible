@@ -24,7 +24,8 @@ import select
 import socket
 import sys
 import time
-from collections import namedtuple, Mapping
+from collections import namedtuple
+from ansible.module_utils.common._collections_compat import Mapping
 
 try:
     monotonic = time.monotonic

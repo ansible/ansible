@@ -50,6 +50,7 @@ from itertools import chain
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.common._collections_compat import MutableSet
 from ansible.plugins.cache import BaseCacheModule
 
 try:
@@ -126,7 +127,7 @@ class ProxyClientPool(object):
             self.release_connection(conn)
 
 
-class CacheModuleKeys(collections.MutableSet):
+class CacheModuleKeys(MutableSet):
     """
     A set subclass that keeps track of insertion time and persists
     the set in memcached.

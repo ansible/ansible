@@ -18,11 +18,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os.path
-from collections import MutableSequence
 
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import connection_loader

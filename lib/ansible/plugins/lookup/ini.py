@@ -62,12 +62,12 @@ _raw:
 """
 import os
 import re
-from collections import MutableSequence
 from io import StringIO
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.plugins.lookup import LookupBase
 
 

@@ -18,7 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import inspect
 import os
 import time
@@ -26,6 +25,8 @@ import time
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from distutils.version import LooseVersion
+
+from ansible.module_utils.common._collections_compat import Mapping
 
 try:
     from enum import Enum  # enum is a ovirtsdk4 requirement
@@ -512,7 +513,7 @@ class BaseModule(object):
 
     def diff_update(self, after, update):
         for k, v in update.items():
-            if isinstance(v, collections.Mapping):
+            if isinstance(v, Mapping):
                 after[k] = self.diff_update(after.get(k, dict()), v)
             else:
                 after[k] = update[k]

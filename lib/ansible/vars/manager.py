@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 import sys
 
-from collections import defaultdict, MutableMapping, Sequence
+from collections import defaultdict
 
 try:
     from hashlib import sha1
@@ -36,6 +36,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._collections_compat import MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache

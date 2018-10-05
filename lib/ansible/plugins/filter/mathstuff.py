@@ -23,7 +23,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-import collections
 import itertools
 import math
 
@@ -33,6 +32,7 @@ from ansible.errors import AnsibleFilterError
 from ansible.module_utils import basic
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
+from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
 from ansible.module_utils._text import to_native, to_text
 
 try:
@@ -55,7 +55,7 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     try:
         if HAS_UNIQUE:
             c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
-            if isinstance(a, collections.Hashable):
+            if isinstance(a, Hashable):
                 c = set(c)
             else:
                 c = list(c)
@@ -75,7 +75,7 @@ def unique(environment, a, case_sensitive=False, attribute=None):
             raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
                                      "you need a newer version of Jinja2 that provides their version of the filter.")
 
-        if isinstance(a, collections.Hashable):
+        if isinstance(a, Hashable):
             c = set(a)
         else:
             c = []
@@ -87,7 +87,7 @@ def unique(environment, a, case_sensitive=False, attribute=None):
 
 @environmentfilter
 def intersect(environment, a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
     else:
         c = unique(environment, [x for x in a if x in b])
@@ -96,7 +96,7 @@ def intersect(environment, a, b):
 
 @environmentfilter
 def difference(environment, a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
     else:
         c = unique(environment, [x for x in a if x not in b])
@@ -105,7 +105,7 @@ def difference(environment, a, b):
 
 @environmentfilter
 def symmetric_difference(environment, a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) ^ set(b)
     else:
         isect = intersect(environment, a, b)
@@ -115,7 +115,7 @@ def symmetric_difference(environment, a, b):
 
 @environmentfilter
 def union(environment, a, b):
-    if isinstance(a, collections.Hashable) and isinstance(b, collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
     else:
         c = unique(environment, a + b)
@@ -189,15 +189,15 @@ def rekey_on_member(data, key, duplicates='error'):
 
     new_obj = {}
 
-    if isinstance(data, collections.Mapping):
+    if isinstance(data, Mapping):
         iterate_over = data.values()
-    elif isinstance(data, collections.Iterable) and not isinstance(data, (text_type, binary_type)):
+    elif isinstance(data, Iterable) and not isinstance(data, (text_type, binary_type)):
         iterate_over = data
     else:
         raise AnsibleFilterError("Type is not a valid list, set, or dict")
 
     for item in iterate_over:
-        if not isinstance(item, collections.Mapping):
+        if not isinstance(item, Mapping):
             raise AnsibleFilterError("List item is not a valid dict")
 
         try:

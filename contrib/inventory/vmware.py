@@ -30,7 +30,6 @@ required if these options are specified using environment variables.
 
 from __future__ import print_function
 
-import collections
 import json
 import logging
 import optparse
@@ -41,6 +40,8 @@ import time
 
 from six import integer_types, text_type, string_types
 from six.moves import configparser
+
+from ansible.module_utils.common._collections_compat import MutableMapping
 
 # Disable logging message trigged by pSphere/suds.
 try:
@@ -159,7 +160,7 @@ class VMwareInventory(object):
             if k.startswith('_'):
                 continue
             new_key = parent_key + sep + k if parent_key else k
-            if isinstance(v, collections.MutableMapping):
+            if isinstance(v, MutableMapping):
                 items.extend(self._flatten_dict(v, new_key, sep).items())
             elif isinstance(v, (list, tuple)):
                 if all([isinstance(x, string_types) for x in v]):
@@ -229,7 +230,7 @@ class VMwareInventory(object):
             except AttributeError:
                 host_info['%ss' % attr] = []
         for k, v in self._get_obj_info(host.summary, depth=0).items():
-            if isinstance(v, collections.MutableMapping):
+            if isinstance(v, MutableMapping):
                 for k2, v2 in v.items():
                     host_info[k2] = v2
             elif k != 'host':
@@ -265,7 +266,7 @@ class VMwareInventory(object):
         except AttributeError:
             vm_info['guestState'] = ''
         for k, v in self._get_obj_info(vm.summary, depth=0).items():
-            if isinstance(v, collections.MutableMapping):
+            if isinstance(v, MutableMapping):
                 for k2, v2 in v.items():
                     if k2 == 'host':
                         k2 = 'hostSystem'
