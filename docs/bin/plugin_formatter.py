@@ -185,7 +185,9 @@ def write_data(text, output_dir, outputname, module=None):
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
 
-        update_file_if_different(fname, to_bytes(text))
+        updated = update_file_if_different(fname, to_bytes(text))
+        if updated:
+            display.display("rendering: %s" % module)
     else:
         print(text)
 
@@ -401,7 +403,6 @@ def too_old(added):
 def process_plugins(module_map, templates, outputname, output_dir, ansible_version, plugin_type):
     for module in module_map:
 
-        display.display("rendering: %s" % module)
         fname = module_map[module]['path']
         display.vvvvv(pp.pformat(('process_plugins info: ', module_map[module])))
 
@@ -657,6 +658,8 @@ def main():
     validate_options(options)
     display.verbosity = options.verbosity
     plugin_type = options.plugin_type
+
+    display.display("Evaluating %s files..." % plugin_type)
 
     # prep templating
     templates = jinja2_environment(options.template_dir, options.type, plugin_type)
