@@ -1,0 +1,22 @@
+---
+- name: collect netconf_text test cases with text encoding
+  find:
+    paths: "{{ role_path }}/tests/netconf_text"
+    patterns: "{{ testcase }}.yaml"
+  connection: local
+  register: test_cases
+
+- name: set test_items
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
+
+- name: run test case (connection=netconf)
+  include: "{{ test_case_to_run }} ansible_connection=netconf"
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
+
+- name: run test case (connection=local)
+  include: "{{ test_case_to_run }} ansible_connection=local"
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run

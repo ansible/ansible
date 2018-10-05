@@ -1,0 +1,63 @@
+---
+- name: ensure testing folders exists
+  win_file:
+    path: '{{item}}'
+    state: directory
+  with_items:
+  - '{{test_win_package_path}}'
+  - '{{test_win_package_path_safe}}'
+
+- name: download msi files from S3 bucket
+  win_get_url:
+    url: '{{item.url}}'
+    dest: '{{test_win_package_path}}\{{item.name}}'
+  with_items:
+  - { url: '{{test_win_package_good_url}}', name: 'good.msi' }
+  - { url: '{{test_win_package_reboot_url}}', name: 'reboot.msi' }
+  - { url: '{{test_win_package_bad_url}}', name: 'bad.msi' }
+  # - { url: '{{test_win_package_exe_url}}', name: '7z.exe' }
+
+- name: make sure all test msi's are uninstalled before test
+  win_package:
+    product_id: '{{item.id}}'
+    arguments: '{{item.args|default(omit)}}'
+    state: absent
+  with_items:
+  - { id: '{{test_win_package_good_id}}' }
+  - { id: '{{test_win_package_reboot_id}}' }
+  # - { id: '{{test_win_package_exe_id}}', args: '/S' }
+
+- block:
+  - name: run tests for expected failures
+    include_tasks: failure_tests.yml
+
+  - name: run tests for local and URL msi files
+    include_tasks: msi_tests.yml
+
+  # doesn't work 100% on AWS hosts, disabling for now until we get a better exe example
+  # - name: run tests for local and URL exe files
+  #   include_tasks: exe_tests.yml
+
+  # these tests can be run manually by defining test_win_package_network_path
+  - name: run tests for network msi files (manual)
+    include_tasks: network_tests.yml
+    when: test_win_package_network_path is defined
+
+  always:
+  - name: make sure all test msi's are uninstalled after test
+    win_package:
+      product_id: '{{item.id}}'
+      arguments: '{{item.args|default(omit)}}'
+      state: absent
+    with_items:
+    - { id: '{{test_win_package_good_id}}' }
+    - { id: '{{test_win_package_reboot_id}}' }
+    # - { id: '{{test_win_package_exe_id}}', args: '/S' }
+  
+  - name: cleanup test artifacts
+    win_file:
+      path: '{{item}}'
+      state: absent
+    with_items:
+    - '{{test_win_package_path}}'
+    - '{{test_win_package_path_safe}}'

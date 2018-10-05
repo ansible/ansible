@@ -1,0 +1,212 @@
+{
+  "meta": {
+    "prefix": "ansible",
+    "namespace": "http://example.com/ansible",
+    "types": {
+    },
+    "keypath": "/ansible:action/complex"
+  },
+  "data": {
+    "kind": "action",
+    "mandatory": true,
+    "name": "complex",
+    "qname": "ansible:complex",
+    "access": {
+      "read": false,
+      "create": false,
+      "execute": true,
+      "update": false,
+      "delete": false
+    },
+    "children": [
+      {
+        "kind": "leaf",
+        "is_action_input": true,
+        "name": "number",
+        "qname": "ansible:number",
+        "access": {
+          "read": false,
+          "create": false,
+          "execute": false,
+          "update": true,
+          "delete": false
+        },
+        "type": {
+          "primitive": true,
+          "name": "uint8"
+        }
+      },
+      {
+        "kind": "container",
+        "is_action_input": true,
+        "mandatory": true,
+        "name": "ansible",
+        "qname": "ansible:ansible",
+        "access": {
+          "read": false,
+          "create": false,
+          "execute": false,
+          "update": true,
+          "delete": false
+        },
+        "children": [
+          {
+            "kind": "choice",
+            "cases": [
+              {
+                "kind": "case",
+                "name": "version",
+                "children": [
+                  {
+                    "kind": "leaf",
+                    "is_action_input": true,
+                    "name": "version",
+                    "qname": "ansible:version",
+                    "access": {
+                      "read": false,
+                      "create": false,
+                      "execute": false,
+                      "update": true,
+                      "delete": false
+                    },
+                    "type": {
+                      "primitive": true,
+                      "name": "string"
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "case",
+                "name": "release",
+                "children": [
+                  {
+                    "kind": "container",
+                    "is_action_input": true,
+                    "mandatory": true,
+                    "name": "release",
+                    "qname": "ansible:release",
+                    "access": {
+                      "read": false,
+                      "create": false,
+                      "execute": false,
+                      "update": true,
+                      "delete": false
+                    },
+                    "children": [
+                      {
+                        "kind": "leaf",
+                        "is_action_input": true,
+                        "name": "major",
+                        "qname": "ansible:major",
+                        "access": {
+                          "read": false,
+                          "create": false,
+                          "execute": false,
+                          "update": true,
+                          "delete": false
+                        },
+                        "type": {
+                          "primitive": true,
+                          "name": "uint8"
+                        }
+                      },
+                      {
+                        "kind": "leaf",
+                        "is_action_input": true,
+                        "name": "minor",
+                        "qname": "ansible:minor",
+                        "access": {
+                          "read": false,
+                          "create": false,
+                          "execute": false,
+                          "update": true,
+                          "delete": false
+                        },
+                        "type": {
+                          "primitive": true,
+                          "name": "uint8"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "name": "version-releae-choice"
+          }
+        ]
+      },
+      {
+        "kind": "choice",
+        "cases": [
+          {
+            "kind": "case",
+            "name": "version",
+            "children": [
+              {
+                "kind": "list",
+                "min_elements": 0,
+                "name": "version",
+                "max_elements": "unbounded",
+                "qname": "ansible:version",
+                "access": {
+                  "read": false,
+                  "create": false,
+                  "execute": false,
+                  "update": false,
+                  "delete": false
+                },
+                "mandatory": true,
+                "children": [
+                  {
+                    "kind": "leaf",
+                    "name": "name",
+                    "qname": "ansible:name",
+                    "access": {
+                      "read": false,
+                      "create": false,
+                      "execute": false,
+                      "update": false,
+                      "delete": false
+                    },
+                    "type": {
+                      "primitive": true,
+                      "name": "string"
+                    },
+                    "is_action_output": true
+                  }
+                ],
+                "is_action_output": true
+              }
+            ]
+          },
+          {
+            "kind": "case",
+            "name": "release",
+            "children": [
+              {
+                "kind": "leaf",
+                "name": "release",
+                "qname": "ansible:release",
+                "access": {
+                  "read": false,
+                  "create": false,
+                  "execute": false,
+                  "update": false,
+                  "delete": false
+                },
+                "type": {
+                  "primitive": true,
+                  "name": "string"
+                },
+                "is_action_output": true
+              }
+            ]
+          }
+        ],
+        "name": "version-release-choice"
+      }
+    ]
+  }
+}

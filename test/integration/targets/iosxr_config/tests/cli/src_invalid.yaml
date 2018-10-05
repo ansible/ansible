@@ -1,0 +1,18 @@
+---
+- debug: msg="START cli/src_invalid.yaml on connection={{ ansible_connection }}"
+
+
+# Defend https://github.com/ansible/ansible-modules-core/issues/4797
+- name: configure with invalid src
+  iosxr_config:
+    src: basic/foobar.j2
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.failed == true"
+      - "result.msg == 'path specified in src not found'"
+
+- debug: msg="END cli/src_invalid.yaml on connection={{ ansible_connection }}"

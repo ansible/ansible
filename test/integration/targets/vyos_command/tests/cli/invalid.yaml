@@ -1,0 +1,22 @@
+---
+- debug: msg="START cli/invalid.yaml on connection={{ ansible_connection }}"
+
+- name: run invalid command
+  vyos_command:
+    commands: show foo
+  register: result
+  ignore_errors: yes
+
+- assert: { that: result.failed }
+
+- name: run commands that include invalid command
+  vyos_command:
+    commands:
+      - show version
+      - show foo
+  register: result
+  ignore_errors: yes
+
+- assert: { that: result.failed }
+
+- debug: msg="END cli/invalid.yaml on connection={{ ansible_connection }}"

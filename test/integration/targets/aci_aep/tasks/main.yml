@@ -1,0 +1,272 @@
+# Test code for the ACI modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Remove AEP
+  aci_aep: &aep_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    aep: ansible_test
+    state: absent
+
+
+# ADD AEP
+- name: Add AEP (check_mode)
+  aci_aep: &aep_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    aep: ansible_test
+    state: present
+  check_mode: yes
+  register: cm_add_aep
+
+- name: Add AEP (normal mode)
+  aci_aep: *aep_present
+  register: nm_add_aep
+
+- name: Verify add_aep
+  assert:
+    that:
+    - cm_add_aep is changed
+    - nm_add_aep is changed
+    - nm_add_aep.previous == nm_add_aep.previous == cm_add_aep.current == []
+    - 'nm_add_aep.current == [{"infraAttEntityP": {"attributes": {"descr": "", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+    - 'cm_add_aep.proposed == nm_add_aep.proposed == cm_add_aep.sent == nm_add_aep.sent == {"infraAttEntityP": {"attributes": {"name": "ansible_test"}}}'
+
+- name: Add AEP again (check_mode)
+  aci_aep: *aep_present
+  check_mode: yes
+  register: cm_add_aep_again
+
+- name: Add AEP again (normal mode)
+  aci_aep: *aep_present
+  register: nm_add_aep_again
+
+- name: Verify add_aep_again
+  assert:
+    that:
+    - cm_add_aep_again is not changed
+    - nm_add_aep_again is not changed
+    - 'nm_add_aep_again.previous == nm_add_aep_again.previous == cm_add_aep_again.current == nm_add_aep_again.current == [{"infraAttEntityP": {"attributes": {"descr": "", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+    - 'cm_add_aep_again.proposed == nm_add_aep_again.proposed == {"infraAttEntityP": {"attributes": {"name": "ansible_test"}}}'
+    - cm_add_aep_again.sent == nm_add_aep_again.sent == {}
+
+
+# CHANGE AEP
+- name: Change description of AEP (check_mode)
+  aci_aep:
+    <<: *aep_present
+    description: Ansible test AEP
+  check_mode: yes
+  register: cm_add_aep_descr
+
+- name: Change description of AEP (normal mode)
+  aci_aep:
+    <<: *aep_present
+    description: Ansible test AEP
+  register: nm_add_aep_descr
+
+- name: Verify add_aep_descr
+  assert:
+    that:
+    - cm_add_aep_descr is changed
+    - nm_add_aep_descr is changed
+    - 'cm_add_aep_descr.proposed == nm_add_aep_descr.proposed == {"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "name": "ansible_test"}}}'
+    - 'cm_add_aep_descr.sent == nm_add_aep_descr.sent == {"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP"}}}'
+    - 'cm_add_aep_descr.previous == nm_add_aep_descr.previous == cm_add_aep_descr.current == [{"infraAttEntityP": {"attributes": {"descr": "", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+    - 'nm_add_aep_descr.current == [{"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+
+- name: Change description of AEP again (check_mode)
+  aci_aep:
+    <<: *aep_present
+    description: Ansible test AEP
+  check_mode: yes
+  register: cm_add_aep_descr_again
+
+- name: Change description of AEP again (normal mode)
+  aci_aep:
+    <<: *aep_present
+    description: Ansible test AEP
+  register: nm_add_aep_descr_again
+
+- name: Verify add_aep_descr_again
+  assert:
+    that:
+    - cm_add_aep_descr_again is not changed
+    - nm_add_aep_descr_again is not changed
+    - 'cm_add_aep_descr_again.proposed == nm_add_aep_descr_again.proposed == {"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "name": "ansible_test"}}}'
+    - 'cm_add_aep_descr_again.sent == nm_add_aep_descr_again.sent == {}'
+    - 'cm_add_aep_descr_again.previous == nm_add_aep_descr_again.previous == cm_add_aep_descr_again.current == nm_add_aep_descr_again.current == [{"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+
+
+# ADD AEP AGAIN
+- name: Add AEP again with no description (check_mode)
+  aci_aep: *aep_present
+  check_mode: yes
+  register: cm_add_aep_again_no_descr
+
+- name: Add AEP again with no description (normal mode)
+  aci_aep: *aep_present
+  register: nm_add_aep_again_no_descr
+
+- name: Verify add_aep_again_no_descr
+  assert:
+    that:
+    - cm_add_aep_again_no_descr is not changed
+    - nm_add_aep_again_no_descr is not changed
+    - 'cm_add_aep_again_no_descr.proposed == nm_add_aep_again_no_descr.proposed == {"infraAttEntityP": {"attributes": {"name": "ansible_test"}}}'
+    - cm_add_aep_again_no_descr.sent == nm_add_aep_again_no_descr.sent == {}
+    - 'cm_add_aep_again_no_descr.previous == nm_add_aep_again_no_descr.previous == cm_add_aep_again_no_descr.current == nm_add_aep_again_no_descr.current == [{"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+
+
+# QUERY ALL AEPS
+- name: Query all AEPs (check_mode)
+  aci_aep: &aep_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_aeps
+
+- name: Query all AEPs (normal mode)
+  aci_aep: *aep_query
+  register: nm_query_all_aeps
+
+- name: Verify query_all_aeps
+  assert:
+    that:
+    - cm_query_all_aeps is not changed
+    - nm_query_all_aeps is not changed
+    - cm_query_all_aeps == nm_query_all_aeps
+    - nm_query_all_aeps.current|length >= 1
+
+
+# QUERY A AEP
+- name: Query our AEP
+  aci_aep:
+    <<: *aep_query
+    aep: ansible_test
+  check_mode: yes
+  register: cm_query_aep
+
+- name: Query our AEP
+  aci_aep:
+    <<: *aep_query
+    aep: ansible_test
+  register: nm_query_aep
+
+- name: Verify query_aep
+  assert:
+    that:
+    - cm_query_aep is not changed
+    - nm_query_aep is not changed
+    - cm_query_aep == nm_query_aep
+    - nm_query_aep.current.0.infraAttEntityP.attributes.descr == "Ansible test AEP"
+    - nm_query_aep.current.0.infraAttEntityP.attributes.dn == "uni/infra/attentp-ansible_test"
+    - nm_query_aep.current.0.infraAttEntityP.attributes.name == "ansible_test"
+
+
+# REMOVE AEP
+- name: Remove AEP (check_mode)
+  aci_aep: *aep_absent
+  check_mode: yes
+  register: cm_remove_aep
+
+- name: Remove AEP (normal mode)
+  aci_aep: *aep_absent
+  register: nm_remove_aep
+
+- name: Verify remove_aep
+  assert:
+    that:
+    - cm_remove_aep is changed
+    - nm_remove_aep is changed
+    - cm_remove_aep.proposed == nm_remove_aep.proposed == {}
+    - cm_remove_aep.sent == nm_remove_aep.sent == {}
+    - 'cm_remove_aep.previous == nm_remove_aep.previous == cm_remove_aep.current == [{"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+    - nm_remove_aep.current == []
+
+- name: Remove AEP again (check_mode)
+  aci_aep: *aep_absent
+  check_mode: yes
+  register: cm_remove_aep_again
+
+- name: Remove AEP again (normal mode)
+  aci_aep: *aep_absent
+  register: nm_remove_aep_again
+
+- name: Verify remove_aep_again
+  assert:
+    that:
+    - cm_remove_aep_again is not changed
+    - nm_remove_aep_again is not changed
+    - cm_remove_aep_again.proposed == nm_remove_aep_again.proposed == {}
+    - cm_remove_aep_again.sent == nm_remove_aep_again.sent == {}
+    - cm_remove_aep_again.previous == nm_remove_aep_again.previous == cm_remove_aep_again.current == nm_remove_aep_again.current == []
+
+
+# QUERY NON-EXISTING AEP
+- name: Query non-existing AEP (check_mode)
+  aci_aep:
+    <<: *aep_query
+    aep: ansible_test
+  check_mode: yes
+  register: cm_query_non_aep
+
+- name: Query non-existing AEP (normal mode)
+  aci_aep:
+    <<: *aep_query
+    aep: ansible_test
+  register: nm_query_non_aep
+
+- name: Verify query_non_aep
+  assert:
+    that:
+    - cm_query_non_aep is not changed
+    - nm_query_non_aep is not changed
+    - cm_query_non_aep == nm_query_non_aep
+    - cm_query_non_aep.current == nm_query_non_aep.current == []
+
+
+# PROVOKE ERRORS
+- name: Error when required parameter is missing
+  aci_aep:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: present
+  ignore_errors: yes
+  register: error_on_missing_required_param
+
+- name: Verify error_on_missing_required_param
+  assert:
+    that:
+    - error_on_missing_required_param is failed
+    - 'error_on_missing_required_param.msg == "state is present but all of the following are missing: aep"'

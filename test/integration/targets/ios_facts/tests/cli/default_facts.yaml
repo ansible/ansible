@@ -1,0 +1,35 @@
+---
+- debug: msg="START cli/default_facts.yaml on connection={{ ansible_connection }}"
+
+
+- name: test getting default facts
+  ios_facts:
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      # _facts modules should never report a change
+      - "result.changed == false"
+
+      # Correct subsets are present
+      - "'hardware' in result.ansible_facts.ansible_net_gather_subset"
+      - "'default' in result.ansible_facts.ansible_net_gather_subset"
+      - "'interfaces' in result.ansible_facts.ansible_net_gather_subset"
+      - "result.ansible_facts.ansible_net_filesystems is defined"
+      # ... and not present
+      - "'config' not in result.ansible_facts.ansible_net_gather_subset"
+
+      # Items from those subsets are present
+      - "result.ansible_facts.ansible_net_filesystems is defined" #hw
+      - "result.ansible_facts.ansible_net_memtotal_mb > 10" #hw
+      - "result.ansible_facts.ansible_net_interfaces | length > 1" # more than one interface returned
+
+      # ... and not present
+      - "result.ansible_facts.ansible_net_config is not defined" # config
+
+- assert:
+    that: "{{ item.value.spacetotal_kb }} > {{ item.value.spacefree_kb }}"
+  loop: "{{ lookup('dict', result.ansible_facts.ansible_net_filesystems_info, wantlist=True) }}"
+
+- debug: msg="END cli/default.yaml on connection={{ ansible_connection }}"

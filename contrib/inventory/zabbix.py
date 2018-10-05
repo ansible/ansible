@@ -24,17 +24,23 @@ Zabbix Server external inventory script.
 ========================================
 
 Returns hosts and hostgroups from Zabbix Server.
+If you want to run with --limit against a host group with space in the
+name, use asterisk. For example --limit="Linux*servers".
 
 Configuration is read from `zabbix.ini`.
 
-Tested with Zabbix Server 2.0.6.
+Tested with Zabbix Server 2.0.6 and 3.2.3.
 """
 
 from __future__ import print_function
 
-import os, sys
+import os
+import sys
 import argparse
-import ConfigParser
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 try:
     from zabbix_api import ZabbixAPI
@@ -43,16 +49,18 @@ except:
           file=sys.stderr)
     sys.exit(1)
 
-try:
-    import json
-except:
-    import simplejson as json
+import json
+
 
 class ZabbixInventory(object):
 
     def read_settings(self):
-        config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini')
+        config = configparser.SafeConfigParser()
+        conf_path = './zabbix.ini'
+        if not os.path.exists(conf_path):
+            conf_path = os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini'
+        if os.path.exists(conf_path):
+            config.read(conf_path)
         # server
         if config.has_option('zabbix', 'server'):
             self.zabbix_server = config.get('zabbix', 'server')
@@ -62,6 +70,10 @@ class ZabbixInventory(object):
             self.zabbix_username = config.get('zabbix', 'username')
         if config.has_option('zabbix', 'password'):
             self.zabbix_password = config.get('zabbix', 'password')
+        # ssl certs
+        if config.has_option('zabbix', 'validate_certs'):
+            if config.get('zabbix', 'validate_certs') in ['false', 'False', False]:
+                self.validate_certs = False
 
     def read_cli(self):
         parser = argparse.ArgumentParser()
@@ -75,7 +87,7 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
-        data = {}
+        data = {'ansible_ssh_host': name}
         return data
 
     def get_list(self, api):
@@ -91,10 +103,13 @@ class ZabbixInventory(object):
             for group in host['groups']:
                 groupname = group['name']
 
-                if not groupname in data:
+                if groupname not in data:
                     data[groupname] = self.hoststub()
 
                 data[groupname]['hosts'].append(hostname)
+
+        # Prevents Ansible from calling this script for each server with --host
+        data['_meta'] = {'hostvars': self.meta}
 
         return data
 
@@ -104,13 +119,15 @@ class ZabbixInventory(object):
         self.zabbix_server = None
         self.zabbix_username = None
         self.zabbix_password = None
+        self.validate_certs = True
+        self.meta = {}
 
         self.read_settings()
         self.read_cli()
 
         if self.zabbix_server and self.zabbix_username:
             try:
-                api = ZabbixAPI(server=self.zabbix_server)
+                api = ZabbixAPI(server=self.zabbix_server, validate_certs=self.validate_certs)
                 api.login(user=self.zabbix_username, password=self.zabbix_password)
             except BaseException as e:
                 print("Error: Could not login to Zabbix server. Check your zabbix.ini.", file=sys.stderr)
@@ -131,5 +148,6 @@ class ZabbixInventory(object):
         else:
             print("Error: Configuration of server and credentials are required. See zabbix.ini.", file=sys.stderr)
             sys.exit(1)
+
 
 ZabbixInventory()

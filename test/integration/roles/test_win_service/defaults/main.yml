@@ -1,5 +1,0 @@
----
-
-# Service is commonly available and usually disabled/stopped by default.
-test_win_service_name: SSDPSRV
-test_win_service_display_name: "SSDP Discovery"

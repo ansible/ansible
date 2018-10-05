@@ -1,0 +1,31 @@
+---
+- debug: msg="START cli/disable.yaml"
+
+- name: Disable NXAPI
+  nxos_nxapi:
+    state: absent
+  register: result
+
+- name: Check NXAPI state
+  nxos_command:
+    commands:
+      - show feature | grep nxapi
+  register: result
+
+- name: Assert NXAPI is disabled
+  assert:
+    that:
+      result.stdout[0]  is search('disabled')
+
+- name: Disable NXAPI again
+  nxos_nxapi:
+    state:
+      absent
+  register: result
+
+- name: Assert idempotence
+  assert:
+    that:
+      result.changed == false
+
+- debug: msg="END cli/disable.yaml"

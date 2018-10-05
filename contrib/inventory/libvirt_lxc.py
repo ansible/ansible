@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from subprocess import Popen,PIPE
+from subprocess import Popen, PIPE
 import sys
 import json
 
@@ -27,11 +27,11 @@ result['all'] = {}
 pipe = Popen(['virsh', '-q', '-c', 'lxc:///', 'list', '--name', '--all'], stdout=PIPE, universal_newlines=True)
 result['all']['hosts'] = [x[:-1] for x in pipe.stdout.readlines()]
 result['all']['vars'] = {}
-result['all']['vars']['ansible_connection'] = 'lxc'
+result['all']['vars']['ansible_connection'] = 'libvirt_lxc'
 
 if len(sys.argv) == 2 and sys.argv[1] == '--list':
     print(json.dumps(result))
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-    print(json.dumps({'ansible_connection': 'lxc'}))
+    print(json.dumps({'ansible_connection': 'libvirt_lxc'}))
 else:
-    print("Need an argument, either --list or --host <host>")
+    sys.stderr.write("Need an argument, either --list or --host <host>\n")

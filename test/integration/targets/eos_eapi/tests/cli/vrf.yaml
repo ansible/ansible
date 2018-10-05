@@ -1,0 +1,55 @@
+---
+- debug: msg="START cli/vrf.yaml on connection={{ ansible_connection }}"
+
+- name: Set invalid VRF
+  eos_eapi:
+    vrf: foobar
+    provider: "{{ cli }}"
+  become: yes
+  register: eos_eapi_output
+  ignore_errors: true
+
+- name: Ensure that setting VRF failed
+  assert:
+    that:
+      - "eos_eapi_output.failed == true"
+      - "eos_eapi_output.changed == false"
+      - eos_eapi_output.msg == "vrf `foobar` is not configured on the system"
+
+#----
+- name: Set VRF to default
+  eos_eapi:
+    vrf: default
+    provider: "{{ cli }}"
+  become: yes
+  register: eos_eapi_output
+  ignore_errors: true
+
+
+- name: Set VRF to default again (idempotent)
+  eos_eapi:
+    vrf: default
+    provider: "{{ cli }}"
+  become: yes
+  register: eos_eapi_output
+
+- name: Ensure idempotent
+  assert:
+    that:
+      - "eos_eapi_output.changed == false"
+
+
+# -----
+# FIXME Future: Idempotent test
+#       Add in an extra vrt and swap between that and default to ensure idempotency
+- name: DEBUG show vrf
+  eos_command:
+    commands: show vrf
+    provider: "{{ cli }}"
+  register: eos_eapi_output
+  when: false
+
+#- debug:
+#    msg: "{{ eos_eapi_output }}"
+
+- debug: msg="END cli/vrf.yaml on connection={{ ansible_connection }}"

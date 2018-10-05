@@ -1,0 +1,63 @@
+---
+- debug: msg="START cli/config_check.yaml on connection={{ ansible_connection }}"
+
+- name: setup- ensure interface is not present
+  vyos_config:
+    lines: delete interfaces loopback lo
+
+- name: setup- create interface
+  vyos_config:
+    lines:
+      - interfaces
+      - interfaces loopback lo
+      - interfaces loopback lo description test
+  register: result
+
+# note collapsing the duplicate lines doesn't work if
+# lines:
+#   - interfaces loopback lo description test
+#   - interfaces loopback lo
+#   - interfaces
+
+- name: Check that multiple duplicate lines collapse into a single commands
+  assert:
+    that:
+      - "{{ result.commands|length }} == 1"
+
+- name: Check that set is correctly prepended
+  assert:
+    that:
+      - "result.commands[0] == 'set interfaces loopback lo description test'"
+
+- name: configure config_check config command
+  vyos_config:
+    lines: delete interfaces loopback lo
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check config_check config command idempontent
+  vyos_config:
+    lines: delete interfaces loopback lo
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: check multiple line config filter is working
+  vyos_config:
+      lines:
+          - set system login user esa level admin
+          - set system login user esa authentication encrypted-password '!abc!'
+          - set system login user vyos level admin
+          - set system login user vyos authentication encrypted-password 'abc'
+  register: result
+
+- assert:
+    that:
+      - "{{ result.filtered|length }} == 2"
+
+- debug: msg="END cli/config_check.yaml on connection={{ ansible_connection }}"

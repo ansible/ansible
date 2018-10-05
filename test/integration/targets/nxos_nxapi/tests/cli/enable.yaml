@@ -1,0 +1,34 @@
+---
+- debug: msg="START cli/enable.yaml"
+
+- name: Setup - put NXAPI in stopped state
+  nxos_nxapi:
+      state: absent
+  register: result
+
+- name: Enable NXAPI
+  nxos_nxapi:
+      state: present
+  register: result
+
+- name: Check NXAPI state
+  nxos_command:
+      commands:
+          - show feature | grep nxapi
+  register: result
+
+- name: Assert NXAPI is enabled
+  assert:
+      that: result.stdout[0]  is search('enabled')
+
+- name: Enable NXAPI again
+  nxos_nxapi:
+  register: result
+
+- name: Assert idempotence
+  assert:
+    that:
+      result.changed == false
+
+
+- debug: msg="END cli/enable.yaml"

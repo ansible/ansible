@@ -1,0 +1,210 @@
+---
+# tasks file for test_ec2_asg
+
+# we are using a custom built AMI that runs an apache server to verify
+# ELB health checks and perform rolling ASG updates
+# this will only work on us-east-1
+
+# ============================================================
+# create and kill an ASG
+- name: ensure launch config exists
+  ec2_lc:
+    name: "{{ resource_prefix }}-lc"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    image_id: ami-964a0efe
+    instance_type: t2.micro
+
+- name: launch asg and wait for instances to be deemed healthy (no ELB)
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    launch_config_name: "{{ resource_prefix }}-lc"
+    desired_capacity: 1
+    min_size: 1
+    max_size: 1
+    region: "{{ ec2_region }}"
+    state: present
+    wait_for_instances: yes
+  register: output
+
+- assert:
+    that:
+      - "output.viable_instances == 1"
+
+# - name: pause for a bit to make sure that the group can't be trivially deleted
+#   pause: seconds=30
+- name: kill asg
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    state: absent
+  async: 300
+
+
+- name: launch asg and do not wait for instances to be deemed healthy (no ELB)
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    launch_config_name: "{{ resource_prefix }}-lc"
+    desired_capacity: 1
+    min_size: 1
+    max_size: 1
+    region: "{{ ec2_region }}"
+    wait_for_instances: no
+    state: present
+  register: output
+
+- assert:
+    that:
+      - "output.viable_instances == 0"
+
+- name: kill asg
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    state: absent
+  async: 300
+
+- name: launch load balancer
+  ec2_elb_lb:
+    name: "{{ resource_prefix }}-lb"
+    region: "{{ ec2_region }}"
+    state: present
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    zones:
+      - "{{ ec2_region }}b"
+      - "{{ ec2_region }}c"
+    connection_draining_timeout: 60
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+    health_check:
+        ping_protocol: http
+        ping_port: 80
+        ping_path: "/"
+        response_timeout: 5
+        interval: 30
+        unhealthy_threshold: 3
+        healthy_threshold: 3
+  register: load_balancer
+
+
+- name: launch asg and wait for instances to be deemed healthy (ELB)
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    availability_zones:
+      - "{{ ec2_region }}b"
+      - "{{ ec2_region }}c"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    launch_config_name: "{{ resource_prefix }}-lc"
+    health_check_type: ELB
+    desired_capacity: 1
+    min_size: 1
+    max_size: 1
+    health_check_period: 120
+    load_balancers: "{{ resource_prefix }}-lb"
+    region: "{{ ec2_region }}"
+    wait_for_instances: yes
+    wait_timeout: 600
+    state: present
+  register: output
+
+- assert:
+    that:
+      - "output.viable_instances == 1"
+
+
+# grow scaling group to 3
+
+- name: add 2 more instances wait for instances to be deemed healthy (ELB)
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    availability_zones:
+      - "{{ ec2_region }}b"
+      - "{{ ec2_region }}c"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    launch_config_name: "{{ resource_prefix }}-lc"
+    health_check_type: ELB
+    desired_capacity: 3
+    min_size: 3
+    max_size: 5
+    health_check_period: 120
+    load_balancers: ec2-asg-int-test
+    region: "{{ ec2_region }}"
+    wait_for_instances: yes
+    wait_timeout: 600
+    state: present
+  register: output
+
+- assert:
+    that:
+      - "output.viable_instances == 3"
+
+# # create new launch config with alternate AMI
+
+- name: ensure launch config exists
+  ec2_lc:
+    name: "{{ resource_prefix }}-lc-2"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    image_id: ami-2a4a0e42
+    instance_type: t2.micro
+
+
+# # perform rolling replace
+
+- name: perform rolling update to new AMI
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    availability_zones:
+      - "{{ ec2_region }}b"
+      - "{{ ec2_region }}c"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    launch_config_name: "{{ resource_prefix }}-lc-2"
+    health_check_type: ELB
+    desired_capacity: 3
+    min_size: 3
+    max_size: 5
+    health_check_period: 120
+    load_balancers: ec2-asg-int-test
+    region: "{{ ec2_region }}"
+    wait_for_instances: yes
+    replace_all_instances: yes
+    wait_timeout: 600
+    state: present
+  register: output
+
+# ensure that all instances have new launch config
+- assert:
+    that:
+      - "item.value.launch_config_name == '{{ resource_prefix }}-lc-2'"
+  with_dict: output.instance_facts
+
+# assert they are all healthy
+- assert:
+    that:
+      - "output.viable_instances >= 3"
+
+
+- name: kill asg
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    state: absent
+  async: 300

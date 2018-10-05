@@ -1,0 +1,33 @@
+---
+- debug: msg="START eapi/all_facts.yaml"
+
+- name: Make sure LLDP is running (setup)
+  eos_config:
+    lines: lldp run
+  become: yes
+
+- name: test getting all facts
+  eos_facts:
+    gather_subset:
+      - all
+  become: yes
+  register: result
+
+- assert:
+    that:
+      # _facts modules should never report a change
+      - "result.changed == false"
+
+      # Correct subsets are present
+      - "'config' in result.ansible_facts.ansible_net_gather_subset"
+      - "'hardware' in result.ansible_facts.ansible_net_gather_subset"
+      - "'default' in result.ansible_facts.ansible_net_gather_subset"
+      - "'interfaces' in result.ansible_facts.ansible_net_gather_subset"
+
+      # Items from those subsets are present
+      - "result.ansible_facts.ansible_net_filesystems is defined"
+      # Check that these facts not only are present, but are valid (positive integers)
+      - "result.ansible_facts.ansible_net_memfree_mb > 1"
+      - "result.ansible_facts.ansible_net_memtotal_mb > 1"
+
+- debug: msg="END eapi/all_facts.yaml"

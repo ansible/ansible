@@ -1,0 +1,6 @@
+- hosts: testhost
+  gather_facts: False
+  vars:
+    - output_dir: .
+  roles:
+    - { role: test_vaulted_template, tags: test_vaulted_template}

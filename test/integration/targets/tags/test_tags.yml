@@ -1,0 +1,25 @@
+---
+- name: verify tags work as expected
+  hosts: localhost
+  gather_facts: False
+  connection: local
+  tasks:
+    - name: Task_with_tag
+      debug: msg=
+      tags: tag
+    - name: Task_with_always_tag
+      debug: msg=
+      tags: always
+    - name: Task_with_unicode_tag
+      debug: msg=
+      tags: くらとみ
+    - name: Task_with_list_of_tags
+      debug: msg=
+      tags:
+      - café
+      - press
+    - name: Task_without_tag
+      debug: msg=
+    - name: Task_with_never_tag
+      debug: msg=NEVER
+      tags: ['never', 'donever']

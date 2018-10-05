@@ -1,0 +1,4 @@
+cloud/azure
+shippable/azure/group1
+destructive
+azure_rm_publicipaddress_facts

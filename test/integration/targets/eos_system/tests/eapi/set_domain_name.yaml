@@ -1,0 +1,36 @@
+---
+- debug: msg="START eapi/set_domain_name.yaml"
+
+- name: setup
+  eos_config:
+    lines: no ip domain-name
+    match: none
+  become: yes
+
+- name: configure domain_name
+  eos_system:
+    domain_name: eng.ansible.com
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify domain_name
+  eos_system:
+    domain_name: eng.ansible.com
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  eos_config:
+    lines: no ip domain-name
+    match: none
+  become: yes
+
+- debug: msg="END eapi/set_domain_name.yaml"

@@ -1,0 +1,6 @@
+cloud/azure
+destructive
+shippable/azure/group8
+azure_rm_mysqlserver_facts
+azure_rm_mysqldatabase
+azure_rm_mysqldatabase_facts

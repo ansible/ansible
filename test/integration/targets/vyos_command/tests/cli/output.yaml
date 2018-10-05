@@ -1,0 +1,44 @@
+---
+- debug: msg="START cli/output.yaml on connection={{ ansible_connection }}"
+
+- name: get output for single command
+  vyos_command:
+    commands: show version
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+      - result.stdout is defined
+      - result.stdout_lines is defined
+
+- name: get output for multiple commands
+  vyos_command:
+    commands:
+      - show version
+      - show interfaces
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+      - result.stdout is defined
+      - result.stdout | length == 2
+
+- name: Get output for multiple commands that call less explicitly
+  vyos_command:
+    commands:
+        # NOTE: We only test show commands that will output <ANSIBLE_VYOS_TERMINAL_LENGTH
+        # Otherwise you will get ": "command timeout triggered"
+      - show hardware cpu detail
+      - show hardware mem
+      - show license
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+      - result.stdout_lines is defined
+      - result.stdout_lines[2] | length >= 20
+
+- debug: msg="END cli/output.yaml on connection={{ ansible_connection }}"

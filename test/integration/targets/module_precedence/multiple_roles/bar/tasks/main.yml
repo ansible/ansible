@@ -1,0 +1,10 @@
+---
+- name: Use ping from inside foo role
+  ping:
+  register: result
+
+- name: Make sure that we used the ping module from the foo role
+  assert:
+    that:
+      - '"location" in result'
+      - 'result["location"] == "{{ expected_location }}"'

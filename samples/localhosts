@@ -1,3 +1,0 @@
-l1 ansible_ssh_host=127.0.0.1
-l2 ansible_ssh_host=127.0.0.2
-l3 ansible_ssh_host=127.0.0.3

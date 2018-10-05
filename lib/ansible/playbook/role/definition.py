@@ -19,12 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems, string_types
-
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
@@ -33,6 +32,12 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
 from ansible.utils.path import unfrackpath
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 __all__ = ['RoleDefinition']
@@ -43,17 +48,19 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
     _role = FieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
-        self._play             = play
-        self._variable_manager = variable_manager
-        self._loader           = loader
 
-        self._role_path    = None
-        self._role_basedir = role_basedir
-        self._role_params  = dict()
         super(RoleDefinition, self).__init__()
 
-    #def __repr__(self):
-    #    return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
+        self._play = play
+        self._variable_manager = variable_manager
+        self._loader = loader
+
+        self._role_path = None
+        self._role_basedir = role_basedir
+        self._role_params = dict()
+
+    # def __repr__(self):
+    #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
@@ -65,10 +72,14 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        assert isinstance(ds, dict) or isinstance(ds, string_types) or isinstance(ds, AnsibleBaseYAMLObject)
+        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
+            raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
             ds = super(RoleDefinition, self).preprocess_data(ds)
+
+        # save the original ds for use later
+        self._ds = ds
 
         # we create a new data structure here, using the same
         # object used internally by the YAML parsing code so we
@@ -97,9 +108,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # we store the role path internally
         self._role_path = role_path
 
-        # save the original ds for use later
-        self._ds = ds
-
         # and return the cleaned-up data structure
         return new_ds
 
@@ -120,7 +128,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # if we have the required datastructures, and if the role_name
         # contains a variable, try and template it now
         if self._variable_manager:
-            all_vars = self._variable_manager.get_vars(loader=self._loader, play=self._play)
+            all_vars = self._variable_manager.get_vars(play=self._play)
             templar = Templar(loader=self._loader, variables=all_vars)
             if templar._contains_vars(role_name):
                 role_name = templar.template(role_name)
@@ -135,40 +143,49 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         append it to the default role path
         '''
 
-        role_path = unfrackpath(role_name)
+        # we always start the search for roles in the base directory of the playbook
+        role_search_paths = [
+            os.path.join(self._loader.get_basedir(), u'roles'),
+        ]
 
+        # also search in the configured roles path
+        if C.DEFAULT_ROLES_PATH:
+            role_search_paths.extend(C.DEFAULT_ROLES_PATH)
+
+        # next, append the roles basedir, if it was set, so we can
+        # search relative to that directory for dependent roles
+        if self._role_basedir:
+            role_search_paths.append(self._role_basedir)
+
+        # finally as a last resort we look in the current basedir as set
+        # in the loader (which should be the playbook dir itself) but without
+        # the roles/ dir appended
+        role_search_paths.append(self._loader.get_basedir())
+
+        # create a templar class to template the dependency names, in
+        # case they contain variables
+        if self._variable_manager is not None:
+            all_vars = self._variable_manager.get_vars(play=self._play)
+        else:
+            all_vars = dict()
+
+        templar = Templar(loader=self._loader, variables=all_vars)
+        role_name = templar.template(role_name)
+
+        # now iterate through the possible paths and return the first one we find
+        for path in role_search_paths:
+            path = templar.template(path)
+            role_path = unfrackpath(os.path.join(path, role_name))
+            if self._loader.path_exists(role_path):
+                return (role_name, role_path)
+
+        # if not found elsewhere try to extract path from name
+        role_path = unfrackpath(role_name)
         if self._loader.path_exists(role_path):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
-        else:
-            # we always start the search for roles in the base directory of the playbook
-            role_search_paths = [
-                os.path.join(self._loader.get_basedir(), u'roles'),
-                u'./roles',
-                self._loader.get_basedir(),
-                u'./'
-            ]
 
-            # also search in the configured roles path
-            if C.DEFAULT_ROLES_PATH:
-                configured_paths = C.DEFAULT_ROLES_PATH.split(os.pathsep)
-                role_search_paths.extend(configured_paths)
-
-            # finally, append the roles basedir, if it was set, so we can
-            # search relative to that directory for dependent roles
-            if self._role_basedir:
-                role_search_paths.append(self._role_basedir)
-
-            # now iterate through the possible paths and return the first one we find
-            for path in role_search_paths:
-                role_path = unfrackpath(os.path.join(path, role_name))
-                if self._loader.path_exists(role_path):
-                    return (role_name, role_path)
-
-        # FIXME: make the parser smart about list/string entries in
-        #        the yaml so the error line/file can be reported here
-
-        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)))
+        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)), obj=self._ds)
 
     def _split_role_params(self, ds):
         '''
@@ -178,10 +195,15 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         role_def = dict()
         role_params = dict()
-        base_attribute_names = frozenset(self._get_base_attributes().keys())
+        base_attribute_names = frozenset(self._valid_attrs.keys())
         for (key, value) in iteritems(ds):
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)
+            # FIXME: hard-coded list of exception key names here corresponds to the
+            #        connection fields in the Base class. There may need to be some
+            #        other mechanism where we exclude certain kinds of field attributes,
+            #        or make this list more automatic in some way so we don't have to
+            #        remember to update it manually.
             if key not in base_attribute_names:
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value

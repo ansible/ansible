@@ -1,0 +1,34 @@
+---
+- debug: msg="START nxos cli/net_system.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup
+  nxos_config:
+    lines:
+      - no ip domain-list ansible.com
+      - no ip domain-list redhat.com
+    match: none
+
+- name: configure domain_list using platform agnostic module
+  net_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip domain-list ansible.com' in result.commands"
+      - "'ip domain-list redhat.com' in result.commands"
+
+- name: setup
+  nxos_config:
+    lines:
+      - no ip domain-list ansible.com
+      - no ip domain-list redhat.com
+    match: none
+
+- debug: msg="END nxos cli/net_system.yaml on connection={{ ansible_connection }}"

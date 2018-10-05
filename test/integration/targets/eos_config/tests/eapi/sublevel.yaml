@@ -1,0 +1,41 @@
+---
+- debug: msg="START eapi/sublevel.yaml"
+
+- name: setup
+  eos_config:
+    lines: no ip access-list test
+    match: none
+  become: yes
+
+- name: configure sub level command
+  eos_config:
+    lines: 10 permit ip any any log
+    parents: ip access-list test
+    after: exit
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list test' in result.updates"
+      - "'10 permit ip any any log' in result.updates"
+
+- name: configure sub level command idempotent check
+  eos_config:
+    lines: 10 permit ip any any log
+    parents: ip access-list test
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  eos_config:
+    lines: no ip access-list test
+    match: none
+  become: yes
+
+- debug: msg="END eapi/sublevel.yaml"

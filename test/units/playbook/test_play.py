@@ -28,6 +28,8 @@ from ansible.playbook.play import Play
 from ansible.playbook.role import Role
 
 from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
+
 
 class TestPlay(unittest.TestCase):
 
@@ -48,8 +50,8 @@ class TestPlay(unittest.TestCase):
             gather_facts=False,
             connection='local',
             remote_user="root",
-            sudo=True,
-            sudo_user="testing",
+            become=True,
+            become_user="testing",
         ))
 
     def test_play_with_user_conflict(self):
@@ -75,7 +77,7 @@ class TestPlay(unittest.TestCase):
             name="test play",
             hosts=['foo'],
             gather_facts=False,
-            tasks=[dict(action='shell echo "hello world"')], 
+            tasks=[dict(action='shell echo "hello world"')],
         ))
 
     def test_play_with_handlers(self):
@@ -102,6 +104,7 @@ class TestPlay(unittest.TestCase):
             post_tasks=[dict(action='shell echo "hello world"')],
         ))
 
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_play_with_roles(self):
         fake_loader = DictDataLoader({
             '/etc/ansible/roles/foo/tasks.yml': """
@@ -110,12 +113,15 @@ class TestPlay(unittest.TestCase):
             """,
         })
 
+        mock_var_manager = MagicMock()
+        mock_var_manager.get_vars.return_value = dict()
+
         p = Play.load(dict(
             name="test play",
             hosts=['foo'],
             gather_facts=False,
             roles=['foo'],
-        ), loader=fake_loader)
+        ), loader=fake_loader, variable_manager=mock_var_manager)
 
         blocks = p.compile()
 

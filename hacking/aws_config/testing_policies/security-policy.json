@@ -1,0 +1,36 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "iam:GetGroup",
+                "iam:GetInstanceProfile",
+                "iam:GetPolicy",
+                "iam:GetPolicyVersion",
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:GetUser",
+                "iam:ListAttachedGroupPolicies",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListAttachedUserPolicies",
+                "iam:ListGroups",
+                "iam:ListInstanceProfiles",
+                "iam:ListInstanceProfilesForRole",
+                "iam:ListPolicies",
+                "iam:ListRoles",
+                "iam:ListRolePolicies",
+                "iam:ListUsers",
+                "iam:ListAccountAliases"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "AllowReadOnlyIAMUse"
+        },
+        {
+            "Sid": "AllowWAFusage",
+            "Action": "waf:*",
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}

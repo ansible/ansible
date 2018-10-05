@@ -1,0 +1,215 @@
+- block:
+    - name: Install foo-1.0-1
+      dnf:
+        name: foo-1.0-1
+        state: present
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install foo-1.0-1 again
+      dnf:
+        name: foo-1.0-1
+        state: present
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'msg' in dnf_result"
+    # ============================================================================
+    - name: Install foo-1:1.0-2
+      dnf:
+        name: "foo-1:1.0-2.{{ ansible_architecture }}"
+        state: present
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-2')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Update to the latest foo
+      dnf:
+        name: foo
+        state: latest
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.1-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install foo-1.0-1 from a file (downgrade)
+      dnf:
+        name: "{{ repodir }}/foo-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+        allow_downgrade: True
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+
+    - name: Remove foo
+      dnf:
+        name: foo
+        state: absent
+    # ============================================================================
+    - name: Install foo-1.0-1 from a file
+      dnf:
+        name: "{{ repodir }}/foo-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install foo-1.0-1 from a file again
+      dnf:
+        name: "{{ repodir }}/foo-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-1')"
+    # ============================================================================
+    - name: Install foo-1.0-2 from a file
+      dnf:
+        name: "{{ repodir }}/foo-1.0-2.{{ ansible_architecture }}.rpm"
+        state: present
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-2')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install foo-1.0-2 from a file again
+      dnf:
+        name: "{{ repodir }}/foo-1.0-2.{{ ansible_architecture }}.rpm"
+        state: present
+      register: dnf_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-2')"
+    # ============================================================================
+    - name: Remove foo
+      dnf:
+        name: foo
+        state: absent
+
+    - name: Try to install incompatible arch
+      dnf:
+        name: "{{ repodir_ppc64 }}/foo-1.0-1.ppc64.rpm"
+        state: present
+      register: dnf_result
+      ignore_errors: yes
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+      ignore_errors: yes
+
+    - name: Verify installation
+      assert:
+        that:
+            - "rpm_result.rc == 1"
+            - "not dnf_result.changed"
+            - "dnf_result is failed"
+    # ============================================================================
+  always:
+    - name: Clean up
+      dnf:
+        name: foo
+        state: absent

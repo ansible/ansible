@@ -1,0 +1,132 @@
+# test code for repositories with separate git dir updating
+# see https://github.com/ansible/ansible/pull/38016
+# see https://github.com/ansible/ansible/issues/30034
+
+- name: SEPARATE-GIT-DIR | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: SEPARATE-GIT-DIR | make a pre-exist repo dir
+  file:
+    state: directory
+    path: '{{ separate_git_dir }}'
+
+- name: SEPARATE-GIT-DIR | clone with a separate git dir
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    separate_git_dir: '{{ separate_git_dir }}'
+  ignore_errors: yes
+  register: result
+
+- name: SEPARATE-GIT-DIR | the clone will fail due to pre-exist dir
+  assert:
+    that: 'result is failed'
+
+- name: SEPARATE-GIT-DIR | delete pre-exist dir
+  file:
+    state: absent
+    path: '{{ separate_git_dir }}'
+
+- name: SEPARATE-GIT-DIR | clone again with a separate git dir
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    separate_git_dir: '{{ separate_git_dir }}'
+
+- name: SEPARATE-GIT-DIR | check the stat of git dir
+  stat:
+    path: '{{ separate_git_dir }}'
+  register: stat_result
+
+- name: SEPARATE-GIT-DIR | the git dir should exist
+  assert:
+    that: 'stat_result.stat.exists == True'
+
+- name: SEPARATE-GIT-DIR | update repo the usual way
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    separate_git_dir: '{{ separate_git_dir }}'
+  register: result
+
+- name: SEPARATE-GIT-DIR | update should not fail
+  assert:
+    that:
+      - result is not failed
+
+- name: SEPARATE-GIT-DIR | move the git dir to new place
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    separate_git_dir: '{{ separate_git_dir }}_new'
+  register: result
+
+- name: SEPARATE-GIT-DIR | the movement should not failed
+  assert:
+    that: 'result is not failed'
+
+- name: SEPARATE-GIT-DIR | check the stat of new git dir
+  stat:
+    path: '{{ separate_git_dir }}_new'
+  register: stat_result
+
+- name: SEPARATE-GIT-DIR | the new git dir should exist
+  assert:
+    that: 'stat_result.stat.exists == True'
+
+- name: SEPARATE-GIT-DIR | test the update
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+  register: result
+
+- name: SEPARATE-GIT-DIR | the update should not failed
+  assert:
+    that:
+      - result is not failed
+
+- name: SEPARATE-GIT-DIR | set git dir to non-existent dir
+  shell: "echo gitdir: /dev/null/non-existent-dir > .git"
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: SEPARATE-GIT-DIR | update repo the usual way
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"
+  ignore_errors: yes
+  register: result
+
+- name: SEPARATE-GIT-DIR | check update has failed
+  assert:
+    that:
+      - result is failed
+
+- name: SEPARATE-GIT-DIR | set .git file to bad format
+  shell: "echo some text  gitdir: {{ checkout_dir }} > .git"
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: SEPARATE-GIT-DIR | update repo the usual way
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"
+  ignore_errors: yes
+  register: result
+
+- name: SEPARATE-GIT-DIR | check update has failed
+  assert:
+    that:
+      - result is failed
+
+- name: SEPARATE-GIT-DIR | clear separate git dir
+  file:
+    state: absent
+    path: "{{ separate_git_dir }}_new"
+
+- name: SEPARATE-GIT-DIR | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'

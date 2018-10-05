@@ -1,0 +1,112 @@
+---
+- debug: msg="START cli/set_domain_list.yaml"
+
+- name: setup
+  nxos_config:
+    lines:
+      - no ip domain-list ansible.com
+      - no ip domain-list redhat.com
+    match: none
+
+- name: configure domain_list
+  nxos_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip domain-list ansible.com' in result.commands"
+      - "'ip domain-list redhat.com' in result.commands"
+
+- name: verify domain_list
+  nxos_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: remove one entry
+  nxos_system:
+    domain_search:
+      - ansible.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'no ip domain-list redhat.com' in result.commands"
+
+- name: verify remove one entry
+  nxos_system:
+    domain_search:
+      - ansible.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: add one entry
+  nxos_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip domain-list redhat.com' in result.commands"
+
+- name: verify add one entry
+  nxos_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: add and remove one entry
+  nxos_system:
+    domain_search:
+      - ansible.com
+      - eng.ansible.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'no ip domain-list redhat.com' in result.commands"
+      - "'ip domain-list eng.ansible.com' in result.commands"
+      - result.commands|length == 2
+
+- name: verify add and remove one entry
+  nxos_system:
+    domain_search:
+      - ansible.com
+      - eng.ansible.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: teardown
+  nxos_config:
+    lines:
+      - no ip domain-list ansible.com
+      - no ip domain-list redhat.com
+      - no ip domain-list eng.ansible.com
+    match: none
+
+- debug: msg="END cli/set_domain_search.yaml"

@@ -1,0 +1,123 @@
+---
+- name: Enable Feature Privilage
+  nxos_config:
+    lines:
+      - feature privilege
+  connection: network_cli
+  ignore_errors: yes
+
+- name: Enable Feature NXAPI
+  nxos_nxapi:
+    state: present
+  connection: network_cli
+
+- name: Enable lldp
+  nxos_config:
+    lines:
+      - feature lldp
+  ignore_errors: yes
+
+# Gather the list of interfaces on this device and make the list
+# available for integration tests that need them.
+#
+# Usage in integration test playbook:
+#
+#   - set_fact: testint="{{ nxos_int1 }}"
+#
+#   - name: "Interface selected for this test"
+#     debug: msg="{{ testint }}"
+
+- name: "Collect interface list"
+  nxos_command:
+    commands: ['show interface brief | json']
+    timeout: 60
+  connection: network_cli
+  register: intout
+
+- set_fact: intdataraw="{{ intout.stdout_lines[0]['TABLE_interface']['ROW_interface'] }}"
+- set_fact: nxos_int1="{{ intdataraw[1].interface }}"
+- set_fact: nxos_int2="{{ intdataraw[2].interface }}"
+- set_fact: nxos_int3="{{ intdataraw[3].interface }}"
+
+# Get image version information for this device
+- name: "Gather image version info"
+  nxos_command:
+    commands: ['sh version | json']
+  connection: network_cli
+  register: nxos_version_output
+
+- set_fact: image_version="{{ nxos_version_output.stdout[0]['kickstart_ver_str'] }}"
+
+# Get platform information for this device
+#
+# Usage in integration test playbook:
+#
+#   - name: "nxos platform "
+#     debug: msg="{{ platform }}"
+#
+- name: "Gather platform info"
+  nxos_command:
+    commands: ['sh inventory | json']
+  connection: network_cli
+  register: nxos_inventory_output
+
+- set_fact: platform="{{ nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'][0]['productid'].split('-')[0] }}"
+- set_fact: chassis_type="{{ nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'][0]['productid'].split('-')[1] }}"
+
+# Check if platform is fretta
+- set_fact: fretta={% for row in nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'] if 'FM-R' in row['productid'] %}"true"{% endfor %}
+  when: platform is match("N9K")
+
+# Set platform to N9K-F for fretta
+- set_fact: platform="N9K-F"
+  when: ( platform is match("N9K")) and ( fretta is search("true"))
+
+# Check if platform is titanium
+- set_fact: titanium="false"
+- set_fact: titanium={% for row in nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'] if 'NX-OSv' in row['desc']%}"true"{% endfor %}
+  when: platform is match("N7K")
+
+# Set platform to N35 for N3k-35xx
+- set_fact: platform="N35"
+  when: ( chassis_type is search("C35"))
+
+# Set platform to N35NG for N3k-35xx running image version
+# 7.0(3)I7 or later. NG(Next Gen)
+- set_fact: platform="N35NG"
+  when: ( chassis_type is search("C35")) and image_version is search("7.0\(3\)I7")
+
+# Set platform to N3L(N3K Legacy) for C3048 platform.
+- set_fact: platform="N3L"
+  when: ( chassis_type is search("C3048"))
+
+# Create matrix of simple keys based on platform
+# and image version for use within test playbooks.
+- set_fact: imagetag=""
+- set_fact: imagemr=""
+
+# Examples
+# 8.0(1)
+# 7.3(0)D1(1)
+# 7.0(3)IHD8(1)
+- set_fact: major_version="{{ image_version[0:3] }}"
+- set_fact: imagetag="{{ image_version[0:3] }}"
+  when: image_version is search("\d\.\d\(\d\)")
+- set_fact: imagetag="{{ image_version[6:8] }}"
+  when: image_version is search("\d\.\d\(\d\)\S\S\(\d\)")
+- set_fact: imagetag="{{ image_version[6:10] }}"
+  when: image_version is search("\d\.\d\(\d\)\S\S\S\S\(\d\)")
+
+- set_fact: imagemr="{{ image_version[4:5] }}"
+  when: image_version is search("\d\.\d\(\d\)")
+- set_fact: imagemr="{{ image_version[9:10] }}"
+  when: image_version is search("\d\.\d\(\d\)\S\S\(\d\)")
+- set_fact: imagemr="{{ image_version[11:12] }}"
+  when: image_version is search("\d\.\d\(\d\)\S\S\S\S\(\d\)")
+
+- debug: msg="IMAGE VERSION {{ image_version }}"
+- debug: msg="IMAGE TAG {{ imagetag }}"
+- debug: msg="IMAGE MR {{ imagemr }}"
+
+- set_fact: ipv6_supported="true"
+- set_fact: ipv6_supported="false"
+  when: platform is match("N35")

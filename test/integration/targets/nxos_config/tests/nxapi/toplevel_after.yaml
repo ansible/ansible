@@ -1,0 +1,44 @@
+---
+- debug: msg="START nxapi/toplevel_after.yaml"
+
+- name: setup
+  nxos_config:
+    lines:
+      - "snmp-server contact ansible"
+      - "hostname switch"
+    provider: "{{ connection }}"
+    match: none
+
+- name: configure top level command with before
+  nxos_config:
+    lines: hostname foo
+    after: snmp-server contact bar
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+      - "'snmp-server contact bar' in result.updates"
+
+- name: configure top level command with before idempotent check
+  nxos_config:
+    lines: hostname foo
+    after: snmp-server contact foo
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines:
+      - "no snmp-server contact ansible"
+      - "hostname switch"
+    match: none
+    provider: "{{ connection }}"
+
+- debug: msg="END nxapi/toplevel_after.yaml"

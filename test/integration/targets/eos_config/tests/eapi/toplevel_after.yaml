@@ -1,0 +1,44 @@
+---
+- debug: msg="START eapi/toplevel_after.yaml"
+
+- name: setup
+  eos_config:
+    lines:
+      - snmp-server contact ansible
+      - "hostname {{ inventory_hostname_short }}"
+    match: none
+  become: yes
+
+- name: configure top level command with before
+  eos_config:
+    lines: hostname foo
+    after: snmp-server contact bar
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+      - "'snmp-server contact bar' in result.updates"
+
+- name: configure top level command with before idempotent check
+  eos_config:
+    lines: hostname foo
+    after: snmp-server contact foo
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  eos_config:
+    lines:
+      - no snmp-server contact
+      - hostname {{ inventory_hostname_short }}
+    match: none
+  become: yes
+
+- debug: msg="END eapi/toplevel_after.yaml"

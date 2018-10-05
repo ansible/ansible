@@ -1,0 +1,12 @@
+cryptography
+jinja2
+mock
+paramiko
+pycodestyle
+pylint ; python_version >= '2.7' # pylint 1.5.3+ is required for non-buggy JSON output, but 1.4+ requires python 2.7+
+pytest
+rstcheck ; python_version >= '2.7' # rstcheck requires python 2.7+
+sphinx
+virtualenv
+voluptuous
+yamllint

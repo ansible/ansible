@@ -1,0 +1,191 @@
+- name: Set variables in YAML syntax
+  set_fact:
+    no_quotes_single: C:\Windows\Temp
+    single_quotes_single: 'C:\Windows\Temp'
+#    double_quotes_single: "C:\Windows\Temp"
+    no_quotes_double: C:\\Windows\\Temp
+    single_quotes_double: 'C:\\Windows\\Temp'
+    double_quotes_double: "C:\\Windows\\Temp"
+    no_quotes_slash: C:/Windows/Temp
+    no_quotes_trailing: C:\Windows\Temp\
+    single_quotes_trailing: 'C:\Windows\Temp\'
+#    double_quotes_trailing: "C:\Windows\Temp\"
+    good: C:\Windows\Temp
+    works1: C:\\Windows\\Temp
+    works2: C:/Windows/Temp
+#    fail: "C:\Windows\Temp"
+    trailing: C:\Windows\Temp\
+  register: yaml_syntax
+
+- assert:
+    that:
+    - no_quotes_single == good
+    - single_quotes_single == good
+#    - double_quotes_single == fail
+    - no_quotes_double == works1
+    - single_quotes_double == works1
+    - double_quotes_double == good
+    - no_quotes_slash == works2
+    - no_quotes_trailing == trailing
+    - single_quotes_trailing == trailing
+#    - double_quotes_trailing == fail
+    - good != works1
+    - good != works2
+    - good != trailing
+    - works1 != works2
+    - works1 != trailing
+    - works2 != trailing
+
+- name: Test good path {{ good }}
+  win_stat:
+    path: '{{ good }}'
+  register: good_result
+
+- assert:
+    that:
+    - good_result is successful
+    - good_result.stat.attributes == 'Directory'
+    - good_result.stat.exists == true
+    - good_result.stat.path == good
+
+- name: Test works1 path {{ works1 }}
+  win_stat:
+    path: '{{ works1 }}'
+  register: works1_result
+
+- assert:
+    that:
+    - works1_result is successful
+    - works1_result.stat.attributes == 'Directory'
+    - works1_result.stat.exists == true
+    - works1_result.stat.path == good
+
+- name: Test works2 path {{ works2 }}
+  win_stat:
+    path: '{{ works2 }}'
+  register: works2_result
+
+- assert:
+    that:
+    - works2_result is successful
+    - works2_result.stat.attributes == 'Directory'
+    - works2_result.stat.exists == true
+    - works2_result.stat.path == good
+
+- name: Test trailing path {{ trailing }}
+  win_stat:
+    path: '{{ trailing }}'
+  register: trailing_result
+
+- assert:
+    that:
+    - trailing_result is successful
+    - trailing_result.stat.attributes == 'Directory'
+    - trailing_result.stat.exists == true
+    - trailing_result.stat.path == trailing
+
+- name: Set variables in key=value syntax
+  set_fact:
+    no_quotes_single=C:\Windows\Temp
+    single_quotes_single='C:\Windows\Temp'
+    double_quotes_single="C:\Windows\Temp"
+    no_quotes_single_tab=C:\Windows\temp
+    single_quotes_single_tab='C:\Windows\temp'
+    double_quotes_single_tab="C:\Windows\temp"
+    no_quotes_double=C:\\Windows\\Temp
+    single_quotes_double='C:\\Windows\\Temp'
+    double_quotes_double="C:\\Windows\\Temp"
+    no_quotes_slash=C:/Windows/Temp
+    no_quotes_trailing=C:\Windows\Temp\
+    good=C:\Windows\Temp
+    works1=C:\\Windows\\Temp
+    works2=C:/Windows/Temp
+    fail="C:\Windows\Temp"
+    trailing=C:\Windows\Temp\
+    tab=C:\Windows\x09emp
+    eof=foobar
+#    single_quotes_trailing='C:\Windows\Temp\'
+#    double_quotes_trailing="C:\Windows\Temp\"
+  register: legacy_syntax
+
+- assert:
+    that:
+    - no_quotes_single == good
+    - single_quotes_single == good
+    - double_quotes_single == good
+    - no_quotes_double == works1
+    - single_quotes_double == works1
+    - double_quotes_double == works1
+    - no_quotes_slash == works2
+    - no_quotes_single_tab == tab
+    - single_quotes_single_tab == tab
+    - double_quotes_single_tab == tab
+    - no_quotes_trailing == trailing
+    - good == works1
+    - good != works2
+    - good != tab
+    - good != trailing
+    - works1 != works2
+    - works1 != tab
+    - works1 != trailing
+    - works2 != tab
+    - works2 != trailing
+    - tab != trailing
+
+- name: Test good path {{ good }}
+  win_stat:
+    path: '{{ good }}'
+  register: good_result
+
+- assert:
+    that:
+    - good_result is successful
+    - good_result.stat.attributes == 'Directory'
+    - good_result.stat.exists == true
+    - good_result.stat.path == good
+
+- name: Test works1 path {{ works1 }}
+  win_stat:
+    path: '{{ works1 }}'
+  register: works1_result
+
+- assert:
+    that:
+    - works1_result is successful
+    - works1_result.stat.attributes == 'Directory'
+    - works1_result.stat.exists == true
+    - works1_result.stat.path == good
+
+- name: Test works2 path {{ works2 }}
+  win_stat:
+    path: '{{ works2 }}'
+  register: works2_result
+
+- assert:
+    that:
+    - works2_result is successful
+    - works2_result.stat.attributes == 'Directory'
+    - works2_result.stat.exists == true
+    - works2_result.stat.path == good
+
+- name: Test trailing path {{ trailing }}
+  win_stat:
+    path: '{{ trailing }}'
+  register: trailing_result
+
+- assert:
+    that:
+    - trailing_result is successful
+    - trailing_result.stat.attributes == 'Directory'
+    - trailing_result.stat.exists == true
+    - trailing_result.stat.path == trailing
+
+- name: Test tab path {{ tab }}
+  win_stat:
+    path: '{{ tab }}'
+  register: tab_result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - tab_result is failed

@@ -1,0 +1,205 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: present
+    tenant: anstest
+  register: tenant_present
+
+- name: ensure vrf exists for tests to kick off
+  aci_vrf: &aci_vrf_present
+    <<: *aci_tenant_present
+    vrf: anstest
+  register: vrf_present
+
+- name: ensure bd anstest does not exist
+  aci_bd:
+    <<: *aci_tenant_present
+    bd: anstest
+    state: absent
+
+- name: ensure bd anstest2 does not exist
+  aci_bd:
+    <<: *aci_tenant_present
+    bd: anstest2
+    state: absent
+
+- name: create bd - check mode works
+  aci_bd: &aci_bd_present
+    <<: *aci_tenant_present
+    bd: anstest
+    description: Ansible Test
+  check_mode: yes
+  register: bd_present_check_mode
+
+- name: create bd - creation works
+  aci_bd:
+    <<: *aci_bd_present
+  register: bd_present
+
+- name: create bd again - idempotency works
+  aci_bd:
+    <<: *aci_bd_present
+  register: bd_present_idempotent
+
+- name: update bd - update works
+  aci_bd:
+    <<: *aci_bd_present
+    vrf: anstest
+    description: Ansible Test Update
+  register: bd_update
+
+- name: create another bd - check more params
+  aci_bd:
+    <<: *aci_bd_present
+    bd: anstest2
+    ip_learning: "no"
+    l2_unknown_unicast: flood
+    l3_unknown_multicast: opt-flood
+    multi_dest: drop
+    enable_routing: "no"
+    arp_flooding: "yes"
+  register: bd_present_2
+
+- name: create bd without all necessary params - failure message works
+  aci_bd:
+    <<: *aci_bd_present
+    tenant: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: bd_present_missing_param
+
+- name: present asserts
+  assert:
+    that:
+      - bd_present_check_mode is changed
+      - 'bd_present_check_mode.sent == {"fvBD": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
+      - bd_present is changed
+      - bd_present.sent == bd_present_check_mode.sent
+      - bd_present.previous == []
+      - bd_present_idempotent is not changed
+      - bd_present_idempotent.previous != []
+      - bd_update is changed
+      - bd_update.previous != []
+      - bd_update.sent != bd_update.proposed
+      - 'bd_update.sent == {"fvBD": {"attributes": {"descr": "Ansible Test Update"}, "children": [{"fvRsCtx": {"attributes": {"tnFvCtxName": "anstest"}}}]}}'
+      - 'bd_present_2.sent.fvBD.attributes == {"arpFlood": "yes", "descr": "Ansible Test", "ipLearning": "no", "multiDstPktAct": "drop", "name": "anstest2",
+      "unicastRoute": "no", "unkMacUcastAct": "flood", "unkMcastAct": "opt-flood"}'
+      - bd_present_missing_param is failed
+      - 'bd_present_missing_param.msg == "state is present but all of the following are missing: tenant"'
+
+- name: get all bd
+  aci_bd: &aci_query
+    <<: *aci_tenant_present
+    state: query
+    tenant: "{{ fake_var | default(omit) }}"
+  register: query_all
+
+- name: get all in tenant
+  aci_bd:
+    <<: *aci_query
+    tenant: anstest
+  register: query_tenant
+
+- name: get all with name
+  aci_bd:
+    <<: *aci_query
+    bd: anstest
+  register: query_bd_bd
+
+- name: get bd
+  aci_bd:
+    <<: *aci_bd_present
+    state: query
+  register: query_bd
+
+- name: query asserts
+  assert:
+    that:
+      - query_all is not changed
+      - query_all.current | length > 1
+      - query_all.current.0.fvBD is defined
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_all.filter_string'
+      - '"class/fvBD.json" in query_all.url'
+      - query_tenant is not changed
+      - query_tenant.current | length == 1
+      - query_tenant.current.0.fvTenant.children | length == 2
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvBD,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_tenant.filter_string'
+      - '"tn-anstest.json" in query_tenant.url'
+      - query_bd_bd is not changed
+      - query_bd_bd.current != []
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in query_bd_bd.filter_string'
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd_bd.filter_string'
+      - '"class/fvBD.json" in query_bd_bd.url'
+      - query_bd is not changed
+      - query_bd.current | length == 1
+      - query_bd.current.0.fvBD.attributes.name == "anstest"
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd.filter_string'
+      - '"tn-anstest/BD-anstest.json" in query_bd.url'
+
+- name: delete bd - check mode works
+  aci_bd: &aci_bd_absent
+    <<: *aci_bd_present
+    state: absent
+  check_mode: yes
+  register: bd_absent_check_mode
+
+- name: delete bd - delete works
+  aci_bd:
+    <<: *aci_bd_absent
+  register: bd_absent
+
+- name: delete bd again - idempotency works
+  aci_bd:
+    <<: *aci_bd_absent
+  register: bd_absent_idempotent
+
+- name: delete bd - cleanup
+  aci_bd:
+    <<: *aci_bd_absent
+    name: anstest2
+
+- name: delete bd missing param - fails properly
+  aci_bd:
+    <<: *aci_bd_absent
+    bd: "{{ fakevar | default(omit) }}"
+  ignore_errors: yes
+  register: bd_absent_missing_param
+
+- name: asserts for deletion task
+  assert:
+    that:
+      - bd_absent_check_mode is changed
+      - bd_absent_check_mode.proposed == {}
+      - bd_absent is changed
+      - bd_absent.previous != []
+      - bd_absent_idempotent is not changed
+      - bd_absent_idempotent.previous == []
+      - bd_absent_missing_param is failed
+      - 'bd_absent_missing_param.msg == "state is absent but all of the following are missing: bd"'
+
+- name: delete vrf - cleanup before ending tests
+  aci_vrf:
+    <<: *aci_vrf_present
+    state: absent
+  when: vrf_present is changed
+
+- name: delete tenant - cleanup before ending tests
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
+  when: tenant_present is changed

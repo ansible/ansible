@@ -1,0 +1,2 @@
+- name: test handler
+  debug: msg="handler called"

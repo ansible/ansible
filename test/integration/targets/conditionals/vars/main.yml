@@ -1,0 +1,22 @@
+---
+# foo is a dictionary that will be used to check that
+# a conditional passes a with_items loop on a variable
+# with a missing attribute (ie. foo.results)
+cond_bad_attribute:
+  bar: a
+
+cond_list_of_items:
+  results:
+  - a
+  - b
+  - c
+
+things1:
+    - 1
+    - 2
+vars_file_var: 321
+
+test_bare: true
+test_bare_var: 123
+test_bare_nested_good: "test_bare_var == 123"
+test_bare_nested_bad: "{{test_bare_var}} == 321"

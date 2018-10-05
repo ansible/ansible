@@ -1,0 +1,182 @@
+---
+######## NS record tests #################
+
+# the '.' at the end of the value is intentional
+# it must be verified that the '.' will be stripped
+- name: "Test: NS record creation"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: an.si.ble.
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: NS record creation"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == 'an.si.ble'
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'NS'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: NS record idempotency"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: an.si.ble.
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: NS record idempotency"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: NS record update"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: an.si.ble
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: NS record update"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.ttl == 300
+
+- name: "Test: NS record duplicate (create new record)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: ble.si.an
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: NS record duplicate (create new record)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == 'ble.si.an'
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'NS'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: NS record duplicate (old record present)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: an.si.ble
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: NS record duplicate (old record present)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+      - cloudflare_dns.result.record.content == 'an.si.ble'
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == 'NS'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: NS record duplicate (make new record solo)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: ble.si.an
+    ttl: 150
+    solo: true
+  register: cloudflare_dns
+
+- name: "Validate: NS record duplicate (make new record solo)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == 'ble.si.an'
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'NS'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: NS record duplicate (old record absent)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: an.si.ble
+    ttl: 300
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: NS record duplicate (old record absent)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: NS record deletion"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: ble.si.an
+    ttl: 150
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: NS record deletion"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+
+- name: "Test: NS record deletion succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: NS
+    value: ble.si.an
+    ttl: 150
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: NS record deletion succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

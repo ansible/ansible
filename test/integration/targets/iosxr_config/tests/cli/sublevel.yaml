@@ -1,0 +1,37 @@
+---
+- debug: msg="START cli/sublevel.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    commands: ['no ipv4 access-list test']
+    match: none
+  ignore_errors: yes
+
+- name: configure sub level command
+  iosxr_config:
+    commands: ['10 permit ipv4 any any log']
+    parents: ['ipv4 access-list test']
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ipv4 access-list test' in result.commands"
+      - "'10 permit ipv4 any any log' in result.commands"
+
+- name: configure sub level command idempotent check
+  iosxr_config:
+    commands: ['10 permit ipv4 any any log']
+    parents: ['ipv4 access-list test']
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  iosxr_config:
+    commands: ['no ipv4 access-list test']
+    match: none
+
+- debug: msg="END cli/sublevel.yaml on connection={{ ansible_connection }}"

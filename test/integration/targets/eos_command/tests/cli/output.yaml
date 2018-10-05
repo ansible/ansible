@@ -1,0 +1,26 @@
+---
+- debug: msg="START cli/output.yaml on connection={{ ansible_connection }}"
+
+- name: get output for single command
+  eos_command:
+    commands: ['show version']
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- name: get output for multiple commands
+  eos_command:
+    commands:
+      - show version
+      - show interfaces
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END cli/output.yaml on connection={{ ansible_connection }}"

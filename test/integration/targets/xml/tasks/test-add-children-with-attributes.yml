@@ -1,0 +1,35 @@
+---
+  - name: Setup test fixture
+    copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: /tmp/ansible-xml-beers.xml
+
+
+  - name: Add child element
+    xml:
+      path: /tmp/ansible-xml-beers.xml
+      xpath: /business/beers
+      add_children:
+      - beer:
+          name: Ansible Brew
+          type: light
+    register: add_children_with_attributes
+
+  - name: Compare to expected result
+    copy:
+      src: results/test-add-children-with-attributes.xml
+      dest: /tmp/ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  # NOTE: This test may fail if lxml does not support predictable element attribute order
+  #       So we filter the failure out for these platforms (e.g. CentOS 6)
+  #       The module still works fine, we simply are not comparing as smart as we should.
+  - name: Test expected result
+    assert:
+      that:
+      - add_children_with_attributes.changed == true
+      - comparison.changed == false  # identical
+    when: lxml_predictable_attribute_order
+    #command: diff -u {{ role_path }}/results/test-add-children-with-attributes.xml /tmp/ansible-xml-beers.xml

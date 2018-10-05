@@ -1,0 +1,19 @@
+---
+- debug: msg="START eapi/timeout.yaml"
+
+- name: test bad condition
+  eos_command:
+    commands:
+      - show version
+    wait_for:
+      - "result[0].version foo 4.15"
+    retries: 1
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END eapi/timeout.yaml"

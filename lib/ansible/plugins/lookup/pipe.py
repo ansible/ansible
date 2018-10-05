@@ -1,26 +1,45 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: pipe
+    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    version_added: "0.9"
+    short_description: read output from a command
+    description:
+      - Run a command and return the output
+    options:
+      _terms:
+        description: command(s) to run
+        required: True
+    notes:
+      - Like all lookups this runs on the Ansible controller and is unaffected by other keywords, such as become,
+        so if you need to different permissions you must change the command or run Ansible as another user.
+      - Alternatively you can use a shell/command task that runs against localhost and registers the result.
+"""
+
+EXAMPLES = """
+- name: raw result of running date command"
+  debug: msg="{{ lookup('pipe','date') }}"
+
+- name: Always use quote filter to make sure your variables are safe to use with shell
+  debug: msg="{{ lookup('pipe','getent ' + myuser|quote ) }}"
+"""
+
+RETURN = """
+  _string:
+    description:
+      - stdout from command
+"""
 
 import subprocess
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+
 
 class LookupModule(LookupBase):
 
@@ -31,8 +50,8 @@ class LookupModule(LookupBase):
             '''
             http://docs.python.org/2/library/subprocess.html#popen-constructor
 
-            The shell argument (which defaults to False) specifies whether to use the 
-            shell as the program to execute. If shell is True, it is recommended to pass 
+            The shell argument (which defaults to False) specifies whether to use the
+            shell as the program to execute. If shell is True, it is recommended to pass
             args as a string rather than as a sequence
 
             https://github.com/ansible/ansible/issues/6550

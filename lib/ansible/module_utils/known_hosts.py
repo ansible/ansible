@@ -26,8 +26,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import hmac
-import urlparse
+import re
+
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
     from hashlib import sha1
@@ -36,23 +39,6 @@ except ImportError:
 
 HASHED_KEY_MAGIC = "|1|"
 
-def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
-
-    """ idempotently add a git url hostkey """
-
-    if is_ssh_url(url):
-
-        fqdn = get_fqdn(url)
-
-        if fqdn:
-            known_host = check_hostkey(module, fqdn)
-            if not known_host:
-                if accept_hostkey:
-                    rc, out, err = add_host_key(module, fqdn, create_dir=create_dir)
-                    if rc != 0:
-                        module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
-                else:
-                    module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
 
 def is_ssh_url(url):
 
@@ -65,42 +51,50 @@ def is_ssh_url(url):
             return True
     return False
 
-def get_fqdn(repo_url):
 
-    """ chop the hostname out of a url """
+def get_fqdn_and_port(repo_url):
 
-    result = None
+    """ chop the hostname and port out of a url """
+
+    fqdn = None
+    port = None
+    ipv6_re = re.compile(r'(\[[^]]*\])(?::([0-9]+))?')
     if "@" in repo_url and "://" not in repo_url:
         # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
-        if ":" in repo_url:
-            repo_url = repo_url.split(":")[0]
-            result = repo_url
+        match = ipv6_re.match(repo_url)
+        # For this type of URL, colon specifies the path, not the port
+        if match:
+            fqdn, path = match.groups()
+        elif ":" in repo_url:
+            fqdn = repo_url.split(":")[0]
         elif "/" in repo_url:
-            repo_url = repo_url.split("/")[0]
-            result = repo_url
+            fqdn = repo_url.split("/")[0]
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
-        parts = urlparse.urlparse(repo_url)
+        parts = urlparse(repo_url)
         # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
-            result = parts[1]
-            if ":" in result:
-                result = result.split(":")[0]
-            if "@" in result:
-                result = result.split("@", 1)[1]
+            fqdn = parts[1]
+            if "@" in fqdn:
+                fqdn = fqdn.split("@", 1)[1]
+            match = ipv6_re.match(fqdn)
+            if match:
+                fqdn, port = match.groups()
+            elif ":" in fqdn:
+                fqdn, port = fqdn.split(":")[0:2]
+    return fqdn, port
 
-    return result
 
 def check_hostkey(module, fqdn):
-   return not not_in_host_file(module, fqdn)
+    return not not_in_host_file(module, fqdn)
+
 
 # this is a variant of code found in connection_plugins/paramiko.py and we should modify
 # the paramiko code to import and use this.
 
 def not_in_host_file(self, host):
-
 
     if 'USER' in os.environ:
         user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
@@ -112,6 +106,7 @@ def not_in_host_file(self, host):
     host_file_list.append(user_host_file)
     host_file_list.append("/etc/ssh/ssh_known_hosts")
     host_file_list.append("/etc/ssh/ssh_known_hosts2")
+    host_file_list.append("/etc/openssh/ssh_known_hosts")
 
     hfiles_not_found = 0
     for hf in host_file_list:
@@ -121,7 +116,7 @@ def not_in_host_file(self, host):
 
         try:
             host_fh = open(hf)
-        except IOError, e:
+        except IOError:
             hfiles_not_found += 1
             continue
         else:
@@ -135,7 +130,7 @@ def not_in_host_file(self, host):
             if tokens[0].find(HASHED_KEY_MAGIC) == 0:
                 # this is a hashed known host entry
                 try:
-                    (kn_salt,kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|",2)
+                    (kn_salt, kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|", 2)
                     hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
                     hash.update(host)
                     if hash.digest() == kn_host.decode('base64'):
@@ -151,11 +146,10 @@ def not_in_host_file(self, host):
     return True
 
 
-def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
+def add_host_key(module, fqdn, port=22, key_type="rsa", create_dir=False):
 
     """ use ssh-keyscan to add the hostkey """
 
-    result = False
     keyscan_cmd = module.get_bin_path('ssh-keyscan', True)
 
     if 'USER' in os.environ:
@@ -169,7 +163,7 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     if not os.path.exists(user_ssh_dir):
         if create_dir:
             try:
-                os.makedirs(user_ssh_dir, 0700)
+                os.makedirs(user_ssh_dir, int('700', 8))
             except:
                 module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
         else:
@@ -177,10 +171,25 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     elif not os.path.isdir(user_ssh_dir):
         module.fail_json(msg="%s is not a directory" % user_ssh_dir)
 
-    this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
+    if port:
+        this_cmd = "%s -t %s -p %s %s" % (keyscan_cmd, key_type, port, fqdn)
+    else:
+        this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
 
     rc, out, err = module.run_command(this_cmd)
+    # ssh-keyscan gives a 0 exit code and prints nothing on timeout
+    if rc != 0 or not out:
+        msg = 'failed to retrieve hostkey'
+        if not out:
+            msg += '. "%s" returned no matches.' % this_cmd
+        else:
+            msg += ' using command "%s". [stdout]: %s' % (this_cmd, out)
+
+        if err:
+            msg += ' [stderr]: %s' % err
+
+        module.fail_json(msg=msg)
+
     module.append_to_file(user_host_file, out)
 
     return rc, out, err
-

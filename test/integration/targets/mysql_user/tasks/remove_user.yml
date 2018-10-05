@@ -1,0 +1,43 @@
+# test code to remove mysql user
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- name: remove mysql user {{user_name}}
+  mysql_user: name={{user_name}} password={{user_password}} state=absent
+  register: result
+
+- name: assert output message mysql user was removed
+  assert: { that: "result.changed == true" }
+
+# ============================================================
+- name: create blank mysql user to be removed later
+  mysql_user: name="" state=present password='KJFDY&D*Sfuydsgf'
+
+- name: remove blank mysql user with hosts=all (expect changed)
+  mysql_user: user="" host_all=true state=absent
+  register: result
+
+- name: assert changed is true for removing all blank users
+  assert: { that: "result.changed == true" }
+
+- name: remove blank mysql user with hosts=all (expect ok)
+  mysql_user: user="" host_all=true state=absent
+  register: result
+
+- name: assert changed is true for removing all blank users
+  assert: { that: "result.changed == false" }

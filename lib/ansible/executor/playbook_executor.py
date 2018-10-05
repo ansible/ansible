@@ -19,21 +19,24 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import getpass
-import locale
-import signal
-import sys
+import os
 
 from ansible import constants as C
-from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.module_utils._text import to_native, to_text
 from ansible.playbook import Playbook
 from ansible.template import Templar
+from ansible.utils.helpers import pct_to_int
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.utils.path import makedirs_safe
+from ansible.utils.ssh_functions import check_for_controlpersist
 
-from ansible.utils.color import colorize, hostcolor
-from ansible.utils.debug import debug
-from ansible.utils.encrypt import do_encrypt
-from ansible.utils.unicode import to_unicode
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class PlaybookExecutor:
 
@@ -42,28 +45,33 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, display, options, passwords):
-        self._playbooks        = playbooks
-        self._inventory        = inventory
+    def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords):
+        self._playbooks = playbooks
+        self._inventory = inventory
         self._variable_manager = variable_manager
-        self._loader           = loader
-        self._display          = display
-        self._options          = options
-        self.passwords         = passwords
+        self._loader = loader
+        self._options = options
+        self.passwords = passwords
+        self._unreachable_hosts = dict()
 
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=self.passwords)
+            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
+
+        # Note: We run this here to cache whether the default ansible ssh
+        # executable supports control persist.  Sometime in the future we may
+        # need to enhance this to check that ansible_ssh_executable specified
+        # in inventory is also cached.  We can't do this caching at the point
+        # where it is used (in task_executor) because that is post-fork and
+        # therefore would be discarded after every task.
+        check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE)
 
     def run(self):
-
         '''
         Run the given playbook, based on the settings in the play which
         may limit the runs to serialized groups, etc.
         '''
-
-        signal.signal(signal.SIGINT, self._cleanup)
 
         result = 0
         entrylist = []
@@ -71,93 +79,134 @@ class PlaybookExecutor:
         try:
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
-                self._inventory.set_playbook_basedir(os.path.dirname(playbook_path))
+                # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
-                if self._tqm is None: # we are doing a listing
+                if self._tqm is None:  # we are doing a listing
                     entry = {'playbook': playbook_path}
                     entry['plays'] = []
+                else:
+                    # make sure the tqm has callbacks loaded
+                    self._tqm.load_callbacks()
+                    self._tqm.send_callback('v2_playbook_on_start', pb)
 
                 i = 1
                 plays = pb.get_plays()
-                self._display.vv('%d plays in %s' % (len(plays), playbook_path))
+                display.vv(u'%d plays in %s' % (len(plays), to_text(playbook_path)))
 
                 for play in plays:
+                    if play._included_path is not None:
+                        self._loader.set_basedir(play._included_path)
+                    else:
+                        self._loader.set_basedir(pb._basedir)
+
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
+                    # Allow variables to be used in vars_prompt fields.
+                    all_vars = self._variable_manager.get_vars(play=play)
+                    templar = Templar(loader=self._loader, variables=all_vars)
+                    setattr(play, 'vars_prompt', templar.template(play.vars_prompt))
+
                     if play.vars_prompt:
                         for var in play.vars_prompt:
-                            if 'name' not in var:
-                                raise AnsibleError("'vars_prompt' item is missing 'name:'", obj=play._ds)
-
-                            vname     = var['name']
-                            prompt    = var.get("prompt", vname)
-                            default   = var.get("default", None)
-                            private   = var.get("private", True)
-
-                            confirm   = var.get("confirm", False)
-                            encrypt   = var.get("encrypt", None)
+                            vname = var['name']
+                            prompt = var.get("prompt", vname)
+                            default = var.get("default", None)
+                            private = boolean(var.get("private", True))
+                            confirm = boolean(var.get("confirm", False))
+                            encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
-                            salt      = var.get("salt", None)
+                            salt = var.get("salt", None)
 
-                            if vname not in play.vars:
-                                self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                            if vname not in self._variable_manager.extra_vars:
+                                if self._tqm:
+                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                else:  # we are either in --list-<option> or syntax check
+                                    play.vars[vname] = default
 
-                    # Create a temporary copy of the play here, so we can run post_validate
-                    # on it without the templating changes affecting the original object.
-                    all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+                    # Post validate so any play level variables are templated
+                    all_vars = self._variable_manager.get_vars(play=play)
                     templar = Templar(loader=self._loader, variables=all_vars)
-                    new_play = play.copy()
-                    new_play.post_validate(templar)
+                    play.post_validate(templar)
 
                     if self._options.syntax:
                         continue
 
                     if self._tqm is None:
                         # we are just doing a listing
-                        entry['plays'].append(new_play)
+                        entry['plays'].append(play)
 
                     else:
-                        # make sure the tqm has callbacks loaded
-                        self._tqm.load_callbacks()
+                        self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
+                        previously_failed = len(self._tqm._failed_hosts)
+                        previously_unreachable = len(self._tqm._unreachable_hosts)
+
+                        break_play = False
                         # we are actually running plays
-                        for batch in self._get_serialized_batches(new_play):
-                            if len(batch) == 0:
-                                self._tqm.send_callback('v2_playbook_on_play_start', new_play)
-                                self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
-                                break
-
+                        batches = self._get_serialized_batches(play)
+                        if len(batches) == 0:
+                            self._tqm.send_callback('v2_playbook_on_play_start', play)
+                            self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
+                        for batch in batches:
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
                             result = self._tqm.run(play=play)
 
+                            # break the play if the result equals the special return code
+                            if result & self._tqm.RUN_FAILED_BREAK_PLAY != 0:
+                                result = self._tqm.RUN_FAILED_HOSTS
+                                break_play = True
+
                             # check the number of failures here, to see if they're above the maximum
                             # failure percentage allowed, or if any errors are fatal. If either of those
                             # conditions are met, we break out, otherwise we only break out if the entire
                             # batch failed
-                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts)
-                            if new_play.any_errors_fatal and failed_hosts_count > 0:
-                                break
-                            elif new_play.max_fail_percentage is not None and \
-                               int((new_play.max_fail_percentage)/100.0 * len(batch)) > int((len(batch) - failed_hosts_count) / len(batch) * 100.0):
-                                break
-                            elif len(batch) == failed_hosts_count:
+                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
+                                (previously_failed + previously_unreachable)
+
+                            if len(batch) == failed_hosts_count:
+                                break_play = True
                                 break
 
-                            # clear the failed hosts dictionaires in the TQM for the next batch
-                            self._tqm.clear_failed_hosts()
+                            # update the previous counts so they don't accumulate incorrectly
+                            # over multiple serial batches
+                            previously_failed += len(self._tqm._failed_hosts) - previously_failed
+                            previously_unreachable += len(self._tqm._unreachable_hosts) - previously_unreachable
 
-                        # if the last result wasn't zero, break out of the serial batch loop
-                        if result != 0:
+                            # save the unreachable hosts from this batch
+                            self._unreachable_hosts.update(self._tqm._unreachable_hosts)
+
+                        if break_play:
                             break
 
-                    i = i + 1 # per play
+                    i = i + 1  # per play
 
                 if entry:
-                    entrylist.append(entry) # per playbook
+                    entrylist.append(entry)  # per playbook
+
+                # send the stats callback for this playbook
+                if self._tqm is not None:
+                    if C.RETRY_FILES_ENABLED:
+                        retries = set(self._tqm._failed_hosts.keys())
+                        retries.update(self._tqm._unreachable_hosts.keys())
+                        retries = sorted(retries)
+                        if len(retries) > 0:
+                            if C.RETRY_FILES_SAVE_PATH:
+                                basedir = C.RETRY_FILES_SAVE_PATH
+                            elif playbook_path:
+                                basedir = os.path.dirname(os.path.abspath(playbook_path))
+                            else:
+                                basedir = '~/'
+
+                            (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
+                            filename = os.path.join(basedir, "%s.retry" % retry_name)
+                            if self._generate_retry_inventory(filename, retries):
+                                display.display("\tto retry, use: --limit @%s\n" % filename)
+
+                    self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
 
                 # if the last result wasn't zero, break out of the playbook file name loop
                 if result != 0:
@@ -168,45 +217,15 @@ class PlaybookExecutor:
 
         finally:
             if self._tqm is not None:
-                self._cleanup()
+                self._tqm.cleanup()
+            if self._loader:
+                self._loader.cleanup_all_tmp_files()
 
         if self._options.syntax:
-            self.display.display("No issues encountered")
+            display.display("No issues encountered")
             return result
 
-        # FIXME: this stat summary stuff should be cleaned up and moved
-        #        to a new method, if it even belongs here...
-        self._display.banner("PLAY RECAP")
-
-        hosts = sorted(self._tqm._stats.processed.keys())
-        for h in hosts:
-            t = self._tqm._stats.summarize(h)
-
-            self._display.display("%s : %s %s %s %s" % (
-                hostcolor(h, t),
-                colorize('ok', t['ok'], 'green'),
-                colorize('changed', t['changed'], 'yellow'),
-                colorize('unreachable', t['unreachable'], 'red'),
-                colorize('failed', t['failures'], 'red')),
-                screen_only=True
-            )
-
-            self._display.display("%s : %s %s %s %s" % (
-                hostcolor(h, t, False),
-                colorize('ok', t['ok'], None),
-                colorize('changed', t['changed'], None),
-                colorize('unreachable', t['unreachable'], None),
-                colorize('failed', t['failures'], None)),
-                log_only=True
-            )
-
-        self._display.display("", screen_only=True)
-        # END STATS STUFF
-
         return result
-
-    def _cleanup(self, signum=None, framenum=None):
-        return self._tqm.cleanup()
 
     def _get_serialized_batches(self, play):
         '''
@@ -216,24 +235,28 @@ class PlaybookExecutor:
 
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts)
+        all_hosts_len = len(all_hosts)
 
-        # check to see if the serial number was specified as a percentage,
-        # and convert it to an integer value based on the number of hosts
-        if isinstance(play.serial, basestring) and play.serial.endswith('%'):
-            serial_pct = int(play.serial.replace("%",""))
-            serial = int((serial_pct/100.0) * len(all_hosts))
-        else:
-            serial = int(play.serial)
+        # the serial value can be listed as a scalar or a list of
+        # scalars, so we make sure it's a list here
+        serial_batch_list = play.serial
+        if len(serial_batch_list) == 0:
+            serial_batch_list = [-1]
 
-        # if the serial count was not specified or is invalid, default to
-        # a list of all hosts, otherwise split the list of hosts into chunks
-        # which are based on the serial size
-        if serial <= 0:
-            return [all_hosts]
-        else:
-            serialized_batches = []
+        cur_item = 0
+        serialized_batches = []
 
-            while len(all_hosts) > 0:
+        while len(all_hosts) > 0:
+            # get the serial value from current item in the list
+            serial = pct_to_int(serial_batch_list[cur_item], all_hosts_len)
+
+            # if the serial count was not specified or is invalid, default to
+            # a list of all hosts, otherwise grab a chunk of the hosts equal
+            # to the current serial item size
+            if serial <= 0:
+                serialized_batches.append(all_hosts)
+                break
+            else:
                 play_hosts = []
                 for x in range(serial):
                     if len(all_hosts) > 0:
@@ -241,52 +264,28 @@ class PlaybookExecutor:
 
                 serialized_batches.append(play_hosts)
 
-            return serialized_batches
+            # increment the current batch list item number, and if we've hit
+            # the end keep using the last element until we've consumed all of
+            # the hosts in the inventory
+            cur_item += 1
+            if cur_item > len(serial_batch_list) - 1:
+                cur_item = len(serial_batch_list) - 1
 
-    def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+        return serialized_batches
 
-        if sys.__stdin__.isatty():
-            if prompt and default is not None:
-                msg = "%s [%s]: " % (prompt, default)
-            elif prompt:
-                msg = "%s: " % prompt
-            else:
-                msg = 'input for %s: ' % varname
+    def _generate_retry_inventory(self, retry_path, replay_hosts):
+        '''
+        Called when a playbook run fails. It generates an inventory which allows
+        re-running on ONLY the failed hosts.  This may duplicate some variable
+        information in group_vars/host_vars but that is ok, and expected.
+        '''
+        try:
+            makedirs_safe(os.path.dirname(retry_path))
+            with open(retry_path, 'w') as fd:
+                for x in replay_hosts:
+                    fd.write("%s\n" % x)
+        except Exception as e:
+            display.warning("Could not create retry file '%s'.\n\t%s" % (retry_path, to_native(e)))
+            return False
 
-            def do_prompt(prompt, private):
-                if sys.stdout.encoding:
-                    msg = prompt.encode(sys.stdout.encoding)
-                else:
-                    # when piping the output, or at other times when stdout
-                    # may not be the standard file descriptor, the stdout
-                    # encoding may not be set, so default to something sane
-                    msg = prompt.encode(locale.getpreferredencoding())
-                if private:
-                    return getpass.getpass(msg)
-                return raw_input(msg)
-
-            if confirm:
-                while True:
-                    result = do_prompt(msg, private)
-                    second = do_prompt("confirm " + msg, private)
-                    if result == second:
-                        break
-                    self._display.display("***** VALUES ENTERED DO NOT MATCH ****")
-            else:
-                result = do_prompt(msg, private)
-        else:
-            result = None
-            self._display.warning("Not prompting as we are not in interactive mode")
-
-        # if result is false and default is not None
-        if not result and default is not None:
-            result = default
-
-        if encrypt:
-            result = do_encrypt(result, encrypt, salt_size, salt)
-
-        # handle utf-8 chars
-        result = to_unicode(result, errors='strict')
-        return result
-
-
+        return True

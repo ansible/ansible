@@ -1,0 +1,173 @@
+# test code for the mysql_user module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 dof the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+# create mysql user and verify user is added to mysql database
+#
+- include: create_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
+- include: assert_user.yml user_name={{user_name_1}}
+
+- include: remove_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
+- include: assert_no_user.yml user_name={{user_name_1}}
+
+# ============================================================
+# Create mysql user that already exist on mysql database
+#
+- include: create_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
+- name: create mysql user that already exist (expect changed=false)
+  mysql_user: name={{user_name_1}} password={{user_password_1}} state=present
+  register: result
+
+- name: assert output message mysql user was not created
+  assert: { that: "result.changed == false" }
+
+# ============================================================
+# remove mysql user and verify user is removed from mysql database
+#
+- name: remove mysql user state=absent (expect changed=true)
+  mysql_user: name={{ user_name_1 }} password={{ user_password_1 }} state=absent
+  register: result
+
+- name: assert output message mysql user was removed
+  assert: { that: "result.changed == true" }
+
+- include: assert_no_user.yml user_name={{user_name_1}}
+
+# ============================================================
+# remove mysql user that does not exist on mysql database
+#
+- name: remove mysql user that does not exist state=absent (expect changed=false)
+  mysql_user: name={{ user_name_1 }} password={{ user_password_1 }} state=absent
+  register: result
+
+- name: assert output message mysql user that does not exist
+  assert: { that: "result.changed == false" }
+
+- include: assert_no_user.yml user_name={{user_name_1}}
+
+# ============================================================
+# Create user with no privileges and verify default privileges are assign
+#
+- name: create user with select privilege state=present (expect changed=true)
+  mysql_user: name={{ user_name_1 }} password={{ user_password_1 }} state=present
+  register: result
+
+- include: assert_user.yml user_name={{user_name_1}} priv=USAGE
+
+- include: remove_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
+- include: assert_no_user.yml user_name={{user_name_1}}
+
+# ============================================================
+# Create user with select privileges and verify select privileges are assign
+#
+- name: create user with select privilege state=present (expect changed=true)
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} state=present priv=*.*:SELECT
+  register: result
+
+- include: assert_user.yml user_name={{user_name_2}} priv=SELECT
+
+- include: remove_user.yml user_name={{user_name_2}} user_password={{ user_password_2 }}
+
+- include: assert_no_user.yml user_name={{user_name_2}}
+
+# ============================================================
+# Assert user has access to multiple databases
+#
+- name: give users access to multiple databases
+  mysql_user: name={{ item[0]  }} priv={{ item[1] }}.*:ALL append_privs=yes password={{ user_password_1 }}
+  with_nested:
+    - [ '{{ user_name_1 }}', '{{ user_name_2 }}']
+    - "{{db_names}}"
+
+- name: show grants access for user1 on multiple database
+  command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
+  register: result
+
+- name: assert grant access for user1 on multiple database
+  assert: { that: "'{{ item }}' in result.stdout" }
+  with_items: "{{db_names}}"
+
+- name: show grants access for user2 on multiple database
+  command: mysql "-e SHOW GRANTS FOR '{{ user_name_2 }}'@'localhost';"
+  register: result
+
+- name: assert grant access for user2 on multiple database
+  assert: { that: "'{{ item }}' in result.stdout" }
+  with_items: "{{db_names}}"
+
+- include: remove_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
+- include: remove_user.yml user_name={{user_name_2}} user_password={{ user_password_1 }}
+
+- name: give user access to database via wildcard
+  mysql_user: name={{ user_name_1 }} priv=%db.*:SELECT append_privs=yes password={{ user_password_1 }}
+
+- name: show grants access for user1 on multiple database
+  command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
+  register: result
+
+- name: assert grant access for user1 on multiple database
+  assert:
+    that:
+      - "'%db' in result.stdout"
+      - "'SELECT' in result.stdout"
+
+- name: change user access to database via wildcard
+  mysql_user: name={{ user_name_1 }} priv=%db.*:INSERT append_privs=yes password={{ user_password_1 }}
+
+- name: show grants access for user1 on multiple database
+  command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
+  register: result
+
+- name: assert grant access for user1 on multiple database
+  assert:
+    that:
+      - "'%db' in result.stdout"
+      - "'INSERT' in result.stdout"
+
+- include: remove_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
+# ============================================================
+# Update user password for a user.
+# Assert the user password is updated and old password can no longer be used.
+#
+#- include: user_password_update_test.yml
+
+# ============================================================
+# Assert create user with SELECT privileges, attempt to create database and update privileges to create database
+#
+- include: test_privs.yml current_privilege=SELECT current_append_privs=no
+
+# ============================================================
+# Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
+#
+- include: test_privs.yml current_privilege=DROP current_append_privs=yes
+
+# ============================================================
+# Assert create user with SELECT privileges, attempt to create database and update privileges to create database
+#
+- include: test_privs.yml current_privilege='UPDATE,ALTER' current_append_privs=no
+
+# ============================================================
+# Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
+#
+- include: test_privs.yml current_privilege='INSERT,DELETE' current_append_privs=yes

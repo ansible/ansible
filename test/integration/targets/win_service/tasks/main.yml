@@ -1,0 +1,59 @@
+# test code for the win_service module
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: remove the dummy test services if it is left over from previous tests
+  win_service:
+    name: '{{item}}'
+    force_dependent_services: True
+    state: absent
+  with_items:
+  - '{{test_win_service_name}}'
+  - TestServiceParent2
+  - TestServiceDependency
+
+- name: get details of the {{test_win_service_pause_name}} service
+  win_service:
+    name: '{{test_win_service_pause_name}}'
+  register: pause_service_details
+
+- block:
+  - include_tasks: tests.yml
+
+  always:
+  - name: ensure the {{test_win_service_pause_name}} is set to stopped if it was stopped
+    win_service:
+      name: '{{test_win_service_pause_name}}'
+      state: stopped
+      force_dependent_services: True
+    when: pause_service_details.state == 'stopped'
+
+  - name: make sure all services are removed in the end
+    win_service:
+      name: '{{item}}'
+      force_dependent_services: True
+      state: absent
+    with_items:
+    - '{{test_win_service_name}}'
+    - TestServiceParent2
+    - TestServiceDependency
+
+  - name: remove test environment variable
+    win_environment:
+      name: TEST_SERVICE_PATH
+      level: machine
+      state: absent

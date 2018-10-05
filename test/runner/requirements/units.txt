@@ -1,0 +1,36 @@
+boto3
+placebo
+cryptography
+pycrypto
+jinja2
+mock
+nose
+passlib
+pytest
+pytest-mock
+pytest-xdist
+python-memcached
+pyyaml
+redis
+requests
+setuptools > 0.6 # pytest-xdist installed via requirements does not work with very old setuptools (sanity_ok)
+unittest2 ; python_version < '2.7'
+netaddr
+ipaddress
+
+# requirements for F5 specific modules
+f5-sdk ; python_version >= '2.7'
+f5-icontrol-rest ; python_version >= '2.7'
+deepdiff
+
+# requirement for Fortinet specific modules
+pyFMG
+
+# requirement for aci_rest module
+xmljson
+
+# requirement for winrm connection plugin tests
+pexpect
+
+# requirement for the linode module
+linode-python

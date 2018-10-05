@@ -1,0 +1,135 @@
+- name: python 2
+  set_fact:
+    python_suffix: ""
+  when: ansible_python_version is version('3', '<')
+
+- name: python 3
+  set_fact:
+    python_suffix: "-py3"
+  when: ansible_python_version is version('3', '>=')
+
+- include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_os_family }}{{ python_suffix }}.yml'
+        - 'default{{ python_suffix }}.yml'
+      paths: '../vars'
+
+# Make sure we start fresh
+- name: stop postgresql service
+  service: name={{ postgresql_service }} state=stopped
+  ignore_errors: True
+
+- name: remove old db (RedHat or Suse)
+  command: rm -rf "{{ pg_dir }}"
+  ignore_errors: True
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
+
+- name: remove old db (FreeBSD)
+  file:
+    path: "{{ pg_dir }}"
+    state: absent
+  when: ansible_os_family == "FreeBSD"
+
+# Theoretically, pg_dropcluster should work but it doesn't so rm files
+- name: remove old db config (debian)
+  command: rm -rf /etc/postgresql
+  ignore_errors: True
+  when: ansible_os_family == "Debian"
+
+- name: remove old db files (debian)
+  command: rm -rf /var/lib/postgresql
+  ignore_errors: True
+  when: ansible_os_family == "Debian"
+
+- name: install dependencies for postgresql test
+  package: name={{ postgresql_package_item }} state=present
+  with_items: "{{ postgresql_packages }}"
+  loop_control:
+    loop_var: postgresql_package_item
+
+- name: initialize postgres (FreeBSD)
+  command: /usr/local/etc/rc.d/postgresql oneinitdb
+  when: ansible_os_family == "FreeBSD"
+
+- name: Initialize postgres (RedHat systemd)
+  command: postgresql-setup initdb
+  when: ansible_os_family == "RedHat" and ansible_service_mgr == "systemd"
+
+- name: Initialize postgres (RedHat sysv)
+  command: /sbin/service postgresql initdb
+  when: ansible_os_family == "RedHat" and ansible_service_mgr != "systemd"
+
+- name: Initialize postgres (Debian)
+  shell: '. /usr/share/postgresql-common/maintscripts-functions && set_system_locale && /usr/bin/pg_createcluster -u postgres {{ pg_ver }} main'
+  args:
+    creates: "/etc/postgresql/{{ pg_ver }}/"
+  when: ansible_os_family == 'Debian'
+
+- name: Initialize postgres (Suse)
+  service: name=postgresql state=restarted
+  when: ansible_os_family == 'Suse'
+
+- name: Copy pg_hba into place
+  template:
+    src: files/pg_hba.conf
+    dest: "{{ pg_hba_location }}"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+    mode: "0644"
+
+- name: Generate locales (Debian)
+  locale_gen:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - pt_BR
+    - es_ES
+  when: ansible_os_family == 'Debian'
+
+# Suse: locales are installed by default (glibc-locale package).
+# Fedora 23: locales are installed by default (glibc-common package)
+# CentOS: all locales are installed by default (glibc-common package) but some
+# RPM macros could prevent their installation (for example when using anaconda
+# instLangs parameter).
+
+- block:
+  - name: Check if locales need to be generated (RedHat)
+    shell: "localedef --list-archive | grep -a -q '^{{ locale }}$'"
+    register: locale_present
+    ignore_errors: True
+    with_items:
+      - es_ES
+      - pt_BR
+    loop_control:
+      loop_var: locale
+
+  - name: Generate locale (RedHat)
+    command: 'localedef -f ISO-8859-1 -i {{ item.locale }} {{ item.locale }}'
+    when: item is failed
+    with_items: '{{ locale_present.results }}'
+  when: ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora'
+
+- name: Install glibc langpacks (Fedora >= 24)
+  package:
+    name: '{{ item }}'
+    state: 'latest'
+  with_items:
+    - glibc-langpack-es
+    - glibc-langpack-pt
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 24
+
+- name: enable postgresql service (FreeBSD)
+  lineinfile:
+    path: /etc/rc.conf
+    line: 'postgresql_enable="YES"'
+  when: ansible_os_family == "FreeBSD"
+
+- name: start postgresql service
+  # work-around for issue on FreeBSD where service won't restart if currently stopped
+  service: name={{ postgresql_service }} state=started
+
+- name: restart postgresql service
+  service: name={{ postgresql_service }} state=restarted

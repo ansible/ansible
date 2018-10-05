@@ -1,0 +1,4 @@
+- name: test that we cannot insert arguments
+  file: path={{ test_file }} {{ test_input }}
+  failed_when: False # ignore the module, just test the parser
+  tags: scenario1

@@ -1,0 +1,427 @@
+---
+- name: install network msi (check mode)
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_msi_check
+  check_mode: yes
+
+- name: get result of install network msi (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: install_network_msi_actual_check
+
+- name: assert install network msi (check mode)
+  assert:
+    that:
+    - install_network_msi_check is changed
+    - install_network_msi_check.reboot_required == False
+    - install_network_msi_actual_check.exists == False
+
+- name: install network msi
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_msi
+
+- name: get result of install network msi
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: install_network_msi_actual
+
+- name: assert install network msi
+  assert:
+    that:
+    - install_network_msi is changed
+    - install_network_msi.reboot_required == False
+    - install_network_msi.rc == 0
+    - install_network_msi_actual.exists == True
+
+- name: install network msi (idempotent)
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_msi_idempotent
+
+- name: assert install network msi (idempotent)
+  assert:
+    that:
+    - install_network_msi_idempotent is not changed
+
+- name: uninstall network msi with path (check mode)
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: absent
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: uninstall_path_network_msi_check
+  check_mode: yes
+
+- name: get result of uninstall network msi with path (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: uninstall_path_network_msi_actual_check
+
+- name: assert uninstall network msi with path (check mode)
+  assert:
+    that:
+    - uninstall_path_network_msi_check is changed
+    - uninstall_path_network_msi_check.reboot_required == False
+    - uninstall_path_network_msi_actual_check.exists == True
+
+- name: uninstall network msi with path
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: absent
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: uninstall_path_network_msi
+
+- name: get result of uninstall network msi with path
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: uninstall_path_network_msi_actual
+
+- name: assert uninstall network msi with path
+  assert:
+    that:
+    - uninstall_path_network_msi is changed
+    - uninstall_path_network_msi.reboot_required == False
+    - uninstall_path_network_msi.rc == 0
+    - uninstall_path_network_msi_actual.exists == False
+
+- name: uninstall network msi with path (idempotent)
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: absent
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: uninstall_path_network_msi_idempotent
+
+- name: assert uninstall network msi with path (idempotent)
+  assert:
+    that:
+    - uninstall_path_network_msi_idempotent is not changed
+
+- name: install network reboot msi (check mode)
+  win_package:
+    path: '{{test_win_package_network_path}}\reboot.msi'
+    product_id: '{{test_win_package_reboot_id}}'
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_reboot_msi_check
+  check_mode: yes
+
+- name: get result of install network reboot msi (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_reboot_id}}
+  register: install_network_reboot_msi_actual_check
+
+- name: assert install network reboot msi (check mode)
+  assert:
+    that:
+    - install_network_reboot_msi_check is changed
+    - install_network_reboot_msi_check.reboot_required == False
+    - install_network_reboot_msi_actual_check.exists == False
+
+- name: install network reboot msi
+  win_package:
+    path: '{{test_win_package_network_path}}\reboot.msi'
+    product_id: '{{test_win_package_reboot_id}}'
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_reboot_msi
+
+- name: get result of install network reboot msi
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_reboot_id}}
+  register: install_network_reboot_msi_actual
+
+- name: assert install network reboot msi
+  assert:
+    that:
+    - install_network_reboot_msi is changed
+    - install_network_reboot_msi.reboot_required == True
+    - install_network_reboot_msi.rc == 3010
+    - install_network_reboot_msi_actual.exists == True
+
+- name: install network reboot msi (idempotent)
+  win_package:
+    path: '{{test_win_package_network_path}}\reboot.msi'
+    product_id: '{{test_win_package_reboot_id}}'
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_reboot_msi_idempotent
+
+- name: assert install network reboot msi (idempotent)
+  assert:
+    that:
+    - install_network_reboot_msi_idempotent is not changed
+
+- name: uninstall network msi with product_id (check mode)
+  win_package:
+    product_id: '{{test_win_package_reboot_id}}'
+    state: absent
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: uninstall_id_network_msi_check
+  check_mode: yes
+
+- name: get result of uninstall network msi with product_id (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_reboot_id}}
+  register: uninstall_id_network_msi_actual_check
+
+- name: assert uninstall network msi with product_id (check mode)
+  assert:
+    that:
+    - uninstall_id_network_msi_check is changed
+    - uninstall_id_network_msi_check.reboot_required == False
+    - uninstall_id_network_msi_actual_check.exists == True
+
+- name: uninstall network msi with product_id
+  win_package:
+    product_id: '{{test_win_package_reboot_id}}'
+    state: absent
+  register: uninstall_id_network_msi
+
+- name: get result of uninstall network msi with product_id
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_reboot_id}}
+  register: uninstall_id_network_msi_actual
+
+- name: assert uninstall network msi with product_id
+  assert:
+    that:
+    - uninstall_id_network_msi is changed
+    - uninstall_id_network_msi.reboot_required == True
+    - uninstall_id_network_msi.rc == 3010
+    - uninstall_id_network_msi_actual.exists == False
+
+- name: uninstall network msi with product_id (idempotent)
+  win_package:
+    product_id: '{{test_win_package_reboot_id}}'
+    state: absent
+  register: uninstall_id_network_msi_idempotent
+
+- name: assert uninstall network msi with product_id (idempotent)
+  assert:
+    that:
+    - uninstall_id_network_msi_idempotent is not changed
+
+- name: ensure the install folder is cleaned in case uninstall didn't work
+  win_file:
+    path: '%ProgramFiles(x86)%\Bovine University'
+    state: absent
+
+- name: install network msi with arguments (check mode)
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+    arguments: ADDLOCAL=Cow
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_msi_argument_check
+  check_mode: yes
+
+- name: get result of moo file after install network msi with arguments (check mode)
+  win_stat:
+    path: '%ProgramFiles(x86)%\Bovine University\moo.exe'
+  register: install_network_msi_argument_moo_check
+
+- name: get result of cow file after install network msi with arguments (check mode)
+  win_stat:
+    path: '%ProgramFiles(x86)%\Bovine University\cow.exe'
+  register: install_network_msi_argument_cow_check
+
+- name: assert install network msi with arguments (check mode)
+  assert:
+    that:
+    - install_network_msi_argument_check is changed
+    - install_network_msi_argument_check.reboot_required == False
+    - install_network_msi_argument_moo_check.stat.exists == False
+    - install_network_msi_argument_cow_check.stat.exists == False
+
+- name: install network msi with arguments
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+    arguments: ADDLOCAL=Cow
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_msi_argument
+
+- name: get result of moo file after install network msi with arguments
+  win_stat:
+    path: '%ProgramFiles(x86)%\Bovine University\moo.exe'
+  register: install_network_msi_argument_moo
+
+- name: get result of cow file after install network msi with arguments
+  win_stat:
+    path: '%ProgramFiles(x86)%\Bovine University\cow.exe'
+  register: install_network_msi_argument_cow
+
+- name: assert install network msi with arguments
+  assert:
+    that:
+    - install_network_msi_argument is changed
+    - install_network_msi_argument.reboot_required == False
+    - install_network_msi_argument.rc == 0
+    - install_network_msi_argument_moo.stat.exists == False
+    - install_network_msi_argument_cow.stat.exists == True
+
+- name: install network msi with arguments (idempotent)
+  win_package:
+    path: '{{test_win_package_network_path}}\good.msi'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+    arguments: ADDLOCAL=Cow
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_msi_argument_again
+
+- name: assert install network msi with arguments (idempotent)
+  assert:
+    that:
+    - install_network_msi_argument_again is not changed
+
+- name: uninstall msi after test
+  win_package:
+    product_id: '{{test_win_package_good_id}}'
+    state: absent
+
+- name: install network exe (check mode)
+  win_package:
+    path: '{{test_win_package_network_path}}\7z.exe'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_exe_check
+  check_mode: yes
+
+- name: get result of install network exe (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: install_network_exe_actual_check
+
+- name: assert install network exe (check mode)
+  assert:
+    that:
+    - install_network_exe_check is changed
+    - install_network_exe_check.reboot_required == False
+    - install_network_exe_actual_check.exists == False
+
+- name: install network exe
+  win_package:
+    path: '{{test_win_package_network_path}}\7z.exe'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_exe
+
+- name: get result of install network exe
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: install_network_exe_actual
+
+- name: assert install network exe
+  assert:
+    that:
+    - install_network_exe is changed
+    - install_network_exe.reboot_required == False
+    - install_network_exe.rc == 0
+    - install_network_exe_actual.exists == True
+
+- name: install network exe (idempotent)
+  win_package:
+    path: '{{test_win_package_network_path}}\7z.exe'
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: present
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: install_network_exe_idempotent
+
+- name: assert install network exe (idempotent)
+  assert:
+    that:
+    - install_network_exe_idempotent is not changed
+
+- name: uninstall network exe (check mode)
+  win_package:
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: uninstall_network_exe_check
+  check_mode: yes
+
+- name: get result of uninstall network exe (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: uninstall_network_exe_actual_check
+
+- name: assert uninstall network exe (check mode)
+  assert:
+    that:
+    - uninstall_network_exe_check is changed
+    - uninstall_network_exe_check.reboot_required == False
+    - uninstall_network_exe_actual_check.exists == True
+
+- name: uninstall network exe
+  win_package:
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: uninstall_network_exe
+
+- name: get result of uninstall network exe
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_exe_id}}
+  register: uninstall_network_exe_actual
+
+- name: assert uninstall network exe
+  assert:
+    that:
+    - uninstall_network_exe is changed
+    - uninstall_network_exe.reboot_required == False
+    - uninstall_network_exe.rc == 0
+    - uninstall_network_exe_actual.exists == False
+
+- name: uninstall network exe (idempotent)
+  win_package:
+    product_id: '{{test_win_package_exe_id}}'
+    arguments: /S
+    state: absent
+    user_name: '{{test_win_package_network_username|default(omit)}}'
+    user_password: '{{test_win_package_network_password|default(omit)}}'
+  register: uninstall_network_exe_idempotent
+
+- name: assert uninstall network exe (idempotent)
+  assert:
+    that:
+    - uninstall_network_exe_idempotent is not changed

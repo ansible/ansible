@@ -1,0 +1,18 @@
+---
+- debug: msg="START eapi/src_invalid.yaml"
+
+
+# Defend https://github.com/ansible/ansible-modules-core/issues/4797
+- name: configure with invalid src
+  eos_config:
+    src: basic/foobar.j2
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.failed == true"
+      - "result.msg == 'path specified in src not found'"
+
+- debug: msg="END eapi/src_invalid.yaml"

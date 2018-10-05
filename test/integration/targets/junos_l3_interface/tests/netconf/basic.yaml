@@ -1,0 +1,257 @@
+---
+- debug: msg="START junos_l3_interface netconf/basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup - remove interface address
+  junos_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Configure interface address
+  junos_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>192.0.2.1/32</name>' in config.xml"
+      - "'<name>fd5d:12c9:2201:1::1/128</name>' in config.xml"
+      - result.diff.prepared is search("\+ *address 192.0.2.1/32")
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:1::1/128")
+
+- name: Configure interface address (idempotent)
+  junos_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate interface address
+  junos_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<address inactive=\"inactive\">' in config.xml"
+      - result.diff.prepared is search("! *inactive[:] address 192.0.2.1/32")
+      - result.diff.prepared is search("! *inactive[:] address fd5d:12c9:2201:1::1/128")
+
+- name: Activate interface address
+  junos_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("! *active[:] address 192.0.2.1/32")
+      - result.diff.prepared is search("! *active[:] address fd5d:12c9:2201:1::1/128")
+
+- name: Delete interface address
+  junos_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - result.diff.prepared is search("\- *address 192.0.2.1/32")
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:1::1/128")
+
+- name: Delete interface address (idempotent)
+  junos_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Aggregate setup- delete interface ge-0/0/1
+  junos_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Aggregate setup- delete interface ge-0/0/2
+  junos_l3_interface:
+    name: ge-0/0/2
+    ipv4: 192.0.2.2
+    ipv6: fd5d:12c9:2201:2::2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Configure l3 interface in aggregate
+  junos_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 192.0.2.1
+      ipv6: fd5d:12c9:2201:1::1
+    - name: ge-0/0/2
+      ipv4: 192.0.2.2
+      ipv6: fd5d:12c9:2201:2::2
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'edit interfaces ge-0/0/1 unit 0 family inet' in result.diff.prepared"
+      - result.diff.prepared is search("\+ *address 192.0.2.1/32")
+      - "'edit interfaces ge-0/0/1 unit 0 family inet6' in result.diff.prepared"
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:1::1/128")
+      - "'edit interfaces ge-0/0/2 unit 0 family inet' in result.diff.prepared"
+      - result.diff.prepared is search("\+ *address 192.0.2.2/32")
+      - "'edit interfaces ge-0/0/2 unit 0 family inet6' in result.diff.prepared"
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:2::2/128")
+
+- name: Configure l3 interface in aggregate (idempotent)
+  junos_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 192.0.2.1
+      ipv6: fd5d:12c9:2201:1::1
+    - name: ge-0/0/2
+      ipv4: 192.0.2.2
+      ipv6: fd5d:12c9:2201:2::2
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Deactivate l3 interface configuration
+  junos_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 192.0.2.1
+      ipv6: fd5d:12c9:2201:1::1
+    - name: ge-0/0/2
+      ipv4: 192.0.2.2
+      ipv6: fd5d:12c9:2201:2::2
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *inactive[:] address 192.0.2.1/32")
+      - result.diff.prepared is search("! *inactive[:] address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("! *inactive[:] address 192.0.2.2/32")
+      - result.diff.prepared is search("! *inactive[:] address fd5d:12c9:2201:2::2/128")
+
+- name: Activate l3 interface configuration
+  junos_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 192.0.2.1
+      ipv6: fd5d:12c9:2201:1::1
+    - name: ge-0/0/2
+      ipv4: 192.0.2.2
+      ipv6: fd5d:12c9:2201:2::2
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - result.diff.prepared is search("! *active[:] address 192.0.2.1/32")
+      - result.diff.prepared is search("! *active[:] address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("! *active[:] address 192.0.2.2/32")
+      - result.diff.prepared is search("! *active[:] address fd5d:12c9:2201:2::2/128")
+
+- name: Delete l3 interface configuration
+  junos_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 192.0.2.1
+      ipv6: fd5d:12c9:2201:1::1
+    - name: ge-0/0/2
+      ipv4: 192.0.2.2
+      ipv6: fd5d:12c9:2201:2::2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'edit interfaces ge-0/0/1 unit 0 family inet' in result.diff.prepared"
+      - result.diff.prepared is search("\- *address 192.0.2.1/32")
+      - "'edit interfaces ge-0/0/1 unit 0 family inet6' in result.diff.prepared"
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:1::1/128")
+      - "'edit interfaces ge-0/0/2 unit 0 family inet' in result.diff.prepared"
+      - result.diff.prepared is search("\- *address 192.0.2.2/32")
+      - "'edit interfaces ge-0/0/2 unit 0 family inet6' in result.diff.prepared"
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:2::2/128")
+
+- name: Delete l3 interface configuration (idempotent)
+  junos_l3_interface:
+    aggregate:
+    - name: ge-0/0/1
+      ipv4: 192.0.2.1
+      ipv6: fd5d:12c9:2201:1::1
+    - name: ge-0/0/2
+      ipv4: 192.0.2.2
+      ipv6: fd5d:12c9:2201:2::2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END junos_l3_interface netconf/basic.yaml on connection={{ ansible_connection }}"

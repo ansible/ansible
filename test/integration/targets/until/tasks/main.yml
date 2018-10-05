@@ -1,0 +1,71 @@
+- shell: '{{ ansible_python.executable }} -c "import tempfile; print(tempfile.mkstemp()[1])"'
+  register: tempfilepath
+
+- set_fact:
+    until_tempfile_path: "{{ tempfilepath.stdout }}"
+
+- name: loop with default retries
+  shell: echo "run" >> {{ until_tempfile_path }} && wc -w < {{ until_tempfile_path }} | tr -d ' '
+  register: runcount
+  until: runcount.stdout | int == 3
+  delay: 0.01
+
+- assert:
+    that: runcount.stdout | int == 3
+
+- file: path="{{ until_tempfile_path }}" state=absent
+
+- name: loop with specified max retries
+  shell: echo "run" >> {{ until_tempfile_path }}
+  until: 1==0
+  retries: 5
+  delay: 0.01
+  ignore_errors: true
+
+- name: validate output
+  shell: wc -l < {{ until_tempfile_path }}
+  register: runcount
+
+- assert:
+    that: runcount.stdout | int == 6 # initial + 5 retries
+
+- file:
+    path: "{{ until_tempfile_path }}"
+    state: absent
+
+- name: Test failed_when impacting until
+  shell: 'true'
+  register: failed_when_until
+  failed_when: True
+  until: failed_when_until is successful
+  retries: 3
+  delay: 0.5
+  ignore_errors: True
+
+- assert:
+    that:
+      - failed_when_until.attempts == 3
+
+- name: Test changed_when impacting until
+  shell: 'true'
+  register: changed_when_until
+  changed_when: False
+  until: changed_when_until is changed
+  retries: 3
+  delay: 0.5
+  ignore_errors: True
+
+- assert:
+    that:
+      - changed_when_until.attempts == 3
+
+# This task shouldn't fail, previously .attempts was not available to changed_when/failed_when
+# and would cause the conditional to fail due to ``'dict object' has no attribute 'attempts'``
+# https://github.com/ansible/ansible/issues/34139
+- name: Test access to attempts in changed_when/failed_when
+  shell: 'true'
+  register: changed_when_attempts
+  until: 1 == 0
+  retries: 5
+  delay: 0.5
+  failed_when: changed_when_attempts.attempts > 6

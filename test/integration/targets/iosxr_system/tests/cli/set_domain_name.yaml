@@ -1,0 +1,36 @@
+---
+- debug: msg="START cli/set_domain_name.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    lines: no domain name
+    match: none
+    provider: "{{ cli }}"
+
+- name: configure domain_name
+  iosxr_system:
+    domain_name: eng.ansible.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify domain_name
+  iosxr_system:
+    domain_name: eng.ansible.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  iosxr_config:
+    lines: no domain name
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/set_domain_name.yaml on connection={{ ansible_connection }}"

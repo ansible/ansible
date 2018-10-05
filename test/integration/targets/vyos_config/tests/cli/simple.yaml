@@ -1,0 +1,33 @@
+---
+- debug: msg="START cli/simple.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
+
+- name: configure simple config command
+  vyos_config:
+    lines: set system host-name foo
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name foo' in result.commands"
+
+- name: check simple config command idempontent
+  vyos_config:
+    lines: set system host-name foo
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
+
+- debug: msg="END cli/simple.yaml on connection={{ ansible_connection }}"

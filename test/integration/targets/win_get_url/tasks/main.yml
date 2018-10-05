@@ -1,0 +1,59 @@
+---
+- name: ensure testing folder is present
+  win_file:
+    path: '{{test_win_get_url_path}}'
+    state: directory
+
+- name: copy across testing files
+  win_copy:
+    src: files/
+    dest: '{{test_win_get_url_path}}\'
+
+- name: download SlimFTPd binary
+  win_get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
+    dest: '{{test_win_get_url_path}}\SlimFTPd.exe'
+
+- name: template SlimFTPd configuration file
+  win_template:
+    src: slimftpd.conf.tmpl
+    dest: '{{test_win_get_url_path}}\slimftpd.conf'
+
+- name: create SlimFTPd service
+  win_service:
+    name: SlimFTPd
+    path: '"{{test_win_get_url_path}}\SlimFTPd.exe" -service'
+    state: started
+    dependencies:
+    - tcpip
+
+- name: create env var for win_get_url tests
+  win_environment:
+    name: '{{test_win_get_url_env_var}}'
+    level: machine
+    value: '{{test_win_get_url_path}}'
+    state: present
+
+- block:
+  - name: run URL tests
+    include_tasks: tests_url.yml
+
+  - name: run FTP tests
+    include_tasks: tests_ftp.yml
+
+  always:
+  - name: remove SlimFTPd service
+    win_service:
+      name: SlimFTPd
+      state: absent
+
+  - name: remove test env var for tests
+    win_environment:
+      name: '{{test_win_get_url_env_var}}'
+      level: machine
+      state: absent
+
+  - name: remove testing folder
+    win_file:
+      path: '{{test_win_get_url_path}}'
+      state: absent

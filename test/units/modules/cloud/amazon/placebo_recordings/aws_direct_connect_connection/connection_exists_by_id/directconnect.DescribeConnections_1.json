@@ -1,0 +1,27 @@
+{
+    "status_code": 200,
+    "data": {
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPHeaders": {
+                "x-amzn-requestid": "b8f5493c-5b55-11e7-a718-2b51b84a4672",
+                "content-type": "application/x-amz-json-1.1",
+                "date": "Tue, 27 Jun 2017 16:28:58 GMT",
+                "content-length": "214"
+            },
+            "RequestId": "b8f5493c-5b55-11e7-a718-2b51b84a4672",
+            "HTTPStatusCode": 200
+        },
+        "connections": [
+            {
+                "connectionState": "requested",
+                "connectionId": "dxcon-fgq9rgot",
+                "location": "EqSe2",
+                "connectionName": "ansible-test-connection",
+                "bandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2"
+            }
+        ]
+    }
+}

@@ -18,33 +18,82 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import stat
-from time import sleep
+
 from errno import EEXIST
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
-__all__ = ['is_executable', 'unfrackpath']
 
-def is_executable(path):
-    '''is the given path executable?'''
-    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+__all__ = ['unfrackpath', 'makedirs_safe']
 
-def unfrackpath(path):
+
+def unfrackpath(path, follow=True, basedir=None):
     '''
-    returns a path that is free of symlinks, environment
-    variables, relative path traversals and symbols (~)
-    example:
-    '$HOME/../../var/mail' becomes '/var/spool/mail'
+    Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
+
+    :arg path: A byte or text string representing a path to be canonicalized
+    :arg follow: A boolean to indicate of symlinks should be resolved or not
+    :raises UnicodeDecodeError: If the canonicalized version of the path
+        contains non-utf8 byte sequences.
+    :rtype: A text string (unicode on pyyhon2, str on python3).
+    :returns: An absolute path with symlinks, environment variables, and tilde
+        expanded.  Note that this does not check whether a path exists.
+
+    example::
+        '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
-    return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
+
+    if basedir is None:
+        basedir = os.getcwd()
+    elif os.path.isfile(basedir):
+        basedir = os.path.dirname(basedir)
+
+    final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
+
+    if not os.path.isabs(final_path):
+        final_path = os.path.join(to_bytes(basedir, errors='surrogate_or_strict'), final_path)
+
+    if follow:
+        final_path = os.path.realpath(final_path)
+
+    return to_text(os.path.normpath(final_path), errors='surrogate_or_strict')
+
 
 def makedirs_safe(path, mode=None):
-    '''Safe way to create dirs in muliprocess/thread environments'''
-    if not os.path.exists(path):
+    '''Safe way to create dirs in muliprocess/thread environments.
+
+    :arg path: A byte or text string representing a directory to be created
+    :kwarg mode: If given, the mode to set the directory to
+    :raises AnsibleError: If the directory cannot be created and does not already exists.
+    :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
+    '''
+
+    rpath = unfrackpath(path)
+    b_rpath = to_bytes(rpath)
+    if not os.path.exists(b_rpath):
         try:
             if mode:
-                os.makedirs(path, mode)
+                os.makedirs(b_rpath, mode)
             else:
-                os.makedirs(path)
+                os.makedirs(b_rpath)
         except OSError as e:
             if e.errno != EEXIST:
-                raise
+                raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))
+
+
+def basedir(source):
+    """ returns directory for inventory or playbook """
+    source = to_bytes(source, errors='surrogate_or_strict')
+    dname = None
+    if os.path.isdir(source):
+        dname = source
+    elif source in [None, '', '.']:
+        dname = os.getcwd()
+    elif os.path.isfile(source):
+        dname = os.path.dirname(source)
+
+    if dname:
+        # don't follow symlinks for basedir, enables source re-use
+        dname = os.path.abspath(dname)
+
+    return to_text(dname, errors='surrogate_or_strict')

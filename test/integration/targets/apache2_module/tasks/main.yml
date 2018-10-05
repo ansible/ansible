@@ -1,0 +1,21 @@
+---
+
+
+- name:
+  block:
+    - name: get list of enabled modules
+      shell: apache2ctl -M | sort
+      register: modules_before
+    - name: include only on supported systems
+      include: actualtest.yml
+  always:
+    - name: get list of enabled modules
+      shell: apache2ctl -M | sort
+      register: modules_after
+    - debug: var=modules_before
+    - debug: var=modules_after
+    - name: ensure that all test modules are disabled again
+      assert:
+        that: modules_before.stdout == modules_after.stdout
+  when: ansible_os_family in ['Debian', 'Suse']
+  # centos/RHEL does not have a2enmod/a2dismod

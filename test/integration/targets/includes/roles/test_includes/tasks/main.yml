@@ -1,0 +1,106 @@
+# test code for the ping module
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+- include: included_task1.yml a=1 b=2 c=3
+
+- name: verify non-variable include params
+  assert:
+    that:
+      - "ca == '1'"
+      - "cb == '2'"
+      - "cc == '3'"
+
+- set_fact:
+     a: 101
+     b: 102
+     c: 103
+
+- include: included_task1.yml a={{a}} b={{b}} c=103
+
+- name: verify variable include params
+  assert:
+    that:
+      - "ca == 101"
+      - "cb == 102"
+      - "cc == 103"
+
+# Test that strings are not turned into numbers
+- set_fact:
+     a: "101"
+     b: "102"
+     c: "103"
+
+- include: included_task1.yml a={{a}} b={{b}} c=103
+
+- name: verify variable include params
+  assert:
+    that:
+      - "ca == '101'"
+      - "cb == '102'"
+      - "cc == '103'"
+
+# now try long form includes
+
+- include: included_task1.yml
+  vars:
+    a: 201
+    b: 202
+    c: 203
+
+- debug: var=a
+- debug: var=b
+- debug: var=c
+
+- name: verify long-form include params
+  assert:
+    that:
+      - "ca == 201"
+      - "cb == 202"
+      - "cc == 203"
+
+- name: test handlers with includes
+  shell: echo 1
+  notify:
+    # both these via a handler include
+    - included_handler
+    - verify_handler
+
+- include: branch_toplevel.yml canary=value1 nested_include_static=no
+  static: no
+- assert:
+    that:
+      - 'canary_fact == "value1"'
+
+- include: branch_toplevel.yml canary=value2 nested_include_static=yes
+  static: no
+- assert:
+    that:
+      - 'canary_fact == "value2"'
+
+- include: branch_toplevel.yml canary=value3 nested_include_static=no
+  static: yes
+- assert:
+    that:
+      - 'canary_fact == "value3"'
+
+- include: branch_toplevel.yml canary=value4 nested_include_static=yes
+  static: yes
+- assert:
+    that:
+      - 'canary_fact == "value4"'

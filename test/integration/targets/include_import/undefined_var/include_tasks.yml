@@ -1,0 +1,5 @@
+---
+
+- debug:
+    msg: "This message comes from an 'include_tasks'-task! :-)"
+  register: "_include_tasks_task_result"

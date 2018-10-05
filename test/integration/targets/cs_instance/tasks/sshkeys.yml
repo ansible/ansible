@@ -1,0 +1,168 @@
+---
+- name: test update instance ssh key non existent
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey2"
+    template: "{{ test_cs_instance_template }}"
+    force: true
+  register: instance
+  ignore_errors: true
+- name: verify  update instance ssh key non existent
+  assert:
+    that:
+    - instance is failed
+    - 'instance.msg == "SSH key not found: {{ cs_resource_prefix }}-sshkey2"'
+
+- name: test create instance without keypair in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+  check_mode: true
+  register: instance
+- name: verify create instance without keypair in check mode
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+
+- name: test create instance without keypair
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+  register: instance
+- name: verify create instance without keypair
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.ssh_key is not defined
+
+- name: test create instance without keypair idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+  register: instance
+- name: verify create instance without keypair idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.ssh_key is not defined
+
+- name: setup ssh key2
+  cs_sshkeypair: name={{ cs_resource_prefix }}-sshkey2
+  register: sshkey
+- name: verify setup ssh key2
+  assert:
+    that:
+    - sshkey is successful
+
+- name: test update instance ssh key2 in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey2"
+    force: true
+  check_mode: true
+  register: instance
+- name: verify update instance ssh key2 in check mode
+  assert:
+    that:
+    - instance is changed
+    - instance.ssh_key is not defined
+
+- name: test update instance ssh key2
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey2"
+    force: true
+  register: instance
+- name: verify update instance ssh key2
+  assert:
+    that:
+    - instance is changed
+    - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey2"
+
+- name: test update instance ssh key2 idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey2"
+    force: true
+  register: instance
+- name: verify update instance ssh key2 idempotence
+  assert:
+    that:
+    - instance is not changed
+    - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey2"
+
+- name: cleanup ssh key2
+  cs_sshkeypair:
+    name: "{{ cs_resource_prefix }}-sshkey2"
+    state: absent
+  register: sshkey2
+- name: verify cleanup ssh key2
+  assert:
+    that:
+    - sshkey2 is successful
+
+- name: test update instance ssh key2 idempotence2
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey2"
+    force: true
+  register: instance
+  ignore_errors: true
+- name: verify update instance ssh key2 idempotence2
+  assert:
+    that:
+    - instance is failed
+    - 'instance.msg == "SSH key not found: {{ cs_resource_prefix }}-sshkey2"'
+
+- name: test update instance ssh key in check mode
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    force: true
+  check_mode: true
+  register: instance
+- name: verify update instance ssh key in check mode
+  assert:
+    that:
+    - instance is changed
+    - instance.ssh_key is not defined
+
+- name: test update instance ssh key
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    force: true
+  register: instance
+- name: verify update instance ssh key
+  assert:
+    that:
+    - instance is changed
+    - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
+
+- name: test update instance ssh key idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    force: true
+  register: instance
+- name: verify update instance ssh key idempotence
+  assert:
+    that:
+    - instance is not changed
+    - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
+
+- name: cleanup expunge instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-sshkey"
+    state: expunged
+  register: instance
+- name: verify cleanup expunge instance
+  assert:
+    that:
+    - instance is successful

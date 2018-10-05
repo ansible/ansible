@@ -15,9 +15,13 @@ installed and has a valid config at ~/.chube. If not, run:
 
 For more details, see: https://github.com/exosite/chube
 
-NOTE: This script also assumes that the Linodes in your account all have
+NOTE: By default, this script also assumes that the Linodes in your account all have
 labels that correspond to hostnames that are in your resolver search path.
 Your resolver search path resides in /etc/hosts.
+Optionally, if you would like to use the hosts public IP instead of it's label use
+the following setting in linode.ini:
+
+    use_public_ip = true
 
 When run against a specific host, this script returns the following variables:
 
@@ -77,10 +81,7 @@ import sys
 import argparse
 from time import time
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     from chube import load_chube_config
@@ -109,11 +110,15 @@ load_chube_config()
 # Imports for ansible
 import ConfigParser
 
+
 class LinodeInventory(object):
+    def _empty_inventory(self):
+        return {"_meta": {"hostvars": {}}}
+
     def __init__(self):
         """Main execution path."""
         # Inventory grouped by display group
-        self.inventory = {}
+        self.inventory = self._empty_inventory()
         # Index of label to Linode ID
         self.index = {}
         # Local cache of Datacenter objects populated by populate_datacenter_cache()
@@ -134,7 +139,7 @@ class LinodeInventory(object):
             data_to_print = self.get_host_info()
         elif self.args.list:
             # Display list of nodes for inventory
-            if len(self.inventory) == 0:
+            if len(self.inventory) == 1:
                 data_to_print = self.get_inventory_from_cache()
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
@@ -161,16 +166,17 @@ class LinodeInventory(object):
         self.cache_path_cache = cache_path + "/ansible-linode.cache"
         self.cache_path_index = cache_path + "/ansible-linode.index"
         self.cache_max_age = config.getint('linode', 'cache_max_age')
+        self.use_public_ip = config.getboolean('linode', 'use_public_ip')
 
     def parse_cli_args(self):
         """Command line argument processing"""
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Linode')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List nodes (default: True)')
+                            help='List nodes (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific node')
+                            help='Get all the variables about a specific node')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to Linode (default: False - use cache files)')
+                            help='Force refresh of cache by making API requests to Linode (default: False - use cache files)')
         self.args = parser.parse_args()
 
     def do_api_calls_update_cache(self):
@@ -185,20 +191,14 @@ class LinodeInventory(object):
             for node in Linode.search(status=Linode.STATUS_RUNNING):
                 self.add_node(node)
         except chube_api.linode_api.ApiError as e:
-            print("Looks like Linode's API is down:")
-            print("")
-            print(e)
-            sys.exit(1)
+            sys.exit("Looks like Linode's API is down:\n %s" % e)
 
     def get_node(self, linode_id):
         """Gets details about a specific node."""
         try:
             return Linode.find(api_id=linode_id)
         except chube_api.linode_api.ApiError as e:
-            print("Looks like Linode's API is down:")
-            print("")
-            print(e)
-            sys.exit(1)
+            sys.exit("Looks like Linode's API is down:\n%s" % e)
 
     def populate_datacenter_cache(self):
         """Creates self._datacenter_cache, containing all Datacenters indexed by ID."""
@@ -218,8 +218,10 @@ class LinodeInventory(object):
 
     def add_node(self, node):
         """Adds an node to the inventory and index."""
-
-        dest = node.label
+        if self.use_public_ip:
+            dest = self.get_node_public_ip(node)
+        else:
+            dest = node.label
 
         # Add to index
         self.index[dest] = node.api_id
@@ -230,8 +232,18 @@ class LinodeInventory(object):
         # Inventory: Group by datacenter city
         self.push(self.inventory, self.get_datacenter_city(node), dest)
 
-        # Inventory: Group by dipslay group
+        # Inventory: Group by display group
         self.push(self.inventory, node.display_group, dest)
+
+        # Inventory: Add a "linode" global tag group
+        self.push(self.inventory, "linode", dest)
+
+        # Add host info to hostvars
+        self.inventory["_meta"]["hostvars"][dest] = self._get_host_info(node)
+
+    def get_node_public_ip(self, node):
+        """Returns a the public IP address of the node"""
+        return [addr.address for addr in node.ipaddresses if addr.is_public][0]
 
     def get_host_info(self):
         """Get variables about a specific host."""
@@ -240,16 +252,19 @@ class LinodeInventory(object):
             # Need to load index from cache
             self.load_index_from_cache()
 
-        if not self.args.host in self.index:
+        if self.args.host not in self.index:
             # try updating the cache
             self.do_api_calls_update_cache()
-            if not self.args.host in self.index:
+            if self.args.host not in self.index:
                 # host might not exist anymore
                 return self.json_format_dict({}, True)
 
         node_id = self.index[self.args.host]
-
         node = self.get_node(node_id)
+
+        return self.json_format_dict(self._get_host_info(node), True)
+
+    def _get_host_info(self, node):
         node_vars = {}
         for direct_attr in [
             "api_id",
@@ -278,19 +293,24 @@ class LinodeInventory(object):
             node_vars[direct_attr] = getattr(node, direct_attr)
 
         node_vars["datacenter_city"] = self.get_datacenter_city(node)
-        node_vars["public_ip"] = [addr.address for addr in node.ipaddresses if addr.is_public][0]
+        node_vars["public_ip"] = self.get_node_public_ip(node)
+
+        # Set the SSH host information, so these inventory items can be used if
+        # their labels aren't FQDNs
+        node_vars['ansible_ssh_host'] = node_vars["public_ip"]
+        node_vars['ansible_host'] = node_vars["public_ip"]
 
         private_ips = [addr.address for addr in node.ipaddresses if not addr.is_public]
 
         if private_ips:
             node_vars["private_ip"] = private_ips[0]
 
-        return self.json_format_dict(node_vars, True)
+        return node_vars
 
     def push(self, my_dict, key, element):
         """Pushed an element onto an array that may not have been defined in the dict."""
         if key in my_dict:
-            my_dict[key].append(element);
+            my_dict[key].append(element)
         else:
             my_dict[key] = [element]
 
@@ -315,7 +335,7 @@ class LinodeInventory(object):
 
     def to_safe(self, word):
         """Escapes any characters that would be invalid in an ansible group name."""
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         """Converts a dict to a JSON object and dumps it as a formatted string."""

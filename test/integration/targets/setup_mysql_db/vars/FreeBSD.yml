@@ -1,0 +1,5 @@
+mysql_service: 'mysql-server'
+
+mysql_packages:
+    - mariadb101-server
+    - py-pymysql

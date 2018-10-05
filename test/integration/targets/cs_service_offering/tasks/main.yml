@@ -1,0 +1,3 @@
+---
+- import_tasks: guest_vm_service_offering.yml
+- import_tasks: system_vm_service_offering.yml

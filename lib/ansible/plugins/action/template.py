@@ -17,172 +17,196 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
-import datetime
 import os
-import time
+import shutil
+import stat
+import tempfile
 
 from ansible import constants as C
+from ansible.config.manager import ensure_type
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleAction, AnsibleActionFail
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
-from ansible.utils.hashing import checksum_s
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.template import generate_ansible_template_vars
+
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
+    DEFAULT_NEWLINE_SEQUENCE = "\n"
 
-    def get_checksum(self, tmp, dest, all_vars, try_directory=False, source=None):
-        remote_checksum = self._remote_checksum(tmp, dest, all_vars=all_vars)
-
-        if remote_checksum in ('0', '2', '3', '4'):
-            # Note: 1 means the file is not present which is fine; template
-            # will create it.  3 means directory was specified instead of file
-            if try_directory and remote_checksum == '3' and source:
-                base = os.path.basename(source)
-                dest = os.path.join(dest, base)
-                remote_checksum = self.get_checksum(tmp, dest, all_vars=all_vars, try_directory=False)
-                if remote_checksum not in ('0', '2', '3', '4'):
-                    return remote_checksum
-
-            result = dict(failed=True, msg="failed to checksum remote file."
-                        " Checksum error code: %s" % remote_checksum)
-            return result
-
-        return remote_checksum
-
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
 
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
+
         source = self._task.args.get('src', None)
-        dest   = self._task.args.get('dest', None)
-        faf    = self._task.first_available_file
+        dest = self._task.args.get('dest', None)
+        force = boolean(self._task.args.get('force', True), strict=False)
+        follow = boolean(self._task.args.get('follow', False), strict=False)
+        state = self._task.args.get('state', None)
+        newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
+        variable_start_string = self._task.args.get('variable_start_string', None)
+        variable_end_string = self._task.args.get('variable_end_string', None)
+        block_start_string = self._task.args.get('block_start_string', None)
+        block_end_string = self._task.args.get('block_end_string', None)
+        trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
+        lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
+        output_encoding = self._task.args.get('output_encoding', 'utf-8') or 'utf-8'
 
-        if (source is None and faf is not None) or dest is None:
-            return dict(failed=True, msg="src and dest are required")
-
-        if tmp is None:
-            tmp = self._make_tmp_path()
-
-        if faf:
-            source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
-            if source is None:
-                return dict(failed=True, msg="could not find src in first_available_file list")
-        else:
-            if self._task._role is not None:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
-            else:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
-
-        # Expand any user home dir specification
-        dest = self._remote_expand_user(dest, tmp)
-
-        directory_prepended = False
-        if dest.endswith(os.sep):
-            directory_prepended = True
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
-
-        # template the source data locally & get ready to transfer
-        try:
-            with open(source, 'r') as f:
-                template_data = to_unicode(f.read())
+        # Option `lstrip_blocks' was added in Jinja2 version 2.7.
+        if lstrip_blocks:
+            try:
+                import jinja2.defaults
+            except ImportError:
+                raise AnsibleError('Unable to import Jinja2 defaults for determing Jinja2 features.')
 
             try:
-                template_uid = pwd.getpwuid(os.stat(source).st_uid).pw_name
-            except:
-                template_uid = os.stat(source).st_uid
+                jinja2.defaults.LSTRIP_BLOCKS
+            except AttributeError:
+                raise AnsibleError("Option `lstrip_blocks' is only available in Jinja2 versions >=2.7")
 
-            temp_vars = task_vars.copy()
-            temp_vars['template_host']     = os.uname()[1]
-            temp_vars['template_path']     = source
-            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(source))
-            temp_vars['template_uid']      = template_uid
-            temp_vars['template_fullpath'] = os.path.abspath(source)
-            temp_vars['template_run_date'] = datetime.datetime.now()
+        wrong_sequences = ["\\n", "\\r", "\\r\\n"]
+        allowed_sequences = ["\n", "\r", "\r\n"]
 
-            managed_default = C.DEFAULT_MANAGED_STR
-            managed_str = managed_default.format(
-                host = temp_vars['template_host'],
-                uid  = temp_vars['template_uid'],
-                file = to_bytes(temp_vars['template_path'])
-            )
-            temp_vars['ansible_managed'] = time.strftime(
-                managed_str,
-                time.localtime(os.path.getmtime(source))
-            )
+        # We need to convert unescaped sequences to proper escaped sequences for Jinja2
+        if newline_sequence in wrong_sequences:
+            newline_sequence = allowed_sequences[wrong_sequences.index(newline_sequence)]
 
-            # Create a new searchpath list to assign to the templar environment's file
-            # loader, so that it knows about the other paths to find template files
-            searchpath = [self._loader._basedir, os.path.dirname(source)]
-            if self._task._role is not None:
-                searchpath.insert(1, C.DEFAULT_ROLES_PATH)
-                searchpath.insert(1, self._task._role._role_path)
+        try:
+            for s_type in ('source', 'dest', 'state', 'newline_sequence', 'variable_start_string', 'variable_end_string', 'block_start_string',
+                           'block_end_string'):
+                value = locals()[s_type]
+                value = ensure_type(value, 'string')
+                if value is not None and not isinstance(value, string_types):
+                    raise AnsibleActionFail("%s is expected to be a string, but got %s instead" % (s_type, type(value)))
+                locals()[s_type] = value
 
-            self._templar.environment.loader.searchpath = searchpath
+            for b_type in ('force', 'follow', 'trim_blocks'):
+                value = locals()[b_type]
+                value = ensure_type(value, 'boolean')
+                if value is not None and not isinstance(value, bool):
+                    raise AnsibleActionFail("%s is expected to be a boolean, but got %s instead" % (b_type, type(value)))
+                locals()[b_type] = value
 
-            old_vars = self._templar._available_variables
-            self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, convert_data=False)
-            self._templar.set_available_variables(old_vars)
-        except Exception as e:
-            return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
+            if state is not None:
+                raise AnsibleActionFail("'state' cannot be specified on a template")
+            elif source is None or dest is None:
+                raise AnsibleActionFail("src and dest are required")
+            elif newline_sequence not in allowed_sequences:
+                raise AnsibleActionFail("newline_sequence needs to be one of: \n, \r or \r\n")
+            else:
+                try:
+                    source = self._find_needle('templates', source)
+                except AnsibleError as e:
+                    raise AnsibleActionFail(to_text(e))
 
-        local_checksum = checksum_s(resultant)
-        remote_checksum = self.get_checksum(tmp, dest, task_vars, not directory_prepended, source=source)
-        if isinstance(remote_checksum, dict):
-            # Error from remote_checksum is a dict.  Valid return is a str
-            return remote_checksum
+            mode = self._task.args.get('mode', None)
+            if mode == 'preserve':
+                mode = '0%03o' % stat.S_IMODE(os.stat(source).st_mode)
 
-        diff = {}
-        new_module_args = self._task.args.copy()
+            # Get vault decrypted tmp file
+            try:
+                tmp_source = self._loader.get_real_file(source)
+            except AnsibleFileNotFound as e:
+                raise AnsibleActionFail("could not find src=%s, %s" % (source, to_text(e)))
+            b_tmp_source = to_bytes(tmp_source, errors='surrogate_or_strict')
 
-        if local_checksum != remote_checksum:
-            dest_contents = ''
+            # template the source data locally & get ready to transfer
+            try:
+                with open(b_tmp_source, 'rb') as f:
+                    try:
+                        template_data = to_text(f.read(), errors='surrogate_or_strict')
+                    except UnicodeError:
+                        raise AnsibleActionFail("Template source files must be utf-8 encoded")
 
-            # if showing diffs, we need to get the remote value
-            if self._play_context.diff:
-                diff = self._get_diff_data(tmp, dest, resultant, task_vars, source_file=False)
+                # set jinja2 internal search path for includes
+                searchpath = task_vars.get('ansible_search_path', [])
+                searchpath.extend([self._loader._basedir, os.path.dirname(source)])
 
-            if not self._play_context.check_mode: # do actual work thorugh copy
-                xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
+                # We want to search into the 'templates' subdir of each search path in
+                # addition to our original search paths.
+                newsearchpath = []
+                for p in searchpath:
+                    newsearchpath.append(os.path.join(p, 'templates'))
+                    newsearchpath.append(p)
+                searchpath = newsearchpath
 
-                # fix file permissions when the copy is done as a different user
-                if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', xfered, tmp)
+                self._templar.environment.loader.searchpath = searchpath
+                self._templar.environment.newline_sequence = newline_sequence
+                if block_start_string is not None:
+                    self._templar.environment.block_start_string = block_start_string
+                if block_end_string is not None:
+                    self._templar.environment.block_end_string = block_end_string
+                if variable_start_string is not None:
+                    self._templar.environment.variable_start_string = variable_start_string
+                if variable_end_string is not None:
+                    self._templar.environment.variable_end_string = variable_end_string
+                self._templar.environment.trim_blocks = trim_blocks
+                self._templar.environment.lstrip_blocks = lstrip_blocks
 
-                # run the copy module
-                new_module_args.update(
-                   dict(
-                       src=xfered,
-                       dest=dest,
-                       original_basename=os.path.basename(source),
-                       follow=True,
+                # add ansible 'template' vars
+                temp_vars = task_vars.copy()
+                temp_vars.update(generate_ansible_template_vars(source))
+
+                old_vars = self._templar._available_variables
+                self._templar.set_available_variables(temp_vars)
+                resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
+                self._templar.set_available_variables(old_vars)
+            except AnsibleAction:
+                raise
+            except Exception as e:
+                raise AnsibleActionFail("%s: %s" % (type(e).__name__, to_text(e)))
+            finally:
+                self._loader.cleanup_tmp_file(b_tmp_source)
+
+            new_task = self._task.copy()
+            # mode is either the mode from task.args or the mode of the source file if the task.args
+            # mode == 'preserve'
+            new_task.args['mode'] = mode
+            new_task.args.pop('newline_sequence', None)
+            new_task.args.pop('block_start_string', None)
+            new_task.args.pop('block_end_string', None)
+            new_task.args.pop('variable_start_string', None)
+            new_task.args.pop('variable_end_string', None)
+            new_task.args.pop('trim_blocks', None)
+            new_task.args.pop('lstrip_blocks', None)
+            new_task.args.pop('output_encoding', None)
+
+            local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
+
+            try:
+                result_file = os.path.join(local_tempdir, os.path.basename(source))
+                with open(to_bytes(result_file, errors='surrogate_or_strict'), 'wb') as f:
+                    f.write(to_bytes(resultant, encoding=output_encoding, errors='surrogate_or_strict'))
+
+                new_task.args.update(
+                    dict(
+                        src=result_file,
+                        dest=dest,
+                        follow=follow,
                     ),
                 )
-                result = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
-            else:
-                result=dict(changed=True)
+                copy_action = self._shared_loader_obj.action_loader.get('copy',
+                                                                        task=new_task,
+                                                                        connection=self._connection,
+                                                                        play_context=self._play_context,
+                                                                        loader=self._loader,
+                                                                        templar=self._templar,
+                                                                        shared_loader_obj=self._shared_loader_obj)
+                result.update(copy_action.run(task_vars=task_vars))
+            finally:
+                shutil.rmtree(to_bytes(local_tempdir, errors='surrogate_or_strict'))
 
-            if result.get('changed', False) and self._play_context.diff:
-                result['diff'] = diff
-            #    result['diff'] = dict(before=dest_contents, after=resultant, before_header=dest, after_header=source)
+        except AnsibleAction as e:
+            result.update(e.result)
+        finally:
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
-            return result
-
-        else:
-            # when running the file module based on the template data, we do
-            # not want the source filename (the name of the template) to be used,
-            # since this would mess up links, so we clear the src param and tell
-            # the module to follow links.  When doing that, we have to set
-            # original_basename to the template just in case the dest is
-            # a directory.
-            new_module_args.update(
-                dict(
-                    src=None,
-                    original_basename=os.path.basename(source),
-                    follow=True,
-                ),
-            )
-
-            return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
-
+        return result

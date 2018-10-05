@@ -1,0 +1,15 @@
+---
+# defaults file for test_mysql_user
+db_name: 'data'
+user_name_1: 'db_user1'
+user_name_2: 'db_user2'
+
+user_password_1: 'gadfFDSdtTU^Sdfuj'
+user_password_2: 'jkFKUdfhdso78yi&td'
+
+db_names:
+    - clientdb
+    - employeedb
+    - providerdb
+
+tmp_dir: '/tmp'

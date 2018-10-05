@@ -28,6 +28,8 @@
 
 import os
 
+from ansible.module_utils.six import iteritems
+
 
 def openstack_argument_spec():
     # DEPRECATED: This argument spec is only used for the deprecated old
@@ -36,17 +38,17 @@ def openstack_argument_spec():
     # Consume standard OpenStack environment variables.
     # This is mainly only useful for ad-hoc command line operation as
     # in playbooks one would assume variables would be used appropriately
-    OS_AUTH_URL=os.environ.get('OS_AUTH_URL', 'http://127.0.0.1:35357/v2.0/')
-    OS_PASSWORD=os.environ.get('OS_PASSWORD', None)
-    OS_REGION_NAME=os.environ.get('OS_REGION_NAME', None)
-    OS_USERNAME=os.environ.get('OS_USERNAME', 'admin')
-    OS_TENANT_NAME=os.environ.get('OS_TENANT_NAME', OS_USERNAME)
+    OS_AUTH_URL = os.environ.get('OS_AUTH_URL', 'http://127.0.0.1:35357/v2.0/')
+    OS_PASSWORD = os.environ.get('OS_PASSWORD', None)
+    OS_REGION_NAME = os.environ.get('OS_REGION_NAME', None)
+    OS_USERNAME = os.environ.get('OS_USERNAME', 'admin')
+    OS_TENANT_NAME = os.environ.get('OS_TENANT_NAME', OS_USERNAME)
 
     spec = dict(
-        login_username                  = dict(default=OS_USERNAME),
-        auth_url                        = dict(default=OS_AUTH_URL),
-        region_name                     = dict(default=OS_REGION_NAME),
-        availability_zone               = dict(default=None),
+        login_username=dict(default=OS_USERNAME),
+        auth_url=dict(default=OS_AUTH_URL),
+        region_name=dict(default=OS_REGION_NAME),
+        availability_zone=dict(),
     )
     if OS_PASSWORD:
         spec['login_password'] = dict(default=OS_PASSWORD)
@@ -58,10 +60,11 @@ def openstack_argument_spec():
         spec['login_tenant_name'] = dict(required=True)
     return spec
 
+
 def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
 
     ret = []
-    for (k, v) in addresses.iteritems():
+    for (k, v) in iteritems(addresses):
         if key_name and k == key_name:
             ret.extend([addrs['addr'] for addrs in v])
         else:
@@ -70,23 +73,24 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
                     ret.append(interface_spec['addr'])
     return ret
 
+
 def openstack_full_argument_spec(**kwargs):
     spec = dict(
-        cloud=dict(default=None),
+        cloud=dict(default=None, type='raw'),
         auth_type=dict(default=None),
-        auth=dict(default=None),
+        auth=dict(default=None, type='dict', no_log=True),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
-        verify=dict(default=True, aliases=['validate_certs']),
+        verify=dict(default=None, type='bool', aliases=['validate_certs']),
         cacert=dict(default=None),
         cert=dict(default=None),
-        key=dict(default=None),
+        key=dict(default=None, no_log=True),
         wait=dict(default=True, type='bool'),
         timeout=dict(default=180, type='int'),
         api_timeout=dict(default=None, type='int'),
-        endpoint_type=dict(
-            default='public', choices=['public', 'internal', 'admin']
-        )
+        interface=dict(
+            default='public', choices=['public', 'internal', 'admin'],
+            aliases=['endpoint_type']),
     )
     spec.update(kwargs)
     return spec
@@ -102,3 +106,52 @@ def openstack_module_kwargs(**kwargs):
                 ret[key] = kwargs[key]
 
     return ret
+
+
+def openstack_cloud_from_module(module, min_version='0.12.0'):
+    from distutils.version import StrictVersion
+    try:
+        # Due to the name shadowing we should import other way
+        import importlib
+        sdk = importlib.import_module('openstack')
+    except ImportError:
+        module.fail_json(msg='openstacksdk is required for this module')
+
+    if min_version:
+        if StrictVersion(sdk.version.__version__) < StrictVersion(min_version):
+            module.fail_json(
+                msg="To utilize this module, the installed version of"
+                    "the openstacksdk library MUST be >={min_version}".format(
+                        min_version=min_version))
+
+    cloud_config = module.params.pop('cloud', None)
+    try:
+        if isinstance(cloud_config, dict):
+            fail_message = (
+                "A cloud config dict was provided to the cloud parameter"
+                " but also a value was provided for {param}. If a cloud"
+                " config dict is provided, {param} should be"
+                " excluded.")
+            for param in (
+                    'auth', 'region_name', 'verify',
+                    'cacert', 'key', 'api_timeout', 'interface'):
+                if module.params[param] is not None:
+                    module.fail_json(msg=fail_message.format(param=param))
+            if module.params['auth_type'] != 'password':
+                module.fail_json(msg=fail_message.format(param='auth_type'))
+            return sdk, sdk.connect(**cloud_config)
+        else:
+            return sdk, sdk.connect(
+                cloud=cloud_config,
+                auth_type=module.params['auth_type'],
+                auth=module.params['auth'],
+                region_name=module.params['region_name'],
+                verify=module.params['verify'],
+                cacert=module.params['cacert'],
+                key=module.params['key'],
+                api_timeout=module.params['api_timeout'],
+                interface=module.params['interface'],
+            )
+    except sdk.exceptions.SDKException as e:
+        # Probably a cloud configuration/login error
+        module.fail_json(msg=str(e))

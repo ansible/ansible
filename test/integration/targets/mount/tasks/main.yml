@@ -1,0 +1,250 @@
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Create the mount point
+  file:
+    state: "directory"
+    path: "{{ output_dir }}/mount_dest"
+
+- name: Create a directory to bind mount
+  file:
+    state: "directory"
+    path: "{{ output_dir }}/mount_source"
+
+- name: Put something in the directory so we see that it worked
+  copy:
+    content: "Testing\n"
+    dest: "{{ output_dir }}/mount_source/test_file"
+  register: orig_info
+
+# The opts type of bind mount only works on Linux
+- name: Bind mount a filesystem (Linux)
+  mount:
+    src: "{{ output_dir }}/mount_source"
+    name: "{{ output_dir }}/mount_dest"
+    state: "mounted"
+    fstype: "None"
+    opts: "bind"
+  when: ansible_system == 'Linux'
+  register: bind_result_linux
+
+# Nullfs is freebsd only
+- name: Bind mount a filesystem (FreeBSD)
+  mount:
+    src: "{{ output_dir }}/mount_source"
+    name: "{{ output_dir }}/mount_dest"
+    state: "mounted"
+    fstype: "nullfs"
+  when: ansible_system == 'FreeBSD'
+  register: bind_result_freebsd
+
+- name: get checksum for bind mounted file
+  stat:
+    path: "{{ output_dir }}/mount_dest/test_file"
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: dest_stat
+
+- name: assert the bind mount was successful
+  assert:
+    that:
+      - "(ansible_system == 'Linux' and bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and bind_result_freebsd['changed'])"
+      - "dest_stat['stat']['exists']"
+      - "orig_info['checksum'] == dest_stat['stat']['checksum']"
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+# The opts type of bind mount only works on Linux
+- name: Bind mount a filesystem (Linux)
+  mount:
+    src: "{{ output_dir }}/mount_source"
+    name: "{{ output_dir }}/mount_dest"
+    state: "mounted"
+    fstype: "None"
+    opts: "bind"
+  when: ansible_system == 'Linux'
+  register: bind_result_linux
+
+# Nullfs is freebsd only
+- name: Bind mount a filesystem (FreeBSD)
+  mount:
+    src: "{{ output_dir }}/mount_source"
+    name: "{{ output_dir }}/mount_dest"
+    state: "mounted"
+    fstype: "nullfs"
+  when: ansible_system == 'FreeBSD'
+  register: bind_result_freebsd
+
+- name: Make sure we didn't mount a second time
+  assert:
+    that:
+      - "(ansible_system == 'Linux' and not bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and not bind_result_freebsd['changed'])"
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+# The opts type of bind mount only works on Linux
+- name: Remount filesystem with different opts (Linux)
+  mount:
+    src: "{{ output_dir }}/mount_source"
+    name: "{{ output_dir }}/mount_dest"
+    state: "mounted"
+    fstype: "None"
+    opts: "bind,ro"
+  when: ansible_system == 'Linux'
+  register: bind_result_linux
+
+# Nullfs is freebsd only
+- name: Remount filesystem with different opts (FreeBSD)
+  mount:
+    src: "{{ output_dir }}/mount_source"
+    name: "{{ output_dir }}/mount_dest"
+    state: "mounted"
+    fstype: "nullfs"
+    opts: "ro"
+  when: ansible_system == 'FreeBSD'
+  register: bind_result_freebsd
+
+- name: Get mount options
+  shell: mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l
+  register: remount_options
+
+- debug: var=remount_options
+
+- name: Make sure the filesystem now has the new opts
+  assert:
+    that:
+      - "(ansible_system == 'Linux' and bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and bind_result_freebsd['changed'])"
+      - "'1' in remount_options.stdout"
+      - "1 == remount_options.stdout_lines | length"
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+- name: Unmount the bind mount
+  mount:
+    name: "{{ output_dir }}/mount_dest"
+    state: "absent"
+  when: ansible_system in ('Linux', 'FreeBSD')
+  register: unmount_result
+
+- name: Make sure the file no longer exists in dest
+  stat:
+    path: "{{ output_dir }}/mount_dest/test_file"
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: dest_stat
+
+- name: Check that we unmounted
+  assert:
+    that:
+      - "unmount_result['changed']"
+      - "not dest_stat['stat']['exists']"
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+- name: Create fstab record for the first swap file
+  mount:
+    name: none
+    src: /tmp/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap1_created
+  when: ansible_system in ('Linux')
+
+- name: Try to create fstab record for the first swap file again
+  mount:
+    name: none
+    src: /tmp/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap1_created_again
+  when: ansible_system in ('Linux')
+
+- name: Check that we created the swap1 record
+  assert:
+    that:
+      - "swap1_created['changed']"
+      - "not swap1_created_again['changed']"
+  when: ansible_system in ('Linux')
+
+- name: Create fstab record for the second swap file
+  mount:
+    name: none
+    src: /tmp/swap2
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap2_created
+  when: ansible_system in ('Linux')
+
+- name: Try to create fstab record for the second swap file again
+  mount:
+    name: none
+    src: /tmp/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap2_created_again
+  when: ansible_system in ('Linux')
+
+- name: Check that we created the swap2 record
+  assert:
+    that:
+      - "swap2_created['changed']"
+      - "not swap2_created_again['changed']"
+  when: ansible_system in ('Linux')
+
+- name: Remove the fstab record for the first swap file
+  mount:
+    name: none
+    src: /tmp/swap1
+    state: absent
+  register: swap1_removed
+  when: ansible_system in ('Linux')
+
+- name: Try to remove the fstab record for the first swap file again
+  mount:
+    name: none
+    src: /tmp/swap1
+    state: absent
+  register: swap1_removed_again
+  when: ansible_system in ('Linux')
+
+- name: Check that we removed the swap1 record
+  assert:
+    that:
+      - "swap1_removed['changed']"
+      - "not swap1_removed_again['changed']"
+  when: ansible_system in ('Linux')
+
+- name: Remove the fstab record for the second swap file
+  mount:
+    name: none
+    src: /tmp/swap2
+    state: absent
+  register: swap2_removed
+  when: ansible_system in ('Linux')
+
+- name: Try to remove the fstab record for the second swap file again
+  mount:
+    name: none
+    src: /tmp/swap2
+    state: absent
+  register: swap2_removed_again
+  when: ansible_system in ('Linux')
+
+- name: Check that we removed the swap2 record
+  assert:
+    that:
+      - "swap2_removed['changed']"
+      - "not swap2_removed_again['changed']"
+  when: ansible_system in ('Linux')

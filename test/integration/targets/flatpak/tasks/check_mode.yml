@@ -1,0 +1,193 @@
+# - Tests with absent flatpak --------------------------------------------------
+
+# state=present on absent flatpak
+
+- name: Test addition of absent flatpak (check mode)
+  flatpak:
+    name: org.gnome.Characters
+    remote: flathub
+    state: present
+  register: addition_result
+  check_mode: true
+
+- name: Verify addition of absent flatpak test result (check mode)
+  assert:
+    that:
+      - "addition_result.changed == true"
+    msg: "Adding an absent flatpak shall mark module execution as changed"
+
+- name: Test non-existent idempotency of addition of absent flatpak (check mode)
+  flatpak:
+    name: org.gnome.Characters
+    remote: flathub
+    state: present
+  register: double_addition_result
+  check_mode: true
+
+- name: Verify non-existent idempotency of addition of absent flatpak test result (check mode)
+  assert:
+    that:
+      - "double_addition_result.changed == true"
+    msg: |
+        Adding an absent flatpak a second time shall still mark module execution
+        as changed in check mode
+
+# state=absent on absent flatpak
+
+- name: Test removal of absent flatpak check mode
+  flatpak:
+    name: org.gnome.Characters
+    state: absent
+  register: removal_result
+  check_mode: true
+
+- name: Verify removal of absent flatpak test result (check mode)
+  assert:
+    that:
+      - "removal_result.changed == false"
+    msg: "Removing an absent flatpak shall mark module execution as not changed"
+
+# state=present with url on absent flatpak
+
+- name: Test addition of absent flatpak with url (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
+    remote: flathub
+    state: present
+  register: url_addition_result
+  check_mode: true
+
+- name: Verify addition of absent flatpak with url test result (check mode)
+  assert:
+    that:
+      - "url_addition_result.changed == true"
+    msg: "Adding an absent flatpak from URL shall mark module execution as changed"
+
+- name: Test non-existent idempotency of addition of absent flatpak with url (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
+    remote: flathub
+    state: present
+  register: double_url_addition_result
+  check_mode: true
+
+- name: >
+      Verify non-existent idempotency of additionof absent flatpak with url test
+      result (check mode)
+  assert:
+    that:
+      - "double_url_addition_result.changed == true"
+    msg: |
+        Adding an absent flatpak from URL a second time shall still mark module execution
+        as changed in check mode
+
+# state=absent with url on absent flatpak
+
+- name: Test removal of absent flatpak with url not doing anything (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
+    state: absent
+  register: url_removal_result
+  check_mode: true
+
+- name: Verify removal of absent flatpak with url test result (check mode)
+  assert:
+    that:
+      - "url_removal_result.changed == false"
+    msg: "Removing an absent flatpak shall mark module execution as not changed"
+
+
+# - Tests with present flatpak -------------------------------------------------
+
+# state=present on present flatpak
+
+- name: Test addition of present flatpak (check mode)
+  flatpak:
+    name: org.gnome.Calculator
+    remote: flathub
+    state: present
+  register: addition_present_result
+  check_mode: true
+
+- name: Verify addition test result of present flatpak (check mode)
+  assert:
+    that:
+      - "addition_present_result.changed == false"
+    msg: "Adding an present flatpak shall mark module execution as not changed"
+
+# state=absent on present flatpak
+
+- name: Test removal of present flatpak (check mode)
+  flatpak:
+    name: org.gnome.Calculator
+    state: absent
+  register: removal_present_result
+  check_mode: true
+
+- name: Verify removal of present flatpak test result (check mode)
+  assert:
+    that:
+      - "removal_present_result.changed == true"
+    msg: "Removing a present flatpak shall mark module execution as changed"
+
+- name: Test non-existent idempotency of removal (check mode)
+  flatpak:
+    name: org.gnome.Calculator
+    state: absent
+  register: double_removal_present_result
+  check_mode: true
+
+- name: Verify non-existent idempotency of removal (check mode)
+  assert:
+    that:
+      - "double_removal_present_result.changed == true"
+    msg: |
+        Removing a present flatpak a second time shall still mark module execution
+        as changed in check mode
+
+# state=present with url on present flatpak
+
+- name: Test addition with url of present flatpak (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    remote: flathub
+    state: present
+  register: url_addition_present_result
+  check_mode: true
+
+- name: Verify addition with url of present flatpak test result (check mode)
+  assert:
+    that:
+      - "url_addition_present_result.changed == false"
+    msg: "Adding a present flatpak from URL shall mark module execution as not changed"
+
+# state=absent with url on present flatpak
+
+- name: Test removal with url of present flatpak (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    state: absent
+  register: url_removal_present_result
+  check_mode: true
+
+- name: Verify removal with url of present flatpak test result (check mode)
+  assert:
+    that:
+      - "url_removal_present_result.changed == true"
+    msg: "Removing an absent flatpak shall mark module execution as not changed"
+
+- name: Test non-existent idempotency of removal with url of present flatpak (check mode)
+  flatpak:
+    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    remote: flathub
+    state: absent
+  register: double_url_removal_present_result
+  check_mode: true
+
+- name: >
+      Verify non-existent idempotency of installation with url of present
+      flatpak test result (check mode)
+  assert:
+    that:
+      - "double_url_removal_present_result.changed == true"
+    msg: Removing an absent flatpak a second time shall still mark module execution as changed

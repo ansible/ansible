@@ -1,0 +1,29 @@
+---
+- debug: msg="START netconf/invalid.yaml on connection={{ ansible_connection }}"
+
+- name: configure single invalid command
+  junos_config:
+    lines:
+      - 'set system foo'
+    provider: "{{ netconf }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+
+- name: configure multiple invalid command
+  junos_config:
+    lines:
+      - 'set system host-name {{ inventory_hostname_short }}'
+      - 'set system foo'
+    provider: "{{ netconf }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+
+- debug: msg="END netconf/invalid.yaml on connection={{ ansible_connection }}"

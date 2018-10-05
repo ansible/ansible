@@ -1,0 +1,73 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_igmp sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: restart="true"
+  when: platform is not match("N35")
+
+- block:
+
+  - name: Configure igmp with non-default values
+    nxos_igmp: &non-default
+      flush_routes: true
+      enforce_rtr_alert: true
+      restart: false
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Configure igmp interface with non-default values"
+    nxos_igmp: *non-default
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure igmp defaults
+    nxos_igmp: &default
+      flush_routes: false
+      enforce_rtr_alert: false
+      restart: "{{restart|default(omit)}}"
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp with defaults"
+    nxos_igmp: *default
+    register: result
+
+  - assert: *false
+
+  - name: Configure igmp non-defaults again
+    nxos_igmp: *non-default
+    register: result
+
+  - name: Configure igmp state as values
+    nxos_igmp: &sdefault
+      provider: "{{ connection }}"
+      state: default
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp with state default"
+    nxos_igmp: *sdefault
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Configure igmp with default values
+    nxos_igmp: *sdefault
+    register: result
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_igmp sanity test"

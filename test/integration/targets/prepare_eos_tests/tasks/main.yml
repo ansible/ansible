@@ -1,0 +1,27 @@
+- name: Enable Ethernet1 interface and disable switchport
+  eos_config:
+    lines:
+      - no shutdown
+      - no switchport
+    parents: int Ethernet1
+  become: yes
+  connection: network_cli
+
+- name: Enable Ethernet2 interface and disable switchport
+  eos_config:
+    lines:
+      - no shutdown
+      - no switchport
+    parents: int Ethernet2
+  become: yes
+  connection: network_cli
+
+- name: enable eapi
+  eos_eapi:
+    http: yes
+    https: yes
+    local_http: no
+    enable_socket: yes
+  become: yes
+  connection: network_cli
+  tags: eapi

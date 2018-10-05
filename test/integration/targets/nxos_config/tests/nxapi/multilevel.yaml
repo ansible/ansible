@@ -1,0 +1,45 @@
+---
+- debug: msg="START nxapi/mulitlevel.yaml"
+
+- name: setup
+  nxos_config:
+    lines: feature bgp
+    match: none
+    provider: "{{ connection }}"
+
+- name: configure multi level command
+  nxos_config:
+    lines: maximum-paths 14
+    parents:
+      - router bgp 1
+      - address-family ipv4 unicast
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'router bgp 1' in result.updates"
+      - "'address-family ipv4 unicast' in result.updates"
+      - "'maximum-paths 14' in result.updates"
+
+- name: test multi level command
+  nxos_config:
+    lines: maximum-paths 14
+    parents:
+      - router bgp 1
+      - address-family ipv4 unicast
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines: no feature bgp
+    match: none
+    provider: "{{ connection }}"
+
+- debug: msg="END nxapi/mulitlevel.yaml"

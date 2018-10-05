@@ -1,0 +1,33 @@
+---
+- debug: msg="START cli/diff.yaml on connection={{ ansible_connection }}"
+
+- name: Ensure hostname is preset
+  ios_system:
+    hostname: "{{ shorter_hostname }}"
+
+- name: ios_config diff against retrieved config
+  ios_config:
+    diff_against: intended
+    intended_config: "{{ lookup('file', '{{ role_path }}/templates/basic/intended_running_config') }}"
+  diff: true
+  register: result
+
+- assert:
+    that:
+      - "'hostname an-ios-02.ansible.com' in result['diff']['after']"
+      - "'hostname {{ shorter_hostname }}' in result['diff']['before']"
+
+- name: ios_config diff against provided running_config
+  ios_config:
+    diff_against: intended
+    intended_config: "{{ lookup('file', '{{ role_path }}/templates/basic/intended_running_config') }}"
+    running_config: "{{ lookup('file', '{{ role_path }}/templates/basic/base_running_config') }}"
+  diff: true
+  register: result
+
+- assert:
+    that:
+      - "'hostname an-ios-02.ansible.com' in result['diff']['after']"
+      - "'hostname an-ios-01.ansible.com' in result['diff']['before']"
+
+- debug: msg="END cli/diff.yaml on connection={{ ansible_connection }}"

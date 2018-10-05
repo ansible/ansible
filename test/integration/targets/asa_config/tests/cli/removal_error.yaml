@@ -1,0 +1,46 @@
+---
+- debug: msg="START cli/removal_error.yaml"
+
+- name: setup
+  asa_config:
+    commands:
+      - clear configure access-list ANSIBLE-DNS
+      - no object-group network OGA-GOOGLE-DNS
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: configure test object-group
+  asa_config:
+    parents: object-group network OGA-GOOGLE-DNS
+    lines: network-object host 8.8.8.8
+    provider: "{{ cli }}"
+  register: result
+
+
+- name: configure test access-list
+  asa_config:
+    lines: access-list ANSIBLE-DNS extended permit udp any object-group OGA-GOOGLE-DNS eq domain
+    provider: "{{ cli }}"
+
+- name: try to remove object-group (should fail)
+  asa_config:
+    commands:
+      - no object-group network OGA-GOOGLE-DNS
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+
+- name: Last command should fail
+  assert:
+    that:
+      - "result.failed == true"
+
+- name: teardown
+  asa_config:
+    commands:
+      - clear configure access-list ANSIBLE-DNS
+      - no object-group network OGA-GOOGLE-DNS
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/removal_error.yaml"

@@ -1,0 +1,149 @@
+---
+- name: ensure project does not exist
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: prj
+- name: verify project did not exist
+  assert:
+    that:
+    - prj is successful
+
+- name: test create project in check mode
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+  register: prj
+  check_mode: true
+- name: verify test create project in check mode
+  assert:
+    that:
+    - prj is changed
+
+- name: test create project
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+  register: prj
+- name: verify test create project
+  assert:
+    that:
+    - prj is changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+
+- name: test create project idempotence
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+  register: prj
+- name: verify test create project idempotence
+  assert:
+    that:
+    - prj is not changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+
+- name: test suspend project in check mode
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: suspended
+  register: prj
+  check_mode: true
+- name: verify test suspend project in check mode
+  assert:
+    that:
+    - prj is changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state != "Suspended"
+
+- name: test suspend project
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: suspended
+  register: prj
+- name: verify test suspend project
+  assert:
+    that:
+    - prj is changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state == "Suspended"
+
+- name: test suspend project idempotence
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: suspended
+  register: prj
+- name: verify test suspend project idempotence
+  assert:
+    that:
+    - prj is not changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state == "Suspended"
+
+- name: test activate project in check mode
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: active
+  register: prj
+  check_mode: true
+- name: verify test activate project in check mode
+  assert:
+    that:
+    - prj is changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state != "Active"
+
+- name: test activate project
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: active
+  register: prj
+- name: verify test activate project
+  assert:
+    that:
+    - prj is changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state == "Active"
+
+- name: test activate project idempotence
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: active
+  register: prj
+- name: verify test activate project idempotence
+  assert:
+    that:
+    - prj is not changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state == "Active"
+
+- name: test delete project in check mode
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: prj
+  check_mode: true
+- name: verify test delete project in check mode
+  assert:
+    that:
+    - prj is changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state == "Active"
+
+- name: test delete project
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: prj
+- name: verify test delete project
+  assert:
+    that:
+    - prj is changed
+    - prj.name == "{{ cs_resource_prefix }}-prj"
+    - prj.state == "Active"
+
+- name: test delete project idempotence
+  cs_project:
+    name: "{{ cs_resource_prefix }}-prj"
+    state: absent
+  register: prj
+- name: verify test delete project idempotence
+  assert:
+    that:
+    - prj is not changed

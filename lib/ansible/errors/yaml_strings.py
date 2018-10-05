@@ -31,7 +31,7 @@ __all__ = [
 
 YAML_SYNTAX_ERROR = """\
 Syntax Error while loading YAML.
-"""
+  %s"""
 
 YAML_POSITION_DETAILS = """\
 The error appears to have been in '%s': line %s, column %s, but may
@@ -116,3 +116,20 @@ Could be written as:
     foo: '"bad" "wolf"'
 """
 
+YAML_COMMON_LEADING_TAB_ERROR = """\
+There appears to be a tab character at the start of the line.
+
+YAML does not use tabs for formatting. Tabs should be replaced with spaces.
+
+For example:
+    - name: update tooling
+      vars:
+        version: 1.2.3
+#    ^--- there is a tab there.
+
+Should be written as:
+    - name: update tooling
+      vars:
+        version: 1.2.3
+# ^--- all spaces here.
+"""

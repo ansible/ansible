@@ -1,4 +1,4 @@
-# (c) 2014, Brian Coca, Josh Drake, et al
+# (c) 2017, ansible by Red Hat
 #
 # This file is part of Ansible
 #
@@ -14,50 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from abc import ABCMeta, abstractmethod
-
-from six import with_metaclass
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
-
-class BaseCacheModule(with_metaclass(ABCMeta, object)):
-
-    display = display
-
-    @abstractmethod
-    def get(self, key):
-        pass
-
-    @abstractmethod
-    def set(self, key, value):
-        pass
-
-    @abstractmethod
-    def keys(self):
-        pass
-
-    @abstractmethod
-    def contains(self, key):
-        pass
-
-    @abstractmethod
-    def delete(self, key):
-        pass
-
-    @abstractmethod
-    def flush(self):
-        pass
-
-    @abstractmethod
-    def copy(self):
-        pass
-
+# moved actual classes to __init__ kept here for backward compat with 3rd parties
+from ansible.plugins.cache import BaseCacheModule, BaseFileCacheModule

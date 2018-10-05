@@ -1,134 +1,74 @@
-# This is the configuration file for the Ansible plugin for Docker inventory.
+# This is the configuration file for the Docker inventory script: docker_inventory.py.
 #
-# Author: Paul Durivage <paul.durivage@gmail.com>
+# You can define the following in this file:
 #
-# Description:
-# This module queries local or remote Docker daemons and generates
-# inventory information.
+#   defaults
+#        Defines a default connection. Defaults will be taken from this and applied to any values not provided
+#        for a host defined in the hosts list.
 #
-# This plugin does not support targeting of specific hosts using the --host
-# flag. Instead, it it queries the Docker API for each container, running
-# or not, and returns this data all once.
+#    hosts
+#        If you wish to get inventory from more than one Docker host, define a hosts list.
 #
-# The plugin returns the following custom attributes on Docker containers:
-#    docker_args
-#    docker_config
-#    docker_created
-#    docker_driver
-#    docker_exec_driver
-#    docker_host_config
-#    docker_hostname_path
-#    docker_hosts_path
-#    docker_id
-#    docker_image
-#    docker_name
-#    docker_network_settings
-#    docker_path
-#    docker_resolv_conf_path
-#    docker_state
-#    docker_volumes
-#    docker_volumes_rw
+# For the default host and each host in the hosts list define the following attributes:
 #
-# Requirements:
-# The docker-py module: https://github.com/dotcloud/docker-py
+#  host:
+#      description: The URL or Unix socket path used to connect to the Docker API.
+#      required: yes
 #
-# Notes:
-# A config file can be used to configure this inventory module, and there
-# are several environment variables that can be set to modify the behavior
-# of the plugin at runtime:
-#    DOCKER_CONFIG_FILE
-#    DOCKER_HOST
-#    DOCKER_VERSION
-#    DOCKER_TIMEOUT
-#    DOCKER_PRIVATE_SSH_PORT
-#    DOCKER_DEFAULT_IP
-#
-# Environment Variables:
-# environment variable: DOCKER_CONFIG_FILE
-#     description:
-#         - A path to a Docker inventory hosts/defaults file in YAML format
-#         - A sample file has been provided, colocated with the inventory
-#           file called 'docker.yml'
+#  tls:
+#     description: Connect using TLS without verifying the authenticity of the Docker host server.
+#     default: false
 #     required: false
-#     default: Uses docker.docker.Client constructor defaults
-# environment variable: DOCKER_HOST
-#     description:
-#         - The socket on which to connect to a Docker daemon API
+#
+#  tls_verify:
+#     description: Connect using TLS without verifying the authenticity of the Docker host server.
+#     default: false
 #     required: false
-#     default: Uses docker.docker.Client constructor defaults
-# environment variable: DOCKER_VERSION
-#     description:
-#         - Version of the Docker API to use
-#     default: Uses docker.docker.Client constructor defaults
+#
+#  cert_path:
+#     description: Path to the client's TLS certificate file.
+#     default: null
 #     required: false
-# environment variable: DOCKER_TIMEOUT
-#     description:
-#         - Timeout in seconds for connections to Docker daemon API
-#     default: Uses docker.docker.Client constructor defaults
+#
+#  cacert_path:
+#     description: Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+#     default: null
 #     required: false
-# environment variable: DOCKER_PRIVATE_SSH_PORT
-#     description:
-#         - The private port (container port) on which SSH is listening
-#           for connections
+#
+#  key_path:
+#     description: Path to the client's TLS key file.
+#     default: null
+#     required: false
+#
+#  version:
+#     description: The Docker API version.
+#     required: false
+#     default: will be supplied by the docker-py module.
+#
+#  timeout:
+#     description: The amount of time in seconds to wait on an API response.
+#     required: false
+#     default: 60
+#
+#  default_ip:
+#     description: The IP address to assign to ansible_host when the container's SSH port is mapped to interface
+#     '0.0.0.0'.
+#     required: false
+#     default: 127.0.0.1
+#
+#  private_ssh_port:
+#     description: The port containers use for SSH
+#     required: false
 #     default: 22
-#     required: false
-# environment variable: DOCKER_DEFAULT_IP
-#     description:
-#         - This environment variable overrides the container SSH connection
-#           IP address (aka, 'ansible_ssh_host')
-#
-#           This option allows one to override the ansible_ssh_host whenever
-#           Docker has exercised its default behavior of binding private ports
-#           to all interfaces of the Docker host.  This behavior, when dealing
-#           with remote Docker hosts, does not allow Ansible to determine
-#           a proper host IP address on which to connect via SSH to containers.
-#           By default, this inventory module assumes all 0.0.0.0-exposed
-#           ports to be bound to localhost:<port>.  To override this
-#           behavior, for example, to bind a container's SSH port to the public
-#           interface of its host, one must manually set this IP.
-#
-#           It is preferable to begin to launch Docker containers with
-#           ports exposed on publicly accessible IP addresses, particularly
-#           if the containers are to be targeted by Ansible for remote
-#           configuration, not accessible via localhost SSH connections.
-#
-#           Docker containers can be explicitly exposed on IP addresses by
-#           a) starting the daemon with the --ip argument
-#           b) running containers with the -P/--publish ip::containerPort
-#              argument
-#     default: 127.0.0.1 if port exposed on 0.0.0.0 by Docker
-#     required: false
-#
-# Examples:
-#  Use the config file:
-#  DOCKER_CONFIG_FILE=./docker.yml docker.py --list
-#
-#  Connect to docker instance on localhost port 4243
-#  DOCKER_HOST=tcp://localhost:4243 docker.py --list
-#
-#  Any container's ssh port exposed on 0.0.0.0 will mapped to
-#  another IP address (where Ansible will attempt to connect via SSH)
-#  DOCKER_DEFAULT_IP=1.2.3.4 docker.py --list
-#
-#
-#
-# The Docker inventory plugin provides several environment variables that
-# may be overridden here.  This configuration file always takes precedence
-# over environment variables.
-#
-# Variable precedence is: hosts > defaults > environment
 
----
-defaults:
-  host: unix:///var/run/docker.sock
-  version: 1.9
-  timeout: 60
-  private_ssh_port: 22
-  default_ip: 127.0.0.1
-hosts:
+#defaults:
+#  host: unix:///var/run/docker.sock
+#  private_ssh_port: 22
+#  default_ip: 127.0.0.1
+
+#hosts:
 #  - host: tcp://10.45.5.16:4243
-#    version: 1.9
-#    timeout: 60
 #    private_ssh_port: 2022
 #    default_ip: 172.16.3.45
 #  - host: tcp://localhost:4243
+#    private_ssh_port: 2029

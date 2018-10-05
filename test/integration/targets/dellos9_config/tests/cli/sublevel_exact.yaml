@@ -1,0 +1,66 @@
+---
+- debug: msg="START cli/sublevel_exact.yaml"
+
+- name: setup
+  dellos9_config:
+    lines:
+      - seq 5 permit ip host 192.0.2.1 any log threshold-in-msgs 10 interval 5
+      - seq 10 permit ip host 192.0.2.2 any log threshold-in-msgs 10 interval 5
+      - seq 15 permit ip host 192.0.2.3 any log threshold-in-msgs 10 interval 5
+      - seq 20 permit ip host 192.0.2.4 any log threshold-in-msgs 10 interval 5
+      - seq 25 permit ip host 192.0.2.5 any log threshold-in-msgs 10 interval 5
+    parents: ['ip access-list extended test']
+    before: ['no ip access-list extended test']
+    after: ['exit']
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure sub level command using exact match
+  dellos9_config:
+    lines:
+      - seq 5 permit ip host 192.0.2.1 any log threshold-in-msgs 10 interval 5
+      - seq 10 permit ip host 192.0.2.2 any log threshold-in-msgs 10 interval 5
+      - seq 15 permit ip host 192.0.2.3 any log threshold-in-msgs 10 interval 5
+      - seq 20 permit ip host 192.0.2.4 any log threshold-in-msgs 10 interval 5
+    parents: ['ip access-list extended test']
+    after: ['exit']
+    match: exact
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list extended test' in result.updates"
+      - "'seq 5 permit ip host 192.0.2.1 any log threshold-in-msgs 10 interval 5' in result.updates"
+      - "'seq 10 permit ip host 192.0.2.2 any log threshold-in-msgs 10 interval 5' in result.updates"
+      - "'seq 15 permit ip host 192.0.2.3 any log threshold-in-msgs 10 interval 5' in result.updates"
+      - "'seq 20 permit ip host 192.0.2.4 any log threshold-in-msgs 10 interval 5' in result.updates"
+      - "'seq 25 permit ip host 192.0.2.5 any log threshold-in-msgs 10 interval 5' not in result.updates"
+
+- name: check sub level command using exact match
+  dellos9_config:
+    lines:
+      - seq 5 permit ip host 192.0.2.1 any log threshold-in-msgs 10 interval 5
+      - seq 10 permit ip host 192.0.2.2 any log threshold-in-msgs 10 interval 5
+      - seq 15 permit ip host 192.0.2.3 any log threshold-in-msgs 10 interval 5
+      - seq 20 permit ip host 192.0.2.4 any log threshold-in-msgs 10 interval 5
+      - seq 25 permit ip host 192.0.2.5 any log threshold-in-msgs 10 interval 5
+    parents: ['ip access-list extended test']
+    after: ['exit']
+    match: exact
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  dellos9_config:
+    lines:
+      - no ip access-list extended test
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/sublevel_exact.yaml"

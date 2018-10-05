@@ -1,0 +1,62 @@
+---
+- debug: msg="START cli/sublevel_block.yaml"
+
+- name: setup
+  dellos10_config:
+    lines:
+      - seq 5 permit ip host 192.0.2.1 any count byte
+      - seq 10 permit ip host 192.0.2.2 any count byte
+      - seq 15 permit ip host 192.0.2.3 any count byte
+    parents: ['ip access-list test']
+    before: ['no ip access-list test']
+    after: ['exit']
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure sub level command using block resplace
+  dellos10_config:
+    lines:
+      - seq 5 permit ip host 192.0.2.1 any count byte
+      - seq 10 permit ip host 192.0.2.2 any count byte
+      - seq 15 permit ip host 192.0.2.3 any count byte
+      - seq 20 permit ip host 192.0.2.4 any count byte
+    parents: ['ip access-list test']
+    replace: block
+    after: ['exit']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list test' in result.updates"
+      - "'seq 5 permit ip host 192.0.2.1 any count byte' in result.updates"
+      - "'seq 10 permit ip host 192.0.2.2 any count byte' in result.updates"
+      - "'seq 15 permit ip host 192.0.2.3 any count byte' in result.updates"
+      - "'seq 20 permit ip host 192.0.2.4 any count byte' in result.updates"
+
+- name: check sub level command using block replace
+  dellos10_config:
+    lines:
+      - seq 5 permit ip host 192.0.2.1 any count byte
+      - seq 10 permit ip host 192.0.2.2 any count byte
+      - seq 15 permit ip host 192.0.2.3 any count byte
+      - seq 20 permit ip host 192.0.2.4 any count byte
+    parents: ['ip access-list test']
+    replace: block
+    after: ['exit']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  dellos10_config:
+    lines:
+      - no ip access-list test
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/sublevel_block.yaml"

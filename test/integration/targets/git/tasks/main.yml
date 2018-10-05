@@ -1,0 +1,39 @@
+# test code for the git module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- include_tasks: setup.yml
+- include_tasks: setup-local-repos.yml
+
+- include_tasks: formats.yml
+- include_tasks: missing_hostkey.yml
+- include_tasks: no-destination.yml
+- include_tasks: specific-revision.yml
+- include_tasks: submodules.yml
+- include_tasks: change-repo-url.yml
+- include_tasks: depth.yml
+- include_tasks: checkout-new-tag.yml
+- include_tasks: gpg-verification.yml
+  when:
+    - not gpg_version.stderr
+    - gpg_version.stdout
+    - git_version.stdout is version("2.1.0", '>=')
+- include_tasks: localmods.yml
+- include_tasks: reset-origin.yml
+- include_tasks: ambiguous-ref.yml
+- include_tasks: archive.yml
+- include_tasks: separate-git-dir.yml

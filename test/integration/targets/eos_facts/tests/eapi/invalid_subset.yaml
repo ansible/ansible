@@ -1,0 +1,46 @@
+---
+- debug: msg="START eapi/invalid_subset.yaml"
+
+
+- name: test invalid subset (foobar)
+  eos_facts:
+    gather_subset:
+      - "foobar"
+  register: result
+  ignore_errors: true
+
+
+- assert:
+    that:
+      # Failures shouldn't return changes
+      - "result.changed == false"
+      # It's a failure
+      - "result.failed == true"
+      # Sensible Failure message
+      - "'Subset must be one of' in result.msg"
+
+###############
+# FIXME Future
+# We may in the future want to add a test for
+
+- name: test subset specified multiple times
+  eos_facts:
+    gather_subset:
+      - "!hardware"
+      - "hardware"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      # Failures shouldn't return changes
+      - "result.changed == false"
+      # It's a failure
+      - "result.failed == true"
+      # Sensible Failure message
+      #- "result.msg == 'Bad subset'"
+  ignore_errors: true
+
+
+
+- debug: msg="END eapi/invalid_subset.yaml"

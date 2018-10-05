@@ -1,0 +1,57 @@
+---
+- debug: msg="START cli/sublevel_strict.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  ios_config:
+    lines:
+      - permit ip host 192.0.2.1 any log
+      - permit ip host 192.0.2.2 any log
+      - permit ip host 192.0.2.3 any log
+      - permit ip host 192.0.2.4 any log
+      - permit ip host 192.0.2.5 any log
+    parents: ip access-list extended test
+    before: no ip access-list extended test
+    match: none
+
+- name: configure sub level command using strict match
+  ios_config:
+    lines:
+      - permit ip host 192.0.2.1 any log
+      - permit ip host 192.0.2.2 any log
+      - permit ip host 192.0.2.3 any log
+      - permit ip host 192.0.2.4 any log
+    parents: ip access-list extended test
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: check sub level command using strict match
+  ios_config:
+    lines:
+      - permit ip host 192.0.2.1 any log
+      - permit ip host 192.0.2.3 any log
+      - permit ip host 192.0.2.2 any log
+    parents: ip access-list extended test
+    after: exit
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list extended test' in result.updates"
+      - "'permit ip host 192.0.2.1 any log' not in result.updates"
+      - "'permit ip host 192.0.2.2 any log' in result.updates"
+      - "'permit ip host 192.0.2.3 any log' in result.updates"
+      - "'permit ip host 192.0.2.4 any log' not in result.updates"
+      - "'permit ip host 192.0.2.5 any log' not in result.updates"
+
+- name: teardown
+  ios_config:
+    lines: no ip access-list extended test
+    match: none
+
+- debug: msg="END cli/sublevel_strict.yaml on connection={{ ansible_connection }}"

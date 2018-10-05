@@ -1,0 +1,19 @@
+---
+- debug: msg="START netconf_xml/timeout.yaml on connection={{ ansible_connection }}"
+
+- name: test bad condition
+  junos_command:
+    commands:
+      - show version
+    wait_for:
+      - "result[0] contains bad_value_string"
+    provider: "{{ netconf }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END netconf_xml/timeout.yaml on connection={{ ansible_connection }}"

@@ -1,0 +1,4 @@
+vrf context coke
+vrf context management
+  ip route 172.26.0.0/16 172.26.4.1
+vrf context test-vrf

@@ -1,0 +1,60 @@
+# test code for the ping module
+# (c) 2014, Michael DeHaan <michael@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# the following tests all raise errors, to use them in a Makefile, we run them with different flags, as
+# otherwise ansible stops at the first one and we want to ensure STOP conditions for each
+
+- set_fact:
+    test_file: "{{ output_dir }}/ansible_test_file"  # FIXME, use set tempdir
+    test_input: "owner=test"
+    bad_var: "{{ output_dir }}' owner=test"
+    chdir: "mom chdir=/tmp"
+  tags: common
+
+- file: name={{test_file}} state=touch
+  tags: common
+
+- name: remove touched file
+  file: name={{test_file}} state=absent
+  tags: common
+
+- name: include test that we cannot insert arguments
+  include: scenario1.yml
+  tags: scenario1
+
+- name: include test that we cannot duplicate arguments
+  include: scenario2.yml
+  tags: scenario2
+
+- name: include test that we can't do this for the shell module
+  include: scenario3.yml
+  tags: scenario3
+
+- name: include test that we can't go all Little Bobby Droptables on a quoted var to add more
+  include: scenario4.yml
+  tags: scenario4
+
+- name: test that a missing/malformed jinja2 filter fails
+  debug: msg="{{output_dir|badfiltername}}"
+  tags: scenario5
+  register: filter_fail
+  ignore_errors: yes
+
+- assert:
+    that:
+     - filter_fail is failed

@@ -1,4 +1,0 @@
-git+http://bitbucket.org/willthames/git-ansible-galaxy,v1.4
-hg+http://bitbucket.org/willthames/hg-ansible-galaxy
-https://bitbucket.org/willthames/http-ansible-galaxy/get/master.tar.gz,,http-role
-git+git@github.com:geerlingguy/ansible-role-php.git

@@ -1,7 +1,0 @@
-- hosts: ubuntu1404
-  gather_facts: no
-  remote_user: testing
-  tasks:
-  - command: whoami
-  - apt: update_cache=yes
-    sudo: yes

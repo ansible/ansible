@@ -1,0 +1,20 @@
+---
+# vars file for test_ec2_ami
+
+# based on Amazon Linux AMI 2017.09.0 (HVM), SSD Volume Type
+ec2_region_images:
+  us-east-1: ami-8c1be5f6
+  us-east-2: ami-c5062ba0
+  us-west-1: ami-02eada62
+  us-west-2: ami-e689729e
+  ca-central-1: ami-fd55ec99
+  eu-west-1: ami-acd005d5
+  eu-central-1: ami-c7ee5ca8
+  eu-west-2: ami-1a7f6d7e
+  ap-southeast-1: ami-0797ea64
+  ap-southeast-2: ami-8536d6e7
+  ap-northeast-2: ami-9bec36f5
+  ap-northeast-1: ami-2a69be4c
+  ap-south-1: ami-4fc58420
+  sa-east-1: ami-f1344b9d
+  cn-north-1: ami-fba67596

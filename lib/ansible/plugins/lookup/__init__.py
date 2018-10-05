@@ -19,6 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from abc import abstractmethod
+
+from ansible.errors import AnsibleFileNotFound
+from ansible.plugins import AnsiblePlugin
+
 try:
     from __main__ import display
 except ImportError:
@@ -27,10 +32,17 @@ except ImportError:
 
 __all__ = ['LookupBase']
 
-class LookupBase:
+
+class LookupBase(AnsiblePlugin):
+
     def __init__(self, loader=None, templar=None, **kwargs):
+
+        super(LookupBase, self).__init__()
+
         self._loader = loader
         self._templar = templar
+
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
     def get_basedir(self, variables):
@@ -39,7 +51,8 @@ class LookupBase:
         else:
             return self._loader.get_basedir()
 
-    def _flatten(self, terms):
+    @staticmethod
+    def _flatten(terms):
         ret = []
         for term in terms:
             if isinstance(term, (list, tuple)):
@@ -48,16 +61,68 @@ class LookupBase:
                 ret.append(term)
         return ret
 
-    def _combine(self, a, b):
+    @staticmethod
+    def _combine(a, b):
         results = []
         for x in a:
             for y in b:
-                results.append(self._flatten([x,y]))
+                results.append(LookupBase._flatten([x, y]))
         return results
 
-    def _flatten_hash_to_list(self, terms):
+    @staticmethod
+    def _flatten_hash_to_list(terms):
         ret = []
         for key in terms:
             ret.append({'key': key, 'value': terms[key]})
         return ret
 
+    @abstractmethod
+    def run(self, terms, variables=None, **kwargs):
+        """
+        When the playbook specifies a lookup, this method is run.  The
+        arguments to the lookup become the arguments to this method.  One
+        additional keyword argument named ``variables`` is added to the method
+        call.  It contains the variables available to ansible at the time the
+        lookup is templated.  For instance::
+
+            "{{ lookup('url', 'https://toshio.fedorapeople.org/one.txt', validate_certs=True) }}"
+
+        would end up calling the lookup plugin named url's run method like this::
+            run(['https://toshio.fedorapeople.org/one.txt'], variables=available_variables, validate_certs=True)
+
+        Lookup plugins can be used within playbooks for looping.  When this
+        happens, the first argument is a list containing the terms.  Lookup
+        plugins can also be called from within playbooks to return their
+        values into a variable or parameter.  If the user passes a string in
+        this case, it is converted into a list.
+
+        Errors encountered during execution should be returned by raising
+        AnsibleError() with a message describing the error.
+
+        Any strings returned by this method that could ever contain non-ascii
+        must be converted into python's unicode type as the strings will be run
+        through jinja2 which has this requirement.  You can use::
+
+            from ansible.module_utils._text import to_text
+            result_string = to_text(result_string)
+        """
+        pass
+
+    def find_file_in_search_path(self, myvars, subdir, needle, ignore_missing=False):
+        '''
+        Return a file (needle) in the task's expected search path.
+        '''
+
+        if 'ansible_search_path' in myvars:
+            paths = myvars['ansible_search_path']
+        else:
+            paths = [self.get_basedir(myvars)]
+
+        result = None
+        try:
+            result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
+        except AnsibleFileNotFound:
+            if not ignore_missing:
+                self._display.warning("Unable to find '%s' in expected paths (use -vvvvv to see paths)" % needle)
+
+        return result

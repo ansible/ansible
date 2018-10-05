@@ -1,21 +1,22 @@
-prune v2
-prune docsite
-prune ticket_stubs
-prune packaging
-prune test
 prune hacking
-include README.md packaging/rpm/ansible.spec COPYING
+include README.rst
+include COPYING
+include SYMLINK_CACHE.json
+include requirements.txt
+include .coveragerc
 include examples/hosts
 include examples/ansible.cfg
-include lib/ansible/module_utils/powershell.ps1
+recursive-include lib/ansible/executor/powershell *
+recursive-include lib/ansible/module_utils/csharp *
+recursive-include lib/ansible/module_utils/powershell *
 recursive-include lib/ansible/modules *
+recursive-include lib/ansible/galaxy/data *
 recursive-include docs *
+recursive-include licenses *
+recursive-include packaging *
+recursive-include test *
 include Makefile
-include VERSION
 include MANIFEST.in
+include changelogs/CHANGELOG*.rst
 include contrib/README.md
-include contrib/inventory *
-exclude lib/ansible/modules/core/.git*
-exclude lib/ansible/modules/extras/.git*
-prune lib/ansible/modules/core/.git
-prune lib/ansible/modules/extras/.git
+recursive-include contrib/inventory *

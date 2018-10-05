@@ -20,26 +20,33 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.playbook.attribute import Attribute, FieldAttribute
-#from ansible.utils.display import deprecated
+from ansible.errors import AnsibleParserError
+from ansible.playbook.attribute import FieldAttribute
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class Become:
 
-    # Privlege escalation
-    _become              = FieldAttribute(isa='bool')
-    _become_method       = FieldAttribute(isa='string')
-    _become_user         = FieldAttribute(isa='string')
+    # Privilege escalation
+    _become = FieldAttribute(isa='bool')
+    _become_method = FieldAttribute(isa='string')
+    _become_user = FieldAttribute(isa='string')
+    _become_flags = FieldAttribute(isa='string')
 
     def __init__(self):
-        return super(Become, self).__init__()
+        super(Become, self).__init__()
 
     def _detect_privilege_escalation_conflict(self, ds):
 
         # Fail out if user specifies conflicting privilege escalations
         has_become = 'become' in ds or 'become_user'in ds
-        has_sudo   = 'sudo' in ds or 'sudo_user' in ds
-        has_su     = 'su' in ds or 'su_user' in ds
+        has_sudo = 'sudo' in ds or 'sudo_user' in ds
+        has_su = 'su' in ds or 'su_user' in ds
 
         if has_become:
             msg = 'The become params ("become", "become_user") and'
@@ -55,7 +62,7 @@ class Become:
 
         This is called from the Base object's preprocess_data() method which
         in turn is called pretty much anytime any sort of playbook object
-        (plays, tasks, blocks, etc) are created.
+        (plays, tasks, blocks, etc) is created.
         """
 
         self._detect_privilege_escalation_conflict(ds)
@@ -66,60 +73,23 @@ class Become:
             if 'sudo' in ds:
                 ds['become'] = ds['sudo']
                 del ds['sudo']
-            else:
-                ds['become'] = True
+
             if 'sudo_user' in ds:
                 ds['become_user'] = ds['sudo_user']
                 del ds['sudo_user']
 
-            #deprecated("Instead of sudo/sudo_user, use become/become_user and set become_method to 'sudo' (default)")
+            display.deprecated("Instead of sudo/sudo_user, use become/become_user and make sure become_method is 'sudo' (default)", '2.9')
 
         elif 'su' in ds or 'su_user' in ds:
             ds['become_method'] = 'su'
             if 'su' in ds:
                 ds['become'] = ds['su']
                 del ds['su']
-            else:
-                ds['become'] = True
+
             if 'su_user' in ds:
                 ds['become_user'] = ds['su_user']
                 del ds['su_user']
 
-            #deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
-
-        # if we are becoming someone else, but some fields are unset,
-        # make sure they're initialized to the default config values
-        if ds.get('become', False):
-            if ds.get('become_method', None) is None:
-                ds['become_method'] = C.DEFAULT_BECOME_METHOD
-            if ds.get('become_user', None) is None:
-                ds['become_user'] = C.DEFAULT_BECOME_USER
+            display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)", '2.9')
 
         return ds
-
-    def _get_attr_become(self):
-        '''
-        Override for the 'become' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become')
-        else:
-            return self._attributes['become']
-
-    def _get_attr_become_method(self):
-        '''
-        Override for the 'become_method' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_method')
-        else:
-            return self._attributes['become_method']
-
-    def _get_attr_become_user(self):
-        '''
-        Override for the 'become_user' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_user')
-        else:
-            return self._attributes['become_user']

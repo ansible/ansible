@@ -1,0 +1,115 @@
+---
+- debug: msg="START nxapi/set_name_servers.yaml"
+
+
+# nxapi will error if you try and remove a non-existent entry,
+# Therefore we do this as a with_items loop with ignore_errors
+- name: setup
+  nxos_config: &reset
+    lines:
+      - no ip name-server {{ item }}
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+  with_items:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+
+- name: configure name_servers
+  nxos_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip name-server 192.0.2.1' in result.commands"
+      - "'ip name-server 192.0.2.2' in result.commands"
+      - "'ip name-server 192.0.2.3' in result.commands"
+
+- name: verify name_servers
+  nxos_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+#- name: change to vrf
+#  nxos_system:
+#    name_servers:
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
+#  register: result
+
+#- assert:
+#    that:
+#      - result.changed == true
+#      - result.commands|length == 2
+#      - "'no ip name-server 192.0.2.2' in result.commands"
+#      - "'ip name-server 192.0.2.2 vrf ansible' in result.commands"
+
+#- name: verify change to vrf
+#  nxos_system:
+#    name_servers:
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
+#  register: result
+#
+#- assert:
+#    that:
+#      - result.changed == false
+
+- name: remove one
+  nxos_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 1
+      - "'no ip name-server 192.0.2.3' in result.commands"
+
+- name: default name server
+  nxos_system: &defns
+    name_servers: default
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: Idempotent check
+  nxos_system: *defns
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: teardown
+  nxos_config: *reset
+  with_items:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+  ignore_errors: yes
+
+- debug: msg="END nxapi/set_name_servers.yaml"

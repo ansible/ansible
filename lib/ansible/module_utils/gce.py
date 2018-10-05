@@ -25,69 +25,30 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
-import pprint
+try:
+    from libcloud.compute.types import Provider
+    from libcloud.compute.providers import get_driver
+    HAS_LIBCLOUD_BASE = True
+except ImportError:
+    HAS_LIBCLOUD_BASE = False
 
-USER_AGENT_PRODUCT="Ansible-gce"
-USER_AGENT_VERSION="v1"
+from ansible.module_utils.gcp import gcp_connect
+from ansible.module_utils.gcp import unexpected_error_msg as gcp_error
+
+USER_AGENT_PRODUCT = "Ansible-gce"
+USER_AGENT_VERSION = "v1"
+
 
 def gce_connect(module, provider=None):
-    """Return a Google Cloud Engine connection."""
-    service_account_email = module.params.get('service_account_email', None)
-    pem_file = module.params.get('pem_file', None)
-    project_id = module.params.get('project_id', None)
+    """Return a GCP connection for Google Compute Engine."""
+    if not HAS_LIBCLOUD_BASE:
+        module.fail_json(msg='libcloud must be installed to use this module')
+    provider = provider or Provider.GCE
 
-    # If any of the values are not given as parameters, check the appropriate
-    # environment variables.
-    if not service_account_email:
-        service_account_email = os.environ.get('GCE_EMAIL', None)
-    if not project_id:
-        project_id = os.environ.get('GCE_PROJECT', None)
-    if not pem_file:
-        pem_file = os.environ.get('GCE_PEM_FILE_PATH', None)
+    return gcp_connect(module, provider, get_driver, USER_AGENT_PRODUCT, USER_AGENT_VERSION)
 
-    # If we still don't have one or more of our credentials, attempt to
-    # get the remaining values from the libcloud secrets file.
-    if service_account_email is None or pem_file is None:
-        try:
-            import secrets
-        except ImportError:
-            secrets = None
-
-        if hasattr(secrets, 'GCE_PARAMS'):
-            if not service_account_email:
-                service_account_email = secrets.GCE_PARAMS[0]
-            if not pem_file:
-                pem_file = secrets.GCE_PARAMS[1]
-        keyword_params = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
-        if not project_id:
-            project_id = keyword_params.get('project', None)
-
-    # If we *still* don't have the credentials we need, then it's time to
-    # just fail out.
-    if service_account_email is None or pem_file is None or project_id is None:
-        module.fail_json(msg='Missing GCE connection parameters in libcloud '
-                             'secrets file.')
-        return None
-
-    # Allow for passing in libcloud Google DNS (e.g, Provider.GOOGLE)
-    if provider is None:
-        provider = Provider.GCE
-
-    try:
-        gce = get_driver(provider)(service_account_email, pem_file,
-                datacenter=module.params.get('zone', None),
-                project=project_id)
-        gce.connection.user_agent_append("%s/%s" % (
-            USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except (RuntimeError, ValueError), e:
-        module.fail_json(msg=str(e), changed=False)
-    except Exception, e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
-
-    return gce
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
-    return 'Unexpected response: ' + pprint.pformat(vars(error))
+    return gcp_error(error)

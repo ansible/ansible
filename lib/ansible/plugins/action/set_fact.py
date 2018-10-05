@@ -18,28 +18,44 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems
-
-from ansible.errors import AnsibleError
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.vars import isidentifier
+
+import ansible.constants as C
 
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
+
         facts = dict()
+
+        cacheable = boolean(self._task.args.pop('cacheable', False))
+
         if self._task.args:
             for (k, v) in iteritems(self._task.args):
                 k = self._templar.template(k)
 
                 if not isidentifier(k):
-                    return dict(failed=True, msg="The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores." % k)
+                    result['failed'] = True
+                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
+                                     "letters, numbers and underscores." % k)
+                    return result
 
-                if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
-                    v = boolean(v)
+                if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
+                    v = boolean(v, strict=False)
                 facts[k] = v
-        return dict(changed=False, ansible_facts=facts)
+
+        result['changed'] = False
+        result['ansible_facts'] = facts
+        result['_ansible_facts_cacheable'] = cacheable
+        return result

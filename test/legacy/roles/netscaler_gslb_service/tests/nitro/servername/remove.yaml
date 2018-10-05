@@ -1,0 +1,12 @@
+---
+
+- name: Remove gslb-service-3
+
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+
+  netscaler_gslb_service:
+    operation: absent
+
+    servicename: gslb-service-3

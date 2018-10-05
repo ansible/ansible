@@ -1,0 +1,107 @@
+General Info :
+
+	SysDescr     : VSP-4450GSX-PWR+ (7.0.0.0_B015)
+	SysName      : VSP-4450GSX-PWR+
+	SysUpTime    : 5 day(s), 17:13:09
+	SysContact   : http://www.extremenetworks.com/contact/
+	SysLocation  :
+
+Chassis Info:
+
+	Chassis            : 4450GSX-PWR+
+	ModelName          : 4450GSX-PWR+
+	BrandName          : Extreme Networks.
+	Serial#            : 14JP512E0001
+	H/W Revision       : 01
+	H/W Config         : none
+	Part Number        :
+	NumSlots           : 1
+	NumPorts           : 50
+	BaseMacAddr        : b4:47:5e:00:00:00
+	MacAddrCapacity    : 256
+	System MTU         : 1950
+
+Card Info :
+
+	Slot#      CardType          Serial#            Part#             Oper   Admin  Power
+	                                                                Status  Status  State
+	    1  4450GSX-PWR+     14JP512E0001               --               up      up     on
+
+Temperature Info :
+
+ Chassis Temperature
+                 30
+
+
+Power Supply Info :
+
+	Ps#1 Status       : UP
+	Ps#1 Type         : AC
+	Ps#1 Description  : AC-DC-54V-1000W
+	Ps#1 Serial Number: LBNNTMPL20180R
+	Ps#1 Version      : --
+	Ps#1 Part Number  : 325220-A.01
+
+	Ps#2 Status       : empty
+
+	Total Power Available : 1000 watts
+	Total Power Usage     : 127 watts
+
+Fan Info :
+
+	    Description   OperStatus       OperSpeed   AirflowDir
+	   Tray 1 Fan 1           up     mediumSpeed   left-right
+	   Tray 1 Fan 2           up     mediumSpeed   left-right
+	   Tray 1 Fan 3           up     mediumSpeed   left-right
+
+LED Info :
+
+	LED#1 Label  : PWR
+	LED#1 Status : GreenSteady
+
+	LED#2 Label  : Status
+	LED#2 Status : GreenSteady
+
+	LED#3 Label  : Rps
+	LED#3 Status : Off
+
+	LED#4 Label  : Up
+	LED#4 Status : UnSupported
+
+	LED#5 Label  : Down
+	LED#5 Status : UnSupported
+
+	LED#6 Label  : Base
+	LED#6 Status : UnSupported
+
+System Error Info :
+
+	Send Login Success Trap   : false
+	Send Authentication Trap  : false
+	Error Code                : 0
+	Error Severity            : 0
+
+Port Lock Info :
+
+	Status       : off
+	LockedPorts  :
+
+Message Control Info :
+
+	Action                 : suppress-msg
+	Control-Interval       : 5
+	Max-msg-num            : 5
+	Status                 : disable
+
+
+Configuration Operation Info Since Boot Up:
+         Last Change: 0 day(s), 08:31:10   (5 day(s), 08:41:59 ago)
+    Last Vlan Change: 0 day(s), 08:27:35   (5 day(s), 08:45:34 ago)
+Last Statistic Reset: 5 day(s), 16:56:45   (0 day(s), 00:16:24 ago)
+
+Current Uboot Info :
+----------------------------------------------------------------------------------------------------
+
+ VU-Boot 2012.04-00002-g6fb1c26 (Apr 26 2017 - 13:37:44) bld=17042617
+
+

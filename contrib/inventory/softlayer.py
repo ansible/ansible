@@ -3,10 +3,10 @@
 SoftLayer external inventory script.
 
 The SoftLayer Python API client is required. Use `pip install softlayer` to install it.
-You have a few different options for configuring your username and api_key. You can pass 
+You have a few different options for configuring your username and api_key. You can pass
 environment variables (SL_USERNAME and SL_API_KEY). You can also write INI file to
 ~/.softlayer or /etc/softlayer.conf. For more information see the SL API at:
-- https://softlayer-python.readthedocs.org/en/latest/config_file.html
+- https://softlayer-python.readthedocs.io/en/latest/config_file.html
 
 The SoftLayer Python client has a built in command for saving this configuration file
 via the command `sl config setup`.
@@ -35,14 +35,41 @@ via the command `sl config setup`.
 import SoftLayer
 import re
 import argparse
-try:
-    import json
-except:
-    import simplejson as json
+import itertools
+import json
+
 
 class SoftLayerInventory(object):
+    common_items = [
+        'id',
+        'globalIdentifier',
+        'hostname',
+        'domain',
+        'fullyQualifiedDomainName',
+        'primaryBackendIpAddress',
+        'primaryIpAddress',
+        'datacenter',
+        'tagReferences',
+        'userData.value',
+    ]
+
+    vs_items = [
+        'lastKnownPowerState.name',
+        'powerState',
+        'maxCpu',
+        'maxMemory',
+        'activeTransaction.transactionStatus[friendlyName,name]',
+        'status',
+    ]
+
+    hw_items = [
+        'hardwareStatusId',
+        'processorPhysicalCoreAmount',
+        'memoryCapacity',
+    ]
+
     def _empty_inventory(self):
-        return {"_meta" : {"hostvars" : {}}}
+        return {"_meta": {"hostvars": {}}}
 
     def __init__(self):
         '''Main path'''
@@ -55,19 +82,19 @@ class SoftLayerInventory(object):
             self.get_all_servers()
             print(self.json_format_dict(self.inventory, True))
         elif self.args.host:
-            self.get_virtual_servers()
+            self.get_all_servers()
             print(self.json_format_dict(self.inventory["_meta"]["hostvars"][self.args.host], True))
 
     def to_safe(self, word):
         '''Converts 'bad' characters in a string to underscores so they can be used as Ansible groups'''
 
-        return re.sub("[^A-Za-z0-9\-\.]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-\.]", "_", word)
 
     def push(self, my_dict, key, element):
         '''Push an element onto an array that may not have been defined in the dict'''
 
         if key in my_dict:
-            my_dict[key].append(element);
+            my_dict[key].append(element)
         else:
             my_dict[key] = [element]
 
@@ -76,9 +103,9 @@ class SoftLayerInventory(object):
 
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on SoftLayer')
         parser.add_argument('--list', action='store_true', default=False,
-                           help='List instances (default: False)')
+                            help='List instances (default: False)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific instance')
+                            help='Get all the variables about a specific instance')
         self.args = parser.parse_args()
 
     def json_format_dict(self, data, pretty=False):
@@ -108,7 +135,15 @@ class SoftLayerInventory(object):
         if 'primaryIpAddress' not in instance:
             return
 
+        instance['userData'] = instance['userData'][0]['value'] if instance['userData'] else ''
+
         dest = instance['primaryIpAddress']
+
+        instance['tags'] = list()
+        for tag in instance['tagReferences']:
+            instance['tags'].append(tag['tag']['name'])
+
+        del instance['tagReferences']
 
         self.inventory["_meta"]["hostvars"][dest] = instance
 
@@ -139,10 +174,14 @@ class SoftLayerInventory(object):
         # Inventory: group by type (hardware/virtual)
         self.push(self.inventory, instance_type, dest)
 
+        for tag in instance['tags']:
+            self.push(self.inventory, tag, dest)
+
     def get_virtual_servers(self):
         '''Get all the CCI instances'''
         vs = SoftLayer.VSManager(self.client)
-        instances = vs.list_instances()
+        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items, self.vs_items))
+        instances = vs.list_instances(mask=mask)
 
         for instance in instances:
             self.process_instance(instance)
@@ -150,7 +189,8 @@ class SoftLayerInventory(object):
     def get_physical_servers(self):
         '''Get all the hardware instances'''
         hw = SoftLayer.HardwareManager(self.client)
-        instances = hw.list_hardware()
+        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items, self.hw_items))
+        instances = hw.list_hardware(mask=mask)
 
         for instance in instances:
             self.process_instance(instance, 'hardware')
@@ -159,5 +199,6 @@ class SoftLayerInventory(object):
         self.client = SoftLayer.Client()
         self.get_virtual_servers()
         self.get_physical_servers()
+
 
 SoftLayerInventory()

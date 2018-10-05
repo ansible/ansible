@@ -1,0 +1,22 @@
+{
+    "status_code": 400,
+    "data": {
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 400,
+            "RequestId": "03b1107f-b5d0-11e7-ae09-550cfe4b2358",
+            "HTTPHeaders": {
+                "x-amzn-requestid": "03b1107f-b5d0-11e7-ae09-550cfe4b2358",
+                "date": "Fri, 20 Oct 2017 19:51:07 GMT",
+                "content-length": "320",
+                "content-type": "text/xml",
+                "connection": "close"
+            }
+        },
+        "Error": {
+            "Message": "Template format error: JSON not well-formed. (line 4, column 4)",
+            "Code": "ValidationError",
+            "Type": "Sender"
+        }
+    }
+}

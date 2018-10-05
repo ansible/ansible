@@ -1,0 +1,339 @@
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      name: vnet001
+      resource_group: "{{ resource_group }}"
+      address_prefixes_cidr: "10.10.0.0/16"
+  register: output
+
+- name: Create subnet
+  azure_rm_subnet:
+      name: subnet001
+      resource_group: "{{ resource_group }}"
+      virtual_network_name: vnet001
+      address_prefix_cidr: "10.10.0.0/24"
+  register: output
+
+- name: Create second virtual network
+  azure_rm_virtualnetwork:
+      name: vnet002
+      resource_group: "{{ resource_group }}"
+      address_prefixes_cidr: "10.20.0.0/16"
+  register: output
+
+- name: Create second subnet
+  azure_rm_subnet:
+      name: subnet002
+      resource_group: "{{ resource_group }}"
+      virtual_network_name: vnet002
+      address_prefix_cidr: "10.20.0.0/24"
+  register: output
+
+- name: Create security group
+  azure_rm_securitygroup:
+      name: secgroup001
+      resource_group: "{{ resource_group }}"
+  register: output
+
+- name: Create second security group
+  azure_rm_securitygroup:
+      name: secgroup002
+      resource_group: "{{ resource_group }}"
+  register: output
+
+- name: Create a public ip
+  azure_rm_publicipaddress:
+      name: publicip001
+      resource_group: "{{ resource_group }}"
+      allocation_method: "Static"
+  register: output
+
+- name: Create second public ip
+  azure_rm_publicipaddress:
+      name: publicip002
+      resource_group: "{{ resource_group }}"
+      allocation_method: "Static"
+  register: output
+
+- name: Delete network interface, if it exists
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      state: absent
+  register: output
+
+- name: Should require subnet when creating nic
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      virtual_network_name: vnet001
+      security_group_name: secgroup001
+      public_ip_address_name: publicip001
+  register: output
+  ignore_errors: yes
+
+- assert:
+      that:
+          - output.failed
+          - "'subnet' in output.msg"
+
+- name: Should require virtual network when creating nic
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      security_group_name: secgroup001
+      public_ip_address_name: publicip001
+      subnet: subnet001
+  register: output
+  ignore_errors: yes
+
+- assert:
+      that:
+          - output.failed
+          - "'virtual_network_name' in output.msg"
+
+- name: Create nic
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      virtual_network_name: vnet001
+      subnet: subnet001
+      security_group_name: secgroup001
+      public_ip_address_name: publicip001
+  register: output
+
+- name: Should be idempotent
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      virtual_network_name: vnet001
+      subnet: subnet001
+      security_group_name: secgroup001
+      public_ip_address_name: publicip001
+  register: output
+
+- assert:
+      that: not output.changed
+
+- name: Should change private IP address
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      private_ip_address: 10.10.0.10
+      private_ip_allocation_method: Static
+      virtual_network_name: vnet001
+      subnet: subnet001
+      security_group_name: secgroup001
+      public_ip_address_name: publicip001
+  register: output
+
+- assert:
+      that:
+          - output.changed
+          - output.state.ip_configuration.private_ip_address == '10.10.0.10'
+          - output.state.ip_configuration.private_ip_allocation_method == 'Static'
+
+- name: Should change virtual network and subnet
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      private_ip_allocation_method: Dynamic
+      virtual_network_name: vnet002
+      subnet: subnet002
+      security_group_name: secgroup002
+      public_ip_address_name: publicip002
+  register: output
+
+- assert:
+      that:
+          - output.changed
+          - "'10.20' in output.state.ip_configuration.private_ip_address"
+          - output.state.ip_configuration.private_ip_allocation_method == 'Dynamic'
+          - output.state.ip_configuration.subnet.name == 'subnet002'
+          - output.state.ip_configuration.public_ip_address.name == 'publicip002'
+
+- name: Add tags
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      tags:
+          testing: testing
+          foo: bar
+  register: output
+
+- assert:
+      that:
+          - output.state.tags | length == 2
+          - output.state.tags.testing == 'testing'
+
+- name: Gather facts for tags
+  azure_rm_networkinterface_facts:
+    tags: testing
+  register: output
+
+- assert:
+      that:
+          - azure_networkinterfaces | length >= 1
+
+- name: Gather facts for resource group and tags
+  azure_rm_networkinterface_facts:
+    resource_group: "{{ resource_group }}"
+    tags: testing
+  register: output
+
+- assert:
+      that:
+          - azure_networkinterfaces| length == 1
+
+- name: Gather facts for name and tags
+  azure_rm_networkinterface_facts:
+    resource_group: "{{ resource_group }}"
+    name: nic003
+    tags: testing
+  register: output
+
+- assert:
+      that:
+          - azure_networkinterfaces | length == 1
+
+- name: Purge one tag
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      tags:
+        testing: testing
+  register: output
+
+- assert:
+      that:
+          - output.changed
+          - output.state.tags | length == 1
+
+- name: Purge all tags
+  azure_rm_networkinterface:
+      name: nic003
+      resource_group: "{{ resource_group }}"
+      tags: {}
+  register: output
+
+- assert:
+      that:
+          - output.changed
+          - output.state.tags | length == 0
+
+- name: Remove network interface, if it exists
+  azure_rm_networkinterface:
+      name: "{{ item }}"
+      resource_group: "{{ resource_group }}"
+      state: absent
+  register: output
+  with_items:
+      - nic004
+      - nic005
+
+- name: Remove publicip, if it exists
+  azure_rm_publicipaddress:
+      name: "{{ item }}"
+      resource_group: "{{ resource_group }}"
+      state: absent
+  with_items:
+      - nic00401
+      - nic00501
+
+- name: Remove security group, if it exists
+  azure_rm_securitygroup:
+      name: "{{ item }}"
+      resource_group: "{{ resource_group }}"
+      state: absent
+  with_items:
+      - nic00401
+      - nic00501
+
+- name: Should create default security group and default public ip for linux host
+  azure_rm_networkinterface:
+      name: nic004
+      resource_group: "{{ resource_group }}"
+      virtual_network_name: vnet001
+      subnet: subnet001
+  register: output
+
+- assert:
+      that:
+          - output.state.ip_configuration.public_ip_address.name == 'nic00401'
+          - output.state.network_security_group.name == 'nic00401'
+
+- name: Gather facts for security group nic00401
+  azure_rm_securitygroup_facts:
+      resource_group: "{{ resource_group }}"
+      name: nic00401
+  register: output
+
+- assert:
+      that:
+          - azure_securitygroups[0].properties.securityRules[0].properties.destinationPortRange == '22'
+
+- name: Should create default security group and default public ip for windows host
+  azure_rm_networkinterface:
+      name: nic005
+      resource_group: "{{ resource_group }}"
+      virtual_network_name: vnet001
+      subnet: subnet001
+      os_type: Windows
+      open_ports:
+          - 9000
+          - '9005-9010'
+  register: output
+
+- assert:
+      that:
+          - output.state.ip_configuration.public_ip_address.name == 'nic00501'
+          - output.state.network_security_group.name == 'nic00501'
+
+- name: Gather facts for security group nic00501
+  azure_rm_securitygroup_facts:
+      resource_group: "{{ resource_group }}"
+      name: nic00501
+  register: output
+
+- name: Security group should allow RDP access on custom port
+  assert:
+      that:
+          - azure_securitygroups[0].properties.securityRules[0].properties.destinationPortRange == '9000'
+          - azure_securitygroups[0].properties.securityRules[1].properties.destinationPortRange == '9005-9010'
+
+- name: Gather facts for one nic
+  azure_rm_networkinterface_facts:
+      resource_group: "{{ resource_group }}"
+      name: nic003
+  register: output
+
+- assert:
+      that:
+          - azure_networkinterfaces | length == 1
+
+- name: Gather facts for all nics in resource groups
+  azure_rm_networkinterface_facts:
+      resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+      that:
+          - azure_networkinterfaces | length >= 3
+
+- name: Gather facts for all nics
+  azure_rm_networkinterface_facts:
+  register: output
+
+- assert:
+      that:
+          - azure_networkinterfaces | length >= 3
+
+- name: Delete nic
+  azure_rm_networkinterface:
+      name: "{{ item }}"
+      resource_group: "{{ resource_group }}"
+      state: absent
+  register: output
+  with_items:
+      - nic003
+      - nic004
+      - nic005

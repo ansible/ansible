@@ -1,0 +1,7 @@
+- block:
+
+    - import_tasks: selfsigned.yml
+
+    - import_tasks: ownca.yml
+
+  when: pyopenssl_version.stdout is version('0.15', '>=')

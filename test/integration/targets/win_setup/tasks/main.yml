@@ -1,0 +1,141 @@
+# test code for the setup module when using winrm connection
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: test setup module
+  action: setup
+  register: setup_result
+
+- name: check windows setup result
+  assert:
+    that:
+      - setup_result is not failed
+      - setup_result is not changed
+      - setup_result.ansible_facts
+      - setup_result.ansible_facts.ansible_os_family == 'Windows'
+      - setup_result.ansible_facts.ansible_date_time
+      - setup_result.ansible_facts.ansible_date_time.date
+      - setup_result.ansible_facts.ansible_date_time.year
+      - setup_result.ansible_facts.ansible_date_time.month
+      - setup_result.ansible_facts.ansible_date_time.day
+      - setup_result.ansible_facts.ansible_date_time.hour is defined
+      - setup_result.ansible_facts.ansible_date_time.minute is defined
+      - setup_result.ansible_facts.ansible_date_time.iso8601
+      - setup_result.ansible_facts.ansible_distribution
+      - setup_result.ansible_facts.ansible_distribution_version
+      - setup_result.ansible_facts.ansible_fqdn
+      - setup_result.ansible_facts.ansible_hostname
+      - setup_result.ansible_facts.ansible_ip_addresses
+      - setup_result.ansible_facts.ansible_system
+      - setup_result.ansible_facts.ansible_memtotal_mb
+      - setup_result.ansible_facts.ansible_interfaces
+      - setup_result.ansible_facts.ansible_interfaces[0]
+      - setup_result.ansible_facts.ansible_interfaces[0].interface_name
+      - setup_result.ansible_facts.ansible_interfaces[0].connection_name
+      - setup_result.ansible_facts.ansible_interfaces[0].interface_index
+      - setup_result.ansible_facts.ansible_architecture
+      - setup_result.ansible_facts.ansible_os_name
+      - setup_result.ansible_facts.ansible_powershell_version
+      - setup_result.ansible_facts.gather_subset is defined
+      - setup_result.ansible_facts.gather_subset[0] == 'all'
+      - setup_result.ansible_facts.module_setup == true
+
+- name: check setup result only when using https
+  assert:
+    that:
+      - "setup_result.ansible_facts.ansible_win_rm_certificate_expires"
+  when: ansible_ssh_port|default(5986) != 5985
+
+- name: test gather_subset "!all"
+  setup:
+    gather_subset: '!all'
+  register: setup_result
+
+- name: verify that some known "all" keys are missing (should just be "min" subset)
+  assert:
+    that:
+    - setup_result is not failed
+    - setup_result is not changed
+    - setup_result.ansible_facts is defined
+    - setup_result.ansible_facts.gather_subset[0] == '!all'
+    - setup_result.ansible_facts.gather_subset is defined
+    - setup_result.ansible_facts.ansible_ip_addresses is not defined
+    - setup_result.ansible_facts.ansible_interfaces is not defined
+
+- name: test gather_subset "!all,!min" with list
+  setup:
+    gather_subset:
+    - '!all'
+    - '!min'
+  register: setup_result
+
+- name: verify that only status keys are returned
+  assert:
+    that:
+    - setup_result is not failed
+    - setup_result is not changed
+    - setup_result.ansible_facts is defined
+    - setup_result.ansible_facts.gather_subset is defined
+    - setup_result.ansible_facts.gather_subset[0] == '!all'
+    - setup_result.ansible_facts.gather_subset[1] == '!min'
+    - setup_result.ansible_facts.keys() | union(['gather_subset','module_setup']) | length == 2
+
+- name: test gather_subset "!all,!min,interfaces" with list
+  setup:
+    gather_subset:
+    - '!all'
+    - '!min'
+    - interfaces
+  register: setup_result
+
+- name: verify that only status keys and ansible_interfaces are returned
+  assert:
+    that:
+    - setup_result is not failed
+    - setup_result is not changed
+    - setup_result.ansible_facts is defined
+    - setup_result.ansible_facts.gather_subset is defined
+    - setup_result.ansible_facts.gather_subset[0] == '!all'
+    - setup_result.ansible_facts.gather_subset[1] == '!min'
+    - setup_result.ansible_facts.gather_subset[2] == 'interfaces'
+    - setup_result.ansible_facts.ansible_interfaces
+    - setup_result.ansible_facts.ansible_interfaces[0]
+    - setup_result.ansible_facts.ansible_interfaces[0].interface_name
+    - setup_result.ansible_facts.ansible_interfaces[0].connection_name
+    - setup_result.ansible_facts.ansible_interfaces[0].interface_index
+    - setup_result.ansible_facts.keys() | union(['ansible_interfaces','gather_subset','module_setup']) | length == 3
+
+- name: test gather_subset "!all,!min,bogus" with list
+  setup:
+    gather_subset:
+    - '!all'
+    - '!min'
+    - bogus
+  register: setup_result
+
+- name: verify that only status keys are returned and that we got a warning
+  assert:
+    that:
+    - setup_result is not failed
+    - setup_result is not changed
+    - setup_result.ansible_facts is defined
+    - setup_result.ansible_facts.gather_subset is defined
+    - setup_result.ansible_facts.gather_subset[0] == '!all'
+    - setup_result.ansible_facts.gather_subset[1] == '!min'
+    - setup_result.ansible_facts.keys() | union(['gather_subset','module_setup']) | length == 2
+    - setup_result.warnings | length == 1
+    - setup_result.warnings[0] | regex_search('bogus')

@@ -20,45 +20,53 @@ __metaclass__ = type
 
 import os
 
+from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
+from ansible.module_utils._text import to_native
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
+
 
 class ActionModule(ActionBase):
 
-    def run(self, tmp=None, task_vars=dict()):
+    TRANSFERS_FILES = True
 
-        src        = self._task.args.get('src', None)
-        dest       = self._task.args.get('dest', None)
-        remote_src = boolean(self._task.args.get('remote_src', 'no'))
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
 
-        if src is None:
-            return dict(failed=True, msg="src is required")
-        elif remote_src:
-            # everything is remote, so we just execute the module
-            # without changing any of the module arguments
-            return self._execute_module(task_vars=task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
-        if self._task._role is not None:
-            src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
-        else:
-            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
+        src = self._task.args.get('src', None)
+        remote_src = boolean(self._task.args.get('remote_src', 'no'), strict=False)
 
-        # create the remote tmp dir if needed, and put the source file there
-        if tmp is None or "-tmp-" not in tmp:
-            tmp = self._make_tmp_path()
+        try:
+            if src is None:
+                raise AnsibleActionFail("src is required")
+            elif remote_src:
+                # everything is remote, so we just execute the module
+                # without changing any of the module arguments
+                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars))
 
-        tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
-        self._connection.put_file(src, tmp_src)
+            try:
+                src = self._find_needle('files', src)
+            except AnsibleError as e:
+                raise AnsibleActionFail(to_native(e))
 
-        if self._play_context.become and self._play_context.become_user != 'root':
-            if not self._play_context.check_mode:
-                self._remote_chmod('a+r', tmp_src, tmp)
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, os.path.basename(src))
+            self._transfer_file(src, tmp_src)
+            self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
 
-        new_module_args = self._task.args.copy()
-        new_module_args.update(
-            dict(
-                src=tmp_src,
+            new_module_args = self._task.args.copy()
+            new_module_args.update(
+                dict(
+                    src=tmp_src,
+                )
             )
-        )
 
-        return self._execute_module('patch', module_args=new_module_args, task_vars=task_vars)
+            result.update(self._execute_module('patch', module_args=new_module_args, task_vars=task_vars))
+        except AnsibleAction as e:
+            result.update(e.result)
+        finally:
+            self._remove_tmp_path(self._connection._shell.tmpdir)
+        return result

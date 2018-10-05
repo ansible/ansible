@@ -1,0 +1,19 @@
+---
+- debug: msg="START cli/bad_operator.yaml on connection={{ ansible_connection }}"
+
+- name: test bad operator
+  iosxr_command:
+    commands:
+      - show version
+      - show interfaces GigabitEthernet 0/0
+    wait_for:
+      - "result[0] contains 'Description: Foo'"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END cli/bad_operator.yaml on connection={{ ansible_connection }}"

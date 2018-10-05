@@ -1,0 +1,1 @@
+set interfaces lo0 unit 0 family inet address 192.0.2.1/32

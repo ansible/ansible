@@ -1,0 +1,38 @@
+---
+- debug: msg="START cli/toplevel_nonidempotent.yaml"
+
+- name: setup
+  asa_config:
+    backup: true
+    #    lines: ['hostname firewall']
+    provider: "{{ cli }}"
+
+- name: configure top level command
+  asa_config:
+    lines: ['hostname foo']
+    provider: "{{ cli }}"
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+
+- name: configure top level command idempotent check
+  asa_config:
+    lines: ['hostname foo']
+    provider: "{{ cli }}"
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown
+  asa_config:
+    lines: ['hostname {{ inventory_hostname_short }}']
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/toplevel_nonidempotent.yaml"

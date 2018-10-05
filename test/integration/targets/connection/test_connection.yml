@@ -1,0 +1,43 @@
+- hosts: "{{ target_hosts }}"
+  gather_facts: no
+  serial: 1
+  tasks:
+
+  ### raw with unicode arg and output
+
+  - name: raw with unicode arg and output
+    raw: echo 汉语
+    register: command
+  - name: check output of raw with unicode arg and output
+    assert:
+      that:
+      - "'汉语' in command.stdout"
+      - command is changed # as of 2.2, raw should default to changed: true for consistency w/ shell/command/script modules
+
+  ### copy local file with unicode filename and content
+
+  - name: create local file with unicode filename and content
+    local_action: lineinfile dest={{ local_tmp }}-汉语/汉语.txt create=true line=汉语
+  - name: remove remote file with unicode filename and content
+    action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语/汉语.txt state=absent"
+  - name: create remote directory with unicode name
+    action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语 state=directory"
+  - name: copy local file with unicode filename and content
+    action: "{{ action_prefix }}copy src={{ local_tmp }}-汉语/汉语.txt dest={{ remote_tmp }}-汉语/汉语.txt"
+
+  ### fetch remote file with unicode filename and content
+
+  - name: remove local file with unicode filename and content
+    local_action: file path={{ local_tmp }}-汉语/汉语.txt state=absent
+  - name: fetch remote file with unicode filename and content
+    fetch: src={{ remote_tmp }}-汉语/汉语.txt dest={{ local_tmp }}-汉语/汉语.txt fail_on_missing=true validate_checksum=true flat=true
+
+  ### remove local and remote temp files
+
+  - name: remove local temp file
+    local_action: file path={{ local_tmp }}-汉语 state=absent
+  - name: remove remote temp file
+    action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语 state=absent"
+
+  ### test wait_for_connection plugin
+  - wait_for_connection:

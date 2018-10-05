@@ -1,0 +1,104 @@
+---
+- debug: msg="START netconf/src_basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname_short }}
+      - delete interfaces lo0
+    provider: "{{ netconf }}"
+
+- name: configure device with text config
+  junos_config:
+    src: basic/config.j2
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check device with config
+  junos_config:
+    src: basic/config.j2
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  junos_config:
+    lines:
+      - delete interfaces lo0
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: configure device with set config
+  junos_config:
+    src: basic/config.set
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'address 192.0.2.1/32' in result.diff.prepared"
+
+- name: check device with config
+  junos_config:
+    src: basic/config.set
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  junos_config:
+    lines:
+      - delete interfaces lo0
+    provider: "{{ netconf }}"
+  register: result
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: configure device with xml config
+  junos_config:
+    src: basic/config.xml
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'address 192.0.2.1/32' in result.diff.prepared"
+
+- name: check device with config
+  junos_config:
+    src: basic/config.xml
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  junos_config:
+    lines:
+      - delete interfaces lo0
+    provider: "{{ netconf }}"
+  register: result
+- assert:
+    that:
+      - "result.changed == true"
+
+- debug: msg="END netconf/src_basic.yaml on connection={{ ansible_connection }}"

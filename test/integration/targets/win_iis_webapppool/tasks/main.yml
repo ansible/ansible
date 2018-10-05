@@ -1,0 +1,43 @@
+---
+# Cannot use win_feature to install IIS on Server 2008.
+# Run a brief check and skip hosts that don't support
+# that operation
+- name: check if win_feature will work on test host
+  win_command: powershell.exe "Get-WindowsFeature"
+  register: module_available
+  failed_when: False
+
+# Run actual tests
+- block:
+  - name: ensure IIS features are installed
+    win_feature:
+      name: Web-Server
+      state: present
+      include_management_tools: True
+    register: feature_install
+  
+  - name: reboot after feature install
+    win_reboot:
+    when: feature_install.reboot_required
+
+  - name: set version of IIS for tests
+    win_file_version:
+      path: C:\Windows\System32\inetsrv\w3wp.exe
+    register: iis_version
+
+  - name: ensure test pool is deleted as a baseline
+    win_iis_webapppool:
+      name: '{{test_iis_webapppool_name}}'
+      state: absent
+
+  # Tests
+  - name: run tests on hosts that support it
+    include_tasks: tests.yml
+  
+  always:
+  # Cleanup
+  - name: ensure test pool is deleted
+    win_iis_webapppool:
+      name: '{{test_iis_webapppool_name}}'
+      state: absent
+  when: module_available.rc == 0

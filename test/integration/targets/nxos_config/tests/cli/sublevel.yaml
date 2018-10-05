@@ -1,0 +1,36 @@
+---
+- debug: msg='START cli/sublevel.yaml'
+
+- name: setup
+  nxos_config:
+    lines: no ip access-list test
+    match: none
+
+- name: configure sub level command
+  nxos_config:
+    lines: 10 permit ip any any log
+    parents: ip access-list test
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list test' in result.updates"
+      - "'10 permit ip any any log' in result.updates"
+
+- name: configure sub level command idempotent check
+  nxos_config:
+    lines: 10 permit ip any any log
+    parents: ip access-list test
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines: no ip access-list test
+    match: none
+
+- debug: msg='END cli/sublevel.yaml'

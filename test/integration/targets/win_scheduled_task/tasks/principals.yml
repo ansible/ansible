@@ -1,0 +1,436 @@
+---
+- name: create test user
+  win_user:
+    name: '{{test_scheduled_task_user}}'
+    password: '{{test_scheduled_task_pass}}'
+    state: present
+    groups:
+    - Administrators
+
+- name: task with password principal (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    password: '{{test_scheduled_task_pass}}'
+    logon_type: password
+    update_password: no
+    actions:
+    - path: cmd.exe
+  register: task_with_password_check
+  check_mode: yes
+
+- name: get result of task with password principal (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_password_result_check
+
+- name: assert results of task with password principal (check mode)
+  assert:
+    that:
+    - task_with_password_check is changed
+    - task_with_password_result_check.task_exists == False
+
+- name: task with password principal
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    password: '{{test_scheduled_task_pass}}'
+    logon_type: password
+    update_password: no
+    actions:
+    - path: cmd.exe
+  register: task_with_password
+
+- name: get result of task with password principal
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_password_result
+
+- name: assert results of task with password principal
+  assert:
+    that:
+    - task_with_password is changed
+    - task_with_password_result.task_exists == True
+    - task_with_password_result.principal.group_id == None
+    - task_with_password_result.principal.logon_type == "TASK_LOGON_PASSWORD"
+    - task_with_password_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_password_result.principal.user_id.endswith(test_scheduled_task_user)
+
+- name: task with password principal (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    password: '{{test_scheduled_task_pass}}'
+    logon_type: password
+    update_password: no
+    actions:
+    - path: cmd.exe
+  register: task_with_password_again
+
+- name: assert results of task with password principal (idempotent)
+  assert:
+    that:
+    - task_with_password_again is not changed
+
+- name: task with password principal force pass change
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    password: '{{test_scheduled_task_pass}}'
+    logon_type: password
+    update_password: yes
+    actions:
+    - path: cmd.exe
+  register: task_with_password_force_update
+
+- name: assert results of task with password principal force pass change
+  assert:
+    that:
+    - task_with_password_force_update is changed
+
+- name: task with s4u principal (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    password: '{{test_scheduled_task_pass}}'
+    logon_type: s4u
+    update_password: no
+    actions:
+    - path: cmd.exe
+  register: task_with_s4u_check
+  check_mode: yes
+
+- name: get result of task with s4u principal (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_s4u_result_check
+
+- name: assert results of task with s4u principal (check mode)
+  assert:
+    that:
+    - task_with_s4u_check is changed
+    - task_with_s4u_result_check.task_exists == True
+    - task_with_s4u_result_check.principal.group_id == None
+    - task_with_s4u_result_check.principal.logon_type == "TASK_LOGON_PASSWORD"
+    - task_with_s4u_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_s4u_result_check.principal.user_id.endswith(test_scheduled_task_user)
+
+- name: task with s4u principal
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    password: '{{test_scheduled_task_pass}}'
+    logon_type: s4u
+    update_password: no
+    actions:
+    - path: cmd.exe
+  register: task_with_s4u
+
+- name: get result of task with s4u principal
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_s4u_result
+
+- name: assert results of task with s4u principal
+  assert:
+    that:
+    - task_with_s4u is changed
+    - task_with_s4u_result.task_exists == True
+    - task_with_s4u_result.principal.group_id == None
+    - task_with_s4u_result.principal.logon_type == "TASK_LOGON_S4U"
+    - task_with_s4u_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_s4u_result.principal.user_id.endswith(test_scheduled_task_user)
+
+- name: task with s4u principal (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    password: '{{test_scheduled_task_pass}}'
+    logon_type: s4u
+    update_password: no
+    actions:
+    - path: cmd.exe
+  register: task_with_s4u_again
+
+- name: assert results of task with s4u principal (idempotent)
+  assert:
+    that:
+    - task_with_s4u_again is not changed
+
+- name: task with interactive principal (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    logon_type: interactive_token
+    actions:
+    - path: cmd.exe
+  register: task_with_interactive_check
+  check_mode: yes
+
+- name: get result of task with interactive principal (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_interactive_result_check
+
+- name: assert results of task with interactive principal (check mode)
+  assert:
+    that:
+    - task_with_interactive_check is changed
+    - task_with_interactive_result_check.task_exists == True
+    - task_with_interactive_result_check.principal.group_id == None
+    - task_with_interactive_result_check.principal.logon_type == "TASK_LOGON_S4U"
+    - task_with_interactive_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_interactive_result_check.principal.user_id.endswith(test_scheduled_task_user)
+
+- name: task with interactive principal
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    logon_type: interactive_token
+    actions:
+    - path: cmd.exe
+  register: task_with_interactive
+
+- name: get result of task with interactive principal
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_interactive_result
+
+- name: assert results of task with interactive principal
+  assert:
+    that:
+    - task_with_interactive is changed
+    - task_with_interactive_result.task_exists == True
+    - task_with_interactive_result.principal.group_id == None
+    - task_with_interactive_result.principal.logon_type == "TASK_LOGON_INTERACTIVE_TOKEN"
+    - task_with_interactive_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_interactive_result.principal.user_id.endswith(test_scheduled_task_user)
+
+- name: task with interactive principal (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: '{{test_scheduled_task_user}}'
+    logon_type: interactive_token
+    actions:
+    - path: cmd.exe
+  register: task_with_interactive_again
+
+- name: assert results of task with interactive principal (idempotent)
+  assert:
+    that:
+    - task_with_interactive_again is not changed
+
+- name: task with group principal (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    group: Administrators
+    logon_type: group
+    actions:
+    - path: cmd.exe
+  register: task_with_group_check
+  check_mode: yes
+
+- name: get result of task with group principal (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_group_result_check
+
+- name: assert results of task with group principal (check mode)
+  assert:
+    that:
+    - task_with_group_check is changed
+    - task_with_group_result_check.task_exists == True
+    - task_with_group_result_check.principal.group_id == None
+    - task_with_group_result_check.principal.logon_type == "TASK_LOGON_INTERACTIVE_TOKEN"
+    - task_with_group_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_group_result_check.principal.user_id.endswith(test_scheduled_task_user)
+
+- name: task with group principal
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    group: Administrators
+    logon_type: group
+    actions:
+    - path: cmd.exe
+  register: task_with_group
+
+- name: get result of task with group principal
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_group_result
+
+- name: assert results of task with group principal
+  assert:
+    that:
+    - task_with_group is changed
+    - task_with_group_result.task_exists == True
+    - task_with_group_result.principal.group_id == "BUILTIN\\Administrators"
+    - task_with_group_result.principal.logon_type == "TASK_LOGON_GROUP"
+    - task_with_group_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_group_result.principal.user_id == None
+
+- name: task with group principal (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    group: Administrators
+    logon_type: group
+    actions:
+    - path: cmd.exe
+  register: task_with_group_again
+
+- name: assert results of task with group principal (idempotent)
+  assert:
+    that:
+    - task_with_group_again is not changed
+
+- name: task with service account principal (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: System
+    logon_type: service_account
+    action:
+    - path: cmd.exe
+  register: task_with_service_check
+  check_mode: yes
+
+- name: get result of task with service account principal (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_service_result_check
+
+- name: assert results of task with service account principal (check mode)
+  assert:
+    that:
+    - task_with_service_check is changed
+    - task_with_service_result_check.task_exists == True
+    - task_with_service_result_check.principal.group_id == "BUILTIN\\Administrators"
+    - task_with_service_result_check.principal.logon_type == "TASK_LOGON_GROUP"
+    - task_with_service_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_service_result_check.principal.user_id == None
+
+- name: task with service account principal
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: System
+    logon_type: service_account
+    action:
+    - path: cmd.exe
+  register: task_with_service
+
+- name: get result of task with service account principal
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_service_result
+
+- name: assert results of task with service account principal
+  assert:
+    that:
+    - task_with_service is changed
+    - task_with_service_result.task_exists == True
+    - task_with_service_result.principal.group_id == None
+    - task_with_service_result.principal.logon_type == "TASK_LOGON_SERVICE_ACCOUNT"
+    - task_with_service_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_service_result.principal.user_id == "NT AUTHORITY\\SYSTEM"
+
+- name: task with service account principal (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    username: System
+    logon_type: service_account
+    action:
+    - path: cmd.exe
+  register: task_with_service_again
+
+- name: assert results of task with service account principal (idempotent)
+  assert:
+    that:
+    - task_with_service_again is not changed
+
+- name: task with highest privilege (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    run_level: highest
+    username: System
+    logon_type: service_account
+    action:
+    - path: cmd.exe
+  register: task_with_highest_privilege_check
+  check_mode: yes
+
+- name: get result of task with highest privilege (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_highest_privilege_result_check
+
+- name: assert results of task with highest privilege (check mode)
+  assert:
+    that:
+    - task_with_highest_privilege_check is changed
+    - task_with_highest_privilege_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+
+- name: task with highest privilege
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    run_level: highest
+    username: System
+    logon_type: service_account
+    action:
+    - path: cmd.exe
+  register: task_with_highest_privilege
+
+- name: get result of task with highest privilege
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: task_with_highest_privilege_result
+
+- name: assert results of task with highest privilege
+  assert:
+    that:
+    - task_with_highest_privilege is changed
+    - task_with_highest_privilege_result.principal.run_level == "TASK_RUNLEVEL_HIGHEST"
+
+- name: task with highest privilege (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    run_level: highest
+    username: System
+    logon_type: service_account
+    action:
+    - path: cmd.exe
+  register: task_with_highest_privilege_again
+
+- name: assert results of task with highest privilege (idempotent)
+  assert:
+    that:
+    - task_with_highest_privilege_again is not changed

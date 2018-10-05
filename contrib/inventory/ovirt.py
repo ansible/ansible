@@ -71,11 +71,7 @@ import argparse
 import ConfigParser
 from collections import defaultdict
 
-try:
-    import json
-except ImportError:
-    # noinspection PyUnresolvedReferences,PyPackageRequirements
-    import simplejson as json
+import json
 
 try:
     # noinspection PyUnresolvedReferences
@@ -172,9 +168,9 @@ class OVirtInventory(object):
 
         # If the appropriate environment variables are set, they override
         # other configuration; process those into our args and kwargs.
-        kwargs['url'] = os.environ.get('OVIRT_URL')
-        kwargs['username'] = os.environ.get('OVIRT_EMAIL')
-        kwargs['password'] = os.environ.get('OVIRT_PASS')
+        kwargs['url'] = os.environ.get('OVIRT_URL', kwargs['url'])
+        kwargs['username'] = next(val for val in [os.environ.get('OVIRT_EMAIL'), os.environ.get('OVIRT_USERNAME'), kwargs['username']] if val is not None)
+        kwargs['password'] = next(val for val in [os.environ.get('OVIRT_PASS'), os.environ.get('OVIRT_PASSWORD'), kwargs['password']] if val is not None)
 
         # Retrieve and return the ovirt driver.
         return API(insecure=True, **kwargs)
@@ -211,7 +207,7 @@ class OVirtInventory(object):
             'ovirt_uuid': inst.get_id(),
             'ovirt_id': inst.get_id(),
             'ovirt_image': inst.get_os().get_type(),
-            'ovirt_machine_type': inst.get_instance_type(),
+            'ovirt_machine_type': self.get_machine_type(inst),
             'ovirt_ips': ips,
             'ovirt_name': inst.get_name(),
             'ovirt_description': inst.get_description(),
@@ -229,6 +225,11 @@ class OVirtInventory(object):
         :type inst: params.VM
         """
         return [x.get_name() for x in inst.get_tags().list()]
+
+    def get_machine_type(self, inst):
+        inst_type = inst.get_instance_type()
+        if inst_type:
+            return self.driver.instancetypes.get(id=inst_type.id).name
 
     # noinspection PyBroadException,PyUnusedLocal
     def get_instance(self, instance_name):
@@ -282,6 +283,7 @@ class OVirtInventory(object):
             return json.dumps(data, sort_keys=True, indent=2)
         else:
             return json.dumps(data)
+
 
 # Run the script
 OVirtInventory()

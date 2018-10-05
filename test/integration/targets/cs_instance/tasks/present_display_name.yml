@@ -1,0 +1,178 @@
+---
+- name: setup instance with display_name to be absent
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: expunged
+  register: instance
+- name: verify instance with display_name to be absent
+  assert:
+    that:
+    - instance is successful
+
+- name: test create instance with display_name
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    affinity_group: "{{ cs_resource_prefix }}-ag"
+    security_group: "{{ cs_resource_prefix }}-sg"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    tags: []
+  register: instance
+- name: verify create instance with display_name
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
+    - not instance.tags
+
+- name: test create instance with display_name idempotence
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    affinity_group: "{{ cs_resource_prefix }}-ag"
+    security_group: "{{ cs_resource_prefix }}-sg"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    tags: []
+  register: instance
+- name: verify create instance with display_name idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
+    - not instance.tags
+
+- name: test running instance with display_name not updated
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_2 }}"
+  register: instance
+- name: verify running instance with display_name not updated
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+
+- name: test stopping instance with display_name
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: stopped
+  register: instance
+- name: verify stopping instance with display_name
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Stopped"
+
+- name: test stopping instance with display_name idempotence
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: stopped
+  register: instance
+- name: verify stopping instance idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.state == "Stopped"
+
+- name: test updating stopped instance with display_name
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_2 }}"
+  register: instance
+- name: verify updating stopped instance with display_name
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Stopped"
+
+- name: test starting instance with display_name
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: started
+  register: instance
+- name: verify starting instance with display_name
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Running"
+
+- name: test starting instance with display_name idempotence
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: started
+  register: instance
+- name: verify starting instance with display_name idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
+    - instance.state == "Running"
+
+- name: test force update running instance with display_name
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    force: true
+  register: instance
+- name: verify force update running instance with display_name
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+
+- name: test force update running instance with display_name idempotence
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    force: true
+  register: instance
+- name: verify force update running instance with display_name idempotence
+  assert:
+    that:
+    - instance is successful
+    - instance is not changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+
+- name: test restore instance with display_name
+  cs_instance:
+    display_name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    state: restored
+  register: instance
+- name: verify restore instance with display_name
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"

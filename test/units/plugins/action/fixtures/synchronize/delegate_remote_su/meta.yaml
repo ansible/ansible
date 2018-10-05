@@ -1,0 +1,33 @@
+fixtures:
+    taskvars_in: task_vars_in.json
+    taskvars_out: task_vars_out.json
+task_args:
+    src: /tmp/deleteme
+    dest: /tmp/deleteme
+_task:
+    delegate_to: u1404    
+_play_context:
+    become: True
+    become_user: None #if ! None|root, different testcase
+    become_method: su
+    shell: None
+    remote_addr: u1404
+    remote_user: root
+connection:
+    transport: 'ssh'
+hostvars:
+    '127.0.0.1': {}
+    '::1': {}
+    'localhost': {}
+asserts:
+    - "hasattr(SAM._connection, 'ismock')"
+    - "SAM._connection.transport == 'ssh'"
+    - "self._play_context.shell == None"
+    - "self._play_context.remote_addr == 'u1404'"
+    - "self._play_context.remote_user == 'root'"
+    - "not self._play_context.become"            
+    - "self._play_context.become_method == 'su'"            
+    - "self.execute_called"
+    - "self.final_module_args['_local_rsync_path'] == 'rsync'"
+    - "self.final_module_args['src'] == '/tmp/deleteme'"
+    - "self.final_module_args['dest'] == 'root@el6host:/tmp/deleteme'"

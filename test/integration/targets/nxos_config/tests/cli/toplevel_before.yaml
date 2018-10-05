@@ -1,0 +1,40 @@
+---
+- debug: msg='START cli/toplevel_before.yaml'
+
+- name: setup
+  nxos_config:
+    lines:
+      - "snmp-server contact ansible"
+      - "hostname switch"
+    match: none
+
+- name: configure top level command with before
+  nxos_config:
+    lines: hostname foo
+    before: snmp-server contact bar
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+      - "'snmp-server contact bar' in result.updates"
+
+- name: configure top level command with before idempotent check
+  nxos_config:
+    lines: hostname foo
+    before: snmp-server contact foo
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines:
+      - "no snmp-server contact"
+      - "hostname switch"
+    match: none
+
+- debug: msg='END cli/toplevel_before.yaml'

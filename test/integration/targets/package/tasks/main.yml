@@ -1,0 +1,114 @@
+# Test code for the package module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_dir_test={{output_dir}}/at
+
+- name: make sure our testing sub-directory does not exist
+  file: path="{{ output_dir_test }}" state=absent
+
+- name: create our testing sub-directory
+  file: path="{{ output_dir_test }}" state=directory
+
+# Verify correct default package manager for Fedora
+# Validates: https://github.com/ansible/ansible/issues/34014
+- block:
+    - name: install apt
+      dnf:
+        name: apt
+        state: present
+    - name: gather facts again
+      setup:
+    - name: validate output
+      assert:
+        that:
+          - 'ansible_pkg_mgr == "dnf"'
+  always:
+    - name: remove apt
+      dnf:
+        name: apt
+        state: absent
+    - name: gather facts again
+      setup:
+  when: ansible_distribution == "Fedora"
+
+# Verify correct default package manager for Debian/Ubuntu when Zypper installed
+- block:
+    # Just make an executable file called "zypper" - installing zypper itself
+    # consistently is hard - and we're not going to use it
+    - name: install fake zypper
+      file:
+        state: touch
+        mode: 0755
+        path: /usr/bin/zypper
+    - name: gather facts again
+      setup:
+    - name: validate output
+      assert:
+        that:
+          - 'ansible_pkg_mgr == "apt"'
+  always:
+    - name: remove fake zypper
+      file:
+        path: /usr/bin/zypper
+        state: absent
+    - name: gather facts again
+      setup:
+  when: ansible_os_family == "Debian"
+
+##
+## package
+##
+
+- name: define distros to attempt installing at on
+  set_fact:
+    package_distros:
+        - RedHat
+        - CentOS
+        - ScientificLinux
+        - Fedora
+        - Ubuntu
+        - Debian
+
+- block:
+    - name: remove at package
+      package:
+        name: at
+        state: absent
+      register: at_check0
+
+    - name: verify at command is missing
+      shell: which at
+      register: at_check1
+      failed_when: at_check1.rc == 0
+
+    - name: reinstall at package
+      package:
+          name: at
+          state: present
+      register: at_install0
+    - debug: var=at_install0
+    - name: validate results
+      assert:
+          that:
+              - 'at_install0.changed is defined'
+              - 'at_install0.changed'
+
+    - name: verify at command is installed
+      shell: which at
+
+  when: ansible_distribution in package_distros

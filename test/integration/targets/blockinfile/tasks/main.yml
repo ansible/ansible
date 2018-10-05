@@ -1,0 +1,114 @@
+# Test code for the blockinfile module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact:
+    output_dir_test: "{{ output_dir }}/test_blockinfile"
+
+- name: make sure our testing sub-directory does not exist
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
+
+- name: create our testing sub-directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
+
+##
+## blockinfile
+##
+
+- name: copy the sshd_config to the test dir
+  copy:
+    src: sshd_config
+    dest: "{{ output_dir_test }}"
+
+- name: insert/update "Match User" configuration block in sshd_config
+  blockinfile:
+    path: "{{ output_dir_test }}/sshd_config"
+    block: |
+      Match User ansible-agent
+      PasswordAuthentication no
+  register: blockinfile_test0
+
+- name: check content
+  shell: 'grep -e "Match User ansible-agent" -e "PasswordAuthentication no" {{ output_dir_test }}/sshd_config'
+  register: blockinfile_test0_grep
+
+- debug:
+    var: blockinfile_test0
+    verbosity: 1
+
+- debug:
+    var: blockinfile_test0_grep
+    verbosity: 1
+
+- name: validate first example results
+  assert:
+    that:
+      - 'blockinfile_test0.changed is defined'
+      - 'blockinfile_test0.msg is defined'
+      - 'blockinfile_test0.changed'
+      - 'blockinfile_test0.msg == "Block inserted"'
+      - 'blockinfile_test0_grep.stdout_lines | length == 2'
+
+- name: check idemptotence
+  blockinfile:
+    path: "{{ output_dir_test }}/sshd_config"
+    block: |
+      Match User ansible-agent
+      PasswordAuthentication no
+  register: blockinfile_test1
+
+- name: validate idempotence results
+  assert:
+    that:
+      - 'not blockinfile_test1.changed'
+
+- name: Create a file with blockinfile
+  blockinfile:
+    path: "{{ output_dir_test }}/empty.txt"
+    block: |
+      Hey
+      there
+    state: present
+    create: yes
+  register: empty_test_1
+
+- name: Run a task that results in an empty file
+  blockinfile:
+    path: "{{ output_dir_test }}/empty.txt"
+    block: |
+      Hey
+      there
+    state: absent
+    create: yes
+  register: empty_test_2
+
+- stat:
+    path: "{{ output_dir_test }}/empty.txt"
+  register: empty_test_stat
+
+- name: Ensure empty file was created
+  assert:
+    that:
+      - empty_test_1 is changed
+      - "'File created' in empty_test_1.msg"
+      - empty_test_2 is changed
+      - "'Block removed' in empty_test_2.msg"
+      - empty_test_stat.stat.size == 0

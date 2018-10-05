@@ -1,19 +1,31 @@
-# (c) 2014 James Cammarata, <jcammarata@ansible.com>
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# This file is part of Ansible
+# Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
+# All rights reserved.
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 def _get_quote_state(token, quote_char):
     '''
@@ -25,7 +37,7 @@ def _get_quote_state(token, quote_char):
     prev_char = None
     for idx, cur_char in enumerate(token):
         if idx > 0:
-            prev_char = token[idx-1]
+            prev_char = token[idx - 1]
         if cur_char in '"\'' and prev_char != '\\':
             if quote_char:
                 if cur_char == quote_char:
@@ -34,19 +46,21 @@ def _get_quote_state(token, quote_char):
                 quote_char = cur_char
     return quote_char
 
+
 def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
     '''
     this function counts the number of opening/closing blocks for a
     given opening/closing type and adjusts the current depth for that
     block based on the difference
     '''
-    num_open  = token.count(open_token)
+    num_open = token.count(open_token)
     num_close = token.count(close_token)
     if num_open != num_close:
         cur_depth += (num_open - num_close)
         if cur_depth < 0:
             cur_depth = 0
     return cur_depth
+
 
 def split_args(args):
     '''
@@ -88,13 +102,13 @@ def split_args(args):
 
     quote_char = None
     inside_quotes = False
-    print_depth   = 0 # used to count nested jinja2 {{ }} blocks
-    block_depth   = 0 # used to count nested jinja2 {% %} blocks
-    comment_depth = 0 # used to count nested jinja2 {# #} blocks
+    print_depth = 0  # used to count nested jinja2 {{ }} blocks
+    block_depth = 0  # used to count nested jinja2 {% %} blocks
+    comment_depth = 0  # used to count nested jinja2 {# #} blocks
 
     # now we loop over each split chunk, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
-    for itemidx,item in enumerate(items):
+    for itemidx, item in enumerate(items):
 
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
@@ -102,7 +116,7 @@ def split_args(args):
         tokens = item.strip().split(' ')
 
         line_continuation = False
-        for idx,token in enumerate(tokens):
+        for idx, token in enumerate(tokens):
 
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue
@@ -190,12 +204,13 @@ def split_args(args):
 
     return params
 
+
 def is_quoted(data):
     return len(data) > 0 and (data[0] == '"' and data[-1] == '"' or data[0] == "'" and data[-1] == "'")
+
 
 def unquote(data):
     ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''
     if is_quoted(data):
         return data[1:-1]
     return data
-

@@ -1,0 +1,38 @@
+---
+- debug: msg="START cli/src_match_none.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  ios_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+- name: configure device with config
+  ios_config:
+    src: basic/config.j2
+    match: none
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#     - "result.updates is not defined"
+
+- name: check device with config
+  ios_config:
+    src: basic/config.j2
+  register: result
+
+- assert:
+    that:
+      # Idempotent test
+# https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.changed == false"
+      - "result.updates is not defined"
+
+- debug: msg="END cli/src_match_none.yaml on connection={{ ansible_connection }}"

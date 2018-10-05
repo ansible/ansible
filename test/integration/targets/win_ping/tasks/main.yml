@@ -1,0 +1,97 @@
+# test code for the win_ping module
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: test win_ping
+  action: win_ping
+  register: win_ping_result
+
+- name: check win_ping result
+  assert:
+    that:
+      - win_ping_result is not failed
+      - win_ping_result is not changed
+      - win_ping_result.ping == 'pong'
+
+- name: test win_ping with data
+  win_ping:
+    data: ☠
+  register: win_ping_with_data_result
+
+- name: check win_ping result with data
+  assert:
+    that:
+      - win_ping_with_data_result is not failed
+      - win_ping_with_data_result is not changed
+      - win_ping_with_data_result.ping == '☠'
+
+- name: test win_ping.ps1 with data as complex args
+  win_ping.ps1:
+    data: bleep
+  register: win_ping_ps1_result
+
+- name: check win_ping.ps1 result with data
+  assert:
+    that:
+      - win_ping_ps1_result is not failed
+      - win_ping_ps1_result is not changed
+      - win_ping_ps1_result.ping == 'bleep'
+
+# TODO: this will have to be removed once PS basic is implemented
+- name: test win_ping with extra args to verify that v2 module replacer escaping works as expected
+  win_ping:
+    data: bloop
+    a_null: null
+    a_boolean: true
+    another_boolean: false
+    a_number: 299792458
+    another_number: 22.7
+    yet_another_number: 6.022e23
+    a_string: |
+      it's magic
+      "@'
+      '@"
+    an_array:
+      - first
+      - 2
+      - 3.0
+    an_object:
+      - the_thing: the_value
+      - the_other_thing: 0
+      - the_list_of_things: [1, 2, 3, 5]
+  register: win_ping_extra_args_result
+
+- name: check that win_ping with extra args succeeds and ignores everything except data
+  assert:
+    that:
+      - win_ping_extra_args_result is not failed
+      - win_ping_extra_args_result is not changed
+      - win_ping_extra_args_result.ping == 'bloop'
+
+- name: test win_ping using data=crash so that it throws an exception
+  win_ping:
+    data: crash
+  register: win_ping_crash_result
+  ignore_errors: yes
+
+- name: check win_ping_crash result
+  assert:
+    that:
+      - win_ping_crash_result is failed
+      - win_ping_crash_result is not changed
+      - 'win_ping_crash_result.msg == "Unhandled exception while executing module: boom"'
+      - '"throw \"boom\"" in win_ping_crash_result.exception'

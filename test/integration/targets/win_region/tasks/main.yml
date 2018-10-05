@@ -1,0 +1,252 @@
+# test code for the win_region module
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: expect failure when only setting copy_settings
+  win_region:
+    copy_settings: False
+  register: actual
+  failed_when: actual.msg != "An argument for 'format', 'location' or 'unicode_language' needs to be supplied"
+
+- name: expect failure when using invalid geo id for the location
+  win_region:
+    location: 111111
+  register: actual
+  failed_when: actual.msg != "The argument location '111111' does not contain a valid Geo ID"
+
+- name: expect failure when using invalid culture for format
+  win_region:
+    format: ab-CD
+  register: actual
+  failed_when: actual.msg != "The argument format 'ab-CD' does not contain a valid Culture Name"
+
+- name: expect failure when using invalid culture for unicode_language
+  win_region:
+    unicode_language: ab-CD
+  register: actual
+  failed_when: actual.msg != "The argument unicode_language 'ab-CD' does not contain a valid Culture Name"
+
+- name: set settings all to English Australia before tests for a baseline
+  win_region:
+    location: 12
+    format: en-AU
+    unicode_language: en-AU
+
+- name: reboot server to set properties
+  win_reboot:
+
+- name: check that changing location in check mode works
+  win_region:
+    location: 244
+  register: check_location
+  check_mode: yes
+
+- name: get current location value
+  win_command: powershell (Get-ItemProperty -Path 'HKCU:\Control Panel\International\Geo').Nation
+  register: actual_location
+
+- name: check assertion about location change in check mode
+  assert:
+    that:
+    - "actual_location.stdout_lines[0] == '12'" # Corresponds to en-AU
+    - "check_location is changed"
+    - "check_location.restart_required == False"
+
+- name: set location to United States
+  win_region:
+    location: 244
+  register: location
+
+- name: get current location value
+  win_command: powershell (Get-ItemProperty -Path 'HKCU:\Control Panel\International\Geo').Nation
+  register: actual_location
+
+- name: check assertion about location change
+  assert:
+    that:
+    - "actual_location.stdout_lines[0] == '244'" # Corresponds to en-US
+    - "location is changed"
+    - "location.restart_required == False"
+
+- name: set location to United States again
+  win_region:
+    location: 244
+  register: location_again
+
+- name: check that the result did not change
+  assert:
+    that:
+    - "location_again is not changed"
+    - "location_again.restart_required == False"
+
+- name: set format to English United States in check mode
+  win_region:
+    format: en-US
+  register: check_format
+  check_mode: yes
+
+- name: get actual format value from check mode
+  win_command: powershell (Get-Culture).Name
+  register: actual_format
+
+- name: check assertion about location change in check mode
+  assert:
+    that:
+    - "actual_format.stdout_lines[0] == 'en-AU'"
+    - "check_format is changed"
+    - "check_format.restart_required == False"
+
+- name: set format to English United States
+  win_region:
+    format: en-US
+  register: format
+
+- name: get actual format value
+  win_command: powershell (Get-Culture).Name
+  register: actual_format
+
+- name: check assertion about format change
+  assert:
+    that:
+    - "actual_format.stdout_lines[0] == 'en-US'"
+    - "format is changed"
+    - "format.restart_required == False"
+
+- name: set format to English United States again
+  win_region:
+    format: en-US
+  register: format_again
+
+- name: check that the result did not change
+  assert:
+    that:
+    - "format_again is not changed"
+    - "format_again.restart_required == False"
+
+- name: set unicode_language to English United States in check mode
+  win_region:
+    unicode_language: en-US
+  register: check_unicode
+  check_mode: yes
+
+- name: get actual unicode values
+  win_command: powershell (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language').Default
+  register: actual_unicode
+
+- name: check assertion about unicode language change in check mode
+  assert:
+    that:
+    - "actual_unicode.stdout_lines[0] == '0c09'"
+    - "check_unicode is changed"
+    - "check_unicode.restart_required == True"
+
+- name: set unicode_language to English United States
+  win_region:
+    unicode_language: en-US
+  register: unicode
+
+- name: reboot the server after changing unicode language
+  action: win_reboot
+  when: unicode.restart_required
+
+- name: get actual unicode value
+  win_command: powershell (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language').Default
+  register: actual_unicode
+
+- name: check assertion about unicode language change
+  assert:
+    that:
+    - "actual_unicode.stdout_lines[0] == '0409'" # corresponds to en-US
+    - "unicode is changed"
+    - "unicode.restart_required == True"
+
+- name: set unicode_language to English United States again
+  win_region:
+    unicode_language: en-US
+  register: unicode_again
+
+- name: check that the result did not change
+  assert:
+    that:
+    - "unicode_again is not changed"
+    - "unicode_again.restart_required == False"
+
+- name: copy settings when setting to the same format check mode
+  win_region:
+    format: en-US
+    copy_settings: True
+  register: check_copy_same
+  check_mode: yes
+
+- name: check that the result did not change in check mode
+  assert:
+    that:
+    - "check_copy_same is not changed"
+    - "check_copy_same.restart_required == False"
+
+- name: copy settings when setting to the same format
+  win_region:
+    format: en-US
+    copy_settings: True
+  register: copy_same
+
+- name: check that the result did not change
+  assert:
+    that:
+    - "copy_same is not changed"
+    - "copy_same.restart_required == False"
+
+- name: copy setting when setting to a different format
+  win_region:
+    format: en-GB
+    copy_settings: True
+  register: copy
+
+- name: get actual format value after copy_settings
+  win_command: powershell (Get-Culture).Name
+  register: actual_copy
+
+- name: get locale name for local service registry hive
+  win_command: powershell "New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null; (Get-ItemProperty 'HKU:\S-1-5-19\Control Panel\International').LocaleName"
+  register: actual_local
+
+- name: get locale name for network service registry hive
+  win_command: powershell "New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null; (Get-ItemProperty 'HKU:\S-1-5-20\Control Panel\International').LocaleName"
+  register: actual_network
+
+- name: load temp hive
+  win_command: reg load HKU\TEMP C:\Users\Default\NTUSER.DAT
+
+- name: get locale name for default registry hive
+  win_command: powershell "New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null; (Get-ItemProperty 'HKU:\TEMP\Control Panel\International').LocaleName"
+  register: actual_temp
+
+- name: unload temp hive
+  win_command: reg unload HKU\TEMP
+
+- name: get locale name for default registry hive
+  win_command: powershell "New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null; (Get-ItemProperty 'HKU:\.DEFAULT\Control Panel\International').LocaleName"
+  register: actual_default
+
+- name: check assertions about copy setting when setting to a different format
+  assert:
+    that:
+    - "actual_copy.stdout_lines[0] == 'en-GB'"
+    - "actual_local.stdout_lines[0] == 'en-GB'"
+    - "actual_network.stdout_lines[0] == 'en-GB'"
+    - "actual_temp.stdout_lines[0] == 'en-GB'"
+    - "actual_default.stdout_lines[0] == 'en-GB'"
+    - "copy is changed"
+    - "copy.restart_required == False"

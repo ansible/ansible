@@ -1,0 +1,101 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vrf sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: intname1="{{ nxos_int1 }}"
+- set_fact: intname2="{{ nxos_int2 }}"
+
+- set_fact: rdnd="1:2"
+  when: (platform is not match("N35|N7K")) and ((imagetag != 'I2'))
+
+- set_fact: rdd="default"
+  when: (platform is not match("N35|N7K")) and ((imagetag != 'I2'))
+
+- set_fact: vnind="5000"
+  when: platform is not match("N35|N7K|N3L")
+
+- set_fact: vnid="default"
+  when: platform is not match("N35|N7K|N3L")
+
+- name: "Enable feature BGP"
+  nxos_feature:
+    feature: bgp
+    provider: "{{ connection }}"
+    state: enabled
+  ignore_errors: yes
+
+- block:
+  - name: Ensure ntc VRF exists on switch
+    nxos_vrf: &configure
+      vrf: ntc
+      admin_state: down
+      description: testing
+      vni: "{{vnind|default(omit)}}"
+      rd: "{{rdnd|default(omit)}}"
+      interfaces:
+        - "{{ intname1 }}"
+        - "{{ intname2 }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vrf: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - pause:
+      seconds: 30
+
+  - name: Remove config
+    nxos_vrf: &remconf
+      vrf: ntc
+      admin_state: up
+      vni: "{{vnid|default(omit)}}"
+      rd: "{{rdd|default(omit)}}"
+      interfaces: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vrf: *remconf
+    register: result
+
+  - assert: *false
+
+  - name: Ensure ntc VRF does not exist on switch
+    nxos_vrf: &remove
+      vrf: ntc
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 30
+
+  - name: "Remove Idempotence"
+    nxos_vrf: *remove
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "Disable feature BGP"
+    nxos_feature:
+      feature: bgp
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_vrf sanity test"

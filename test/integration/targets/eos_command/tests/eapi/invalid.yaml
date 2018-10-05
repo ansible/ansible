@@ -1,0 +1,28 @@
+---
+- debug: msg="START eapi/invalid.yaml"
+
+- name: run invalid command
+  eos_command:
+    commands: ['show foo']
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- name: run commands that include invalid command
+  eos_command:
+    commands:
+      - show version
+      - show foo
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END eapi/invalid.yaml"

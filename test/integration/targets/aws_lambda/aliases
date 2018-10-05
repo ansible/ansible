@@ -1,0 +1,4 @@
+cloud/aws
+shippable/aws/group1
+execute_lambda
+lambda

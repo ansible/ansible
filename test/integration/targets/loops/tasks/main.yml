@@ -1,0 +1,254 @@
+#
+# loop_control/pause
+#
+
+- name: Measure time before
+  shell: date +%s
+  register: before
+
+- debug:
+    var: i
+  with_sequence: count=3
+  loop_control:
+    loop_var: i
+    pause: 2
+
+- name: Measure time after
+  shell: date +%s
+  register: after
+
+# since there is 3 rounds, and 2 seconds between, it should last 4 seconds
+# we do not test the upper bound, since CI can lag significantly
+- assert:
+    that:
+    - '(after.stdout |int) - (before.stdout|int) >= 4'
+
+#
+# Tests of loop syntax with args
+#
+
+- name: Test that with_list works with a list
+  ping:
+    data: '{{ item }}'
+  with_list:
+    - 'Hello World'
+    - 'Olá Mundo'
+  register: results
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results["results"][0]["ping"] == "Hello World"'
+      - 'results["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that with_list works with a list inside a variable
+  ping:
+    data: '{{ item }}'
+  with_list: '{{ phrases }}'
+  register: results2
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results2["results"][0]["ping"] == "Hello World"'
+      - 'results2["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a manual list
+  ping:
+    data: '{{ item }}'
+  loop:
+    - 'Hello World'
+    - 'Olá Mundo'
+  register: results3
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results3["results"][0]["ping"] == "Hello World"'
+      - 'results3["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list in a variable
+  ping:
+    data: '{{ item }}'
+  loop: '{{ phrases }}'
+  register: results4
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results4["results"][0]["ping"] == "Hello World"'
+      - 'results4["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list via the list lookup
+  ping:
+    data: '{{ item }}'
+  loop: '{{ lookup("list", "Hello World", "Olá Mundo", wantlist=True) }}'
+  register: results5
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results5["results"][0]["ping"] == "Hello World"'
+      - 'results5["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list in a variable via the list lookup
+  ping:
+    data: '{{ item }}'
+  loop: '{{ lookup("list", wantlist=True, *phrases) }}'
+  register: results6
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results6["results"][0]["ping"] == "Hello World"'
+      - 'results6["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list via the query lookup
+  ping:
+    data: '{{ item }}'
+  loop: '{{ query("list", "Hello World", "Olá Mundo") }}'
+  register: results7
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results7["results"][0]["ping"] == "Hello World"'
+      - 'results7["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list in a variable via the query lookup
+  ping:
+    data: '{{ item }}'
+  loop: '{{ q("list", *phrases) }}'
+  register: results8
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results8["results"][0]["ping"] == "Hello World"'
+      - 'results8["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list and keyword args
+  ping:
+    data: '{{ item }}'
+  loop: '{{ q("file", "data1.txt", "data2.txt", lstrip=True) }}'
+  register: results9
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results9["results"][0]["ping"] == "Hello World"'
+      - 'results9["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list in variable and keyword args
+  ping:
+    data: '{{ item }}'
+  loop: '{{ q("file", lstrip=True, *filenames) }}'
+  register: results10
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results10["results"][0]["ping"] == "Hello World"'
+      - 'results10["results"][1]["ping"] == "Olá Mundo"'
+
+#
+# loop_control/index_var
+#
+
+- name: check that the index var is created and increments as expected
+  assert:
+    that: my_idx == item|int
+  with_sequence: start=0 count=3
+  loop_control:
+    index_var: my_idx
+
+- name: check that value of index var matches position of current item in source list
+  assert:
+    that: 'test_var.index(item) == my_idx'
+  vars:
+    test_var: ['a', 'b', 'c']
+  with_items: "{{ test_var }}"
+  loop_control:
+    index_var: my_idx
+
+- name: check index var with included tasks file
+  include_tasks: index_var_tasks.yml
+  with_sequence: start=0 count=3
+  loop_control:
+    index_var: my_idx
+
+#
+# loop_control/label
+# https://github.com/ansible/ansible/pull/36430
+#
+
+- set_fact:
+    loopthis:
+        - name: foo
+          label: foo_label
+        - name: bar
+          label: bar_label
+
+- name: check that item label is updated each iteration
+  debug:
+    msg: "{{ looped_var.name }}"
+  with_items: "{{ loopthis }}"
+  loop_control:
+    loop_var: looped_var
+    label: "looped_var {{ looped_var.label }}"
+  register: output
+
+- assert:
+    that:
+      - "output.results[0]['_ansible_item_label'] == 'looped_var foo_label'"
+      - "output.results[1]['_ansible_item_label'] == 'looped_var bar_label'"
+
+# The following test cases are to ensure that we don't have a regression on
+# GitHub Issue https://github.com/ansible/ansible/issues/35481
+#
+# This should execute and not cause a RuntimeError
+- debug:
+    msg: "with_dict passed a list: {{item}}"
+  with_dict: "{{ a_list }}"
+  register: with_dict_passed_a_list
+  ignore_errors: True
+- assert:
+    that:
+      - with_dict_passed_a_list is failed
+- debug:
+    msg: "with_list passed a dict: {{item}}"
+  with_list: "{{ a_dict }}"
+  register: with_list_passed_a_dict
+  ignore_errors: True
+- assert:
+    that:
+      - with_list_passed_a_dict is failed
+
+- debug:
+    var: "item"
+  loop:
+    - "{{ ansible_search_path }}"
+  register: loop_search_path
+
+- assert:
+    that:
+      - ansible_search_path == loop_search_path.results.0.item
+
+# https://github.com/ansible/ansible/issues/45189
+- name: with_X conditional delegate_to shortcircuit on templating error
+  debug:
+    msg: "loop"
+  when: false
+  delegate_to: localhost
+  with_list: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: loop conditional delegate_to shortcircuit on templating error
+  debug:
+      msg: "loop"
+  when: false
+  delegate_to: localhost
+  loop: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped

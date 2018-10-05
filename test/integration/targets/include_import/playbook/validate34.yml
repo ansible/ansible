@@ -1,0 +1,11 @@
+- hosts: testhost2
+
+  tasks:
+    - name: Assert that playbook3.yml and playbook4.yml were imported
+      assert:
+        that:
+          - canary_var3 == 'playbook3 imported'
+          - canary_var4 == 'playbook4 imported'
+      tags:
+        - validate
+        - validate34

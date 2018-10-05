@@ -155,24 +155,21 @@ import ConfigParser
 
 from six import iteritems
 
-from ansible.constants import get_config, mk_boolean
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import pyrax
     from pyrax.utils import slugify
 except ImportError:
-    print('pyrax is required for this module')
-    sys.exit(1)
+    sys.exit('pyrax is required for this module')
 
 from time import time
 
+from ansible.constants import get_config
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import text_type
 
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+NON_CALLABLES = (text_type, str, bool, dict, int, list, type(None))
 
 
 def load_config_file():
@@ -185,11 +182,10 @@ def load_config_file():
         return None
     else:
         return p
-p = load_config_file()
 
 
 def rax_slugify(value):
-    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+    return 'rax_%s' % (re.sub(r'[^\w-]', '_', value).lower().lstrip('_'))
 
 
 def to_dict(obj):
@@ -227,12 +223,25 @@ def _list_into_cache(regions):
 
     prefix = get_config(p, 'rax', 'meta_prefix', 'RAX_META_PREFIX', 'meta')
 
-    networks = get_config(p, 'rax', 'access_network', 'RAX_ACCESS_NETWORK',
-                          'public', islist=True)
     try:
-        ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
-                                          'RAX_ACCESS_IP_VERSION', 4,
-                                          islist=True))
+        # Ansible 2.3+
+        networks = get_config(p, 'rax', 'access_network',
+                              'RAX_ACCESS_NETWORK', 'public', value_type='list')
+    except TypeError:
+        # Ansible 2.2.x and below
+        # pylint: disable=unexpected-keyword-arg
+        networks = get_config(p, 'rax', 'access_network',
+                              'RAX_ACCESS_NETWORK', 'public', islist=True)
+    try:
+        try:
+            # Ansible 2.3+
+            ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
+                                              'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
+        except TypeError:
+            # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
+            ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
+                                              'RAX_ACCESS_IP_VERSION', 4, islist=True))
     except:
         ip_versions = [4]
     else:
@@ -280,7 +289,7 @@ def _list_into_cache(regions):
                 if not cbs_attachments[region]:
                     cbs = pyrax.connect_to_cloud_blockstorage(region)
                     for vol in cbs.list():
-                        if mk_boolean(vol.bootable):
+                        if boolean(vol.bootable, strict=False):
                             for attachment in vol.attachments:
                                 metadata = vol.volume_image_metadata
                                 server_id = attachment['server_id']
@@ -355,9 +364,12 @@ def get_cache_file_path(regions):
 
 
 def _list(regions, refresh_cache=True):
+    cache_max_age = int(get_config(p, 'rax', 'cache_max_age',
+                                   'RAX_CACHE_MAX_AGE', 600))
+
     if (not os.path.exists(get_cache_file_path(regions)) or
-        refresh_cache or
-        (time() - os.stat(get_cache_file_path(regions))[-1]) > 600):
+            refresh_cache or
+            (time() - os.stat(get_cache_file_path(regions))[-1]) > cache_max_age):
         # Cache file doesn't exist or older than 10m or refresh cache requested
         _list_into_cache(regions)
 
@@ -399,10 +411,9 @@ def setup():
         if os.path.isfile(default_creds_file):
             creds_file = default_creds_file
         elif not keyring_username:
-            sys.stderr.write('No value in environment variable %s and/or no '
-                             'credentials file at %s\n'
-                             % ('RAX_CREDS_FILE', default_creds_file))
-            sys.exit(1)
+            sys.exit('No value in environment variable %s and/or no '
+                     'credentials file at %s'
+                     % ('RAX_CREDS_FILE', default_creds_file))
 
     identity_type = pyrax.get_setting('identity_type')
     pyrax.set_setting('identity_type', identity_type or 'rackspace')
@@ -415,23 +426,29 @@ def setup():
         else:
             pyrax.set_credential_file(creds_file, region=region)
     except Exception as e:
-        sys.stderr.write("%s: %s\n" % (e, e.message))
-        sys.exit(1)
+        sys.exit("%s: %s" % (e, e.message))
 
     regions = []
     if region:
         regions.append(region)
     else:
-        region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
-                                 islist=True)
+        try:
+            # Ansible 2.3+
+            region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
+                                     value_type='list')
+        except TypeError:
+            # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
+            region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
+                                     islist=True)
+
         for region in region_list:
             region = region.strip().upper()
             if region == 'ALL':
                 regions = pyrax.regions
                 break
             elif region not in pyrax.regions:
-                sys.stderr.write('Unsupported region %s' % region)
-                sys.exit(1)
+                sys.exit('Unsupported region %s' % region)
             elif region not in regions:
                 regions.append(region)
 
@@ -448,5 +465,6 @@ def main():
     sys.exit(0)
 
 
+p = load_config_file()
 if __name__ == '__main__':
     main()

@@ -1,0 +1,415 @@
+- name: get hello package version
+  shell: zypper --xml se -svx hello | grep 'name="hello"' | sed 's/.*edition="\([^ ]*\)".*/\1/'
+  register: hello_version
+
+- name: set URL of test package
+  set_fact:
+    hello_package_url: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/suse/x86_64/hello-{{hello_version.stdout}}.x86_64.rpm
+
+- debug: var=hello_package_url
+
+# UNINSTALL
+- name: uninstall hello
+  zypper:
+    name: hello
+    state: removed
+  register: zypper_result
+
+- name: check hello with rpm
+  shell: rpm -q hello
+  failed_when: False
+  register: rpm_result
+
+- debug: var=zypper_result
+- debug: var=rpm_result
+
+- name: verify uninstallation of hello
+  assert:
+    that:
+        - "zypper_result.rc == 0"
+        - "rpm_result.rc == 1"
+
+# UNINSTALL AGAIN
+- name: uninstall hello again
+  zypper:
+    name: hello
+    state: removed
+  register: zypper_result
+
+- name: verify no change on re-uninstall
+  assert:
+    that:
+        - "not zypper_result.changed"
+
+# INSTALL
+- name: install hello
+  zypper:
+    name: hello
+    state: present
+  register: zypper_result
+
+- name: check hello with rpm
+  shell: rpm -q hello
+  failed_when: False
+  register: rpm_result
+
+- debug: var=zypper_result
+- debug: var=rpm_result
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "zypper_result.rc == 0"
+        - "zypper_result.changed"
+        - "rpm_result.rc == 0"
+
+# INSTALL AGAIN
+- name: install hello again
+  zypper:
+    name: hello
+    state: present
+  register: zypper_result
+
+- name: verify no change on second install
+  assert:
+    that:
+        - "not zypper_result.changed"
+
+# Multiple packages
+- name: uninstall hello and metamail
+  zypper:
+    name:
+      - hello
+      - metamail
+    state: removed
+  register: zypper_result
+
+- name: check hello with rpm
+  shell: rpm -q hello
+  failed_when: False
+  register: rpm_hello_result
+
+- name: check metamail with rpm
+  shell: rpm -q metamail
+  failed_when: False
+  register: rpm_metamail_result
+
+- name: verify packages uninstalled
+  assert:
+    that:
+        - "rpm_hello_result.rc != 0"
+        - "rpm_metamail_result.rc != 0"
+
+- name: install hello and metamail
+  zypper:
+    name:
+      - hello
+      - metamail
+    state: present
+  register: zypper_result
+
+- name: check hello with rpm
+  shell: rpm -q hello
+  failed_when: False
+  register: rpm_hello_result
+
+- name: check metamail with rpm
+  shell: rpm -q metamail
+  failed_when: False
+  register: rpm_metamail_result
+
+- name: verify packages installed
+  assert:
+    that:
+        - "zypper_result.rc == 0"
+        - "zypper_result.changed"
+        - "rpm_hello_result.rc == 0"
+        - "rpm_metamail_result.rc == 0"
+
+- name: uninstall hello and metamail
+  zypper:
+    name:
+      - hello
+      - metamail
+    state: removed
+
+# INSTALL nonexistent package
+- name: install hello from url
+  zypper:
+    name: doesnotexist
+    state: present
+  register: zypper_result
+  ignore_errors: yes
+
+- name: verify package installation failed
+  assert:
+    that:
+      - "zypper_result.rc == 104"
+      - "zypper_result.msg.startswith('No provider of')"
+
+# INSTALL broken local package
+- name: create directory
+  file:
+    path: "{{output_dir | expanduser}}/zypper1"
+    state: directory
+
+- name: fake rpm package
+  file:
+    path: "{{output_dir | expanduser}}/zypper1/broken.rpm"
+    state: touch
+
+- name: install broken rpm
+  zypper:
+    name: "{{output_dir | expanduser}}/zypper1/broken.rpm"
+    state: present
+  register: zypper_result
+  ignore_errors: yes
+
+- debug: var=zypper_result
+
+- name: verify we failed installation of broken rpm
+  assert:
+    that:
+      - "zypper_result.rc == 3"
+      - "'Problem reading the RPM header' in zypper_result.stdout"
+
+# Build and install an empty rpm
+- name: uninstall empty
+  zypper:
+    name: empty
+    state: removed
+
+- name: clean zypper RPM cache
+  file: 
+    name: /var/cache/zypper/RPMS
+    state: absent
+
+- name: create directory
+  file:
+    path: "{{output_dir | expanduser}}/zypper2"
+    state: directory
+
+- name: copy spec file
+  copy:
+    src: empty.spec
+    dest: "{{ output_dir | expanduser }}/zypper2/empty.spec"
+
+- name: build rpm
+  command: |
+    rpmbuild -bb \
+    --define "_topdir {{output_dir | expanduser }}/zypper2/rpm-build"
+    --define "_builddir %{_topdir}" \
+    --define "_rpmdir %{_topdir}" \
+    --define "_srcrpmdir %{_topdir}" \
+    --define "_specdir {{output_dir | expanduser}}/zypper2" \
+    --define "_sourcedir %{_topdir}" \
+    {{ output_dir }}/zypper2/empty.spec
+  register: rpm_build_result
+
+- name: install empty rpm
+  zypper:
+    name: "{{ output_dir | expanduser }}/zypper2/rpm-build/noarch/empty-1-0.noarch.rpm"
+    disable_gpg_check: yes
+  register: zypper_result
+
+- name: check empty with rpm
+  shell: rpm -q empty
+  failed_when: False
+  register: rpm_result
+
+- name: verify installation of empty
+  assert:
+    that:
+        - "zypper_result.rc == 0"
+        - "zypper_result.changed"
+        - "rpm_result.rc == 0"
+
+- name: uninstall empty
+  zypper:
+    name: empty
+    state: removed
+
+- name: extract from rpm
+  zypper:
+    name: "{{ output_dir | expanduser }}/zypper2/rpm-build/noarch/empty-1-0.noarch.rpm"
+    state: installed
+    disable_gpg_check: yes
+    extra_args_precommand: --root {{ output_dir | expanduser }}/testdir/
+
+- name: check that dir var is exist
+  stat: path={{ output_dir | expanduser }}/testdir/var
+  register: stat_result
+
+- name: check that we extract rpm package in testdir folder and folder var is exist
+  assert:
+    that:
+     - "stat_result.stat.exists == true"
+
+
+# test simultaneous remove and install using +- prefixes
+
+- name: install hello to prep next task
+  zypper:
+    name: hello
+    state: present
+
+- name: remove metamail to prep next task
+  zypper:
+    name: metamail
+    state: absent
+
+- name: install and remove in the same run, with +- prefix
+  zypper: 
+    name: 
+      - -hello
+      - +metamail
+    state: present
+  register: zypper_res1
+
+- name: install and remove again, leave out plus
+  zypper:
+    name:
+      - metamail
+      - -hello
+    state: present
+  register: zypper_res1a
+
+- name: in and rm swapped
+  zypper:
+    name:
+      - -metamail
+      - hello
+    state: present
+  register: zypper_res1b
+
+- name: install metamail
+  zypper:
+    name: metamail
+    state: absent
+  register: zypper_res2
+
+- name: remove hello
+  zypper:
+    name: hello
+    state: present
+  register: zypper_res3
+
+- name: verify simultaneous install/remove worked
+  assert:
+    that:
+      - zypper_res1 is successful
+      - zypper_res1 is changed
+      - zypper_res1a is not changed
+      - zypper_res1b is changed
+      - zypper_res2 is not changed
+      - zypper_res3 is not changed
+
+
+- name: install and remove with state=absent
+  zypper:
+    name:
+      - metamail
+      - +hello
+    state: absent
+  register: zypper_res
+  ignore_errors: yes
+
+- name: verify simultaneous install/remove failed with absent
+  assert:
+    that:
+      - zypper_res is failed
+      - zypper_res.msg == "Can not combine '+' prefix with state=remove/absent."
+
+- name: try rm patch
+  zypper:
+    name: openSUSE-2016-128 
+    type: patch
+    state: absent
+  ignore_errors: yes
+  register: zypper_patch
+- assert:
+    that: 
+      - zypper_patch is failed
+      - zypper_patch.msg.startswith('Can not remove patches.')
+
+- name: try rm URL
+  zypper:
+    name: "{{ hello_package_url }}"
+    state: absent
+  ignore_errors: yes
+  register: zypper_rm
+- assert:
+    that: 
+      - zypper_rm is failed
+      - zypper_rm.msg.startswith('Can not remove via URL.')
+
+- name: remove pattern update_test
+  zypper:
+    name: update_test
+    type: pattern
+    state: absent
+
+- name: install pattern update_test
+  zypper:
+    name: update_test
+    type: pattern
+    state: present
+  register: zypper_install_pattern1
+  
+- name: install pattern update_test again
+  zypper:
+    name: update_test
+    type: pattern
+    state: present
+  register: zypper_install_pattern2
+
+- assert:
+    that:
+      - zypper_install_pattern1 is changed
+      - zypper_install_pattern2 is not changed
+
+- name: remove hello
+  zypper:
+    name: hello
+    state: absent
+
+- name: install via URL
+  zypper:
+    state: present
+    name: "{{ hello_package_url }}"
+  register: zypperin1
+
+- name: test install
+  zypper:
+    name: hello
+    state: present
+  register: zypperin2
+  
+- assert:
+    that:
+      - zypperin1 is succeeded
+      - zypperin1 is changed
+      - zypperin2 is not changed
+
+# check for https://github.com/ansible/ansible/issues/20139
+- name: run updatecache
+  zypper:
+    name: hello
+    state: present
+    update_cache: True
+  register: zypper_result_update_cache
+
+- name: run updatecache in check mode
+  zypper:
+    name: hello
+    state: present
+    update_cache: True
+  check_mode: True
+  register: zypper_result_update_cache_check
+
+
+- assert:
+    that:
+      - zypper_result_update_cache is successful
+      - zypper_result_update_cache_check is successful
+      - zypper_result_update_cache_check is not changed

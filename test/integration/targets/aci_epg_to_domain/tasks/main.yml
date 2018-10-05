@@ -1,0 +1,217 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    tenant: anstest
+    state: present
+  register: tenant_present
+
+- name: ensure ap exists for tests to kick off
+  aci_ap: &aci_ap_present
+    <<: *aci_tenant_present
+    ap: anstest
+  register: ap_present
+
+- name: ensure epg exists for tests to kick off
+  aci_epg: &aci_epg_present
+    <<: *aci_ap_present
+    epg: anstest
+  register: epg_present
+
+- name: ensure phys domain exists for tests to kick off
+  aci_rest: &aci_rest_phys_domain
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    method: post
+    path: api/mo/uni/phys-anstest.json
+    content: {"physDomP": {"attributes": {}}}
+  register: phys_domain_post
+
+- name: ensure vmm domain exists for tests to kick off
+  aci_rest: &aci_rest_vmm_domain
+    <<: *aci_rest_phys_domain
+    path: api/mo/uni/vmmp-VMware/dom-anstest.json
+    content: {"vmmDomP": {"attributes": {}}}
+  register: vmm_domain_post
+
+- name: bind phys domain to epg - check mode works
+  aci_epg_to_domain: &aci_epg_to_domain_present
+    <<: *aci_epg_present
+    domain: anstest
+    domain_type: phys
+  check_mode: yes
+  register: phys_check_mode_present
+
+- name: bind phys domain to epg - creation works
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_present
+  register: phys_present
+
+- name: bind phys domain to epg - idempotency works
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_present 
+  register: phys_idempotent
+
+- name: bind phys domain to epg - update works
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_present
+    deploy_immediacy: immediate
+  register: phys_update
+
+- name: bind vmm domain to epg - creation works
+  aci_epg_to_domain: &aci_epg_to_domain_vmm_present
+    <<: *aci_epg_to_domain_present
+    domain_type: vmm
+    vm_provider: vmware
+    resolution_immediacy: pre-provision
+  register: vmm_present
+
+- name: bind vmm domain to epg - missing params
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_vmm_present
+    vm_provider: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: present_missing_params
+
+- name: bind vmm domain to epg - invalid vlan
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_present
+    encap: 4097
+  ignore_errors: yes
+  register: invalid_vlan
+
+- name: bind vmm domain to epg - incompatible params
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_present
+    vm_provider: vmware
+  ignore_errors: yes
+  register: incompatible_params
+
+- name: present assertions
+  assert:
+    that:
+      - phys_check_mode_present is changed
+      - phys_present is changed
+      - phys_present.previous == []
+      - 'phys_present.sent == {"fvRsDomAtt": {"attributes": {}}}'
+      - '"[uni/phys-anstest].json" in phys_present.url'
+      - phys_idempotent is not changed
+      - phys_idempotent.sent == {}
+      - phys_update is changed
+      - 'phys_update.sent == {"fvRsDomAtt": {"attributes": {"instrImedcy": "immediate"}}}'
+      - vmm_present is changed
+      - 'vmm_present.sent == {"fvRsDomAtt": {"attributes": {"resImedcy": "pre-provision"}}}'
+      - '"[uni/vmmp-VMware/dom-anstest].json" in vmm_present.url'
+      - present_missing_params is failed
+      - 'present_missing_params.msg == "domain_type is vmm but all of the following are missing: vm_provider"'
+      - invalid_vlan is failed
+      - invalid_vlan.msg == "Valid VLAN assigments are from 1 to 4096"
+      - incompatible_params is failed
+      - incompatible_params.msg == "Domain type 'phys' cannot have a 'vm_provider'"
+
+- name: get domain epg binding
+  aci_epg_to_domain: &aci_epg_domain_query
+    <<: *aci_tenant_present
+    state: query
+    tenant: "{{ fake_var | default(omit) }}"
+  register: binding_query
+
+- name: query assertions
+  assert:
+    that:
+      - binding_query is not changed
+      - binding_query.current | length > 1
+      - '"class/fvRsDomAtt.json" in binding_query.url'
+
+- name: delete domain epg binding - check mode
+  aci_epg_to_domain: &aci_epg_to_domain_absent
+    <<: *aci_epg_to_domain_present
+    state: absent
+  check_mode: yes
+  register: epg_domain_check_mode_absent
+
+- name: delete phys domain epg binding - delete works
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_absent
+  register: epg_domain_absent
+
+- name: delete vmm domain epg binding - delete works
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_vmm_present
+    state: absent
+  register: epg_vmm_domain_absent
+
+- name: delete domain epg binding - idempotency works
+  aci_epg_to_domain:
+    <<: *aci_epg_to_domain_absent
+  register: idempotency_absent
+
+- name: delete domain epg binding - missing param
+  aci_epg_to_domain:
+    <<: *aci_tenant_present
+    state: absent
+  ignore_errors: true
+  register: absent_missing_param
+
+- name: absent assertions
+  assert:
+    that:
+      - epg_domain_check_mode_absent is changed
+      - epg_domain_check_mode_absent.previous != []
+      - epg_domain_absent is changed
+      - epg_domain_absent.previous == epg_domain_check_mode_absent.previous
+      - epg_vmm_domain_absent is changed
+      - idempotency_absent is not changed
+      - idempotency_absent.previous == []
+      - absent_missing_param is failed
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: ap, domain, domain_type, epg"'
+
+- name: remove vmm domain - cleanup
+  aci_rest:
+    <<: *aci_rest_vmm_domain
+    method: delete
+  when: vmm_domain_post is changed
+
+- name: remove phys domain - cleanup
+  aci_rest:
+    <<: *aci_rest_phys_domain
+    method: delete
+  when: phys_domain_post is changed
+
+- name: remove epg - cleanup
+  aci_epg:
+    <<: *aci_epg_present
+    state: absent
+  when: epg_present is changed
+
+- name: remove ap - cleanup
+  aci_ap:
+    <<: *aci_ap_present
+    state: absent
+  when: ap_present is changed
+
+- name: remove tenant - cleanup
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
+  when: tenant_present is changed

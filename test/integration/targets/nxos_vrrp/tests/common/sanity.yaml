@@ -1,0 +1,144 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vrrp sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+  - name: "Enable interface-vlan"
+    nxos_feature: 
+      feature: interface-vlan
+      provider: "{{ connection }}"
+      state: enabled
+
+  - name: "Enable vrrp"
+    nxos_feature: 
+      feature: vrrp
+      provider: "{{ connection }}"
+      state: enabled
+
+  - name: "create int vlan 10"
+    nxos_config: 
+      commands: "int vlan 10"
+      provider: "{{ connection }}"
+
+  - name: Ensure vrrp group 100 and vip 10.1.100.1 is on vlan10
+    nxos_vrrp: &configure
+      interface: vlan10
+      group: 100
+      vip: 10.1.100.1
+      admin_state: 'no shutdown'
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vrrp: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Ensure vrrp group 100 is default
+    nxos_vrrp: &configure_def
+      interface: vlan10
+      group: 100
+      vip: default
+      admin_state: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vrrp: *configure_def
+    register: result
+
+  - assert: *false
+
+  - name: Ensure removal of the vrrp group config
+    nxos_vrrp: &remove
+      interface: vlan10
+      group: 100
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 30
+
+  - name: "Remove Idempotence"
+    nxos_vrrp: *remove
+    register: result
+
+  - assert: *false
+
+  - pause:
+      seconds: 30
+
+  - name: Re-config with more params
+    nxos_vrrp: &reconfig
+      interface: vlan10
+      group: 100
+      vip: 10.1.100.1
+      preempt: False
+      interval: 10
+      priority: 130
+      authentication: AUTHKEY
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Reconfig Idempotence"
+    nxos_vrrp: *reconfig
+    register: result
+
+  - assert: *false
+
+  - name: Re-config with defaults
+    nxos_vrrp: &reconfig_def
+      interface: vlan10
+      group: 100
+      vip: default
+      preempt: True
+      interval: default
+      priority: default
+      authentication: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Reconfig Idempotence"
+    nxos_vrrp: *reconfig_def
+    register: result
+
+  - assert: *false
+
+  always:
+    - name: remove vrrp
+      nxos_vrrp: *remove
+      ignore_errors: yes
+  
+    - name: "Disable interface-vlan"
+      nxos_config: 
+        commands:
+          - no feature interface-vlan
+        match: none
+        provider: "{{ connection }}"
+      ignore_errors: yes
+
+    - name: "Disable vrrp"
+      nxos_feature: 
+        feature: vrrp
+        provider: "{{ connection }}"
+        state: disabled
+      ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vrrp sanity test"

@@ -1,0 +1,10 @@
+- hosts: testhost2
+
+  tasks:
+    - name: Assert that playbook2.yml was skipeed
+      assert:
+        that:
+          - canary_var2 is not defined
+      tags:
+        - validate
+        - validate2

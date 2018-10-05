@@ -1,0 +1,237 @@
+- name: execute a command
+  win_command: whoami /groups
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is successful
+    - cmdout is changed
+    - cmdout.cmd == 'whoami /groups'
+    - cmdout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.rc == 0
+    - cmdout.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.stderr == ""
+    - cmdout.stdout is search('GROUP INFORMATION')
+    - '"GROUP INFORMATION" in cmdout.stdout_lines'
+
+- name: execute something nonexistent
+  win_command: bogus_command1234
+  register: cmdout
+  ignore_errors: true
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is failed
+    - cmdout is not changed
+    - cmdout.cmd == 'bogus_command1234'
+    - cmdout.rc == 2
+    - "'Could not locate the following executable bogus_command1234' in cmdout.msg"
+
+- name: execute something with error output
+  win_command: cmd /c "echo some output & echo some error 1>&2"
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is successful
+    - cmdout is changed
+    - cmdout.cmd == 'cmd /c "echo some output & echo some error 1>&2"'
+    - cmdout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.rc == 0
+    - cmdout.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.stderr is search('some error')
+    - cmdout.stdout == "some output \r\n"
+    - cmdout.stdout_lines == ["some output "]
+
+- name: ensure test file is absent
+  win_file:
+    path: c:\testfile.txt
+    state: absent
+
+- name: run with creates, should create
+  win_command: cmd /c "echo $null >> c:\testfile.txt"
+  args:
+    creates: c:\testfile.txt
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is successful
+    - cmdout is changed
+
+- name: run again with creates, should skip
+  win_command: cmd /c "echo $null >> c:\testfile.txt"
+  args:
+    creates: c:\testfile.txt
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is skipped
+    - cmdout.msg is search('exists')
+
+- name: get path of pagefile
+  win_shell: |
+    $pagefile = $null
+    $cs = Get-CimInstance -ClassName Win32_ComputerSystem
+    if ($cs.AutomaticManagedPagefile) {
+        $pagefile = "$($env:SystemRoot.Substring(0, 1)):\pagefile.sys"
+    } else {
+        $pf = Get-CimInstance -ClassName Win32_PageFileSetting
+        if ($pf -ne $null) {
+            $pagefile = $pf[0].Name
+        }
+    }
+    $pagefile
+  register: pagefile_path
+
+- name: test creates with hidden system file, should skip
+  win_command: echo no
+  args:
+    creates: '{{pagefile_path.stdout_lines[0]}}'
+  register: cmdout
+  when: pagefile_path.stdout_lines|count != 0
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is skipped
+    - cmdout.msg is search('exists')
+  when: pagefile_path.stdout_lines|count != 0
+
+- name: ensure testfile is still present
+  win_stat:
+    path: c:\testfile.txt
+  register: statout
+
+- name: validate result
+  assert:
+    that:
+    - statout.stat.exists == true
+
+- name: run with removes, should remove
+  win_command: cmd /c "del c:\testfile.txt"
+  args:
+    removes: c:\testfile.txt
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is successful
+    - cmdout is changed
+
+- name: run again with removes, should skip
+  win_command: cmd /c "del c:\testfile.txt"
+  args:
+    removes: c:\testfile.txt
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is skipped
+    - cmdout.msg is search('does not exist')
+
+- name: run something with known nonzero exit code
+  win_command: cmd /c "exit 254"
+  register: cmdout
+  ignore_errors: true
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is failed
+    - cmdout.failed == True # check the failure key explicitly, since failed does magic with RC
+    - cmdout.rc == 254
+
+- name: interleave large writes between stdout/stderr (check for buffer consumption deadlock)
+  win_command: powershell /c "$ba = New-Object byte[] 4096; (New-Object System.Random 32).NextBytes($ba); $text = [Convert]::ToBase64String($ba); Write-Output startout; Write-Error starterror; Write-Error $text; Write-Output $text; Write-Error $text; Write-Output $text; Write-Error $text; Write-Output $text; Write-Output doneout Write-Error doneerror"
+  register: cmdout
+
+- name: ensure that the entirety of both streams were read
+  assert:
+    that:
+    - cmdout.stdout is search("startout")
+    - cmdout.stdout is search("doneout")
+    - cmdout.stderr is search("starterror")
+    - cmdout.stderr is search("doneerror")
+
+- name: create testing folder for argv binary
+  win_file:
+    path: C:\ansible testing
+    state: directory
+
+- name: download binary the outputs argv to stdout
+  win_get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_module_utils/PrintArgv.exe
+    dest: C:\ansible testing\PrintArgv.exe
+
+- name: call argv binary with absolute path
+  win_command: '"C:\ansible testing\PrintArgv.exe" arg1 "arg 2" C:\path\arg "\"quoted arg\""'
+  register: cmdout
+
+- name: assert call to argv binary with absolute path
+  assert:
+    that:
+    - cmdout is changed
+    - cmdout.rc == 0
+    - cmdout.stdout_lines[0] == 'arg1'
+    - cmdout.stdout_lines[1] == 'arg 2'
+    - cmdout.stdout_lines[2] == 'C:\\path\\arg'
+    - cmdout.stdout_lines[3] == '"quoted arg"'
+
+- name: call argv binary with relative path
+  win_command: 'PrintArgv.exe C:\path\end\slash\ ADDLOCAL="msi,example" two\\slashes'
+  args:
+    chdir: C:\ansible testing
+  register: cmdout
+
+- name: assert call to argv binary with relative path
+  assert:
+    that:
+    - cmdout is changed
+    - cmdout.rc == 0
+    - cmdout.stdout_lines[0] == 'C:\\path\\end\\slash\\'
+    - cmdout.stdout_lines[1] == 'ADDLOCAL=msi,example'
+    - cmdout.stdout_lines[2] == 'two\\\\slashes'
+
+- name: remove testing folder
+  win_file:
+    path: C:\ansible testing
+    state: absent
+
+- name: run stdin test
+  win_command: powershell.exe -
+  args:
+    stdin: Write-Host "some input"
+  register: cmdout
+
+- name: assert run stdin test
+  assert:
+    that:
+    - cmdout is changed
+    - cmdout.rc == 0
+    - cmdout.stdout_lines|count == 1
+    - cmdout.stdout_lines[0] == "some input"
+    - cmdout.stderr == ""
+
+- name: echo some non ascii characters
+  win_command: cmd.exe /c echo über den Fußgängerübergang gehen
+  register: nonascii_output
+
+- name: assert echo some non ascii characters
+  assert:
+    that:
+    - nonascii_output is changed
+    - nonascii_output.rc == 0
+    - nonascii_output.stdout_lines|count == 1
+    - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
+    - nonascii_output.stderr == ''

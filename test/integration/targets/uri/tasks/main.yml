@@ -1,0 +1,498 @@
+# test code for the uri module
+# (c) 2014, Leonid Evdokimov <leon@darkk.net.ru>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
+
+- name: set role facts
+  set_fact:
+    http_port: 15260
+    files_dir: '{{ output_dir|expanduser }}/files'
+    checkout_dir: '{{ output_dir }}/git'
+
+- name: create a directory to serve files from
+  file:
+    dest: "{{ files_dir }}"
+    state: directory
+
+- copy:
+    src: "{{ item }}"
+    dest: "{{files_dir}}/{{ item }}"
+  with_sequence: start=0 end=4 format=pass%d.json
+
+- copy:
+    src: "{{ item }}"
+    dest: "{{files_dir}}/{{ item }}"
+  with_sequence: start=0 end=30 format=fail%d.json
+
+- copy:
+    src: "testserver.py"
+    dest: "{{ output_dir }}/testserver.py"
+
+- name: start SimpleHTTPServer
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
+  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
+  poll: 0
+
+- wait_for: port={{ http_port }}
+
+
+- name: checksum pass_json
+  stat: path={{ files_dir }}/{{ item }}.json get_checksum=yes
+  register: pass_checksum
+  with_sequence: start=0 end=4 format=pass%d
+
+- name: fetch pass_json
+  uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
+  register: pass
+  with_sequence: start=0 end=4 format=pass%d
+
+- name: check pass_json
+  assert:
+    that:
+      - '"json" in item.1'
+      - item.0.stat.checksum == item.1.content | checksum
+  with_together:
+    - "{{pass_checksum.results}}"
+    - "{{pass.results}}"
+
+
+- name: checksum fail_json
+  stat: path={{ files_dir }}/{{ item }}.json get_checksum=yes
+  register: fail_checksum
+  with_sequence: start=0 end=30 format=fail%d
+
+- name: fetch fail_json
+  uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
+  register: fail
+  with_sequence: start=0 end=30 format=fail%d
+
+- name: check fail_json
+  assert:
+    that:
+      - item.0.stat.checksum == item.1.content | checksum
+      - '"json" not in item.1'
+  with_together:
+    - "{{fail_checksum.results}}"
+    - "{{fail.results}}"
+
+- name: test https fetch to a site with mismatched hostname and certificate
+  uri:
+    url: "https://{{ badssl_host }}/"
+    dest: "{{ output_dir }}/shouldnotexist.html"
+  ignore_errors: True
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/shouldnotexist.html"
+  register: stat_result
+
+- name: Assert that the file was not downloaded
+  assert:
+    that:
+      - "result.failed == true"
+      - "'Failed to validate the SSL certificate' in result.msg or ( result.msg is match('hostname .* doesn.t match .*'))"
+      - "stat_result.stat.exists == false"
+
+- name: Clean up any cruft from the results directory
+  file:
+    name: "{{ output_dir }}/kreitz.html"
+    state: absent
+
+- name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
+  uri:
+    url: "https://{{ badssl_host }}/"
+    dest: "{{ output_dir }}/kreitz.html"
+    validate_certs: no
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/kreitz.html"
+  register: stat_result
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - "stat_result.stat.exists == true"
+      - "result.changed == true"
+
+- name: test redirect without follow_redirects
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect/2'
+    follow_redirects: 'none'
+    status_code: 302
+  register: result
+
+- name: Assert location header
+  assert:
+    that:
+      - 'result.location|default("") == "https://{{ httpbin_host }}/relative-redirect/1"'
+
+- name: Check SSL with redirect
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect/2'
+  register: result
+
+- name: Assert SSL with redirect
+  assert:
+    that:
+      - 'result.url|default("") == "https://{{ httpbin_host }}/get"'
+
+- name: redirect to bad SSL site
+  uri:
+    url: 'http://{{ badssl_host }}'
+  register: result
+  ignore_errors: true
+
+- name: Ensure bad SSL site reidrect fails
+  assert:
+    that:
+      - result is failed
+      - 'badssl_host in result.msg'
+
+- name: test basic auth
+  uri:
+    url: 'https://{{ httpbin_host }}/basic-auth/user/passwd'
+    user: user
+    password: passwd
+
+- name: test basic forced auth
+  uri:
+    url: 'https://{{ httpbin_host }}/hidden-basic-auth/user/passwd'
+    force_basic_auth: true
+    user: user
+    password: passwd
+
+- name: test digest auth
+  uri:
+    url: 'https://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    user: user
+    password: passwd
+    headers:
+      Cookie: "fake=fake_value"
+
+- name: test PUT
+  uri:
+    url: 'https://{{ httpbin_host }}/put'
+    method: PUT
+    body: 'foo=bar'
+
+- name: test OPTIONS
+  uri:
+    url: 'https://{{ httpbin_host }}/'
+    method: OPTIONS
+  register: result
+
+- name: Assert we got an allow header
+  assert:
+    that:
+      - 'result.allow.split(", ")|sort == ["GET", "HEAD", "OPTIONS"]'
+
+# Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
+# We'll use this to just skip 12.04 on those tests.  We should be sufficiently covered with other OSes and versions
+- name: Set fact if running on Ubuntu 12.04
+  set_fact:
+    is_ubuntu_precise: "{{ ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'precise' }}"
+
+- name: Test that SNI succeeds on python versions that have SNI
+  uri:
+    url: 'https://{{ sni_host }}/'
+    return_content: true
+  when: ansible_python.has_sslcontext
+  register: result
+
+- name: Assert SNI verification succeeds on new python
+  assert:
+    that:
+      - result is successful
+      - 'sni_host in result.content'
+  when: ansible_python.has_sslcontext
+
+- name: Verify SNI verification fails on old python without urllib3 contrib
+  uri:
+    url: 'https://{{ sni_host }}'
+  ignore_errors: true
+  when: not ansible_python.has_sslcontext
+  register: result
+
+- name: Assert SNI verification fails on old python
+  assert:
+    that:
+      - result is failed
+  when: result is not skipped
+
+- name: install OS packages that are needed for SNI on old python
+  package:
+    name: "{{ item }}"
+  with_items: "{{ uri_os_packages[ansible_os_family].step1 | default([]) }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: install python modules for Older Python SNI verification
+  pip:
+    name: "{{ item }}"
+  with_items:
+    - ndg-httpsclient
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: Verify SNI verification succeeds on old python with urllib3 contrib
+  uri:
+    url: 'https://{{ sni_host }}'
+    return_content: true
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+  register: result
+
+- name: Assert SNI verification succeeds on old python
+  assert:
+    that:
+      - result is successful
+      - 'sni_host in result.content'
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: Uninstall ndg-httpsclient
+  pip:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - ndg-httpsclient
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: uninstall OS packages that are needed for SNI on old python
+  package:
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ uri_os_packages[ansible_os_family].step1 | default([]) }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: install OS packages that are needed for building cryptography
+  package:
+    name: "{{ item }}"
+  with_items: "{{ uri_os_packages[ansible_os_family].step2 | default([]) }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: install urllib3 and pyopenssl via pip
+  pip:
+    name: "{{ item }}"
+    state: latest
+    extra_args: "-c {{ role_path }}/files/constraints.txt"
+  with_items:
+    - urllib3
+    - PyOpenSSL
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: Verify SNI verification succeeds on old python with pip urllib3 contrib
+  uri:
+    url: 'https://{{ sni_host }}'
+    return_content: true
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+  register: result
+
+- name: Assert SNI verification succeeds on old python with pip urllib3 contrib
+  assert:
+    that:
+      - result is successful
+      - 'sni_host in result.content'
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: Uninstall urllib3 and PyOpenSSL
+  pip:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - urllib3
+    - PyOpenSSL
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: validate the status_codes are correct
+  uri:
+    url: "https://{{ httpbin_host }}/status/202"
+    status_code: 202
+    method: POST
+    body: foo
+
+- name: Validate body_format json does not override content-type in 2.3 or newer
+  uri:
+    url: "https://{{ httpbin_host }}/post"
+    method: POST
+    body:
+      foo: bar
+    body_format: json
+    headers:
+      'Content-Type': 'text/json'
+    return_content: true
+  register: result
+  failed_when: result.json.headers['Content-Type'] != 'text/json'
+
+- name: Validate body_format form-urlencoded using dicts works
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+      user: foo
+      password: bar!#@ |&82$M
+      submit: Sign in
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+
+- name: Assert form-urlencoded dict input
+  assert:
+    that:
+    - result is successful
+    - result.json.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+    - result.json.form.password == 'bar!#@ |&82$M'
+
+- name: Validate body_format form-urlencoded using lists works
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+      - [ user, foo ]
+      - [ password, bar!#@ |&82$M ]
+      - [ submit, Sign in ]
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+
+- name: Assert form-urlencoded list input
+  assert:
+    that:
+    - result is successful
+    - result.json.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+    - result.json.form.password == 'bar!#@ |&82$M'
+
+- name: Validate body_format form-urlencoded of invalid input fails
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+    - foo
+    - bar: baz
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+  ignore_errors: yes
+
+- name: Assert invalid input fails
+  assert:
+    that:
+    - result is failure
+    - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
+
+- name: Test client cert auth, no certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    status_code: 200
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:NONE"
+  when: has_httptester
+
+- name: Test client cert auth, with certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
+
+- name: Test client cert auth, with no validation
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+    validate_certs: no
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
+
+- name: Test client cert auth, with validation and ssl mismatch
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+    validate_certs: yes
+  register: result
+  failed_when: result is not failed
+  when: has_httptester
+
+- uri:
+    url: https://{{ httpbin_host }}/response-headers?Set-Cookie=Foo%3Dbar&Set-Cookie=Baz%3Dqux
+  register: result
+
+- assert:
+    that:
+      - result['set_cookie'] == 'Foo=bar, Baz=qux'
+      # Python sorts cookies in order of most specific (ie. longest) path first
+      # items with the same path are reversed from response order
+      - result['cookies_string'] == 'Baz=qux; Foo=bar'
+
+- name: Write out netrc template
+  template:
+    src: netrc.j2
+    dest: "{{ output_dir }}/netrc"
+
+- debug:
+    msg: "{{ lookup('file', output_dir ~ '/netrc') }}"
+
+- name: Test netrc with port
+  uri:
+    url: "https://{{ httpbin_host }}:443/basic-auth/user/passwd"
+  environment:
+    NETRC: "{{ output_dir|expanduser }}/netrc"
+
+- name: Test JSON POST with src
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: pass0.json
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Test JSON POST with src and remote_src=True
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: "{{ role_path }}/files/pass0.json"
+    remote_src: true
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src  and remote_src=True works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Test follow_redirects=none
+  include_tasks: redirect-none.yml
+
+- name: Test follow_redirects=safe
+  include_tasks: redirect-safe.yml
+
+- name: Test follow_redirects=urllib2
+  include_tasks: redirect-urllib2.yml
+
+- name: Test follow_redirects=all
+  include_tasks: redirect-all.yml

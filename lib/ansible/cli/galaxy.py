@@ -19,170 +19,160 @@
 #
 ########################################################################
 
-import os
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os.path
+import re
+import shutil
 import sys
+import time
 import yaml
 
-from collections import defaultdict
-from distutils.version import LooseVersion
-from jinja2 import Environment
+from jinja2 import Environment, FileSystemLoader
 
 import ansible.constants as C
-import ansible.utils
-import ansible.galaxy
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
 from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
+from ansible.galaxy.token import GalaxyToken
+from ansible.module_utils._text import to_text
 from ansible.playbook.role.requirement import RoleRequirement
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class GalaxyCLI(CLI):
+    '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
-    VALID_ACTIONS = ("init", "info", "install", "list", "remove", "search")
-    SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
+    SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url")
+    VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
 
-    def __init__(self, args, display=None):
-
+    def __init__(self, args):
         self.api = None
         self.galaxy = None
-        super(GalaxyCLI, self).__init__(args, display)
+        super(GalaxyCLI, self).__init__(args)
+
+    def set_action(self):
+
+        super(GalaxyCLI, self).set_action()
+
+        # specific to actions
+        if self.action == "delete":
+            self.parser.set_usage("usage: %prog delete [options] github_user github_repo")
+            self.parser.set_description("Removes the role from Galaxy. It does not remove or alter the actual GitHub repository.")
+        elif self.action == "import":
+            self.parser.set_usage("usage: %prog import [options] github_user github_repo")
+            self.parser.set_description("Import a role.")
+            self.parser.add_option('--no-wait', dest='wait', action='store_false', default=True, help='Don\'t wait for import results.')
+            self.parser.add_option('--branch', dest='reference',
+                                   help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
+            self.parser.add_option('--role-name', dest='role_name', help='The name the role should have, if different than the repo name')
+            self.parser.add_option('--status', dest='check_status', action='store_true', default=False,
+                                   help='Check the status of the most recent import request for given github_user/github_repo.')
+        elif self.action == "info":
+            self.parser.set_usage("usage: %prog info [options] role_name[,version]")
+            self.parser.set_description("View more details about a specific role.")
+        elif self.action == "init":
+            self.parser.set_usage("usage: %prog init [options] role_name")
+            self.parser.set_description("Initialize new role with the base structure of a role.")
+            self.parser.add_option('--init-path', dest='init_path', default="./",
+                                   help='The path in which the skeleton role will be created. The default is the current working directory.')
+            self.parser.add_option('--type', dest='role_type', action='store', default='default',
+                                   help="Initialize using an alternate role type. Valid types include: 'container', 'apb' and 'network'.")
+            self.parser.add_option('--role-skeleton', dest='role_skeleton', default=C.GALAXY_ROLE_SKELETON,
+                                   help='The path to a role skeleton that the new role should be based upon.')
+        elif self.action == "install":
+            self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
+            self.parser.set_description("Install Roles from file(s), URL(s) or tar file(s)")
+            self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
+                                   help='Ignore errors and continue with the next specified role.')
+            self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
+            self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
+            self.parser.add_option('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
+                                   default=False, help='Use tar instead of the scm archive option when packaging the role')
+        elif self.action == "remove":
+            self.parser.set_usage("usage: %prog remove role1 role2 ...")
+            self.parser.set_description("Delete a role from roles_path.")
+        elif self.action == "list":
+            self.parser.set_usage("usage: %prog list [role_name]")
+            self.parser.set_description("Show the name and version of each role installed in the roles_path.")
+        elif self.action == "login":
+            self.parser.set_usage("usage: %prog login [options]")
+            self.parser.set_description("Login to api.github.com server in order to use ansible-galaxy sub command such as 'import', 'delete' and 'setup'.")
+            self.parser.add_option('--github-token', dest='token', default=None, help='Identify with github token rather than username and password.')
+        elif self.action == "search":
+            self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] "
+                                  "[--author username]")
+            self.parser.add_option('--platforms', dest='platforms', help='list of OS platforms to filter by')
+            self.parser.add_option('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
+            self.parser.add_option('--author', dest='author', help='GitHub username')
+            self.parser.set_description("Search the Galaxy database by tags, platforms, author and multiple keywords.")
+        elif self.action == "setup":
+            self.parser.set_usage("usage: %prog setup [options] source github_user github_repo secret")
+            self.parser.add_option('--remove', dest='remove_id', default=None,
+                                   help='Remove the integration matching the provided ID value. Use --list to see ID values.')
+            self.parser.add_option('--list', dest="setup_list", action='store_true', default=False, help='List all of your integrations.')
+            self.parser.set_description("Manage the integration between Galaxy and the given source.")
+        # options that apply to more than one action
+        if self.action in ['init', 'info']:
+            self.parser.add_option('--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
+
+        if self.action not in ("delete", "import", "init", "login", "setup"):
+            # NOTE: while the option type=str, the default is a list, and the
+            # callback will set the value to a list.
+            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.unfrack_paths, default=C.DEFAULT_ROLES_PATH,
+                                   help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg'
+                                        ' file (/etc/ansible/roles if not configured)', type='str')
+        if self.action in ("init", "install"):
+            self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
 
         self.parser = CLI.base_parser(
-            usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+            usage="usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
+            desc="Perform various Role related operations.",
         )
 
-
+        # common
+        self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
+        self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
+                               help='Ignore SSL certificate validation errors.')
         self.set_action()
 
-        # options specific to actions
-        if self.action == "info":
-            self.parser.set_usage("usage: %prog info [options] role_name[,version]")
-        elif self.action == "init":
-            self.parser.set_usage("usage: %prog init [options] role_name")
-            self.parser.add_option('-p', '--init-path', dest='init_path', default="./",
-                help='The path in which the skeleton role will be created. The default is the current working directory.')
-            self.parser.add_option(
-                '--offline', dest='offline', default=False, action='store_true',
-                help="Don't query the galaxy API when creating roles")
-        elif self.action == "install":
-            self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
-            self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
-                help='Ignore errors and continue with the next specified role.')
-            self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
-                help='Don\'t download roles listed as dependencies')
-            self.parser.add_option('-r', '--role-file', dest='role_file',
-                help='A file containing a list of roles to be imported')
-        elif self.action == "remove":
-            self.parser.set_usage("usage: %prog remove role1 role2 ...")
-        elif self.action == "list":
-            self.parser.set_usage("usage: %prog list [role_name]")
-        elif self.action == "search":
-            self.parser.add_option('-P', '--platforms', dest='platforms',
-                help='list of OS platforms to filter by')
-            self.parser.add_option('-C', '--categories', dest='categories',
-                help='list of categories to filter by')
-            self.parser.set_usage("usage: %prog search [<search_term>] [-C <category1,category2>] [-P platform]")
+        super(GalaxyCLI, self).parse()
 
-        # options that apply to more than one action
-        if self.action != "init":
-            self.parser.add_option('-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
-                help='The path to the directory containing your roles. '
-                     'The default is the roles_path configured in your '
-                     'ansible.cfg file (/etc/ansible/roles if not configured)')
-
-        if self.action in ("info","init","install","search"):
-            self.parser.add_option('-s', '--server', dest='api_server', default="https://galaxy.ansible.com",
-                help='The API server destination')
-
-        if self.action in ("init","install"):
-            self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False,
-                help='Force overwriting an existing role')
-
-        # get options, args and galaxy object
-        self.options, self.args =self.parser.parse_args()
-        self.display.verbosity = self.options.verbosity
-        self.galaxy = Galaxy(self.options, self.display)
-
-        return True
+        display.verbosity = self.options.verbosity
+        self.galaxy = Galaxy(self.options)
 
     def run(self):
 
         super(GalaxyCLI, self).run()
 
-        # if not offline, get connect to galaxy api
-        if self.action in ("info","install", "search") or (self.action == 'init' and not self.options.offline):
-            api_server = self.options.api_server
-            self.api = GalaxyAPI(self.galaxy, api_server)
-            if not self.api:
-                raise AnsibleError("The API server (%s) is not responding, please try again later." % api_server)
-
+        self.api = GalaxyAPI(self.galaxy)
         self.execute()
-
-    def get_opt(self, k, defval=""):
-        """
-        Returns an option from an Optparse values instance.
-        """
-        try:
-            data = getattr(self.options, k)
-        except:
-            return defval
-        if k == "roles_path":
-            if os.pathsep in data:
-                data = data.split(os.pathsep)[0]
-        return data
 
     def exit_without_ignore(self, rc=1):
         """
         Exits with the specified return code unless the
         option --ignore-errors was specified
         """
-        if not self.get_opt("ignore_errors", False):
+        if not self.options.ignore_errors:
             raise AnsibleError('- you can use --ignore-errors to skip failed roles and finish processing the list.')
-
-    def parse_requirements_files(self, role):
-        if 'role' in role:
-            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-            role_info = role_spec_parse(role['role'])
-            if isinstance(role_info, dict):
-                # Warning: Slight change in behaviour here.  name may be being
-                # overloaded.  Previously, name was only a parameter to the role.
-                # Now it is both a parameter to the role and the name that
-                # ansible-galaxy will install under on the local system.
-                if 'name' in role and 'name' in role_info:
-                    del role_info['name']
-                role.update(role_info)
-        else:
-            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
-            if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
-                role["src"] = "git+" + role["src"]
-
-            if '+' in role["src"]:
-                (scm, src) = role["src"].split('+')
-                role["scm"] = scm
-                role["src"] = src
-
-            if 'name' not in role:
-                role["name"] = GalaxyRole.url_to_spec(role["src"])
-
-            if 'version' not in role:
-                role['version'] = ''
-
-            if 'scm' not in role:
-                role['scm'] = None
-
-        return role
-
 
     def _display_role_info(self, role_info):
 
-        text = "\nRole: %s \n" % role_info['name']
-        text += "\tdescription: %s \n" % role_info['description']
+        text = [u"", u"Role: %s" % to_text(role_info['name'])]
+        text.append(u"\tdescription: %s" % role_info.get('description', ''))
 
         for k in sorted(role_info.keys()):
 
@@ -190,15 +180,15 @@ class GalaxyCLI(CLI):
                 continue
 
             if isinstance(role_info[k], dict):
-                text += "\t%s: \n" % (k)
+                text.append(u"\t%s:" % (k))
                 for key in sorted(role_info[k].keys()):
                     if key in self.SKIP_INFO_KEYS:
                         continue
-                    text += "\t\t%s: %s\n" % (key, role_info[k][key])
+                    text.append(u"\t\t%s: %s" % (key, role_info[k][key]))
             else:
-                text += "\t%s: %s\n" % (k, role_info[k])
+                text.append(u"\t%s: %s" % (k, role_info[k]))
 
-        return text
+        return u'\n'.join(text)
 
 ############################
 # execute actions
@@ -206,103 +196,92 @@ class GalaxyCLI(CLI):
 
     def execute_init(self):
         """
-        Executes the init action, which creates the skeleton framework
-        of a role that complies with the galaxy metadata format.
+        creates the skeleton framework of a role that complies with the galaxy metadata format.
         """
 
-        init_path  = self.get_opt('init_path', './')
-        force      = self.get_opt('force', False)
-        offline    = self.get_opt('offline', False)
+        init_path = self.options.init_path
+        force = self.options.force
+        role_skeleton = self.options.role_skeleton
 
-        role_name = self.args.pop(0).strip()
-        if role_name == "":
+        role_name = self.args.pop(0).strip() if self.args else None
+        if not role_name:
             raise AnsibleOptionsError("- no role name specified for init")
         role_path = os.path.join(init_path, role_name)
         if os.path.exists(role_path):
             if os.path.isfile(role_path):
                 raise AnsibleError("- the path %s already exists, but is a file - aborting" % role_path)
             elif not force:
-                raise AnsibleError("- the directory %s already exists." % role_path + \
-                            "you can use --force to re-initialize this directory,\n" + \
-                            "however it will reset any main.yml files that may have\n" + \
-                                "been modified there already.")
+                raise AnsibleError("- the directory %s already exists."
+                                   "you can use --force to re-initialize this directory,\n"
+                                   "however it will reset any main.yml files that may have\n"
+                                   "been modified there already." % role_path)
 
-        # create the default README.md
+        inject_data = dict(
+            role_name=role_name,
+            author='your name',
+            description='your description',
+            company='your company (optional)',
+            license='license (GPLv2, CC-BY, etc)',
+            issue_tracker_url='http://example.com/issue/tracker',
+            min_ansible_version='2.4',
+            role_type=self.options.role_type
+        )
+
+        # create role directory
         if not os.path.exists(role_path):
             os.makedirs(role_path)
-        readme_path = os.path.join(role_path, "README.md")
-        f = open(readme_path, "wb")
-        f.write(self.galaxy.default_readme)
-        f.close
 
-        for dir in GalaxyRole.ROLE_DIRS:
-            dir_path = os.path.join(init_path, role_name, dir)
-            main_yml_path = os.path.join(dir_path, 'main.yml')
-            # create the directory if it doesn't exist already
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
+        if role_skeleton is not None:
+            skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
+        else:
+            role_skeleton = self.galaxy.default_role_skeleton_path
+            skeleton_ignore_expressions = ['^.*/.git_keep$']
 
-            # now create the main.yml file for that directory
-            if dir == "meta":
-                # create a skeleton meta/main.yml with a valid galaxy_info
-                # datastructure in place, plus with all of the available
-                # tags/platforms included (but commented out) and the
-                # dependencies section
-                platforms = []
-                if not offline and self.api:
-                    platforms = self.api.get_list("platforms") or []
-                categories = []
-                if not offline and self.api:
-                    categories = self.api.get_list("categories") or []
+        role_skeleton = os.path.expanduser(role_skeleton)
+        skeleton_ignore_re = [re.compile(x) for x in skeleton_ignore_expressions]
 
-                # group the list of platforms from the api based
-                # on their names, with the release field being
-                # appended to a list of versions
-                platform_groups = defaultdict(list)
-                for platform in platforms:
-                    platform_groups[platform['name']].append(platform['release'])
-                    platform_groups[platform['name']].sort()
+        template_env = Environment(loader=FileSystemLoader(role_skeleton))
 
-                inject = dict(
-                    author = 'your name',
-                    company = 'your company (optional)',
-                    license = 'license (GPLv2, CC-BY, etc)',
-                    issue_tracker_url = 'http://example.com/issue/tracker',
-                    min_ansible_version = '1.2',
-                    platforms = platform_groups,
-                    categories = categories,
-                )
-                rendered_meta = Environment().from_string(self.galaxy.default_meta).render(inject)
-                f = open(main_yml_path, 'w')
-                f.write(rendered_meta)
-                f.close()
-                pass
-            elif dir not in ('files','templates'):
-                # just write a (mostly) empty YAML file for main.yml
-                f = open(main_yml_path, 'w')
-                f.write('---\n# %s file for %s\n' % (dir,role_name))
-                f.close()
-        self.display.display("- %s was created successfully" % role_name)
+        for root, dirs, files in os.walk(role_skeleton, topdown=True):
+            rel_root = os.path.relpath(root, role_skeleton)
+            in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
+            dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
+
+            for f in files:
+                filename, ext = os.path.splitext(f)
+                if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):
+                    continue
+                elif ext == ".j2" and not in_templates_dir:
+                    src_template = os.path.join(rel_root, f)
+                    dest_file = os.path.join(role_path, rel_root, filename)
+                    template_env.get_template(src_template).stream(inject_data).dump(dest_file)
+                else:
+                    f_rel_path = os.path.relpath(os.path.join(root, f), role_skeleton)
+                    shutil.copyfile(os.path.join(root, f), os.path.join(role_path, f_rel_path))
+
+            for d in dirs:
+                dir_path = os.path.join(role_path, rel_root, d)
+                if not os.path.exists(dir_path):
+                    os.makedirs(dir_path)
+
+        display.display("- %s was created successfully" % role_name)
 
     def execute_info(self):
         """
-        Executes the info action. This action prints out detailed
-        information about an installed role as well as info available
-        from the galaxy API.
+        prints out detailed information about an installed role as well as info available from the galaxy API.
         """
 
         if len(self.args) == 0:
             # the user needs to specify a role
             raise AnsibleOptionsError("- you must specify a user/role name")
 
-        roles_path = self.get_opt("roles_path")
+        roles_path = self.options.roles_path
 
         data = ''
         for role in self.args:
 
-            role_info = {}
+            role_info = {'path': roles_path}
             gr = GalaxyRole(self.galaxy, role)
-            #self.galaxy.add_role(gr)
 
             install_info = gr.install_info
             if install_info:
@@ -312,7 +291,7 @@ class GalaxyCLI(CLI):
                 role_info.update(install_info)
 
             remote_data = False
-            if self.api:
+            if not self.options.offline:
                 remote_data = self.api.lookup_role_by_name(role, False)
 
             if remote_data:
@@ -322,156 +301,143 @@ class GalaxyCLI(CLI):
                 role_info.update(gr.metadata)
 
             req = RoleRequirement()
-            __, __, role_spec= req.parse({'role': role})
+            role_spec = req.role_yaml_parse({'role': role})
             if role_spec:
                 role_info.update(role_spec)
 
-            data += self._display_role_info(role_info)
+            data = self._display_role_info(role_info)
+            # FIXME: This is broken in both 1.9 and 2.0 as
+            # _display_role_info() always returns something
             if not data:
-                data += "\n- the role %s was not found" % role
+                data = u"\n- the role %s was not found" % role
 
         self.pager(data)
 
     def execute_install(self):
         """
-        Executes the installation action. The args list contains the
-        roles to be installed, unless -f was specified. The list of roles
-        can be a name (which will be downloaded via the galaxy API and github),
-        or it can be a local .tar.gz file.
+        uses the args list of roles to be installed, unless -f was specified. The list of roles
+        can be a name (which will be downloaded via the galaxy API and github), or it can be a local .tar.gz file.
         """
-
-        role_file  = self.get_opt("role_file", None)
+        role_file = self.options.role_file
 
         if len(self.args) == 0 and role_file is None:
-            # the user needs to specify one of either --role-file
-            # or specify a single user/role name
+            # the user needs to specify one of either --role-file or specify a single user/role name
             raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
-        elif len(self.args) == 1 and not role_file is None:
-            # using a role file is mutually exclusive of specifying
-            # the role name on the command line
-            raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
-        no_deps    = self.get_opt("no_deps", False)
-        roles_path = self.get_opt("roles_path")
+        no_deps = self.options.no_deps
+        force = self.options.force
 
-        roles_done = []
         roles_left = []
         if role_file:
-            self.display.debug('Getting roles from %s' % role_file)
             try:
-                self.display.debug('Processing role file: %s' % role_file)
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
                     try:
-                        rolesparsed = map(self.parse_requirements_files, yaml.safe_load(f))
+                        required_roles = yaml.safe_load(f.read())
                     except Exception as e:
-                       raise AnsibleError("%s does not seem like a valid yaml file: %s" % (role_file, str(e)))
-                    roles_left = [GalaxyRole(self.galaxy, **r) for r in rolesparsed]
+                        raise AnsibleError("Unable to load data from the requirements file: %s" % role_file)
+
+                    if required_roles is None:
+                        raise AnsibleError("No roles found in file: %s" % role_file)
+
+                    for role in required_roles:
+                        if "include" not in role:
+                            role = RoleRequirement.role_yaml_parse(role)
+                            display.vvv("found role %s in yaml file" % str(role))
+                            if "name" not in role and "scm" not in role:
+                                raise AnsibleError("Must specify name or src for role")
+                            roles_left.append(GalaxyRole(self.galaxy, **role))
+                        else:
+                            with open(role["include"]) as f_include:
+                                try:
+                                    roles_left += [
+                                        GalaxyRole(self.galaxy, **r) for r in
+                                        (RoleRequirement.role_yaml_parse(i) for i in yaml.safe_load(f_include))
+                                    ]
+                                except Exception as e:
+                                    msg = "Unable to load data from the include requirements file: %s %s"
+                                    raise AnsibleError(msg % (role_file, e))
                 else:
-                    # roles listed in a file, one per line
-                    self.display.deprecated("Non yaml files for role requirements")
-                    for rname in f.readlines():
-                        if rname.startswith("#") or rname.strip() == '':
-                            continue
-                        roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
+                    raise AnsibleError("Invalid role requirements file")
                 f.close()
-            except (IOError,OSError) as e:
-                raise AnsibleError("Unable to read requirements file (%s): %s" % (role_file, str(e)))
+            except (IOError, OSError) as e:
+                raise AnsibleError('Unable to open %s: %s' % (role_file, str(e)))
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
             for rname in self.args:
-                roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
+                role = RoleRequirement.role_yaml_parse(rname.strip())
+                roles_left.append(GalaxyRole(self.galaxy, **role))
 
-        while len(roles_left) > 0:
+        for role in roles_left:
+            # only process roles in roles files when names matches if given
+            if role_file and self.args and role.name not in self.args:
+                display.vvv('Skipping role %s' % role.name)
+                continue
+
+            display.vvv('Processing role %s ' % role.name)
+
             # query the galaxy API for the role data
-            role_data = None
-            role = roles_left.pop(0)
-            role_path = role.path
 
-
-            if role_path:
-                self.options.roles_path = role_path
-            else:
-                self.options.roles_path = roles_path
-
-            self.display.debug('Installing role %s from %s' % (role.name, self.options.roles_path))
-
-            tmp_file = None
-            installed = False
-            if role.src and os.path.isfile(role.src):
-                # installing a local tar.gz
-                tmp_file = role.src
-            else:
-                if role.scm:
-                    # create tar file from scm url
-                    tmp_file = GalaxyRole.scm_archive_role(role.scm, role.src, role.version, role.name)
-                if role.src:
-                    if '://' not in role.src:
-                        role_data = self.api.lookup_role_by_name(role.src)
-                        if not role_data:
-                            self.display.warning("- sorry, %s was not found on %s." % (role.src, self.options.api_server))
-                            self.exit_without_ignore()
-                            continue
-
-                        role_versions = self.api.fetch_role_related('versions', role_data['id'])
-                        if not role.version:
-                            # convert the version names to LooseVersion objects
-                            # and sort them to get the latest version. If there
-                            # are no versions in the list, we'll grab the head
-                            # of the master branch
-                            if len(role_versions) > 0:
-                                loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
-                                loose_versions.sort()
-                                role.version = str(loose_versions[-1])
-                            else:
-                                role.version = 'master'
-                        elif role.version != 'master':
-                            if role_versions and role.version not in [a.get('name', None) for a in role_versions]:
-                                self.display.warning('role is %s' % role)
-                                self.display.warning("- the specified version (%s) was not found in the list of available versions (%s)." % (role.version, role_versions))
-                                self.exit_without_ignore()
-                                continue
-
-                    # download the role. if --no-deps was specified, we stop here,
-                    # otherwise we recursively grab roles and all of their deps.
-                    tmp_file = role.fetch(role_data)
-            if tmp_file:
-                installed = role.install(tmp_file)
-                # we're done with the temp file, clean it up
-                if tmp_file != role.src:
-                    os.unlink(tmp_file)
-                # install dependencies, if we want them
-                if not no_deps and installed:
-                    if not role_data:
-                        role_data = gr.get_metadata(role.get("name"), options)
-                        role_dependencies = role_data['dependencies']
+            if role.install_info is not None:
+                if role.install_info['version'] != role.version or force:
+                    if force:
+                        display.display('- changing role %s from %s to %s' %
+                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                        role.remove()
                     else:
-                        role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
-                    for dep in role_dependencies:
-                        self.display.debug('Installing dep %s' % dep)
-                        if isinstance(dep, basestring):
-                            dep = ansible.utils.role_spec_parse(dep)
-                        else:
-                            dep = ansible.utils.role_yaml_parse(dep)
-                        if not get_role_metadata(dep["name"], options):
-                            if dep not in roles_left:
-                                self.display.display('- adding dependency: %s' % dep["name"])
-                                roles_left.append(dep)
-                            else:
-                                self.display.display('- dependency %s already pending installation.' % dep["name"])
-                        else:
-                            self.display.display('- dependency %s is already installed, skipping.' % dep["name"])
+                        display.warning('- %s (%s) is already installed - use --force to change version to %s' %
+                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                        continue
+                else:
+                    if not force:
+                        display.display('- %s is already installed, skipping.' % str(role))
+                        continue
 
-            if not tmp_file or not installed:
-                self.display.warning("- %s was NOT installed successfully." % role.name)
+            try:
+                installed = role.install()
+            except AnsibleError as e:
+                display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
                 self.exit_without_ignore()
+                continue
+
+            # install dependencies, if we want them
+            if not no_deps and installed:
+                if not role.metadata:
+                    display.warning("Meta file %s is empty. Skipping dependencies." % role.path)
+                else:
+                    role_dependencies = role.metadata.get('dependencies') or []
+                    for dep in role_dependencies:
+                        display.debug('Installing dep %s' % dep)
+                        dep_req = RoleRequirement()
+                        dep_info = dep_req.role_yaml_parse(dep)
+                        dep_role = GalaxyRole(self.galaxy, **dep_info)
+                        if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+                            # we know we can skip this, as it's not going to
+                            # be found on galaxy.ansible.com
+                            continue
+                        if dep_role.install_info is None:
+                            if dep_role not in roles_left:
+                                display.display('- adding dependency: %s' % str(dep_role))
+                                roles_left.append(dep_role)
+                            else:
+                                display.display('- dependency %s already pending installation.' % dep_role.name)
+                        else:
+                            if dep_role.install_info['version'] != dep_role.version:
+                                display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
+                                                (str(dep_role), role.name, dep_role.install_info['version']))
+                            else:
+                                display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+
+            if not installed:
+                display.warning("- %s was NOT installed successfully." % role.name)
+                self.exit_without_ignore()
+
         return 0
 
     def execute_remove(self):
         """
-        Executes the remove action. The args list contains the list
-        of roles to be removed. This list can contain more than one role.
+        removes the list of roles passed as arguments from the local system.
         """
 
         if len(self.args) == 0:
@@ -481,9 +447,9 @@ class GalaxyCLI(CLI):
             role = GalaxyRole(self.galaxy, role_name)
             try:
                 if role.remove():
-                    self.display.display('- successfully removed %s' % role_name)
+                    display.display('- successfully removed %s' % role_name)
                 else:
-                    self.display.display('- %s is not installed, skipping.' % role_name)
+                    display.display('- %s is not installed, skipping.' % role_name)
             except Exception as e:
                 raise AnsibleError("Failed to remove role %s: %s" % (role_name, str(e)))
 
@@ -491,10 +457,7 @@ class GalaxyCLI(CLI):
 
     def execute_list(self):
         """
-        Executes the list action. The args list can contain zero
-        or one role. If one is specified, only that role will be
-        shown, otherwise all roles in the specified directory will
-        be shown.
+        lists the roles installed on the local system or matches a single role passed as an argument.
         """
 
         if len(self.args) > 1:
@@ -512,46 +475,217 @@ class GalaxyCLI(CLI):
                 if not version:
                     version = "(unknown version)"
                 # show some more info about single roles here
-                self.display.display("- %s, %s" % (name, version))
+                display.display("- %s, %s" % (name, version))
             else:
-                self.display.display("- the role %s was not found" % name)
+                display.display("- the role %s was not found" % name)
         else:
             # show all valid roles in the roles_path directory
-            roles_path = self.get_opt('roles_path')
-            roles_path = os.path.expanduser(roles_path)
-            if not os.path.exists(roles_path):
-                raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path)
-            elif not os.path.isdir(roles_path):
-                raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
-            path_files = os.listdir(roles_path)
-            for path_file in path_files:
-                gr = GalaxyRole(self.galaxy, path_file)
-                if gr.metadata:
-                    install_info = gr.metadata
-                    version = None
-                    if install_info:
-                        version = install_info.get("version", None)
-                    if not version:
-                        version = "(unknown version)"
-                    self.display.display("- %s, %s" % (path_file, version))
+            roles_path = self.options.roles_path
+            path_found = False
+            for path in roles_path:
+                role_path = os.path.expanduser(path)
+                if not os.path.exists(role_path):
+                    display.warning("- the configured path %s does not exist." % role_path)
+                    continue
+                elif not os.path.isdir(role_path):
+                    display.warning("- the configured path %s, exists, but it is not a directory." % role_path)
+                    continue
+                path_files = os.listdir(role_path)
+                path_found = True
+                for path_file in path_files:
+                    gr = GalaxyRole(self.galaxy, path_file, path=path)
+                    if gr.metadata:
+                        install_info = gr.install_info
+                        version = None
+                        if install_info:
+                            version = install_info.get("version", None)
+                        if not version:
+                            version = "(unknown version)"
+                        display.display("- %s, %s" % (path_file, version))
+            if not path_found:
+                raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
         return 0
 
     def execute_search(self):
-
+        ''' searches for roles on the Ansible Galaxy server'''
+        page_size = 1000
         search = None
-        if len(self.args) > 1:
-            raise AnsibleOptionsError("At most a single search term is allowed.")
-        elif len(self.args) == 1:
-            search = self.args.pop()
 
-        response = self.api.search_roles(search, self.options.platforms, self.options.categories)
+        if len(self.args):
+            terms = []
+            for i in range(len(self.args)):
+                terms.append(self.args.pop())
+            search = '+'.join(terms[::-1])
 
-        if 'count' in response:
-            self.galaxy.display.display("Found %d roles matching your search:\n" % response['count'])
+        if not search and not self.options.platforms and not self.options.galaxy_tags and not self.options.author:
+            raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
-        data = ''
-        if 'results' in response:
-            for role in response['results']:
-                data += self._display_role_info(role)
+        response = self.api.search_roles(search, platforms=self.options.platforms,
+                                         tags=self.options.galaxy_tags, author=self.options.author, page_size=page_size)
 
+        if response['count'] == 0:
+            display.display("No roles match your search.", color=C.COLOR_ERROR)
+            return True
+
+        data = [u'']
+
+        if response['count'] > page_size:
+            data.append(u"Found %d roles matching your search. Showing first %s." % (response['count'], page_size))
+        else:
+            data.append(u"Found %d roles matching your search:" % response['count'])
+
+        max_len = []
+        for role in response['results']:
+            max_len.append(len(role['username'] + '.' + role['name']))
+        name_len = max(max_len)
+        format_str = u" %%-%ds %%s" % name_len
+        data.append(u'')
+        data.append(format_str % (u"Name", u"Description"))
+        data.append(format_str % (u"----", u"-----------"))
+        for role in response['results']:
+            data.append(format_str % (u'%s.%s' % (role['username'], role['name']), role['description']))
+
+        data = u'\n'.join(data)
         self.pager(data)
+
+        return True
+
+    def execute_login(self):
+        """
+        verify user's identify via Github and retrieve an auth token from Ansible Galaxy.
+        """
+        # Authenticate with github and retrieve a token
+        if self.options.token is None:
+            if C.GALAXY_TOKEN:
+                github_token = C.GALAXY_TOKEN
+            else:
+                login = GalaxyLogin(self.galaxy)
+                github_token = login.create_github_token()
+        else:
+            github_token = self.options.token
+
+        galaxy_response = self.api.authenticate(github_token)
+
+        if self.options.token is None and C.GALAXY_TOKEN is None:
+            # Remove the token we created
+            login.remove_github_token()
+
+        # Store the Galaxy token
+        token = GalaxyToken()
+        token.set(galaxy_response['token'])
+
+        display.display("Successfully logged into Galaxy as %s" % galaxy_response['username'])
+        return 0
+
+    def execute_import(self):
+        """ used to import a role into Ansible Galaxy """
+
+        colors = {
+            'INFO': 'normal',
+            'WARNING': C.COLOR_WARN,
+            'ERROR': C.COLOR_ERROR,
+            'SUCCESS': C.COLOR_OK,
+            'FAILED': C.COLOR_ERROR,
+        }
+
+        if len(self.args) < 2:
+            raise AnsibleError("Expected a github_username and github_repository. Use --help.")
+
+        github_repo = to_text(self.args.pop(), errors='surrogate_or_strict')
+        github_user = to_text(self.args.pop(), errors='surrogate_or_strict')
+
+        if self.options.check_status:
+            task = self.api.get_import_task(github_user=github_user, github_repo=github_repo)
+        else:
+            # Submit an import request
+            task = self.api.create_import_task(github_user, github_repo, reference=self.options.reference, role_name=self.options.role_name)
+
+            if len(task) > 1:
+                # found multiple roles associated with github_user/github_repo
+                display.display("WARNING: More than one Galaxy role associated with Github repo %s/%s." % (github_user, github_repo),
+                                color='yellow')
+                display.display("The following Galaxy roles are being updated:" + u'\n', color=C.COLOR_CHANGED)
+                for t in task:
+                    display.display('%s.%s' % (t['summary_fields']['role']['namespace'], t['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
+                display.display(u'\nTo properly namespace this role, remove each of the above and re-import %s/%s from scratch' % (github_user, github_repo),
+                                color=C.COLOR_CHANGED)
+                return 0
+            # found a single role as expected
+            display.display("Successfully submitted import request %d" % task[0]['id'])
+            if not self.options.wait:
+                display.display("Role name: %s" % task[0]['summary_fields']['role']['name'])
+                display.display("Repo: %s/%s" % (task[0]['github_user'], task[0]['github_repo']))
+
+        if self.options.check_status or self.options.wait:
+            # Get the status of the import
+            msg_list = []
+            finished = False
+            while not finished:
+                task = self.api.get_import_task(task_id=task[0]['id'])
+                for msg in task[0]['summary_fields']['task_messages']:
+                    if msg['id'] not in msg_list:
+                        display.display(msg['message_text'], color=colors[msg['message_type']])
+                        msg_list.append(msg['id'])
+                if task[0]['state'] in ['SUCCESS', 'FAILED']:
+                    finished = True
+                else:
+                    time.sleep(10)
+
+        return 0
+
+    def execute_setup(self):
+        """ Setup an integration from Github or Travis for Ansible Galaxy roles"""
+
+        if self.options.setup_list:
+            # List existing integration secrets
+            secrets = self.api.list_secrets()
+            if len(secrets) == 0:
+                # None found
+                display.display("No integrations found.")
+                return 0
+            display.display(u'\n' + "ID         Source     Repo", color=C.COLOR_OK)
+            display.display("---------- ---------- ----------", color=C.COLOR_OK)
+            for secret in secrets:
+                display.display("%-10s %-10s %s/%s" % (secret['id'], secret['source'], secret['github_user'],
+                                                       secret['github_repo']), color=C.COLOR_OK)
+            return 0
+
+        if self.options.remove_id:
+            # Remove a secret
+            self.api.remove_secret(self.options.remove_id)
+            display.display("Secret removed. Integrations using this secret will not longer work.", color=C.COLOR_OK)
+            return 0
+
+        if len(self.args) < 4:
+            raise AnsibleError("Missing one or more arguments. Expecting: source github_user github_repo secret")
+
+        secret = self.args.pop()
+        github_repo = self.args.pop()
+        github_user = self.args.pop()
+        source = self.args.pop()
+
+        resp = self.api.add_secret(source, github_user, github_repo, secret)
+        display.display("Added integration for %s %s/%s" % (resp['source'], resp['github_user'], resp['github_repo']))
+
+        return 0
+
+    def execute_delete(self):
+        """ Delete a role from Ansible Galaxy. """
+
+        if len(self.args) < 2:
+            raise AnsibleError("Missing one or more arguments. Expected: github_user github_repo")
+
+        github_repo = self.args.pop()
+        github_user = self.args.pop()
+        resp = self.api.delete_role(github_user, github_repo)
+
+        if len(resp['deleted_roles']) > 1:
+            display.display("Deleted the following roles:")
+            display.display("ID     User            Name")
+            display.display("------ --------------- ----------")
+            for role in resp['deleted_roles']:
+                display.display("%-8s %-15s %s" % (role.id, role.namespace, role.name))
+
+        display.display(resp['status'])
+
+        return True

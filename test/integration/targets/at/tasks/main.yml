@@ -1,0 +1,62 @@
+# Test code for the at module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_dir_test={{output_dir}}/at
+
+- name: make sure our testing sub-directory does not exist
+  file: path="{{ output_dir_test }}" state=absent
+
+- name: create our testing sub-directory
+  file: path="{{ output_dir_test }}" state=directory
+
+##
+## at
+##
+
+- name: define distros to attempt installing at on 
+  set_fact:
+    package_distros:
+        - RedHat
+        - CentOS
+        - ScientificLinux
+        - Fedora
+        - Ubuntu
+        - Debian
+        - openSUSE Leap
+
+- name: ensure at is installed
+  package:
+    name: at
+    state: present
+  when: ansible_distribution in package_distros
+
+- name: run the first example
+  at:
+    command: "ls -d / > /dev/null"
+    count: 20
+    units: minutes
+  register: at_test0
+- debug: var=at_test0
+- name: validate results
+  assert:
+      that:
+          - 'at_test0.changed is defined'
+          - 'at_test0.count is defined'
+          - 'at_test0.script_file is defined'
+          - 'at_test0.state is defined'
+          - 'at_test0.units is defined'

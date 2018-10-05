@@ -1,0 +1,77 @@
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- block:
+  - block:
+      - include: 'repo.yml'
+    always:
+      - apt_repository:
+          repo: "deb file:{{ repodir }} ./"
+          state: absent
+      - file:
+          name: "{{ repodir }}"
+          state: absent
+
+  - include: 'apt.yml'
+
+  - include: 'apt-multiarch.yml'
+    when:
+      - ansible_userspace_architecture != apt_foreign_arch
+
+  - include: 'apt-builddep.yml'
+
+  - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type=dist force_apt_get={{ False | bool }}"
+
+  - name: Check if aptitude is installed
+    command: dpkg-query --show --showformat='${db:Status-Abbrev}' aptitude
+    register: aptitude_status
+
+  - name: Remove aptitude, if installed, to test fall-back to apt-get
+    apt:
+      pkg: aptitude
+      state: absent
+    when:
+      - aptitude_status.stdout.find('ii') != -1
+
+  - include: "upgrade.yml aptitude_present={{ False | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
+    with_items:
+      - { upgrade_type: safe, force_apt_get: False }
+      - { upgrade_type: full, force_apt_get: False }
+      - { upgrade_type: safe, force_apt_get: True }
+      - { upgrade_type: full, force_apt_get: True }
+
+  - name: (Re-)Install aptitude, run same tests again
+    apt:
+      pkg: aptitude
+      state: present
+
+  - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
+    with_items:
+      - { upgrade_type: safe, force_apt_get: False }
+      - { upgrade_type: full, force_apt_get: False }
+      - { upgrade_type: safe, force_apt_get: True }
+      - { upgrade_type: full, force_apt_get: True }
+
+  - name: Remove aptitude if not originally present
+    apt:
+      pkg: aptitude
+      state: absent
+    when:
+      - aptitude_status.stdout.find('ii') == -1
+
+  when:
+    - ansible_distribution in ('Ubuntu', 'Debian')

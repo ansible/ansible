@@ -1,0 +1,208 @@
+---
+- debug: msg="START junos_banner netconf/basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup - remove login banner
+  junos_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create login banner
+  junos_banner:
+    banner: login
+    text: this is my login banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message>this is my login banner</message>' in config.xml"
+
+- name: Create login banner (idempotent)
+  junos_banner:
+    banner: login
+    text: this is my login banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate login banner
+  junos_banner:
+    banner: login
+    text: this is my login banner
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message inactive=\"inactive\">this is my login banner</message>' in config.xml"
+
+- name: Activate login banner
+  junos_banner:
+    banner: login
+    text: this is my login banner
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message>this is my login banner</message>' in config.xml"
+
+- name: check mode
+  junos_banner:
+    banner: login
+    text: this is not the login banner you're looking for
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+  check_mode: yes
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.failed == false"
+
+- name: delete login banner
+  junos_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message>this is my login banner</message>' not in config.xml"
+
+- name: setup - remove motd banner
+  junos_banner:
+    banner: motd
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create motd banner
+  junos_banner:
+    banner: motd
+    text: this is my motd banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement>this is my motd banner</announcement>' in config.xml"
+
+- name: Create motd banner (idempotent)
+  junos_banner:
+    banner: motd
+    text: this is my motd banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate motd banner
+  junos_banner:
+    banner: motd
+    text: this is my motd banner
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement inactive=\"inactive\">this is my motd banner</announcement>' in config.xml"
+
+- name: Activate motd banner
+  junos_banner:
+    banner: motd
+    text: this is my motd banner
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement>this is my motd banner</announcement>' in config.xml"
+
+- name: delete motd banner
+  junos_banner:
+    banner: motd
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<announcement>this is my motd banner</announcement>' not in config.xml"
+
+- debug: msg="END junos_banner netconf/basic.yaml on connection={{ ansible_connection }}"

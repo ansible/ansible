@@ -1,0 +1,53 @@
+- debug: var=ansible_system
+
+- name: ping
+  ping:
+  when: ansible_system != 'Win32NT'
+
+- name: win_ping
+  win_ping:
+  when: ansible_system == 'Win32NT'
+
+- name: Hello, World!
+  action: "helloworld_{{ ansible_system|lower }}"
+  register: hello_world
+
+- assert:
+    that:
+      - 'hello_world.msg == "Hello, World!"'
+
+- name: Hello, Ansible!
+  action: "helloworld_{{ ansible_system|lower }}"
+  args:
+    name: Ansible
+  register: hello_ansible
+
+- assert:
+    that:
+      - 'hello_ansible.msg == "Hello, Ansible!"'
+
+- name: Async Hello, World!
+  action: "helloworld_{{ ansible_system|lower }}"
+  async: 10
+  poll: 1
+  when: ansible_system != 'Win32NT'
+  register: async_hello_world
+
+- assert:
+    that:
+      - 'async_hello_world.msg == "Hello, World!"'
+  when: async_hello_world is not skipped
+
+- name: Async Hello, Ansible!
+  action: "helloworld_{{ ansible_system|lower }}"
+  args:
+    name: Ansible
+  async: 10
+  poll: 1
+  when: ansible_system != 'Win32NT'
+  register: async_hello_ansible
+
+- assert:
+    that:
+      - 'async_hello_ansible.msg == "Hello, Ansible!"'
+  when: async_hello_ansible is not skipped

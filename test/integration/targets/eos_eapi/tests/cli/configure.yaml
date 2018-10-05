@@ -1,0 +1,43 @@
+- debug: msg="START CLI/CONFIGURE.YAML"
+
+- name: Change endpoint ports
+  eos_eapi:
+    enable_http: false
+    http_port: 81
+    https_port: 4443
+    enable_local_http: yes
+    enable_https: yes
+    local_http_port: 8181
+    provider: "{{ cli }}"
+  become: yes
+  register: eos_eapi_output
+
+- eos_command:
+    commands:
+      - show management api http-commands | json
+    provider: "{{ cli }}"
+  register: http_config
+
+- name: Expect endpoint ports to be set
+  assert:
+    that:
+        - http_config.stdout[0].httpServer.port == 80
+        - http_config.stdout[0].httpsServer.port == 4443
+        - http_config.stdout[0].localHttpServer.port == 8181
+
+- name: Change endpoint ports again
+  eos_eapi:
+    http_port: 80
+    https_port: 4443
+    enable_local_http: yes
+    local_http_port: 8181
+    provider: "{{ cli }}"
+  become: yes
+  register: eos_eapi_output
+
+- name: Expect action to be idempotent
+  assert:
+    that:
+      - "eos_eapi_output.changed == false"
+
+- debug: msg="END CLI/CONFIGURE.YAML"

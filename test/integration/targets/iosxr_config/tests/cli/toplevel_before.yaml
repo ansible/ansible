@@ -1,0 +1,40 @@
+---
+- debug: msg="START cli/toplevel_before.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    commands:
+      - "no cdp"
+      - "hostname {{ inventory_hostname_short }}"
+    match: none
+
+- name: configure top level command with before
+  iosxr_config:
+    commands: ['hostname foo']
+    before: ['cdp']
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.commands"
+      - "'cdp' in result.commands"
+
+- name: configure top level command with before idempotent check
+  iosxr_config:
+    commands: ['hostname foo']
+    before: ['cdp']
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  iosxr_config:
+    commands:
+      - "no cdp"
+      - "hostname {{ inventory_hostname_short }}"
+    match: none
+
+- debug: msg="END cli/toplevel_before.yaml on connection={{ ansible_connection }}"

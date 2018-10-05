@@ -20,19 +20,37 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import text_type, binary_type
-from six.moves import StringIO
+from io import StringIO
+
 from collections import Sequence, Set, Mapping
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
 
+from ansible import errors
+from ansible.module_utils.six import text_type, binary_type
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.parsing import vault
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.parsing.yaml.dumper import AnsibleDumper
+
+from units.mock.yaml_helper import YamlTestUtils
+from units.mock.vault_helper import TextVaultSecret
 
 try:
     from _yaml import ParserError
+    from _yaml import ScannerError
 except ImportError:
     from yaml.parser import ParserError
+    from yaml.scanner import ScannerError
+
+
+class NameStringIO(StringIO):
+    """In py2.6, StringIO doesn't let you set name because a baseclass has it
+    as readonly property"""
+    name = None
+
+    def __init__(self, *args, **kwargs):
+        super(NameStringIO, self).__init__(*args, **kwargs)
 
 
 class TestAnsibleLoaderBasic(unittest.TestCase):
@@ -44,7 +62,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         pass
 
     def test_parse_number(self):
-        stream = StringIO("""
+        stream = StringIO(u"""
                 1
                 """)
         loader = AnsibleLoader(stream, 'myfile.yml')
@@ -53,7 +71,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         # No line/column info saved yet
 
     def test_parse_string(self):
-        stream = StringIO("""
+        stream = StringIO(u"""
                 Ansible
                 """)
         loader = AnsibleLoader(stream, 'myfile.yml')
@@ -64,7 +82,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
     def test_parse_utf8_string(self):
-        stream = StringIO("""
+        stream = StringIO(u"""
                 Cafè Eñyei
                 """)
         loader = AnsibleLoader(stream, 'myfile.yml')
@@ -75,7 +93,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
     def test_parse_dict(self):
-        stream = StringIO("""
+        stream = StringIO(u"""
                 webster: daniel
                 oed: oxford
                 """)
@@ -93,7 +111,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[u'oed'].ansible_pos, ('myfile.yml', 3, 22))
 
     def test_parse_list(self):
-        stream = StringIO("""
+        stream = StringIO(u"""
                 - a
                 - b
                 """)
@@ -109,7 +127,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[1].ansible_pos, ('myfile.yml', 3, 19))
 
     def test_parse_short_dict(self):
-        stream = StringIO("""{"foo": "bar"}""")
+        stream = StringIO(u"""{"foo": "bar"}""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
@@ -117,7 +135,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data.ansible_pos, ('myfile.yml', 1, 1))
         self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 1, 9))
 
-        stream = StringIO("""foo: bar""")
+        stream = StringIO(u"""foo: bar""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
@@ -126,12 +144,17 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 1, 6))
 
     def test_error_conditions(self):
-        stream = StringIO("""{""")
+        stream = StringIO(u"""{""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         self.assertRaises(ParserError, loader.get_single_data)
 
+    def test_tab_error(self):
+        stream = StringIO(u"""---\nhosts: localhost\nvars:\n  foo: bar\n\tblip: baz""")
+        loader = AnsibleLoader(stream, 'myfile.yml')
+        self.assertRaises(ScannerError, loader.get_single_data)
+
     def test_front_matter(self):
-        stream = StringIO("""---\nfoo: bar""")
+        stream = StringIO(u"""---\nfoo: bar""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
@@ -140,7 +163,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 2, 6))
 
         # Initial indent (See: #6348)
-        stream = StringIO(""" - foo: bar\n   baz: qux""")
+        stream = StringIO(u""" - foo: bar\n   baz: qux""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, [{u'foo': u'bar', u'baz': u'qux'}])
@@ -151,10 +174,141 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[0][u'baz'].ansible_pos, ('myfile.yml', 2, 9))
 
 
+class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
+    def setUp(self):
+        self.vault_password = "hunter42"
+        vault_secret = TextVaultSecret(self.vault_password)
+        self.vault_secrets = [('vault_secret', vault_secret),
+                              ('default', vault_secret)]
+        self.vault = vault.VaultLib(self.vault_secrets)
+
+    @property
+    def vault_secret(self):
+        return vault.match_encrypt_secret(self.vault_secrets)[1]
+
+    def test_wrong_password(self):
+        plaintext = u"Ansible"
+        bob_password = "this is a different password"
+
+        bobs_secret = TextVaultSecret(bob_password)
+        bobs_secrets = [('default', bobs_secret)]
+
+        bobs_vault = vault.VaultLib(bobs_secrets)
+
+        ciphertext = bobs_vault.encrypt(plaintext, vault.match_encrypt_secret(bobs_secrets)[1])
+
+        try:
+            self.vault.decrypt(ciphertext)
+        except Exception as e:
+            self.assertIsInstance(e, errors.AnsibleError)
+            self.assertEqual(e.message, 'Decryption failed (no vault secrets were found that could decrypt)')
+
+    def _encrypt_plaintext(self, plaintext):
+        # Construct a yaml repr of a vault by hand
+        vaulted_var_bytes = self.vault.encrypt(plaintext, self.vault_secret)
+
+        # add yaml tag
+        vaulted_var = vaulted_var_bytes.decode()
+        lines = vaulted_var.splitlines()
+        lines2 = []
+        for line in lines:
+            lines2.append('        %s' % line)
+
+        vaulted_var = '\n'.join(lines2)
+        tagged_vaulted_var = u"""!vault |\n%s""" % vaulted_var
+        return tagged_vaulted_var
+
+    def _build_stream(self, yaml_text):
+        stream = NameStringIO(yaml_text)
+        stream.name = 'my.yml'
+        return stream
+
+    def _loader(self, stream):
+        return AnsibleLoader(stream, vault_secrets=self.vault.secrets)
+
+    def _load_yaml(self, yaml_text, password):
+        stream = self._build_stream(yaml_text)
+        loader = self._loader(stream)
+
+        data_from_yaml = loader.get_single_data()
+
+        return data_from_yaml
+
+    def test_dump_load_cycle(self):
+        avu = AnsibleVaultEncryptedUnicode.from_plaintext('The plaintext for test_dump_load_cycle.', self.vault, self.vault_secret)
+        self._dump_load_cycle(avu)
+
+    def test_embedded_vault_from_dump(self):
+        avu = AnsibleVaultEncryptedUnicode.from_plaintext('setec astronomy', self.vault, self.vault_secret)
+        blip = {'stuff1': [{'a dict key': 24},
+                           {'shhh-ssh-secrets': avu,
+                            'nothing to see here': 'move along'}],
+                'another key': 24.1}
+
+        blip = ['some string', 'another string', avu]
+        stream = NameStringIO()
+
+        self._dump_stream(blip, stream, dumper=AnsibleDumper)
+
+        stream.seek(0)
+
+        stream.seek(0)
+
+        loader = self._loader(stream)
+
+        data_from_yaml = loader.get_data()
+
+        stream2 = NameStringIO(u'')
+        # verify we can dump the object again
+        self._dump_stream(data_from_yaml, stream2, dumper=AnsibleDumper)
+
+    def test_embedded_vault(self):
+        plaintext_var = u"""This is the plaintext string."""
+        tagged_vaulted_var = self._encrypt_plaintext(plaintext_var)
+        another_vaulted_var = self._encrypt_plaintext(plaintext_var)
+
+        different_var = u"""A different string that is not the same as the first one."""
+        different_vaulted_var = self._encrypt_plaintext(different_var)
+
+        yaml_text = u"""---\nwebster: daniel\noed: oxford\nthe_secret: %s\nanother_secret: %s\ndifferent_secret: %s""" % (tagged_vaulted_var,
+                                                                                                                          another_vaulted_var,
+                                                                                                                          different_vaulted_var)
+
+        data_from_yaml = self._load_yaml(yaml_text, self.vault_password)
+        vault_string = data_from_yaml['the_secret']
+
+        self.assertEqual(plaintext_var, data_from_yaml['the_secret'])
+
+        test_dict = {}
+        test_dict[vault_string] = 'did this work?'
+
+        self.assertEqual(vault_string.data, vault_string)
+
+        # This looks weird and useless, but the object in question has a custom __eq__
+        self.assertEqual(vault_string, vault_string)
+
+        another_vault_string = data_from_yaml['another_secret']
+        different_vault_string = data_from_yaml['different_secret']
+
+        self.assertEqual(vault_string, another_vault_string)
+        self.assertNotEquals(vault_string, different_vault_string)
+
+        # More testing of __eq__/__ne__
+        self.assertTrue('some string' != vault_string)
+        self.assertNotEquals('some string', vault_string)
+
+        # Note this is a compare of the str/unicode of these, they are different types
+        # so we want to test self == other, and other == self etc
+        self.assertEqual(plaintext_var, vault_string)
+        self.assertEqual(vault_string, plaintext_var)
+        self.assertFalse(plaintext_var != vault_string)
+        self.assertFalse(vault_string != plaintext_var)
+
+
 class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def setUp(self):
-        stream = StringIO("""
+        stream = NameStringIO(u"""
                 - hosts: localhost
                   vars:
                     number: 1
@@ -198,16 +352,17 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         self.assertEqual(self.data[0][u'vars'][u'number'], 1)
         self.assertEqual(self.data[0][u'vars'][u'string'], u'Ansible')
         self.assertEqual(self.data[0][u'vars'][u'utf8_string'], u'Cafè Eñyei')
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'],
-                {u'webster': u'daniel',
-                    u'oed': u'oxford'})
+        self.assertEqual(self.data[0][u'vars'][u'dictionary'], {
+            u'webster': u'daniel',
+            u'oed': u'oxford'
+        })
         self.assertEqual(self.data[0][u'vars'][u'list'], [u'a', u'b', 1, 2])
 
-        self.assertEqual(self.data[0][u'tasks'],
-                [{u'name': u'Test case', u'ping': {u'data': u'{{ utf8_string }}'}},
-                 {u'name': u'Test 2', u'ping': {u'data': u'Cafè Eñyei'}},
-                 {u'name': u'Test 3', u'command': u'printf \'Cafè Eñyei\n\''},
-                 ])
+        self.assertEqual(self.data[0][u'tasks'], [
+            {u'name': u'Test case', u'ping': {u'data': u'{{ utf8_string }}'}},
+            {u'name': u'Test 2', u'ping': {u'data': u'Cafè Eñyei'}},
+            {u'name': u'Test 3', u'command': u'printf \'Cafè Eñyei\n\''},
+        ])
 
     def walk(self, data):
         # Make sure there's no str in the data
@@ -234,7 +389,7 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def check_vars(self):
         # Numbers don't have line/col information yet
-        #self.assertEqual(self.data[0][u'vars'][u'number'].ansible_pos, (self.play_filename, 4, 21))
+        # self.assertEqual(self.data[0][u'vars'][u'number'].ansible_pos, (self.play_filename, 4, 21))
 
         self.assertEqual(self.data[0][u'vars'][u'string'].ansible_pos, (self.play_filename, 5, 29))
         self.assertEqual(self.data[0][u'vars'][u'utf8_string'].ansible_pos, (self.play_filename, 6, 34))
@@ -247,8 +402,8 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         self.assertEqual(self.data[0][u'vars'][u'list'][0].ansible_pos, (self.play_filename, 11, 25))
         self.assertEqual(self.data[0][u'vars'][u'list'][1].ansible_pos, (self.play_filename, 12, 25))
         # Numbers don't have line/col info yet
-        #self.assertEqual(self.data[0][u'vars'][u'list'][2].ansible_pos, (self.play_filename, 13, 25))
-        #self.assertEqual(self.data[0][u'vars'][u'list'][3].ansible_pos, (self.play_filename, 14, 25))
+        # self.assertEqual(self.data[0][u'vars'][u'list'][2].ansible_pos, (self.play_filename, 13, 25))
+        # self.assertEqual(self.data[0][u'vars'][u'list'][3].ansible_pos, (self.play_filename, 14, 25))
 
     def check_tasks(self):
         #

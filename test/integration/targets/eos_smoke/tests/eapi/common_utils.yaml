@@ -1,0 +1,71 @@
+---
+# eos_static_route -> remove_default_spec, validate_ip_address, validate_prefix
+# eos_interface -> conditional
+# eos_command -> ComplexList
+
+- debug: msg="START cli/common_utils.yaml on connection={{ ansible_connection }}"
+
+# hit remove_default_spec() validate_ip_address() validate_prefix() ComplexList
+- name: setup - remove config used in test
+  eos_config:
+    lines:
+    - no ip route 192.168.3.0/24 192.168.0.1
+    authorize: yes
+    provider: "{{ eapi }}"
+  become: yes
+
+- name: configure static route
+  eos_static_route:
+    address: 192.168.3.0/24
+    next_hop: 192.168.0.1
+    admin_distance: 2
+    authorize: yes
+    provider: "{{ eapi }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip route 192.168.3.0/24 192.168.0.1 2' in result.commands"
+
+- name: configure static route
+  eos_static_route:
+    address: 192.168.3.0/250
+    next_hop: 192.168.0.1
+    admin_distance: 2
+    authorize: yes
+    provider: "{{ eapi }}"
+  become: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+   that:
+     - "result.failed == true"
+
+- name: teardown
+  eos_config:
+    lines:
+    - no ip route 192.168.3.0/24 192.168.0.1
+    authorize: yes
+    provider: "{{ eapi }}"
+  become: yes
+
+- debug: msg="END cli/common_utils.yaml on connection={{ ansible_connection }}"
+
+# hit conditional()
+- name: Set test interface
+  set_fact:
+    test_interface_1: ethernet1
+
+- name: Check intent arguments
+  eos_interface:
+    name: "{{ test_interface_1 }}"
+    state: up
+    tx_rate: ge(0)
+    rx_rate: ge(0)
+    authorize: yes
+    provider: "{{ eapi }}"
+  become: yes
+  register: result

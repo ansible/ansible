@@ -1,0 +1,3 @@
+---
+conditional_command_data1:
+  - {flag: "pass", clicommand: "display users"}

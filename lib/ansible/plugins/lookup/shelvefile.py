@@ -1,36 +1,50 @@
 # (c) 2015, Alejandro Guirao <lekumberri@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2012-17 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import shelve
-import os
+DOCUMENTATION = """
+    lookup: shelvefile
+    author: Alejandro Guirao <lekumberri@gmail.com>
+    version_added: "2.0"
+    short_description: read keys from Python shelve file
+    description:
+      - Read keys from Python shelve file.
+    options:
+      _terms:
+        description: sets of key value pairs of parameters
+      key:
+        description: key to query
+        required: True
+      file:
+        description: path to shelve file
+        required: True
+"""
 
-from ansible.errors import AnsibleError
+EXAMPLES = """
+- name: retrieve a string value corresponding to a key inside a Python shelve file
+  debug: msg="{{ lookup('shelvefile', 'file=path_to_some_shelve_file.db key=key_to_retrieve') }}
+"""
+
+RETURN = """
+_list:
+  description: value(s) of key(s) in shelve file(s)
+"""
+import shelve
+
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_bytes, to_text
+
 
 class LookupModule(LookupBase):
-
 
     def read_shelve(self, shelve_filename, key):
         """
         Read the value of "key" from a shelve file
         """
-        d = shelve.open(shelve_filename)
+        d = shelve.open(to_bytes(shelve_filename))
         res = d.get(key, None)
         d.close()
         return res
@@ -38,46 +52,38 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         if not isinstance(terms, list):
-            terms = [ terms ]
+            terms = [terms]
 
         ret = []
 
         for term in terms:
-            playbook_path = None
-            relative_path = None
-
             paramvals = {"file": None, "key": None}
             params = term.split()
 
             try:
                 for param in params:
                     name, value = param.split('=')
-                    assert(name in paramvals)
+                    if name not in paramvals:
+                        raise AnsibleAssertionError('%s not in paramvals' % name)
                     paramvals[name] = value
 
             except (ValueError, AssertionError) as e:
                 # In case "file" or "key" are not present
                 raise AnsibleError(e)
 
-            file = paramvals['file']
             key = paramvals['key']
-            basedir_path  = self._loader.path_dwim(file)
 
             # Search also in the role/files directory and in the playbook directory
-            if 'role_path' in variables:
-                relative_path = self._loader.path_dwim_relative(variables['role_path'], 'files', file)
-            if 'playbook_dir' in variables:
-                playbook_path = self._loader.path_dwim_relative(variables['playbook_dir'],'files', file)
+            shelvefile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
 
-            for path in (basedir_path, relative_path, playbook_path):
-                if path and os.path.exists(path):
-                    res = self.read_shelve(path, key)
-                    if res is None:
-                        raise AnsibleError("Key %s not found in shelve file %s" % (key, file))
-                    # Convert the value read to string
-                    ret.append(str(res))
-                    break
+            if shelvefile:
+                res = self.read_shelve(shelvefile, key)
+                if res is None:
+                    raise AnsibleError("Key %s not found in shelve file %s" % (key, shelvefile))
+                # Convert the value read to string
+                ret.append(to_text(res))
+                break
             else:
-                raise AnsibleError("Could not locate shelve file in lookup: %s" % file)
+                raise AnsibleError("Could not locate shelve file in lookup: %s" % paramvals['file'])
 
         return ret

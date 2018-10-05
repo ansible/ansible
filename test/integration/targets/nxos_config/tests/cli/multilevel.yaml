@@ -1,0 +1,52 @@
+---
+- debug: msg="START cli/mulitlevel.yaml"
+
+- name: get config
+  nxos_command:
+    commands: show running-config
+  register: config
+
+- name: enable feature bgp
+  nxos_config:
+    lines: feature bgp
+  when: "'feature bgp' not in config.stdout[0]"
+
+- name: remove bgp
+  nxos_config:
+    lines: no router bgp 1
+  when: "'router bgp 1' in config.stdout[0]"
+
+- name: configure multi level command
+  nxos_config:
+    lines: maximum-paths 14
+    parents:
+      - router bgp 1
+      - address-family ipv4 unicast
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'router bgp 1' in result.updates"
+      - "'address-family ipv4 unicast' in result.updates"
+      - "'maximum-paths 14' in result.updates"
+
+- name: check multi level command
+  nxos_config:
+    lines: maximum-paths 14
+    parents:
+      - router bgp 1
+      - address-family ipv4 unicast
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines:
+      - no feature bgp
+    match: none
+
+- debug: msg="END cli/mulitlevel.yaml"

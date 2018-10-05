@@ -1,0 +1,91 @@
+---
+# Check made for absent state
+ - name: missing name
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     state: absent
+   register: missing_name
+   ignore_errors: True
+
+ - name: not wanted type fqdn
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: some name
+     state: absent
+     type: fqdn
+   register: unwanted_fqdn
+   ignore_errors: True
+
+ - name: not wanted type geography
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: some name
+     state: absent
+     type: geography
+   register: unwanted_geography
+   ignore_errors: True
+
+ - name: not wanted param start_ip
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: some name
+     state: absent
+     start_ip: 10.1.1.1
+   register: unwanted_start_ip
+   ignore_errors: True
+
+ - name: not wanted param end_ip
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: some name
+     state: absent
+     end_ip: 10.1.1.1
+   register: unwanted_end_ip
+   ignore_errors: True
+
+ - name: not wanted param country
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: some name
+     state: absent
+     country: FR
+   register: unwanted_country
+   ignore_errors: True
+
+ - name: not wanted param comment
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: some name
+     state: absent
+     comment: blabla
+   register: unwanted_comment
+   ignore_errors: True
+
+ - name: not wanted param value
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     name: some name
+     state: absent
+     value: blabla
+   register: unwanted_value
+   ignore_errors: True
+
+ - name: Verify that all previous test have failed
+   assert:
+     that:
+      - "missing_name.failed == True"
+      - "unwanted_fqdn.failed == True"
+      - "unwanted_geography.failed == True"
+      - "unwanted_start_ip.failed == True"
+      - "unwanted_end_ip.failed == True"
+      - "unwanted_country.failed == True"
+      - "unwanted_comment.failed == True"
+      - "unwanted_value.failed == True"

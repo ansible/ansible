@@ -1,0 +1,77 @@
+---
+- debug:
+    msg: "START netconf/set_domain_name.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    lines:
+      - no domain name
+      - no domain vrf ansiblevrf name
+    match: none
+    provider: "{{ cli }}"
+  connection: network_cli
+
+- name: configure domain_name
+  iosxr_system: &domain
+    domain_name: eng.ansible.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify domain_name
+  iosxr_system: *domain
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: configure domain_name
+  iosxr_system: &deldomain
+    domain_name: eng.ansible.com
+    provider: "{{ netconf }}"
+    state: absent
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify domain_name
+  iosxr_system: *deldomain
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: configure domain_name with vrf
+  iosxr_system: &domainvrf
+    domain_name: eng.ansible.com
+    vrf: ansiblevrf
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify domain_name with vrf
+  iosxr_system: *domainvrf
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug:
+    msg: "END netconf/set_domain_name.yaml on connection={{ ansible_connection }}"

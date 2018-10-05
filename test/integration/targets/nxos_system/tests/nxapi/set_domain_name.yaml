@@ -1,0 +1,38 @@
+---
+- debug: msg="START nxapi/set_domain_name.yaml"
+
+- name: setup
+  nxos_config:
+    lines: no ip domain-name eng.ansible.com
+    match: none
+    provider: "{{ connection }}"
+# NXAPI errors if you try to remove something that doesn't exist
+  ignore_errors: yes
+
+- name: configure domain_name
+  nxos_system:
+    domain_name: eng.ansible.com
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify domain_name
+  nxos_system:
+    domain_name: eng.ansible.com
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines: no ip domain-name eng.ansible.com
+    match: none
+    provider: "{{ connection }}"
+
+- debug: msg="END nxapi/set_domain_name.yaml"

@@ -1,0 +1,121 @@
+router ospf 1
+  area 0
+!
+prefix-set EBGP-PEER-BOGONS
+  0.0.0.0/0,
+  0.0.0.0/8 le 32,
+  10.0.0.0/8 le 32,
+  127.0.0.0/8 le 32,
+  169.254.0.0/16 le 32,
+  172.16.0.0/12 le 32,
+  192.0.0.0/24 le 32,
+  192.0.2.0/24 le 32,
+  192.168.0.0/16 le 32,
+  198.18.0.0/15 le 32,
+  224.0.0.0/4 le 32,
+  240.0.0.0/4 le 32
+end-set
+!
+prefix-set cust-ddos-DDOS
+end-set
+!
+prefix-set cust-no-export
+end-set
+!
+prefix-set acme_DC_Internal
+  137.1.0.0/16,
+  137.1.16.0/24,
+  137.1.18.0/24,
+  137.1.20.0/24,
+  137.1.22.0/24,
+  137.1.23.0/24,
+  137.1.24.0/24,
+  137.1.29.0/24,
+  137.1.30.0/24,
+  137.1.31.0/24,
+  137.1.32.0/21,
+  137.1.40.0/22,
+  209.1.0.0/16
+end-set
+!
+as-path-set EBGP-PEER-AS16509-403-PERMIT-PATHS
+  ios-regex '^11164_8075_',
+  ios-regex '^11164_16509$',
+  ios-regex '^1116_16509_[0-9]+$',
+  ios-regex '^8075_',
+  ios-regex '^16509$',
+  ios-regex '^16509_[0-9]+$'
+end-set
+!
+community-set cust-announce
+  1525:65298,
+  1525:65436,
+  1525:65438,
+  1525:65439,
+  1525:65498,
+  1525:65511,
+  1523:65418,
+  1523:65436,
+  1523:65438
+end-set
+!
+community-set cust-no-export
+  1525:65439,
+  1525:65511,
+  1525:65535
+end-set
+!
+
+route-policy POLICY2
+end-policy
+!
+route-policy cust2bgp
+  set origin igp
+  set next-hop 137.1.16.12
+end-policy
+!
+rd-set ebpg-1
+end-set
+!
+rd-set EBGP_INCOMING_RD_SET
+  172.16.0.0/16:*,
+  172.17.0.0/16:100,
+  192:*,
+  192:100
+end-set
+!
+extcommunity-set rt EBGP_INCOMIG_RT_SET
+  10:615,
+  10:6150,
+  15.15.15.15:15
+end-set
+!
+extcommunity-set rt ebpg-1
+end-set
+!
+route-policy static-to-bgp
+  if destination in cust-no-export then
+    apply cust2bgp
+    set community cust-no-export additive
+  elseif destination in cust-announce then
+    apply cust2bgp
+    set community cust-announce additive
+  elseif destination in cust-announce-backup then
+    apply cust2bgp
+    set local-preference 100
+    set weight 0
+    set community cust-announce additive
+  elseif destination in cust-no-export-backup then
+    apply cust2bgp
+    set local-preference 98
+    set weight 0
+    set community cust-no-export additive
+  else
+    drop
+  endif
+end-policy
+!
+class-map match-any data
+ match precedence ipv4 0 1
+ end-class-map
+!

@@ -1,0 +1,51 @@
+---
+- debug: msg="START cli/config.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  eos_config:
+    lines: hostname {{ inventory_hostname_short }}
+    match: none
+  become: yes
+
+- name: get current running-config
+  eos_command:
+    commands: show running-config
+  become: yes
+  register: config
+
+- name: configure hostname
+  eos_config:
+    lines: hostname foo
+    config: "{{ config.stdout[0] }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+
+- name: get current running-config
+  eos_command:
+    commands: show running-config
+  become: yes
+  register: config
+
+- name: configure hostname again
+  eos_config:
+    lines: hostname foo
+    config: "{{ config.stdout[0] }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  eos_config:
+    lines: hostname {{ inventory_hostname_short }}
+    match: none
+  become: yes
+
+- debug: msg="END cli/config.yaml on connection={{ ansible_connection }}"

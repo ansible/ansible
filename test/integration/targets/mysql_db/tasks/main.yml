@@ -1,0 +1,190 @@
+# test code for the mysql_db module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- name: make sure the test database is not there
+  command: mysql {{db_name}}
+  register: mysql_db_check
+  failed_when: "'1049' not in mysql_db_check.stderr"
+
+- name: test state=present for a database name (expect changed=true)
+  mysql_db: name={{ db_name }} state=present
+  register: result
+
+- name: assert output message that database exist
+  assert:
+    that:
+       - "result.changed == true"
+       - "result.db =='{{ db_name }}'"
+
+- name: run command to test state=present for a database name (expect db_name in stdout)
+  command: mysql "-e show databases like '{{ db_name }}';"
+  register: result
+
+- name: assert database exist
+  assert: { that: "'{{ db_name }}' in result.stdout" }
+
+# ============================================================
+- name: test state=absent for a database name (expect changed=true)
+  mysql_db: name={{ db_name }} state=absent
+  register: result
+
+- name: assert output message that database does not exist
+  assert:
+    that:
+       - "result.changed == true"
+       - "result.db =='{{ db_name }}'"
+
+- name: run command to test state=absent for a database name (expect db_name not in stdout)
+  command: mysql "-e show databases like '{{ db_name }}';"
+  register: result
+
+- name: assert database does not exist
+  assert: { that: "'{{ db_name }}' not in result.stdout" }
+
+# ============================================================
+- name: test mysql_db encoding param not valid - issue 8075
+  mysql_db: name=datanotvalid state=present encoding=notvalid
+  register: result
+  ignore_errors: true
+
+- name: assert test mysql_db encoding param not valid - issue 8075 (failed=true)
+  assert:
+    that:
+       - "result.failed == true"
+       - "'Traceback' not in result.msg"
+       - "'Unknown character set' in result.msg"
+
+# ============================================================
+- name: test mysql_db using a valid encoding utf8 (expect changed=true)
+  mysql_db: name=en{{ db_name }}  state=present encoding=utf8
+  register: result
+
+- name: assert output message created a database
+  assert: { that: "result.changed == true" }
+
+- name: test database was created
+  command: mysql "-e SHOW CREATE DATABASE en{{ db_name }};"
+  register: result
+
+- name: assert created database is of encoding utf8
+  assert: { that: "'utf8' in result.stdout" }
+
+- name: remove database
+  mysql_db: name=en{{ db_name }} state=absent
+
+# ============================================================
+- name: test mysql_db using valid encoding binary (expect changed=true)
+  mysql_db: name=en{{ db_name }}  state=present encoding=binary
+  register: result
+
+- name: assert output message that database was created
+  assert: { that: "result.changed == true" }
+
+- name: run command to test database was created
+  command: mysql "-e SHOW CREATE DATABASE en{{ db_name }};"
+  register: result
+
+- name: assert created database is of encoding binary
+  assert: { that: "'binary' in result.stdout" }
+
+- name: remove database
+  mysql_db: name=en{{ db_name }}  state=absent
+
+# ============================================================
+- name: create user1 to access database dbuser1
+  mysql_user: name=user1 password=Hfd6fds^dfA8Ga priv=*.*:ALL state=present
+
+- name: create database dbuser1 using user1
+  mysql_db: name={{ db_user1 }} state=present login_user=user1 login_password=Hfd6fds^dfA8Ga
+  register: result
+
+- name: assert output message that database was created
+  assert: { that: "result.changed == true" }
+
+- name: run command to test database was created using user1
+  command: mysql "-e show databases like '{{ db_user1 }}';"
+  register: result
+
+- name: assert database exist
+  assert: { that: "'{{ db_user1 }}' in result.stdout" }
+
+# ============================================================
+- name: create user2 to access database with privilege select only
+  mysql_user: name=user2 password=kjsfd&F7safjad priv=*.*:SELECT state=present
+
+- name: create database dbuser2 using user2 with no privilege to create (expect failed=true)
+  mysql_db: name={{ db_user2 }} state=present login_user=user2 login_password=kjsfd&F7safjad
+  register: result
+  ignore_errors: true
+
+- name: assert output message that database was not created using dbuser2
+  assert:
+    that:
+       - "result.failed == true"
+       - "'Access denied' in result.msg"
+
+- name: run command to test that database was not created
+  command: mysql "-e show databases like '{{ db_user2 }}';"
+  register: result
+
+- name: assert database does not exist
+  assert: { that: "'{{ db_user2 }}' not in result.stdout" }
+
+# ============================================================
+- name: delete database using user2 with no privilege to delete (expect failed=true)
+  mysql_db: name={{ db_user1 }} state=absent login_user=user2 login_password=kjsfd&F7safjad
+  register: result
+  ignore_errors: true
+
+- name: assert output message that database was not deleted using dbuser2
+  assert:
+    that:
+       - "result.failed == true"
+       - "'Access denied' in result.msg"
+
+- name: run command to test database was not deleted
+  command: mysql "-e show databases like '{{ db_user1 }}';"
+  register: result
+
+- name: assert database still exist
+  assert: { that: "'{{ db_user1 }}' in result.stdout" }
+
+# ============================================================
+- name: delete database using user1 with all privilege to delete a database (expect changed=true)
+  mysql_db: name={{ db_user1 }} state=absent login_user=user1 login_password=Hfd6fds^dfA8Ga
+  register: result
+  ignore_errors: true
+
+- name: assert output message that database was deleted using user1
+  assert: { that: "result.changed == true" }
+
+- name: run command to test database was deleted using user1
+  command: mysql "-e show databases like '{{ db_name }}';"
+  register: result
+
+- name: assert database does not exist
+  assert: { that: "'{{ db_user1 }}' not in result.stdout" }
+
+# ============================================================
+- include: state_dump_import.yml format_type=sql file=dbdata.sql format_msg_type=ASCII
+
+- include: state_dump_import.yml format_type=gz  file=dbdata.gz format_msg_type=gzip
+
+- include: state_dump_import.yml format_type=bz2 file=dbdata.bz2 format_msg_type=bzip2

@@ -1,0 +1,62 @@
+---
+- debug: msg="START cli/sublevel_block.yaml"
+
+- name: setup
+  dellos6_config:
+    lines:
+      - permit ip 192.0.2.1 0.0.0.0 any log
+      - permit ip 192.0.2.2 0.0.0.0 any log
+      - permit ip 192.0.2.3 0.0.0.0 any log
+    parents: ['ip access-list test']
+    before: ['no ip access-list test']
+    after: ['exit']
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure sub level command using block resplace
+  dellos6_config:
+    lines:
+      - 1000 permit ip 192.0.2.1 0.0.0.0 any log
+      - 1010 permit ip 192.0.2.2 0.0.0.0 any log
+      - 1020 permit ip 192.0.2.3 0.0.0.0 any log
+      - 1030 permit ip 192.0.2.4 0.0.0.0 any log
+    parents: ['ip access-list test']
+    replace: block
+    after: ['exit']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list test' in result.updates"
+      - "'1000 permit ip 192.0.2.1 0.0.0.0 any log' in result.updates"
+      - "'1010 permit ip 192.0.2.2 0.0.0.0 any log' in result.updates"
+      - "'1020 permit ip 192.0.2.3 0.0.0.0 any log' in result.updates"
+      - "'1030 permit ip 192.0.2.4 0.0.0.0 any log' in result.updates"
+
+- name: check sub level command using block replace
+  dellos6_config:
+    lines:
+      - 1000 permit ip 192.0.2.1 0.0.0.0 any log
+      - 1010 permit ip 192.0.2.2 0.0.0.0 any log
+      - 1020 permit ip 192.0.2.3 0.0.0.0 any log
+      - 1030 permit ip 192.0.2.4 0.0.0.0 any log
+    parents: ['ip access-list test']
+    replace: block
+    after: ['exit']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  dellos6_config:
+    lines:
+      - no ip access-list test
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/sublevel_block.yaml"

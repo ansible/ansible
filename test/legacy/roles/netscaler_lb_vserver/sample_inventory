@@ -1,0 +1,5 @@
+
+
+[netscaler]
+
+netscaler01 nsip=172.18.0.2 nitro_user=nsroot nitro_pass=nsroot

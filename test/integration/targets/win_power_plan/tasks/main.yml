@@ -1,0 +1,78 @@
+- name: register os version (seems integration tests don't gather this fact)
+  raw: powershell.exe "gwmi Win32_OperatingSystem | select -expand version"
+  register: os_version
+  changed_when: False
+# ^^ seems "raw" is the only module that works on 2008 non-r2. win_command and win_shell both failed
+
+- name: check if module fails gracefully when older than 2008r2
+  win_power_plan:
+    name: "high performance"
+  when: os_version.stdout_lines[0]  is version('6.1','lt')
+  check_mode: yes
+  register: old_os_check
+  failed_when: old_os_check.msg != 'The win_power_plan Ansible module is only available on Server 2008r2 (6.1) and newer'
+
+- block:
+  - name: register inactive power plan to test with
+    win_shell: (Get-CimInstance -Name root\cimv2\power -Class win32_PowerPlan | ? {! $_.IsActive}).ElementName[0]
+    register: disabled_power_plan
+    changed_when: False
+
+  - set_fact:
+      name: "{{ disabled_power_plan.stdout_lines[0] }}"
+
+  #Test that plan detects change is needed, but doesn't actually apply change
+  - name: set power plan (check mode)
+    win_power_plan:
+      name: "{{ name }}"
+    register: set_plan_check
+    check_mode: yes
+
+#  - debug:
+#      var: set_plan_check
+
+  - name: get result of set power plan (check mode)
+    win_shell: (Get-CimInstance -Name root\cimv2\power -Class win32_PowerPlan -Filter "ElementName = '{{ name }}'").IsActive
+    register: set_plan_check_result
+    changed_when: False
+    
+  # verify that the powershell check is showing the plan as still inactive on the system
+  - name: assert setting plan (check mode)
+    assert:
+      that:
+      - set_plan_check is changed
+      - set_plan_check_result.stdout == 'False\r\n'
+
+  #Test that setting plan and that change is applied
+  - name: set power plan
+    win_power_plan:
+      name: "{{ name }}"
+    register: set_plan
+
+  - name: get result of set power plan
+    win_shell: (Get-CimInstance -Name root\cimv2\power -Class win32_PowerPlan -Filter "ElementName = '{{ name }}'").IsActive
+    register: set_plan_result
+    changed_when: False
+
+  - name: assert setting plan
+    assert:
+      that:
+      - set_plan is changed
+      - set_plan_result.stdout == 'True\r\n'
+
+  #Test that plan doesn't apply change if it is already set
+  - name: set power plan (idempotent)
+    win_power_plan:
+      name: "{{ name }}"
+    register: set_plan_idempotent
+
+  - name: assert setting plan (idempotent)
+    assert:
+      that:
+      - set_plan_idempotent is not changed
+
+  when: os_version.stdout_lines[0]  is version('6.1','ge')
+  always:
+  - name: always change back plan to high performance when done testing
+    win_power_plan:
+      name: high performance

@@ -1,0 +1,82 @@
+---
+- debug: msg="START netconf/single.yaml on connection={{ ansible_connection }}"
+
+# Ensure that when we change the hostname to `localhost` we cause a change
+- name: setup
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname_short }}
+    provider: "{{ netconf }}"
+
+- name: configure single command
+  junos_config:
+    lines:
+      - set system host-name localhost
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'+  host-name localhost;' in result.diff.prepared"
+
+- name: check single command idempotent
+  junos_config:
+    lines:
+      - set system host-name localhost
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: confirm previous commit
+  junos_config:
+    confirm_commit: yes
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown for rollback test
+  junos_config:
+    lines:
+    - delete system syslog file test1
+    provider: "{{ netconf }}"
+
+- name: Configure syslog file
+  junos_config:
+    lines:
+    - set system syslog file test1 any any
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\+ *file test1")
+      - result.diff.prepared is search("\+ *any any")
+
+- name: Rollback junos config
+  junos_config:
+    rollback: 1
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\+ *file test1")
+      - result.diff.prepared is search("\+ *any any")
+
+- name: teardown
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname_short }}
+    provider: "{{ netconf }}"
+
+
+- debug: msg="END netconf/single.yaml on connection={{ ansible_connection }}"

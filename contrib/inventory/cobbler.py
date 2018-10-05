@@ -13,7 +13,7 @@ This, more or less, allows you to keep one central database containing
 info about all of your managed instances.
 
 This script is an example of sourcing that data from Cobbler
-(http://cobbler.github.com).  With cobbler each --mgmt-class in cobbler
+(https://cobbler.github.io).  With cobbler each --mgmt-class in cobbler
 will correspond to a group in Ansible, and --ks-meta variables will be
 passed down for use in templates or even in argument lines.
 
@@ -24,8 +24,6 @@ ansible talking to it twice.  The first one found will be used. If no
 --dns-name is set the system will NOT be visible to ansible.  We do
 not add cobbler system names because there is no requirement in cobbler
 that those correspond to addresses.
-
-See http://ansible.github.com/api.html for more info
 
 Tested with Cobbler 2.0.11.
 
@@ -56,7 +54,7 @@ Changelog:
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
 
 ######################################################################
 
@@ -67,10 +65,7 @@ import re
 from time import time
 import xmlrpclib
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from six import iteritems
 
@@ -90,8 +85,10 @@ class CobblerInventory(object):
 
         self.inventory = dict()  # A list of groups and the hosts in that group
         self.cache = dict()  # Details about hosts in the inventory
+        self.ignore_settings = False  # used to only look at env vars for settings.
 
-        # Read settings and parse CLI arguments
+        # Read env vars, read settings, and parse CLI arguments
+        self.parse_env_vars()
         self.read_settings()
         self.parse_cli_args()
 
@@ -110,9 +107,9 @@ class CobblerInventory(object):
         if self.args.host:
             data_to_print += self.get_host_info()
         else:
-            self.inventory['_meta'] = { 'hostvars': {} }
+            self.inventory['_meta'] = {'hostvars': {}}
             for hostname in self.cache:
-                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
+                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname]}
             data_to_print += self.json_format_dict(self.inventory, True)
 
         print(data_to_print)
@@ -120,6 +117,9 @@ class CobblerInventory(object):
     def _connect(self):
         if not self.conn:
             self.conn = xmlrpclib.Server(self.cobbler_host, allow_none=True)
+            self.token = None
+            if self.cobbler_username is not None:
+                self.token = self.conn.login(self.cobbler_username, self.cobbler_password)
 
     def is_cache_valid(self):
         """ Determines if the cache files have expired, or if it is still valid """
@@ -136,16 +136,53 @@ class CobblerInventory(object):
     def read_settings(self):
         """ Reads the settings from the cobbler.ini file """
 
+        if(self.ignore_settings):
+            return
+
         config = ConfigParser.SafeConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/cobbler.ini')
 
         self.cobbler_host = config.get('cobbler', 'host')
+        self.cobbler_username = None
+        self.cobbler_password = None
+        if config.has_option('cobbler', 'username'):
+            self.cobbler_username = config.get('cobbler', 'username')
+        if config.has_option('cobbler', 'password'):
+            self.cobbler_password = config.get('cobbler', 'password')
 
         # Cache related
         cache_path = config.get('cobbler', 'cache_path')
         self.cache_path_cache = cache_path + "/ansible-cobbler.cache"
         self.cache_path_inventory = cache_path + "/ansible-cobbler.index"
         self.cache_max_age = config.getint('cobbler', 'cache_max_age')
+
+    def parse_env_vars(self):
+        """ Reads the settings from the environment """
+
+        # Env. Vars:
+        #   COBBLER_host
+        #   COBBLER_username
+        #   COBBLER_password
+        #   COBBLER_cache_path
+        #   COBBLER_cache_max_age
+        #   COBBLER_ignore_settings
+
+        self.cobbler_host = os.getenv('COBBLER_host', None)
+        self.cobbler_username = os.getenv('COBBLER_username', None)
+        self.cobbler_password = os.getenv('COBBLER_password', None)
+
+        # Cache related
+        cache_path = os.getenv('COBBLER_cache_path', None)
+        if(cache_path is not None):
+            self.cache_path_cache = cache_path + "/ansible-cobbler.cache"
+            self.cache_path_inventory = cache_path + "/ansible-cobbler.index"
+
+        self.cache_max_age = int(os.getenv('COBBLER_cache_max_age', "30"))
+
+        # ignore_settings is used to ignore the settings file, for use in Ansible
+        # Tower (or AWX inventory scripts and not throw python exceptions.)
+        if(os.getenv('COBBLER_ignore_settings', False) == "True"):
+            self.ignore_settings = True
 
     def parse_cli_args(self):
         """ Command line argument processing """
@@ -163,12 +200,14 @@ class CobblerInventory(object):
         self._connect()
         self.groups = dict()
         self.hosts = dict()
-
-        data = self.conn.get_systems()
+        if self.token is not None:
+            data = self.conn.get_systems(self.token)
+        else:
+            data = self.conn.get_systems()
 
         for host in data:
             # Get the FQDN for the host and add it to the right groups
-            dns_name = host['hostname'] #None
+            dns_name = host['hostname']  # None
             ksmeta = None
             interfaces = host['interfaces']
             # hostname is often empty for non-static IP hosts
@@ -179,7 +218,7 @@ class CobblerInventory(object):
                         if this_dns_name is not None and this_dns_name is not "":
                             dns_name = this_dns_name
 
-            if dns_name == '':
+            if dns_name == '' or dns_name is None:
                 continue
 
             status = host['status']
@@ -218,11 +257,11 @@ class CobblerInventory(object):
             # Need to load index from cache
             self.load_cache_from_cache()
 
-        if not self.args.host in self.cache:
+        if self.args.host not in self.cache:
             # try updating the cache
             self.update_cache()
 
-            if not self.args.host in self.cache:
+            if self.args.host not in self.cache:
                 # host might not exist anymore
                 return self.json_format_dict({}, True)
 
@@ -260,7 +299,7 @@ class CobblerInventory(object):
     def to_safe(self, word):
         """ Converts 'bad' characters in a string to underscores so they can be used as Ansible groups """
 
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         """ Converts a dict to a JSON object and dumps it as a formatted string """
@@ -269,5 +308,6 @@ class CobblerInventory(object):
             return json.dumps(data, sort_keys=True, indent=2)
         else:
             return json.dumps(data)
+
 
 CobblerInventory()

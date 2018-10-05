@@ -1,0 +1,485 @@
+# test code for the authorized_key module
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# -------------------------------------------------------------
+# Setup steps
+
+
+- name: copy an existing file in place with comments
+  copy:
+    src: existing_authorized_keys
+    dest: "{{ output_dir | expanduser }}/authorized_keys"
+
+- name: add multiple keys different order
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_different_order_2 }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: get the file content
+  shell: cat "{{ output_dir | expanduser }}/authorized_keys"
+  changed_when: no
+  register: multiple_keys_existing
+
+- name: assert that the key was added and comments and ordering preserved
+  assert:
+    that:
+      - 'result.changed == True'
+      - '"# I like candy" in multiple_keys_existing.stdout'
+      - '"# I like candy" in multiple_keys_existing.stdout_lines[0]'
+      - '"ssh-rsa DATA_BASIC 1@testing" in multiple_keys_existing.stdout'
+      # The specific index is a little fragile, but I want to verify the line shows up
+      # as the 3rd line in the new entries after the existing entries and comments are preserved
+      - '"ssh-rsa DATA_BASIC 1@testing" in multiple_keys_existing.stdout_lines[7]'
+
+# start afresh
+
+- name: remove file foo.txt
+  file:
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+    state: absent
+
+- name: touch the authorized_keys file
+  file:
+    dest: "{{ output_dir }}/authorized_keys"
+    state: touch
+  register: result
+
+- name: assert that the authorized_keys file was created
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.state == "file"'
+
+- name: add multiple keys
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_base }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+    - 'result.changed == True'
+    - 'result.key == multiple_key_base'
+    - 'result.key_options == None'
+
+- name: add multiple keys different order
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_different_order }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+    - 'result.changed == True'
+    - 'result.key == multiple_key_different_order'
+    - 'result.key_options == None'
+
+- name: add multiple keys exclusive
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_exclusive }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+    exclusive: true
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == multiple_key_exclusive'
+      - 'result.key_options == None'
+
+- name: add multiple keys in different calls
+  authorized_key:
+    user: root
+    key: "ecdsa-sha2-nistp521 ECDSA_DATA 4@testing"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: add multiple keys in different calls
+  authorized_key:
+    user: root
+    key: "ssh-rsa DATA_BASIC 1@testing"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: get the file content
+  shell: cat "{{ output_dir | expanduser }}/authorized_keys"
+  changed_when: no
+  register: multiple_keys_at_a_time
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == false'
+      - 'multiple_keys_at_a_time.stdout  == multiple_key_exclusive.strip()'
+
+- name: add multiple keys comment
+  authorized_key:
+    user: root
+    key: "{{ multiple_keys_comments }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+    exclusive: true
+  register: result
+
+- name: get the file content
+  shell: cat "{{ output_dir | expanduser }}/authorized_keys"
+  changed_when: no
+  register: multiple_keys_comments
+
+- name: assert that the keys exist and comment only lines were not added
+  assert:
+    that:
+      - 'result.changed == False'
+      - 'multiple_keys_comments.stdout == multiple_key_exclusive.strip()'
+      - 'result.key_options == None'
+
+
+
+# -------------------------------------------------------------
+# basic ssh-dss key
+
+- name: add basic ssh-dss key
+  authorized_key: user=root key="{{ dss_key_basic }}" state=present path="{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == dss_key_basic'
+      - 'result.key_options == None'
+
+- name: re-add basic ssh-dss key
+  authorized_key: user=root key="{{ dss_key_basic }}" state=present path="{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that nothing changed
+  assert:
+    that:
+      - 'result.changed == False'
+
+# -------------------------------------------------------------
+# ssh-dss key with an unquoted option
+
+- name: add ssh-dss key with an unquoted option
+  authorized_key:
+    user: root
+    key: "{{ dss_key_unquoted_option }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == dss_key_unquoted_option'
+      - 'result.key_options == None'
+
+- name: re-add ssh-dss key with an unquoted option
+  authorized_key:
+    user: root
+    key: "{{ dss_key_unquoted_option }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that nothing changed
+  assert:
+    that:
+      - 'result.changed == False'
+
+# -------------------------------------------------------------
+# ssh-dss key with a leading command="/bin/foo"
+
+- name: add ssh-dss key with a leading command
+  authorized_key:
+    user: root
+    key: "{{ dss_key_command }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == dss_key_command'
+      - 'result.key_options == None'
+
+- name: re-add ssh-dss key with a leading command
+  authorized_key:
+    user: root
+    key: "{{ dss_key_command }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that nothing changed
+  assert:
+    that:
+      - 'result.changed == False'
+
+# -------------------------------------------------------------
+# ssh-dss key with a complex quoted leading command
+# ie. command="/bin/echo foo 'bar baz'"
+
+- name: add ssh-dss key with a complex quoted leading command
+  authorized_key:
+    user: root
+    key: "{{ dss_key_complex_command }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == dss_key_complex_command'
+      - 'result.key_options == None'
+
+- name: re-add ssh-dss key with a complex quoted leading command
+  authorized_key:
+    user: root
+    key: "{{ dss_key_complex_command }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that nothing changed
+  assert:
+    that:
+      - 'result.changed == False'
+
+# -------------------------------------------------------------
+# ssh-dss key with a command and a single option, which are
+# in a comma-separated list
+
+- name: add ssh-dss key with a command and a single option
+  authorized_key:
+    user: root
+    key: "{{ dss_key_command_single_option }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == dss_key_command_single_option'
+      - 'result.key_options == None'
+
+- name: re-add ssh-dss key with a command and a single option
+  authorized_key:
+    user: root
+    key: "{{ dss_key_command_single_option }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that nothing changed
+  assert:
+    that:
+      - 'result.changed == False'
+
+# -------------------------------------------------------------
+# ssh-dss key with a command and multiple other options
+
+- name: add ssh-dss key with a command and multiple options
+  authorized_key:
+    user: root
+    key: "{{ dss_key_command_multiple_options }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == dss_key_command_multiple_options'
+      - 'result.key_options == None'
+
+- name: re-add ssh-dss key with a command and multiple options
+  authorized_key:
+    user: root
+    key: "{{ dss_key_command_multiple_options }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that nothing changed
+  assert:
+    that:
+      - 'result.changed == False'
+
+# -------------------------------------------------------------
+# ssh-dss key with multiple trailing parts, which are space-
+# separated and not quoted in any way
+
+- name: add ssh-dss key with trailing parts
+  authorized_key:
+    user: root
+    key: "{{ dss_key_trailing }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == dss_key_trailing'
+      - 'result.key_options == None'
+
+- name: re-add ssh-dss key with trailing parts
+  authorized_key:
+    user: root
+    key: "{{ dss_key_trailing }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that nothing changed
+  assert:
+    that:
+      - 'result.changed == False'
+
+# -------------------------------------------------------------
+# basic ssh-dss key with mutliple permit-open options
+# https://github.com/ansible/ansible-modules-core/issues/1715
+
+- name: add basic ssh-dss key with multi-opts
+  authorized_key:
+    user: root
+    key: "{{ dss_key_basic }}"
+    key_options: 'no-agent-forwarding,no-X11-forwarding,permitopen="10.9.8.1:8080",permitopen="10.9.8.1:9001"'
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: assert that the key with multi-opts was added
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.key == dss_key_basic'
+      - 'result.key_options == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\""'
+
+- name: get the file content
+  shell: cat "{{ output_dir | expanduser }}/authorized_keys" | fgrep DATA_BASIC
+  changed_when: no
+  register: content
+
+- name: validate content
+  assert:
+    that:
+      - 'content.stdout == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\" ssh-dss DATA_BASIC root@testing"'
+
+# -------------------------------------------------------------
+# check mode
+
+- name: copy an existing file in place with comments
+  copy:
+    src: existing_authorized_keys
+    dest: "{{ output_dir | expanduser }}/authorized_keys"
+
+- authorized_key:
+    user: root
+    key: "{{ multiple_key_different_order_2 }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  check_mode: True
+  register: result
+
+- name: assert that the file was not changed
+  copy:
+    src: existing_authorized_keys
+    dest: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == False'
+
+# -------------------------------------------------------------
+# comments
+
+- name: Add rsa key with existing comment
+  authorized_key:
+    user: root
+    key: "{{ rsa_key_basic }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: Change the comment on an existing key
+  authorized_key:
+    user: root
+    key: "{{ rsa_key_basic }}"
+    comment: user@acme.com
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: get the file content
+  shell: cat "{{ output_dir | expanduser }}/authorized_keys" | fgrep DATA_BASIC
+  changed_when: no
+  register: content
+
+- name: Assert that comment on an existing key was changed
+  assert:
+    that:
+      - "'user@acme.com' in content.stdout"
+
+- name: Set the same key with comment to ensure no changes are reported
+  authorized_key:
+    user: root
+    key: "{{ rsa_key_basic }}"
+    comment: user@acme.com
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: Assert that no changes were made when running again
+  assert:
+    that:
+      - not result.changed
+
+- debug:
+    var: "{{ item }}"
+    verbosity: 1
+  with_items:
+    - result
+    - content

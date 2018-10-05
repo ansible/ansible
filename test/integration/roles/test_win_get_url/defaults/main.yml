@@ -1,7 +1,0 @@
----
-
-test_win_get_url_link: http://docs.ansible.com
-test_win_get_url_path: "C:\\Users\\{{ansible_ssh_user}}\\docs_index.html"
-test_win_get_url_invalid_link: http://docs.ansible.com/skynet_module.html
-test_win_get_url_invalid_path: "Q:\\Filez\\Cyberdyne.html"
-test_win_get_url_dir_path: "C:\\Users\\{{ansible_ssh_user}}"

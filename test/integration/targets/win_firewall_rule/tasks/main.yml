@@ -1,0 +1,395 @@
+- name: Remove potentially leftover firewall rule
+  win_firewall_rule:
+    name: http
+    state: absent
+    action: allow
+    direction: in
+
+- name: Add firewall rule
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_firewall_rule
+
+- name: Check that creating new firewall rule succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule.changed == true
+
+- name: Add same firewall rule (again)
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_firewall_rule_again
+
+- name: Check that creating same firewall rule succeeds without a change
+  assert:
+    that:
+    - add_firewall_rule_again.changed == false
+
+- name: Remove firewall rule
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: absent
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+  register: remove_firewall_rule
+
+- name: Check that removing existing firewall rule succeeds with a change
+  assert:
+    that:
+    - remove_firewall_rule.changed == true
+
+- name: Remove absent firewall rule
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: absent
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+  register: remove_absent_firewall_rule
+
+- name: Check that removing non existing firewall rule succeeds without a change
+  assert:
+    that:
+    - remove_absent_firewall_rule.changed == false
+
+- name: Add firewall rule
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+
+- name: Change firewall rule
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: block
+    direction: in
+    protocol: tcp
+  register: change_firewall_rule
+
+- name: Check that changing firewall rule succeeds
+  assert:
+    that:
+    - change_firewall_rule.changed == true
+
+- name: Add firewall rule when remoteip is range
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.0.1-192.168.0.5
+    action: allow
+    direction: in
+    protocol: tcp
+
+- name: Add same firewall rule when remoteip is range (again)
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.0.1-192.168.0.5
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_firewall_rule_with_range_remoteip_again
+
+- name: Check that creating same firewall rule when remoteip is range succeeds without a change
+  assert:
+    that:
+    - add_firewall_rule_with_range_remoteip_again.changed == false
+
+- name: Add firewall rule when remoteip in CIDR notation
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.0.0/24
+    action: allow
+    direction: in
+    protocol: tcp
+
+- name: Add same firewall rule when remoteip in CIDR notation (again)
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.0.0/24
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_firewall_rule_with_cidr_remoteip_again
+
+- name: Check that creating same firewall rule succeeds without a change when remoteip in CIDR notation
+  assert:
+    that:
+    - add_firewall_rule_with_cidr_remoteip_again.changed == false
+
+- name: Add firewall rule when remoteip contains a netmask
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.1.0/255.255.255.0
+    action: allow
+    direction: in
+    protocol: tcp
+
+- name: Add same firewall rule when remoteip contains a netmask (again)
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.1.0/255.255.255.0
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_firewall_rule_remoteip_contains_netmask_again
+
+- name: Check that creating same firewall rule succeeds without a change when remoteip contains a netmask
+  assert:
+    that:
+    - add_firewall_rule_remoteip_contains_netmask_again.changed == false
+
+- name: Add firewall rule when remoteip is IPv4
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.0.1
+    action: allow
+    direction: in
+    protocol: tcp
+
+- name: Add same firewall rule when remoteip is IPv4 (again)
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.0.1
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_firewall_rule_with_ipv4_remoteip_again
+
+- name: Check that creating same firewall rule when remoteip is IPv4 succeeds without a change
+  assert:
+    that:
+    - add_firewall_rule_with_ipv4_remoteip_again.changed == false
+
+- name: Add firewall rule when remoteip contains a netmask
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.2.0/255.255.255.0
+    action: allow
+    direction: in
+    protocol: tcp
+
+- name: Add same firewall rule when remoteip in CIDR notation
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.2.0/24
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_same_firewall_rule_with_cidr_remoteip
+
+- name: Check that creating same firewall rule succeeds without a change when remoteip contains a netmask or CIDR
+  assert:
+    that:
+    - add_same_firewall_rule_with_cidr_remoteip.changed == false
+
+- name: Add firewall rule with multiple ports
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: '80,81'
+    action: allow
+    direction: in
+    protocol: tcp
+  register: add_firewall_rule_with_multiple_ports
+
+- name: Check that creating firewall rule with multiple ports succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_multiple_ports.changed == true
+
+- name: Add firewall rule with interface types in string format
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    interfacetypes: 'ras,lan,wireless'
+  register: add_firewall_rule_with_string_interface_types
+
+- name: Check that creating firewall rule with interface types in string format succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_string_interface_types.changed == true
+
+- name: Add firewall rule with interface types in list format
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    interfacetypes: [ras, lan]
+  register: add_firewall_rule_with_list_interface_types
+
+- name: Check that creating firewall rule with interface types in list format succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_list_interface_types.changed == true
+
+- name: Add firewall rule with interface type 'any'
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    interfacetypes: any
+  register: add_firewall_rule_with_interface_type_any
+
+- name: Check that creating firewall rule with interface type 'any' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_interface_type_any.changed == true
+
+- name: Add firewall rule with edge traversal option 'deferapp'
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    edge: deferapp
+  register: add_firewall_rule_with_edge_traversal
+
+# Setup action creates ansible_distribution_version variable
+- action: setup
+
+- name: Check that creating firewall rule with enge traversal option 'deferapp' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_edge_traversal.changed == true
+  # Works on windows >= Windows 7/Windows Server 2008 R2
+  when: ansible_distribution_version is version('6.1', '>=')
+
+- name: Add firewall rule with 'authenticate' secure flag
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    security: authenticate
+  register: add_firewall_rule_with_secure_flags
+
+- name: Check that creating firewall rule with secure flag 'authenticate' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_secure_flags.changed == true
+  # Works on windows >= Windows 8/Windows Server 2012
+  when: ansible_distribution_version is version('6.2', '>=')
+
+- name: Add firewall rule with profiles in string format
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: 'domain,public'
+  register: add_firewall_rule_with_string_profiles
+
+- name: Check that creating firewall rule with profiles in string format succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_string_profiles.changed == true
+
+- name: Set firewall rule profile back to 'all'
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: [Domain, Public, Private]
+  register: add_firewall_rule_with_string_profiles
+
+- name: Check that setting firewall rule profile back to 'all' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_string_profiles.changed == true
+
+- name: Add firewall rule with profiles in list format
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: [Domain, Private]
+  register: add_firewall_rule_with_list_profiles
+
+- name: Check that creating firewall rule with profiles in list format succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_list_profiles.changed == true

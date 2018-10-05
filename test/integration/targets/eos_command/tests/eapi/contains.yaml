@@ -1,0 +1,19 @@
+---
+- debug: msg="START eapi/contains.yaml on connection={{ ansible_connection }}"
+
+- name: test contains operator
+  eos_command:
+    commands:
+      - show version
+      - show interfaces Management1 | json
+    wait_for:
+      - "result[0] contains EOS"
+      - "result[1].interfaces.Management1.name contains Manage"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END eapi/contains.yaml on connection={{ ansible_connection }}"

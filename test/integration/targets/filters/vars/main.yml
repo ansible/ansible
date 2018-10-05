@@ -1,0 +1,118 @@
+some_structure:
+  - "this is a list element"
+  -
+    this: "is a hash element in a list"
+    warp: 9
+    where: endor
+
+users:
+  - name: steve
+    hosts:
+      - host: host_a
+        password: abc
+      - host: host_b
+  - name: bill
+    hosts:
+      - host: host_c
+        password: default
+      - host: host_d
+
+other_data:
+  level1:
+    foo: bar
+    blip: baz
+    nested:
+        abc: def
+        ghi: xyz
+        alist:
+          - alpha
+          - beta
+          - charlie
+          - delta
+  level2:
+    asd: df
+    xc: dsdfsfsd
+    nested:
+      abc: foo
+      alist:
+        - zebra
+        - yellow
+        - xray
+
+# from https://github.com/ansible/ansible/issues/20379#issuecomment-280492883
+example_20379: {
+    "ApplicationVersions": [
+        {
+            "ApplicationName": "gitlab_ci_elasticbeanstalk",
+            "Status": "UNPROCESSED",
+            "VersionLabel": "test-npm-check-626-1313",
+            "Description": "bla",
+            "DateCreated": "2017-01-22T02:02:31.798Z",
+            "DateUpdated": "2017-01-22T02:02:31.798Z",
+            "SourceBundle": {
+                "S3Bucket": "bla",
+                "S3Key": "ci/beanstalk/gitlab_ci_elasticbeanstalk/gitlab_ci_elasticbeanstalk-626-1313.war"
+            }
+        },
+        {
+            "ApplicationName": "gitlab_ci_elasticbeanstalk",
+            "Status": "UNPROCESSED",
+            "VersionLabel": "terminate-611-1289",
+            "Description": "bla",
+            "DateCreated": "2017-01-20T00:34:29.864Z",
+            "DateUpdated": "2017-01-20T00:34:29.864Z",
+            "SourceBundle": {
+                "S3Bucket": "bla",
+                "S3Key": "ci/beanstalk/gitlab_ci_elasticbeanstalk/gitlab_ci_elasticbeanstalk-611-1289.war"
+            }
+        },
+        {
+            "ApplicationName": "gitlab_ci_elasticbeanstalk",
+            "Status": "UNPROCESSED",
+            "VersionLabel": "terminate-610-1286",
+            "Description": "bla",
+            "DateCreated": "2017-01-20T00:22:02.229Z",
+            "DateUpdated": "2017-01-20T00:22:02.229Z",
+            "SourceBundle": {
+                "S3Bucket": "bla",
+                "S3Key": "ci/beanstalk/gitlab_ci_elasticbeanstalk/gitlab_ci_elasticbeanstalk-610-1286.war"
+            }
+        },
+        {
+            "ApplicationName": "gitlab_ci_elasticbeanstalk",
+            "Status": "UNPROCESSED",
+            "VersionLabel": "master-609-1284",
+            "Description": "bla",
+            "DateCreated": "2017-01-19T23:54:32.902Z",
+            "DateUpdated": "2017-01-19T23:54:32.902Z",
+            "SourceBundle": {
+                "S3Bucket": "bla",
+                "S3Key": "ci/beanstalk/gitlab_ci_elasticbeanstalk/gitlab_ci_elasticbeanstalk-609-1284.war"
+            }
+        },
+        {
+            "ApplicationName": "gitlab_ci_elasticbeanstalk",
+            "Status": "UNPROCESSED",
+            "VersionLabel": "master-608-1282",
+            "Description": "bla",
+            "DateCreated": "2017-01-19T23:02:44.902Z",
+            "DateUpdated": "2017-01-19T23:02:44.902Z",
+            "SourceBundle": {
+                "S3Bucket": "bla",
+                "S3Key": "ci/beanstalk/gitlab_ci_elasticbeanstalk/gitlab_ci_elasticbeanstalk-608-1282.war"
+            }
+        },
+        {
+            "ApplicationName": "gitlab_ci_elasticbeanstalk",
+            "Status": "UNPROCESSED",
+            "VersionLabel": "master-606-1278",
+            "Description": "bla'",
+            "DateCreated": "2017-01-19T22:47:57.741Z",
+            "DateUpdated": "2017-01-19T22:47:57.741Z",
+            "SourceBundle": {
+                "S3Bucket": "bla",
+                "S3Key": "ci/beanstalk/gitlab_ci_elasticbeanstalk/gitlab_ci_elasticbeanstalk-606-1278.war"
+            }
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+a: 1
+b: 2
+c: 3
+d: 4
+role_var_beats_inventory: 'should_not_see_this'
+test_hash:
+  host_vars_testhost: "this is in host_vars/testhost"
+
+# Var precedence testing
+defaults_file_var_role3: "overridden from inventory"

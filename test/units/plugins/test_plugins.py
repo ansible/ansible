@@ -21,12 +21,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-from ansible.compat.tests import unittest
-from ansible.compat.tests import BUILTINS
 
+from ansible.compat.tests import BUILTINS, unittest
 from ansible.compat.tests.mock import mock_open, patch, MagicMock
+from ansible.plugins.loader import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
 
-from ansible.plugins import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, _basedirs, push_basedir, PluginLoader
 
 class TestErrors(unittest.TestCase):
 
@@ -53,11 +52,15 @@ class TestErrors(unittest.TestCase):
         # python library, and then uses the __file__ attribute of
         # the result for that to get the library path, so we mock
         # that here and patch the builtin to use our mocked result
-        m = MagicMock()
-        m.return_value.__file__ = '/path/to/my/test.py'
+        foo = MagicMock()
+        bar = MagicMock()
+        bam = MagicMock()
+        bam.__file__ = '/path/to/my/foo/bar/bam/__init__.py'
+        bar.bam = bam
+        foo.return_value.bar = bar
         pl = PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
-        with patch('{0}.__import__'.format(BUILTINS), m):
-            self.assertEqual(pl._get_package_paths(), ['/path/to/my/bar/bam'])
+        with patch('{0}.__import__'.format(BUILTINS), foo):
+            self.assertEqual(pl._get_package_paths(), ['/path/to/my/foo/bar/bam'])
 
     def test_plugins__get_paths(self):
         pl = PluginLoader('test', '', 'test', 'test_plugin')
@@ -65,13 +68,71 @@ class TestErrors(unittest.TestCase):
         self.assertEqual(pl._get_paths(), ['/path/one', '/path/two'])
 
         # NOT YET WORKING
-        #def fake_glob(path):
-        #    if path == 'test/*':
-        #        return ['test/foo', 'test/bar', 'test/bam']
-        #    elif path == 'test/*/*'
-        #m._paths = None
-        #mock_glob = MagicMock()
-        #mock_glob.return_value = []
-        #with patch('glob.glob', mock_glob):
-        #    pass
+        # def fake_glob(path):
+        #     if path == 'test/*':
+        #         return ['test/foo', 'test/bar', 'test/bam']
+        #     elif path == 'test/*/*'
+        # m._paths = None
+        # mock_glob = MagicMock()
+        # mock_glob.return_value = []
+        # with patch('glob.glob', mock_glob):
+        #     pass
 
+    def assertPluginLoaderConfigBecomes(self, arg, expected):
+        pl = PluginLoader('test', '', arg, 'test_plugin')
+        self.assertEqual(pl.config, expected)
+
+    def test_plugin__init_config_list(self):
+        config = ['/one', '/two']
+        self.assertPluginLoaderConfigBecomes(config, config)
+
+    def test_plugin__init_config_str(self):
+        self.assertPluginLoaderConfigBecomes('test', ['test'])
+
+    def test_plugin__init_config_none(self):
+        self.assertPluginLoaderConfigBecomes(None, [])
+
+    def test__load_module_source_no_duplicate_names(self):
+        '''
+        This test simulates importing 2 plugins with the same name,
+        and validating that the import is shortcirtuited if a file with the same name
+        has already been imported
+        '''
+
+        fixture_path = os.path.join(os.path.dirname(__file__), 'loader_fixtures')
+
+        pl = PluginLoader('test', '', 'test', 'test_plugin')
+        one = pl._load_module_source('import_fixture', os.path.join(fixture_path, 'import_fixture.py'))
+        # This line wouldn't even succeed if we didn't short cirtuit on finding a duplicate name
+        two = pl._load_module_source('import_fixture', '/path/to/import_fixture.py')
+
+        self.assertEqual(one, two)
+
+    @patch('ansible.plugins.loader.glob')
+    @patch.object(PluginLoader, '_get_paths')
+    def test_all_no_duplicate_names(self, gp_mock, glob_mock):
+        '''
+        This test goes along with ``test__load_module_source_no_duplicate_names``
+        and ensures that we ignore duplicate imports on multiple paths
+        '''
+
+        fixture_path = os.path.join(os.path.dirname(__file__), 'loader_fixtures')
+
+        gp_mock.return_value = [
+            fixture_path,
+            '/path/to'
+        ]
+
+        glob_mock.glob.side_effect = [
+            [os.path.join(fixture_path, 'import_fixture.py')],
+            ['/path/to/import_fixture.py']
+        ]
+
+        pl = PluginLoader('test', '', 'test', 'test_plugin')
+        # Aside from needing ``list()`` so we can do a len, ``PluginLoader.all`` returns a generator
+        # so ``list()`` actually causes ``PluginLoader.all`` to run.
+        plugins = list(pl.all())
+        self.assertEqual(len(plugins), 1)
+
+        self.assertIn(os.path.join(fixture_path, 'import_fixture.py'), pl._module_cache)
+        self.assertNotIn('/path/to/import_fixture.py', pl._module_cache)

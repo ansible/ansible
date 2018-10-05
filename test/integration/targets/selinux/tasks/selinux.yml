@@ -1,0 +1,364 @@
+# (c) 2017, Sam Doran <sdoran@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# First Test
+# ##############################################################################
+# Test changing the state, which requires a reboot
+
+- name: TEST 1 | Get current SELinux config file contents
+  set_fact:
+    selinux_config_original: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+    before_test_sestatus: "{{ ansible_selinux }}"
+
+- debug:
+    var: "{{ item }}"
+    verbosity: 1
+  with_items:
+    - selinux_config_original
+    - before_test_sestatus
+    - ansible_selinux
+
+- name: TEST 1 | Setup SELinux configuration for tests
+  selinux:
+    state: enforcing
+    policy: targeted
+
+- name: TEST 1 | Disable SELinux
+  selinux:
+    state: disabled
+    policy: targeted
+  register: _disable_test1
+
+- debug:
+    var: _disable_test1
+    verbosity: 1
+
+- name: TEST 1 | Re-gather facts
+  setup:
+
+- name: TEST 1 | Assert that status was changed, reboot_required is True, a warning was displayed, and SELinux is configured properly
+  assert:
+    that:
+      - _disable_test1 is changed
+      - _disable_test1.reboot_required
+      - (_disable_test1.warnings | length ) >= 1
+      - ansible_selinux.config_mode == 'disabled'
+      - ansible_selinux.type == 'targeted'
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+
+- name: TEST 1 | Disable SELinux again
+  selinux:
+    state: disabled
+    policy: targeted
+  register: _disable_test2
+
+- debug:
+    var: _disable_test2
+    verbosity: 1
+
+- name: TEST 1 | Assert that no change is reported, a warnking was dispalyed, and reboot_required is True
+  assert:
+    that:
+      - _disable_test2 is not changed
+      - (_disable_test1.warnings | length ) >= 1
+      - _disable_test2.reboot_required
+
+- name: TEST 1 | Get modified config file
+  set_fact:
+    selinux_config_after: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+
+- debug:
+    var: selinux_config_after
+    verbosity: 1
+
+- name: TEST 1 | Ensure SELinux config file is properly formatted
+  assert:
+    that:
+      - selinux_config_original | length == selinux_config_after | length
+      - selinux_config_after[selinux_config_after.index('SELINUX=disabled')]  is search("^SELINUX=\w+$")
+      - selinux_config_after[selinux_config_after.index('SELINUXTYPE=targeted')]  is search("^SELINUXTYPE=\w+$")
+
+- name: TEST 1 | Reset SELinux configuration for next test
+  selinux:
+    state: enforcing
+    policy: targeted
+
+
+# Second Test
+# ##############################################################################
+# Test changing only the policy, which does not require a reboot
+
+- name: TEST 2 | Make sure the policy is present
+  package:
+    name: selinux-policy-mls
+    state: present
+
+- name: TEST 2 | Set SELinux policy
+  selinux:
+    state: enforcing
+    policy: mls
+  register: _state_test1
+
+- debug:
+    var: _state_test1
+    verbosity: 1
+
+- name: TEST 2 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+  tags: debug
+
+- name: TEST 2 | Assert that status was changed, reboot_required is False, no warnings were displayed, and SELinux is configured properly
+  assert:
+    that:
+      - _state_test1 is changed
+      - not _state_test1.reboot_required
+      - _state_test1.warnings is not defined
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'mls'
+
+- name: TEST 2 | Set SELinux policy again
+  selinux:
+    state: enforcing
+    policy: mls
+  register: _state_test2
+
+- debug:
+    var: _state_test2
+    verbosity: 1
+
+- name: TEST 2 | Assert that no change was reported, no warnings were dispalyed, and reboot_required is False
+  assert:
+    that:
+      - _state_test2 is not changed
+      - _state_test2.warnings is not defined
+      - not _state_test2.reboot_required
+
+- name: TEST 2 | Get modified config file
+  set_fact:
+    selinux_config_after: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+
+- debug:
+    var: selinux_config_after
+    verbosity: 1
+
+- name: TEST 2 | Ensure SELinux config file is properly formatted
+  assert:
+    that:
+      - selinux_config_original | length == selinux_config_after | length
+      - selinux_config_after[selinux_config_after.index('SELINUX=enforcing')]  is search("^SELINUX=\w+$")
+      - selinux_config_after[selinux_config_after.index('SELINUXTYPE=mls')]  is search("^SELINUXTYPE=\w+$")
+
+- name: TEST 2 | Reset SELinux configuration for next test
+  selinux:
+    state: enforcing
+    policy: targeted
+
+
+# Third Test
+# ##############################################################################
+# Test changing non-existing policy
+
+- name: TEST 3 | Set SELinux policy
+  selinux:
+    state: enforcing
+    policy: non-existing-selinux-policy
+  register: _state_test1
+  ignore_errors: yes
+
+- debug:
+    var: _state_test1
+    verbosity: 1
+
+- name: TEST 3 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+  tags: debug
+
+- name: TEST 3 | Assert that status was not changed, the task failed, the msg contains proper information and SELinux was not changed
+  assert:
+    that:
+      - _state_test1 is not changed
+      - _state_test1 is failed
+      - _state_test1.msg == 'Policy non-existing-selinux-policy does not exist in /etc/selinux/'
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'
+
+
+# Fourth Test
+# ##############################################################################
+# Test if check mode returns correct changed values and
+# doesn't make any changes
+
+
+- name: TEST 4 | Set SELinux to enforcing
+  selinux:
+    state: enforcing
+    policy: targeted
+  register: _check_mode_test1
+
+- debug:
+    var: _check_mode_test1
+    verbosity: 1
+
+- name: TEST 4 | Set SELinux to enforcing in check mode
+  selinux:
+    state: enforcing
+    policy: targeted
+  register: _check_mode_test1
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that check mode is idempotent
+  assert:
+    that:
+      - _check_mode_test1 is success
+      - not _check_mode_test1.reboot_required
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 4 | Set SELinux to permissive in check mode
+  selinux:
+    state: permissive
+    policy: targeted
+  register: _check_mode_test2
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that check mode doesn't set state permissive and returns changed
+  assert:
+    that:
+      - _check_mode_test2 is changed
+      - not _check_mode_test2.reboot_required
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 4 | Disable SELinux in check mode
+  selinux:
+    state: disabled
+  register: _check_mode_test3
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that check mode didn't change anything, status is changed, reboot_required is True, a warning was displayed
+  assert:
+    that:
+      - _check_mode_test3 is changed
+      - _check_mode_test3.reboot_required
+      - (_check_mode_test3.warnings | length ) >= 1
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 4 | Set SELinux to permissive
+  selinux:
+    state: permissive
+    policy: targeted
+  register: _check_mode_test4
+
+- debug:
+    var: _check_mode_test4
+    verbosity: 1
+
+- name: TEST 4 | Disable SELinux in check mode
+  selinux:
+    state: disabled
+  register: _check_mode_test4
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that check mode didn't change anything, status is changed, reboot_required is True, a warning was displayed
+  assert:
+    that:
+      - _check_mode_test4 is changed
+      - _check_mode_test4.reboot_required
+      - (_check_mode_test3.warnings | length ) >= 1
+      - ansible_selinux.config_mode == 'permissive'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 4 | Set SELinux to enforcing
+  selinux:
+    state: enforcing
+    policy: targeted
+  register: _check_mode_test5
+
+- debug:
+    var: _check_mode_test5
+    verbosity: 1
+
+- name: TEST 4 | Disable SELinux
+  selinux:
+    state: disabled
+  register: _check_mode_test5
+
+- name: TEST 4 | Disable SELinux in check mode
+  selinux:
+    state: disabled
+  register: _check_mode_test5
+  check_mode: yes
+
+- name: TEST 4 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+  tags: debug
+
+- name: TEST 4 | Assert that in check mode status was not changed, reboot_required is True, a warning was displayed, and SELinux is configured properly
+  assert:
+    that:
+      - _check_mode_test5 is success
+      - _check_mode_test5.reboot_required
+      - (_check_mode_test5.warnings | length ) >= 1
+      - ansible_selinux.config_mode == 'disabled'
+      - ansible_selinux.type == 'targeted'

@@ -1,0 +1,6 @@
+[local]
+local-pipelining    ansible_ssh_pipelining=true
+local-no-pipelining ansible_ssh_pipelining=false
+[local:vars]
+ansible_host=localhost
+ansible_connection=local

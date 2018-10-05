@@ -38,13 +38,13 @@ import os.path
 import subprocess
 import re
 from paramiko import SSHConfig
-from cStringIO import StringIO
 from optparse import OptionParser
 from collections import defaultdict
-try:
-    import json
-except:
-    import simplejson as json
+import json
+
+from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import StringIO
+
 
 _group = 'vagrant'  # a default group
 _ssh_to_ansible = [('user', 'ansible_ssh_user'),
@@ -69,17 +69,18 @@ parser.add_option('--host', default=None, dest="host",
 
 # get all the ssh configs for all boxes in an array of dictionaries.
 def get_ssh_config():
-    return {k: get_a_ssh_config(k) for k in list_running_boxes()}
+    return dict((k, get_a_ssh_config(k)) for k in list_running_boxes())
 
 
 # list all the running boxes
 def list_running_boxes():
-    output = subprocess.check_output(["vagrant", "status"]).split('\n')
+
+    output = to_text(subprocess.check_output(["vagrant", "status"]), errors='surrogate_or_strict').split('\n')
 
     boxes = []
 
     for line in output:
-        matcher = re.search("([^\s]+)[\s]+running \(.+", line)
+        matcher = re.search(r"([^\s]+)[\s]+running \(.+", line)
         if matcher:
             boxes.append(matcher.group(1))
 
@@ -90,7 +91,7 @@ def list_running_boxes():
 def get_a_ssh_config(box_name):
     """Gives back a map of all the machine's ssh configurations"""
 
-    output = subprocess.check_output(["vagrant", "ssh-config", box_name])
+    output = to_text(subprocess.check_output(["vagrant", "ssh-config", box_name]), errors='surrogate_or_strict')
     config = SSHConfig()
     config.parse(StringIO(output))
     host_config = config.lookup(box_name)
@@ -102,7 +103,8 @@ def get_a_ssh_config(box_name):
         if os.path.isfile(id):
             host_config['identityfile'] = id
 
-    return {v: host_config[k] for k, v in _ssh_to_ansible}
+    return dict((v, host_config[k]) for k, v in _ssh_to_ansible)
+
 
 # List out servers that vagrant has running
 # ------------------------------

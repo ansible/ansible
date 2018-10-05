@@ -20,39 +20,32 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from nose import tools
-from ansible.compat.tests import unittest
+from ansible.parsing.quoting import unquote
 
-from ansible.parsing.splitter import unquote
+import pytest
+
+UNQUOTE_DATA = (
+    (u'1', u'1'),
+    (u'\'1\'', u'1'),
+    (u'"1"', u'1'),
+    (u'"1 \'2\'"', u'1 \'2\''),
+    (u'\'1 "2"\'', u'1 "2"'),
+    (u'\'1 \'2\'\'', u'1 \'2\''),
+    (u'"1\\"', u'"1\\"'),
+    (u'\'1\\\'', u'\'1\\\''),
+    (u'"1 \\"2\\" 3"', u'1 \\"2\\" 3'),
+    (u'\'1 \\\'2\\\' 3\'', u'1 \\\'2\\\' 3'),
+    (u'"', u'"'),
+    (u'\'', u'\''),
+    # Not entirely sure these are good but they match the current
+    # behaviour
+    (u'"1""2"', u'1""2'),
+    (u'\'1\'\'2\'', u'1\'\'2'),
+    (u'"1" 2 "3"', u'1" 2 "3'),
+    (u'"1"\'2\'"3"', u'1"\'2\'"3'),
+)
 
 
-# Tests using nose's test generators cannot use unittest base class.
-# http://nose.readthedocs.org/en/latest/writing_tests.html#test-generators
-class TestUnquote:
-    UNQUOTE_DATA = (
-            (u'1', u'1'),
-            (u'\'1\'', u'1'),
-            (u'"1"', u'1'),
-            (u'"1 \'2\'"', u'1 \'2\''),
-            (u'\'1 "2"\'', u'1 "2"'),
-            (u'\'1 \'2\'\'', u'1 \'2\''),
-            (u'"1\\"', u'"1\\"'),
-            (u'\'1\\\'', u'\'1\\\''),
-            (u'"1 \\"2\\" 3"', u'1 \\"2\\" 3'),
-            (u'\'1 \\\'2\\\' 3\'', u'1 \\\'2\\\' 3'),
-            (u'"', u'"'),
-            (u'\'', u'\''),
-            # Not entirely sure these are good but they match the current
-            # behaviour
-            (u'"1""2"', u'1""2'),
-            (u'\'1\'\'2\'', u'1\'\'2'),
-            (u'"1" 2 "3"', u'1" 2 "3'),
-            (u'"1"\'2\'"3"', u'1"\'2\'"3'),
-            )
-
-    def check_unquote(self, quoted, expected):
-        tools.eq_(unquote(quoted), expected)
-
-    def test_unquote(self):
-        for datapoint in self.UNQUOTE_DATA:
-            yield self.check_unquote, datapoint[0], datapoint[1]
+@pytest.mark.parametrize("quoted, expected", UNQUOTE_DATA)
+def test_unquote(quoted, expected):
+    assert unquote(quoted) == expected

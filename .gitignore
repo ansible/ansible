@@ -2,9 +2,10 @@
 *.py[co]
 build
 AUTHORS.TXT
-# Emacs backup files...
+# Emacs backup and autosave files...
 *~
 .\#*
+\#*
 # RPM stuff...
 MANIFEST
 dist
@@ -16,39 +17,91 @@ rpm-build
 .idea
 #IntelliJ IDEA stuff..
 *.iml
+#VSCode stuff..
+.vscode/
 # Mac OS X stuff...
 .DS_Store
 # manpage build stuff...
+docs/man/man1/ansible*.1
+docs/man/man1/ansible*.1.asciidoc.in
 docs/man/man3/*
 # Sublime stuff
 *.sublime-project
 *.sublime-workspace
 # docsite stuff...
-docsite/rst/modules_by_category.rst
-docsite/rst/list_of_*.rst
-docsite/rst/*_module.rst
-docsite/*.html
-docsite/_static/*.gif
-docsite/_static/*.png
-docsite/_static/websupport.js
-docsite/searchindex.js
-docsite/htmlout
+docs/api/_build/
+docs/api/rst/
+docs/docsite/_build
+docs/docsite/*.html
+docs/docsite/htmlout
+docs/docsite/rst/cli/ansible-*.rst
+docs/docsite/rst/cli/ansible.rst
+docs/docsite/rst/modules/*.rst
+docs/docsite/rst/playbooks_directives.rst
+docs/docsite/rst/plugins_by_category.rst
+docs/docsite/rst/plugins/*/*.rst
+docs/docsite/rst/reference_appendices/config.rst
+docs/docsite/rst/reference_appendices/playbooks_keywords.rst
+docs/docsite/rst_warnings
+docs/docsite/searchindex.js
+docs/docsite/_static/*.gif
+docs/docsite/_static/*.png
+docs/docsite/_static/websupport.js
 # deb building stuff...
-debian/
+/debian/
 deb-build
 # Vim swap files
 *.swp
 *.swo
 credentials.yml
 # test output
-.coverage
+*.retry
+*.out
+.pytest_cache/
 .tox
+.cache
+.pytest_cache
 results.xml
 coverage.xml
 /test/units/cover-html
+/test/integration/targets/*/backup/
+/test/cache/*
 # Development
 /test/develop
 venv
 Vagrantfile
 .vagrant
 ansible.egg-info/
+/shippable/
+/test/integration/cloud-config-*.*
+!/test/integration/cloud-config-*.*.template
+.python-version
+# Release directory
+packaging/release/ansible_release
+/.cache/
+/test/results/coverage/*=coverage.*
+/test/results/coverage/coverage*
+/test/results/reports/coverage*.xml
+/test/results/reports/coverage*/
+/test/results/bot/*.json
+/test/results/junit/*.xml
+/test/results/logs/*.log
+/test/results/data/*.json
+/test/integration/inventory.remote
+/test/integration/inventory.networking
+/test/integration/inventory.winrm
+/test/integration/cloud-config-aws.yml
+/test/integration/cloud-config-cs.ini
+# python 'rope' stuff
+.ropeproject
+# local 'ack' config files
+.ackrc
+# default 'coverage html' results
+htmlcov/
+# default 'coverage' tool data
+.coverage
+# ansible-test coverage results
+test/units/.coverage.*
+/test/integration/cloud-config-azure.yml
+/SYMLINK_CACHE.json
+changelogs/.plugin-cache.yaml

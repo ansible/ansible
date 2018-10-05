@@ -1,0 +1,17 @@
+- name: Test normal connection to target node
+  wait_for_connection:
+    connect_timeout: 5
+    sleep: 1
+    timeout: 10
+
+- name: Use invalid parameter
+  wait_for_connection:
+    foo: bar
+  ignore_errors: yes
+  register: invalid_parameter
+
+- name: Ensure task fails with error
+  assert:
+    that:
+    - invalid_parameter is failed
+    - "invalid_parameter.msg == 'Invalid options for wait_for_connection: foo'"

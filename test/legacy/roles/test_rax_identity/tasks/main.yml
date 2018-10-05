@@ -1,0 +1,51 @@
+# ============================================================
+- name: Test rax_identity with no args
+  rax_identity:
+  ignore_errors: true
+  register: rax_identity
+
+- name: Validate results of rax_identity with no args
+  assert:
+    that:
+      - rax_identity is failed
+      - rax_identity.msg == 'No credentials supplied!'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_identity with name and credentials
+  rax_identity:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+  ignore_errors: true
+  register: rax_identity
+
+- name: Validate results of rax_identity with name and credentials
+  assert:
+    that:
+      - rax_identity is failed
+      - rax_identity.msg.startswith('None is not a valid region')
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_identity with name and credentials and region
+  rax_identity:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+  register: rax_identity
+
+- name: Validate results of rax_identity with name and credentials
+  assert:
+    that:
+      - rax_identity is successful
+      - rax_identity is not changed
+      - rax_identity.identity.region == "{{ rackspace_region }}"
+      - rax_identity.identity.username == "{{ rackspace_username }}"
+      - rax_identity.identity.authenticated
+      - rax_identity.identity.services
+      - rax_identity.identity.auth_token
+# ============================================================

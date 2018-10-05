@@ -1,0 +1,34 @@
+---
+- debug: msg="START cli/comment.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+- name: configure device with comment
+  iosxr_config:
+    src: basic/config.j2
+    comment: "this is sensible commit message"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.updates is not defined"
+
+- name: check device with config
+  iosxr_config:
+    src: basic/config.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.updates is not defined"
+
+- debug: msg="END cli/comment.yaml on connection={{ ansible_connection }}"

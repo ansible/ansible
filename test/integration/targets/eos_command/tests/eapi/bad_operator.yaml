@@ -1,0 +1,19 @@
+---
+- debug: msg="START eapi/bad_operator.yaml"
+
+- name: test bad operator
+  eos_command:
+    commands:
+      - show version
+      - show interfaces Management1
+    wait_for:
+      - "result[1].interfaces.Management1.name foo Management"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END eapi/bad_operator.yaml"

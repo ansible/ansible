@@ -1,0 +1,49 @@
+---
+- debug: msg="START netconf/multiple.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  junos_config:
+    lines:
+      - "set system host-name {{ inventory_hostname_short }}"
+      - "delete interfaces lo0"
+    provider: "{{ netconf }}"
+  register: test
+
+- name: configure multiple commands
+  junos_config:
+    lines:
+      - 'set system host-name {{ inventory_hostname_short }}'
+      - 'set interfaces lo0 unit 0 family inet address 192.0.2.1/32'
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      # Ensure host-name *hasn't* been updated
+      - "'host-name;' not in result.diff.prepared"
+      # Ensure interface has *been* updated
+      - "'address 192.0.2.1/32' in result.diff.prepared"
+
+- name: check multiple commands idempotent
+  junos_config:
+    lines:
+      - 'set system host-name {{ inventory_hostname_short }}'
+      - 'set interfaces lo0 unit 0 family inet address 192.0.2.1/32'
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.diff is not defined"
+
+- name: teardown
+  junos_config:
+    lines:
+      - "set system host-name {{ inventory_hostname_short }}"
+      - "delete interfaces lo0"
+    provider: "{{ netconf }}"
+  register: test
+
+- debug: msg="END netconf/multiple.yaml on connection={{ ansible_connection }}"

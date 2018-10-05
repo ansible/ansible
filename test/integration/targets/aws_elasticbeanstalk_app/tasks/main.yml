@@ -1,0 +1,156 @@
+---
+# tasks file for aws_elasticbeanstalk_app
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  # ============================================================
+  - name: test with no parameters
+    aws_elasticbeanstalk_app:
+    register: result
+    ignore_errors: true
+  
+  - name: assert failure when called with no parameters
+    assert:
+      that:
+        - 'result.failed'
+
+  # ============================================================
+  - name: test create app
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      description: "{{ description }}"
+      state: present
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is True
+    assert:
+      that:
+        - result.changed == True
+
+  # ============================================================
+  - name: test create when app already exists
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      description: "{{ description }}"
+      state: present
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is False since the app already exists
+    assert:
+      that:
+        - result.changed == False
+
+  # ============================================================
+  - name: make an update to an existing app 
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      description: "{{ alternate_description }}"
+      state: present
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is True
+    assert:
+      that:
+        - result.changed == True
+
+#   # ============================================================
+#   - name: fail deleting an app that has environments that exist
+#     aws_elasticbeanstalk_app:
+#       app_name: "non_app"
+#       state: absent
+#       <<: *aws_connection_info
+#     register: result
+#     ignore_errors: true
+#
+#   - name: assert deleteing app with running environments fail
+#     assert:
+#       that:
+#         - result.changed == False
+
+#   # ============================================================
+#   - name: deleting an app that has environments that exist with terminate_by_force True
+#     aws_elasticbeanstalk_app:
+#       app_name: "non_app"
+#       state: absent
+#       terminate_by_force: True
+#       <<: *aws_connection_info
+#     register: result
+#
+#   - name: assert deleteing app with running environments with terminate_by_force True
+#     assert:
+#       that:
+#         - result.changed == True
+#
+  # ============================================================
+#  - name: retrieve a list of apps
+#    aws_elasticbeanstalk_app_facts:
+#      <<: *aws_connection_info
+#    register: result
+
+#  - name: assert changed is True
+#    assert:
+#      that:
+#        - result is success
+
+#   # ============================================================
+#   - name: deleting an app that has environments that exist with terminate_by_force True
+#     aws_elasticbeanstalk_app:
+#       app_name: "non_app"
+#       state: absent
+#       terminate_by_force: True
+#       <<: *aws_connection_info
+#     register: result
+#
+#   - name: assert deleteing app with running environments with terminate_by_force True
+#     assert:
+#       that:
+#         - result.changed == True
+#
+  # ============================================================
+  - name: delete non existent app
+    aws_elasticbeanstalk_app:
+      app_name: "non_app"
+      state: absent
+      <<: *aws_connection_info
+    register: result
+    ignore_errors: true
+
+  - name: assert deleteing non existant app fails
+    assert:
+      that:
+        - result.changed == False
+        - 'result.output.startswith("Application not found")'
+
+  # ============================================================
+  - name: delete existing app
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      state: absent
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is True
+    assert:
+      that:
+        - result.changed == True
+
+  # ============================================================
+
+  always:
+
+  - name: delete existing app
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      state: absent
+      <<: *aws_connection_info

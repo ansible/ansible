@@ -1,0 +1,50 @@
+- name: install the test daemon script
+  copy: src=ansible_test_service dest=/usr/sbin/ansible_test_service mode=755
+  register: install_result
+
+- block:
+    - name: assert that the daemon script was installed
+      assert:
+        that:
+          - "install_result.dest == '/usr/sbin/ansible_test_service'"
+          - "install_result.state == 'file'"
+          - "install_result.mode == '0755'"
+
+    # determine init system is in use
+    - name: detect sysv init system
+      set_fact:
+        service_type: sysv
+      when:
+        - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+        - ansible_distribution_version is version('6', '>=')
+        - ansible_distribution_version is version('7', '<')
+    - name: detect systemd init system
+      set_fact:
+        service_type: systemd
+      when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ( ansible_distribution_version is version('7', '>=') and ansible_distribution_version is version('8', '<'))) or ansible_distribution == 'Fedora' or (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('15.04', '>=')) or (ansible_distribution == 'Debian' and ansible_distribution_version is version('8', '>=')) or ansible_os_family == 'Suse'
+    - name: detect upstart init system
+      set_fact:
+        service_type: upstart
+      when:
+        - ansible_distribution == 'Ubuntu'
+        - ansible_distribution_version is version('15.04', '<')
+
+    - name: display value of ansible_service_mgr
+      debug:
+        msg: 'ansible_service_mgr: {{ ansible_service_mgr }}'
+
+    - name: setup test service script
+      include_tasks: '{{ service_type }}_setup.yml'
+
+    - name: execute tests
+      import_tasks: tests.yml
+
+  always:
+    - name: disable and stop ansible test service
+      service:
+        name: ansible_test
+        state: stopped
+        enabled: false
+
+    # cleaning up changes made by this playbook
+    - include_tasks: '{{ service_type }}_cleanup.yml'

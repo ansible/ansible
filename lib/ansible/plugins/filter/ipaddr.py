@@ -15,8 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from functools import partial
 import types
+from ansible.module_utils import six
 
 try:
     import netaddr
@@ -32,7 +37,6 @@ from ansible import errors
 
 
 # ---- IP address and network query helpers ----
-
 def _empty_ipaddr_query(v, vtype):
     # We don't have any query to process, so just check what type the user
     # expects, and return the IP address in a correct format
@@ -41,6 +45,18 @@ def _empty_ipaddr_query(v, vtype):
             return str(v.ip)
         elif vtype == 'network':
             return str(v)
+
+
+def _first_last(v):
+    if v.size == 2:
+        first_usable = int(netaddr.IPAddress(v.first))
+        last_usable = int(netaddr.IPAddress(v.last))
+        return first_usable, last_usable
+    elif v.size > 1:
+        first_usable = int(netaddr.IPAddress(v.first + 1))
+        last_usable = int(netaddr.IPAddress(v.last - 1))
+        return first_usable, last_usable
+
 
 def _6to4_query(v, vtype, value):
     if v.version == 4:
@@ -72,28 +88,41 @@ def _6to4_query(v, vtype, value):
             else:
                 return False
 
+
 def _ip_query(v):
     if v.size == 1:
         return str(v.ip)
     if v.size > 1:
-        if v.ip != v.network:
+        # /31 networks in netaddr have no broadcast address
+        if v.ip != v.network or not v.broadcast:
             return str(v.ip)
+
 
 def _gateway_query(v):
     if v.size > 1:
         if v.ip != v.network:
             return str(v.ip) + '/' + str(v.prefixlen)
 
+
+def _address_prefix_query(v):
+    if v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + '/' + str(v.prefixlen)
+
+
 def _bool_ipaddr_query(v):
     if v:
         return True
 
+
 def _broadcast_query(v):
-    if v.size > 1:
+    if v.size > 2:
         return str(v.broadcast)
+
 
 def _cidr_query(v):
     return str(v)
+
 
 def _cidr_lookup_query(v, iplist, value):
     try:
@@ -102,6 +131,18 @@ def _cidr_lookup_query(v, iplist, value):
     except:
         return False
 
+
+def _first_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size == 2:
+            return str(netaddr.IPAddress(int(v.network)))
+        elif v.size > 1:
+            return str(netaddr.IPAddress(int(v.network) + 1))
+
+
 def _host_query(v):
     if v.size == 1:
         return str(v)
@@ -109,14 +150,43 @@ def _host_query(v):
         if v.ip != v.network:
             return str(v.ip) + '/' + str(v.prefixlen)
 
+
 def _hostmask_query(v):
     return str(v.hostmask)
+
 
 def _int_query(v, vtype):
     if vtype == 'address':
         return int(v.ip)
     elif vtype == 'network':
         return str(int(v.ip)) + '/' + str(int(v.prefixlen))
+
+
+def _ip_prefix_query(v):
+    if v.size == 2:
+        return str(v.ip) + '/' + str(v.prefixlen)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + '/' + str(v.prefixlen)
+
+
+def _ip_netmask_query(v):
+    if v.size == 2:
+        return str(v.ip) + ' ' + str(v.netmask)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + ' ' + str(v.netmask)
+
+
+'''
+def _ip_wildcard_query(v):
+    if v.size == 2:
+        return str(v.ip) + ' ' + str(v.hostmask)
+    elif v.size > 1:
+        if v.ip != v.network:
+            return str(v.ip) + ' ' + str(v.hostmask)
+'''
+
 
 def _ipv4_query(v, value):
     if v.version == 6:
@@ -127,11 +197,23 @@ def _ipv4_query(v, value):
     else:
         return value
 
+
 def _ipv6_query(v, value):
     if v.version == 4:
         return str(v.ipv6())
     else:
         return value
+
+
+def _last_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size > 1:
+            first_usable, last_usable = _first_last(v)
+            return str(netaddr.IPAddress(last_usable))
+
 
 def _link_local_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
@@ -143,51 +225,120 @@ def _link_local_query(v, value):
         if ipaddr(str(v_ip), 'fe80::/10'):
             return value
 
+
 def _loopback_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
     if v_ip.is_loopback():
         return value
 
+
 def _multicast_query(v, value):
     if v.is_multicast():
         return value
+
 
 def _net_query(v):
     if v.size > 1:
         if v.ip == v.network:
             return str(v.network) + '/' + str(v.prefixlen)
 
+
 def _netmask_query(v):
-    if v.size > 1:
-        return str(v.netmask)
+    return str(v.netmask)
+
 
 def _network_query(v):
+    '''Return the network of a given IP or subnet'''
     if v.size > 1:
         return str(v.network)
 
+
+def _network_id_query(v):
+    '''Return the network of a given IP or subnet'''
+    return str(v.network)
+
+
+def _network_netmask_query(v):
+    return str(v.network) + ' ' + str(v.netmask)
+
+
+def _network_wildcard_query(v):
+    return str(v.network) + ' ' + str(v.hostmask)
+
+
+def _next_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size > 1:
+            first_usable, last_usable = _first_last(v)
+            next_ip = int(netaddr.IPAddress(int(v.ip) + 1))
+            if next_ip >= first_usable and next_ip <= last_usable:
+                return str(netaddr.IPAddress(int(v.ip) + 1))
+
+
 def _prefix_query(v):
     return int(v.prefixlen)
+
+
+def _previous_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size > 1:
+            first_usable, last_usable = _first_last(v)
+            previous_ip = int(netaddr.IPAddress(int(v.ip) - 1))
+            if previous_ip >= first_usable and previous_ip <= last_usable:
+                return str(netaddr.IPAddress(int(v.ip) - 1))
+
 
 def _private_query(v, value):
     if v.is_private():
         return value
 
+
 def _public_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
-    if v_ip.is_unicast() and not v_ip.is_private() and \
-        not v_ip.is_loopback() and not v_ip.is_netmask() and \
-        not v_ip.is_hostmask():
+    if (v_ip.is_unicast() and not v_ip.is_private() and
+            not v_ip.is_loopback() and not v_ip.is_netmask() and
+            not v_ip.is_hostmask()):
         return value
+
+
+def _range_usable_query(v, vtype):
+    if vtype == 'address':
+        "Does it make sense to raise an error"
+        raise errors.AnsibleFilterError('Not a network address')
+    elif vtype == 'network':
+        if v.size > 1:
+            first_usable, last_usable = _first_last(v)
+            first_usable = str(netaddr.IPAddress(first_usable))
+            last_usable = str(netaddr.IPAddress(last_usable))
+            return "{0}-{1}".format(first_usable, last_usable)
+
 
 def _revdns_query(v):
     v_ip = netaddr.IPAddress(str(v.ip))
     return v_ip.reverse_dns
 
+
 def _size_query(v):
     return v.size
 
+
+def _size_usable_query(v):
+    if v.size == 1:
+        return 0
+    elif v.size == 2:
+        return 2
+    return v.size - 2
+
+
 def _subnet_query(v):
     return str(v.cidr)
+
 
 def _type_query(v):
     if v.size == 1:
@@ -198,12 +349,15 @@ def _type_query(v):
         else:
             return 'network'
 
+
 def _unicast_query(v, value):
     if v.is_unicast():
         return value
 
+
 def _version_query(v):
     return v.version
+
 
 def _wrap_query(v, vtype, value):
     if v.version == 6:
@@ -220,29 +374,40 @@ def _bare_query(v):
     v.dialect = netaddr.mac_bare
     return str(v)
 
+
 def _bool_hwaddr_query(v):
     if v:
         return True
+
+
+def _int_hwaddr_query(v):
+    return int(v)
+
 
 def _cisco_query(v):
     v.dialect = netaddr.mac_cisco
     return str(v)
 
+
 def _empty_hwaddr_query(v, value):
     if v:
         return value
+
 
 def _linux_query(v):
     v.dialect = mac_linux
     return str(v)
 
+
 def _postgresql_query(v):
     v.dialect = netaddr.mac_pgsql
     return str(v)
 
+
 def _unix_query(v):
     v.dialect = netaddr.mac_unix
     return str(v)
+
 
 def _win_query(v):
     v.dialect = netaddr.mac_eui48
@@ -251,72 +416,123 @@ def _win_query(v):
 
 # ---- IP address and network filters ----
 
-def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
+# Returns a minified list of subnets or a single subnet that spans all of
+# the inputs.
+def cidr_merge(value, action='merge'):
+    if not hasattr(value, '__iter__'):
+        raise errors.AnsibleFilterError('cidr_merge: expected iterable, got ' + repr(value))
+
+    if action == 'merge':
+        try:
+            return [str(ip) for ip in netaddr.cidr_merge(value)]
+        except Exception as e:
+            raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+
+    elif action == 'span':
+        # spanning_cidr needs at least two values
+        if len(value) == 0:
+            return None
+        elif len(value) == 1:
+            try:
+                return str(netaddr.IPNetwork(value[0]))
+            except Exception as e:
+                raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+        else:
+            try:
+                return str(netaddr.spanning_cidr(value))
+            except Exception as e:
+                raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+
+    else:
+        raise errors.AnsibleFilterError("cidr_merge: invalid action '%s'" % action)
+
+
+def ipaddr(value, query='', version=False, alias='ipaddr'):
     ''' Check if string is an IP address or network and filter it '''
 
     query_func_extra_args = {
-            '': ('vtype',),
-            '6to4': ('vtype', 'value'),
-            'cidr_lookup': ('iplist', 'value'),
-            'int': ('vtype',),
-            'ipv4': ('value',),
-            'ipv6': ('value',),
-            'link-local': ('value',),
-            'loopback': ('value',),
-            'lo': ('value',),
-            'multicast': ('value',),
-            'private': ('value',),
-            'public': ('value',),
-            'unicast': ('value',),
-            'wrap': ('vtype', 'value'),
-            }
+        '': ('vtype',),
+        '6to4': ('vtype', 'value'),
+        'cidr_lookup': ('iplist', 'value'),
+        'first_usable': ('vtype',),
+        'int': ('vtype',),
+        'ipv4': ('value',),
+        'ipv6': ('value',),
+        'last_usable': ('vtype',),
+        'link-local': ('value',),
+        'loopback': ('value',),
+        'lo': ('value',),
+        'multicast': ('value',),
+        'next_usable': ('vtype',),
+        'previous_usable': ('vtype',),
+        'private': ('value',),
+        'public': ('value',),
+        'unicast': ('value',),
+        'range_usable': ('vtype',),
+        'wrap': ('vtype', 'value'),
+    }
+
     query_func_map = {
-            '': _empty_ipaddr_query,
-            '6to4': _6to4_query,
-            'address': _ip_query,
-            'address/prefix': _gateway_query,
-            'bool': _bool_ipaddr_query,
-            'broadcast': _broadcast_query,
-            'cidr': _cidr_query,
-            'cidr_lookup': _cidr_lookup_query,
-            'gateway': _gateway_query,
-            'gw': _gateway_query,
-            'host': _host_query,
-            'host/prefix': _gateway_query,
-            'hostmask': _hostmask_query,
-            'hostnet': _gateway_query,
-            'int': _int_query,
-            'ip': _ip_query,
-            'ipv4': _ipv4_query,
-            'ipv6': _ipv6_query,
-            'link-local': _link_local_query,
-            'lo': _loopback_query,
-            'loopback': _loopback_query,
-            'multicast': _multicast_query,
-            'net': _net_query,
-            'netmask': _netmask_query,
-            'network': _network_query,
-            'prefix': _prefix_query,
-            'private': _private_query,
-            'public': _public_query,
-            'revdns': _revdns_query,
-            'router': _gateway_query,
-            'size': _size_query,
-            'subnet': _subnet_query,
-            'type': _type_query,
-            'unicast': _unicast_query,
-            'v4': _ipv4_query,
-            'v6': _ipv6_query,
-            'version': _version_query,
-            'wrap': _wrap_query,
-            }
+        '': _empty_ipaddr_query,
+        '6to4': _6to4_query,
+        'address': _ip_query,
+        'address/prefix': _address_prefix_query,  # deprecate
+        'bool': _bool_ipaddr_query,
+        'broadcast': _broadcast_query,
+        'cidr': _cidr_query,
+        'cidr_lookup': _cidr_lookup_query,
+        'first_usable': _first_usable_query,
+        'gateway': _gateway_query,  # deprecate
+        'gw': _gateway_query,  # deprecate
+        'host': _host_query,
+        'host/prefix': _address_prefix_query,  # deprecate
+        'hostmask': _hostmask_query,
+        'hostnet': _gateway_query,  # deprecate
+        'int': _int_query,
+        'ip': _ip_query,
+        'ip/prefix': _ip_prefix_query,
+        'ip_netmask': _ip_netmask_query,
+        # 'ip_wildcard': _ip_wildcard_query, built then could not think of use case
+        'ipv4': _ipv4_query,
+        'ipv6': _ipv6_query,
+        'last_usable': _last_usable_query,
+        'link-local': _link_local_query,
+        'lo': _loopback_query,
+        'loopback': _loopback_query,
+        'multicast': _multicast_query,
+        'net': _net_query,
+        'next_usable': _next_usable_query,
+        'netmask': _netmask_query,
+        'network': _network_query,
+        'network_id': _network_id_query,
+        'network/prefix': _subnet_query,
+        'network_netmask': _network_netmask_query,
+        'network_wildcard': _network_wildcard_query,
+        'prefix': _prefix_query,
+        'previous_usable': _previous_usable_query,
+        'private': _private_query,
+        'public': _public_query,
+        'range_usable': _range_usable_query,
+        'revdns': _revdns_query,
+        'router': _gateway_query,  # deprecate
+        'size': _size_query,
+        'size_usable': _size_usable_query,
+        'subnet': _subnet_query,
+        'type': _type_query,
+        'unicast': _unicast_query,
+        'v4': _ipv4_query,
+        'v6': _ipv6_query,
+        'version': _version_query,
+        'wildcard': _hostmask_query,
+        'wrap': _wrap_query,
+    }
 
     vtype = None
 
     if not value:
         return False
 
-    elif value == True:
+    elif value is True:
         return False
 
     # Check if value is a list and parse each element
@@ -325,7 +541,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
         _ret = []
         for element in value:
             if ipaddr(element, str(query), version):
-                    _ret.append(ipaddr(element, str(query), version))
+                _ret.append(ipaddr(element, str(query), version))
 
         if _ret:
             return _ret
@@ -414,7 +630,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
     # that string is a valid subnet, if so, we can check later if given IP
     # address/network is inside that specific subnet
     try:
-        ### ?? 6to4 and link-local were True here before.  Should they still?
+        # ?? 6to4 and link-local were True here before.  Should they still?
         if query and (query not in query_func_map or query == 'cidr_lookup') and ipaddr(query, 'network'):
             iplist = netaddr.IPSet([netaddr.IPNetwork(query)])
             query = 'cidr_lookup'
@@ -456,19 +672,36 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
     return False
 
 
-def ipwrap(value, query = ''):
+def ipmath(value, amount):
+    try:
+        ip = netaddr.IPAddress(value)
+    except netaddr.AddrFormatError:
+        msg = 'You must pass a valid IP address; {0} is invalid'.format(value)
+        raise errors.AnsibleFilterError(msg)
+
+    if not isinstance(amount, int):
+        msg = (
+            'You must pass an integer for arithmetic; '
+            '{0} is not a valid integer'
+        ).format(amount)
+        raise errors.AnsibleFilterError(msg)
+
+    return str(ip + amount)
+
+
+def ipwrap(value, query=''):
     try:
         if isinstance(value, (list, tuple, types.GeneratorType)):
             _ret = []
             for element in value:
-                if ipaddr(element, query, version = False, alias = 'ipwrap'):
+                if ipaddr(element, query, version=False, alias='ipwrap'):
                     _ret.append(ipaddr(element, 'wrap'))
                 else:
                     _ret.append(element)
 
             return _ret
         else:
-            _ret = ipaddr(value, query, version = False, alias = 'ipwrap')
+            _ret = ipaddr(value, query, version=False, alias='ipwrap')
             if _ret:
                 return ipaddr(_ret, 'wrap')
             else:
@@ -478,12 +711,12 @@ def ipwrap(value, query = ''):
         return value
 
 
-def ipv4(value, query = ''):
-    return ipaddr(value, query, version = 4, alias = 'ipv4')
+def ipv4(value, query=''):
+    return ipaddr(value, query, version=4, alias='ipv4')
 
 
-def ipv6(value, query = ''):
-    return ipaddr(value, query, version = 6, alias = 'ipv6')
+def ipv6(value, query=''):
+    return ipaddr(value, query, version=6, alias='ipv6')
 
 
 # Split given subnet into smaller subnets or find out the biggest subnet of
@@ -504,7 +737,10 @@ def ipv6(value, query = ''):
 #
 #  - address | ipsubnet(cidr, index)
 #      returns next indexed subnet which contains given address
-def ipsubnet(value, query = '', index = 'x'):
+#
+#  - address/prefix | ipsubnet(subnet/prefix)
+#      return the index of the subnet in the subnet
+def ipsubnet(value, query='', index='x'):
     ''' Manipulate IPv4/IPv6 subnets '''
 
     try:
@@ -517,11 +753,11 @@ def ipsubnet(value, query = '', index = 'x'):
         value = netaddr.IPNetwork(v)
     except:
         return False
-
+    query_string = str(query)
     if not query:
         return str(value)
 
-    elif str(query).isdigit():
+    elif query_string.isdigit():
         vsize = ipaddr(v, 'size')
         query = int(query)
 
@@ -554,7 +790,23 @@ def ipsubnet(value, query = '', index = 'x'):
                 except:
                     return False
 
+    elif query_string:
+        vtype = ipaddr(query, 'type')
+        if vtype == 'address':
+            v = ipaddr(query, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(query, 'subnet')
+        else:
+            msg = 'You must pass a valid subnet or IP address; {0} is invalid'.format(query_string)
+            raise errors.AnsibleFilterError(msg)
+        query = netaddr.IPNetwork(v)
+        for i, subnet in enumerate(query.subnet(value.prefixlen), 1):
+            if subnet == value:
+                return str(i)
+        msg = '{0} is not in the subnet {1}'.format(value.cidr, query.cidr)
+        raise errors.AnsibleFilterError(msg)
     return False
+
 
 # Returns the nth host within a network described by value.
 # Usage:
@@ -578,21 +830,183 @@ def nthhost(value, query=''):
         return False
 
     try:
-        vsize = ipaddr(v, 'size')
         nth = int(query)
         if value.size > nth:
-          return value[nth]
+            return value[nth]
 
     except ValueError:
         return False
 
     return False
 
+
+# Returns the next nth usable ip within a network described by value.
+def next_nth_usable(value, offset):
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        v = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if type(offset) != int:
+        raise errors.AnsibleFilterError('Must pass in an integer')
+    if v.size > 1:
+        first_usable, last_usable = _first_last(v)
+        nth_ip = int(netaddr.IPAddress(int(v.ip) + offset))
+        if nth_ip >= first_usable and nth_ip <= last_usable:
+            return str(netaddr.IPAddress(int(v.ip) + offset))
+
+
+# Returns the previous nth usable ip within a network described by value.
+def previous_nth_usable(value, offset):
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        v = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if type(offset) != int:
+        raise errors.AnsibleFilterError('Must pass in an integer')
+    if v.size > 1:
+        first_usable, last_usable = _first_last(v)
+        nth_ip = int(netaddr.IPAddress(int(v.ip) - offset))
+        if nth_ip >= first_usable and nth_ip <= last_usable:
+            return str(netaddr.IPAddress(int(v.ip) - offset))
+
+
+def _range_checker(ip_check, first, last):
+    '''
+    Tests whether an ip address is within the bounds of the first and last address.
+
+    :param ip_check: The ip to test if it is within first and last.
+    :param first: The first IP in the range to test against.
+    :param last: The last IP in the range to test against.
+
+    :return: bool
+    '''
+    if ip_check >= first and ip_check <= last:
+        return True
+    else:
+        return False
+
+
+def _address_normalizer(value):
+    '''
+    Used to validate an address or network type and return it in a consistent format.
+    This is being used for future use cases not currently available such as an address range.
+
+    :param value: The string representation of an address or network.
+
+    :return: The address or network in the normalized form.
+    '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address' or vtype == "network":
+            v = ipaddr(value, 'subnet')
+    except:
+        return False
+
+    return v
+
+
+def network_in_usable(value, test):
+    '''
+    Checks whether 'test' is a useable address or addresses in 'value'
+
+    :param: value: The string representation of an address or network to test against.
+    :param test: The string representation of an address or network to validate if it is within the range of 'value'.
+
+    :return: bool
+    '''
+    # normalize value and test variables into an ipaddr
+    v = _address_normalizer(value)
+    w = _address_normalizer(test)
+
+    # get first and last addresses as integers to compare value and test; or cathes value when case is /32
+    v_first = ipaddr(ipaddr(v, 'first_usable') or ipaddr(v, 'address'), 'int')
+    v_last = ipaddr(ipaddr(v, 'last_usable') or ipaddr(v, 'address'), 'int')
+    w_first = ipaddr(ipaddr(w, 'network') or ipaddr(w, 'address'), 'int')
+    w_last = ipaddr(ipaddr(w, 'broadcast') or ipaddr(w, 'address'), 'int')
+
+    if _range_checker(w_first, v_first, v_last) and _range_checker(w_last, v_first, v_last):
+        return True
+    else:
+        return False
+
+
+def network_in_network(value, test):
+    '''
+    Checks whether the 'test' address or addresses are in 'value', including broadcast and network
+
+    :param: value: The network address or range to test against.
+    :param test: The address or network to validate if it is within the range of 'value'.
+
+    :return: bool
+    '''
+    # normalize value and test variables into an ipaddr
+    v = _address_normalizer(value)
+    w = _address_normalizer(test)
+
+    # get first and last addresses as integers to compare value and test; or cathes value when case is /32
+    v_first = ipaddr(ipaddr(v, 'network') or ipaddr(v, 'address'), 'int')
+    v_last = ipaddr(ipaddr(v, 'broadcast') or ipaddr(v, 'address'), 'int')
+    w_first = ipaddr(ipaddr(w, 'network') or ipaddr(w, 'address'), 'int')
+    w_last = ipaddr(ipaddr(w, 'broadcast') or ipaddr(w, 'address'), 'int')
+
+    if _range_checker(w_first, v_first, v_last) and _range_checker(w_last, v_first, v_last):
+        return True
+    else:
+        return False
+
+
+def reduce_on_network(value, network):
+    '''
+    Reduces a list of addresses to only the addresses that match a given network.
+
+    :param: value: The list of addresses to filter on.
+    :param: network: The network to validate against.
+
+    :return: The reduced list of addresses.
+    '''
+    # normalize network variable into an ipaddr
+    n = _address_normalizer(network)
+
+    # get first and last addresses as integers to compare value and test; or cathes value when case is /32
+    n_first = ipaddr(ipaddr(n, 'network') or ipaddr(n, 'address'), 'int')
+    n_last = ipaddr(ipaddr(n, 'broadcast') or ipaddr(n, 'address'), 'int')
+
+    # create an empty list to fill and return
+    r = []
+
+    for address in value:
+        # normalize address variables into an ipaddr
+        a = _address_normalizer(address)
+
+        # get first and last addresses as integers to compare value and test; or cathes value when case is /32
+        a_first = ipaddr(ipaddr(a, 'network') or ipaddr(a, 'address'), 'int')
+        a_last = ipaddr(ipaddr(a, 'broadcast') or ipaddr(a, 'address'), 'int')
+
+        if _range_checker(a_first, n_first, n_last) and _range_checker(a_last, n_first, n_last):
+            r.append(address)
+
+    return r
+
+
 # Returns the SLAAC address within a network for a given HW/MAC address.
 # Usage:
 #
 #  - prefix | slaac(mac)
-def slaac(value, query = ''):
+def slaac(value, query=''):
     ''' Get the SLAAC address within given network '''
     try:
         vtype = ipaddr(value, 'type')
@@ -601,7 +1015,7 @@ def slaac(value, query = ''):
         elif vtype == 'network':
             v = ipaddr(value, 'subnet')
 
-        if v.version != 6:
+        if ipaddr(value, 'version') != 6:
             return False
 
         value = netaddr.IPNetwork(v)
@@ -612,7 +1026,7 @@ def slaac(value, query = ''):
         return False
 
     try:
-        mac = hwaddr(query, alias = 'slaac')
+        mac = hwaddr(query, alias='slaac')
 
         eui = netaddr.EUI(mac)
     except:
@@ -622,26 +1036,27 @@ def slaac(value, query = ''):
 
 
 # ---- HWaddr / MAC address filters ----
-
-def hwaddr(value, query = '', alias = 'hwaddr'):
+def hwaddr(value, query='', alias='hwaddr'):
     ''' Check if string is a HW/MAC address and filter it '''
 
     query_func_extra_args = {
-            '': ('value',),
-            }
+        '': ('value',),
+    }
+
     query_func_map = {
-            '': _empty_hwaddr_query,
-            'bare': _bare_query,
-            'bool': _bool_hwaddr_query,
-            'cisco': _cisco_query,
-            'eui48': _win_query,
-            'linux': _linux_query,
-            'pgsql': _postgresql_query,
-            'postgresql': _postgresql_query,
-            'psql': _postgresql_query,
-            'unix': _unix_query,
-            'win': _win_query,
-            }
+        '': _empty_hwaddr_query,
+        'bare': _bare_query,
+        'bool': _bool_hwaddr_query,
+        'int': _int_hwaddr_query,
+        'cisco': _cisco_query,
+        'eui48': _win_query,
+        'linux': _linux_query,
+        'pgsql': _postgresql_query,
+        'postgresql': _postgresql_query,
+        'psql': _postgresql_query,
+        'unix': _unix_query,
+        'win': _win_query,
+    }
 
     try:
         v = netaddr.EUI(value)
@@ -659,25 +1074,41 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
 
     return False
 
-def macaddr(value, query = ''):
-    return hwaddr(value, query, alias = 'macaddr')
+
+def macaddr(value, query=''):
+    return hwaddr(value, query, alias='macaddr')
+
 
 def _need_netaddr(f_name, *args, **kwargs):
-    raise errors.AnsibleFilterError('The {0} filter requires python-netaddr be'
-            ' installed on the ansible controller'.format(f_name))
+    raise errors.AnsibleFilterError("The %s filter requires python's netaddr be "
+                                    "installed on the ansible controller" % f_name)
+
+
+def ip4_hex(arg, delimiter=''):
+    ''' Convert an IPv4 address to Hexadecimal notation '''
+    numbers = list(map(int, arg.split('.')))
+    return '{0:02x}{sep}{1:02x}{sep}{2:02x}{sep}{3:02x}'.format(*numbers, sep=delimiter)
+
 
 # ---- Ansible filters ----
-
 class FilterModule(object):
     ''' IP address and network manipulation filters '''
-    filter_map =  {
+    filter_map = {
         # IP addresses and networks
+        'cidr_merge': cidr_merge,
         'ipaddr': ipaddr,
+        'ipmath': ipmath,
         'ipwrap': ipwrap,
+        'ip4_hex': ip4_hex,
         'ipv4': ipv4,
         'ipv6': ipv6,
         'ipsubnet': ipsubnet,
+        'next_nth_usable': next_nth_usable,
+        'network_in_network': network_in_network,
+        'network_in_usable': network_in_usable,
+        'reduce_on_network': reduce_on_network,
         'nthhost': nthhost,
+        'previous_nth_usable': previous_nth_usable,
         'slaac': slaac,
 
         # MAC / HW addresses
@@ -689,5 +1120,5 @@ class FilterModule(object):
         if netaddr:
             return self.filter_map
         else:
-            # Need to install python-netaddr for these filters to work
+            # Need to install python's netaddr for these filters to work
             return dict((f, partial(_need_netaddr, f)) for f in self.filter_map)

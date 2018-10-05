@@ -1,0 +1,6 @@
+win_test_log_source:
+  log: WinEventLogEntryTest
+  source: WinEventLogEntrySource
+win_test_log_source_extra:
+  log: ExtraWinEventLogEntryTest
+  source: ExtraWinEventLogEntrySource

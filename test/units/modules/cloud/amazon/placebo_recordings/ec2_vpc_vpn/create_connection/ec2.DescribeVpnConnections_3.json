@@ -1,0 +1,66 @@
+{
+    "data": {
+        "VpnConnections": [
+            {
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9006e285",
+                "Category": "VPN",
+                "CustomerGatewayConfiguration": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<vpn_connection id=\"vpn-9006e285\">\n  <customer_gateway_id>cgw-6113c87f</customer_gateway_id>\n  <vpn_gateway_id>vgw-35d70c2b</vpn_gateway_id>\n  <vpn_connection_type>ipsec.1</vpn_connection_type>\n  <vpn_connection_attributes>NoBGPVPNConnection</vpn_connection_attributes>\n  <ipsec_tunnel>\n    <customer_gateway>\n      <tunnel_outside_address>\n        <ip_address>9.8.7.6</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.14.194</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n    </customer_gateway>\n    <vpn_gateway>\n      <tunnel_outside_address>\n        <ip_address>52.24.101.167</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.14.193</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n    </vpn_gateway>\n    <ike>\n      <authentication_protocol>sha1</authentication_protocol>\n      <encryption_protocol>aes-128-cbc</encryption_protocol>\n      <lifetime>28800</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>main</mode>\n      <pre_shared_key>ZqeYNh0tOtKAbA2GjOnfP1ckplrsKR0I</pre_shared_key>\n    </ike>\n    <ipsec>\n      <protocol>esp</protocol>\n      <authentication_protocol>hmac-sha1-96</authentication_protocol>\n      <encryption_protocol>aes-128-cbc</encryption_protocol>\n      <lifetime>3600</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>tunnel</mode>\n      <clear_df_bit>true</clear_df_bit>\n      <fragmentation_before_encryption>true</fragmentation_before_encryption>\n      <tcp_mss_adjustment>1379</tcp_mss_adjustment>\n      <dead_peer_detection>\n        <interval>10</interval>\n        <retries>3</retries>\n      </dead_peer_detection>\n    </ipsec>\n  </ipsec_tunnel>\n  <ipsec_tunnel>\n    <customer_gateway>\n      <tunnel_outside_address>\n        <ip_address>9.8.7.6</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.14.58</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n    </customer_gateway>\n    <vpn_gateway>\n      <tunnel_outside_address>\n        <ip_address>52.40.126.9</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.14.57</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n    </vpn_gateway>\n    <ike>\n      <authentication_protocol>sha1</authentication_protocol>\n      <encryption_protocol>aes-128-cbc</encryption_protocol>\n      <lifetime>28800</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>main</mode>\n      <pre_shared_key>2hNRbfughR8JKpllR1mEg0uPRckXd0bR</pre_shared_key>\n    </ike>\n    <ipsec>\n      <protocol>esp</protocol>\n      <authentication_protocol>hmac-sha1-96</authentication_protocol>\n      <encryption_protocol>aes-128-cbc</encryption_protocol>\n      <lifetime>3600</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>tunnel</mode>\n      <clear_df_bit>true</clear_df_bit>\n      <fragmentation_before_encryption>true</fragmentation_before_encryption>\n      <tcp_mss_adjustment>1379</tcp_mss_adjustment>\n      <dead_peer_detection>\n        <interval>10</interval>\n        <retries>3</retries>\n      </dead_peer_detection>\n    </ipsec>\n  </ipsec_tunnel>\n</vpn_connection>",
+                "Routes": [],
+                "Options": {
+                    "StaticRoutesOnly": true
+                },
+                "Type": "ipsec.1",
+                "VgwTelemetry": [
+                    {
+                        "StatusMessage": "",
+                        "Status": "DOWN",
+                        "OutsideIpAddress": "52.24.101.167",
+                        "AcceptedRouteCount": 0,
+                        "LastStatusChange": {
+                            "year": 2018,
+                            "hour": 12,
+                            "second": 34,
+                            "minute": 53,
+                            "__class__": "datetime",
+                            "day": 16,
+                            "month": 4,
+                            "microsecond": 0
+                        }
+                    },
+                    {
+                        "StatusMessage": "",
+                        "Status": "DOWN",
+                        "OutsideIpAddress": "52.40.126.9",
+                        "AcceptedRouteCount": 0,
+                        "LastStatusChange": {
+                            "year": 2018,
+                            "hour": 12,
+                            "second": 34,
+                            "minute": 53,
+                            "__class__": "datetime",
+                            "day": 16,
+                            "month": 4,
+                            "microsecond": 0
+                        }
+                    }
+                ],
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "pending"
+            }
+        ],
+        "ResponseMetadata": {
+            "HTTPStatusCode": 200,
+            "RequestId": "8174c5d9-d54a-4173-aef3-5e9c3e86bac6",
+            "HTTPHeaders": {
+                "vary": "Accept-Encoding",
+                "content-length": "6116",
+                "server": "AmazonEC2",
+                "content-type": "text/xml;charset=UTF-8",
+                "date": "Mon, 16 Apr 2018 12:53:49 GMT"
+            },
+            "RetryAttempts": 0
+        }
+    },
+    "status_code": 200
+}

@@ -1,0 +1,42 @@
+---
+- debug: msg="START eapi/defaults.yaml"
+
+- name: setup
+  eos_config:
+    commands:
+      - no description
+      - shutdown
+    parents:
+      - interface Ethernet2
+    match: none
+  become: yes
+
+- name: configure device with defaults included
+  eos_config:
+    src: defaults/config.j2
+    defaults: yes
+  become: yes
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.updates is defined"
+
+- name: check device with defaults included
+  eos_config:
+    src: defaults/config.j2
+    defaults: yes
+  become: yes
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.updates is not defined"
+
+- debug: msg="END eapi/defaults.yaml"

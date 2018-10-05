@@ -1,0 +1,21 @@
+- hosts: testhost
+  vars_files:
+    - vars/test_hash_vars.yml
+  vars:
+    test_hash:
+      playbook_vars: "this is a playbook variable"
+    replaced_hash:
+      extra_args: "this is an extra arg"
+    merged_hash:
+      default_vars: "this is in role defaults/main.yml"
+      extra_args: "this is an extra arg"
+      group_vars_all: "this is in group_vars/all"
+      host_vars_testhost: "this is in host_vars/testhost"
+      playbook_vars: "this is a playbook variable"
+      role_argument: "this is a role argument variable"
+      role_vars: "this is in role vars/main.yml"
+      vars_file: "this is in a vars_file"
+  roles:
+  - role: test_hash_behaviour
+    test_hash:
+      role_argument: 'this is a role argument variable'

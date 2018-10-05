@@ -1,0 +1,3 @@
+- include: fail.yml
+  args:
+    msg: "nested {{msg}}"

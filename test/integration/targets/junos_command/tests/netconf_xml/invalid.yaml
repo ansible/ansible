@@ -1,0 +1,31 @@
+---
+- debug: msg="START netconf_xml/invalid.yaml on connection={{ ansible_connection }}"
+
+- name: run invalid command
+  junos_command:
+    commands: ['show foo']
+    provider: "{{ netconf }}"
+  register: result
+  ignore_errors: yes
+- debug: var=result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- name: run commands that include invalid command
+  junos_command:
+    commands:
+      - show version
+      - show foo
+    provider: "{{ netconf }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END netconf_xml/invalid.yaml on connection={{ ansible_connection }}"

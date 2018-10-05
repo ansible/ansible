@@ -11,8 +11,8 @@ supported_archs noarch
 
 maintainers     nomaintainer
 
-homepage        http://ansible.com/
-description     Radically simple IT automation
+homepage        https://ansible.com/
+description     Ansible IT Automation
 long_description \
     Ansible is a radically simple model-driven configuration \
     management, multi-node deployment, and orchestration \
@@ -33,7 +33,6 @@ python.default_version  27
 depends_lib-append      port:py${python.version}-jinja2 \
                         port:py${python.version}-paramiko \
                         port:py${python.version}-yaml
-# fireball mode requires py-zmq, py-asn1, py-crypto and py-keyczar
 
 patch {
     fs-traverse f ${worksrcpath} {
@@ -46,7 +45,7 @@ patch {
 
 post-destroot {
   # documentation and examples
-  xinstall -m 644 -W ${worksrcpath} README.md CHANGELOG.md CONTRIBUTING.md COPYING  \
+  xinstall -m 644 -W ${worksrcpath} README.rst CHANGELOG.md CONTRIBUTING.md COPYING  \
     ${destroot}${prefix}/share/doc/${name}
 
   xinstall -m 755 -d ${destroot}${prefix}/share/doc/examples

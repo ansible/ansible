@@ -1,20 +1,12 @@
 clouds:
-  mordred:
-    cloud: hp
+  vexxhost:
+    profile: vexxhost
     auth:
-      username: mordred@example.com
-      password: my-wonderful-password
-      project_name: mordred-tenant
-    region_name: region-b.geo-1
-  monty:
-    cloud: hp
-    auth:
-      username: monty.taylor@example.com
-      password: another-wonderful-password
-      project_name: monty.taylor@example.com-default-tenant
-    region_name: region-b.geo-1
+      project_name: 39e296b2-fc96-42bf-8091-cb742fa13da9
+      username: fb886a9b-c37b-442a-9be3-964bed961e04
+      password: fantastic-password1
   rax:
-    cloud: rackspace
+    profile: rackspace
     auth:
       username: example
       password: spectacular-password
@@ -22,7 +14,11 @@ clouds:
     region_name: DFW,ORD,IAD
   devstack:
     auth:
-      auth_url: http://127.0.0.1:35357/v2.0/
+      auth_url: https://devstack.example.com
       username: stack
       password: stack
       project_name: stack
+ansible:
+  use_hostnames: True
+  expand_hostvars: False
+  fail_on_errors: True

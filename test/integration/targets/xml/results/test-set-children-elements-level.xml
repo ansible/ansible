@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<business type="bar">
+  <name>Tasty Beverage Co.</name>
+  <beers>
+    <beer alcohol="0.5" name="90 Minute IPA"><Water liter="0.2" quantity="200g"/><Starch quantity="10g"/><Hops quantity="50g"/><Yeast quantity="20g"/></beer><beer alcohol="0.3" name="Harvest Pumpkin Ale"><Water liter="0.2" quantity="200g"/><Hops quantity="25g"/><Yeast quantity="20g"/></beer></beers>
+  <rating subjective="true">10</rating>
+  <website>
+    <mobilefriendly/>
+    <address>http://tastybeverageco.com</address>
+  </website>
+</business>

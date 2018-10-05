@@ -1,0 +1,54 @@
+---
+- debug: msg="START cli/save.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  ios_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+
+- name: save config
+  ios_config:
+    save: true
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: save should always run
+  ios_config:
+    save: true
+  register: result
+
+- name: delete config (setup)
+  ios_config:
+    replace: line
+    lines:
+      - "no ip http server"
+    save_when: modified
+  register: result
+
+- name: save should always run
+  ios_config:
+    replace: line
+    lines:
+      - "ip http server"
+    save_when: modified
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown
+  ios_config:
+    lines:
+      - "no ip http server"
+  register: result
+
+- debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

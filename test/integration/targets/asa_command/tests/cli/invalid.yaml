@@ -1,0 +1,30 @@
+---
+- debug: msg="START cli/invalid.yaml"
+
+- name: run invalid command
+  asa_command:
+    commands: ['show foo']
+    provider: "{{ cli }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed"
+
+- name: run commands that include invalid command
+  asa_command:
+    commands:
+      - show version
+      - show foo
+    provider: "{{ cli }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed"
+# FIXME bug https://github.com/ansible/ansible-modules-extras/issues/3048
+  ignore_errors: true
+
+- debug: msg="END cli/invalid.yaml"

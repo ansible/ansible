@@ -1,4 +1,5 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -19,48 +20,101 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import getpass
 import operator
 import optparse
 import os
+import subprocess
+import re
 import sys
 import time
 import yaml
-import re
-import getpass
-import subprocess
 
-from ansible import __version__
+from abc import ABCMeta, abstractmethod
+
+import ansible
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.utils.unicode import to_bytes
-from ansible.utils.display import Display
-from ansible.utils.path import is_executable
+from ansible.errors import AnsibleOptionsError, AnsibleError
+from ansible.inventory.manager import InventoryManager
+from ansible.module_utils.six import with_metaclass, string_types
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.parsing.dataloader import DataLoader
+from ansible.release import __version__
+from ansible.utils.path import unfrackpath
+from ansible.utils.vars import load_extra_vars, load_options_vars
+from ansible.vars.manager import VariableManager
+from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
-
-    #FIXME: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
 
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
-class CLI(object):
+
+# Note: Inherit from SortedOptParser so that we get our format_help method
+class InvalidOptsParser(SortedOptParser):
+    '''Ignore invalid options.
+
+    Meant for the special case where we need to take care of help and version
+    but may not know the full range of options yet.  (See it in use in set_action)
+    '''
+    def __init__(self, parser):
+        # Since this is special purposed to just handle help and version, we
+        # take a pre-existing option parser here and set our options from
+        # that.  This allows us to give accurate help based on the given
+        # option parser.
+        SortedOptParser.__init__(self, usage=parser.usage,
+                                 option_list=parser.option_list,
+                                 option_class=parser.option_class,
+                                 conflict_handler=parser.conflict_handler,
+                                 description=parser.description,
+                                 formatter=parser.formatter,
+                                 add_help_option=False,
+                                 prog=parser.prog,
+                                 epilog=parser.epilog)
+        self.version = parser.version
+
+    def _process_long_opt(self, rargs, values):
+        try:
+            optparse.OptionParser._process_long_opt(self, rargs, values)
+        except optparse.BadOptionError:
+            pass
+
+    def _process_short_opts(self, rargs, values):
+        try:
+            optparse.OptionParser._process_short_opts(self, rargs, values)
+        except optparse.BadOptionError:
+            pass
+
+
+class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
 
-    VALID_ACTIONS = ['No Actions']
+    VALID_ACTIONS = []
 
     _ITALIC = re.compile(r"I\(([^)]+)\)")
-    _BOLD   = re.compile(r"B\(([^)]+)\)")
+    _BOLD = re.compile(r"B\(([^)]+)\)")
     _MODULE = re.compile(r"M\(([^)]+)\)")
-    _URL    = re.compile(r"U\(([^)]+)\)")
-    _CONST  = re.compile(r"C\(([^)]+)\)")
+    _URL = re.compile(r"U\(([^)]+)\)")
+    _CONST = re.compile(r"C\(([^)]+)\)")
 
-    PAGER   = 'less'
-    LESS_OPTS = 'FRSX'  # -F (quit-if-one-screen) -R (allow raw ansi control chars)
-                        # -S (chop long lines) -X (disable termcap init and de-init)
+    PAGER = 'less'
 
-    def __init__(self, args, display=None):
+    # -F (quit-if-one-screen) -R (allow raw ansi control chars)
+    # -S (chop long lines) -X (disable termcap init and de-init)
+    LESS_OPTS = 'FRSX'
+    SKIP_INVENTORY_DEFAULTS = False
+
+    def __init__(self, args, callback=None):
         """
         Base init method for all command line programs
         """
@@ -69,17 +123,13 @@ class CLI(object):
         self.options = None
         self.parser = None
         self.action = None
-
-        if display is None:
-            self.display = Display()
-        else:
-            self.display = display
+        self.callback = callback
 
     def set_action(self):
         """
         Get the action the user wants to execute from the sys argv list.
         """
-        for i in range(0,len(self.args)):
+        for i in range(0, len(self.args)):
             arg = self.args[i]
             if arg in self.VALID_ACTIONS:
                 self.action = arg
@@ -87,7 +137,15 @@ class CLI(object):
                 break
 
         if not self.action:
-            raise AnsibleOptionsError("Missing required action")
+            # if we're asked for help or version, we don't need an action.
+            # have to use a special purpose Option Parser to figure that out as
+            # the standard OptionParser throws an error for unknown options and
+            # without knowing action, we only know of a subset of the options
+            # that could be legal for this command
+            tmp_parser = InvalidOptsParser(self.parser)
+            tmp_options, tmp_args = tmp_parser.parse_args(self.args)
+            if not(hasattr(tmp_options, 'help') and tmp_options.help) or (hasattr(tmp_options, 'version') and tmp_options.version):
+                raise AnsibleOptionsError("Missing required action")
 
     def execute(self):
         """
@@ -96,51 +154,159 @@ class CLI(object):
         fn = getattr(self, "execute_%s" % self.action)
         fn()
 
-    def parse(self):
-        raise Exception("Need to implement!")
-
+    @abstractmethod
     def run(self):
+        """Run the ansible command
 
-        if self.options.verbosity > 0:
-            if C.CONFIG_FILE:
-                self.display.display("Using %s as config file" % C.CONFIG_FILE)
+        Subclasses must implement this method.  It does the actual work of
+        running an Ansible command.
+        """
+
+        display.vv(to_text(self.parser.get_version()))
+
+        if C.CONFIG_FILE:
+            display.v(u"Using %s as config file" % to_text(C.CONFIG_FILE))
+        else:
+            display.v(u"No config file found; using defaults")
+
+        # warn about deprecated config options
+        for deprecated in C.config.DEPRECATED:
+            name = deprecated[0]
+            why = deprecated[1]['why']
+            if 'alternatives' in deprecated[1]:
+                alt = ', use %s instead' % deprecated[1]['alternatives']
             else:
-                self.display.display("No config file found; using defaults")
+                alt = ''
+            ver = deprecated[1]['version']
+            display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
 
     @staticmethod
-    def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
-        ''' prompt for vault password and/or password change '''
+    def split_vault_id(vault_id):
+        # return (before_@, after_@)
+        # if no @, return whole string as after_
+        if '@' not in vault_id:
+            return (None, vault_id)
 
-        vault_pass = None
-        new_vault_pass = None
+        parts = vault_id.split('@', 1)
+        ret = tuple(parts)
+        return ret
 
-        try:
-            if ask_vault_pass:
-                vault_pass = getpass.getpass(prompt="Vault password: ")
+    @staticmethod
+    def build_vault_ids(vault_ids, vault_password_files=None,
+                        ask_vault_pass=None, create_new_password=None,
+                        auto_prompt=True):
+        vault_password_files = vault_password_files or []
+        vault_ids = vault_ids or []
 
-            if ask_vault_pass and confirm_vault:
-                vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
-                if vault_pass != vault_pass2:
-                    raise errors.AnsibleError("Passwords do not match")
+        # convert vault_password_files into vault_ids slugs
+        for password_file in vault_password_files:
+            id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, password_file)
 
-            if ask_new_vault_pass:
-                new_vault_pass = getpass.getpass(prompt="New Vault password: ")
+            # note this makes --vault-id higher precendence than --vault-password-file
+            # if we want to intertwingle them in order probably need a cli callback to populate vault_ids
+            # used by --vault-id and --vault-password-file
+            vault_ids.append(id_slug)
 
-            if ask_new_vault_pass and confirm_new:
-                new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
-                if new_vault_pass != new_vault_pass2:
-                    raise errors.AnsibleError("Passwords do not match")
-        except EOFError:
-            pass
+        # if an action needs an encrypt password (create_new_password=True) and we dont
+        # have other secrets setup, then automatically add a password prompt as well.
+        # prompts cant/shouldnt work without a tty, so dont add prompt secrets
+        if ask_vault_pass or (not vault_ids and auto_prompt):
 
-        # enforce no newline chars at the end of passwords
-        if vault_pass:
-            vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
-        if new_vault_pass:
-            new_vault_pass = to_bytes(new_vault_pass, errors='strict', nonstring='simplerepr').strip()
+            id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
+            vault_ids.append(id_slug)
 
-        return vault_pass, new_vault_pass
+        return vault_ids
 
+    # TODO: remove the now unused args
+    @staticmethod
+    def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
+                            ask_vault_pass=None, create_new_password=False,
+                            auto_prompt=True):
+        # list of tuples
+        vault_secrets = []
+
+        # Depending on the vault_id value (including how --ask-vault-pass / --vault-password-file create a vault_id)
+        # we need to show different prompts. This is for compat with older Towers that expect a
+        # certain vault password prompt format, so 'promp_ask_vault_pass' vault_id gets the old format.
+        prompt_formats = {}
+
+        # If there are configured default vault identities, they are considered 'first'
+        # so we prepend them to vault_ids (from cli) here
+
+        vault_password_files = vault_password_files or []
+        if C.DEFAULT_VAULT_PASSWORD_FILE:
+            vault_password_files.append(C.DEFAULT_VAULT_PASSWORD_FILE)
+
+        if create_new_password:
+            prompt_formats['prompt'] = ['New vault password (%(vault_id)s): ',
+                                        'Confirm vew vault password (%(vault_id)s): ']
+            # 2.3 format prompts for --ask-vault-pass
+            prompt_formats['prompt_ask_vault_pass'] = ['New Vault password: ',
+                                                       'Confirm New Vault password: ']
+        else:
+            prompt_formats['prompt'] = ['Vault password (%(vault_id)s): ']
+            # The format when we use just --ask-vault-pass needs to match 'Vault password:\s*?$'
+            prompt_formats['prompt_ask_vault_pass'] = ['Vault password: ']
+
+        vault_ids = CLI.build_vault_ids(vault_ids,
+                                        vault_password_files,
+                                        ask_vault_pass,
+                                        create_new_password,
+                                        auto_prompt=auto_prompt)
+
+        for vault_id_slug in vault_ids:
+            vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
+            if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
+
+                # --vault-id some_name@prompt_ask_vault_pass --vault-id other_name@prompt_ask_vault_pass will be a little
+                # confusing since it will use the old format without the vault id in the prompt
+                built_vault_id = vault_id_name or C.DEFAULT_VAULT_IDENTITY
+
+                # choose the prompt based on --vault-id=prompt or --ask-vault-pass. --ask-vault-pass
+                # always gets the old format for Tower compatibility.
+                # ie, we used --ask-vault-pass, so we need to use the old vault password prompt
+                # format since Tower needs to match on that format.
+                prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_id_value],
+                                                          vault_id=built_vault_id)
+
+                # a empty or invalid password from the prompt will warn and continue to the next
+                # without erroring globablly
+                try:
+                    prompted_vault_secret.load()
+                except AnsibleError as exc:
+                    display.warning('Error in vault password prompt (%s): %s' % (vault_id_name, exc))
+                    raise
+
+                vault_secrets.append((built_vault_id, prompted_vault_secret))
+
+                # update loader with new secrets incrementally, so we can load a vault password
+                # that is encrypted with a vault secret provided earlier
+                loader.set_vault_secrets(vault_secrets)
+                continue
+
+            # assuming anything else is a password file
+            display.vvvvv('Reading vault password file: %s' % vault_id_value)
+            # read vault_pass from a file
+            file_vault_secret = get_file_vault_secret(filename=vault_id_value,
+                                                      vault_id=vault_id_name,
+                                                      loader=loader)
+
+            # an invalid password file will error globally
+            try:
+                file_vault_secret.load()
+            except AnsibleError as exc:
+                display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, exc))
+                raise
+
+            if vault_id_name:
+                vault_secrets.append((vault_id_name, file_vault_secret))
+            else:
+                vault_secrets.append((C.DEFAULT_VAULT_IDENTITY, file_vault_secret))
+
+            # update loader with as-yet-known vault secrets
+            loader.set_vault_secrets(vault_secrets)
+
+        return vault_secrets
 
     def ask_passwords(self):
         ''' prompt for connection and become passwords if needed '''
@@ -150,14 +316,16 @@ class CLI(object):
         becomepass = None
         become_prompt = ''
 
+        become_prompt_method = "BECOME" if C.AGNOSTIC_BECOME_PROMPT else op.become_method.upper()
+
         try:
             if op.ask_pass:
                 sshpass = getpass.getpass(prompt="SSH password: ")
-                become_prompt = "%s password[defaults to SSH password]: " % op.become_method.upper()
+                become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
                 if sshpass:
                     sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
             else:
-                become_prompt = "%s password: " % op.become_method.upper()
+                become_prompt = "%s password: " % become_prompt_method
 
             if op.become_ask_pass:
                 becomepass = getpass.getpass(prompt=become_prompt)
@@ -170,175 +338,278 @@ class CLI(object):
 
         return (sshpass, becomepass)
 
-
     def normalize_become_options(self):
         ''' this keeps backwards compatibility with sudo/su self.options '''
         self.options.become_ask_pass = self.options.become_ask_pass or self.options.ask_sudo_pass or self.options.ask_su_pass or C.DEFAULT_BECOME_ASK_PASS
-        self.options.become_user     = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
+        self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
+
+        def _dep(which):
+            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.9')
 
         if self.options.become:
             pass
         elif self.options.sudo:
             self.options.become = True
             self.options.become_method = 'sudo'
+            _dep('sudo')
         elif self.options.su:
             self.options.become = True
             self.options.become_method = 'su'
+            _dep('su')
 
+        # other deprecations:
+        if self.options.ask_sudo_pass or self.options.sudo_user:
+            _dep('sudo')
+        if self.options.ask_su_pass or self.options.su_user:
+            _dep('su')
 
-    def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False):
+    def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False, vault_rekey_opts=False):
         ''' check for conflicting options '''
 
         op = self.options
 
         if vault_opts:
             # Check for vault related conflicts
-            if (op.ask_vault_pass and op.vault_password_file):
+            if (op.ask_vault_pass and op.vault_password_files):
                 self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
+        if vault_rekey_opts:
+            if (op.new_vault_id and op.new_vault_password_file):
+                self.parser.error("--new-vault-password-file and --new-vault-id are mutually exclusive")
 
         if runas_opts:
             # Check for privilege escalation conflicts
-            if (op.su or op.su_user or op.ask_su_pass) and \
-                        (op.sudo or op.sudo_user or op.ask_sudo_pass) or \
-                (op.su or op.su_user or op.ask_su_pass) and \
-                        (op.become or op.become_user or op.become_ask_pass) or \
-                (op.sudo or op.sudo_user or op.ask_sudo_pass) and \
-                        (op.become or op.become_user or op.become_ask_pass):
+            if ((op.su or op.su_user) and (op.sudo or op.sudo_user) or
+                    (op.su or op.su_user) and (op.become or op.become_user) or
+                    (op.sudo or op.sudo_user) and (op.become or op.become_user)):
 
-                self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-                                  "and su arguments ('-su', '--su-user', and '--ask-su-pass') "
-                                  "and become arguments ('--become', '--become-user', and '--ask-become-pass')"
-                                  " are exclusive of each other")
+                self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') and su arguments ('--su', '--su-user', and '--ask-su-pass') "
+                                  "and become arguments ('--become', '--become-user', and '--ask-become-pass') are exclusive of each other")
 
         if fork_opts:
             if op.forks < 1:
                 self.parser.error("The number of processes (--forks) must be >= 1")
 
     @staticmethod
-    def expand_tilde(option, opt, value, parser):
-        setattr(parser.values, option.dest, os.path.expanduser(value))
+    def unfrack_paths(option, opt, value, parser):
+        paths = getattr(parser.values, option.dest)
+        if paths is None:
+            paths = []
+
+        if isinstance(value, string_types):
+            paths[:0] = [unfrackpath(x) for x in value.split(os.pathsep) if x]
+        elif isinstance(value, list):
+            paths[:0] = [unfrackpath(x) for x in value if x]
+        else:
+            pass  # FIXME: should we raise options error?
+
+        setattr(parser.values, option.dest, paths)
+
+    @staticmethod
+    def unfrack_path(option, opt, value, parser):
+        if value != '-':
+            setattr(parser.values, option.dest, unfrackpath(value))
+        else:
+            setattr(parser.values, option.dest, value)
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
-        async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False):
+                    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
+                    runas_prompt_opts=False, desc=None, basedir_opts=False, vault_rekey_opts=False):
         ''' create an options parser for most ansible scripts '''
 
-        #FIXME: implemente epilog parsing
-        #OptionParser.format_epilog = lambda self, formatter: self.epilog
-
         # base opts
-        parser = SortedOptParser(usage, version=CLI.version("%prog"))
-        parser.add_option('-v','--verbose', dest='verbosity', default=0, action="count",
-            help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+        parser = SortedOptParser(usage, version=CLI.version("%prog"), description=desc, epilog=epilog)
+        parser.add_option('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
+                          help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
         if inventory_opts:
-            parser.add_option('-i', '--inventory-file', dest='inventory',
-                help="specify inventory host file (default=%s)" % C.DEFAULT_HOST_LIST,
-                default=C.DEFAULT_HOST_LIST, action="callback", callback=CLI.expand_tilde, type=str)
+            parser.add_option('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
+                              help="specify inventory host path or comma separated host list. --inventory-file is deprecated")
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
-                help='outputs a list of matching hosts; does not execute anything else')
+                              help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
-                help='further limit selected hosts to an additional pattern')
+                              help='further limit selected hosts to an additional pattern')
 
         if module_opts:
             parser.add_option('-M', '--module-path', dest='module_path', default=None,
-                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
-                action="callback", callback=CLI.expand_tilde, type=str)
+                              help="prepend colon-separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
+                              action="callback", callback=CLI.unfrack_paths, type='str')
         if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-                help="set additional variables as key=value or YAML/JSON", default=[])
+                              help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
 
         if fork_opts:
-            parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
-                help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
+            parser.add_option('-f', '--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
+                              help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
 
         if vault_opts:
-            parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
-                help='ask for vault password')
-            parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
-                dest='vault_password_file', help="vault password file", action="callback",
-                callback=CLI.expand_tilde, type=str)
-            parser.add_option('--new-vault-password-file',
-                dest='new_vault_password_file', help="new vault password file for rekey", action="callback",
-                callback=CLI.expand_tilde, type=str)
-            parser.add_option('--output', default=None, dest='output_file',
-                help='output file name for encrypt or decrypt; use - for stdout')
+            parser.add_option('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
+                              help='ask for vault password')
+            parser.add_option('--vault-password-file', default=[], dest='vault_password_files',
+                              help="vault password file", action="callback", callback=CLI.unfrack_paths, type='string')
+            parser.add_option('--vault-id', default=[], dest='vault_ids', action='append', type='string',
+                              help='the vault identity to use')
 
+        if vault_rekey_opts:
+            parser.add_option('--new-vault-password-file', default=None, dest='new_vault_password_file',
+                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_path, type='string')
+            parser.add_option('--new-vault-id', default=None, dest='new_vault_id', type='string',
+                              help='the new vault identity to use for rekey')
 
         if subset_opts:
-            parser.add_option('-t', '--tags', dest='tags', default='all',
-                help="only run plays and tasks tagged with these values")
-            parser.add_option('--skip-tags', dest='skip_tags',
-                help="only run plays and tasks whose tags do not match these values")
+            parser.add_option('-t', '--tags', dest='tags', default=C.TAGS_RUN, action='append',
+                              help="only run plays and tasks tagged with these values")
+            parser.add_option('--skip-tags', dest='skip_tags', default=C.TAGS_SKIP, action='append',
+                              help="only run plays and tasks whose tags do not match these values")
 
         if output_opts:
             parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
-                help='condense output')
+                              help='condense output')
             parser.add_option('-t', '--tree', dest='tree', default=None,
-                help='log output to this directory')
-
-        if runas_opts:
-            # priv user defaults to root later on to enable detecting when this option was given here
-            parser.add_option('-K', '--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
-                help='ask for sudo password (deprecated, use become)')
-            parser.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
-                help='ask for su password (deprecated, use become)')
-            parser.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
-                help="run operations with sudo (nopasswd) (deprecated, use become)")
-            parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
-                              help='desired sudo user (default=root) (deprecated, use become)')
-            parser.add_option('-S', '--su', default=C.DEFAULT_SU, action='store_true',
-                help='run operations with su (deprecated, use become)')
-            parser.add_option('-R', '--su-user', default=None,
-                help='run operations with su as this user (default=%s) (deprecated, use become)' % C.DEFAULT_SU_USER)
-
-            # consolidated privilege escalation (become)
-            parser.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
-                help="run operations with become (nopasswd implied)")
-            parser.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='string',
-                help="privilege escalation method to use (default=%s), valid choices: [ %s ]" % (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
-            parser.add_option('--become-user', default=None, dest='become_user', type='string',
-                help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
-            parser.add_option('--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
-                help='ask for privilege escalation password')
-
+                              help='log output to this directory')
 
         if connect_opts:
-            parser.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
-                help='ask for connection password')
-            parser.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                help='use this file to authenticate the connection')
-            parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
-                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
-            parser.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
-                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-            parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
-                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
-            parser.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
-                help="specify extra arguments to pass to ssh (e.g. ProxyCommand)")
+            connect_group = optparse.OptionGroup(parser, "Connection Options", "control as whom and how to connect to hosts")
+            connect_group.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
+                                     help='ask for connection password')
+            connect_group.add_option('--private-key', '--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
+                                     help='use this file to authenticate the connection', action="callback", callback=CLI.unfrack_path, type='string')
+            connect_group.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
+                                     help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
+            connect_group.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
+                                     help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
+            connect_group.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
+                                     help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+            connect_group.add_option('--ssh-common-args', default='', dest='ssh_common_args',
+                                     help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
+            connect_group.add_option('--sftp-extra-args', default='', dest='sftp_extra_args',
+                                     help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
+            connect_group.add_option('--scp-extra-args', default='', dest='scp_extra_args',
+                                     help="specify extra arguments to pass to scp only (e.g. -l)")
+            connect_group.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
+                                     help="specify extra arguments to pass to ssh only (e.g. -R)")
+
+            parser.add_option_group(connect_group)
+
+        runas_group = None
+        rg = optparse.OptionGroup(parser, "Privilege Escalation Options", "control how and which user you become as on target hosts")
+        if runas_opts:
+            runas_group = rg
+            # priv user defaults to root later on to enable detecting when this option was given here
+            runas_group.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
+                                   help="run operations with sudo (nopasswd) (deprecated, use become)")
+            runas_group.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
+                                   help='desired sudo user (default=root) (deprecated, use become)')
+            runas_group.add_option('-S', '--su', default=C.DEFAULT_SU, action='store_true',
+                                   help='run operations with su (deprecated, use become)')
+            runas_group.add_option('-R', '--su-user', default=None,
+                                   help='run operations with su as this user (default=%s) (deprecated, use become)' % C.DEFAULT_SU_USER)
+
+            # consolidated privilege escalation (become)
+            runas_group.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
+                                   help="run operations with become (does not imply password prompting)")
+            runas_group.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='choice', choices=C.BECOME_METHODS,
+                                   help="privilege escalation method to use (default=%s), valid choices: [ %s ]" %
+                                   (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
+            runas_group.add_option('--become-user', default=None, dest='become_user', type='string',
+                                   help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
+
+        if runas_opts or runas_prompt_opts:
+            if not runas_group:
+                runas_group = rg
+            runas_group.add_option('--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
+                                   help='ask for sudo password (deprecated, use become)')
+            runas_group.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
+                                   help='ask for su password (deprecated, use become)')
+            runas_group.add_option('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
+                                   help='ask for privilege escalation password')
+
+        if runas_group:
+            parser.add_option_group(runas_group)
 
         if async_opts:
             parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',
-                help="set the poll interval if using -B (default=%s)" % C.DEFAULT_POLL_INTERVAL)
+                              help="set the poll interval if using -B (default=%s)" % C.DEFAULT_POLL_INTERVAL)
             parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
-                help='run asynchronously, failing after X seconds (default=N/A)')
+                              help='run asynchronously, failing after X seconds (default=N/A)')
 
         if check_opts:
             parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
-                help="don't make any changes; instead, try to predict some of the changes that may occur")
+                              help="don't make any changes; instead, try to predict some of the changes that may occur")
             parser.add_option('--syntax-check', dest='syntax', action='store_true',
-                help="perform a syntax check on the playbook, but do not execute it")
-            parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
-                help="when changing (small) files and templates, show the differences in those files; works great with --check")
+                              help="perform a syntax check on the playbook, but do not execute it")
+            parser.add_option("-D", "--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
+                              help="when changing (small) files and templates, show the differences in those files; works great with --check")
 
         if meta_opts:
             parser.add_option('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',
-                help="run handlers even if a task fails")
+                              help="run handlers even if a task fails")
             parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
-                help="clear the fact cache")
+                              help="clear the fact cache for every host in inventory")
 
+        if basedir_opts:
+            parser.add_option('--playbook-dir', default=None, dest='basedir', action='store',
+                              help="Since this tool does not use playbooks, use this as a subsitute playbook directory."
+                                   "This sets the relative path for many features including roles/ group_vars/ etc.")
         return parser
+
+    @abstractmethod
+    def parse(self):
+        """Parse the command line args
+
+        This method parses the command line arguments.  It uses the parser
+        stored in the self.parser attribute and saves the args and options in
+        self.args and self.options respectively.
+
+        Subclasses need to implement this method.  They will usually create
+        a base_parser, add their own options to the base_parser, and then call
+        this method to do the actual parsing.  An implementation will look
+        something like this::
+
+            def parse(self):
+                parser = super(MyCLI, self).base_parser(usage="My Ansible CLI", inventory_opts=True)
+                parser.add_option('--my-option', dest='my_option', action='store')
+                self.parser = parser
+                super(MyCLI, self).parse()
+                # If some additional transformations are needed for the
+                # arguments and options, do it here.
+        """
+
+        self.options, self.args = self.parser.parse_args(self.args[1:])
+
+        # process tags
+        if hasattr(self.options, 'tags') and not self.options.tags:
+            # optparse defaults does not do what's expected
+            self.options.tags = ['all']
+        if hasattr(self.options, 'tags') and self.options.tags:
+            tags = set()
+            for tag_set in self.options.tags:
+                for tag in tag_set.split(u','):
+                    tags.add(tag.strip())
+            self.options.tags = list(tags)
+
+        # process skip_tags
+        if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
+            skip_tags = set()
+            for tag_set in self.options.skip_tags:
+                for tag in tag_set.split(u','):
+                    skip_tags.add(tag.strip())
+            self.options.skip_tags = list(skip_tags)
+
+        # process inventory options except for CLIs that require their own processing
+        if hasattr(self.options, 'inventory') and not self.SKIP_INVENTORY_DEFAULTS:
+
+            if self.options.inventory:
+
+                # should always be list
+                if isinstance(self.options.inventory, string_types):
+                    self.options.inventory = [self.options.inventory]
+
+                # Ensure full paths when needed
+                self.options.inventory = [unfrackpath(opt, follow=False) if ',' not in opt else opt for opt in self.options.inventory]
+            else:
+                self.options.inventory = C.DEFAULT_HOST_LIST
 
     @staticmethod
     def version(prog):
@@ -348,7 +619,14 @@ class CLI(object):
         if gitinfo:
             result = result + " {0}".format(gitinfo)
         result += "\n  config file = %s" % C.CONFIG_FILE
-        result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
+        if C.DEFAULT_MODULE_PATH is None:
+            cpath = "Default w/o overrides"
+        else:
+            cpath = C.DEFAULT_MODULE_PATH
+        result = result + "\n  configured module search path = %s" % cpath
+        result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
+        result = result + "\n  executable location = %s" % sys.argv[0]
+        result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
         return result
 
     @staticmethod
@@ -356,7 +634,7 @@ class CLI(object):
         ''' return full ansible version info '''
         if gitinfo:
             # expensive call, user with care
-            ansible_version_string = version('')
+            ansible_version_string = CLI.version('')
         else:
             ansible_version_string = __version__
         ansible_version = ansible_version_string.split()[0]
@@ -366,16 +644,16 @@ class CLI(object):
                 ansible_versions[counter] = 0
             try:
                 ansible_versions[counter] = int(ansible_versions[counter])
-            except:
+            except Exception:
                 pass
         if len(ansible_versions) < 3:
             for counter in range(len(ansible_versions), 3):
                 ansible_versions.append(0)
-        return {'string':      ansible_version_string.strip(),
-                'full':        ansible_version,
-                'major':       ansible_versions[0],
-                'minor':       ansible_versions[1],
-                'revision':    ansible_versions[2]}
+        return {'string': ansible_version_string.strip(),
+                'full': ansible_version,
+                'major': ansible_versions[0],
+                'minor': ansible_versions[1],
+                'revision': ansible_versions[2]}
 
     @staticmethod
     def _git_repo_info(repo_path):
@@ -394,16 +672,20 @@ class CLI(object):
                 except (IOError, AttributeError):
                     return ''
             f = open(os.path.join(repo_path, "HEAD"))
-            branch = f.readline().split('/')[-1].rstrip("\n")
+            line = f.readline().rstrip("\n")
+            if line.startswith("ref:"):
+                branch_path = os.path.join(repo_path, line[5:])
+            else:
+                branch_path = None
             f.close()
-            branch_path = os.path.join(repo_path, "refs", "heads", branch)
-            if os.path.exists(branch_path):
+            if branch_path and os.path.exists(branch_path):
+                branch = '/'.join(line.split('/')[2:])
                 f = open(branch_path)
                 commit = f.readline()[:10]
                 f.close()
             else:
                 # detached HEAD
-                commit = branch[:10]
+                commit = line[:10]
                 branch = 'detached HEAD'
                 branch_path = os.path.join(repo_path, "HEAD")
 
@@ -412,8 +694,7 @@ class CLI(object):
                 offset = time.timezone
             else:
                 offset = time.altzone
-            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), int(offset / -36))
+            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit, time.strftime("%Y/%m/%d %H:%M:%S", date), int(offset / -36))
         else:
             result = ''
         return result
@@ -425,7 +706,7 @@ class CLI(object):
         result = CLI._git_repo_info(repo_path)
         submodules = os.path.join(basedir, '.gitmodules')
         if not os.path.exists(submodules):
-           return result
+            return result
         f = open(submodules)
         for line in f:
             tokens = line.strip().split(' ')
@@ -438,21 +719,23 @@ class CLI(object):
         f.close()
         return result
 
-
     def pager(self, text):
         ''' find reasonable way to display text '''
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
-            self.display.display(text)
+            display.display(text, screen_only=True)
         elif 'PAGER' in os.environ:
             if sys.platform == 'win32':
-                self.display.display(text)
+                display.display(text, screen_only=True)
             else:
                 self.pager_pipe(text, os.environ['PAGER'])
-        elif subprocess.call('(less --version) 2> /dev/null', shell = True) == 0:
-            self.pager_pipe(text, 'less')
         else:
-            self.display.display(text)
+            p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p.communicate()
+            if p.returncode == 0:
+                self.pager_pipe(text, 'less')
+            else:
+                display.display(text, screen_only=True)
 
     @staticmethod
     def pager_pipe(text, cmd):
@@ -461,49 +744,77 @@ class CLI(object):
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
             cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
-            cmd.communicate(input=text.encode(sys.stdout.encoding))
+            cmd.communicate(input=to_bytes(text))
         except IOError:
             pass
         except KeyboardInterrupt:
             pass
 
     @classmethod
-    def tty_ify(self, text):
+    def tty_ify(cls, text):
 
-        t = self._ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
-        t = self._BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
-        t = self._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-        t = self._URL.sub(r"\1", t)                      # U(word) => word
-        t = self._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+        t = cls._ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
+        t = cls._BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
+        t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
+        t = cls._URL.sub(r"\1", t)                      # U(word) => word
+        t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
 
         return t
 
     @staticmethod
-    def read_vault_password_file(vault_password_file):
-        """
-        Read a vault password from a file or if executable, execute the script and
-        retrieve password from STDOUT
-        """
+    def _play_prereqs(options):
 
-        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
-        if not os.path.exists(this_path):
-            raise AnsibleError("The vault password file %s was not found" % this_path)
+        # all needs loader
+        loader = DataLoader()
 
-        if is_executable(this_path):
-            try:
-                # STDERR not captured to make it easier for users to prompt for input in their scripts
-                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
-            except OSError as e:
-                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
-            stdout, stderr = p.communicate()
-            vault_pass = stdout.strip('\r\n')
+        basedir = getattr(options, 'basedir', False)
+        if basedir:
+            loader.set_basedir(basedir)
+
+        vault_ids = options.vault_ids
+        default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
+        vault_ids = default_vault_ids + vault_ids
+
+        vault_secrets = CLI.setup_vault_secrets(loader,
+                                                vault_ids=vault_ids,
+                                                vault_password_files=options.vault_password_files,
+                                                ask_vault_pass=options.ask_vault_pass,
+                                                auto_prompt=False)
+        loader.set_vault_secrets(vault_secrets)
+
+        # create the inventory, and filter it based on the subset specified (if any)
+        inventory = InventoryManager(loader=loader, sources=options.inventory)
+
+        # create the variable manager, which will be shared throughout
+        # the code, ensuring a consistent view of global variables
+        variable_manager = VariableManager(loader=loader, inventory=inventory)
+
+        if hasattr(options, 'basedir'):
+            if options.basedir:
+                variable_manager.safe_basedir = True
         else:
-            try:
-                f = open(this_path, "rb")
-                vault_pass=f.read().strip()
-                f.close()
-            except (OSError, IOError) as e:
-                raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
+            variable_manager.safe_basedir = True
 
-        return vault_pass
+        # load vars from cli options
+        variable_manager.extra_vars = load_extra_vars(loader=loader, options=options)
+        variable_manager.options_vars = load_options_vars(options, CLI.version_info(gitinfo=False))
 
+        return loader, inventory, variable_manager
+
+    @staticmethod
+    def get_host_list(inventory, subset, pattern='all'):
+
+        no_hosts = False
+        if len(inventory.list_hosts()) == 0:
+            # Empty inventory
+            if C.LOCALHOST_WARNING:
+                display.warning("provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'")
+            no_hosts = True
+
+        inventory.subset(subset)
+
+        hosts = inventory.list_hosts(pattern)
+        if len(hosts) == 0 and no_hosts is False:
+            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+
+        return hosts

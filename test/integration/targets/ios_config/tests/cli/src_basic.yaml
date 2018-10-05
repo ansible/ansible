@@ -1,0 +1,70 @@
+---
+- debug: msg="START cli/src_basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  ios_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+- name: configure device with config
+  ios_config:
+    src: basic/config.j2
+  register: result
+
+- name: debug, remove me
+  debug:
+    msg: "{{ result }}"
+- assert:
+    that:
+      - "result.changed == true"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#      - "result.updates is not defined"
+
+- name: check device with config
+  ios_config:
+    src: basic/config.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#      - "result.updates is not defined"
+
+- name: check for empty diff
+  ios_config:
+    running_config: |
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+    lines:
+      - service timestamps debug datetime msec
+      - service timestamps log datetime msec
+  check_mode: True
+  register: result
+- assert:
+    that:
+      - "result.updates is undefined"
+
+- name: check for diff with ignore lines for running config
+  ios_config:
+    running_config: |
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+    lines:
+      - service timestamps debug datetime msec
+      - service timestamps log datetime msec
+    diff_ignore_lines: service timestamps log datetime msec
+  check_mode: True
+  register: result
+
+- assert:
+    that:
+      - "'service timestamps log datetime msec' in result.updates"
+
+- debug: msg="END cli/src_basic.yaml on connection={{ ansible_connection }}"

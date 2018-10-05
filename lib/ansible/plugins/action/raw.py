@@ -19,24 +19,32 @@ __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
 
-import re
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        if self._task.environment and any(self._task.environment):
+            self._display.warning('raw module does not support the environment keyword')
+
+        result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         if self._play_context.check_mode:
             # in --check mode, always skip this module execution
-            return dict(skipped=True)
+            result['skipped'] = True
+            return result
 
-        executable = self._task.args.get('executable')
-        result = self._low_level_execute_command(self._task.args.get('_raw_params'), tmp=tmp, executable=executable)
+        executable = self._task.args.get('executable', False)
+        result.update(self._low_level_execute_command(self._task.args.get('_raw_params'), executable=executable))
 
-        # for some modules (script, raw), the sudo success key
-        # may leak into the stdout due to the way the sudo/su
-        # command is constructed, so we filter that out here
-        if result.get('stdout','').strip().startswith('BECOME-SUCCESS-'):
-            result['stdout'] = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', result['stdout'])
+        result['changed'] = True
+
+        if 'rc' in result and result['rc'] != 0:
+            result['failed'] = True
+            result['msg'] = 'non-zero return code'
 
         return result

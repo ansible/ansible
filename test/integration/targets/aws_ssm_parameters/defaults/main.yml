@@ -1,0 +1,3 @@
+---
+# defaults file for aws_lambda test
+ssm_key_prefix: '{{resource_prefix}}'

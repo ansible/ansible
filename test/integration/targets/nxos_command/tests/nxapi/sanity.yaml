@@ -1,0 +1,70 @@
+---
+- debug: msg="START nxapi/sanity.yaml on connection={{ ansible_connection }}"
+
+- name: "Disable feature BGP"
+  nxos_feature:
+    feature: bgp
+    provider: "{{ connection }}"
+    state: disabled
+
+- block:
+  - name: "Run show running-config bgp - should fail"
+    nxos_command:
+      commands:
+        - sh running-config bgp
+    ignore_errors: yes
+    register: result
+
+  - assert: &fail
+      that:
+        - "result.failed == true"
+
+  - name: "Enable feature BGP"
+    nxos_feature:
+      feature: bgp
+      provider: "{{ connection }}"
+      state: enabled
+
+  - name: "Configure BGP defaults"
+    nxos_bgp: &configure_default
+      asn: 65535
+      router_id: 192.0.2.1
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Run show running-config bgp - should pass"
+    nxos_command:
+      commands: 
+        - sh running-config bgp
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == false"
+        - "'65535' in result.stdout[0]|to_json"
+
+  - name: "Run an invalid command - should fail"
+    nxos_command:
+      commands:
+        - show interface bief
+    ignore_errors: yes
+    register: result
+
+  - assert: *fail
+
+  rescue:
+  - debug: msg="nxos_command sanity test failure detected"
+
+  always:
+  - name: "Disable feature bgp"
+    nxos_feature:
+      feature: bgp
+      provider: "{{ connection }}"
+      state: disabled
+
+- debug: msg="END nxapi/sanity.yaml on connection={{ ansible_connection }}"

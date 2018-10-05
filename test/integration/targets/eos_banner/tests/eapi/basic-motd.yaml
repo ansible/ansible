@@ -1,0 +1,84 @@
+---
+- debug: msg="START eapi/basic-motd.yaml on connection={{ ansible_connection }}"
+
+- name: Remove previous motd banner
+  eos_config:
+    lines: no banner motd
+  become: yes
+
+- name: Set motd
+  eos_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my motd banner' in result.commands"
+      - "'that has a multiline' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Set motd again (idempotent)
+  eos_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
+
+- name: Remove motd
+  eos_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: absent
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no banner motd' in result.commands"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Remove motd again (idempotent)
+  eos_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: absent
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name is not defined"
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"

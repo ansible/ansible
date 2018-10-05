@@ -19,92 +19,50 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems, string_types
-
 import os
+import tempfile
+import tarfile
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from subprocess import Popen, PIPE
+
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
+from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 
+
 __all__ = ['RoleRequirement']
+
+
+VALID_SPEC_KEYS = [
+    'name',
+    'role',
+    'scm',
+    'src',
+    'version',
+]
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class RoleRequirement(RoleDefinition):
 
     """
-    FIXME: document various ways role specs can be specified
+    Helper class for Galaxy, which is used to parse both dependencies
+    specified in meta/main.yml and requirements.yml files.
     """
 
     def __init__(self):
         pass
 
-    def _get_valid_spec_keys(self):
-        return (
-            'name',
-            'role',
-            'scm',
-            'src',
-            'version',
-        )
-
-    def parse(self, ds):
-        '''
-        FIXME: docstring
-        '''
-
-        assert type(ds) == dict or isinstance(ds, string_types)
-
-        role_name    = ''
-        role_params  = dict()
-        new_ds       = dict()
-
-        if isinstance(ds, string_types):
-            role_name = ds
-        else:
-            ds = self._preprocess_role_spec(ds)
-            (new_ds, role_params) = self._split_role_params(ds)
-
-            # pull the role name out of the ds
-            role_name = new_ds.get('role_name')
-            del ds['role_name']
-
-        return (new_ds, role_name, role_params)
-
-    def _preprocess_role_spec(self, ds):
-        if 'role' in ds:
-            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-            role_info = self._role_spec_parse(ds['role'])
-            if isinstance(role_info, dict):
-                # Warning: Slight change in behaviour here.  name may be being
-                # overloaded.  Previously, name was only a parameter to the role.
-                # Now it is both a parameter to the role and the name that
-                # ansible-galaxy will install under on the local system.
-                if 'name' in ds and 'name' in role_info:
-                    del role_info['name']
-                ds.update(role_info)
-        else:
-            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
-            if 'github.com' in ds["src"] and 'http' in ds["src"] and '+' not in ds["src"] and not ds["src"].endswith('.tar.gz'):
-                ds["src"] = "git+" + ds["src"]
-
-            if '+' in ds["src"]:
-                (scm, src) = ds["src"].split('+')
-                ds["scm"] = scm
-                ds["src"] = src
-
-            if 'name' in ds:
-                ds["role"] = ds["name"]
-                del ds["name"]
-            else:
-                ds["role"] = self._repo_url_to_role_name(ds["src"])
-
-            # set some values to a default value, if none were specified
-            ds.setdefault('version', '')
-            ds.setdefault('scm', None)
-
-        return ds
-
-    def _repo_url_to_role_name(self, repo_url):
+    @staticmethod
+    def repo_url_to_role_name(repo_url):
         # gets the role name out of a repo like
         # http://git.example.com/repos/repo.git" => "repo"
 
@@ -119,81 +77,120 @@ class RoleRequirement(RoleDefinition):
             trailing_path = trailing_path.split(',')[0]
         return trailing_path
 
-    def _role_spec_parse(self, role_spec):
-        # takes a repo and a version like
-        # git+http://git.example.com/repos/repo.git,v1.0
-        # and returns a list of properties such as:
-        # {
-        #   'scm': 'git',
-        #   'src': 'http://git.example.com/repos/repo.git',
-        #   'version': 'v1.0',
-        #   'name': 'repo'
-        # }
+    @staticmethod
+    def role_yaml_parse(role):
 
-        default_role_versions = dict(git='master', hg='tip')
-
-        role_spec = role_spec.strip()
-        role_version = ''
-        if role_spec == "" or role_spec.startswith("#"):
-            return (None, None, None, None)
-
-        tokens = [s.strip() for s in role_spec.split(',')]
-
-        # assume https://github.com URLs are git+https:// URLs and not
-        # tarballs unless they end in '.zip'
-        if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
-            tokens[0] = 'git+' + tokens[0]
-
-        if '+' in tokens[0]:
-            (scm, role_url) = tokens[0].split('+')
-        else:
+        if isinstance(role, string_types):
+            name = None
             scm = None
-            role_url = tokens[0]
+            src = None
+            version = None
+            if ',' in role:
+                if role.count(',') == 1:
+                    (src, version) = role.strip().split(',', 1)
+                elif role.count(',') == 2:
+                    (src, version, name) = role.strip().split(',', 2)
+                else:
+                    raise AnsibleError("Invalid role line (%s). Proper format is 'role_name[,version[,name]]'" % role)
+            else:
+                src = role
 
-        if len(tokens) >= 2:
-            role_version = tokens[1]
+            if name is None:
+                name = RoleRequirement.repo_url_to_role_name(src)
+            if '+' in src:
+                (scm, src) = src.split('+', 1)
 
-        if len(tokens) == 3:
-            role_name = tokens[2]
+            return dict(name=name, src=src, scm=scm, version=version)
+
+        if 'role' in role:
+            name = role['role']
+            if ',' in name:
+                raise AnsibleError("Invalid old style role requirement: %s" % name)
+            else:
+                del role['role']
+                role['name'] = name
         else:
-            role_name = self._repo_url_to_role_name(tokens[0])
+            role = role.copy()
 
-        if scm and not role_version:
-            role_version = default_role_versions.get(scm, '')
+            if 'src'in role:
+                # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+                if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
+                    role["src"] = "git+" + role["src"]
 
-        return dict(scm=scm, src=role_url, version=role_version, role_name=role_name)
+                if '+' in role["src"]:
+                    (scm, src) = role["src"].split('+')
+                    role["scm"] = scm
+                    role["src"] = src
 
+                if 'name' not in role:
+                    role["name"] = RoleRequirement.repo_url_to_role_name(role["src"])
 
-def role_yaml_parse(role):
-    if 'role' in role:
-        # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-        role_info = role_spec_parse(role['role'])
-        if isinstance(role_info, dict):
-            # Warning: Slight change in behaviour here.  name may be being
-            # overloaded.  Previously, name was only a parameter to the role.
-            # Now it is both a parameter to the role and the name that
-            # ansible-galaxy will install under on the local system.
-            if 'name' in role and 'name' in role_info:
-                del role_info['name']
-            role.update(role_info)
-    else:
-        # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
-        if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
-            role["src"] = "git+" + role["src"]
+            if 'version' not in role:
+                role['version'] = ''
 
-        if '+' in role["src"]:
-            (scm, src) = role["src"].split('+')
-            role["scm"] = scm
-            role["src"] = src
+            if 'scm' not in role:
+                role['scm'] = None
 
-        if 'name' not in role:
-            role["name"] = repo_url_to_role_name(role["src"])
+        for key in list(role.keys()):
+            if key not in VALID_SPEC_KEYS:
+                role.pop(key)
 
-        if 'version' not in role:
-            role['version'] = ''
+        return role
 
-        if 'scm' not in role:
-            role['scm'] = None
+    @staticmethod
+    def scm_archive_role(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
 
-    return role
+        def run_scm_cmd(cmd, tempdir):
+            try:
+                stdout = ''
+                stderr = ''
+                popen = Popen(cmd, cwd=tempdir, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = popen.communicate()
+            except Exception as e:
+                ran = " ".join(cmd)
+                display.debug("ran %s:" % ran)
+                display.debug("\tstdout: " + stdout)
+                display.debug("\tstderr: " + stderr)
+                raise AnsibleError("when executing %s: %s" % (ran, to_native(e)))
+            if popen.returncode != 0:
+                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(cmd), tempdir, popen.returncode))
 
+        if scm not in ['hg', 'git']:
+            raise AnsibleError("- scm %s is not currently supported" % scm)
+
+        try:
+            scm_path = get_bin_path(scm)
+        except (ValueError, OSError, IOError):
+            raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
+
+        tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
+        clone_cmd = [scm_path, 'clone', src, name]
+        run_scm_cmd(clone_cmd, tempdir)
+
+        if scm == 'git' and version:
+            checkout_cmd = [scm_path, 'checkout', version]
+            run_scm_cmd(checkout_cmd, os.path.join(tempdir, name))
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar', dir=C.DEFAULT_LOCAL_TMP)
+        archive_cmd = None
+        if keep_scm_meta:
+            display.vvv('tarring %s from %s to %s' % (name, tempdir, temp_file.name))
+            with tarfile.open(temp_file.name, "w") as tar:
+                tar.add(os.path.join(tempdir, name), arcname=name)
+        elif scm == 'hg':
+            archive_cmd = [scm_path, 'archive', '--prefix', "%s/" % name]
+            if version:
+                archive_cmd.extend(['-r', version])
+            archive_cmd.append(temp_file.name)
+        elif scm == 'git':
+            archive_cmd = [scm_path, 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
+            if version:
+                archive_cmd.append(version)
+            else:
+                archive_cmd.append('HEAD')
+
+        if archive_cmd is not None:
+            display.vvv('archiving %s' % archive_cmd)
+            run_scm_cmd(archive_cmd, os.path.join(tempdir, name))
+
+        return temp_file.name

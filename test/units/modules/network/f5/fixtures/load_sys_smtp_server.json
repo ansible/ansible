@@ -1,0 +1,16 @@
+{
+    "kind": "tm:sys:smtp-server:smtp-serverstate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 54,
+    "selfLink": "https://localhost/mgmt/tm/sys/smtp-server/~Common~foo?ver=13.0.0",
+    "authenticationEnabled": true,
+    "encryptedConnection": "ssl",
+    "fromAddress": "no-reply@foo.bar",
+    "localHostName": "mail-host.foo.bar",
+    "passwordEncrypted": "$M$Ch$this-is-encrypted==",
+    "smtpServerHostName": "mail.foo.bar",
+    "smtpServerPort": 465,
+    "username": "admin"
+}

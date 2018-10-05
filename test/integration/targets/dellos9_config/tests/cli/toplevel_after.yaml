@@ -1,0 +1,44 @@
+---
+- debug: msg="START cli/toplevel_after.yaml"
+
+- name: setup
+  dellos9_config:
+    lines:
+      - "snmp-server contact ansible"
+      - "hostname {{ inventory_hostname_short }}"
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure top level command with after
+  dellos9_config:
+    lines: ['hostname foo']
+    after: ['snmp-server contact bar']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+      - "'snmp-server contact bar' in result.updates"
+
+- name: configure top level command with after idempotent check
+  dellos9_config:
+    lines: ['hostname foo']
+    after: ['snmp-server contact bar']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  dellos9_config:
+    lines:
+      - "no snmp-server contact"
+      - "hostname {{ inventory_hostname_short }}"
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/toplevel_after.yaml"

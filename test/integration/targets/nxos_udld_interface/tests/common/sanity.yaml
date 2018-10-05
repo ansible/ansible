@@ -1,0 +1,117 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_udld_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: udld_run="true"
+- set_fact: udld_enable="true"
+- set_fact: udld_run="false"
+  when: ((platform is search('N9K-F')) and (imagetag and (imagetag is version_compare('F3', 'lt'))))
+- set_fact: udld_run="false"
+  when: titanium
+- set_fact: udld_enable="false"
+  when: imagetag and (imagetag is version_compare('N1', 'eq'))
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- block:
+  - name: "Enable feature udld"
+    nxos_feature: 
+      feature: udld
+      provider: "{{ connection }}"
+      state: enabled
+
+  - name: "put the interface into default state"
+    nxos_config: 
+      commands:
+        - "default interface {{intname}}"
+      match: none
+      provider: "{{ connection }}"
+
+  - name: ensure interface is configured to be in aggressive mode
+    nxos_udld_interface: &conf1
+      interface: "{{ intname }}"
+      mode: aggressive
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf1 Idempotence"
+    nxos_udld_interface: *conf1
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - block:
+
+    - name: ensure interface has mode enabled
+      nxos_udld_interface: &conf2
+        interface: "{{ intname }}"
+        mode: enabled
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert: *true
+
+    - name: "Conf2 Idempotence"
+      nxos_udld_interface: *conf2
+      register: result
+
+    - assert: *false
+
+    - name: ensure interface has mode aggressive
+      nxos_udld_interface: *conf1
+      register: result
+
+    - assert: *true
+
+    - name: "Conf1 Idempotence"
+      nxos_udld_interface: *conf1
+      register: result
+
+    - assert: *false
+
+    - name: ensure interface has mode disabled
+      nxos_udld_interface: &conf3
+        interface: "{{ intname }}"
+        mode: disabled
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert: *true
+
+    - name: "Conf3 Idempotence"
+      nxos_udld_interface: *conf3
+      register: result
+
+    - assert: *false
+
+    when: udld_enable
+
+  - name: Remove the config
+    nxos_udld_interface: &remove
+      interface: "{{ intname }}"
+      mode: enabled
+      provider: "{{ connection }}"
+      state: absent
+
+  when: udld_run
+
+  always:
+  - name: "Disable udld"
+    nxos_feature: 
+      feature: udld
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_udld_interface sanity test"

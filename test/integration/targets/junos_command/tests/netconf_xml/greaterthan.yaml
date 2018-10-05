@@ -1,0 +1,38 @@
+---
+- debug: msg="START netconf_xml/greaterthan.yaml on connection={{ ansible_connection }}"
+
+- name: test gt operator
+  junos_command:
+    commands:
+      - show version
+      - show interfaces lo0
+    format: xml
+    wait_for:
+      - "result[1].rpc-reply.interface-information.physical-interface.local-index gt 5"
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- name: test > operator
+  junos_command:
+    commands:
+      - show version
+      - show interfaces lo0
+    format: xml
+    wait_for:
+      - "result[1].rpc-reply.interface-information.physical-interface.local-index > 5"
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- debug: msg="END netconf_xml/greaterthan.yaml on connection={{ ansible_connection }}"

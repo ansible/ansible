@@ -1,3 +1,0 @@
-allow_duplicates: yes
-dependencies:
-  - test_become_r1

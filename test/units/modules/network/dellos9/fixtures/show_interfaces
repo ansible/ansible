@@ -1,0 +1,1259 @@
+TenGigabitEthernet 0/0 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1048580
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 10000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:13:21
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:16:47
+
+
+TenGigabitEthernet 0/1 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1048708
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 10000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:17:48
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:16:49
+
+
+TenGigabitEthernet 0/2 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1048836
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 10000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:18:30
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:17:31
+
+
+TenGigabitEthernet 0/3 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1048964
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 10000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:18:33
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:17:35
+
+
+fortyGigE 0/4 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1049093
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:38:08
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:37:09
+
+
+fortyGigE 0/8 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1049605
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:38:08
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:40:18
+
+
+fortyGigE 0/12 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1050117
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:41:18
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:40:20
+
+
+fortyGigE 0/16 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1050629
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:42:41
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:41:43
+
+
+fortyGigE 0/20 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1051141
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:43:10
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:42:12
+
+
+fortyGigE 0/24 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1051653
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:43:45
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:42:47
+
+
+fortyGigE 0/28 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1052165
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:44:35
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:43:37
+
+
+fortyGigE 0/32 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1052677
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:44:53
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:43:54
+
+
+fortyGigE 0/36 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1053189
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:46:20
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:45:21
+
+
+fortyGigE 0/40 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1053701
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:46:32
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:45:33
+
+
+fortyGigE 0/44 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1054213
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:46:56
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:45:58
+
+
+fortyGigE 0/48 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1054725
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:47:10
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:46:11
+
+
+fortyGigE 0/52 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1055237
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:47:22
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:46:24
+
+
+fortyGigE 0/56 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1055749
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:47:47
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:46:48
+
+
+fortyGigE 0/60 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1056261
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:47:58
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:47:00
+
+
+fortyGigE 0/64 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1056773
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:48:26
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:47:28
+
+
+fortyGigE 0/68 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1057285
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:48:38
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:47:40
+
+
+fortyGigE 0/72 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1057797
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:49:05
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:48:07
+
+
+fortyGigE 0/76 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1058309
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:49:17
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:48:18
+
+
+fortyGigE 0/80 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1058821
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:49:36
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:48:37
+
+
+fortyGigE 0/84 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1059333
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:49:58
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:49:00
+
+
+fortyGigE 0/88 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1059845
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:50:12
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:49:14
+
+
+fortyGigE 0/92 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1060357
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:50:36
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:49:37
+
+
+fortyGigE 0/96 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1060869
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:50:50
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:49:52
+
+
+fortyGigE 0/100 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1061381
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:51:16
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:50:17
+
+
+fortyGigE 0/104 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1061893
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:51:26
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:50:28
+
+
+fortyGigE 0/108 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1062405
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:51:50
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:50:52
+
+
+fortyGigE 0/112 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1062917
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:52:02
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:51:04
+
+
+fortyGigE 0/116 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1063429
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:52:14
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:51:15
+
+
+fortyGigE 0/120 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1063941
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:52:44
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:51:45
+
+
+fortyGigE 0/124 is down, line protocol is down
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 1064453
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 40000 Mbit
+Flowcontrol rx off tx off
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:52:55
+Queueing strategy: fifo
+Input Statistics:
+     0 packets, 0 bytes
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 runts, 0 giants, 0 throttles
+     0 CRC, 0 overrun, 0 discarded
+Output Statistics:
+     0 packets, 0 bytes, 0 underruns
+     0 64-byte pkts, 0 over 64-byte pkts, 0 over 127-byte pkts
+     0 over 255-byte pkts, 0 over 511-byte pkts, 0 over 1023-byte pkts
+     0 Multicasts, 0 Broadcasts, 0 Unicasts
+     0 throttles, 0 discarded, 0 collisions, 0 wreddrops
+Rate info (interval 299 seconds):
+     Input 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+     Output 00.00 Mbits/sec,          0 packets/sec, 0.00% of line-rate
+Time since last interface status change: 13:51:56
+
+
+ManagementEthernet 0/0 is up, line protocol is up
+Hardware is DellEth, address is 90:b1:1c:f4:a2:8f
+    Current address is 90:b1:1c:f4:a2:8f
+Pluggable media not present
+Interface index is 7340033
+Internet address is 10.16.148.71/16
+Mode of IPv4 Address Assignment : MANUAL
+DHCP Client-ID(61): 90b11cf4a28f
+Virtual-IP is not set
+Virtual-IP IPv6 address is not set
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed 1000 Mbit, Mode full duplex
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:52:17
+Queueing strategy: fifo
+    Input 111338 packets, 7239813 bytes, 96163 multicast
+    Received 0 errors, 0 discarded
+    Output 8316 packets, 1491845 bytes, 0 multicast
+    Output 0 errors, 0 invalid protocol
+Time since last interface status change: 13:52:13
+
+
+ManagementEthernet 1/0 is up, line protocol is not present
+Hardware is DellEth, address is not set
+Interface index is 8388609
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed auto, Mode full duplex
+ARP type: ARPA, ARP Timeout 04:00:00
+Queueing strategy: fifo
+Time since last interface status change: 13:52:33
+
+
+ManagementEthernet 2/0 is up, line protocol is not present
+Hardware is DellEth, address is not set
+Interface index is 9437185
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed auto, Mode full duplex
+ARP type: ARPA, ARP Timeout 04:00:00
+Queueing strategy: fifo
+Time since last interface status change: 13:52:33
+
+
+ManagementEthernet 3/0 is up, line protocol is not present
+Hardware is DellEth, address is not set
+Interface index is 10485761
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed auto, Mode full duplex
+ARP type: ARPA, ARP Timeout 04:00:00
+Queueing strategy: fifo
+Time since last interface status change: 13:52:43
+
+
+ManagementEthernet 4/0 is up, line protocol is not present
+Hardware is DellEth, address is not set
+Interface index is 11534337
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed auto, Mode full duplex
+ARP type: ARPA, ARP Timeout 04:00:00
+Queueing strategy: fifo
+Time since last interface status change: 13:52:43
+
+
+ManagementEthernet 5/0 is up, line protocol is not present
+Hardware is DellEth, address is not set
+Interface index is 12582913
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed auto, Mode full duplex
+ARP type: ARPA, ARP Timeout 04:00:00
+Queueing strategy: fifo
+Time since last interface status change: 13:52:53
+
+
+Vlan 1 is down, line protocol is down
+Address is 90:b1:1c:f4:a2:8f, Current address is 90:b1:1c:f4:a2:8f
+Interface index is 1275068928
+Internet address is not set
+Mode of IPv4 Address Assignment : NONE
+DHCP Client-ID :90b11cf4a28f
+MTU 1554 bytes, IP MTU 1500 bytes
+LineSpeed auto
+ARP type: ARPA, ARP Timeout 04:00:00
+Last clearing of "show interface" counters 13:53:06
+Queueing strategy: fifo
+Time since last interface status change: 13:53:06
+Input Statistics:
+    0 packets, 0 bytes
+Output Statistics:
+    0 packets, 0 bytes
+

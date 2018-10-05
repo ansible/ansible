@@ -20,16 +20,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import itertools
-from six import string_types
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+
 
 class Taggable:
 
     untagged = frozenset(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[], listof=(string_types,int))
+    _tags = FieldAttribute(isa='list', default=[], listof=(string_types, int), extend=True)
 
     def __init__(self):
         super(Taggable, self).__init__()
@@ -37,26 +38,17 @@ class Taggable:
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
             return ds
-        elif isinstance(ds, basestring):
-            return [ ds ]
+        elif isinstance(ds, string_types):
+            value = ds.split(',')
+            if isinstance(value, list):
+                return [x.strip() for x in value]
+            else:
+                return [ds]
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
-    def _get_attr_tags(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        tags = self._attributes['tags']
-        if tags is None:
-            tags = []
-        if hasattr(self, '_get_parent_attribute'):
-            tags = self._get_parent_attribute('tags', extend=True)
-        return tags
-
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''
-
-        should_run = True
 
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)
@@ -68,21 +60,24 @@ class Taggable:
                 else:
                     tags = set([tags])
             else:
-                tags = set([i for i,_ in itertools.groupby(tags)])
+                tags = set([i for i, _ in itertools.groupby(tags)])
         else:
             # this makes isdisjoint work for untagged
             tags = self.untagged
 
+        should_run = True  # default, tasks to run
+
         if only_tags:
-
-            should_run = False
-
-            if 'always' in tags or 'all' in only_tags:
-                 should_run = True
+            if 'always' in tags:
+                should_run = True
+            elif ('all' in only_tags and 'never' not in tags):
+                should_run = True
             elif not tags.isdisjoint(only_tags):
                 should_run = True
-            elif 'tagged' in only_tags and tags != self.untagged:
+            elif 'tagged' in only_tags and tags != self.untagged and 'never' not in tags:
                 should_run = True
+            else:
+                should_run = False
 
         if should_run and skip_tags:
 

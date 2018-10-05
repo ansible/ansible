@@ -1,0 +1,86 @@
+---
+# Check made for present state
+# type ipmask
+ - name: missing name
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     state: present
+     value: blabla
+   register: missing_name
+   ignore_errors: True
+
+ - name: missing value
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     state: present
+     name: blabla
+   register: missing_value
+   ignore_errors: True
+
+ - name: bad ip mask value
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     state: present
+     name: blabla
+     value: pwet
+   register: bad_ipmask
+   ignore_errors: True
+
+# type geography
+ - name: missing country
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     state: present
+     name: blabla
+     type: geography
+   register: missing_country
+   ignore_errors: True
+
+ - name: bad country
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     state: present
+     name: blabla
+     type: geography
+     country: FRA
+   register: bad_country
+   ignore_errors: True
+
+# type iprange
+ - name: missing start_ip
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     state: present
+     name: blabla
+     type: iprange
+     end_ip: 10.10.10.10     
+   register: missing_sart_ip
+   ignore_errors: True
+
+ - name: missing end_ip
+   fortios_address:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     state: present
+     name: blabla
+     type: iprange
+     start_ip: 10.10.10.10     
+   register: missing_end_ip
+   ignore_errors: True
+
+ - name: Verify that all previous test have failed
+   assert:
+     that:
+      - "missing_name.failed == True"
+      - "missing_value.failed == True"
+      - "bad_ipmask.failed == True"
+      - "missing_country.failed == True"
+      - "bad_country.failed == True"
+      - "missing_sart_ip.failed == True"
+      - "missing_end_ip.failed == True"

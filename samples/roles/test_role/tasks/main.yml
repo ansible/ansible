@@ -1,3 +1,0 @@
-- debug: msg="here we are in the role, foo={{foo}}"
-- fail:
-  when: foo != "bar"

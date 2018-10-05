@@ -1,0 +1,238 @@
+Current Configuration ...
+! Version 9.12(0.0)
+! Last configuration change at Thu Jan 11 06:53:29 2018 by admin
+!
+!
+logging coredump stack-unit  0
+logging coredump stack-unit  1
+logging coredump stack-unit  2
+logging coredump stack-unit  3
+logging coredump stack-unit  4
+logging coredump stack-unit  5
+!
+hostname Dell
+!
+protocol lldp
+!
+redundancy auto-synchronize full
+!
+enable password 7 b125455cf679b208e79b910e85789edf
+!
+username admin password 7 1d28e9f33f99cf5c
+!
+stack-unit 0 quad-port-profile 0,8,16,24,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,100,108,116,124
+!
+stack-unit 0 provision S6000
+!
+stack-unit 0 port 0 portmode quad
+!
+interface TenGigabitEthernet 0/0
+ no ip address
+ shutdown
+!
+interface TenGigabitEthernet 0/1
+ no ip address
+ shutdown
+!
+interface TenGigabitEthernet 0/2
+ no ip address
+ shutdown
+!
+interface TenGigabitEthernet 0/3
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/4
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/8
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/12
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/16
+ no ip address
+ ipv6 address 2001:4898:5808:ffa2::5/126
+ shutdown
+!
+interface fortyGigE 0/20
+ no ip address
+ switchport
+ ip access-group ipv6-ssh-only in
+ shutdown
+!
+interface fortyGigE 0/24
+ no ip address
+ switchport
+ mac access-group ssh-only-mac in
+ mac access-group ssh-only-mac out
+ shutdown
+!
+interface fortyGigE 0/28
+ no ip address
+ switchport
+ mac access-group ssh-only-mac in
+ mac access-group ssh-only-mac out
+ shutdown
+!
+interface fortyGigE 0/32
+ no ip address
+ switchport
+ ip access-group ipv6-ssh-only out
+ shutdown
+!
+interface fortyGigE 0/36
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/40
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/44
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/48
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/52
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/56
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/60
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/64
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/68
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/72
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/76
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/80
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/84
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/88
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/92
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/96
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/100
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/104
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/108
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/112
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/116
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/120
+ no ip address
+ shutdown
+!
+interface fortyGigE 0/124
+ no ip address
+ shutdown
+!
+interface ManagementEthernet 0/0
+ ip address 10.16.148.71/16
+ no shutdown
+!
+interface ManagementEthernet 1/0
+ no shutdown
+!
+interface ManagementEthernet 2/0
+ no shutdown
+!
+interface ManagementEthernet 3/0
+ no shutdown
+!
+interface ManagementEthernet 4/0
+ no shutdown
+!
+interface ManagementEthernet 5/0
+ no shutdown
+!
+interface Vlan 1
+!untagged fortyGigE 0/20-32
+!
+ipv6 access-list ipv6-ssh-only
+ description ipv6acl
+ remark 1 ipv6
+ seq 10 permit ipv6 2001:4898::/32 any
+ seq 20 permit tcp any eq 2 2404:f801::/32
+ seq 30 permit tcp any 2a01:110::/31 ack
+ seq 40 permit tcp any any
+!
+mac access-list extended ssh-only-mac
+ description macacl
+ remark 1 mac
+ seq 5 permit any any count
+ seq 6 deny any any
+!
+ip ssh server enable
+!
+line console 0
+line vty 0
+line vty 1
+ access-class ipv6-ssh-only ipv6
+line vty 2
+ access-class ipv6-ssh-only ipv6
+line vty 3
+ access-class ipv6-ssh-only ipv6
+line vty 4
+line vty 5
+line vty 6
+line vty 7
+line vty 8
+line vty 9
+!
+reload-type
+ boot-type normal-reload
+ config-scr-download enable
+!
+end
+

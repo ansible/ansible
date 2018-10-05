@@ -1,0 +1,43 @@
+---
+- debug:
+    msg: "START netconf/set_hostname.yaml on connection={{ ansible_connection }}"
+
+- block:
+  - name: setup
+    iosxr_config:
+      lines: hostname switch
+      match: none
+      provider: "{{ cli }}"
+    connection: network_cli
+
+  - name: configure hostname
+    iosxr_system:
+      hostname: foo
+      provider: "{{ netconf }}"
+    connection: netconf
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: verify hostname
+    iosxr_system:
+      hostname: foo
+      provider: "{{ netconf }}"
+    connection: netconf
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+  always:
+  - name: teardown
+    iosxr_config:
+      lines: "hostname {{ inventory_hostname }}"
+      match: none
+      provider: "{{ cli }}"
+    connection: network_cli
+
+- debug:
+    msg: "END netconf/set_hostname.yaml on connection={{ ansible_connection }}"

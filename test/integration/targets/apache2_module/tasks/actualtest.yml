@@ -1,0 +1,231 @@
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: install apache via apt
+  apt:
+    name: "{{item}}"
+    state: present
+  when: "ansible_os_family == 'Debian'"
+  with_items:
+    - apache2
+    - libapache2-mod-evasive
+
+- name: install apache via zypper
+  zypper:
+    name: apache2
+    state: present
+  when: "ansible_os_family == 'Suse'"
+
+- name: disable userdir module
+  apache2_module:
+    name: userdir
+    state: absent
+  register: userdir_first_disable
+
+- name: disable userdir module, second run
+  apache2_module:
+    name: userdir
+    state: absent
+  register: disable
+
+- name: ensure apache2_module is idempotent
+  assert:
+    that:
+      - disable is not changed
+
+- name: enable userdir module
+  apache2_module:
+    name: userdir
+    state: present
+  register: enable
+
+- name: ensure changed on successful enable
+  assert:
+    that:
+      - enable is changed
+
+- name: enable userdir module, second run
+  apache2_module:
+    name: userdir
+    state: present
+  register: enabletwo
+
+- name: ensure apache2_module is idempotent
+  assert:
+    that:
+      - 'not enabletwo.changed'
+
+- name: disable userdir module, final run
+  apache2_module:
+    name: userdir
+    state: absent
+  register: disablefinal
+
+- name: ensure changed on successful disable
+  assert:
+    that:
+      - 'disablefinal.changed'
+
+- name: set userdir to original state
+  apache2_module:
+    name: userdir
+    state: present
+  when: userdir_first_disable is changed
+
+- name: ensure autoindex enabled
+  apache2_module:
+    name: autoindex
+    state: present
+
+- name: Debian/Ubuntu specific tests
+  when: "ansible_os_family == 'Debian'"
+  block:
+  - name: force disable of autoindex  # bug #2499
+    apache2_module:
+      name: autoindex
+      state: absent
+      force: True
+
+  - name: reenable autoindex
+    apache2_module:
+      name: autoindex
+      state: present
+
+  - name: enable evasive module, test https://github.com/ansible/ansible/issues/22635
+    apache2_module:
+      name: evasive
+      state: present
+
+  - name: disable evasive module
+    apache2_module:
+      name: evasive
+      state: absent
+
+  - name: use identifier to enable module, fix for https://github.com/ansible/ansible/issues/33669
+    apache2_module:
+      name: dump_io
+      state: present
+    ignore_errors: True
+    register: enable_dumpio_wrong
+
+  - name: disable dump_io
+    apache2_module:
+      name: dump_io
+      identifier: dumpio_module
+      state: absent
+
+  - name: use identifier to enable module, fix for https://github.com/ansible/ansible/issues/33669
+    apache2_module:
+      name: dump_io
+      identifier: dumpio_module
+      state: present
+    register: enable_dumpio_correct_1
+
+  - name: ensure idempotency with identifier
+    apache2_module:
+      name: dump_io
+      identifier: dumpio_module
+      state: present
+    register: enable_dumpio_correct_2
+
+  - name: disable dump_io
+    apache2_module:
+      name: dump_io
+      identifier: dumpio_module
+      state: absent
+
+  - assert:
+      that:
+        - enable_dumpio_wrong is failed
+        - enable_dumpio_correct_1 is changed
+        - enable_dumpio_correct_2 is not changed
+
+  - name: disable mpm modules
+    apache2_module:
+      name: "{{ item }}"
+      state: absent
+      ignore_configcheck: True
+    with_items:
+      - mpm_worker
+      - mpm_event
+      - mpm_prefork
+
+  - name: enabled mpm_event
+    apache2_module:
+      name: mpm_event
+      state: present
+      ignore_configcheck: True
+    register: enabledmpmevent
+
+  - name: ensure changed mpm_event
+    assert:
+      that:
+        - 'enabledmpmevent.changed'
+
+  - name: switch between mpm_event and mpm_worker
+    apache2_module:
+      name: "{{ item.name }}"
+      state: "{{ item.state }}"
+      ignore_configcheck: True
+    with_items:
+      - name: mpm_event
+        state: absent
+      - name: mpm_worker
+        state: present
+
+  - name: ensure mpm_worker is already enabled
+    apache2_module:
+      name: mpm_worker
+      state: present
+    register: enabledmpmworker
+
+  - name: ensure mpm_worker unchanged
+    assert:
+      that:
+        - 'not enabledmpmworker.changed'
+
+  - name: try to disable all mpm modules with configcheck
+    apache2_module:
+      name: "{{item}}"
+      state: absent
+    with_items:
+      - mpm_worker
+      - mpm_event
+      - mpm_prefork
+    ignore_errors: yes
+    register: remove_with_configcheck
+
+  - name: ensure configcheck fails task with when run without mpm modules
+    assert:
+      that:
+        - "{{ item.failed }}"
+    with_items: "{{ remove_with_configcheck.results }}"
+
+  - name: try to disable all mpm modules without configcheck
+    apache2_module:
+      name: "{{item}}"
+      state: absent
+      ignore_configcheck: True
+    with_items:
+      - mpm_worker
+      - mpm_event
+      - mpm_prefork
+
+  - name: enabled mpm_event to restore previous state
+    apache2_module:
+      name: mpm_event
+      state: present
+      ignore_configcheck: True
+    register: enabledmpmevent

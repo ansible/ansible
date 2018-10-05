@@ -1,0 +1,12 @@
+- name: Get volume informations and register it in a variable
+  scaleway_volume_facts:
+  register: volumes
+
+- name: Display volumes variable
+  debug:
+    var: volumes
+
+- name: Ensure retrieval of volumes facts is success
+  assert:
+    that:
+      - volumes is success

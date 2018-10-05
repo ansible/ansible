@@ -1,4 +1,26 @@
-[report]
+# This configuration file is used for manual execution of coverage
+# as well as for tests run through ansible-test.
+
+[run]
+branch = True
+
+# Enable concurrency. This also enables parallel mode, which results in
+# multiple coverage files being created. Concurrency allows us to collect
+# results from multiple tests simultaneously, as well as supporting multiple
+# test runs, such as from integration tests.
+concurrency = multiprocessing
+parallel = True
+
+# When running tests through ansible-test, this option is overridden by
+# the COVERAGE_FILE environment variable. This option is present for
+# convenience when running coverage manually from this directory.
+data_file = test/results/coverage/coverage
+
+# Don't collect or report code coverage from files matching these patterns.
 omit =
-    */python?.?/*
-    */site-packages/nose/*
+    */python*/dist-packages/*
+    */python*/site-packages/*
+    */python*/distutils/*
+    */pyshared/*
+    */pytest
+    */AnsiballZ_*.py

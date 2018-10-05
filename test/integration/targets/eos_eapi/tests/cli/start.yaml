@@ -1,0 +1,38 @@
+- debug: msg="START CLI/START.YAML"
+
+- name: Set state to started
+  eos_eapi:
+    state: started
+    provider: "{{ cli }}"
+  become: yes
+  register: eos_eapi_output
+
+- eos_command:
+    commands:
+      - show management api http-commands | json
+    provider: "{{ cli }}"
+  register: http_config
+
+- debug: var=http_config
+  when: debug
+
+- name: Expect EAPI state is on
+  assert:
+    that: http_config.stdout[0].enabled == true
+
+- name: Set state to running again
+  eos_eapi:
+    state: started
+    provider: "{{ cli }}"
+  become: yes
+  register: eos_eapi_output
+
+- debug: var=eos_eapi_output
+  when: debug
+
+- name:  Expect action to be idempotent
+  assert:
+    that:
+      - "eos_eapi_output.changed == false"
+
+- debug: msg="STOP CLI/START.YAML"
