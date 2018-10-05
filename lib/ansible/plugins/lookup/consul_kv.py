@@ -151,7 +151,7 @@ class LookupModule(LookupBase):
                         for r in results[1]:
                             values.append(to_native(r['Value']))
                     else:
-                        values.append((to_native(results[1]['Value'])))
+                        values.append(to_native(results[1]['Value']))
         except Exception as e:
             raise AnsibleError(
                 "Error locating '%s' in kv store. Error was %s" % (term, e))
