@@ -69,6 +69,7 @@ DOCUMENTATION = '''
         name: Prefix to find actual test cases
         default: <empty>
         description: Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed test cases.
+        version_added: "2.8"
         env:
           - name: JUNIT_TEST_CASE_PREFIX
     requirements:
