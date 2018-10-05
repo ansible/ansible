@@ -158,6 +158,7 @@ MAGIC_VARIABLE_MAPPING = dict(
 
     # docker TODO: remove
     docker_extra_args=('ansible_docker_extra_args', ),
+    docker_cwd=('ansible_docker_cwd',),
 
     # become
     become=('ansible_become', ),

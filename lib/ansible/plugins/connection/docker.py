@@ -37,6 +37,13 @@ DOCUMENTATION = """
         vars:
             - name: ansible_host
             - name: ansible_docker_host
+      working_dir:
+        description:
+            - The default working directory for subsequent connections to the container.
+            - Added in version 2.8.
+        default: /
+        vars:
+            - name: ansible_docker_cwd
 """
 
 import distutils.spawn
@@ -95,6 +102,19 @@ class Connection(ConnectionBase):
         self.remote_user = None
         # The actual user which will execute commands in docker (if known)
         self.actual_user = None
+
+        docker_supports_cwd = LooseVersion(docker_version) >= LooseVersion(u'17.09')
+        if hasattr(self._play_context, 'docker_cwd'):
+            if docker_supports_cwd:
+                self.working_dir = self._play_context.docker_cwd
+            else:
+                display.warning(u'docker {0} does not support setting the working directory'.format(docker_version))
+                self.working_dir = None
+        else:
+            if docker_supports_cwd:
+                self.working_dir = '/'
+            else:
+                self.working_dir = None
 
         if self._play_context.remote_user is not None:
             if LooseVersion(docker_version) >= LooseVersion(u'1.7'):
@@ -188,6 +208,9 @@ class Connection(ConnectionBase):
 
         if self.remote_user is not None:
             local_cmd += [b'-u', self.remote_user]
+
+        if self.working_dir is not None:
+            local_cmd += [b'-w', self.working_dir]
 
         # -i is needed to keep stdin open which allows pipelining to work
         local_cmd += [b'-i', self._play_context.remote_addr] + cmd
