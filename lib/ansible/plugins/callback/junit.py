@@ -62,6 +62,7 @@ DOCUMENTATION = '''
         name: Hide the arguments for a task
         default: False
         description: Hide the arguments for a task
+        version_added: "2.8"
         env:
           - name: JUNIT_HIDE_TASK_ARGUMENTS
     requirements:
