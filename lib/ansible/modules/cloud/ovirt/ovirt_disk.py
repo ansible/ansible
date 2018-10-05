@@ -597,7 +597,7 @@ def main():
     host = module.params['host']
     # Fail when host is specified with the LUN id. Lun id is needed to identify
     # an existing disk if already available inthe environment.
-    if (host and lun is None) or (host and lun.get("id") is None ):
+    if (host and lun is None) or (host and lun.get("id") is None):
         module.fail_json(
             msg="Can not use parameter host ({0!s}) without "
             "specifying the logical_unit id".format(host)
