@@ -70,7 +70,17 @@ class Online(object):
         if not results.ok:
             raise OnlineException('Error fetching {0} ({1}) [{2}: {3}]'.format(
                 self.name, '%s/%s' % (self.module.params.get('api_url'), self.name),
-                results.status_code, results.json['message']
+                results.status_code, results.json['error']
+            ))
+
+        return results.json
+
+    def post_resources(self, data):
+        results = self.post('/%s' % self.name, data)
+        if not results.ok:
+            raise OnlineException('Error fetching {0} ({1}) [{2}: {3}]'.format(
+                self.name, '%s/%s' % (self.module.params.get('api_url'), self.name),
+                results.status_code, results.json['error']
             ))
 
         return results.json
