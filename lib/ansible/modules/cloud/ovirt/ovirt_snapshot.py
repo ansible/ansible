@@ -123,7 +123,7 @@ snapshot:
     returned: On success if snapshot is found.
     type: dict
 snapshots:
-    description: List of deleted snapshots
+    description: List of deleted snapshots when keep_days_old is defined and snapshot is older than the input days
     returned: On success returns deleted snapshots
     type: list
 '''
@@ -136,6 +136,7 @@ try:
 except ImportError:
     pass
 
+from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     check_sdk,
@@ -175,10 +176,12 @@ def create_snapshot(module, vm_service, snapshots_service):
     }
 
 
-def remove_snapshot(module, vm_service, snapshots_service):
+def remove_snapshot(module, vm_service, snapshots_service, snapshot_id=None):
     changed = False
+    if not snapshot_id:
+        snapshot_id = module.params['snapshot_id']
     snapshot = get_entity(
-        snapshots_service.snapshot_service(module.params['snapshot_id'])
+        snapshots_service.snapshot_service(snapshot_id)
     )
 
     if snapshot:
@@ -236,21 +239,18 @@ def restore_snapshot(module, vm_service, snapshots_service):
     }
 
 
-def remove_old_snapshosts(module, snapshots_service):
-    from datetime import datetime
-    import time
-    deleted_snapshot = []
+def remove_old_snapshosts(module, vm_service, snapshots_service):
+    deleted_snapshots = []
     changed = False
     date_now = datetime.now()
     for snapshot in snapshots_service.list():
-        if snapshot.vm and snapshot.vm.name == module.params.get('vm_name'):
+        if snapshot.vm is not None and snapshot.vm.name == module.params.get('vm_name'):
             diff = date_now - snapshot.date.replace(tzinfo=None)
             if diff.days >= module.params.get('keep_days_old'):
-                snapshots_service.snapshot_service(snapshot.id).remove()
-                deleted_snapshot.append(get_dict_of_struct(snapshot))
+                snapshot = remove_snapshot(module, vm_service, snapshots_service, snapshot.id).get('snapshot')
+                deleted_snapshots.append(snapshot)
                 changed = True
-                time.sleep(45)
-    return dict(snapshots=deleted_snapshot, changed=changed)
+    return dict(snapshots=deleted_snapshots, changed=changed)
 
 
 def main():
@@ -299,7 +299,7 @@ def main():
         state = module.params['state']
         if state == 'present':
             if module.params.get('keep_days_old') is not None:
-                ret = remove_old_snapshosts(module, snapshots_service)
+                ret = remove_old_snapshosts(module, vm_service, snapshots_service)
             else:
                 ret = create_snapshot(module, vm_service, snapshots_service)
         elif state == 'restore':
