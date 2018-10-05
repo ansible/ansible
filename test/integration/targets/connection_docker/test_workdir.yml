@@ -1,0 +1,14 @@
+---
+- hosts: docker
+  tasks:
+    - name: run pwd
+      command: pwd
+      register: pwd
+
+    - name: test custom cwd on supported versions
+      command: test "{{pwd.stdout}}" = "{{ansible_docker_cwd}}"
+      when: old_docker == "false"
+
+    - name: test default cwd on unsupported versions
+      command: test "{{pwd.stdout}}" = "/"
+      when: old_docker == "true"
