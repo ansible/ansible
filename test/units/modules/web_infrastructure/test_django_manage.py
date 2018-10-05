@@ -19,11 +19,13 @@ TESTCASE_NO_INPUT_COMMANDS = [
     "collectstatic",
 ]
 
+
+def dummy_run_command(module, cmd, *args, **kwargs):
+    return 0, "", ""
+
+
 def base_test(mocker, module_arguments):
     arguments_as_dict = json.loads(module_arguments)['ANSIBLE_MODULE_ARGS']
-
-    def dummy_run_command(module, cmd, *args, **kwargs):
-        return 0, "", ""
 
     mocker.patch.object(django_manage.AnsibleModule,
                         'run_command',
@@ -53,7 +55,7 @@ def test_no_arguments(mocker, patch_ansible_module):
     arg_list = django_manage.AnsibleModule.run_command.call_args_list
     args, kwargs = arg_list[0]
 
-    assert args[1] == './manage.py {}'.format(arguments["command"])
+    assert args[1] == './manage.py %s' % arguments["command"]
     assert kwargs['cwd'] == arguments["app_path"]
 
 
@@ -74,7 +76,7 @@ def test_no_input_commands(mocker, patch_ansible_module):
     arg_list = django_manage.AnsibleModule.run_command.call_args_list
     args, kwargs = arg_list[0]
 
-    assert args[1] == './manage.py {} --noinput'.format(arguments["command"])
+    assert args[1] == './manage.py %s --noinput' % arguments["command"]
     assert kwargs['cwd'] == arguments["app_path"]
 
 
@@ -98,5 +100,5 @@ def test_failfast_with_arguments(mocker, patch_ansible_module):
     arg_list = django_manage.AnsibleModule.run_command.call_args_list
     args, kwargs = arg_list[0]
 
-    assert args[1] == './manage.py {} --failfast'.format(arguments["command"])
+    assert args[1] == './manage.py %s --failfast' % arguments["command"]
     assert kwargs['cwd'] == arguments["app_path"]

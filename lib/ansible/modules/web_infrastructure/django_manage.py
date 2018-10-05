@@ -137,7 +137,7 @@ EXAMPLES = """
 import os
 import sys
 
-from ansible.utils.shlex import shlex_split
+import shlex
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -259,7 +259,7 @@ def main():
         value = module.params[param]
         if param in specific_boolean_params:
             value = module.boolean(value)
-        command_name = shlex_split(command)[0]  # Else it fails with arguments
+        command_name = shlex.split(command)[0]  # Else it fails with arguments
         if value and param not in command_allowed_param_map.get(command_name, []):
             module.fail_json(msg='%s param is incompatible with command=%s' % (param, command))
 
