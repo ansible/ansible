@@ -59,6 +59,11 @@ options:
             - "restore_memory"
             - "save_memory"
         type: bool
+    keep_days_old:
+        description:
+            - "Number of days after which should snapshot be deleted."
+            - "It will check all snapshots of virtual machine and delete them, if they are older."
+        version_added: "2.8"
 notes:
     - "Note that without a guest agent the data on the created snapshot may be
        inconsistent."
@@ -98,6 +103,11 @@ EXAMPLES = '''
     state: absent
     vm_name: rhel7
     snapshot_id: "{{ snapshot.id }}"
+
+# Delete all snapshots older than 2 days
+- ovirt_snapshot:
+    vm_name: test
+    keep_days_old: 2
 '''
 
 
@@ -112,6 +122,10 @@ snapshot:
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/snapshot."
     returned: On success if snapshot is found.
     type: dict
+snapshots:
+    description: List of deleted snapshots when keep_days_old is defined and snapshot is older than the input days
+    returned: On success returns deleted snapshots
+    type: list
 '''
 
 
@@ -122,6 +136,7 @@ try:
 except ImportError:
     pass
 
+from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     check_sdk,
@@ -161,10 +176,12 @@ def create_snapshot(module, vm_service, snapshots_service):
     }
 
 
-def remove_snapshot(module, vm_service, snapshots_service):
+def remove_snapshot(module, vm_service, snapshots_service, snapshot_id=None):
     changed = False
+    if not snapshot_id:
+        snapshot_id = module.params['snapshot_id']
     snapshot = get_entity(
-        snapshots_service.snapshot_service(module.params['snapshot_id'])
+        snapshots_service.snapshot_service(snapshot_id)
     )
 
     if snapshot:
@@ -222,6 +239,20 @@ def restore_snapshot(module, vm_service, snapshots_service):
     }
 
 
+def remove_old_snapshosts(module, vm_service, snapshots_service):
+    deleted_snapshots = []
+    changed = False
+    date_now = datetime.now()
+    for snapshot in snapshots_service.list():
+        if snapshot.vm is not None and snapshot.vm.name == module.params.get('vm_name'):
+            diff = date_now - snapshot.date.replace(tzinfo=None)
+            if diff.days >= module.params.get('keep_days_old'):
+                snapshot = remove_snapshot(module, vm_service, snapshots_service, snapshot.id).get('snapshot')
+                deleted_snapshots.append(snapshot)
+                changed = True
+    return dict(snapshots=deleted_snapshots, changed=changed)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -231,6 +262,7 @@ def main():
         vm_name=dict(required=True),
         snapshot_id=dict(default=None),
         description=dict(default=None),
+        keep_days_old=dict(default=None, type='int'),
         use_memory=dict(
             default=None,
             type='bool',
@@ -263,7 +295,10 @@ def main():
     try:
         state = module.params['state']
         if state == 'present':
-            ret = create_snapshot(module, vm_service, snapshots_service)
+            if module.params.get('keep_days_old') is not None:
+                ret = remove_old_snapshosts(module, vm_service, snapshots_service)
+            else:
+                ret = create_snapshot(module, vm_service, snapshots_service)
         elif state == 'restore':
             ret = restore_snapshot(module, vm_service, snapshots_service)
         elif state == 'absent':
