@@ -60,10 +60,10 @@ options:
   state:
     description:
       - Desired state of the provided backend host.
-      - Note that C(drain) state was added in version 2.4. It is supported only by HAProxy version 1.5 or later,
+      - Note that C(draining) state was added in version 2.4. It is supported only by HAProxy version 1.5 or later,
         if used on versions < 1.5, it will be ignored.
     required: true
-    choices: [ "enabled", "disabled", "drain" ]
+    choices: [ "enabled", "disabled", "draining" ]
   fail_on_not_found:
     description:
       - Fail whenever trying to enable/disable a backend host that does not exist
@@ -73,7 +73,7 @@ options:
   wait:
     description:
       - Wait until the server reports a status of 'UP' when `state=enabled`,
-        status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drain`
+        status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=draining`
     type: bool
     default: 'no'
     version_added: "2.0"
@@ -179,9 +179,10 @@ EXAMPLES = '''
     weight: 10
     backend: www
 
-# set the server in 'www' backend pool to drain mode
+# set the server in 'www' backend pool to drain mode without waiting for
+# backend hosts to finish draining
 - haproxy:
-    state: drain
+    state: draining
     host: '{{ inventory_hostname }}'
     socket: /var/run/haproxy.sock
     backend: www
@@ -198,7 +199,7 @@ from ansible.module_utils._text import to_bytes, to_text
 
 DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
 RECV_SIZE = 1024
-ACTION_CHOICES = ['enabled', 'disabled', 'drain']
+ACTION_CHOICES = ['enabled', 'disabled', 'draining']
 WAIT_RETRIES = 25
 WAIT_INTERVAL = 5
 
@@ -344,7 +345,7 @@ class HAProxy(object):
 
             # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
             if state[0]['status'] == status:
-                if not self.drain or (state[0]['scur'] == '0' and state == 'MAINT'):
+                if not self.drain or (state[0]['scur'] == '0' and state[0]['status'] in ('MAINT', 'DRAIN')):
                     return True
             else:
                 time.sleep(self.wait_interval)
@@ -373,9 +374,9 @@ class HAProxy(object):
             cmd += "; shutdown sessions server $pxname/$svname"
         self.execute_for_backends(cmd, backend, host, 'MAINT')
 
-    def drain(self, host, backend, status='DRAIN'):
+    def draining(self, host, backend, status='DRAIN'):
         """
-        Drain action, sets the server to DRAIN mode.
+        Draining action, sets the server to DRAIN mode.
         In this mode mode, the server will not accept any new connections
         other than those that are accepted via persistence.
         """
@@ -398,11 +399,11 @@ class HAProxy(object):
         if self.state == 'enabled':
             self.enabled(self.host, self.backend, self.weight)
         elif self.state == 'disabled' and self.drain:
-            self.drain(self.host, self.backend, status='MAINT')
+            self.draining(self.host, self.backend, status='MAINT')
         elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)
-        elif self.state == 'drain':
-            self.drain(self.host, self.backend)
+        elif self.state == 'draining':
+            self.draining(self.host, self.backend)
         else:
             self.module.fail_json(msg="unknown state specified: '%s'" % self.state)
 
