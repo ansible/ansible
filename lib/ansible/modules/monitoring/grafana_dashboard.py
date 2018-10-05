@@ -290,7 +290,8 @@ def grafana_create_dashboard(module, data):
                     'Unable to update the dashboard %s : %s' % (uid, body['message']))
     else:
         # create
-        payload["dashboard"].pop("id")
+        if 'id' in payload["dashboard"]:
+            payload["dashboard"].pop("id")
 
         #raise GrafanaAPIException("{}".format(payload))
         r, info = fetch_url(module, '%s/api/dashboards/db' %
