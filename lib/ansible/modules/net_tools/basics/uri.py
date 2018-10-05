@@ -270,11 +270,11 @@ import sys
 import tempfile
 import traceback
 
-from collections import Mapping, Sequence
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 JSON_CANDIDATES = ('text', 'json', 'javascript')

@@ -62,11 +62,11 @@ validate_certs: False
 
 import re
 
-from collections import MutableMapping
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 # 3rd party imports

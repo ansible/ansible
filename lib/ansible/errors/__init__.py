@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from collections import Sequence
 import traceback
 import sys
 
@@ -33,6 +32,7 @@ from ansible.errors.yaml_strings import (
     YAML_POSITION_DETAILS,
 )
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import Sequence
 
 
 class AnsibleError(Exception):

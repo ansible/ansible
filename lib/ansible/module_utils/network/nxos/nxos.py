@@ -36,6 +36,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
@@ -179,7 +180,7 @@ class Cli:
         responses = []
         try:
             resp = connection.edit_config(config, replace=replace)
-            if isinstance(resp, collections.Mapping):
+            if isinstance(resp, Mapping):
                 resp = resp['response']
         except ConnectionError as e:
             code = getattr(e, 'code', 1)

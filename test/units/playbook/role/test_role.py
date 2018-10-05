@@ -19,12 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
-
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.common._collections_compat import Container
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 
@@ -97,7 +96,7 @@ class TestHashParams(unittest.TestCase):
 
     def test_container_but_not_iterable(self):
         # This is a Container that is not iterable, which is unlikely but...
-        class MyContainer(collections.Container):
+        class MyContainer(Container):
             def __init__(self, some_thing):
                 self.data = []
                 self.data.append(some_thing)

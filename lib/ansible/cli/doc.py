@@ -23,12 +23,11 @@ import textwrap
 import traceback
 import yaml
 
-from collections import Sequence
-
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub

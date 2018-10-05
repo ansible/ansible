@@ -21,9 +21,9 @@ DOCUMENTATION = '''
 import os
 import time
 import json
-from collections import MutableMapping
 
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.callback import CallbackBase
 
 
