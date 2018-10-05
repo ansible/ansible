@@ -456,14 +456,17 @@ class VariableManager:
             # This is a list of all role names of all roles for this play
             play_role_names = [r._role_name for r in play.roles]
 
-            # role_names includes all role names, dependent or directly referenced by the play
-            variables['role_names'] = list(set(dependency_role_names + play_role_names))
-            # play_role_names includes the names of all roles directly referenced by this play
+            # ansible_role_names includes all role names, dependent or directly referenced by the play
+            variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))
+            # ansible_play_role_names includes the names of all roles directly referenced by this play
             # roles that are implicitly referenced via dependencies are not listed.
-            variables['play_role_names'] = play_role_names
-            # dependent_role_names includes the names of all roles that are referenced via dependencies
+            variables['ansible_play_role_names'] = play_role_names
+            # ansible_dependent_role_names includes the names of all roles that are referenced via dependencies
             # dependencies that are also explicitly named as roles are included in this list
-            variables['dependent_role_names'] = dependency_role_names
+            variables['ansible_dependent_role_names'] = dependency_role_names
+
+            # DEPRECATED: role_names should be deprecated in favor of ansible_role_names or ansible_play_role_names
+            variables['role_names'] = variables['ansible_play_role_names']
 
             variables['ansible_play_name'] = play.get_name()
 
