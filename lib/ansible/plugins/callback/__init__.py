@@ -26,9 +26,9 @@ import sys
 import warnings
 
 from copy import deepcopy
-from collections import MutableMapping
 
 from ansible import constants as C
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc

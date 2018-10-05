@@ -63,3 +63,4 @@ lib/ansible/modules/storage/infinidat/infini_vol.py ansible-format-automatic-spe
 lib/ansible/modules/storage/purestorage/purefa_host.py ansible-format-automatic-specification
 lib/ansible/modules/storage/purestorage/purefa_pg.py ansible-format-automatic-specification
 lib/ansible/modules/system/firewalld.py ansible-format-automatic-specification
+test/units/modules/system/test_known_hosts.py ansible-bad-function
