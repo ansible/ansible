@@ -4,6 +4,7 @@ cryptography
 pycrypto
 jinja2
 mock
+mocker
 nose
 passlib
 pytest
@@ -34,3 +35,6 @@ pexpect
 
 # requirement for the linode module
 linode-python
+
+# requirement for netconf
+ncclient

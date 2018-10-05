@@ -1,0 +1,5 @@
+# pip packages required to build docssite
+jinja2
+pygments
+PyYAML
+Sphinx
