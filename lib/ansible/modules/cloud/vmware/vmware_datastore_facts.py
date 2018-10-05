@@ -40,6 +40,7 @@ options:
      - Datacenter to search for datastores.
      - This parameter is required, if C(cluster) is not supplied.
      required: False
+     aliases: ['datacenter_name']
    cluster:
      description:
      - Cluster to search for datastores.
@@ -55,7 +56,7 @@ EXAMPLES = '''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: '{{ datacenter_name }}'
+    datacenter_name: '{{ datacenter_name }}'
     validate_certs: no
   delegate_to: localhost
   register: facts
@@ -65,7 +66,7 @@ EXAMPLES = '''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: '{{ datacenter_name }}'
+    datacenter_name: '{{ datacenter_name }}'
     name: datastore1
   delegate_to: localhost
   register: facts
@@ -149,8 +150,8 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         name=dict(type='str'),
-        datacenter=dict(type='str'),
         cluster=dict(type='str')
+        datacenter=dict(type='str', aliases=['datacenter_name']),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=[
