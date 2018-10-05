@@ -342,7 +342,7 @@ def main():
             name=dict(required=True, aliases=['user']),
             password=dict(aliases=['pass'], no_log=True),
             ssl=dict(default=False, type='bool'),
-            roles=dict(default=None, type='list'),
+            roles=dict(default="readWrite", type='list'),
             state=dict(default='present', choices=['absent', 'present']),
             update_password=dict(default="always", choices=["always", "on_create"]),
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
