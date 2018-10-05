@@ -174,6 +174,10 @@ def createcachetable_filter_output(line):
     return "Already exists" not in line
 
 
+def createsuperuser_filter_output(line):
+    return "Already exists" not in line
+
+
 def flush_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
 
@@ -251,6 +255,8 @@ def main():
     )
 
     command = module.params['command']
+    command_first_word = command.split(" ")[0]
+
     app_path = module.params['app_path']
     virtualenv = module.params['virtualenv']
 
@@ -289,6 +295,8 @@ def main():
     if rc != 0:
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'
+        if 'createsuperuser' in command_first_word and 'UNIQUE constraint failed' in err:
+            out = 'Already exists.'
         else:
             if "Unknown command:" in err:
                 _fail(module, cmd, err, "Unknown django command: %s" % command)
@@ -298,6 +306,7 @@ def main():
 
     lines = out.split('\n')
     filt = globals().get(command + "_filter_output", None)
+    filt = filt or globals().get(command_first_word + "_filter_output", None)
     if filt:
         filtered_output = list(filter(filt, lines))
         if len(filtered_output):
