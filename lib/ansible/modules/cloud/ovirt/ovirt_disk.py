@@ -146,6 +146,16 @@ options:
                your playbook accordingly to not export the disk all the time.
                This option is valid only for template disks."
         version_added: "2.4"
+    host:
+        description:
+            - "When the hypervisor name is specified the newly created disk or
+               an existing disk will refresh its information about the
+               underlying storage( Disk size, Serial, Product ID, Vendor ID ...)
+               The specified host will be used for gathering the storage
+               related information. This option is only valid for passthrough
+               disks. This option requires at least the logical_unit.id to be
+               specified"
+        version_added: "2.8"
 extends_documentation_fragment: ovirt
 '''
 
@@ -253,12 +263,10 @@ import ssl
 
 from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
 from ansible.module_utils.six.moves.urllib.parse import urlparse
-
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     BaseModule,
@@ -578,11 +586,22 @@ def main():
         sparsify=dict(default=None, type='bool'),
         openstack_volume_type=dict(default=None),
         image_provider=dict(default=None),
+        host=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    lun = module.params.get('logical_unit')
+    host = module.params['host']
+    # Fail when host is specified with the LUN id. Lun id is needed to identify
+    # an existing disk if already available inthe environment.
+    if (host and lun is None) or (host and lun.get("id") is None):
+        module.fail_json(
+            msg="Can not use parameter host ({0!s}) without "
+            "specifying the logical_unit id".format(host)
+        )
 
     check_sdk(module)
     check_params(module)
@@ -599,7 +618,6 @@ def main():
             service=disks_service,
         )
 
-        lun = module.params.get('logical_unit')
         if lun:
             disk = _search_by_lun(disks_service, lun.get('id'))
 
@@ -689,6 +707,13 @@ def main():
                     )
             elif state == 'detached':
                 ret = disk_attachments_module.remove()
+
+        # When the host parameter is specified and the disk is not being
+        # removed, refresh the information about the LUN.
+        if state != 'absent' and host:
+            hosts_service = connection.system_service().hosts_service()
+            host_id = get_id_by_name(hosts_service, host)
+            disks_service.disk_service(disk.id).refresh_lun(otypes.Host(id=host_id))
 
         module.exit_json(**ret)
     except Exception as e:
