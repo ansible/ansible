@@ -161,7 +161,8 @@ class GrafanaDeleteException(Exception):
 
 
 def grafana_switch_organisation(module, grafana_url, org_id, headers):
-    r, info = fetch_url(module, '%s/api/user/using/%s' % (grafana_url, org_id), headers=headers, method='POST')
+    r, info = fetch_url(module, '%s/api/user/using/%s' %
+                        (grafana_url, org_id), headers=headers, method='POST')
     if info['status'] != 200:
         raise GrafanaAPIException('Unable to switch to organization %s : %s' % (org_id, info))
 
@@ -179,7 +180,8 @@ def grafana_headers(module, data):
 
 def get_grafana_version(module, grafana_url, headers):
     grafana_version = None
-    r, info = fetch_url(module, '%s/api/frontend/settings' % grafana_url, headers=headers, method='GET')
+    r, info = fetch_url(module, '%s/api/frontend/settings' %
+                        grafana_url, headers=headers, method='GET')
     if info['status'] == 200:
         try:
             settings = json.loads(r.read())
@@ -199,9 +201,11 @@ def grafana_dashboard_exists(module, grafana_url, uid, headers):
     grafana_version = get_grafana_version(module, grafana_url, headers)
 
     if grafana_version >= 5:
-        r, info = fetch_url(module, '%s/api/dashboards/uid/%s' % (grafana_url, uid), headers=headers, method='GET')
+        r, info = fetch_url(module, '%s/api/dashboards/uid/%s' %
+                            (grafana_url, uid), headers=headers, method='GET')
     else:
-        r, info = fetch_url(module, '%s/api/dashboards/db/%s' % (grafana_url, uid), headers=headers, method='GET')
+        r, info = fetch_url(module, '%s/api/dashboards/db/%s' %
+                            (grafana_url, uid), headers=headers, method='GET')
     if info['status'] == 200:
         dashboard_exists = True
         try:
@@ -222,6 +226,8 @@ def grafana_create_dashboard(module, data):
     try:
         with open(data['path'], 'r') as json_file:
             payload = json.load(json_file)
+            if 'dashboard' not in payload:
+                payload = {'dashboard': payload}
     except Exception as e:
         raise GrafanaAPIException("Can't load json file %s" % to_native(e))
 
@@ -249,7 +255,8 @@ def grafana_create_dashboard(module, data):
             uid = None
 
     # test if dashboard already exists
-    dashboard_exists, dashboard = grafana_dashboard_exists(module, data['grafana_url'], uid, headers=headers)
+    dashboard_exists, dashboard = grafana_dashboard_exists(
+        module, data['grafana_url'], uid, headers=headers)
 
     result = {}
     if dashboard_exists is True:
@@ -265,7 +272,8 @@ def grafana_create_dashboard(module, data):
             if 'message' in data and data['message']:
                 payload['message'] = data['message']
 
-            r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
+            r, info = fetch_url(module, '%s/api/dashboards/db' %
+                                data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
             if info['status'] == 200:
                 if grafana_version >= 5:
                     try:
@@ -278,10 +286,15 @@ def grafana_create_dashboard(module, data):
                 result['changed'] = True
             else:
                 body = json.loads(info['body'])
-                raise GrafanaAPIException('Unable to update the dashboard %s : %s' % (uid, body['message']))
+                raise GrafanaAPIException(
+                    'Unable to update the dashboard %s : %s' % (uid, body['message']))
     else:
         # create
-        r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
+        payload["dashboard"].pop("id")
+
+        #raise GrafanaAPIException("{}".format(payload))
+        r, info = fetch_url(module, '%s/api/dashboards/db' %
+                            data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
             result['msg'] = "Dashboard %s created" % uid
             result['changed'] = True
@@ -293,7 +306,8 @@ def grafana_create_dashboard(module, data):
                     raise GrafanaAPIException(e)
             result['uid'] = uid
         else:
-            raise GrafanaAPIException('Unable to create the new dashboard %s : %s - %s.' % (uid, info['status'], info))
+            raise GrafanaAPIException(
+                'Unable to create the new dashboard %s : %s - %s.' % (uid, info['status'], info))
 
     return result
 
@@ -316,15 +330,18 @@ def grafana_delete_dashboard(module, data):
             raise GrafanaDeleteException('No uid specified %s')
 
     # test if dashboard already exists
-    dashboard_exists, dashboard = grafana_dashboard_exists(module, data['grafana_url'], uid, headers=headers)
+    dashboard_exists, dashboard = grafana_dashboard_exists(
+        module, data['grafana_url'], uid, headers=headers)
 
     result = {}
     if dashboard_exists is True:
         # delete
         if grafana_version < 5:
-            r, info = fetch_url(module, '%s/api/dashboards/db/%s' % (data['grafana_url'], uid), headers=headers, method='DELETE')
+            r, info = fetch_url(module, '%s/api/dashboards/db/%s' %
+                                (data['grafana_url'], uid), headers=headers, method='DELETE')
         else:
-            r, info = fetch_url(module, '%s/api/dashboards/uid/%s' % (data['grafana_url'], uid), headers=headers, method='DELETE')
+            r, info = fetch_url(module, '%s/api/dashboards/uid/%s' %
+                                (data['grafana_url'], uid), headers=headers, method='DELETE')
         if info['status'] == 200:
             result['msg'] = "Dashboard %s deleted" % uid
             result['changed'] = True
@@ -358,7 +375,8 @@ def grafana_export_dashboard(module, data):
             raise GrafanaExportException('No uid specified')
 
     # test if dashboard already exists
-    dashboard_exists, dashboard = grafana_dashboard_exists(module, data['grafana_url'], uid, headers=headers)
+    dashboard_exists, dashboard = grafana_dashboard_exists(
+        module, data['grafana_url'], uid, headers=headers)
 
     if dashboard_exists is True:
         try:
