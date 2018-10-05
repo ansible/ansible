@@ -7,10 +7,10 @@ __metaclass__ = type
 
 import json
 
-from collections import Mapping
 from datetime import date, datetime
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from ansible.parsing.vault import VaultLib
