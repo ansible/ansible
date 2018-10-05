@@ -183,7 +183,7 @@ if($state -eq 'present') {
                     }
                 }
             } elseif($ip_action -eq 'replace') {
-                # this is not the ip we were looking for
+                # this is not the ip we are looking for
                 # remove the alias if it exists
                 Remove-AliasFromEntry -list $hosts_lines -idx ([ref]$idx) -name $host_name
             }
