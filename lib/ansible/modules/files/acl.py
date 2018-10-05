@@ -27,7 +27,7 @@ options:
   state:
     description:
     - Define whether the ACL should be present or not.
-    - The C(query) state gets the current ACL without changing it, for use in 'register' operations.
+    - The C(query) state gets the current ACL without changing it, for use in C(register) operations.
     choices: [ absent, present, query ]
     default: query
   follow:
@@ -38,7 +38,7 @@ options:
   default:
     description:
     - If the target is a directory, setting this to C(yes) will make it the default ACL for entities created inside the directory.
-    - It causes an error if path is a file.
+    - Setting C(default) to C(yes) causes an error if the path is a file.
     type: bool
     default: no
     version_added: '1.5'
@@ -65,7 +65,7 @@ options:
     - This is now superseded by entity, type and permissions fields.
   recursive:
     description:
-    - Recursively sets the specified ACL (added in Ansible 2.0).
+    - Recursively sets the specified ACL.
     - Incompatible with C(state=query).
     type: bool
     default: no
