@@ -7,14 +7,14 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: win_hosts
-version_added: '2.5.1'
+version_added: '2.8'
 short_description: Modify hosts file entries on windows.
 description:
   - Allows  the addition, replacement, and removal of ip addresses and aliases from host entries in the windows system hosts file.
