@@ -36,67 +36,81 @@ options:
   from:
     description:
     - The email-address the mail is sent from. May contain address and phrase.
+    type: str
     default: root
   to:
     description:
     - The email-address(es) the mail is being sent to.
     - This is a list, which may contain address and phrase portions.
+    type: list
     default: root
-    aliases: ['recipients']
+    aliases: [ recipients ]
   cc:
     description:
     - The email-address(es) the mail is being copied to.
     - This is a list, which may contain address and phrase portions.
+    type: list
   bcc:
     description:
     - The email-address(es) the mail is being 'blind' copied to.
     - This is a list, which may contain address and phrase portions.
+    type: list
   subject:
     description:
     - The subject of the email being sent.
-    required: true
+    required: yes
+    type: str
   body:
     description:
     - The body of the email being sent.
+    type: str
     default: $subject
   username:
     description:
     - If SMTP requires username.
+    type: str
     version_added: '1.9'
   password:
     description:
     - If SMTP requires password.
+    type: str
     version_added: '1.9'
   host:
     description:
     - The mail server.
+    type: str
     default: localhost
   port:
     description:
     - The mail server port.
     - This must be a valid integer between 1 and 65534
+    type: int
     default: 25
     version_added: '1.0'
   attach:
     description:
     - A list of pathnames of files to attach to the message.
     - Attached files will have their content-type set to C(application/octet-stream).
+    type: list
     default: []
     version_added: '1.0'
   headers:
     description:
     - A list of headers which should be added to the message.
     - Each individual header is specified as C(header=value) (see example below).
+    type: list
     default: []
     version_added: '1.0'
   charset:
     description:
     - The character set of email being sent.
+    type: str
     default: utf-8
   subtype:
     description:
     - The minor mime type, can be either C(plain) or C(html).
     - The major type is always C(text).
+    type: str
     choices: [ html, plain ]
     default: plain
     version_added: '2.0'
@@ -108,12 +122,14 @@ options:
     - If C(never), the connection will not attempt to setup a secure SSL/TLS session, before sending
     - If C(starttls), the connection will try to upgrade to a secure SSL/TLS connection, before sending.
       If it is unable to do so it will fail.
+    type: str
     choices: [ always, never, starttls, try ]
     default: try
     version_added: '2.3'
   timeout:
     description:
     - Sets the timeout in seconds for connection attempts.
+    type: int
     default: 20
     version_added: '2.3'
 '''
@@ -255,6 +271,8 @@ def main():
                 if secure == 'always':
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                                (host, port, to_native(e)), exception=traceback.format_exc())
+            except:
+                pass
 
         if not secure_state:
             smtp = smtplib.SMTP(timeout=timeout)
