@@ -1,5 +1,4 @@
 ---
-
 powershell_module: powershell-yaml
 wrong_module: powershell_yaml
 allow_clobber_module: PowerShellCookbook

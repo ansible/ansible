@@ -1,12 +1,12 @@
 #!powershell
 
 # Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
-# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski.net>
+# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
-# win_psmodule (Powershell modules Additions/Removal)
+# win_psmodule (Windows PowerShell modules Additions/Removals/Updates)
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 
@@ -371,10 +371,10 @@ Function Find-LatestPsModule {
     $LatestModuleVersion
 }
 
-# Check powershell version, fail if < 5.0
+# Check PowerShell version, fail if < 5.0
 $PsVersion = $PSVersionTable.PSVersion
 if ($PsVersion.Major -lt 5){
-    $ErrorMessage = "Powershell 5.0 or higher is needed"
+    $ErrorMessage = "Windows PowerShell 5.0 or higher is needed"
     Fail-Json $result $ErrorMessage
 }
 
