@@ -1,0 +1,2 @@
+bugfixes:
+- use proper module_util to get Ansible version for Azure requests
