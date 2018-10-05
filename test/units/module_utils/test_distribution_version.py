@@ -943,7 +943,7 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
 ]
 
 
-@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x['name'], indirect=['stdin'])
+@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x.get('name'), indirect=['stdin'])
 def test_distribution_version(am, mocker, testcase):
     """tests the distribution parsing code of the Facts class
 
