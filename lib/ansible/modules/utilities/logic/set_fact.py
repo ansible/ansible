@@ -21,8 +21,8 @@ module: set_fact
 short_description: Set host facts from a task
 description:
     - This module allows setting new variables.  Variables are set on a host-by-host basis just like facts discovered by the setup module.
-    - These variables will be available to subsequent plays during an ansible-playbook run, but will not be saved across executions even if you use
-      a fact cache.
+    - These variables will be available to subsequent plays during an ansible-playbook run. Variables can also be saved across executions
+      using a fact cache by setting C(cacheable) to C(yes) in the module's parameters.
     - Per the standard Ansible variable precedence rules, many other types of variables have a higher priority, so this value may be overridden.
       See L(Variable Precedence Guide,../user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable) for more information.
     - This module is also supported for Windows targets.
