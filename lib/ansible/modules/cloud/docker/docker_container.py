@@ -163,7 +163,9 @@ options:
   image:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
-        will be pulled from the registry. If no tag is included, 'latest' will be used.
+        will be pulled from the registry. If no tag is included, C(latest) will be used.
+      - Can also be an image ID. If this is the case, the image is assumed to be available locally.
+        The C(pull) option is ignored for this case.
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
@@ -312,7 +314,10 @@ options:
       - ports
   pull:
     description:
-       - If true, always pull the latest version of an image. Otherwise, will only pull an image when missing.
+       - If true, always pull the latest version of an image. Otherwise, will only pull an image
+         when missing.
+       - I(Note) that images are only pulled when specified by name. If the image is specified
+         as a image ID (hash), it cannot be pulled.
     type: bool
     default: 'no'
   purge_networks:
@@ -693,7 +698,10 @@ import shlex
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, sanitize_result
+from ansible.module_utils.docker_common import (
+    HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient,
+    DockerBaseClass, sanitize_result, is_image_name_id,
+)
 from ansible.module_utils.six import string_types
 
 try:
@@ -979,7 +987,7 @@ class TaskParameters(DockerBaseClass):
             for vol in self.volumes:
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
-                        host, container, _ = vol.split(':')
+                        host, container, dummy = vol.split(':')
                         result.append(container)
                         continue
                     if len(vol.split(':')) == 2:
@@ -1988,19 +1996,22 @@ class ContainerManager(DockerBaseClass):
         if not self.parameters.image:
             self.log('No image specified')
             return None
-        repository, tag = utils.parse_repository_tag(self.parameters.image)
-        if not tag:
-            tag = "latest"
-        image = self.client.find_image(repository, tag)
-        if not self.check_mode:
-            if not image or self.parameters.pull:
-                self.log("Pull the image.")
-                image, alreadyToLatest = self.client.pull_image(repository, tag)
-                if alreadyToLatest:
-                    self.results['changed'] = False
-                else:
-                    self.results['changed'] = True
-                    self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
+        if is_image_name_id(self.parameters.image):
+            image = self.client.find_image_by_id(self.parameters.image)
+        else:
+            repository, tag = utils.parse_repository_tag(self.parameters.image)
+            if not tag:
+                tag = "latest"
+            image = self.client.find_image(repository, tag)
+            if not self.check_mode:
+                if not image or self.parameters.pull:
+                    self.log("Pull the image.")
+                    image, alreadyToLatest = self.client.pull_image(repository, tag)
+                    if alreadyToLatest:
+                        self.results['changed'] = False
+                    else:
+                        self.results['changed'] = True
+                        self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
         self.log("image")
         self.log(image, pretty_print=True)
         return image

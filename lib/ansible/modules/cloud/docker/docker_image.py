@@ -58,6 +58,7 @@ options:
     description:
       - "Image name. Name format will be one of: name, repository/name, registry_server:port/name.
         When pushing or pulling an image the name can optionally include the tag by appending ':tag_name'."
+      - Note that image IDs (hashes) are not supported.
     required: true
   path:
     description:
