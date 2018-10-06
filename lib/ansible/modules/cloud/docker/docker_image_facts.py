@@ -26,8 +26,9 @@ description:
 options:
   name:
     description:
-      - An image name or a list of image names. Name format will be name[:tag] or repository/name[:tag], where tag is
-        optional. If a tag is not provided, 'latest' will be used.
+      - An image name or a list of image names. Name format will be C(name[:tag]) or C(repository/name[:tag]),
+        where C(tag) is optional. If a tag is not provided, C(latest) will be used. Instead of image names, also
+        image IDs can be used.
     required: true
 
 extends_documentation_fragment:
@@ -163,7 +164,7 @@ except ImportError:
     # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, is_image_name_id
 
 
 class ImageManager(DockerBaseClass):
@@ -199,11 +200,15 @@ class ImageManager(DockerBaseClass):
             names = [names]
 
         for name in names:
-            repository, tag = utils.parse_repository_tag(name)
-            if not tag:
-                tag = 'latest'
-            self.log('Fetching image %s:%s' % (repository, tag))
-            image = self.client.find_image(name=repository, tag=tag)
+            if is_image_name_id(name):
+                self.log('Fetching image %s (ID)' % (name))
+                image = self.client.find_image_by_id(name)
+            else:
+                repository, tag = utils.parse_repository_tag(name)
+                if not tag:
+                    tag = 'latest'
+                self.log('Fetching image %s:%s' % (repository, tag))
+                image = self.client.find_image(name=repository, tag=tag)
             if image:
                 results.append(image)
         return results
