@@ -3,15 +3,6 @@
 # GNU General Public License v3.0+ (see COPYING or # https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
-import errno
-import os
-import stat
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -76,17 +67,18 @@ EXAMPLES = '''
   loop: "{{ res.by_target | dict2items }}"
 
 # Taking a more complex but also more flexible approach, we define first
-# a dependency tree of target and sources files, like this:
+# a dependency tree of target and sources files, e.g. like this:
 
-dependencies:
-  target.local.1:
-  - source.local.1
-  - source.local.2
-  target.local.2:
-  - source.local.2
-  target.local.3:
-  - source.local.2
-  - source.local.3
+- set_fact:
+    dependencies:
+      target.local.1:
+      - source.local.1
+      - source.local.2
+      target.local.2:
+      - source.local.2
+      target.local.3:
+      - source.local.2
+      - source.local.3
 
 # Then we go through the tree using a loop, capturing the result in a quite
 # complex structure for further use (we'll try to make this easier in a
@@ -132,8 +124,16 @@ by_source:
 count:
     description: number of pairs of source/target files
     returned: success
-    type: integer
+    type: int
 '''
+
+import errno
+import os
+import stat
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def main():
