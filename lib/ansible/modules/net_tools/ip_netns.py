@@ -1,20 +1,12 @@
 #!/usr/bin/python
 # (c) 2017, Arie Bregman <abregman@redhat.com>
 #
-# This file is a module for Ansible that interacts with Network Manager
+# This file is a module for Ansible that interacts with ip-netns module
+# of iproute.
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.    See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.    If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -47,11 +39,22 @@ options:
 EXAMPLES = '''
 # Create a namespace named mario
 - name: Create a namespace named mario
-  namespace:
+  ip_netns:
     name: mario
     state: present
+
+- name: Assign an id to a peer network namespace
+  ip_netns:
+    name: luigi
+    netnsid: 14
+
+- name: Run cmd in the named network namespace
+  ip_netns:
+    name: luigi
+    command: "ip link set dev eth0 up"
+
 - name: Delete a namespace named luigi
-  namespace:
+  ip_netns:
     name: luigi
     state: absent
 '''
@@ -69,12 +72,15 @@ class Namespace(object):
 
     def __init__(self, module):
         self.module = module
+        self.ip_bin = self.module.get_bin_path('ip', True)
         self.name = module.params['name']
+        self.netnsid = module.params['netnsid']
+        self.command = module.params['command']
         self.state = module.params['state']
 
     def _netns(self, command):
         '''Run ip nents command'''
-        return self.module.run_command(['ip', 'netns'] + command)
+        return self.module.run_command([self.ip_bin, 'netns'] + command)
 
     def exists(self):
         '''Check if the namespace already exists'''
@@ -90,9 +96,28 @@ class Namespace(object):
         if rtc != 0:
             self.module.fail_json(msg=err)
 
+    def setnsid(self):
+        '''Assign an id to a peer network namespace'''
+        rtc, out, err = self._netns(['set', self.name, self.netnsid])
+
+        if rtc != 0:
+            self.module.fail_json(msg=err)
+
     def delete(self):
         '''Delete network namespace'''
         rtc, out, err = self._netns(['del', self.name])
+        if rtc != 0:
+            self.module.fail_json(msg=err)
+
+    def nsexec(self):
+        '''Run command in the named network namespace'''
+        cmd = ['exec', self.name]
+
+        cmd_list = self.command.split()
+        for c in cmd_list:
+            cmd.append(c)
+
+        rtc, out, err = self._netns(cmd)
         if rtc != 0:
             self.module.fail_json(msg=err)
 
@@ -122,6 +147,13 @@ class Namespace(object):
             if not self.exists():
                 self.add()
                 changed = True
+            elif self.exists() and self.netnsid:
+                self.setnsid()
+                changed = True
+
+        if self.command and self.exists():
+            self.nsexec()
+            changed = True
 
         self.module.exit_json(changed=changed)
 
@@ -129,10 +161,12 @@ class Namespace(object):
 def main():
     """Entry point."""
     module = AnsibleModule(
-        argument_spec={
-            'name': {'default': None},
-            'state': {'default': 'present', 'choices': ['present', 'absent']},
-        },
+        argument_spec=dict(
+            name=dict(default=None, type='str'),
+            netnsid=dict(default=None, type='str'),
+            command=dict(default=None, type='str'),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+        ),
         supports_check_mode=True,
     )
 
