@@ -1817,11 +1817,19 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
+
+        # If the image parameter was passed then we need to deal with the image
+        # version comparison. Otherwise we handle this depending on whether
+        # the container already runs or not; in the former case, in case the
+        # container needs to be restarted, we use the existing container's
+        # image ID.
         image = self._get_image()
         self.log(image, pretty_print=True)
         if not container.exists:
             # New container
             self.log('No container found')
+            if not self.parameters.image:
+                self.fail('Cannot create container when image is not specified!')
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
@@ -1837,10 +1845,15 @@ class ContainerManager(DockerBaseClass):
                     self.diff['image_different'] = True
                 self.log("differences")
                 self.log(differences, pretty_print=True)
+                image_to_use = self.parameters.image
+                if not image_to_use and container and container.Image:
+                    image_to_use = container.Image
+                if not image_to_use:
+                    self.fail('Cannot recreate container when image is not specified or cannot be extracted from current container!')
                 if container.running:
                     self.container_stop(container.Id)
                 self.container_remove(container.Id)
-                new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+                new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
 
