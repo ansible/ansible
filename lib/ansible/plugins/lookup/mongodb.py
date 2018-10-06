@@ -167,7 +167,7 @@ class LookupModule(LookupBase):
         try:
             return self._run_helper(terms)
         except Exception as e:
-            print(u"There was an exception on the mongodb_lookup: {}".format(to_native(e)))
+            print(u"There was an exception on the mongodb_lookup: {0}".format(to_native(e)))
             raise e
 
     def _run_helper(self, terms):
@@ -177,7 +177,7 @@ class LookupModule(LookupBase):
         for term in terms:
             for required_parameter in [u"database", u"collection"]:
                 if required_parameter not in term:
-                    raise AnsibleError(u"missing mandatory parameter [{}]".format(required_parameter))
+                    raise AnsibleError(u"missing mandatory parameter [{0}]".format(required_parameter))
 
             connection_string = term.get(u'connection_string', u"mongodb://localhost")
             database = term[u"database"]
