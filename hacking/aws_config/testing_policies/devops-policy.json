@@ -1,0 +1,15 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AllowCodeCommitModuleTests",
+        "Effect": "Allow",
+        "Action": [
+          "codecommit:*"
+        ],
+        "Resource": [
+          "arn:aws:codecommit:*"
+        ]
+      }
+    ]
+}
