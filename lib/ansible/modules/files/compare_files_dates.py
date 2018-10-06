@@ -116,15 +116,30 @@ by_target:
     returned: success
     type: complex
     sample: { 'target1': [ 'source1', 'source2' ], 'target2': [ 'source1'] }
+    contains:
+        target_file_name:
+            description: list of source files newer than the target file used as key
+            type: list
+            sample:
+                - source_file_1
+                - source_file_2
 by_source:
     description: a dictionary with source files as keys and a list of older target files as value
     returned: success
     type: complex
     sample: { 'source1': [ 'target1', 'target3' ], 'source2': [ 'target2'] }
+    contains:
+        source_file_name:
+            description: list of target files older than the source file used as key
+            type: list
+            sample:
+                - target_file_1
+                - target_file_3
 count:
     description: number of pairs of source/target files
     returned: success
     type: int
+    sample: 0
 '''
 
 import errno
