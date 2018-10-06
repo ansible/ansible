@@ -43,6 +43,7 @@ DOCUMENTATION = '''
                 - sites
                 - tenants
                 - racks
+                - tags
                 - device_roles
                 - device_types
                 - manufacturers
@@ -172,6 +173,7 @@ class InventoryModule(BaseInventoryPlugin):
             "sites": self.extract_site,
             "tenants": self.extract_tenant,
             "racks": self.extract_rack,
+            "tags": self.extract_tags,
             "device_roles": self.extract_device_role,
             "device_types": self.extract_device_type,
             "manufacturers": self.extract_manufacturer
@@ -179,37 +181,37 @@ class InventoryModule(BaseInventoryPlugin):
 
     def extract_device_type(self, host):
         try:
-            return self.device_types_lookup[host["device_type"]["id"]]
+            return [self.device_types_lookup[host["device_type"]["id"]]]
         except Exception:
             return
 
     def extract_rack(self, host):
         try:
-            return self.racks_lookup[host["rack"]["id"]]
+            return [self.racks_lookup[host["rack"]["id"]]]
         except Exception:
             return
 
     def extract_site(self, host):
         try:
-            return self.sites_lookup[host["site"]["id"]]
+            return [self.sites_lookup[host["site"]["id"]]]
         except Exception:
             return
 
     def extract_tenant(self, host):
         try:
-            return self.tenants_lookup[host["tenant"]["id"]]
+            return [self.tenants_lookup[host["tenant"]["id"]]]
         except Exception:
             return
 
     def extract_device_role(self, host):
         try:
-            return self.device_roles_lookup[host["device_role"]["id"]]
+            return [self.device_roles_lookup[host["device_role"]["id"]]]
         except Exception:
             return
 
     def extract_manufacturer(self, host):
         try:
-            return self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]
+            return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
         except Exception:
             return
 
@@ -233,6 +235,9 @@ class InventoryModule(BaseInventoryPlugin):
             return str(ip_interface(address).ip)
         except Exception:
             return
+
+    def extract_tags(self, host):
+        return host["tags"]
 
     def refresh_sites_lookup(self):
         url = urljoin(self.api_endpoint, "/api/dcim/sites/?limit=0")
@@ -318,15 +323,16 @@ class InventoryModule(BaseInventoryPlugin):
         return host["name"] or str(uuid.uuid4())
 
     def add_host_to_groups(self, host, hostname):
-        for g in self.group_by:
-            group = self.group_extractors[g](host)
+        for group in self.group_by:
+            sub_groups = self.group_extractors[group](host)
 
-            if not group:
+            if not sub_groups:
                 continue
 
-            group_name = "_".join([g, group])
-            self.inventory.add_group(group=group_name)
-            self.inventory.add_host(group=group_name, host=hostname)
+            for sub_group in sub_groups:
+                group_name = "_".join([group, sub_group])
+                self.inventory.add_group(group=group_name)
+                self.inventory.add_host(group=group_name, host=hostname)
 
     def _fill_host_variables(self, host, hostname):
         for attribute, extractor in self.group_extractors.items():
