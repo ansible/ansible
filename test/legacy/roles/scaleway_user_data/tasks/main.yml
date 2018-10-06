@@ -5,7 +5,7 @@
     name: foobar
     state: present
     image: 857de28c-39ce-4b15-9389-b68d8bb1bb51
-    organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+    organization: '{{ scaleway_organization }}'
     region: par1
     commercial_type: START1-S
     wait: true
@@ -71,7 +71,7 @@
     state: absent
     region: par1
     image: 857de28c-39ce-4b15-9389-b68d8bb1bb51
-    organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+    organization: '{{ scaleway_organization }}'
     commercial_type: START1-S
     wait: true
   register: server_destroy_task
