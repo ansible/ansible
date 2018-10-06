@@ -1,0 +1,36 @@
+# test code for the mongodb lookup module
+# (c) 2018, Marcos Diez <marcos AT unitron.com.br>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+- include: test_lookup_mongo.yml
+  when: ansible_distribution == 'Ubuntu'
+  vars:
+    mongodb_parameters:
+      #mandatory parameters
+      database: 'local'
+      #optional
+      collection: "startup_log"
+      connection_string: "mongodb://localhost/"
+      extra_connection_parameters: { "connectTimeoutMS": 5000 }
+      # extra_connection_parameters: { "ssl": True , "ssl_certfile": /etc/self_signed_certificate.pem" }
+      #optional query  parameters, we accept any parameter from the normal mongodb query.
+      # filter:  { "hostname": "u18" }
+      projection: { "pid": True, "_id": False, "hostname": True }
+      skip: 0
+      limit: 1
+      sort:  [ [ "startTime", "ASCENDING" ], [ "age", "DESCENDING" ] ]
