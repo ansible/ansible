@@ -3,6 +3,7 @@
       storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
       vm_name1: "vm1{{ resource_group | hash('md5') | truncate(5, True, '') }}"
       vm_name2: "vm2{{ resource_group | hash('md5') | truncate(5, True, '') }}"
+      vm_name3: "vm3{{ resource_group | hash('md5') | truncate(5, True, '') }}"
       abs_name1: "avbs1{{ resource_group | hash('md5') | truncate(3, True, '') }}"
       abs_name2: "avbs2{{ resource_group | hash('md5') | truncate(3, True, '') }}"
 
@@ -63,6 +64,35 @@
       subnet: "{{ vm_name1 }}"
       public_ip_name: "{{ vm_name1 }}"
       security_group: "{{ vm_name1 }}"
+
+- name: Create virtual machine In Availability zone
+  azure_rm_virtualmachine:
+    admin_username: adminuser
+    admin_password: Password123!
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name3 }}"
+    password: PASSWORD
+    vm_size: Standard_A0
+    availability_zone: 1
+    public_ip_allocation_method: Disabled
+    location: centralus
+    image:
+       offer: UbuntuServer
+       publisher: Canonical
+       sku: 16.04-LTS
+       version: latest
+    managed_disk_type: Standard_LRS
+
+- assert:
+      that:
+        - azure_vm.zones == ["1"]
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name3 }}"
+      state: absent
+      vm_size: Standard_A0
 
 - name: Create virtual machine with a single NIC
   register: output

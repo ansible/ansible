@@ -122,6 +122,14 @@ options:
         description:
             - Name or ID of an existing availability set to add the VM to. The availability_set should be in the same resource group as VM.
         version_added: "2.5"
+    availability_zone:
+        description:
+            - Availability Zone where the vm should be available.
+        choices:
+            - 1
+            - 2
+            - 3
+        version_added: "2.8"
     storage_account_name:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
@@ -694,6 +702,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
+            availability_zone=dict(type='str', choices=['1', '2', '3']),
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
             custom_data=dict(type='str'),
@@ -732,6 +741,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             accept_terms=dict(type='bool', default=False)
         )
 
+        self.availability_zone = None
         self.resource_group = None
         self.name = None
         self.custom_data = None
@@ -978,6 +988,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         if changed:
             if self.state == 'present':
                 default_storage_account = None
+                zones = [self.availability_zone] if self.availability_zone else []
+
                 if not vm:
                     # Create the VM
                     self.log("Create virtual machine {0}".format(self.name))
@@ -1068,7 +1080,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             network_interfaces=nics
                         ),
                         availability_set=availability_set_resource,
-                        plan=plan
+                        plan=plan,
+                        zones=zones
                     )
 
                     if self.admin_password:
@@ -1224,6 +1237,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         network_profile=self.compute_models.NetworkProfile(
                             network_interfaces=nics
                         ),
+                        zones=zones
                     )
 
                     if vm_dict.get('tags'):
