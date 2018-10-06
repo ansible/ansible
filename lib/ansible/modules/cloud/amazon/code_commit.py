@@ -89,8 +89,9 @@ class CodeCommit(object):
             repository_exists = False
             repositories = self._connection.list_repositories()['repositories']
             for item in repositories:
-                if not repository_exists:
-                    repository_exists = self._module.params['name'] in item.values()
+                if self._module.params['name'] in item.values():
+                    repository_exists = True
+                    return repository_exists
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't get repository")
         return repository_exists
