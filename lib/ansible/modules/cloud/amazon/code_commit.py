@@ -49,7 +49,7 @@ results:
 '''
 
 EXAMPLES = '''
-# Create new A repository
+# Create A new repository
 - code_commit:
     name: repo
     state: present
