@@ -1,20 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017-2018, Antony Alekseyev <antony.alekseyev@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 DOCUMENTATION = '''
 ---
@@ -23,9 +14,10 @@ author:
     - "Antony Alekseyev (@Akint)"
 short_description: Zabbix map creates/updates/deletes
 description:
-    - "This module allows you to create, modify and delete Zabbix map entries, using DOT language.
+    - "This module allows you to create, modify and delete Zabbix map entries,
+      using Graphviz binaries and text description written in DOT language.
       Nodes of the graph will become map elements and edges will become links between map elements.
-      See U(https://en.wikipedia.org/wiki/DOT_(graph_description_language)) for details.
+      See U(https://en.wikipedia.org/wiki/DOT_(graph_description_language)) and U(https://www.graphviz.org/) for details.
       Inspired by U(http://blog.zabbix.com/maps-for-the-lazy/)."
     - "The following extra node attributes are supported:
         C(zbx_host) contains name of the host in Zabbix. Use this if desired type of map element is C(host).
@@ -49,37 +41,15 @@ requirements:
     - zabbix-api
     - pydotplus
     - webcolors
-    - PIL
+    - Pillow
     - Graphviz
-version_added: "2.4"
+version_added: "2.8"
 options:
-    server_url:
-        description:
-            - Url of Zabbix server, with protocol (http or https).
-        required: true
-        aliases: [ "url" ]
-    login_user:
-        description:
-            - Zabbix user name, used to authenticate against the server.
-        required: true
-    login_password:
-        description:
-            - Zabbix user password.
-        required: true
-    http_login_user:
-        description:
-            - Basic Auth login.
-        required: false
-        default: None
-    http_login_password:
-        description:
-            - Basic Auth password.
-        required: false
-        default: None
     name:
         description:
             - Name of the map.
         required: true
+        aliases: [ "map_name" ]
     data:
         description:
             - Graph written in DOT language.
@@ -93,11 +63,6 @@ options:
         required: false
         choices: ['present', 'absent']
         default: "present"
-    timeout:
-        description:
-            - The timeout of API request (seconds).
-        required: false
-        default: 10
     width:
         description:
             - Width of the map.
@@ -117,11 +82,13 @@ options:
         description:
             - Whether the the problem trigger will be displayed for elements with a single problem.
         required: false
+        type: bool
         default: true
     highlight:
         description:
             - Whether icon highlighting is enabled.
         required: false
+        type: bool
         default: true
     label_type:
         description:
@@ -129,6 +96,14 @@ options:
         required: false
         choices: ['label', 'ip', 'name', 'status', 'nothing', 'custom']
         default: "name"
+    default_image:
+        description:
+            - Name of the Zabbix image used to display the element if this element doesn't have the C(zbx_image) attribute defined.
+        required: false
+        aliases: [ "image" ]
+
+extends_documentation_fragment:
+    - zabbix
 '''
 
 RETURN = ''' # '''
@@ -192,7 +167,7 @@ EXAMPLES = '''
 '''
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
+    'metadata_version': '1.1',
     'supported_by': 'community',
     'status': ['preview']
 }
@@ -770,6 +745,7 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             timeout=dict(type='int', default=10),
+            validate_certs=dict(type='bool', required=False, default=True),
             name=dict(type='str', required=True, aliases=['map_name']),
             data=dict(type='str', required=False, aliases=['dot_data']),
             width=dict(type='int', default=800),
@@ -791,7 +767,7 @@ def main():
     if not HAS_WEBCOLORS:
         module.fail_json(msg="Missing required webcolors module (check docs or install with: pip install webcolors)")
     if not HAS_PIL:
-        module.fail_json(msg="Missing required PIL module (check docs or install with: pip install PIL)")
+        module.fail_json(msg="Missing required Pillow module (check docs or install with: pip install Pillow)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -799,12 +775,14 @@ def main():
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
     timeout = module.params['timeout']
+    validate_certs = module.params['validate_certs']
 
     zbx = None
 
     # login to zabbix
     try:
-        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
