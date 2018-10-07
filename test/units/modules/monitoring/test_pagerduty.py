@@ -1,12 +1,12 @@
 from ansible.compat.tests import unittest
-from ansible.modules.monitoring import pagerduty
+from ansible.modules.monitoring import pagerduty_maintenance_window
 
 import json
 
 
 class PagerDutyTest(unittest.TestCase):
     def setUp(self):
-        self.pd = pagerduty.PagerDutyRequest(module=pagerduty, name='name', user='user', token='token')
+        self.pd = pagerduty_maintenance_window.PagerDutyRequest(module=pagerduty_maintenance_window, name='name', user='user', token='token')
 
     def _assert_ongoing_maintenance_windows(self, module, url, headers):
         self.assertEquals('https://api.pagerduty.com/maintenance_windows?filter=ongoing', url)

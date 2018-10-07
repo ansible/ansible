@@ -603,7 +603,7 @@ lib/ansible/modules/monitoring/logicmonitor_facts.py E317
 lib/ansible/modules/monitoring/logicmonitor_facts.py E324
 lib/ansible/modules/monitoring/nagios.py E317
 lib/ansible/modules/monitoring/nagios.py E324
-lib/ansible/modules/monitoring/pagerduty.py E324
+lib/ansible/modules/monitoring/pagerduty_maintenance_window.py E324
 lib/ansible/modules/monitoring/pingdom.py E326
 lib/ansible/modules/monitoring/sensu_check.py E324
 lib/ansible/modules/monitoring/sensu_client.py E324
