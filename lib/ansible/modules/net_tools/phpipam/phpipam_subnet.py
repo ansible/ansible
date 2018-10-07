@@ -34,6 +34,10 @@ options:
     description:
       - API url for phpIPAM instance
     required: True
+  section:
+    description:
+      - Name of the section that the subnet belongs to.
+    required: True
   subnet:
     description:
       - Subnet in CIDR format.
@@ -42,6 +46,10 @@ options:
     description:
       - Master subnet for the subnet to be nested under.
       - When master_subnet is not defined it defaults to the root.
+    required: False
+  vlan:
+    description:
+      - Optional vlan for subnet to be assigned
     required: False
   description:
     description:

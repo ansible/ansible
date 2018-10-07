@@ -38,22 +38,18 @@ options:
   vlan:
     description:
       - Vlan number.
-    type: int
     required: True
   name:
     description:
       - Vlan display name in phpIPAM.
-    type: string
     required: True
   description:
     description:
       - Optional description displayed next to vlan in phpIPAM.
-    type: string
     required: False
   state:
     description:
       - States whether the vlan should be present or absent
-    type: string
     choices: ["present", "absent"]
     required: False
     default: present
