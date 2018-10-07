@@ -203,7 +203,7 @@ except ImportError:
     HAS_PIL = False
 
 
-class Map(object):
+class Map():
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
@@ -234,7 +234,7 @@ class Map(object):
 
     def get_map_config(self):
         if not self.dot_data:
-            self._module.fail_json(msg="'data' is mandatory with state 'present'" % e)
+            self._module.fail_json(msg="'data' is mandatory with state 'present'")
         graph = self._build_graph()
         nodes = self._get_graph_nodes(graph)
         edges = self._get_graph_edges(graph)
@@ -686,8 +686,8 @@ class Map(object):
     def _get_scales(self, graph):
         bb = remove_quotes(graph.get_bb())
         min_x, min_y, max_x, max_y = bb.split(",")
-        scale_x = (self.width - self.margin * 2) / (float(max_x) - float(min_x))
-        scale_y = (self.height - self.margin * 2) / (float(max_y) - float(min_y))
+        scale_x = (self.width - self.margin * 2) / (float(max_x) - float(min_x)) if float(max_x) != float(min_x) else 0
+        scale_y = (self.height - self.margin * 2) / (float(max_y) - float(min_y)) if float(max_y) != float(min_y) else 0
         return {
             'min_x': float(min_x),
             'min_y': float(min_y),
