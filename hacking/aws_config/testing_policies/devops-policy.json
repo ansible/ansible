@@ -5,7 +5,9 @@
         "Sid": "AllowCodeCommitModuleTests",
         "Effect": "Allow",
         "Action": [
-          "codecommit:*"
+          "codecommit:ListRepositories",
+          "codecommit:CreateRepositories",
+          "codecommit:DeleteRpositories"
         ],
         "Resource": [
           "arn:aws:codecommit:*"
