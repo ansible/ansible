@@ -50,6 +50,22 @@ options:
     description:
       - Specifies whether AutoSupport notification to technical support is enabled.
     type: bool
+  from_address:
+    description:
+      - specify the e-mail address from which the node sends AutoSupport messages
+  partner_address:
+    description:
+      - specify up to five e-mail addresses to receive all AutoSupport messages including periodic messages. This parameter is typically used for support partners. 
+  to:
+    description:
+      - specify up to five e-mail addresses to receive AutoSupport messages that are most relevant for your internal organization. 
+  proxy_url:
+    description:
+      - specify an HTTP or HTTPS proxy if the -transport parameter is set to HTTP or HTTPS and your organization uses a proxy
+  hostname_subject:
+    description:
+      - Specify whether the hostname of the node is included in the subject line of the AutoSupport message.
+    type: bool
 short_description: "NetApp ONTAP manage Autosupport"
 version_added: "2.7"
 
@@ -104,7 +120,12 @@ class NetAppONTAPasup(object):
             noteto=dict(required=False, type='list'),
             post_url=dict(reuired=False, type='str'),
             support=dict(required=False, type='bool'),
-            mail_hosts=dict(required=False, type='list')
+            mail_hosts=dict(required=False, type='list'),
+            from_address=dict(required=False, type='str'),
+            partner_address=dict(required=False, type='list'),
+            to=dict(required=False, type='list'),
+            proxy_url=dict(required=False, type='str'),
+            hostname_subject=dict(required=False, type='bool'),
         ))
 
         self.module = AnsibleModule(
@@ -147,9 +168,18 @@ class NetAppONTAPasup(object):
             asup_info['support'] = True
         elif current_support == 'false':
             asup_info['support'] = False
+        hostname_subject = asup_attr_info.get_child_content('is-node-in-subject')
+        if hostname_subject == 'true':
+            asup_info['hostname_subject'] = True
+        elif hostname_subject == 'false':
+            asup_info['hostname_subject'] = False
+
         asup_info['transport'] = asup_attr_info.get_child_content('transport')
         asup_info['post_url'] = asup_attr_info.get_child_content('post-url')
         mail_hosts = asup_attr_info.get_child_by_name('mail-hosts')
+        asup_info['from_address'] = asup_attr_info.get_child_content('from')
+        asup_info['proxy_url'] = asup_attr_info.get_child_content('proxy-url')
+
         # mail hosts has one valid entry always
         if mail_hosts is not None:
             # get list of mail hosts
@@ -157,6 +187,15 @@ class NetAppONTAPasup(object):
         email_list = asup_attr_info.get_child_by_name('noteto')
         # if email_list is empty, noteto is also empty
         asup_info['noteto'] = [] if email_list is None else [email.get_content() for email in email_list.get_children()]
+
+        partner_email_list = asup_attr_info.get_child_by_name('partner-address')
+        # if partner_email_list is empty, partner_address is also empty
+        asup_info['partner_address'] = [] if partner_email_list is None else [email.get_content() for email in partner_email_list.get_children()]
+
+        to_list = asup_attr_info.get_child_by_name('to')
+        # if to_list is empty, to is also empty
+        asup_info['to'] = [] if to_list is None else [email.get_content() for email in to_list.get_children()]
+
         return asup_info
 
     def modify_autosupport_config(self, modify):
@@ -176,20 +215,40 @@ class NetAppONTAPasup(object):
                 asup_details.add_new_child('is-support-enabled', 'true')
             elif modify.get('support') is False:
                 asup_details.add_new_child('is-support-enabled', 'false')
+        if modify.get('hostname_subject') is not None:
+            if modify.get('hostname_subject') is True:
+                asup_details.add_new_child('is-node-in-subject', 'true')
+            elif modify.get('hostname_subject') is False:
+                asup_details.add_new_child('is-node-in-subject', 'false')
         if modify.get('transport'):
             asup_details.add_new_child('transport', modify['transport'])
         if modify.get('post_url'):
             asup_details.add_new_child('post-url', modify['post_url'])
+        if modify.get('from_address'):
+            asup_details.add_new_child('from', modify['from_address'])
+        if modify.get('proxy_url'):
+            asup_details.add_new_child('proxy-url', modify['proxy_url'])
         if modify.get('noteto'):
             asup_email = netapp_utils.zapi.NaElement('noteto')
             asup_details.add_child_elem(asup_email)
             for email in modify.get('noteto'):
                 asup_email.add_new_child('mail-address', email)
+        if modify.get('partner_address'):
+            asup_partner_address = netapp_utils.zapi.NaElement('partner-address')
+            asup_details.add_child_elem(asup_partner_address)
+            for email in modify.get('partner_address'):
+                asup_partner_address.add_new_child('mail-address', email)
+        if modify.get('to'):
+            asup_to = netapp_utils.zapi.NaElement('to')
+            asup_details.add_child_elem(asup_to)
+            for email in modify.get('to'):
+                asup_to.add_new_child('mail-address', email)
         if modify.get('mail_hosts'):
             asup_mail_hosts = netapp_utils.zapi.NaElement('mail-hosts')
             asup_details.add_child_elem(asup_mail_hosts)
             for mail in modify.get('mail_hosts'):
                 asup_mail_hosts.add_new_child('string', mail)
+
         try:
             result = self.server.invoke_successfully(asup_details, enable_tunneling=True)
             return result
