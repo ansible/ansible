@@ -55,10 +55,11 @@ options:
       - specify the e-mail address from which the node sends AutoSupport messages
   partner_address:
     description:
-      - specify up to five e-mail addresses to receive all AutoSupport messages including periodic messages. This parameter is typically used for support partners. 
+      - specify up to five e-mail addresses to receive all AutoSupport messages including periodic messages.
+      - This parameter is typically used for support partners.
   to:
     description:
-      - specify up to five e-mail addresses to receive AutoSupport messages that are most relevant for your internal organization. 
+      - specify up to five e-mail addresses to receive AutoSupport messages that are most relevant for your internal organization.
   proxy_url:
     description:
       - specify an HTTP or HTTPS proxy if the -transport parameter is set to HTTP or HTTPS and your organization uses a proxy
