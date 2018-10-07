@@ -23,39 +23,40 @@ version_added: "2.7"
 description:
     - Creates, modifies, or destroys vlan in phpIPAM instance if necessary.
 options:
-    username:
-        description:
-            - username that has permission to access phpIPAM API
-        required: True
-    password:
-        description:
-            - password for username provided
-        required: True
-    url:
-        description:
-            - API url for phpIPAM instance
-        required: True
-    vlan:
-        description:
-            - Vlan number.
-        type: int
-        required: True
-    name:
-        description:
-            - Vlan display name in phpIPAM.
-        type: string
-        required: True
-    description
-        description:
-            - Optional description displayed next to vlan in phpIPAM.
-        type: string
-        required: False
-    state:
-        description:
-            - States whether the vlan should be present or absent
-        type: string
-        required: False
-        default: True
+  username:
+    description:
+      - username that has permission to access phpIPAM API
+    required: True
+  password:
+    description:
+      - password for username provided
+    required: True
+  url:
+    description:
+      - API url for phpIPAM instance
+    required: True
+  vlan:
+    description:
+      - Vlan number.
+    type: int
+    required: True
+  name:
+    description:
+      - Vlan display name in phpIPAM.
+    type: string
+    required: True
+  description
+    description:
+      - Optional description displayed next to vlan in phpIPAM.
+    type: string
+    required: False
+  state:
+    description:
+      - States whether the vlan should be present or absent
+    type: string
+    choices: ["present", "absent"]
+    required: False
+    default: present
 '''
 
 EXAMPLES = '''

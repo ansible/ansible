@@ -3,7 +3,8 @@
 # Copyright: (c) 2018, Carson Anderson <rcanderson23@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -22,38 +23,38 @@ version_added: "2.7"
 description:
     - Obtain first free ip address in a subnet from phpIPAM instance
 options:
-    username:
-        description:
-            - username that has permission to access phpIPAM API
-        required: True
-    password:
-        description:
-            - password for username provided
-        required: True
-    url:
-        description:
-            - API url for phpIPAM instance
-        required: True
-    subnet:
-        description:
-            - Subnet to obtain ip address from.
-            - Must be in CIDR format.
-        required: True
-    section:
-        description:
-            - Section name that the subnet resides in.
-        type: string
-        required: True
-    hostname:
-        description:
-            - Hostname displayed next to address in phpIPAM.
-        type: string
-        required: False
-    description
-        description:
-            - Optional description displayed next to address in phpIPAM.
-        type: string
-        required: False
+  username:
+    description:
+        - username that has permission to access phpIPAM API
+    required: True
+  password:
+    description:
+        - password for username provided
+    required: True
+  url:
+    description:
+        - API url for phpIPAM instance
+    required: True
+  subnet:
+    description:
+        - Subnet to obtain ip address from.
+        - Must be in CIDR format.
+    required: True
+  section:
+    description:
+        - Section name that the subnet resides in.
+    type: string
+    required: True
+  hostname:
+    description:
+        - Hostname displayed next to address in phpIPAM.
+    type: string
+    required: False
+  description
+    description:
+        - Optional description displayed next to address in phpIPAM.
+    type: string
+    required: False
 '''
 
 EXAMPLES = '''
@@ -75,9 +76,9 @@ EXAMPLES = '''
 
 RETURN = '''
 ip:
-    description: string containing ip address
-    returned: success
-    type: simple
+  description: string containing ip address
+  returned: success
+  type: string
 output:
     description: dictionary containing phpIPAM response
     returned: success

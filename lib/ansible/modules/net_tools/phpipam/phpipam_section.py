@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Carson Anderson <rcanderson23@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.phpipam as phpipam
+from __future__ import absolute_import, division, print_function
 
 
 ANSIBLE_METADATA = {
@@ -23,41 +22,42 @@ version_added: "2.7"
 description:
     - Creates, modifies, or destroys section in phpIPAM instance if necessary.
 options:
-    username:
-        description:
-            - username that has permission to access phpIPAM API
-        required: True
-    password:
-        description:
-            - password for username provided
-        required: True
-    url:
-        description:
-            - API url for phpIPAM instance
-        required: True
-    section:
-        description:
-            - Section name that the subnet resides in.
-        type: string
-        required: True
-    master_section:
-        description:
-            - Master section for the section to be nested under.
-            - When master_section is not defined it defaults to the root.
-        type: string
-        required: False
-        default: root
-    description
-        description:
-            - Optional description displayed next to address in phpIPAM.
-        type: string
-        required: False
-    state:
-        description:
-            - States whether the section should be present or absent
-        type: string
-        required: False
-        default: True
+  username:
+    description:
+      - username that has permission to access phpIPAM API
+    required: True
+  password:
+    description:
+      - password for username provided
+    required: True
+  url:
+    description:
+      - API url for phpIPAM instance
+    required: True
+  section:
+    description:
+      - Section name that the subnet resides in.
+    type: string
+    required: True
+  master_section:
+    description:
+      - Master section for the section to be nested under.
+      - When master_section is not defined it defaults to the root.
+    type: string
+    required: False
+    default: root
+  description:
+    description:
+      - Optional description displayed next to address in phpIPAM.
+    type: string
+    required: False
+  state:
+    description:
+      - States whether the section should be present or absent
+    type: string
+    choices: ["present", "absent"]
+    required: False
+    default: present
 '''
 
 EXAMPLES = '''
@@ -122,6 +122,9 @@ output:
             type: string
             sample: "206"
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+import ansible.module_utils.phpipam as phpipam
 
 
 def set_master_section(session, master_section):
