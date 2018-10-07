@@ -153,3 +153,52 @@
     - published_ports_1 is changed
     - published_ports_2 is not changed
     - published_ports_3 is changed
+
+####################################################################
+## published_ports: IPv6 addresses #################################
+####################################################################
+
+- name: published_ports -- IPv6
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - "[::1]:8080:8080"
+    stop_timeout: 1
+  register: published_ports_1
+
+- name: published_ports -- IPv6 (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - "[::1]:8080:8080"
+    stop_timeout: 1
+  register: published_ports_2
+
+- name: published_ports -- IPv6 (different IP)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - 127.0.0.1:8080:8080
+    stop_timeout: 1
+  register: published_ports_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - published_ports_1 is changed
+    - published_ports_2 is not changed
+    - published_ports_3 is changed
