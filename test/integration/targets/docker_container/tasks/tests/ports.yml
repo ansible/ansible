@@ -92,3 +92,64 @@
     - published_ports_3 is changed
     - published_ports_4 is not changed
     - published_ports_5 is changed
+
+####################################################################
+## published_ports: port range #####################################
+####################################################################
+
+- name: published_ports -- port range
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - 8080
+    - 5000-5040
+    published_ports:
+    - 8080:8080
+    - 5000-5040:5000-5040
+    stop_timeout: 1
+  register: published_ports_1
+
+- name: published_ports -- port range (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - 8080
+    - 5000-5040
+    published_ports:
+    - 8080:8080
+    - 5000-5040:5000-5040
+    stop_timeout: 1
+  register: published_ports_2
+
+- name: published_ports -- port range (different range)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - 8080
+    - 5000-5040
+    published_ports:
+    - 8080:8080
+    - 5010-5050:5010-5050
+    stop_timeout: 1
+  register: published_ports_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - published_ports_1 is changed
+    - published_ports_2 is not changed
+    - published_ports_3 is changed
