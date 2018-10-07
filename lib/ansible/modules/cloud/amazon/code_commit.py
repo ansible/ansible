@@ -41,8 +41,8 @@ extends_documentation_fragment:
 '''
 
 RETURN = '''
-results:
-    description: A complex type that contains information about results
+result:
+    description: A complex type that contains information about result
     returned: changed
     type: dict
 
@@ -67,56 +67,59 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 class CodeCommit(object):
     def __init__(self, module=None):
         self._module = module
-        self._connection = self._module.client('codecommit')
+        self._client = self._module.client('codecommit')
         self._check_mode = self._module.check_mode
 
     def process(self):
-        results = dict(changed=False)
-        changed = False
+        result = dict(changed=False)
         repository_exists = self._repository_exists()
 
         if self._module.params['state'] == 'present' and not repository_exists:
-            changed = True
+            result['changed'] = True
             if not self._module.check_mode:
-                changed, results = self._create_repository()
+                result = self._create_repository()
         if self._module.params['state'] == 'absent' and repository_exists:
-            changed = True
+            result['changed'] = True
             if not self._module.check_mode:
-                changed, results = self._delete_repository()
-        return changed, results
+                result = self._delete_repository()
+        return result
 
     def _repository_exists(self):
         try:
             repository_exists = False
-            repositories = self._connection.list_repositories()['repositories']
-            for item in repositories:
-                if self._module.params['name'] in item.values():
-                    repository_exists = True
-                    return repository_exists
+            paginator = self._client.get_paginator('list_repositories')
+            for page in paginator.paginate():
+                repositories = page['repositories']
+                for item in repositories:
+                    if self._module.params['name'] in item.values():
+                        repository_exists = True
+                        return repository_exists
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't get repository")
         return repository_exists
 
     def _create_repository(self):
+        result = dict(changed=False)
         try:
-            results = self._connection.create_repository(
+            result = self._client.create_repository(
                 repositoryName=self._module.params['name'],
                 repositoryDescription=self._module.params['comment']
             )
-            changed = True
+            result['changed'] = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't create repository")
-        return changed, results
+        return result
 
     def _delete_repository(self):
+        result = dict(changed=False)
         try:
-            results = self._connection.delete_repository(
+            result = self._client.delete_repository(
                 repositoryName=self._module.params['name']
             )
-            changed = True
+            result['changed'] = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't delete repository")
-        return changed, results
+        return result
 
 
 def main():
@@ -132,8 +135,8 @@ def main():
     )
 
     code_commit = CodeCommit(module=ansible_aws_module)
-    changed, results = code_commit.process()
-    ansible_aws_module.exit_json(changed=changed, **camel_dict_to_snake_dict(results))
+    result = code_commit.process()
+    ansible_aws_module.exit_json(**camel_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':
