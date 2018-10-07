@@ -3,6 +3,7 @@
 # Copyright: (c) 2018, Carson Anderson <rcanderson23@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {
@@ -18,7 +19,7 @@ module: phpipam_section
 author: "Carson Anderson (@rcanderson23)"
 short_description: Set the state of a section
 requirements: []
-version_added: "2.7"
+version_added: "2.8"
 description:
     - Creates, modifies, or destroys section in phpIPAM instance if necessary.
 options:
@@ -37,27 +38,23 @@ options:
   section:
     description:
       - Section name that the subnet resides in.
-    type: string
     required: True
   master_section:
     description:
       - Master section for the section to be nested under.
       - When master_section is not defined it defaults to the root.
-    type: string
     required: False
-    default: root
+    default: 'root'
   description:
     description:
       - Optional description displayed next to address in phpIPAM.
-    type: string
     required: False
   state:
     description:
       - States whether the section should be present or absent
-    type: string
     choices: ["present", "absent"]
     required: False
-    default: present
+    default: 'present'
 '''
 
 EXAMPLES = '''

@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Carson Anderson <rcanderson23@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.phpipam as phpipam
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -19,7 +19,7 @@ module: phpipam_vlan
 author: "Carson Anderson (@rcanderson23)"
 short_description: Set the state of a vlan
 requirements: []
-version_added: "2.7"
+version_added: "2.8"
 description:
     - Creates, modifies, or destroys vlan in phpIPAM instance if necessary.
 options:
@@ -45,7 +45,7 @@ options:
       - Vlan display name in phpIPAM.
     type: string
     required: True
-  description
+  description:
     description:
       - Optional description displayed next to vlan in phpIPAM.
     type: string
@@ -113,6 +113,9 @@ output:
             type: string
             sample: "10"
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+import ansible.module_utils.phpipam as phpipam
 
 
 def main():

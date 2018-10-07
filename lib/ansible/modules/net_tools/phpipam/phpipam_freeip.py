@@ -19,7 +19,7 @@ module: phpipam_freeip
 author: "Carson Anderson (@rcanderson23)"
 short_description: Obtain free ip address
 requirements: []
-version_added: "2.7"
+version_added: "2.8"
 description:
     - Obtain first free ip address in a subnet from phpIPAM instance
 options:
@@ -43,17 +43,14 @@ options:
   section:
     description:
         - Section name that the subnet resides in.
-    type: string
     required: True
   hostname:
     description:
         - Hostname displayed next to address in phpIPAM.
-    type: string
     required: False
-  description
+  description:
     description:
         - Optional description displayed next to address in phpIPAM.
-    type: string
     required: False
 '''
 

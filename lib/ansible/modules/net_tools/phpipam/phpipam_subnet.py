@@ -18,7 +18,7 @@ module: phpipam_subnet
 author: "Carson Anderson (@rcanderson23)"
 short_description: Set the state of a subnet
 requirements: []
-version_added: "2.7"
+version_added: "2.8"
 description:
     - Creates, modifies, or destroys subnet in phpIPAM instance if necessary.
 options:
@@ -37,27 +37,22 @@ options:
   subnet:
     description:
       - Subnet in CIDR format.
-    type: string
     required: True
   master_subnet:
     description:
       - Master subnet for the subnet to be nested under.
       - When master_subnet is not defined it defaults to the root.
-    type: string
     required: False
-    default: root
-  description
+  description:
     description:
       - Optional description displayed next to address in phpIPAM.
-    type: string
     required: False
   state:
     description:
       - States whether the subnet should be present or absent
-    type: string
     choices: ["present", "absent"]
     required: False
-    default: present
+    default: 'present'
 '''
 
 EXAMPLES = '''
