@@ -22,7 +22,7 @@
 
     - assert:
         that:
-          - output.changed
+          - output is changed
           - output.repositoryName == '{{ resource_prefix }}_repo'
           - output.repositoryDescription == 'original comment'
 
@@ -39,7 +39,7 @@
 
     - assert:
         that:
-          - output.changed
+          - output is changed
           - output.repositoryName == '{{ resource_prefix }}_check_repo'
           - output.repositoryDescription == 'original comment'
 
@@ -54,7 +54,7 @@
 
     - assert:
         that:
-          - output.changed
+          - output is changed
 
     - name: Delete  a repository
       code_commit:
@@ -65,4 +65,4 @@
 
     - assert:
         that:
-          - output.changed
+          - output is changed
