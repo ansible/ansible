@@ -200,6 +200,7 @@ ANSIBLE_METADATA = {
 import base64
 from io import BytesIO
 from operator import itemgetter
+from distutils.version import StrictVersion
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -243,6 +244,8 @@ class Map(object):
         self.expand_problem = module.params['expand_problem']
         self.highlight = module.params['highlight']
         self.label_type = module.params['label_type']
+        self.api_version = self._zapi.api_version()
+        self.selements_sort_keys = self._get_selements_sort_keys()
 
     def _build_graph(self):
         try:
@@ -332,13 +335,16 @@ class Map(object):
     def _get_element_type(self, data):
         types = {
             'host': 0,
-            'map': 1,
+            'sysmap': 1,
             'trigger': 2,
             'group': 3,
             'image': 4
         }
         element_type = {
             'elementtype': types['image'],
+            # Elementid was mandatory even for image elements until Zabbix 3.4.
+            # Since Zabbix API ignores unknown fields, this is left here for simplicity:
+            # it works for Zabbix <= 3.2 and doesn't break Zabbix 3.4.
             'elementid': "0",
         }
         for type_name, type_id in sorted(types.items()):
@@ -352,9 +358,18 @@ class Map(object):
                     if elementid and int(elementid) > 0:
                         element_type.update({
                             'elementtype': type_id,
-                            'elementid': elementid,
                             'label': element_name
                         })
+                        if StrictVersion(self.api_version) < StrictVersion('3.4'):
+                            element_type.update({
+                                'elementid': elementid,
+                            })
+                        else:
+                            element_type.update({
+                                'elements': [{
+                                    type_name + 'id': elementid,
+                                }],
+                            })
                         break
                     else:
                         self._module.fail_json(msg="Failed to find id for %s '%s'" % (type_name, element_name))
@@ -535,12 +550,21 @@ class Map(object):
             return False
         return True
 
+    def _get_selements_sort_keys(self):
+        keys_to_sort = ['label']
+        if StrictVersion(self.api_version) < StrictVersion('3.4'):
+            keys_to_sort.insert(0, 'elementid')
+        return keys_to_sort
+
     def _is_selements_equal(self, generated_selements, exist_selements):
         if len(generated_selements) != len(exist_selements):
             return False
-        generated_selements_sorted = sorted(generated_selements, key=itemgetter('elementid', 'label'))
-        exist_selements_sorted = sorted(exist_selements, key=itemgetter('elementid', 'label'))
+        generated_selements_sorted = sorted(generated_selements, key=itemgetter(*self.selements_sort_keys))
+        exist_selements_sorted = sorted(exist_selements, key=itemgetter(*self.selements_sort_keys))
         for (generated_selement, exist_selement) in zip(generated_selements_sorted, exist_selements_sorted):
+            if StrictVersion(self.api_version) >= StrictVersion("3.4"):
+                if not self._is_elements_equal(generated_selement.get('elements', []), exist_selement.get('elements', [])):
+                    return False
             if not self._is_dicts_equal(generated_selement, exist_selement, ['selementid']):
                 return False
             if not self._is_urls_equal(generated_selement.get('urls', []), exist_selement.get('urls', [])):
@@ -557,10 +581,20 @@ class Map(object):
                 return False
         return True
 
+    def _is_elements_equal(self, generated_elements, exist_elements):
+        if len(generated_elements) != len(exist_elements):
+            return False
+        generated_elements_sorted = sorted(generated_elements, key=lambda k: k.values()[0])
+        exist_elements_sorted = sorted(exist_elements, key=lambda k: k.values()[0])
+        for (generated_element, exist_element) in zip(generated_elements_sorted, exist_elements_sorted):
+            if not self._is_dicts_equal(generated_element, exist_element, ['selementid']):
+                return False
+        return True
+
     # since generated IDs differ from real Zabbix ones, make real IDs match generated ones
     def _update_ids(self, generated_map_config, exist_map_config):
-        generated_selements_sorted = sorted(generated_map_config['selements'], key=itemgetter('elementid', 'label'))
-        exist_selements_sorted = sorted(exist_map_config['selements'], key=itemgetter('elementid', 'label'))
+        generated_selements_sorted = sorted(generated_map_config['selements'], key=itemgetter(*self.selements_sort_keys))
+        exist_selements_sorted = sorted(exist_map_config['selements'], key=itemgetter(*self.selements_sort_keys))
         id_mapping = {}
         for (generated_selement, exist_selement) in zip(generated_selements_sorted, exist_selements_sorted):
             id_mapping[exist_selement['selementid']] = generated_selement['selementid']
