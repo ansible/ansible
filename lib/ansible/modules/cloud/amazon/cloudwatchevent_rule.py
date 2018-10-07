@@ -65,7 +65,9 @@ options:
     description:
       - "A dictionary array of targets to add to or update for the rule, in the
         form C({ id: [string], arn: [string], role_arn: [string], input: [valid JSON string],
-        input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]}}).
+        input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]},
+        launch_type: "FARGATE | EC2", network_configuration: {awsvpc_configuration: {subnets: [string],
+        security_groups: [string], assign_public_ip: "ENABLED | DISABLED" }).
         I(id) [required] is the unique target assignment ID. I(arn) (required)
         is the Amazon Resource Name associated with the target. I(role_arn) (optional) is The Amazon Resource Name
         of the IAM role to be used for this target when the rule is triggered. I(input)
@@ -101,6 +103,28 @@ EXAMPLES = '''
 - cloudwatchevent_rule:
     name: MyCronTask
     state: absent
+
+- cloudwatchevent_rule:
+    name: MyECSCronTask-onFargate
+    schedule_expression: "cron(0 22 ? * TUE *)"
+    description: Run my scheduled ECS Task on Fargate
+    targets:
+      - id: MyTargetId
+        arn: arn:aws:ecs:us-east-1:123456789012:cluster/my-ecs-cluster
+        role_arn: arn:aws:iam::123456789012:role/eventsInvokeECS
+        ecs_parameters: {
+            task_definition_arn: "arn:aws:ecs:us-east-1:123456789012:task-definition/my-task-definition",
+            task_count: 1,
+            launch_type: "FARGATE",
+            network_configuration: {
+                awsvpc_configuration: {
+                    subnets: [subnet-0xy1236721caxyyx],
+                    security_groups: [sg-0321y7172xyyx7],
+                    assign_public_ip: "ENABLED",
+                },
+            },
+        }
+
 '''
 
 RETURN = '''
@@ -275,6 +299,18 @@ class CloudWatchEventRule(object):
                     target_request['EcsParameters']['TaskDefinitionArn'] = ecs_parameters['task_definition_arn']
                 if 'task_count' in target['ecs_parameters']:
                     target_request['EcsParameters']['TaskCount'] = ecs_parameters['task_count']
+                if 'launch_type' in target['ecs_parameters']:
+                    target_request['EcsParameters']['LaunchType'] = ecs_parameters['launch_type']
+                if 'network_configuration' in target['ecs_parameters']:
+                    target_request['EcsParameters']['NetworkConfiguration'] = {
+                        'awsvpcConfiguration': target['ecs_parameters']['network_configuration']['awsvpc_configuration']
+                    }
+                    target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration'] = {
+                        'Subnets': target['ecs_parameters']['network_configuration']['awsvpc_configuration']['subnets'],
+                        'AssignPublicIp': target['ecs_parameters']['network_configuration']['awsvpc_configuration']['assign_public_ip']
+                    }
+                    if 'security_groups' in target['ecs_parameters']['network_configuration']['awsvpc_configuration']:
+                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['SecurityGroups'] = target['ecs_parameters']['network_configuration']['awsvpc_configuration']['security_groups']
             targets_request.append(target_request)
         return targets_request
 
