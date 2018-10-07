@@ -3109,7 +3109,7 @@
     state: started
     volumes:
     - "/tmp:/tmp"
-    - "/:/whatever:rw,rshared"
+    - "/:/whatever:rw,z"
   register: volumes_1
 
 - name: volumes (idempotency)
@@ -3119,7 +3119,7 @@
     name: "{{ cname }}"
     state: started
     volumes:
-    - "/:/whatever:rw,rshared"
+    - "/:/whatever:rw,z"
     - "/tmp:/tmp"
   register: volumes_2
 
@@ -3141,7 +3141,7 @@
     state: started
     volumes:
     - "/tmp:/tmp"
-    - "/tmp:/somewhereelse:ro,rshared"
+    - "/tmp:/somewhereelse:ro,Z"
     stop_timeout: 1
   register: volumes_4
 
