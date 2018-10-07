@@ -61,6 +61,7 @@ except ImportError:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 class CodeCommit(object):
@@ -133,7 +134,7 @@ def main():
 
     code_commit = CodeCommit(module=ansible_aws_module)
     changed, results = code_commit.process()
-    ansible_aws_module.exit_json(changed=changed, results=results)
+    ansible_aws_module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':
