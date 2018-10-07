@@ -120,7 +120,7 @@ class CodeCommit(object):
 
 
 def main():
-    argument_spec=dict(
+    argument_spec = dict(
         name=dict(required=True),
         state=dict(choices=['present', 'absent'], required=True),
         comment=dict(default='')
