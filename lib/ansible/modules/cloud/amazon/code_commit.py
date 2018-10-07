@@ -120,7 +120,6 @@ class CodeCommit(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
         state=dict(choices=['present', 'absent'], required=True),
