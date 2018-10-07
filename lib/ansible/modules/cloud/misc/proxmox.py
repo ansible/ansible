@@ -280,7 +280,7 @@ EXAMPLES = '''
     api_user: root@pam
     api_password: 1q2w3e
     api_host: node1
-    state: stopped
+    state: restarted
 
 # Remove container
 - proxmox:
