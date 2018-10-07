@@ -724,7 +724,9 @@ REQUIRES_CONVERSION_TO_BYTES = [
     'shm_size'
 ]
 
-VOLUME_PERMISSIONS = ('rw', 'ro', 'z', 'Z')
+
+def is_volume_permissions(input):
+    return input in ('rw', 'ro', 'z', 'Z')
 
 
 class TaskParameters(DockerBaseClass):
@@ -964,13 +966,15 @@ class TaskParameters(DockerBaseClass):
             if ':' in vol:
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
+                    if not is_volume_permissions(mode):
+                        self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if re.match(r'[.~]', host):
                         host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
                 elif len(vol.split(':')) == 2:
                     parts = vol.split(':')
-                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[.~]', parts[0]):
+                    if not is_volume_permissions(parts[1]) and re.match(r'[.~]', parts[0]):
                         host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
                         continue
@@ -992,7 +996,7 @@ class TaskParameters(DockerBaseClass):
                         continue
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             result.append(parts[1])
                             continue
                 result.append(vol)
@@ -1119,8 +1123,7 @@ class TaskParameters(DockerBaseClass):
                 binds[container_port] = bind
         return binds
 
-    @staticmethod
-    def _get_volume_binds(volumes):
+    def _get_volume_binds(self, volumes):
         '''
         Extract host bindings, if any, from list of volume mapping strings.
 
@@ -1133,9 +1136,11 @@ class TaskParameters(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = (vol.split(':') + ['rw'])
                 if host is not None:
                     result[host] = dict(
@@ -1746,9 +1751,11 @@ class Container(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = vol.split(':') + ['rw']
                 if host:
                     param_vols.append("%s:%s:%s" % (host, container, mode))
@@ -1795,9 +1802,11 @@ class Container(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = vol.split(':') + ['rw']
                 new_vol = dict()
                 if container:
