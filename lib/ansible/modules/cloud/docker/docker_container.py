@@ -1170,6 +1170,10 @@ class TaskParameters(DockerBaseClass):
             elif p_len == 2:
                 port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client.module)]
             elif p_len == 3:
+                # We only allow IPv4 and IPv6 addresses for the bind address
+                if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', parts[0]):
+                    self.fail(('Bind addresses for published ports must be IPv4 or IPv6 addresses, not hostnames. '
+                               'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(parts[0]))
                 if parts[1]:
                     port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client.module)]
                 else:
