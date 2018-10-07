@@ -120,11 +120,11 @@ class CodeCommit(object):
 
 
 def main():
-    argument_spec.update(dict(
+    argument_spec=dict(
         name=dict(required=True),
         state=dict(choices=['present', 'absent'], required=True),
         comment=dict(default='')
-    ))
+    )
 
     ansible_aws_module = AnsibleAWSModule(
         argument_spec=argument_spec,
