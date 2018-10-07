@@ -1,0 +1,17 @@
+---
+- name: ensure Chocolatey is installed
+  win_chocolatey:
+    name: chocolatey
+    state: present
+
+- name: Gather facts from chocolatey
+  win_chocolatey_facts:
+
+- name: assert facts from chocolatey
+  assert:
+    that:
+    - ansible_chocolatey is not changed
+    - ansible_chocolatey.config['commandExecutionTimeoutSeconds'] == '2700'
+    - ansible_chocolatey.feature['checksumFiles'] == true
+    - ansible_chocolatey.packages.0.package == 'chocolatey'
+    - ansible_chocolatey.sources.0.name == 'chocolatey'
