@@ -133,7 +133,7 @@ def main():
 
     code_commit = CodeCommit(module=ansible_aws_module)
     changed, results = code_commit.process()
-    ansible_aws_module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
+    ansible_aws_module.exit_json(changed=changed, **camel_dict_to_snake_dict(results))
 
 
 if __name__ == '__main__':
