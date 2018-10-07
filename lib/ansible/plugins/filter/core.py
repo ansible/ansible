@@ -251,6 +251,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
     passlib_mapping = {
         'md5': 'md5_crypt',
         'blowfish': 'bcrypt',
+        'bcrypt': 'bcrypt',
         'sha256': 'sha256_crypt',
         'sha512': 'sha512_crypt',
     }
