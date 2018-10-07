@@ -726,7 +726,10 @@ REQUIRES_CONVERSION_TO_BYTES = [
 
 
 def is_volume_permissions(input):
-    return input in ('rw', 'ro', 'z', 'Z')
+    for part in input.split(','):
+        if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave'):
+            return False
+    return True
 
 
 class TaskParameters(DockerBaseClass):
