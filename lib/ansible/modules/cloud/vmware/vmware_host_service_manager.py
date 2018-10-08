@@ -148,20 +148,24 @@ class VmwareServiceManager(PyVmomi):
                 try:
                     if self.desired_state in ['start', 'present']:
                         if not actual_service_state:
-                            host_service_system.StartService(id=self.service_name)
+                            if not self.module.check_mode:
+                                host_service_system.StartService(id=self.service_name)
                             changed_state = True
                     elif self.desired_state in ['stop', 'absent']:
                         if actual_service_state:
-                            host_service_system.StopService(id=self.service_name)
+                            if not self.module.check_mode:
+                                host_service_system.StopService(id=self.service_name)
                             changed_state = True
                     elif self.desired_state == 'restart':
-                        host_service_system.RestartService(id=self.service_name)
+                        if not self.module.check_mode:
+                            host_service_system.RestartService(id=self.service_name)
                         changed_state = True
 
                     if self.desired_policy:
                         if actual_service_policy != self.desired_policy:
-                            host_service_system.UpdateServicePolicy(id=self.service_name,
-                                                                    policy=self.desired_policy)
+                            if not self.module.check_mode:
+                                host_service_system.UpdateServicePolicy(id=self.service_name,
+                                                                        policy=self.desired_policy)
                             changed_state = True
 
                     host_service_state.append(changed_state)
@@ -205,7 +209,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_host_service = VmwareServiceManager(module)
