@@ -50,7 +50,8 @@ options:
     kind:
         description:
             - This is the type of netdev device you wish to create.
-        choices: [ "bond", "bridge", "vlan", "macvlan", "ipip" ]
+        choices: [ "bond", "bridge", "vlan", "macvlan", "ipip", "sit", "gre", "greptap", "ip6gre", "ip6tnl",
+                   "ip6gretap", "ip6tnl","vti", "vti6" ]
     mac_address:
         description:
             - Configures the MAC address.
@@ -549,8 +550,8 @@ class NetDev:
             conf += 'Kind=macvlan\n\n[MACVLAN]\nMode={0}\n'.format(self.macvlan_mode)
         elif self.kind == 'macvtap':
             conf += 'Kind=macvlan\n\n[MACVTAP]\nMode={0}\n'.format(self.macvlan_mode)
-        elif self.kind == 'ipip':
-            conf += 'Kind=ipip\n'
+        elif self.kind in ['ipip', 'sit', 'gre', 'greptap', 'ip6gre', 'ip6tnl', 'vti', 'vti6']:
+            conf += 'Kind={0}\n'.format(self.kind)
             conf += self.create_config_tunnel_params()
 
         config = NetworkdUtilities(self.module)
@@ -608,7 +609,8 @@ def main():
             link_name=dict(type='str', default=None),
 
             # [NetDev] section
-            kind=dict(type='str', default=None, choices=['bridge', 'vlan', 'macvlan', 'bond', 'ipip']),
+            kind=dict(type='str', default=None, choices=['bridge', 'vlan', 'macvlan', 'bond', 'ipip', 'sit', 'gre',
+                                                         'greptap', 'ip6gre', 'ip6gretap', 'ip6tnl', 'vti', 'vti6']),
 
             # [VLAN] section
             vlan_id=dict(type='str', default=None),
