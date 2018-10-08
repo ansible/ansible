@@ -576,7 +576,14 @@ class DnfModule(YumDnf):
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
         self._specify_repositories(base, disablerepo, enablerepo)
-        base.fill_sack(load_system_repo='auto')
+        try:
+            base.fill_sack(load_system_repo='auto')
+        except dnf.exceptions.RepoError as e:
+            self.module.fail_json(
+                msg="{0}".format(to_text(e)),
+                results=[],
+                rc=1
+            )
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
             base._update_security_filters = [base.sack.query().filter(**key)]
@@ -584,7 +591,14 @@ class DnfModule(YumDnf):
             key = {'advisory_type__eq': 'security'}
             base._update_security_filters = [base.sack.query().filter(**key)]
         if self.update_cache:
-            base.update_cache()
+            try:
+                base.update_cache()
+            except dnf.exceptions.RepoError as e:
+                self.module.fail_json(
+                    msg="{0}".format(to_text(e)),
+                    results=[],
+                    rc=1
+                )
         return base
 
     def list_items(self, command):
@@ -1040,6 +1054,18 @@ class DnfModule(YumDnf):
                     msg="Autoremove should be used alone or with state=absent",
                     results=[],
                 )
+
+        if self.update_cache and not self.names and not self.list:
+            self.base = self._base(
+                self.conf_file, self.disable_gpg_check, self.disablerepo,
+                self.enablerepo, self.installroot
+            )
+            self.module.exit_json(
+                msg="Cache updated",
+                changed=False,
+                results=[],
+                rc=0
+            )
 
         # Set state as installed by default
         # This is not set in AnsibleModule() because the following shouldn't happend
