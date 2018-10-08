@@ -144,7 +144,7 @@ import traceback
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_file
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:  # python 3.3+
@@ -162,9 +162,6 @@ MOD_TIME_DIFF_RE = re.compile(r': Mod time differs$')
 EMPTY_FILE_RE = re.compile(r': : Warning: Cannot stat: No such file or directory$')
 MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory$')
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
-# When downloading an archive, how much of the archive to download before
-# saving to a tempfile (64k)
-BUFSIZE = 65536
 
 
 def crc32(path):
@@ -821,28 +818,7 @@ def main():
             module.fail_json(msg="Source '%s' failed to transfer" % src)
         # If remote_src=true, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
-            new_src = os.path.join(module.tmpdir, to_native(src.rsplit('/', 1)[1], errors='surrogate_or_strict'))
-            try:
-                rsp, info = fetch_url(module, src)
-                # If download fails, raise a proper exception
-                if rsp is None:
-                    raise Exception(info['msg'])
-
-                # open in binary mode for python3
-                f = open(new_src, 'wb')
-                # Read 1kb at a time to save on ram
-                while True:
-                    data = rsp.read(BUFSIZE)
-                    data = to_bytes(data, errors='surrogate_or_strict')
-
-                    if len(data) < 1:
-                        break  # End of file, break while loop
-
-                    f.write(data)
-                f.close()
-                src = new_src
-            except Exception as e:
-                module.fail_json(msg="Failure downloading %s, %s" % (src, to_native(e)))
+            src = fetch_file(module, src)
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):

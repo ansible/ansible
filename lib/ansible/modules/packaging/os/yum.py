@@ -352,12 +352,10 @@ except ImportError:
     transaction_helpers = False
 
 from contextlib import contextmanager
+from ansible.module_utils.urls import fetch_file
 
 def_qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}"
 rpmbin = None
-
-# 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
-BUFSIZE = 65536
 
 
 class YumModule(YumDnf):
@@ -383,28 +381,6 @@ class YumModule(YumDnf):
 
         self.pkg_mgr_name = "yum"
         self.lockfile = '/var/run/yum.pid'
-
-    def fetch_rpm_from_url(self, spec):
-        # FIXME: Remove this once this PR is merged:
-        #   https://github.com/ansible/ansible/pull/19172
-
-        # download package so that we can query it
-        package_name, dummy = os.path.splitext(str(spec.rsplit('/', 1)[1]))
-        package_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, prefix=package_name, suffix='.rpm', delete=False)
-        self.module.add_cleanup_file(package_file.name)
-        try:
-            rsp, info = fetch_url(self.module, spec)
-            if not rsp:
-                self.module.fail_json(msg="Failure downloading %s, %s" % (spec, info['msg']))
-            data = rsp.read(BUFSIZE)
-            while data:
-                package_file.write(data)
-                data = rsp.read(BUFSIZE)
-            package_file.close()
-        except Exception as e:
-            self.module.fail_json(msg="Failure downloading %s, %s" % (spec, to_native(e)))
-
-        return package_file.name
 
     def yum_base(self):
         my = yum.YumBase()
@@ -884,7 +860,7 @@ class YumModule(YumDnf):
 
                 if '://' in spec:
                     with self.set_env_proxy():
-                        package = self.fetch_rpm_from_url(spec)
+                        package = fetch_file(self.module, spec)
                 else:
                     package = spec
 
@@ -1205,7 +1181,7 @@ class YumModule(YumDnf):
                 elif '://' in spec:
                     # download package so that we can check if it's already installed
                     with self.set_env_proxy():
-                        package = self.fetch_rpm_from_url(spec)
+                        package = fetch_file(self.module, spec)
                     envra = self.local_envra(package)
 
                     if envra is None:
