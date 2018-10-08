@@ -586,7 +586,6 @@ class NetDev:
 
         return conf
 
-
     def create_config_netdev(self):
         conf = '[NetDev]\nName={0}\n'.format(self.name)
 
@@ -614,7 +613,6 @@ class NetDev:
         elif self.kind == 'vxlan':
             conf += 'Kind=vxlan\n'
             conf += self.create_config_vxlan_params()
-
 
         config = NetworkdUtilities(self.module)
         return config.write_configs_to_file(conf)
@@ -724,7 +722,6 @@ def main():
 
     if module.params['state'] == 'present' and not module.params['config_type']:
         module.fail_json(msg='Config type required when state is present')
-
 
     kind = module.params['kind']
 
