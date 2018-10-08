@@ -39,6 +39,8 @@ files:
     labels: botmeta
     # Changes to BOTMETA MUST always be reviewed by Core Team
     support: core
+  changelogs/fragments/:
+    support: community
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph
   $modules/cloud/amazon/aws_api_gateway.py: willthames
