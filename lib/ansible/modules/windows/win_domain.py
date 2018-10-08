@@ -61,7 +61,7 @@ options:
     - The domain functional level cannot be lower than the forest functional level, but it can be higher.
     - The default is automatically computed and set.
     type: str
-    choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinTreshold ]
+    choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
   forest_mode:
     description:
@@ -69,7 +69,7 @@ options:
     - The default forest functional level in Windows Server is typically the same as the version you are running.
     - Beware that the default forest functional level in Windows Server 2008 R2 when you create a new forest is C(Win2003).
     type: str
-    choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinTreshold ]
+    choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
 author:
 - Matt Davis (@nitzmahone)

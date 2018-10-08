@@ -30,8 +30,8 @@ $safe_mode_admin_password = Get-AnsibleParam -obj $params -name "safe_mode_passw
 $database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
 $sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
 $create_dns_delegation = Get-AnsibleParam -obj $params -name "create_dns_delegation" -type "bool" -default $true
-$domain_mode = Get-AnsibleParam -obj $params -name "domain_mode" -type "str" -choices "Win2003","Win2008","Win2008R2","Win2012","Win2012R2","WinTreshold"
-$forest_mode = Get-AnsibleParam -obj $params -name "forest_mode" -type "str" -choices "Win2003","Win2008","Win2008R2","Win2012","Win2012R2","WinTreshold"
+$domain_mode = Get-AnsibleParam -obj $params -name "domain_mode" -type "str" -choices "Win2003","Win2008","Win2008R2","Win2012","Win2012R2","WinThreshold"
+$forest_mode = Get-AnsibleParam -obj $params -name "forest_mode" -type "str" -choices "Win2003","Win2008","Win2008R2","Win2012","Win2012R2","WinThreshold"
 
 $forest = $null
 
