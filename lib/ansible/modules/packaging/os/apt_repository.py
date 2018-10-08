@@ -282,6 +282,11 @@ class SourcesList(object):
         for filename, sources in list(self.files.items()):
             if sources:
                 d, fn = os.path.split(filename)
+                try:
+                    os.makedirs(d)
+                except OSError as err:
+                    if not os.path.isdir(d):
+                        self.module.fail_json("Failed to create directory %s: %s" % (d, to_native(err)))
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
 
                 f = os.fdopen(fd, 'w')
