@@ -288,14 +288,12 @@ def fmgr_cidr_to_netmask(cidr):
 
 
 # utility function: removing keys wih value of None, nothing in playbook for that key
-def fmgr_del_none(data):
-    new_dict = {}
-    for k, v in data.items():
-        if isinstance(v, dict):
-            v = fmgr_del_none(v)
-        if v not in (u'', None, {}):
-            new_dict[k] = v
-    return new_dict
+def fmgr_del_none(obj):
+    if isinstance(obj, dict):
+        return type(obj)((fmgr_del_none(k), fmgr_del_none(v))
+                         for k, v in obj.items() if k is not None and (v is not None and not fmgr_is_empty_dict(v)))
+    else:
+        return obj
 
 
 # utility function: remove keys that are need for the logic but the FMG API won't accept them
@@ -303,6 +301,47 @@ def fmgr_prepare_dict(obj):
     list_of_elems = ["mode", "adom", "host", "username", "password"]
     if isinstance(obj, dict):
         obj = dict((key, fmgr_prepare_dict(value)) for (key, value) in obj.items() if key not in list_of_elems)
+    return obj
+
+
+def fmgr_is_empty_dict(obj):
+    return_val = False
+    if isinstance(obj, dict):
+        if len(obj) > 0:
+            for k, v in obj.items():
+                if isinstance(v, dict):
+                    if len(v) == 0:
+                        return_val = True
+                    elif len(v) > 0:
+                        for k1, v1 in v.items():
+                            if v1 is None:
+                                return_val = True
+                            elif v1 is not None:
+                                return_val = False
+                                return return_val
+                elif v is None:
+                    return_val = True
+                elif v is not None:
+                    return_val = False
+                    return return_val
+        elif len(obj) == 0:
+            return_val = True
+
+    return return_val
+
+
+def fmgr_split_comma_strings_into_lists(obj):
+    if isinstance(obj, dict):
+        if len(obj) > 0:
+            for k, v in obj.items():
+                if isinstance(v, str):
+                    new_list = list()
+                    if "," in v:
+                        new_items = v.split(",")
+                        for item in new_items:
+                            new_list.append(item.strip())
+                        obj[k] = new_list
+
     return obj
 
 
