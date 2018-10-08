@@ -66,8 +66,8 @@ options:
       - "A dictionary array of targets to add to or update for the rule, in the
         form C({ id: [string], arn: [string], role_arn: [string], input: [valid JSON string],
         input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]},
-        launch_type: "FARGATE", network_configuration: {awsvpc_configuration: {subnets: [string],
-        security_groups: [string], assign_public_ip: "ENABLED" }).
+        launch_type: 'FARGATE', network_configuration: {awsvpc_configuration: {subnets: [string],
+        security_groups: [string], assign_public_ip: 'ENABLED' }).
         I(id) [required] is the unique target assignment ID. I(arn) (required)
         is the Amazon Resource Name associated with the target. I(role_arn) (optional) is The Amazon Resource Name
         of the IAM role to be used for this target when the rule is triggered. I(input)
@@ -311,7 +311,7 @@ class CloudWatchEventRule(object):
                     }
                     if 'security_groups' in target['ecs_parameters']['network_configuration']['awsvpc_configuration']:
                         target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['SecurityGroups'] = \
-                        target['ecs_parameters']['network_configuration']['awsvpc_configuration']['security_groups']
+                            target['ecs_parameters']['network_configuration']['awsvpc_configuration']['security_groups']
             targets_request.append(target_request)
         return targets_request
 
