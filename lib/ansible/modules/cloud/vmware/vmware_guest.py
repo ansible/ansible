@@ -202,6 +202,12 @@ options:
     - "vmware-tools needs to be installed on the given virtual machine in order to work with this parameter."
     default: 'no'
     type: bool
+  wait_for_customization:
+    description:
+    - Wait until vCenter detects all guest customizations as successfully completed.
+    default: 'no'
+    type: bool
+    version_added: '2.8'
   state_change_timeout:
     description:
     - If the C(state) is set to C(shutdownguest), by default the module will return immediately after sending the shutdown signal.
