@@ -14,7 +14,7 @@ You can use a separate cache plugin for inventory and facts. If an inventory-spe
 .. _enabling_cache:
 
 Enabling Fact Cache Plugins
-+++++++++++++++++++++++++++
+---------------------------
 
 Only one fact cache plugin can be active at a time.
 
@@ -38,7 +38,7 @@ A custom cache plugin is enabled by dropping it into a ``cache_plugins`` directo
 
 
 Enabling Inventory Cache Plugins
-++++++++++++++++++++++++++++++++
+--------------------------------
 
 Inventory may be cached using a file-based cache plugin (like jsonfile). Check the specific inventory plugin to see if it supports caching.
 If an inventory-specific cache plugin is not specified Ansible will fall back to caching inventory with the fact cache plugin options.
@@ -90,7 +90,7 @@ Consult the individual inventory plugin documentation or the Ansible :ref:`confi
 .. _using_cache:
 
 Using Cache Plugins
-+++++++++++++++++++
+-------------------
 
 Cache plugins are used automatically once they are enabled.
 
@@ -98,7 +98,7 @@ Cache plugins are used automatically once they are enabled.
 .. _cache_plugin_list:
 
 Plugin List
-+++++++++++
+-----------
 
 You can use ``ansible-doc -t cache -l`` to see the list of available plugins.
 Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and examples.
