@@ -228,6 +228,11 @@ EXAMPLES = """
   eos_config:
     src: eos.cfg
 
+- name: render a Jinja2 template onto an Arista switch
+  eos_config:
+    backup: yes
+    src: eos_template.j2
+
 - name: diff the running config against a master config
   eos_config:
     diff_against: intended
