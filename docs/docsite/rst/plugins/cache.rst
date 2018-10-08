@@ -2,7 +2,7 @@
 
 
 Cache Plugins
--------------
+=============
 
 Cache plugin implement a backend caching mechanism that allows Ansible to store gathered facts or inventory source data
 without the performance hit of retrieving them from source.
