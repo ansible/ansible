@@ -1,0 +1,94 @@
+---
+- name: Registering container name
+  set_fact:
+    cname: "{{ cname_prefix ~ '-options' }}"
+
+####################################################################
+## published_ports: all ############################################
+####################################################################
+
+- name: published_ports -- all
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - 8080
+    - 8081
+    published_ports:
+    - all
+    stop_timeout: 1
+  register: published_ports_1
+
+- name: published_ports -- all (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - 8080
+    - 8081
+    published_ports:
+    - all
+    stop_timeout: 1
+  register: published_ports_2
+
+- name: published_ports -- all (writing out 'all')
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - 8080
+    - 8081
+    published_ports:
+    - 8080
+    - 8081
+    stop_timeout: 1
+  register: published_ports_3
+
+- name: published_ports -- all (idempotency 2)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - 8080
+    - 8081
+    published_ports:
+    - 8080
+    - 8081
+    stop_timeout: 1
+  register: published_ports_4
+
+- name: published_ports -- all (switching back to 'all')
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - 8080
+    - 8081
+    published_ports:
+    - all
+    stop_timeout: 1
+  register: published_ports_5
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - published_ports_1 is changed
+    - published_ports_2 is not changed
+    - published_ports_3 is changed
+    - published_ports_4 is not changed
+    - published_ports_5 is changed
