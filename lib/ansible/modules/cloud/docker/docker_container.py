@@ -1249,7 +1249,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_env = None
         self.parameters_map = dict()
         self.parameters_map['expected_links'] = 'links'
-        self.parameters_map['expected_ports'] = 'published_ports'
+        self.parameters_map['expected_ports'] = 'expected_ports'
         self.parameters_map['expected_exposed'] = 'exposed_ports'
         self.parameters_map['expected_volumes'] = 'volumes'
         self.parameters_map['expected_ulimits'] = 'ulimits'
@@ -2180,6 +2180,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             comparisons['image']['comparison'] = 'ignore'
         # Add implicit options
         comparisons['publish_all_ports'] = dict(type='value', comparison='strict', name='published_ports')
+        comparisons['expected_ports'] = dict(type='dict', comparison=comparisons['published_ports']['comparison'], name='expected_ports')
         self.comparisons = comparisons
 
     def __init__(self, **kwargs):
