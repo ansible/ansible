@@ -113,7 +113,7 @@ files:
     maintainers: rambleraptor erjohnso
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
-  $modules/cloud/linode/linode.py: intheclouddan lwm displague
+  $modules/cloud/linode/: intheclouddan lwm displague
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: analbeard
   $modules/cloud/misc/ovirt.py:
