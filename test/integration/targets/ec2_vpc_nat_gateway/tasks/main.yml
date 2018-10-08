@@ -1,82 +1,212 @@
-# The tests for this module are incomplete.
-# The tests below were migrated from unit tests.
-# They take advantage of hard-coded results within the module to trigger both changed and unchanged responses.
-# They were migrated to maintain test coverage while removing unit tests that depended on use of TaskQueueManager.
+---
+- block:
+  - name: set up aws connection info
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+  
+  # ============================================================
+  - name: create a VPC
+    ec2_vpc_net:
+      name: "{{ resource_prefix }}-vpc"
+      state: present
+      cidr_block: "10.232.232.128/26"
+      <<: *aws_connection_info
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+    register: vpc_result
+  
+  # ============================================================
+  - name: create subnet 
+    ec2_vpc_subnet:
+      cidr: "10.232.232.128/28"
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+      state: present
+    register: vpc_subnet_created
 
-- name: Create new nat gateway with eip allocation-id
-  ec2_vpc_nat_gateway:
-    subnet_id: subnet-12345678
-    allocation_id: eipalloc-12345678
-    wait: yes
-    region: us-west-2
-  register: nat_gateway
-  check_mode: yes
+  # ============================================================
+  - name: create NAT gateway (expected changed=true)
+    ec2_vpc_nat_gateway:
+      state: present
+      subnet_id: "{{ vpc_subnet_created.subnet.id }}"
+      if_exist_do_not_create: 'no'
+      <<: *aws_connection_info
+    register: vpc_nat_gateway_created
+  
+  - name: assert creation happened (expected changed=true)
+    assert:
+      that:
+          - 'vpc_nat_gateway_created'
+          - 'vpc_nat_gateway_created.nat_gateway_id.startswith("nat-")'
+          - 'vpc_nat_gateway_created.vpc_id == vpc_result.vpc.id'
+          - 'vpc_nat_gateway_created.tags == {}'
+  
+  # ============================================================
+  - name: attempt to recreate nat_gateway with if_exist_do_not_create=true (expected changed=false)
+    ec2_vpc_nat_gateway:
+      state: present
+      subnet_id: "{{ vpc_subnet_created.subnet.id }}"
+      <<: *aws_connection_info
+      if_exist_do_not_create: 'yes'
+    register: vpc_nat_gateway_recreated
+  
+  - name: assert recreation did nothing (expected changed=false)
+    assert:
+      that:
+          - 'vpc_nat_gateway_recreated.changed == False'
+          - 'vpc_nat_gateway_recreated.nat_gateway_id == vpc_nat_gateway_created.nat_gateway_id'
+          - 'vpc_nat_gateway_recreated.subnet_id == vpc_nat_gateway_created.subnet_id'
 
-- assert:
-    that:
-      - nat_gateway.changed
+  # ============================================================
+  - name: Add tags to nat-gateway
+    ec2_vpc_nat_gateway:
+      if_exist_do_not_create: 'yes'
+      tags:
+        Name: "{{ resource_prefix }}-nat"
+      subnet_id: "{{ vpc_subnet_created.subnet.id }}"
+      nat_gateway_id: "{{ vpc_nat_gateway_created.nat_gateway_id }}"
+      <<: *aws_connection_info
+    register: vpc_nat_gateway_tagged
+  
+  - name: assert tag is added
+    assert:
+      that:
+          - 'vpc_nat_gateway_tagged.changed == True'
+  
+  # ============================================================
+  - name: Collect nat-gateway facts to check tags
+    ec2_vpc_nat_gateway_info:
+      nat_gateway_ids: "{{ vpc_nat_gateway_created.nat_gateway_id }}"
+      <<: *aws_connection_info
+    register: vpc_nat_gateway_facts
+    until: vpc_nat_gateway_facts | json_query('result[].tags[].Name') | count == 1
+    retries: 10
+    delay: 5
+  
+  - name: assert tag is added
+    assert:
+      that:
+          - 'vpc_nat_gateway_facts.result.0.tags.Name == "{{ resource_prefix }}-nat"'
+  
+  # ============================================================
+  - name: Add tags with purge_tags=yes
+    ec2_vpc_nat_gateway:
+      if_exist_do_not_create: 'yes'
+      purge_tags: 'yes'
+      tags:
+        Tag1: "{{ resource_prefix }}-nat"
+      subnet_id: "{{ vpc_subnet_created.subnet.id }}"
+      nat_gateway_id: "{{ vpc_nat_gateway_created.nat_gateway_id }}"
+      <<: *aws_connection_info
+    register: vpc_nat_gateway_tagged
+  
+  - name: assert tag is added (expected changed=true)
+    assert:
+      that:
+          - 'vpc_nat_gateway_tagged.changed == True'
 
-- name: Create new nat gateway with eip allocation-id
-  ec2_vpc_nat_gateway:
-    subnet_id: subnet-123456789
-    allocation_id: eipalloc-1234567
-    wait: yes
-    region: us-west-2
-  register: nat_gateway
-  check_mode: yes
+  # ============================================================
+  - name: Collect nat-gateway facts to check tags (purge_tags=yes)
+    ec2_vpc_nat_gateway_info:
+      nat_gateway_ids: "{{ vpc_nat_gateway_created.nat_gateway_id }}"
+      <<: *aws_connection_info
+    register: vpc_nat_gateway_facts
+    until: vpc_nat_gateway_facts | json_query('result[].tags[].Tag1') | count == 1
+    retries: 10
+    delay: 5
+  
+  - name: assert new tag is added and old purged (purge_tags=yes)
+    assert:
+      that:
+          - '"Name" not in vpc_nat_gateway_facts.result.0.tags'
+          - '"Tag1" in vpc_nat_gateway_facts.result.0.tags'
+          - 'vpc_nat_gateway_facts.result.0.tags.Tag1 == "{{ resource_prefix }}-nat"'
 
-- assert:
-    that:
-      - not nat_gateway.changed
+  # ============================================================
+  - name: Add tags with purge_tags=no
+    ec2_vpc_nat_gateway:
+      if_exist_do_not_create: 'yes'
+      purge_tags: 'no'
+      tags:
+        Tag2: "{{ resource_prefix }}-nat"
+      subnet_id: "{{ vpc_subnet_created.subnet.id }}"
+      nat_gateway_id: "{{ vpc_nat_gateway_created.nat_gateway_id }}"
+      <<: *aws_connection_info
+    register: vpc_nat_gateway_tagged
+  
+  - name: assert tag is added (expected changed=true)
+    assert:
+      that:
+          - 'vpc_nat_gateway_tagged.changed == True'
 
-- name: Create new nat gateway with eip address
-  ec2_vpc_nat_gateway:
-    subnet_id: subnet-12345678
-    eip_address: 55.55.55.55
-    wait: yes
-    region: us-west-2
-  register: nat_gateway
-  check_mode: yes
+  # ============================================================
+  - name: Collect nat-gateway facts to check tags (purge_tags=no)
+    ec2_vpc_nat_gateway_info:
+      nat_gateway_ids: "{{ vpc_nat_gateway_created.nat_gateway_id }}"
+      <<: *aws_connection_info
+    register: vpc_nat_gateway_facts
+    until: vpc_nat_gateway_facts | json_query('result[].tags[].Tag1') | count == 1
+    retries: 10
+    delay: 5
+  
+  - name: assert new tag is added and old is kept (purge_tags=no)
+    assert:
+      that:
+          - '"Tag1" in vpc_nat_gateway_facts.result.0.tags'
+          - 'vpc_nat_gateway_facts.result.0.tags.Tag1 == "{{ resource_prefix }}-nat"'
+          - '"Tag2" in vpc_nat_gateway_facts.result.0.tags'
+          - 'vpc_nat_gateway_facts.result.0.tags.Tag2 == "{{ resource_prefix }}-nat"'
 
-- assert:
-    that:
-      - nat_gateway.changed
+  always:
+    # ============================================================
+    - name: tidy up nat-gateway
+      ec2_vpc_nat_gateway:
+        state: absent
+        release_eip: 'yes'
+        subnet_id: "{{ vpc_subnet_created.subnet.id }}"
+        nat_gateway_id: "{{ vpc_nat_gateway_created.nat_gateway_id }}"
+        wait: 'yes'
+        <<: *aws_connection_info
+      ignore_errors: yes
 
-- name: Create new nat gateway with eip address
-  ec2_vpc_nat_gateway:
-    subnet_id: subnet-123456789
-    eip_address: 55.55.55.55
-    wait: yes
-    region: us-west-2
-  register: nat_gateway
-  check_mode: yes
+    # need approximately 25 retries for the subnet dependency to be removed
+    # ============================================================
+    - name: tidy up subnet
+      ec2_vpc_subnet:
+        state: absent
+        cidr: "10.232.232.128/28"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        wait: 'yes'
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 30
 
-- assert:
-    that:
-      - not nat_gateway.changed
+    # ============================================================
+    - name: ensure EIP is actually released
+      ec2_eip:
+        state: absent
+        device_id: "{{ item.network_interface_id }}"
+        in_vpc: yes
+        <<: *aws_connection_info
+      with_items: "{{ vpc_nat_gateway_facts.result.0.nat_gateway_addresses }}"
+      ignore_errors: yes
 
-- name: Create new nat gateway only if one does not exist already
-  ec2_vpc_nat_gateway:
-    if_exist_do_not_create: yes
-    subnet_id: subnet-123456789
-    wait: yes
-    region: us-west-2
-  register: nat_gateway
-  check_mode: yes
-
-- assert:
-    that:
-      - not nat_gateway.changed
-
-- name: Delete Nat Gateway
-  ec2_vpc_nat_gateway:
-    nat_gateway_id: nat-123456789
-    state: absent
-    wait: yes
-    region: us-west-2
-  register: nat_gateway
-  check_mode: yes
-
-- assert:
-    that:
-      - nat_gateway.changed
+    # ============================================================
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10

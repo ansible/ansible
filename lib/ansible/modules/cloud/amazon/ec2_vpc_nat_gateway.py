@@ -69,6 +69,15 @@ options:
       - Optional unique token to be used during create to ensure idempotency.
         When specifying this option, ensure you specify the eip_address parameter
         as well otherwise any subsequent runs will fail.
+  tags:
+    description:
+      - A dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    version_added: "2.10"
+  purge_tags:
+    description: Whether to remove existing tags that aren't passed in the C(tags) parameter
+    version_added: "2.10"
+    default: "no"
+    type: bool
 author:
   - Allen Sanabria (@linuxdynasty)
   - Jon Hadfield (@jonhadfield)
@@ -98,7 +107,7 @@ EXAMPLES = '''
     region: ap-southeast-2
   register: new_nat_gateway
 
-- name: Create new nat gateway, using an EIP address  and wait for available status.
+- name: Create new nat gateway, using an EIP address and wait for available status.
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
@@ -183,28 +192,40 @@ nat_gateway_addresses:
   returned: In all cases.
   type: str
   sample: [
-      {
-          'public_ip': '52.52.52.52',
-          'network_interface_id': 'eni-12345',
-          'private_ip': '10.0.0.100',
-          'allocation_id': 'eipalloc-12345'
-      }
+    {
+      'public_ip': '52.52.52.52',
+      'network_interface_id': 'eni-12345',
+      'private_ip': '10.0.0.100',
+      'allocation_id': 'eipalloc-12345'
+    }
   ]
+tags:
+  description: A dictionary of tags assigned to gateway
+  returned: In all cases.
+  type: dict
+  sample: {
+    "Env": "devel",
+    "Name": "nat-server"
+  }
 '''
 
 import datetime
 import random
 import time
+import traceback
 
 try:
     import botocore
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by imported ec2.HAS_BOTO3
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
-                                      camel_dict_to_snake_dict, HAS_BOTO3)
-
+                                      camel_dict_to_snake_dict, compare_aws_tags,
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict,
+                                      AWSRetry)
 
 DRY_RUN_GATEWAYS = [
     {
@@ -925,6 +946,59 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
     return success, changed, err_msg, results
 
 
+@AWSRetry.jittered_backoff()
+def manage_tags(client, nat_gateway_id, old_tags, new_tags, purge_tags, check_mode=False):
+    changed = False
+    err_msg = ""
+
+    tags_to_set, tags_to_delete = compare_aws_tags(
+        old_tags, new_tags,
+        purge_tags=purge_tags,
+    )
+
+    if check_mode:
+        return changed, old_tags, new_tags
+
+    try:
+        if tags_to_set:
+            client.create_tags(
+                Resources=[nat_gateway_id],
+                Tags=ansible_dict_to_boto3_tag_list(tags_to_set)
+            )
+            changed = True
+
+        if tags_to_delete:
+            delete_with_current_values = dict((k, old_tags.get(k)) for k in tags_to_delete)
+            client.delete_tags(
+                Resources=[nat_gateway_id],
+                Tags=ansible_dict_to_boto3_tag_list(delete_with_current_values)
+            )
+            changed = True
+    except botocore.exceptions.ClientError as e:
+        err_msg = "{0}: Failed to modify tags".format(str(e))
+
+    return changed, err_msg
+
+
+@AWSRetry.jittered_backoff()
+def find_tags(client, module, resource_id):
+    """ Find the current tags associated to a nat_gateway_id
+    """
+    try:
+        response = client.describe_tags(Filters=[
+            {'Name': 'resource-id', 'Values': [resource_id]}
+        ])
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't get NAT Gateway tags")
+
+    result = response['Tags']
+    if result:
+        result = boto3_tag_list_to_ansible_dict(result)
+    else:
+        result = {}
+    return result
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
@@ -939,9 +1013,11 @@ def main():
             release_eip=dict(type='bool', default=False),
             nat_gateway_id=dict(type='str'),
             client_token=dict(type='str'),
+            tags=dict(type='dict'),
+            purge_tags=dict(type='bool', default=False)
         )
     )
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[
@@ -950,10 +1026,6 @@ def main():
         required_if=[['state', 'absent', ['nat_gateway_id']],
                      ['state', 'present', ['subnet_id']]]
     )
-
-    # Validate Requirements
-    if not HAS_BOTO3:
-        module.fail_json(msg='botocore/boto3 is required.')
 
     state = module.params.get('state').lower()
     check_mode = module.check_mode
@@ -966,6 +1038,8 @@ def main():
     release_eip = module.params.get('release_eip')
     client_token = module.params.get('client_token')
     if_exist_do_not_create = module.params.get('if_exist_do_not_create')
+    purge_tags = module.params.get('purge_tags')
+    tags = module.params.get('tags')
 
     try:
         region, ec2_url, aws_connect_kwargs = (
@@ -978,7 +1052,7 @@ def main():
             )
         )
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Boto3 Client Error - " + str(e.msg))
+        module.fail_json_aws(e, msg="Boto3 Client Error - " + str(e.msg))
 
     changed = False
     err_msg = ''
@@ -991,6 +1065,16 @@ def main():
                 client_token, check_mode=check_mode
             )
         )
+
+        if success:
+            if tags:
+                current_tags = find_tags(client, module, results['nat_gateway_id'])
+                changed, err_msg = manage_tags(
+                    client, results['nat_gateway_id'], current_tags, tags, purge_tags
+                )
+                if err_msg:
+                    success = False
+            results["tags"] = find_tags(client, module, results['nat_gateway_id'])
     else:
         success, changed, err_msg, results = (
             remove(
