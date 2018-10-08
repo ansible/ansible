@@ -27,16 +27,16 @@ options:
     aliases: [ path ]
   ftype:
     description:
-    - File type.
-    - The following file type options can be passed;
-      C(a) for all files,
-      C(b) for block devices,
-      C(c) for character devices,
-      C(d) for directories,
-      C(f) for regular files,
-      C(l) for symbolic links,
-      C(p) for named pipes,
-      C(s) for socket files.
+    - The file type that should have SELinux contexts applied.
+    - "The following file type options are available:"
+    - C(a) for all files,
+    - C(b) for block devices,
+    - C(c) for character devices,
+    - C(d) for directories,
+    - C(f) for regular files,
+    - C(l) for symbolic links,
+    - C(p) for named pipes,
+    - C(s) for socket files.
     type: str
     default: a
   setype:
