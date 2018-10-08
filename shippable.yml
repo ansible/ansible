@@ -129,6 +129,9 @@ branches:
     - "*-patch-*"
     - "revert-*-*"
 
+runtime:
+  nodePool: test_node_pool
+
 build:
   pre_ci_boot:
     image_name: drydock/u16pytall
