@@ -3,7 +3,7 @@
 .. _inventory_plugins:
 
 Inventory Plugins
------------------
+=================
 
 Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either via the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources.
 
