@@ -54,14 +54,25 @@
     frontend_ports:
       - port: 90
         name: ag_frontend_port
+      - port: 80
+        name: http_frontend_port
     backend_address_pools:
       - backend_addresses:
           - ip_address: 10.0.0.4
         name: test_backend_address_pool
+    probes:
+     - name: custom_probe
+       protocol: http
+       host: 10.0.0.4
+       path: /healthz
+       interval: 30
+       timeout: 30
+       unhealthy_threshold: 3
     backend_http_settings_collection:
       - port: 80
         protocol: http
         cookie_based_affinity: enabled
+        probe: custom_probe
         name: sample_appgateway_http_settings
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
@@ -69,12 +80,26 @@
         protocol: https
         ssl_certificate: cert2
         name: sample_http_listener
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: http_frontend_port
+        protocol: http
+        name: http_listener
     request_routing_rules:
       - rule_type: basic
         backend_address_pool: test_backend_address_pool
         backend_http_settings: sample_appgateway_http_settings
         http_listener: sample_http_listener
         name: rule1
+      - rule_type: basic
+        http_listener: http_listener
+        redirect_configuration: redirect_site_to_https
+        name: http_redirect_rule
+    redirect_configurations:
+     - redirect_type: permanent
+       target_listener: sample_http_listener
+       include_path: true
+       include_query_string: true
+       name: redirect_site_to_https
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
@@ -119,14 +144,25 @@
     frontend_ports:
       - port: 90
         name: ag_frontend_port
+      - port: 80
+        name: http_frontend_port
     backend_address_pools:
       - backend_addresses:
           - ip_address: 10.0.0.4
         name: test_backend_address_pool
+    probes:
+     - name: custom_probe
+       protocol: http
+       host: 10.0.0.4
+       path: /healthz
+       interval: 30
+       timeout: 30
+       unhealthy_threshold: 3
     backend_http_settings_collection:
       - port: 80
         protocol: http
         cookie_based_affinity: enabled
+        probe: custom_probe
         name: sample_appgateway_http_settings
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
@@ -134,12 +170,26 @@
         protocol: https
         ssl_certificate: cert2
         name: sample_http_listener
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: http_frontend_port
+        protocol: http
+        name: http_listener
     request_routing_rules:
       - rule_type: Basic
         backend_address_pool: test_backend_address_pool
         backend_http_settings: sample_appgateway_http_settings
         http_listener: sample_http_listener
         name: rule1
+      - rule_type: Basic
+        http_listener: http_listener
+        redirect_configuration: redirect_site_to_https
+        name: http_redirect_rule
+    redirect_configurations:
+     - redirect_type: permanent
+       target_listener: sample_http_listener
+       include_path: true
+       include_query_string: true
+       name: redirect_site_to_https
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -179,14 +229,25 @@
     frontend_ports:
       - port: 90
         name: ag_frontend_port
+      - port: 80
+        name: http_frontend_port
     backend_address_pools:
       - backend_addresses:
           - ip_address: 10.0.0.4
         name: test_backend_address_pool
+    probes:
+     - name: custom_probe
+       protocol: http
+       host: 10.0.0.4
+       path: /healthz
+       interval: 30
+       timeout: 30
+       unhealthy_threshold: 3
     backend_http_settings_collection:
       - port: 80
         protocol: http
         cookie_based_affinity: enabled
+        probe: custom_probe
         name: sample_appgateway_http_settings
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
@@ -194,12 +255,26 @@
         protocol: https
         ssl_certificate: cert2
         name: sample_http_listener
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: http_frontend_port
+        protocol: http
+        name: http_listener
     request_routing_rules:
       - rule_type: Basic
         backend_address_pool: test_backend_address_pool
         backend_http_settings: sample_appgateway_http_settings
         http_listener: sample_http_listener
         name: rule1
+      - rule_type: Basic
+        http_listener: http_listener
+        redirect_configuration: redirect_site_to_https
+        name: http_redirect_rule
+    redirect_configurations:
+     - redirect_type: permanent
+       target_listener: sample_http_listener
+       include_path: true
+       include_query_string: true
+       name: redirect_site_to_https
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -239,14 +314,25 @@
     frontend_ports:
       - port: 90
         name: ag_frontend_port
+      - port: 80
+        name: http_frontend_port
     backend_address_pools:
       - backend_addresses:
           - ip_address: 10.0.0.4
         name: test_backend_address_pool
+    probes:
+     - name: custom_probe
+       protocol: http
+       host: 10.0.0.4
+       path: /healthz
+       interval: 30
+       timeout: 30
+       unhealthy_threshold: 3
     backend_http_settings_collection:
       - port: 81
         protocol: http
         cookie_based_affinity: enabled
+        probe: custom_probe
         name: sample_appgateway_http_settings
     http_listeners:
       - frontend_ip_configuration: sample_gateway_frontend_ip_config
@@ -254,12 +340,26 @@
         protocol: https
         ssl_certificate: cert2
         name: sample_http_listener
+      - frontend_ip_configuration: sample_gateway_frontend_ip_config
+        frontend_port: http_frontend_port
+        protocol: http
+        name: http_listener
     request_routing_rules:
       - rule_type: Basic
         backend_address_pool: test_backend_address_pool
         backend_http_settings: sample_appgateway_http_settings
         http_listener: sample_http_listener
         name: rule1
+      - rule_type: Basic
+        http_listener: http_listener
+        redirect_configuration: redirect_site_to_https
+        name: http_redirect_rule
+    redirect_configurations:
+     - redirect_type: permanent
+       target_listener: sample_http_listener
+       include_path: true
+       include_query_string: true
+       name: redirect_site_to_https
   register: output
 - name: Assert the resource instance is well created
   assert:
