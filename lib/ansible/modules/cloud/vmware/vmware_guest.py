@@ -1286,9 +1286,9 @@ class PyVmomiHelper(PyVmomi):
                     pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
                 if (nic.device.backing and
-                   (not hasattr(nic.device.backing, 'port') or
-                    (nic.device.backing.port.portgroupKey != pg_obj.key or
-                     nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid))):
+                    (not hasattr(nic.device.backing, 'port') or
+                     (nic.device.backing.port.portgroupKey != pg_obj.key or
+                      nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid))):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
@@ -2315,8 +2315,9 @@ class PyVmomiHelper(PyVmomi):
                 while thispoll <= poll:
                     eventsFinishedFailed = self.get_vm_events(['CustomizationSucceeded', 'CustomizationFailed'])
                     if len(eventsFinishedFailed):
-                        if not isinstance(eventsFinishedFailed[0],vim.event.CustomizationSucceeded):
-                            raise RuntimeError('Customization failed with error {}:\n{}'.format(eventsFinishedFailed[0]._wsdlName,eventsFinishedFailed[0].fullFormattedMessage))
+                        if not isinstance(eventsFinishedFailed[0], vim.event.CustomizationSucceeded):
+                            raise RuntimeError('Customization failed with error {0}:\n{1}'.format(
+                                eventsFinishedFailed[0]._wsdlName, eventsFinishedFailed[0].fullFormattedMessage))
                         break
                     else:
                         time.sleep(sleep)
