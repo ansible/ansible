@@ -394,7 +394,6 @@ class Network:
 
     def __init__(self, module):
         self.module = module
-        self.config_path = module.params['config_path']
         self.name = module.params['name']
         self.mac_address = module.params['mac_address']
 
@@ -456,7 +455,6 @@ class NetDev:
 
     def __init__(self, module):
         self.module = module
-        self.config_path = module.params['config_path']
         self.name = module.params['name']
         self.kind = module.params['kind']
         self.mac_address = module.params['mac_address']
@@ -565,9 +563,6 @@ class Networkd:
         self.module = module
         self.state = module.params['state']
         self.config_type = module.params['config_type']
-        self.config_path = module.params['config_path']
-        self.file_name = module.params['file_name']
-        self.name = module.params['name']
 
     def create_config_link(self):
         rc = False
