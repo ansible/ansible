@@ -27,6 +27,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import json
 import os
 import time
 
@@ -100,9 +101,14 @@ def get_connection(module):
     if not _DEVICE_CONNECTION:
         load_params(module)
         if is_eapi(module):
-            conn = Eapi(module)
+            conn = LocalEapi(module)
         else:
-            conn = Cli(module)
+            connection_proxy = Connection(module._socket_path)
+            cap = json.loads(connection_proxy.get_capabilities())
+            if cap['network_api'] == 'cliconf':
+                conn = Cli(module)
+            elif cap['network_api'] == 'eapi':
+                conn = HttpApi(module)
         _DEVICE_CONNECTION = conn
     return _DEVICE_CONNECTION
 
@@ -180,7 +186,7 @@ class Cli:
         return diff
 
 
-class Eapi:
+class LocalEapi:
 
     def __init__(self, module):
         self._module = module
@@ -392,6 +398,119 @@ class Eapi:
         configdiff = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         diff['config_diff'] = configdiff if configdiffobjs else {}
         return diff
+
+
+class HttpApi:
+    def __init__(self, module):
+        self._module = module
+        self._device_configs = {}
+        self._session_support = None
+        self._connection = None
+
+    def edit_config(self, config, commit=False, replace=False):
+        """Loads the configuration onto the remote devices
+
+        If the device doesn't support configuration sessions, this will
+        fallback to using configure() to load the commands.  If that happens,
+        there will be no returned diff or session values
+        """
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+        banner_cmd = None
+        banner_input = []
+
+        commands = ['configure session %s' % session]
+        if replace:
+            commands.append('rollback clean-config')
+
+        for command in config:
+            if command.startswith('banner'):
+                banner_cmd = command
+                banner_input = []
+            elif banner_cmd:
+                if command == 'EOF':
+                    command = {'cmd': banner_cmd, 'input': '\n'.join(banner_input)}
+                    banner_cmd = None
+                    commands.append(command)
+                else:
+                    banner_input.append(command)
+                    continue
+            else:
+                commands.append(command)
+
+        try:
+            response = self._connection.send_request(commands)
+        except Exception:
+            commands = ['configure session %s' % session, 'abort']
+            response = self._connection.send_request(commands, output='text')
+            raise
+
+        commands = ['configure session %s' % session, 'show session-config diffs']
+        if commit:
+            commands.append('commit')
+        else:
+            commands.append('abort')
+
+        response = self._connection.send_request(commands, output='text')
+        diff = response[1].strip()
+        if diff:
+            result['diff'] = diff
+
+        return result
+
+    def run_commands(self, commands, check_rc=True):
+        """Runs list of commands on remote device and returns results
+        """
+        output = None
+        queue = list()
+        responses = list()
+
+        def run_queue(queue, output):
+            try:
+                response = to_list(self._connection.send_request(queue, output=output))
+            except Exception as exc:
+                if check_rc:
+                    raise
+                return to_text(exc)
+
+            if output == 'json':
+                response = [json.loads(item) for item in response]
+            return response
+
+        for item in to_list(commands):
+            cmd_output = 'text'
+            if isinstance(item, dict):
+                command = item['command']
+                if 'output' in item:
+                    cmd_output = item['output']
+            else:
+                command = item
+
+            # Emulate '| json' from CLI
+            if is_json(command):
+                command = command.rsplit('|', 1)[0]
+                cmd_output = 'json'
+
+            if output and output != cmd_output:
+                responses.extend(run_queue(queue, output))
+                queue = list()
+
+            output = cmd_output
+            queue.append(command)
+
+        if queue:
+            responses.extend(run_queue(queue, output))
+
+        return responses
+
+    def load_config(self, config, commit=False, replace=False):
+        """Loads the configuration onto the remote devices
+
+        If the device doesn't support configuration sessions, this will
+        fallback to using configure() to load the commands.  If that happens,
+        there will be no returned diff or session values
+        """
+        return self.edit_config(config, commit, replace)
 
 
 def is_json(cmd):

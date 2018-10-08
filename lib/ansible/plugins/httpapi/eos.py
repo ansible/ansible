@@ -4,8 +4,29 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: eos
+short_description: Use eAPI to run command on eos platform
+description:
+  - This eos plugin provides low level abstraction api's for
+    sending and receiving CLI commands from eos network devices.
+version_added: "2.7"
+options:
+  eos_use_sessions:
+    type: int
+    default: 1
+    description:
+      - Specifies if sessions should be used on remote host or not
+    env:
+      - name: ANSIBLE_EOS_USE_SESSIONS
+    vars:
+      - name: ansible_eos_use_sessions
+        version_added: '2.7'
+"""
+
 import json
-import time
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
@@ -20,6 +41,10 @@ except ImportError:
 
 
 class HttpApi(HttpApiBase):
+    def __init__(self, *args, **kwargs):
+        super(HttpApi, self).__init__(*args, **kwargs)
+        self._session_support = None
+
     def send_request(self, data, **message_kwargs):
         data = to_list(data)
         if self._become:
@@ -48,117 +73,68 @@ class HttpApi(HttpApiBase):
 
         return results
 
-    def get_prompt(self):
-        # Fake a prompt for @enable_mode
-        if self._become:
-            return '#'
-        return '>'
-
-    # Imported from module_utils
-    def edit_config(self, config, commit=False, replace=False):
-        """Loads the configuration onto the remote devices
-
-        If the device doesn't support configuration sessions, this will
-        fallback to using configure() to load the commands.  If that happens,
-        there will be no returned diff or session values
-        """
-        session = 'ansible_%s' % int(time.time())
-        result = {'session': session}
-        banner_cmd = None
-        banner_input = []
-
-        commands = ['configure session %s' % session]
-        if replace:
-            commands.append('rollback clean-config')
-
-        for command in config:
-            if command.startswith('banner'):
-                banner_cmd = command
-                banner_input = []
-            elif banner_cmd:
-                if command == 'EOF':
-                    command = {'cmd': banner_cmd, 'input': '\n'.join(banner_input)}
-                    banner_cmd = None
-                    commands.append(command)
-                else:
-                    banner_input.append(command)
-                    continue
-            else:
-                commands.append(command)
-
+    @property
+    def supports_sessions(self):
+        use_session = self.get_option('eos_use_sessions')
         try:
-            response = self.send_request(commands)
-        except Exception:
-            commands = ['configure session %s' % session, 'abort']
-            response = self.send_request(commands, output='text')
-            raise
+            use_session = int(use_session)
+        except ValueError:
+            pass
 
-        commands = ['configure session %s' % session, 'show session-config diffs']
-        if commit:
-            commands.append('commit')
+        if not bool(use_session):
+            self._session_support = False
         else:
-            commands.append('abort')
+            if self._session_support:
+                return self._session_support
 
-        response = self.send_request(commands, output='text')
-        diff = response[1].strip()
-        if diff:
-            result['diff'] = diff
+            response = self.get('show configuration sessions')
+            self._session_support = 'error' not in response
 
-        return result
+        return self._session_support
 
-    def run_commands(self, commands, check_rc=True):
-        """Runs list of commands on remote device and returns results
-        """
-        output = None
-        queue = list()
-        responses = list()
+    def get_device_info(self):
+        device_info = {}
 
-        def run_queue(queue, output):
-            try:
-                response = to_list(self.send_request(queue, output=output))
-            except Exception as exc:
-                if check_rc:
-                    raise
-                return to_text(exc)
+        device_info['network_os'] = 'eos'
+        reply = self.send_request('show version | json')
+        data = json.loads(reply)
 
-            if output == 'json':
-                response = [json.loads(item) for item in response]
-            return response
+        device_info['network_os_version'] = data['version']
+        device_info['network_os_model'] = data['modelName']
 
-        for item in to_list(commands):
-            cmd_output = 'text'
-            if isinstance(item, dict):
-                command = item['command']
-                if 'output' in item:
-                    cmd_output = item['output']
-            else:
-                command = item
+        reply = self.get('show hostname | json')
+        data = json.loads(reply)
 
-            # Emulate '| json' from CLI
-            if command.endswith('| json'):
-                command = command.rsplit('|', 1)[0]
-                cmd_output = 'json'
+        device_info['network_os_hostname'] = data['hostname']
 
-            if output and output != cmd_output:
-                responses.extend(run_queue(queue, output))
-                queue = list()
+        return device_info
 
-            output = cmd_output
-            queue.append(command)
+    def get_device_operations(self):
+        return {
+            'supports_diff_replace': True,
+            'supports_commit': True if self.supports_sessions else False,
+            'supports_rollback': False,
+            'supports_defaults': False,
+            'supports_onbox_diff': True if self.supports_sessions else False,
+            'supports_commit_comment': False,
+            'supports_multiline_delimiter': False,
+            'supports_diff_match': True,
+            'supports_diff_ignore_lines': True,
+            'supports_generate_diff': False if self.supports_sessions else True,
+            'supports_replace': True if self.supports_sessions else False,
+        }
 
-        if queue:
-            responses.extend(run_queue(queue, output))
+    def get_capabilities(self):
+        result = {}
+        __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
+        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
+        result['rpc'] = __rpc__ + rpc_list
+        result['device_info'] = self.get_device_info()
+        result['device_operations'] = self.get_device_operations()
+        result.update(self.get_option_values())
+        result['network_api'] = 'eapi'
 
-        return responses
-
-    def load_config(self, config, commit=False, replace=False):
-        """Loads the configuration onto the remote devices
-
-        If the device doesn't support configuration sessions, this will
-        fallback to using configure() to load the commands.  If that happens,
-        there will be no returned diff or session values
-        """
-        return self.edit_config(config, commit, replace)
+        return json.dumps(result)
 
 
 def handle_response(response):

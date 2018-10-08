@@ -37,8 +37,8 @@ options:
   network_os:
     description:
       - Configures the device platform network operating system.  This value is
-        used to load the correct httpapi and cliconf plugins to communicate
-        with the remote device
+        used to load the correct httpapi plugin to communicate with the remote
+        device
     vars:
       - name: ansible_network_os
   remote_user:
@@ -154,7 +154,7 @@ from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import cliconf_loader, httpapi_loader
+from ansible.plugins.loader import httpapi_loader
 from ansible.plugins.connection import NetworkConnectionBase
 
 try:
@@ -185,12 +185,6 @@ class Connection(NetworkConnectionBase):
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 
-            self.cliconf = cliconf_loader.get(self._network_os, self)
-            if self.cliconf:
-                self._sub_plugins.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
-            else:
-                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
         else:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
