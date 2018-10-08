@@ -398,13 +398,18 @@ This @{ plugin_type }@ is flagged as **@{cur_state}@** which means that @{module
 
 {%     if metadata.supported_by %}
 
+Maintenance
+-----------
+
+{%       set supported_by = support[metadata.supported_by] %}
+This @{ plugin_type }@ is flagged as **@{metadata.supported_by}@** which means that it is maintained by @{ supported_by }@. See :ref:`Module Maintenance & Support <modules_support>` for more info.
+
+For a list of other modules that are also maintained by @{ supported_by }@, see :ref:`here <@{ metadata.supported_by }@_supported>`.
+
+{%       if metadata.supported_by in ('core', 'network') %}
+
 Support
 ~~~~~~~
-{%       set supported_by = support[metadata.supported_by] %}
-This @{ plugin_type }@ is flagged as **@{metadata.supported_by}@** which means that it is supported by @{ supported_by }@. See :ref:`Module Maintenance & Support <modules_support>` for more info.
-
-For a list of other modules that are also supported by @{ supported_by }@, see :ref:`here <@{ metadata.supported_by }@_supported>`.
-{%       if metadata.supported_by in ('core', 'network') %}
 
 For more information about Red Hat's support of this @{ plugin_type }@,
 please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
