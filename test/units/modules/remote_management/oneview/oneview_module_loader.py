@@ -4,10 +4,10 @@
 import sys
 from ansible.compat.tests.mock import patch, Mock
 
+# FIXME: These should be done inside of a fixture so that they're only mocked during
+# these unittests
 sys.modules['hpOneView'] = Mock()
 sys.modules['hpOneView.oneview_client'] = Mock()
-sys.modules['future'] = Mock()
-sys.modules['__future__'] = Mock()
 
 ONEVIEW_MODULE_UTILS_PATH = 'ansible.module_utils.oneview'
 from ansible.module_utils.oneview import (OneViewModuleException,
