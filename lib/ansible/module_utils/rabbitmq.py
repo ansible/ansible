@@ -54,7 +54,7 @@ class RabbitClient():
     def rabbitmq_argument_spec():
         return dict(
             url=dict(default='amqp://guest:guest@127.0.0.1:5672/%2F', type='str'),
-            queue=dict(default=None, type='str', required=True)
+            queue=dict(default=None, type='str')
         )
 
     ''' Consider some file size limits here '''
@@ -149,18 +149,27 @@ class RabbitClient():
                 properties=pika.BasicProperties(content_type=RabbitClient._check_file_mime_type(self.params.get("src"))[0], delivery_mode=1))
 
         try:
-            self.conn_channel.queue_declare(queue=self.queue,
-                                            durable=self.params.get("durable"),
-                                            exclusive=self.params.get("exclusive"),
-                                            auto_delete=self.params.get("auto_delete"))
+            # If queue is not defined, RabbitMQ will return the queue name of the automatically generated queue.
+            if self.queue is None:
+                result = self.conn_channel.queue_declare(durable=self.params.get("durable"),
+                                                         exclusive=self.params.get("exclusive"),
+                                                         auto_delete=self.params.get("auto_delete"))
+                self.conn_channel.confirm_delivery()
+                self.queue = result.method.queue
+            else:
+                self.conn_channel.queue_declare(queue=self.queue,
+                                                durable=self.params.get("durable"),
+                                                exclusive=self.params.get("exclusive"),
+                                                auto_delete=self.params.get("auto_delete"))
+                self.conn_channel.confirm_delivery()
         except Exception as e:
             self.module.fail_json(msg="Queue declare issue: %s" % to_native(e))
 
         # https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/cloudstack.py#L150
-        if args['exchange'] is None:
-            args['exchange'] = ''
-
         if args['routing_key'] is None:
             args['routing_key'] = self.queue
+
+        if args['exchange'] is None:
+            args['exchange'] = ''
 
         return self.conn_channel.basic_publish(**args)

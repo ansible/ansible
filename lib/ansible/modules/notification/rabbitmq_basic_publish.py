@@ -27,8 +27,7 @@ options:
     default: amqp://guest:guest@127.0.0.1:5672/%2F
   queue:
     description:
-      - The queue to publish a message to.
-    required: true
+      - The queue to publish a message to.  If no queue is specified, RabbitMQ will return a random queue name.
   exchange:
     description:
       - The exchange to publish a message to.
@@ -37,7 +36,7 @@ options:
       - The routing key.
   body:
     description:
-      - The body of the message.  
+      - The body of the message.
       - A C(body) cannot be provided if a C(src) is specified.
   src:
     description:
@@ -87,6 +86,12 @@ EXAMPLES = '''
     file: 'path/to/logo.gif'
   delegate_to: localhost
 
+- name: RabbitMQ auto geneated queue
+  rabbitmq_basic_publish:
+    url: "amqp://guest:guest@192.168.0.32:5672/%2F"
+    body: "Hello world random queue from ansible module rabitmq_basic_publish"
+    content_type: "text/plain"
+  delegate_to: localhost
 '''
 
 
@@ -129,7 +134,7 @@ def main():
         module.exit_json(changed=True, msg="Successfully published to queue %s" % rabbitmq.queue)
     else:
         rabbitmq.close_connection()
-        module.exit_json(changed=False, msg="Unsuccessful publishing to queue %s" % rabbitmq.queue)
+        module.fail_json(changed=False, msg="Unsuccessful publishing to queue %s" % rabbitmq.queue)
 
 
 if __name__ == '__main__':
