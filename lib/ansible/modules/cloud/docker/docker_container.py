@@ -435,11 +435,13 @@ options:
     description:
       - List of volumes to mount within the container.
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
-      - "Read modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
+      - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
         C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
         Note that docker might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
+      - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
+        C(z), and C(Z)."
   volume_driver:
     description:
       - The container volume driver.
