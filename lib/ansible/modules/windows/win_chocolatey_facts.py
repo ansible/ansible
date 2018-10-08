@@ -14,12 +14,14 @@ DOCUMENTATION = r'''
 ---
 module: win_chocolatey_facts
 version_added: '2.8'
-short_description: Create a facts collection for chocolatey
+short_description: Create a facts collection for Chocolatey
 description:
-   - This module shows information from chocolatey, such as installed packages, configuration, feature and sources.
+- This module shows information from Chocolatey, such as installed packages, configuration, feature and sources.
 author:
-    - Simon Bärlocher (@sbaerlocher)
-    - ITIGO AG (@itigoag)
+- Simon Bärlocher (@sbaerlocher)
+- ITIGO AG (@itigoag)
+notes:
+- Chocolatey must be installed beforehand, use M(win_chocolatey) to do this.
 '''
 
 EXAMPLES = r'''
@@ -45,64 +47,93 @@ EXAMPLES = r'''
 
 RETURN = r'''
 ansible_facts:
-    description: Detailed information about the chocolatey installation.
-    returned: always
-    type: complex
-    contains:
-        ansible_chocolatey:
-            description: Detailed information about the Chocolatey installation.
-            returned: infos when choco is found.
-            type: dict
-            contains:
-                config:
-                    description: Detailed information about stored the Configurations.
-                    returned: always
-                    type: dict
-                feature:
-                    description: Detailed information about enabled and disabled functions.
-                    returned: always
-                    type: dict
-                sources:
-                    description: List of Chocolatey sources.
-                    returned: always
-                    type: complex
-                    admin_only:
-                        returned: always
-                        type: string
-                    allow_self_service:
-                        returned: always
-                        type: string
-                    bypass_proxy:
-                        returned: always
-                        type: string
-                    certificate:
-                        returned: always
-                        type: string
-                    disabled:
-                        returned: always
-                        type: string
-                    name:
-                        returned: always
-                        type: string
-                    priority:
-                        returned: always
-                        type: string
-                    source:
-                        returned: always
-                        type: string
-                    source_username:
-                        returned: always
-                        type: string
-                packages:
-                    description: List of installed Packages.
-                    returned: alway
-                    type: complex
-                    package:
-                        description: Returns name of Package.
-                        returned: alway
-                        type: string
-                    version:
-                        description: Returns version of Package.
-                        returned: alway
-                        type: string
+  description: Detailed information about the Chocolatey installation
+  returned: always
+  type: complex
+  contains:
+    ansible_chocolatey:
+      description: Detailed information about the Chocolatey installation
+      returned: always
+      type: complex
+      contains:
+        config:
+          description: Detailed information about stored the configurations
+          returned: always
+          type: dict
+          sample:
+            commandExecutionTimeoutSeconds: 2700
+            containsLegacyPackageInstalls: true
+        feature:
+          description: Detailed information about enabled and disabled features
+          returned: always
+          type: dict
+          sample:
+            allowEmptyCheckums: false
+            autoUninstaller: true
+            failOnAutoUninstaller: false
+        sources:
+          description: List of Chocolatey sources
+          returned: always
+          type: complex
+          contains:
+            admin_only:
+              description: Is the source visible to Administrators only
+              returned: always
+              type: bool
+              sample: false
+            allow_self_service:
+              description: Is the source allowed to be used with self-service
+              returned: always
+              type: bool
+              sample: false
+            bypass_proxy:
+              description: Can the source explicitly bypass configured proxies
+              returned: always
+              type: bool
+              sample: true
+            certificate:
+              description: Pth to a PFX certificate for X509 authenticated feeds
+              returned: always
+              type: string
+              sample: C:\chocolatey\cert.pfx
+            disabled:
+              description: Is the source disabled
+              returned: always
+              type: bool
+              sample: false
+            name:
+              description: Name of the source
+              returned: always
+              type: string
+              sample: chocolatey
+            priority:
+              description: The priority order of this source, lower is better, 0 is no priority
+              returned: always
+              type: int
+              sample: 0
+            source:
+              description: The source, can be a folder/file or an url
+              returned: always
+              type: string
+              sample: https://chocolatey.org/api/v2/
+            source_username:
+              description: Username used to access authenticated feeds
+              returned: always
+              type: string
+              sample: username
+        packages:
+          description: List of installed Packages
+          returned: alway
+          type: complex
+          contains:
+            package:
+              description: Name of the package
+              returned: always
+              type: string
+              sample: vscode
+            version:
+              description: Version of the package
+              returned: always
+              type: string
+              sample: '1.27.2'
 '''

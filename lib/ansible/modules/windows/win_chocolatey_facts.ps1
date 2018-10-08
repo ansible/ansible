@@ -5,6 +5,7 @@
 # Copyright: (c) 2018, ITIGO AG <opensource@itigo.ch> 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#Requires -Module Ansible.ModuleUtils.ArgvParser
 #Requires -Module Ansible.ModuleUtils.CommandUtil
 #Requires -Module Ansible.ModuleUtils.Legacy
 
@@ -18,25 +19,8 @@ $result = @{
         ansible_chocolatey =  @{
             config = @{}
             feature = @{}
-            sources = @(
-                @{
-                    admin_only = ""
-                    allow_self_service = ""
-                    bypass_proxy = ""
-                    certificate = ""
-                    disabled = ""
-                    name = ""
-                    priority = ""
-                    source = ""
-                    source_username = ""                
-                }
-            )
-            packages = @(
-                @{
-                    package = ""
-                    name = ""
-                }
-            )
+            sources = @()
+            packages = @()
         }
     }
 }
@@ -50,7 +34,8 @@ Function Get-ChocolateyFeature {
 
     param($choco_app)
 
-    $res = Run-Command -command "`"$($choco_app.Path)`" feature list -r"
+    $command = Argv-ToString -arguments $choco_app.Path, "feature", "list", "-r"
+    $res = Run-Command -command $command
     if ($res.rc -ne 0) {
         $result.stdout = $res.stdout
         $result.stderr = $res.stderr
@@ -63,7 +48,7 @@ Function Get-ChocolateyFeature {
         $feature_split = $_ -split "\|"
         $feature_info."$($feature_split[0])" = $feature_split[1] -eq "Enabled"
     }
-    $result.ansible_facts.ansible_chocolatey.feature =  $feature_info
+    $result.ansible_facts.ansible_chocolatey.feature = $feature_info
 }
 
 Function Get-ChocolateyConfig {
@@ -83,16 +68,27 @@ Function Get-ChocolateyConfig {
 
     $config_info = @{}
     foreach ($config in $choco_config.chocolatey.config.GetEnumerator()) {
-        $config_info."$($config.key)" = $config.value
+        # try and parse as a boot, then an int, fallback to string
+        try {
+            $value = [System.Boolean]::Parse($config.value)
+        } catch {
+            try {
+                $value = [System.Int32]::Parse($config.value)
+            } catch {
+                $value = $config.value
+            }
+        }
+        $config_info."$($config.key)" = $value
     }
-    $result.ansible_facts.ansible_chocolatey.config =  $config_info
+    $result.ansible_facts.ansible_chocolatey.config = $config_info
 }
 
 Function Get-ChocolateyPackages {
 
     param($choco_app)
 
-    $res = Run-Command -command "`"$($choco_app.Path)`" list --local-only -r"
+    $command = Argv-ToString -arguments $choco_app.Path, "list", "--local-only", "-r"
+    $res = Run-Command -command $command
     if ($res.rc -ne 0) {
         $result.stdout = $res.stdout
         $result.stderr = $res.stderr
@@ -107,7 +103,7 @@ Function Get-ChocolateyPackages {
             package = $packages_split[0]
             version = $packages_split[1]
         }
-        $packages_info.add($package_info) > $null 
+        $packages_info.Add($package_info) > $null
     }
     $result.ansible_facts.ansible_chocolatey.packages = $packages_info
 }
