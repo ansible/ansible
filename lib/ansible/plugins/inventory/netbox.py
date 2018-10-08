@@ -63,6 +63,7 @@ EXAMPLES = '''
 
 plugin: netbox
 api_endpoint: http://localhost:8000
+validate_certs: True
 group_by:
   - device_roles
 query_filters:
@@ -135,7 +136,7 @@ class InventoryModule(BaseInventoryPlugin):
     NAME = 'netbox'
 
     def _fetch_information(self, url):
-        response = open_url(url, headers=self.headers, timeout=self.timeout, validate_certs=False)
+        response = open_url(url, headers=self.headers, timeout=self.timeout, validate_certs=self.validate_certs)
 
         try:
             raw_data = to_text(response.read(), errors='surrogate_or_strict')
@@ -368,6 +369,7 @@ class InventoryModule(BaseInventoryPlugin):
         token = self.get_option("token")
         self.api_endpoint = self.get_option("api_endpoint")
         self.timeout = self.get_option("timeout")
+        self.validate_certs = self.get_option("validate_certs")
         self.headers = {
             'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
