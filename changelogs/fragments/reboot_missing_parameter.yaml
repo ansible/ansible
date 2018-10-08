@@ -1,0 +1,2 @@
+bugfixes:
+- reboot - add reboot_timeout parameter to the list of parameters so it can be used.
