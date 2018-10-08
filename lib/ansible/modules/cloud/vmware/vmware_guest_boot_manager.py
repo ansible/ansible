@@ -72,6 +72,11 @@ options:
      description:
      - Choose which firmware should be used to boot the virtual machine.
      choices: ["bios", "efi"]
+   secure_boot_enabled:
+     description:
+     - Choose if EFI secure boot should be enabled.
+     type: 'bool'
+     default: False
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -87,6 +92,7 @@ EXAMPLES = r'''
     boot_retry_enabled: True
     boot_retry_delay: 22300
     boot_firmware: bios
+    secure_boot_enabled: True
     boot_order:
       - floppy
       - cdrom
@@ -113,11 +119,13 @@ vm_boot_status:
         "current_boot_retry_enabled": true,
         "current_enter_bios_setup": true,
         "current_boot_firmware": "bios",
+        "current_secure_boot_enabled": true,
         "previous_boot_delay": 10,
         "previous_boot_retry_delay": 10000,
         "previous_boot_retry_enabled": true,
         "previous_enter_bios_setup": false,
         "previous_boot_firmware": "bios",
+        "previous_secure_boot_enabled": true,
         "previous_boot_order": [
             "ethernet",
             "cdrom",
@@ -245,6 +253,10 @@ class VmBootManager(PyVmomi):
             change_needed = True
             boot_firmware_required = True
 
+        if self.vm.config.bootOptions.efiSecureBootEnabled != self.params.get('secure_boot_enabled'):
+            kwargs.update({'efiSecureBootEnabled': self.params.get('secure_boot_enabled')})
+            change_needed = True
+
         changed = False
         results = dict(
             previous_boot_order=self.humanize_boot_order(self.vm.config.bootOptions.bootOrder),
@@ -253,6 +265,7 @@ class VmBootManager(PyVmomi):
             previous_boot_retry_enabled=self.vm.config.bootOptions.bootRetryEnabled,
             previous_boot_retry_delay=self.vm.config.bootOptions.bootRetryDelay,
             previous_boot_firmware=self.vm.config.firmware,
+            previous_secure_boot_enabled=self.vm.config.bootOptions.efiSecureBootEnabled,
             current_boot_order=[],
         )
 
@@ -278,6 +291,7 @@ class VmBootManager(PyVmomi):
                 'current_boot_retry_enabled': self.vm.config.bootOptions.bootRetryEnabled,
                 'current_boot_retry_delay': self.vm.config.bootOptions.bootRetryDelay,
                 'current_boot_firmware': self.vm.config.firmware,
+                'current_secure_boot_enabled': self.vm.config.bootOptions.efiSecureBootEnabled,
             }
         )
 
@@ -312,6 +326,10 @@ def main():
         boot_retry_delay=dict(
             type='int',
             default=0,
+        ),
+        secure_boot_enabled=dict(
+            type='bool',
+            default=False,
         ),
         boot_firmware=dict(
             type='str',
