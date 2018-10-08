@@ -48,7 +48,7 @@ yumdnf_argument_spec = dict(
         lock_poll=dict(type='int', default=-1),
         lock_timeout=dict(type='int', default=10),
     ),
-    required_one_of=[['name', 'list']],
+    required_one_of=[['name', 'list', 'update_cache']],
     mutually_exclusive=[['name', 'list']],
     supports_check_mode=True,
 )
