@@ -133,11 +133,13 @@ runtime:
   nodePool: test_node_pool
 
 build:
+  pre_ci:
+  - time python close_fds_test.py
   pre_ci_boot:
     image_name: drydock/u16pytall
     image_tag: master
     pull: false
-    options: "--privileged=false --net=bridge --ulimit nofile=200000"
+    options: "--privileged=false --net=bridge"
   ci:
   - ulimit -a
   - time python close_fds_test.py
