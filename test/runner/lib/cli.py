@@ -79,7 +79,7 @@ def main():
         # being called with close_fds=True on Python (8x the time on some environments)
         nofile_limit = 16384
         soft_nofile, hard_nofile = resource.getrlimit(resource.RLIMIT_NOFILE)
-        if soft_nofile < nofile_limit or hard_nofile < nofile_limit:
+        if soft_nofile > nofile_limit or hard_nofile > nofile_limit:
             resource.setrlimit(resource.RLIMIT_NOFILE, (nofile_limit, nofile_limit))
 
         initialize_cloud_plugins()
