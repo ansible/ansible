@@ -40,7 +40,7 @@ EXAMPLES = """
 - name: msg="Match 'Li' on the first column, but return the 3rd column (columns start counting after the match)"
   debug: msg="The atomic mass of Lithium is {{ lookup('csvfile', 'Li file=elements.csv delimiter=, col=2') }}"
 
-- name: Define Values From CSV File  
+- name: Define Values From CSV File
   set_fact:
     loop_ip: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=1') }}"
     int_ip: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=2') }}"
