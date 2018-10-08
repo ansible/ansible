@@ -278,7 +278,7 @@ options:
       - "Use docker CLI syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000), where 8000 is a
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
       - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
-      - A value of all will publish all exposed container ports to random host ports, ignoring
+      - A value of C(all) will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
         a bridge network with optional parameter com.docker.network.bridge.host_binding_ipv4.
@@ -1435,7 +1435,8 @@ class Container(DockerBaseClass):
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
-            working_dir=config.get('WorkingDir')
+            working_dir=config.get('WorkingDir'),
+            publish_all_ports=host_config.get('PublishAllPorts'),
         )
         if self.parameters.restart_policy:
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
@@ -2177,6 +2178,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Process legacy ignore options
         if self.module.params['ignore_image']:
             comparisons['image']['comparison'] = 'ignore'
+        # Add implicit options
+        comparisons['publish_all_ports'] = dict(type='value', comparison='strict', name='published_ports')
         self.comparisons = comparisons
 
     def __init__(self, **kwargs):
