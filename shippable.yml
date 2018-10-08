@@ -134,7 +134,7 @@ build:
     image_name: drydock/u16pytall
     image_tag: master
     pull: false
-    options: "--privileged=false --net=bridge"
+    options: "--privileged=false --net=bridge --ulimit nofile=1048576"
   ci:
   - ulimit -a
   - time python close_fds_test.py
