@@ -129,8 +129,8 @@ branches:
     - "*-patch-*"
     - "revert-*-*"
 
-runtime:
-  nodePool: test_node_pool
+#runtime:
+#  nodePool: test_node_pool
 
 build:
   pre_ci_boot:
