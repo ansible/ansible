@@ -94,6 +94,14 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+RETURN = '''
+msg:
+  description:
+    - A message stating success or failure of the publish action and the queue name.
+  returned: always
+  type: string
+  sample: Successfully published to queue hello
+'''
 
 try:
     import pika
