@@ -266,7 +266,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_file
 
 # APT related constants
 APT_ENV_VARS = dict(
@@ -846,36 +846,6 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
 
 
-def download(module, deb):
-    package = os.path.join(module.tmpdir, to_native(deb.rsplit('/', 1)[1], errors='surrogate_or_strict'))
-    # When downloading a deb, how much of the deb to download before
-    # saving to a tempfile (64k)
-    BUFSIZE = 65536
-
-    try:
-        rsp, info = fetch_url(module, deb, method='GET')
-        if info['status'] != 200:
-            module.fail_json(msg="Failed to download %s, %s" % (deb,
-                                                                info['msg']))
-        # Ensure file is open in binary mode for Python 3
-        f = open(package, 'wb')
-        # Read 1kb at a time to save on ram
-        while True:
-            data = rsp.read(BUFSIZE)
-            data = to_bytes(data, errors='surrogate_or_strict')
-
-            if len(data) < 1:
-                break  # End of file, break while loop
-
-            f.write(data)
-        f.close()
-        deb = package
-    except Exception as e:
-        module.fail_json(msg="Failure downloading %s, %s" % (deb, to_native(e)))
-
-    return deb
-
-
 def get_cache_mtime():
     """Return mtime of a valid apt cache file.
     Stat the apt cache file and if no cache file is found return 0
@@ -1053,7 +1023,7 @@ def main():
             if p['state'] != 'present':
                 module.fail_json(msg="deb only supports state=present")
             if '://' in p['deb']:
-                p['deb'] = download(module, p['deb'])
+                p['deb'] = fetch_file(module, p['deb'])
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         allow_unauthenticated=allow_unauthenticated,
