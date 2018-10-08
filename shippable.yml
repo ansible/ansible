@@ -70,10 +70,10 @@ matrix:
 #    - env: T=linux/ubuntu1604/2
 #    - env: T=linux/ubuntu1604py3/2
 #
-#    - env: T=osx/10.11/3
-#    - env: T=rhel/7.5/3
+    - env: T=osx/10.11/3
+    - env: T=rhel/7.5/3
 #    - env: T=freebsd/10.4/3
-#    - env: T=freebsd/11.1/3
+    - env: T=freebsd/11.1/3
 #    - env: T=linux/centos6/3
     - env: T=linux/centos7/3
 #    - env: T=linux/fedora24/3
