@@ -47,11 +47,14 @@ options:
     file_name:
         description:
             - This configuration file name  where the configurations will be written.
+
+# NetDev Configuration
+
     kind:
         description:
             - This is the type of netdev device you wish to create.
         choices: [ "bond", "bridge", "vlan", "macvlan", "ipip", "sit", "gre", "greptap", "ip6gre", "ip6tnl",
-                   "ip6gretap", "ip6tnl","vti", "vti6" ]
+                   "ip6gretap", "vti", "vti6", "vxlan" ]
     mac_address:
         description:
             - Configures the MAC address.
@@ -109,6 +112,25 @@ options:
         description:
             - Configures the priority of the bridge.
         required: false
+    vxlan_id:
+        description:
+            - The VXLAN ID to use.
+        required: false
+    vxlan_local:
+        description:
+            - Configures local IP address.
+        required: false
+    vxlan_remote:
+        description:
+            - Configures destination IP address.
+        required: false
+    vxlan_destination_port:
+        description:
+            - Configures the default destination UDP port on a per-device basis.
+        required: false
+
+# Network Configuration
+
     lldp:
         description:
             - Controls support for Ethernet LLDP packet reception.
@@ -279,6 +301,15 @@ EXAMPLES = '''
         name=eth0
         vlan_device="eth0.11 eth0.12"
         state=present
+
+# VxLan
+  - networkd:
+        config_type=netdev
+        name=vxlan-test
+        kind=vxlan
+        vxlan_id=13
+        vxlan_local=192.168.1.1
+        vxlan_remote=192.168.1.3
 '''
 
 UNIT_PATH_NETWORKD = '/lib/systemd/network'
@@ -482,6 +513,12 @@ class NetDev:
         self.tunnel_remote = module.params['tunnel_remote']
         self.tunnel_create_independent = module.params['tunnel_create_independent']
 
+        # VXLAN
+        self.vxlan_id = module.params['vxlan_id']
+        self.vxlan_local = module.params['vxlan_local']
+        self.vxlan_remote = module.params['vxlan_remote']
+        self.vxlan_destination_port = module.params['vxlan_destination_port']
+
     def create_config_bridge_params(self):
         conf = ''
 
@@ -529,6 +566,27 @@ class NetDev:
 
         return conf
 
+    def create_config_vxlan_params(self):
+        conf = ''
+
+        if self.vxlan_id:
+            conf += 'Id={0}\n'.format(self.vxlan_id)
+
+        if self.vxlan_local:
+            conf += 'Local={0}\n'.format(self.vxlan_local)
+
+        if self.vxlan_remote:
+            conf += 'Remote={0}\n'.format(self.vxlan_remote)
+
+        if self.vxlan_destination_port:
+            conf += 'DestinationPort={0}\n'.format(self.vxlan_destination_port)
+
+        if conf:
+            return '\n[VXLAN]\n{0}'.format(conf)
+
+        return conf
+
+
     def create_config_netdev(self):
         conf = '[NetDev]\nName={0}\n'.format(self.name)
 
@@ -553,6 +611,10 @@ class NetDev:
         elif self.kind in ['ipip', 'sit', 'gre', 'greptap', 'ip6gre', 'ip6tnl', 'vti', 'vti6']:
             conf += 'Kind={0}\n'.format(self.kind)
             conf += self.create_config_tunnel_params()
+        elif self.kind == 'vxlan':
+            conf += 'Kind=vxlan\n'
+            conf += self.create_config_vxlan_params()
+
 
         config = NetworkdUtilities(self.module)
         return config.write_configs_to_file(conf)
@@ -610,7 +672,7 @@ def main():
 
             # [NetDev] section
             kind=dict(type='str', default=None, choices=['bridge', 'vlan', 'macvlan', 'bond', 'ipip', 'sit', 'gre',
-                                                         'greptap', 'ip6gre', 'ip6gretap', 'ip6tnl', 'vti', 'vti6']),
+                                                         'greptap', 'ip6gre', 'ip6gretap', 'ip6tnl', 'vti', 'vti6', 'vxlan']),
 
             # [VLAN] section
             vlan_id=dict(type='str', default=None),
@@ -634,6 +696,13 @@ def main():
             bond_mode=dict(require=False, default='balance-rr', type='str', choices=['balance-rr', 'active-backup', 'balance-xor', 'broadcast', '802.3ad',
                                                                                      'balance-tlb', 'balance-alb']),
             transmit_hash_policy=dict(type='str', choices=['layer2', 'layer3+4', 'layer2+3', 'encap2+3', 'encap3+4']),
+
+            # [VXLAN] Sectionaddress=dict(type='str', default=None),
+            vxlan_id=dict(type='str', default=None),
+            vxlan_local=dict(type='str', default=None),
+            vxlan_remote=dict(type='str', default=None),
+            vxlan_destination_port=dict(type='str', default=None),
+
             # [Network] section
             dhcp=dict(type='str', default=None, choices=['yes', 'no', 'ipv4', 'ipv6']),
             address=dict(type='str', default=None),
@@ -655,6 +724,24 @@ def main():
 
     if module.params['state'] == 'present' and not module.params['config_type']:
         module.fail_json(msg='Config type required when state is present')
+
+
+    kind = module.params['kind']
+
+    if kind == 'vxlan':
+        vxlan_id = module.params['vxlan_id']
+        vxlan_local = module.params['vxlan_local']
+        vxlan_remote = module.params['vxlan_remote']
+
+        if vxlan_local is None or vxlan_id is None or vxlan_remote is None:
+            module.fail_json(msg='When kind is vxlan vxlan_id/vxlan_local/vxlan_remote is compulsory')
+
+    if kind in ['ipip', 'sit', 'gre', 'greptap', 'ip6gre', 'ip6gretap', 'ip6tnl', 'vti', 'vti6']:
+        tunnel_local = module.params['tunnel_local']
+        tunnel_remote = module.params['tunnel_remote']
+
+        if tunnel_local is None or tunnel_remote is None:
+                module.fail_json(msg='When kind is tunnel tunnel_local/tunnel_remote is compulsory')
 
     networkd = Networkd(module)
     status = networkd.create_config_link()
