@@ -27,11 +27,11 @@ import string
 from collections import Mapping
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.plugins import AnsiblePlugin
-from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
+from ansible.plugins import AnsiblePlugin
+from ansible.plugins.loader import cache_loader
 from ansible.template import Templar
 
 try:
@@ -207,15 +207,24 @@ class BaseInventoryPlugin(AnsiblePlugin):
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
         self.set_options(direct=config)
-        if self._options.get('cache'):
-            self._set_cache_options(self._options)
+        try:
+            has_cache_options = self.get_option('cache')
+        except AnsibleError:
+            has_cache_options = False
+        if has_cache_options:
+            try:
+                self.cache = cache_loader.get(self.get_option('cache_plugin'), **self._options)
+            except AnsibleError as e:
+                if 'fact_caching_connection' in to_native(e):
+                    raise AnsibleError(
+                        "error, '%s' inventory cache plugin requires the one of the following to be set:\n"
+                        "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
+                        "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION "
+                        "to be set to a writeable directory path" % self.get_option('cache_plugin')
+                    )
+                raise e
 
         return config
-
-    def _set_cache_options(self, options):
-        self.cache = InventoryFileCacheModule(plugin_name=options.get('cache_plugin'),
-                                              timeout=options.get('cache_timeout'),
-                                              cache_dir=options.get('cache_connection'))
 
     def _consume_options(self, data):
         ''' update existing options from alternate configuration sources not normally used by Ansible.

@@ -48,7 +48,6 @@ import time
 from multiprocessing import Lock
 from itertools import chain
 
-from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import BaseCacheModule
 
@@ -165,13 +164,14 @@ class CacheModuleKeys(collections.MutableSet):
 class CacheModule(BaseCacheModule):
 
     def __init__(self, *args, **kwargs):
-        if C.CACHE_PLUGIN_CONNECTION:
-            connection = C.CACHE_PLUGIN_CONNECTION.split(',')
+        super(CacheModule, self).__init__(*args, **kwargs)
+        if self.get_option('_uri'):
+            connection = self.get_option('_uri')
         else:
             connection = ['127.0.0.1:11211']
 
-        self._timeout = C.CACHE_PLUGIN_TIMEOUT
-        self._prefix = C.CACHE_PLUGIN_PREFIX
+        self._timeout = self.get_option('_timeout')
+        self._prefix = self.get_option('_prefix')
         self._cache = {}
         self._db = ProxyClientPool(connection, debug=0)
         self._keys = CacheModuleKeys(self._db, self._db.get(CacheModuleKeys.PREFIX) or [])
