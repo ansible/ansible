@@ -166,7 +166,7 @@ options:
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED. This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, OMIT THE USE OF THIS PARAMETER 
+      - WHEN IN DOUBT, OMIT THE USE OF THIS PARAMETER
       - AND USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
     required: false
 
@@ -236,14 +236,14 @@ options:
     description:
       - Quarantine method.
       - choice | none | Quarantine is disabled.
-      - choice | attacker | Block all traffic sent from attacker's IP address. 
+      - choice | attacker | Block all traffic sent from attacker's IP address.
       - The attacker's IP address is also added to the banned user list. The target's address is not affected.
     required: false
     choices: ["none", "attacker"]
 
   entries_quarantine_expiry:
     description:
-      - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m, default = 5m). 
+      - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m, default = 5m).
       - Requires quarantine set to attacker.
     required: false
 
@@ -286,7 +286,7 @@ options:
 
   entries_risk:
     description:
-      - Risk, or impact, of allowing traffic from this application to occur 1 - 5; 
+      - Risk, or impact, of allowing traffic from this application to occur 1 - 5;
       - (Low, Elevated, Medium, High, and Critical).
     required: false
 
