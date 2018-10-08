@@ -854,9 +854,9 @@ def download(module, deb):
 
     try:
         rsp, info = fetch_url(module, deb, method='GET')
-        if info['status'] != 200:
-            module.fail_json(msg="Failed to download %s, %s" % (deb,
-                                                                info['msg']))
+        if info['status'] != 200 and not deb.startswith('file:/') and not (deb.startswith('ftp:/') and info.get('msg', '').startswith('OK')):
+            module.fail_json(msg="Download failed: {0}".format(deb), status_code=info['status'], response=info['msg'])
+
         # Ensure file is open in binary mode for Python 3
         f = open(package, 'wb')
         # Read 1kb at a time to save on ram
