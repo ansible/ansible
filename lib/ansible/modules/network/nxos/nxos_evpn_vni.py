@@ -275,8 +275,9 @@ def main():
             candidate = CustomNetworkConfig(indent=3)
             candidate.add(commands, parents=parents)
             candidate = candidate.items_text()
-            load_config(module, candidate)
-            results['changed'] = True
+            if not module.check_mode:
+                load_config(module, candidate)
+                results['changed'] = True
             results['commands'] = candidate
     else:
         results['commands'] = []
