@@ -564,79 +564,61 @@ def fmgr_logout(
                 return msg
 
 
-# FUNCTION/METHOD FOR CONVERTING CIDR TO A NETMASK
-# DID NOT USE IP ADDRESS MODULE TO KEEP INCLUDES TO A MINIMUM
-def fmgr_cidr_to_netmask(cidr):
-    cidr = int(cidr)
-    mask = (0xffffffff >> (32 - cidr)) << (32 - cidr)
-    return (str((0xff000000 & mask) >> 24) + '.' +
-            str((0x00ff0000 & mask) >> 16) + '.' +
-            str((0x0000ff00 & mask) >> 8) + '.' +
-            str((0x000000ff & mask)))
-
-
-# EDITED FUNCTION WITH ADDITIONAL FUNCTION CALL TO CHECK IF IS EMPTY DICT
-# OR NOT
+# utility function: removing keys wih value of None, nothing in playbook for that key
 def fmgr_del_none(obj):
     if isinstance(obj, dict):
-        return type(obj)(
-            (fmgr_del_none(k),
-             fmgr_del_none(v)) for k,
-            v in obj.items() if k is not None and (
-                v is not None and not fmgr_is_empty_dict(v)))
+        return type(obj)((fmgr_del_none(k), fmgr_del_none(v))
+                         for k, v in obj.items() if k is not None and (v is not None and not fmgr_is_empty_dict(v)))
     else:
         return obj
 
 
-# NEW FUNCTION TO INSPECT FOR NESTED EMPTY DICTIONARIES
-def fmgr_is_empty_dict(obj):
-    # SET RETURN_VAL TO FALSE -- WE MUST PROVE THAT THIS IS EMPTY!
-    return_val = False
-    # IS IT A DICTIONARY?
+# utility function: remove keys that are need for the logic but the FMG API won't accept them
+def fmgr_prepare_dict(obj):
+    list_of_elems = ["mode", "adom", "host", "username", "password"]
     if isinstance(obj, dict):
-        # IS IT EMPTY?
+        obj = dict((key, fmgr_prepare_dict(value)) for (key, value) in obj.items() if key not in list_of_elems)
+    return obj
+
+
+def fmgr_is_empty_dict(obj):
+    return_val = False
+    if isinstance(obj, dict):
         if len(obj) > 0:
-            # IF NOT EMPTY, LOOP THROUGH ITS ITEMS
             for k, v in obj.items():
-                # IS CHILD ITEM A DICTIONARY?
                 if isinstance(v, dict):
-                    # IS IT EMPTY?
                     if len(v) == 0:
-                        # RETURN TRUE (SO FAR)
                         return_val = True
-                    # IF NOT EMPTY -- LOOP THOUGH CHILD ITEMS TO SEE IF THEY
-                    # ARE == NONE
                     elif len(v) > 0:
                         for k1, v1 in v.items():
-                            # IF CHILD OBJECTS ARE NONE, RETURN TRUE (EMPTY)
                             if v1 is None:
                                 return_val = True
-                            # IF A CHILD OBJECT IS NOT NONE, RETURN FALSE (NOT
-                            # EMPTY) AND EXIT
                             elif v1 is not None:
                                 return_val = False
                                 return return_val
-                # IF IT ISN'T A DICTIONARY, AND IS EMPTY, RETURN TRUE
                 elif v is None:
                     return_val = True
-                # IF IT ISN'T A DICTIONARY, AND ISN'T EMPTY, RETURN FALSE
                 elif v is not None:
                     return_val = False
                     return return_val
-        # IF DICTIONARY IS EMPTY RETURN TRUE
         elif len(obj) == 0:
             return_val = True
 
     return return_val
 
 
-# utility function: remove keys that are need for the logic but the FMG
-# API won't accept them
-def fmgr_prepare_dict(obj):
-    list_of_elems = ["mode", "adom", "host", "username", "password"]
+def fmgr_split_comma_strings_into_lists(obj):
     if isinstance(obj, dict):
-        obj = dict((key, fmgr_prepare_dict(value))
-                   for (key, value) in obj.items() if key not in list_of_elems)
+        if len(obj) > 0:
+            for k, v in obj.items():
+                if isinstance(v, str):
+                    new_list = list()
+                    if "," in v:
+                        new_items = v.split(",")
+                        for item in new_items:
+                            new_list.append(item.strip())
+                        obj[k] = new_list
+
     return obj
 
 
