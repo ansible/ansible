@@ -67,7 +67,7 @@ options:
     description:
     - Specifies the forest functional level for the new forest.
     - The default forest functional level in Windows Server is typically the same as the version you are running.
-    - Beware that the default forest functional level in Windows Server 2008 R2 when you create a new forest is C(Win2003).
+#    - Beware that the default forest functional level in Windows Server 2008 R2 when you create a new forest is C(Win2003).
     type: str
     choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
@@ -84,8 +84,20 @@ reboot_required:
 '''
 
 EXAMPLES = r'''
-- name: Ensure the named domain is reachable from the target host; if not, create the domain in a new forest residing on the target host
+- name: Create new domain in a new forest on the target host
   win_domain:
     dns_domain_name: ansible.vagrant
     safe_mode_password: password123!
+
+- name: Create new Windows domain in a new forest with specific parameters
+  win_domain:
+    create_dns_delegation: no
+    database_path: C:\Windows\NTDS
+    dns_domain_name: ansible.vagrant
+    domain_mode: Win2012R2
+    domain_netbios_name: ANSIBLE
+    forest_mode: Win2012R2
+    safe_mode_password: password123!
+    sysvol_path: C:\Windows\SYSVOL
+  register: domain_install
 '''
