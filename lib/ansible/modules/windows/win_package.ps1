@@ -16,6 +16,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $arguments = Get-AnsibleParam -obj $params -name "arguments"
 $expected_return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "list" -default @(0, 3010)
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
+$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
 $product_id = Get-AnsibleParam -obj $params -name "product_id" -type "str" -aliases "productid"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present" -aliases "ensure"
 $username = Get-AnsibleParam -obj $params -name "username" -type "str" -aliases "user_name"
@@ -343,15 +344,20 @@ if ($state -eq "absent") {
             }
 
             if (-not $check_mode) {
-                $uninstall_command = Argv-ToString -arguments $uninstall_arguments
+                $command_args = @{
+                    command = Argv-ToString -arguments $uninstall_arguments
+                }
                 if ($arguments -ne $null) {
-                    $uninstall_command += " $arguments"
+                    $command_args['command'] += " $arguments"
+                }
+                if ($chdir) {
+                    $command_args['working_directory'] = $chdir
                 }
 
                 try {
-                    $process_result = Run-Command -command $uninstall_command
+                    $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run uninstall process ($uninstall_command): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run uninstall process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
@@ -424,15 +430,20 @@ if ($state -eq "absent") {
             }
 
             if (-not $check_mode) {
-                $install_command = Argv-ToString -arguments $install_arguments
+                $command_args = @{
+                    command = Argv-ToString -arguments $install_arguments
+                }
                 if ($arguments -ne $null) {
-                    $install_command += " $arguments"
+                    $command_args['command'] += " $arguments"
+                }
+                if ($chdir) {
+                    $command_args['working_directory'] = $chdir
                 }
 
                 try {
-                    $process_result = Run-Command -command $install_command
+                    $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run install process ($install_command): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run install process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
