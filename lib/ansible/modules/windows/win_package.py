@@ -32,6 +32,12 @@ options:
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
       with msiexec.
+  chdir:
+    description:
+    - Set the specified path as the current working directory before installing
+      or uninstalling a package.
+    type: path
+    version_added: '2.8'
   creates_path:
     description:
     - Will check the existance of the path specified and use the result to
