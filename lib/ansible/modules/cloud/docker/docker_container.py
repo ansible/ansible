@@ -435,9 +435,13 @@ options:
     description:
       - List of volumes to mount within the container.
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
-      - You can specify a read mode for the mount with either C(ro) or C(rw).
+      - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
+        C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
+        Note that docker might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
+      - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
+        C(z), and C(Z)."
   volume_driver:
     description:
       - The container volume driver.
@@ -724,7 +728,12 @@ REQUIRES_CONVERSION_TO_BYTES = [
     'shm_size'
 ]
 
-VOLUME_PERMISSIONS = ('rw', 'ro', 'z', 'Z')
+
+def is_volume_permissions(input):
+    for part in input.split(','):
+        if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave'):
+            return False
+    return True
 
 
 class TaskParameters(DockerBaseClass):
@@ -964,13 +973,15 @@ class TaskParameters(DockerBaseClass):
             if ':' in vol:
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
+                    if not is_volume_permissions(mode):
+                        self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if re.match(r'[.~]', host):
                         host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
                 elif len(vol.split(':')) == 2:
                     parts = vol.split(':')
-                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[.~]', parts[0]):
+                    if not is_volume_permissions(parts[1]) and re.match(r'[.~]', parts[0]):
                         host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
                         continue
@@ -992,7 +1003,7 @@ class TaskParameters(DockerBaseClass):
                         continue
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             result.append(parts[1])
                             continue
                 result.append(vol)
@@ -1119,8 +1130,7 @@ class TaskParameters(DockerBaseClass):
                 binds[container_port] = bind
         return binds
 
-    @staticmethod
-    def _get_volume_binds(volumes):
+    def _get_volume_binds(self, volumes):
         '''
         Extract host bindings, if any, from list of volume mapping strings.
 
@@ -1133,9 +1143,11 @@ class TaskParameters(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = (vol.split(':') + ['rw'])
                 if host is not None:
                     result[host] = dict(
@@ -1747,9 +1759,11 @@ class Container(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = vol.split(':') + ['rw']
                 if host:
                     param_vols.append("%s:%s:%s" % (host, container, mode))
@@ -1796,9 +1810,11 @@ class Container(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = vol.split(':') + ['rw']
                 new_vol = dict()
                 if container:
