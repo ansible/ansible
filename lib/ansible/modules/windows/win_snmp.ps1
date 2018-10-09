@@ -31,6 +31,9 @@ $Communities_reg_key = "HKLM:\System\CurrentControlSet\services\SNMP\Parameters\
 
 ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
   $manager = (Get-ItemProperty $Managers_reg_key).$idx
+  If ($idx.ToLower() -eq '(default)') {
+    continue
+  }
 
   If ($managers.Contains($manager)) {
     # Remove manager from list since it already exists
@@ -49,6 +52,10 @@ ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
 }
 
 ForEach ($community in (Get-Item $Communities_reg_key).Property) {
+  If ($community.ToLower() -eq '(default)') {
+    continue
+  }
+
   If ($communities.Contains($community)) {
     # Remove community from list since it already exists
     $communities.Remove($community)
@@ -68,7 +75,9 @@ ForEach ($community in (Get-Item $Communities_reg_key).Property) {
 # Get used manager indexes as integers
 [System.Collections.ArrayList]$indexes=@()
 ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
-  $indexes.Add([int]$idx) | Out-Null
+  If ($idx.ToLower() -ne '(default)') {
+    $indexes.Add([int]$idx) | Out-Null
+  }
 }
 
 # Add managers that don't already exist
