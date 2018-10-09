@@ -1349,7 +1349,7 @@ def change_instance_state(filters, desired_state, ec2=None):
                 resp = ec2.terminate_instances(InstanceIds=[inst['InstanceId']])
                 [changed.add(i['InstanceId']) for i in resp['TerminatingInstances']]
             if desired_state == 'STOPPED':
-                if inst['State']['Name'] in ('stopping', 'stopped'):
+                if inst['State']['Name'] in ('stopping','stopped'):
                     unchanged.add(inst['InstanceId'])
                     continue
                 resp = ec2.stop_instances(InstanceIds=[inst['InstanceId']])
