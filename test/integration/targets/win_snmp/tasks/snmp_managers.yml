@@ -128,3 +128,31 @@
         - snmp_manager_reg_remove_add.exists
         - snmp_manager_reg_remove_add.type == 'REG_SZ'
         - snmp_manager_reg_remove_add.value == '192.168.1.20'
+
+  - name: Remove the replaced SNMP manager (again)
+    register: snmp_manager_remove
+    win_snmp:
+      action: remove
+      permitted_managers:
+        - 192.168.1.10
+
+  - name: Check replace SNMP manager is removed in registry (again)
+    register: snmp_manager_reg_remove
+    win_reg_stat:
+      path: "{{ permitted_managers_key }}"
+      name: 1
+
+  - name: Check SNMP manager that was added for testing removal exists in registry (again)
+    register: snmp_manager_reg_remove_add
+    win_reg_stat:
+      path: "{{ permitted_managers_key }}"
+      name: 2
+
+  - name: Assert removal of SNMP manager succeeded and next SNMP manager remains (again)
+    assert:
+      that:
+        - snmp_manager_remove is not changed
+        - snmp_manager_reg_remove.exists == false
+        - snmp_manager_reg_remove_add.exists
+        - snmp_manager_reg_remove_add.type == 'REG_SZ'
+        - snmp_manager_reg_remove_add.value == '192.168.1.20'

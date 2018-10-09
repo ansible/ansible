@@ -135,3 +135,31 @@
         - snmp_community_reg_remove_add.exists
         - snmp_community_reg_remove_add.type == 'REG_DWORD'
         - snmp_community_reg_remove_add.value == 4
+
+  - name: Remove the replaced SNMP community (again)
+    register: snmp_community_remove
+    win_snmp:
+      action: remove
+      community_strings:
+        - ansible-ro-test-replace
+
+  - name: Check replace SNMP community is removed in registry (again)
+    register: snmp_community_reg_remove
+    win_reg_stat:
+      path: "{{ valid_communities_key }}"
+      name: ansible-ro-test-replace
+
+  - name: Check SNMP community that was added for testing removal exists in registry (again)
+    register: snmp_community_reg_remove_add
+    win_reg_stat:
+      path: "{{ valid_communities_key }}"
+      name: ansible-ro-remove-add
+
+  - name: Assert removal of SNMP community succeeded and next SNMP community remains (again)
+    assert:
+      that:
+        - snmp_community_remove is not changed
+        - snmp_community_reg_remove.exists == false
+        - snmp_community_reg_remove_add.exists
+        - snmp_community_reg_remove_add.type == 'REG_DWORD'
+        - snmp_community_reg_remove_add.value == 4

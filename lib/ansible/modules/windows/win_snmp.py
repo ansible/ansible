@@ -33,7 +33,9 @@ options:
     action:
         description:
         - C(add) will add new SNMP community strings and/or SNMP managers
-        - C(set) will replace SNMP community strings and/or SNMP managers
+        - C(set) will replace SNMP community strings and/or SNMP managers. An
+          empty value for either C(community_strings) or C(permitted_managers)
+          will result in the respective lists being removed entirely.
         - C(remove) will remove SNMP community strings and/or SNMP managers
         default: set
         choices: [ add, set, remove ]
