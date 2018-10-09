@@ -156,6 +156,11 @@ options:
                disks. This option requires at least the logical_unit.id to be
                specified"
         version_added: "2.8"
+    wipe_after_delete:
+        description:
+            - "If the disk's Wipe After Delete is enabled, then the disk is first wiped."
+        type: bool
+        version_added: "2.8"
 extends_documentation_fragment: ovirt
 '''
 
@@ -452,6 +457,7 @@ class DisksModule(BaseModule):
             ],
             quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') else None,
             shareable=self._module.params.get('shareable'),
+            wipe_after_delete=self.param('wipe_after_delete'),
             lun_storage=otypes.HostStorage(
                 type=otypes.StorageType(
                     logical_unit.get('storage_type', 'iscsi')
@@ -522,7 +528,8 @@ class DisksModule(BaseModule):
             equal(self._module.params.get('description'), entity.description) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
-            equal(self._module.params.get('shareable'), entity.shareable)
+            equal(self._module.params.get('shareable'), entity.shareable) and
+            equal(self.param('wipe_after_delete'), entity.wipe_after_delete)
         )
 
 
@@ -587,6 +594,7 @@ def main():
         openstack_volume_type=dict(default=None),
         image_provider=dict(default=None),
         host=dict(default=None),
+        wipe_after_delete=dict(type='bool', default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
