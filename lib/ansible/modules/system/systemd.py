@@ -260,7 +260,7 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.system.chroot import is_chroot
-from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
+from ansible.module_utils.service import sysv_exists, fail_if_missing
 from ansible.module_utils._text import to_native
 
 
@@ -436,42 +436,20 @@ def main():
 
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
+            fail_if_missing(module, found, unit, msg='host')
 
+            result['enabled'] = module.params['enabled']
             if module.params['enabled']:
                 action = 'enable'
             else:
                 action = 'disable'
-
-            fail_if_missing(module, found, unit, msg='host')
-
-            # do we need to enable the service?
-            enabled = False
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
-
-            # check systemctl result or if it is a init script
-            if rc == 0:
-                enabled = True
-            elif rc == 1:
-                # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-                if module.params['scope'] in (None, 'system') and \
-                        not module.params['user'] and \
-                        is_initd and \
-                        not out.strip().endswith('disabled') and \
-                        sysv_is_enabled(unit):
-                    enabled = True
-
-            # default to current state
-            result['enabled'] = enabled
-
-            # Change enable/disable if needed
-            if enabled != module.params['enabled']:
+            if module.check_mode:
                 result['changed'] = True
-                if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
-                    if rc != 0:
-                        module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
-
-                result['enabled'] = not enabled
+            else:
+                (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                if rc != 0:
+                    module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
+                result['changed'] = out.strip() != "" or err.strip() != ""
 
         # set service state if requested
         if module.params['state'] is not None:
