@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
         - linode_api4 >= 2.0.0
     description:
         - Reads inventories from the Linode API v4.
-        - Uses a <name>.linode.yaml (or <name>.linode.yml) YAML configuration file.
+        - Uses a C(<name>.linode.yaml) (or C(<name>.linode.yml)) YAML configuration file.
         - Linode labels are used by default as the hostnames.
         - The inventory groups are built from groups and not tags.
     options:
