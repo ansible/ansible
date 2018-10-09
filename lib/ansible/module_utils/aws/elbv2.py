@@ -416,6 +416,7 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
 
         self.module.fail_json(msg='Modifying subnets and elastic IPs is not supported for Network Load Balancer')
 
+
 class ELBListeners(object):
 
     def __init__(self, connection, module, elb_arn):
