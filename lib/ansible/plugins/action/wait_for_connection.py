@@ -37,6 +37,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
+    _VALID_ARGS = frozenset(('connect_timeout', 'delay', 'sleep', 'timeout'))
 
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_DELAY = 0
@@ -82,7 +83,7 @@ class ActionModule(ActionBase):
             display.vvv("wait_for_connection: attempting ping module test")
             # call connection reset between runs if it's there
             try:
-                self._connection._reset()
+                self._connection.reset()
             except AttributeError:
                 pass
 

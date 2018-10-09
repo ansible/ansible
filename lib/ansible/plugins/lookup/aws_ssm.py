@@ -40,7 +40,7 @@ description:
 options:
   decrypt:
     description: A boolean to indicate whether to decrypt the parameter.
-    default: false
+    default: true
     type: boolean
   bypath:
     description: A boolean to indicate whether the parameter is provided as a hierarchy.

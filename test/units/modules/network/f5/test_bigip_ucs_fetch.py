@@ -94,7 +94,7 @@ class TestV1Manager(unittest.TestCase):
             force='yes',
             fail_on_missing='no',
             src='remote.ucs',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

@@ -83,27 +83,33 @@ EXAMPLES = '''
   yarn:
     name: imagemin
     path: /app/location
+
 - name: Install "imagemin" node.js package on version 5.3.1
   yarn:
     name: imagemin
     version: '5.3.1'
     path: /app/location
+
 - name: Install "imagemin" node.js package globally.
   yarn:
     name: imagemin
     global: yes
+
 - name: Remove the globally-installed package "imagemin".
   yarn:
     name: imagemin
     global: yes
     state: absent
+
 - name: Install "imagemin" node.js package from custom registry.
   yarn:
     name: imagemin
     registry: 'http://registry.mysite.com'
+
 - name: Install packages based on package.json.
   yarn:
     path: /app/location
+
 - name: Update all packages in package.json to their latest version.
   yarn:
     path: /app/location

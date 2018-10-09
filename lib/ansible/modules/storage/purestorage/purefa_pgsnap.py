@@ -15,9 +15,10 @@ DOCUMENTATION = r'''
 ---
 module: purefa_pgsnap
 version_added: '2.6'
-short_description: Manage protection group snapshots on Pure Storage FlashArrays
+short_description: Manage local protection group snapshots on Pure Storage FlashArrays
 description:
-- Create or delete protection group snapshots on Pure Storage FlashArray.
+- Create or delete local protection group snapshots on Pure Storage FlashArray.
+- This module only supports local protection groups.
 author:
 - Simon Dodsley (@sdodsley)
 options:
@@ -31,13 +32,20 @@ options:
   state:
     description:
     - Define whether the protection group snapshot should exist or not.
-    choices: [ absent, present ]
+      Copy (added in 2.7) will force an overwrite of an exisitng volume
+      from a snapshot.
+    choices: [ absent, present, copy ]
     default: present
   eradicate:
     description:
     - Define whether to eradicate the snapshot on delete or leave in trash.
     type: bool
     default: 'no'
+  restore:
+    description:
+    - Restore a specific volume from a protection group snapshot.
+      This implies overwrite of the current full volume. USE WITH CARE!!
+    version_added: 2.7
 extends_documentation_fragment:
 - purestorage.fa
 '''
@@ -59,6 +67,16 @@ EXAMPLES = r'''
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
     state: absent
+
+- name: Restore volume data from protection group snapshot named foo.snap
+        USE WITH CARE! This will overwrite your existing volume
+  purefa_pgsnap:
+    name: foo
+    suffix: snap
+    restore: data
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: copy
 '''
 
 RETURN = r'''
@@ -84,6 +102,17 @@ def get_pgroup(module, array):
         return None
 
 
+def get_pgroupvolume(module, array):
+    """Return Protection Group Volume or None"""
+    try:
+        pgroup = array.get_pgroup(module.params['name'])
+        for volume in pgroup['volumes']:
+            if volume == module.params['restore']:
+                return volume
+    except:
+        return None
+
+
 def get_pgsnapshot(module, array):
     """Return Snapshot or None"""
     try:
@@ -103,9 +132,20 @@ def create_pgsnapshot(module, array):
                                          suffix=module.params['suffix'],
                                          snap=True,
                                          apply_retention=True)
-            changed = False
+            changed = True
         except:
             changed = False
+    module.exit_json(changed=changed)
+
+
+def restore_pgsnapvolume(module, array):
+    """Restore a Protection Group Snapshot Volume"""
+    volume = module.params['name'] + "." + module.params['suffix'] + "." + module.params['restore']
+    try:
+        array.copy_volume(volume, module.params['restore'], overwrite=True)
+        changed = True
+    except:
+        changed = False
     module.exit_json(changed=changed)
 
 
@@ -138,11 +178,15 @@ def main():
     argument_spec.update(dict(
         name=dict(type='str', required=True),
         suffix=dict(type='str'),
+        restore=dict(type='str'),
         eradicate=dict(type='bool', default=False),
-        state=dict(type='str', default='present', choices=['absent', 'present']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'copy']),
     ))
 
+    required_if = [('state', 'copy', ['suffix', 'restore'])]
+
     module = AnsibleModule(argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     if not HAS_PURESTORAGE:
@@ -156,8 +200,11 @@ def main():
     array = get_system(module)
     pgroup = get_pgroup(module, array)
     pgsnap = get_pgsnapshot(module, array)
+    rvolume = get_pgroupvolume(module, array)
 
-    if state == 'present' and pgroup and not pgsnap:
+    if state == 'copy' and rvolume:
+        restore_pgsnapvolume(module, array)
+    elif state == 'present' and pgroup and not pgsnap:
         create_pgsnapshot(module, array)
     elif state == 'present' and pgroup and pgsnap:
         update_pgsnapshot(module, array)

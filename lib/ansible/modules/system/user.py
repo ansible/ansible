@@ -22,6 +22,15 @@ notes:
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
   - For Windows targets, use the M(win_user) module instead.
+  - On SunOS platforms, the shadow file is backed up automatically since this module edits it directly.
+    On other platforms, the shadow file is backed up by the underlying tools used by this module.
+  - On macOS, this module uses C(dscl) to create, modify, and delete accounts. C(dseditgroup) is used to
+    modify group membership. Accounts are hidden from the login window by modifying
+    C(/Library/Preferences/com.apple.loginwindow.plist).
+  - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
+    C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
+  - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
+    C(userdel) to remove accounts.
 description:
     - Manage user accounts and user attributes.
     - For Windows targets, use the M(win_user) module instead.
@@ -41,7 +50,7 @@ options:
         required: false
         type: bool
         description:
-            - Darwin/OS X only, optionally hide the user from the login window and system preferences.
+            - macOS only, optionally hide the user from the login window and system preferences.
             - The default will be 'True' if the I(system) option is used.
         version_added: "2.6"
     non_unique:
@@ -74,8 +83,10 @@ options:
     shell:
         description:
             - Optionally set the user's shell.
-            - On Mac OS X, before version 2.5, the default shell for non-system users was /usr/bin/false.
-              Since 2.5, the default shell for non-system users on Mac OS X is /bin/bash.
+            - On macOS, before version 2.5, the default shell for non-system users was /usr/bin/false.
+              Since 2.5, the default shell for non-system users on macOS is /bin/bash.
+            - On other operating systems, the default shell is determined by the underlying tool being
+              used. See Notes for details.
     home:
         description:
             - Optionally set the user's home directory.
@@ -86,7 +97,7 @@ options:
     password:
         description:
             - Optionally set the user's password to this crypted value.
-            - On Darwin/OS X systems, this value has to be cleartext. Beware of security issues.
+            - On macOS systems, this value has to be cleartext. Beware of security issues.
             - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
     state:
@@ -342,11 +353,13 @@ uid:
 import errno
 import grp
 import os
+import re
 import platform
 import pwd
 import shutil
 import socket
 import time
+import re
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
@@ -356,6 +369,9 @@ try:
     HAVE_SPWD = True
 except ImportError:
     HAVE_SPWD = False
+
+
+_HASH_RE = re.compile(r'[^a-zA-Z0-9./=]')
 
 
 class User(object):
@@ -429,6 +445,37 @@ class User(object):
         else:
             self.ssh_file = os.path.join('.ssh', 'id_%s' % self.ssh_type)
 
+    def check_password_encrypted(self):
+        # darwin need cleartext password, so no check
+        if self.module.params['password'] and self.platform != 'Darwin':
+            maybe_invalid = False
+            # : for delimiter, * for disable user, ! for lock user
+            # these characters are invalid in the password
+            if any(char in self.module.params['password'] for char in ':*!'):
+                maybe_invalid = True
+            if '$' not in self.module.params['password']:
+                maybe_invalid = True
+            else:
+                fields = self.module.params['password'].split("$")
+                if len(fields) >= 3:
+                    # contains character outside the crypto constraint
+                    if bool(_HASH_RE.search(fields[-1])):
+                        maybe_invalid = True
+                    # md5
+                    if fields[1] == '1' and len(fields[-1]) != 22:
+                        maybe_invalid = True
+                    # sha256
+                    if fields[1] == '5' and len(fields[-1]) != 43:
+                        maybe_invalid = True
+                    # sha512
+                    if fields[1] == '6' and len(fields[-1]) != 86:
+                        maybe_invalid = True
+                else:
+                    maybe_invalid = True
+            if maybe_invalid:
+                self.module.warn("The input password appears not to have been hashed. "
+                                 "The 'password' argument must be encrypted for this module to work properly.")
+
     def execute_command(self, cmd, use_unsafe_shell=False, data=None, obey_checkmode=True):
         if self.module.check_mode and obey_checkmode:
             self.module.debug('In check mode, would have run: "%s"' % cmd)
@@ -437,6 +484,10 @@ class User(object):
             # cast all args to strings ansible-modules-core/issues/4397
             cmd = [str(x) for x in cmd]
             return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
+
+    def backup_shadow(self):
+        if not self.module.check_mode and self.SHADOWFILE:
+            return self.module.backup_local(self.SHADOWFILE)
 
     def remove_user_userdel(self):
         if self.local:
@@ -518,7 +569,10 @@ class User(object):
 
         if self.expires is not None:
             cmd.append('-e')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            if self.expires < time.gmtime(0):
+                cmd.append('')
+            else:
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password is not None:
             cmd.append('-p')
@@ -966,7 +1020,10 @@ class FreeBsdUser(User):
 
         if self.expires is not None:
             cmd.append('-e')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            if self.expires < time.gmtime(0):
+                cmd.append('0')
+            else:
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -1008,10 +1065,11 @@ class FreeBsdUser(User):
             cmd.append(self.comment)
 
         if self.home is not None:
-            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.createhome):
+            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.create_home):
                 cmd.append('-m')
-            cmd.append('-d')
-            cmd.append(self.home)
+            if info[5] != self.home:
+                cmd.append('-d')
+                cmd.append(self.home)
 
             if self.skeleton is not None:
                 cmd.append('-k')
@@ -1489,6 +1547,9 @@ class SunOS(User):
                 line = line.strip()
                 if (line.startswith('#') or line == ''):
                     continue
+                m = re.match(r'^([^#]*)#(.*)$', line)
+                if m:  # The line contains a hash / comment
+                    line = m.group(1)
                 key, value = line.split('=')
                 if key == "MINWEEKS":
                     minweeks = value.rstrip('\n')
@@ -1558,6 +1619,7 @@ class SunOS(User):
         if not self.module.check_mode:
             # we have to set the password by editing the /etc/shadow file
             if self.password is not None:
+                self.backup_shadow()
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
                 try:
                     lines = []
@@ -1662,6 +1724,7 @@ class SunOS(User):
 
         # we have to set the password by editing the /etc/shadow file
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            self.backup_shadow()
             (rc, out, err) = (0, '', '')
             if not self.module.check_mode:
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
@@ -1693,7 +1756,7 @@ class SunOS(User):
 
 class DarwinUser(User):
     """
-    This is a Darwin Mac OS X User manipulation class.
+    This is a Darwin macOS User manipulation class.
     Main differences are that Darwin:-
       - Handles accounts in a database managed by dscl(1)
       - Has no useradd/groupadd
@@ -2391,6 +2454,7 @@ def main():
     )
 
     user = User(module)
+    user.check_password_encrypted()
 
     module.debug('User instantiated - platform %s' % user.platform)
     if user.distribution:

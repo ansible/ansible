@@ -1,2 +1,0 @@
-bugfixes:
-- win_iis_webapppool - redirect some module output to null so Ansible can read the output JSON https://github.com/ansible/ansible/issues/40874

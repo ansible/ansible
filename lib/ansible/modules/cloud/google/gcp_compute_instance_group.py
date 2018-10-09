@@ -80,19 +80,19 @@ options:
                 required: false
     network:
         description:
-            - A reference to Network resource.
+            - The network to which all instances in the instance group belong.
         required: false
     region:
         description:
-            - A reference to Region resource.
+            - The region where the instance group is located (for regional resources).
         required: false
     subnetwork:
         description:
-            - A reference to Subnetwork resource.
+            - The subnetwork to which all instances in the instance group belong.
         required: false
     zone:
         description:
-            - A reference to Zone resource.
+            - A reference to the zone where the instance group resides.
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -100,27 +100,24 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: 'network-instancegroup'
+      name: "network-instancegroup"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: network
+
 - name: create a instance group
   gcp_compute_instance_group:
-      name: testObject
+      name: "test_object"
       named_ports:
-        - name: ansible
-          port: 1234
+      - name: ansible
+        port: 1234
       network: "{{ network }}"
-      zone: 'us-central1-a'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      zone: us-central1-a
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -171,22 +168,22 @@ RETURN = '''
                 type: int
     network:
         description:
-            - A reference to Network resource.
+            - The network to which all instances in the instance group belong.
         returned: success
         type: dict
     region:
         description:
-            - A reference to Region resource.
+            - The region where the instance group is located (for regional resources).
         returned: success
         type: str
     subnetwork:
         description:
-            - A reference to Subnetwork resource.
+            - The subnetwork to which all instances in the instance group belong.
         returned: success
         type: dict
     zone:
         description:
-            - A reference to Zone resource.
+            - A reference to the zone where the instance group resides.
         returned: success
         type: str
 '''
@@ -224,6 +221,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#instanceGroup'
 
@@ -233,10 +233,10 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                fetch = update(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -256,11 +256,11 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     module.fail_json(msg="InstanceGroup cannot be edited")
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -270,7 +270,7 @@ def resource_to_request(module):
         u'kind': 'compute#instanceGroup',
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
-        u'namedPorts': InstaGroupNamedPortsArray(module.params.get('named_ports', []), module).to_request(),
+        u'namedPorts': InstanceGroupNamedPortsArray(module.params.get('named_ports', []), module).to_request(),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'region': region_selflink(module.params.get('region'), module.params),
         u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
@@ -345,7 +345,7 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
-        u'namedPorts': InstaGroupNamedPortsArray(response.get(u'namedPorts', []), module).from_response(),
+        u'namedPorts': InstanceGroupNamedPortsArray(response.get(u'namedPorts', []), module).from_response(),
         u'network': response.get(u'network'),
         u'region': response.get(u'region'),
         u'subnetwork': response.get(u'subnetwork')
@@ -373,7 +373,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceGroup')
@@ -398,7 +398,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class InstaGroupNamedPortsArray(object):
+class InstanceGroupNamedPortsArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -429,6 +429,7 @@ class InstaGroupNamedPortsArray(object):
             u'name': item.get(u'name'),
             u'port': item.get(u'port')
         })
+
 
 if __name__ == '__main__':
     main()

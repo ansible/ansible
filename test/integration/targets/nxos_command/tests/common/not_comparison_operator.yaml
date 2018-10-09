@@ -1,0 +1,18 @@
+---
+- debug: msg="START common/not_comparison_operator.yaml on connection={{ ansible_connection }}"
+
+- name: test 'not' keyword in wait_for
+  nxos_command:
+    commands:
+      - show version
+    wait_for:
+      - "result[0] not contains QWERTYQWERTYQWERTY"
+      - "result[0] == not QWERTYQWERTYQWERTY"
+      - "result[0] matches not QWERTYQWERTYQWERTY"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END common/not_comparison_operator.yaml on connection={{ ansible_connection }}"

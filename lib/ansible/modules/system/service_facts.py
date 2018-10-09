@@ -202,6 +202,7 @@ class SystemctlScanService(BaseService):
 
 def main():
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
+    module.run_command_environ_update = dict(LANG="C", LC_ALL="C")
     service_modules = (ServiceScanService, SystemctlScanService)
     all_services = {}
     incomplete_warning = False

@@ -46,6 +46,7 @@ options:
     description:
     - The path to the downloaded hotfix .msu file.
     - This MUST be set if C(state=present) and MUST be a .msu hotfix file.
+    type: path
 notes:
 - This must be run on a host that has the DISM powershell module installed and
   a Powershell version >= 4.

@@ -40,13 +40,15 @@ options:
     aliases: [ dest, destfile, name ]
     required: true
   regexp:
-    aliases: [ 'regex' ]
+    aliases: [ regex ]
     description:
-      - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found. Only the last line
-        found will be replaced. For C(state=absent), the pattern of the line(s)
-        to remove. Uses Python regular expressions.
-        See U(http://docs.python.org/2/library/re.html).
+      - The regular expression to look for in every line of the file.
+      - For C(state=present), the pattern to replace if found. Only the last line found will be replaced.
+      - For C(state=absent), the pattern of the line(s) to remove.
+      - If the regular expression is not matched, the line will be
+        added to the file in keeping with`insertbefore` or `insertafter`
+        settings.
+      - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
     description:
@@ -78,6 +80,7 @@ options:
         A special value is available; C(EOF) for inserting the line at the
         end of the file.
         If specified regular expression has no matches, EOF will be used instead.
+        If regular expressions are passed to both C(regexp) and C(insertafter), C(insertafter) is only honored if no match for C(regexp) is found.
         May not be used with C(backrefs).
     choices: [ EOF, '*regex*' ]
     default: EOF
@@ -89,7 +92,9 @@ options:
         A value is available; C(BOF) for inserting the line at
         the beginning of the file.
         If specified regular expression has no matches, the line will be
-        inserted at the end of the file.  May not be used with C(backrefs).
+        inserted at the end of the file.
+        If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
+        May not be used with C(backrefs).
     choices: [ BOF, '*regex*' ]
     version_added: "1.1"
   create:
@@ -131,6 +136,7 @@ EXAMPLES = r"""
     state: absent
     regexp: '^%wheel'
 
+# Searches for a line that begins with 127.0.0.1 and replaces it with the value of the 'line' parameter
 - lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
@@ -252,7 +258,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
 
-    if regexp:
+    if regexp is not None:
         bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
 
     if insertafter not in (None, 'BOF', 'EOF'):
@@ -268,7 +274,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     m = None
     b_line = to_bytes(line, errors='surrogate_or_strict')
     for lineno, b_cur_line in enumerate(b_lines):
-        if regexp:
+        if regexp is not None:
             match_found = bre_m.search(b_cur_line)
         else:
             match_found = b_line == b_cur_line.rstrip(b('\r\n'))
@@ -327,7 +333,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             elif insertbefore and insertbefore != 'BOF':
                 # If the line to insert before is at the beginning of the file
                 # use the appropriate index value.
-                if index[1] == 0:
+                if index[1] <= 0:
                     if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
                         b_lines.insert(index[1], b_line + b_linesep)
                         msg = 'line replaced'
@@ -410,14 +416,14 @@ def absent(module, dest, regexp, line, backup):
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
 
-    if regexp:
+    if regexp is not None:
         bre_c = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
     found = []
 
     b_line = to_bytes(line, errors='surrogate_or_strict')
 
     def matcher(b_cur_line):
-        if regexp:
+        if regexp is not None:
             match_found = bre_c.search(b_cur_line)
         else:
             match_found = b_line == b_cur_line.rstrip(b('\r\n'))
@@ -478,18 +484,24 @@ def main():
     path = params['path']
     firstmatch = params['firstmatch']
     regexp = params['regexp']
-    line = params.get('line', None)
+    line = params['line']
+
+    if regexp == '':
+        module.warn(
+            "The regular expression is an empty string, which will match every line in the file. "
+            "This may have unintended consequences, such as replacing the last line in the file rather than appending. "
+            "If this is desired, use '^' to match every line in the file and avoid this warning.")
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
     if params['state'] == 'present':
-        if backrefs and not regexp:
-            module.fail_json(msg='regexp= is required with backrefs=true')
+        if backrefs and regexp is None:
+            module.fail_json(msg='regexp is required with backrefs=true')
 
-        if params.get('line', None) is None:
-            module.fail_json(msg='line= is required with state=present')
+        if line is None:
+            module.fail_json(msg='line is required with state=present')
 
         # Deal with the insertafter default value manually, to avoid errors
         # because of the mutually_exclusive mechanism.
@@ -497,13 +509,11 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        line = params['line']
-
         present(module, path, regexp, line,
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
-        if not regexp and line is None:
-            module.fail_json(msg='one of line= or regexp= is required with state=absent')
+        if regexp is None and line is None:
+            module.fail_json(msg='one of line or regexp is required with state=absent')
 
         absent(module, path, regexp, line, backup)
 

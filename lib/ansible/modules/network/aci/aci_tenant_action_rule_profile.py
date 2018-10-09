@@ -55,6 +55,7 @@ EXAMPLES = r'''
     action_rule: '{{ action_rule }}'
     description: '{{ descr }}'
     tenant: '{{ tenant }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -194,14 +195,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='rtctrlAttrP',
             aci_rn='attr-{0}'.format(action_rule),
-            filter_target='eq(rtctrlAttrP.name, "{0}")'.format(action_rule),
             module_object=action_rule,
+            target_filter={'name': action_rule},
         ),
     )
 

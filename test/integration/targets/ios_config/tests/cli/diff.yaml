@@ -1,6 +1,10 @@
 ---
 - debug: msg="START cli/diff.yaml on connection={{ ansible_connection }}"
 
+- name: Ensure hostname is preset
+  ios_system:
+    hostname: "{{ shorter_hostname }}"
+
 - name: ios_config diff against retrieved config
   ios_config:
     diff_against: intended

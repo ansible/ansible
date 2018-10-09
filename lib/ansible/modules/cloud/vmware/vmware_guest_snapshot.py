@@ -123,12 +123,12 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
   - name: Create a snapshot
     vmware_guest_snapshot:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      datacenter: datacenter_name
-      folder: /myfolder
-      name: dummy_vm
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: /"{{ datacenter_name }}"/vm/
+      name: "{{ guest_name }}"
       state: present
       snapshot_name: snap1
       description: snap1_description
@@ -136,72 +136,78 @@ EXAMPLES = '''
 
   - name: Remove a snapshot
     vmware_guest_snapshot:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      datacenter: datacenter_name
-      folder: /myfolder
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: /"{{ datacenter_name }}"/vm/
+      name: "{{ guest_name }}"
       state: absent
       snapshot_name: snap1
     delegate_to: localhost
 
   - name: Revert to a snapshot
     vmware_guest_snapshot:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      datacenter: datacenter_name
-      folder: /myfolder
-      name: dummy_vm
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: /"{{ datacenter_name }}"/vm/
+      name: "{{ guest_name }}"
       state: revert
       snapshot_name: snap1
     delegate_to: localhost
 
   - name: Remove all snapshots of a VM
     vmware_guest_snapshot:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      datacenter: datacenter_name
-      folder: /myfolder
-      name: dummy_vm
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: /"{{ datacenter_name }}"/vm/
+      name: "{{ guest_name }}"
       state: remove_all
     delegate_to: localhost
 
   - name: Take snapshot of a VM using quiesce and memory flag on
     vmware_guest_snapshot:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: /"{{ datacenter_name }}"/vm/
+      name: "{{ guest_name }}"
       state: present
       snapshot_name: dummy_vm_snap_0001
-      quiesce: True
-      memory_dump: True
+      quiesce: yes
+      memory_dump: yes
     delegate_to: localhost
 
   - name: Remove a snapshot and snapshot subtree
     vmware_guest_snapshot:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: /"{{ datacenter_name }}"/vm/
+      name: "{{ guest_name }}"
       state: absent
-      remove_children: True
+      remove_children: yes
       snapshot_name: snap1
     delegate_to: localhost
 
   - name: Rename a snapshot
     vmware_guest_snapshot:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: /"{{ datacenter_name }}"/vm/
+      name: "{{ guest_name }}"
       state: present
       snapshot_name: current_snap_name
       new_snapshot_name: im_renamed
-      new_description: "renamed snapshot today"
+      new_description: "{{ new_snapshot_description }}"
     delegate_to: localhost
 '''
 
@@ -215,7 +221,6 @@ instance:
 
 import time
 try:
-    import pyVmomi
     from pyVmomi import vim
 except ImportError:
     pass

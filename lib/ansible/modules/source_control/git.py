@@ -36,7 +36,7 @@ options:
         required: true
     version:
         description:
-            - What version of the repository to check out.  This can be the
+            - What version of the repository to check out.  This can be
               the literal string C(HEAD), a branch name, a tag name.
               It can also be a I(SHA-1) hash, in which case C(refspec) needs
               to be specified if the given revision is not already available.
@@ -161,6 +161,12 @@ options:
               all git servers support git archive.
         version_added: "2.4"
 
+    separate_git_dir:
+        description:
+            - The path to place the cloned repository. If specified, Git repository
+              can be separated from working tree.
+        version_added: "2.7"
+
 requirements:
     - git>=1.7.1 (the command line tool)
 
@@ -210,6 +216,11 @@ EXAMPLES = '''
     dest: /src/ansible-examples
     archive: /tmp/ansible-examples.zip
 
+# Example clone a repo with separate git directory
+- git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    separate_git_dir: /src/ansible-examples.git
 '''
 
 RETURN = '''
@@ -233,6 +244,16 @@ warnings:
     returned: error
     type: string
     sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
+git_dir_now:
+    description: Contains the new path of .git directory if it's changed
+    returned: success
+    type: string
+    sample: /path/to/new/git/dir
+git_dir_before:
+    description: Contains the original path of .git directory if it's changed
+    returned: success
+    type: string
+    sample: /path/to/old/git/dir
 '''
 
 import filecmp
@@ -248,6 +269,24 @@ from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, get_module_path
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
+
+
+def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
+    if os.path.exists(repo_dir):
+        module.fail_json(msg='Separate-git-dir path %s already exists.' % repo_dir)
+    if worktree_dir:
+        dot_git_file_path = os.path.join(worktree_dir, '.git')
+        try:
+            shutil.move(old_repo_dir, repo_dir)
+            with open(dot_git_file_path, 'w') as dot_git_file:
+                dot_git_file.write('gitdir: %s' % repo_dir)
+            result['git_dir_before'] = old_repo_dir
+            result['git_dir_now'] = repo_dir
+        except (IOError, OSError) as err:
+            # if we already moved the .git dir, roll it back
+            if os.path.exists(repo_dir):
+                shutil.move(repo_dir, old_repo_dir)
+            module.fail_json(msg='Unable to move git dir. %s' % str(err))
 
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
@@ -404,9 +443,8 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit):
+          reference, refspec, verify_commit, separate_git_dir, result):
     ''' makes a new git repo if it does not already exist '''
-
     dest_dirname = os.path.dirname(dest)
     try:
         os.makedirs(dest_dirname)
@@ -432,8 +470,23 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
                         "HEAD, branches, tags or in combination with refspec.")
     if reference:
         cmd.extend(['--reference', str(reference)])
+    needs_separate_git_dir_fallback = False
+
+    if separate_git_dir:
+        git_version_used = git_version(git_path, module)
+        if git_version_used is None:
+            module.fail_json(msg='Can not find git executable at %s' % git_path)
+        if git_version_used < LooseVersion('1.7.5'):
+            # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
+            needs_separate_git_dir_fallback = True
+        else:
+            cmd.append('--separate-git-dir=%s' % separate_git_dir)
+
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
+    if needs_separate_git_dir_fallback:
+        relocate_repo(module, result, separate_git_dir, os.path.join(dest, ".git"), dest)
+
     if bare and remote != 'origin':
         module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
@@ -972,7 +1025,9 @@ def main():
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
+            separate_git_dir=dict(type='path'),
         ),
+        mutually_exclusive=[('separate_git_dir', 'bare')],
         supports_check_mode=True
     )
 
@@ -993,6 +1048,7 @@ def main():
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']
     archive = module.params['archive']
+    separate_git_dir = module.params['separate_git_dir']
 
     result = dict(changed=False, warnings=list())
 
@@ -1023,6 +1079,9 @@ def main():
     # call run_command()
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
+    if separate_git_dir:
+        separate_git_dir = os.path.realpath(separate_git_dir)
+
     gitconfig = None
     if not dest and allow_clone:
         module.fail_json(msg="the destination directory must be specified unless clone=no")
@@ -1030,6 +1089,11 @@ def main():
         dest = os.path.abspath(dest)
         try:
             repo_path = get_repo_path(dest, bare)
+            if separate_git_dir and os.path.exists(repo_path) and separate_git_dir != repo_path:
+                result['changed'] = True
+                if not module.check_mode:
+                    relocate_repo(module, result, separate_git_dir, repo_path, dest)
+                    repo_path = separate_git_dir
         except (IOError, ValueError) as err:
             # No repo path found
             """``.git`` file does not have a valid format for detached Git dir."""
@@ -1073,7 +1137,7 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir, result)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo

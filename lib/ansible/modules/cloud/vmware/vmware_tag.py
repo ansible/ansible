@@ -65,33 +65,34 @@ extends_documentation_fragment: vmware_rest_client.documentation
 EXAMPLES = r'''
 - name: Create a tag
   vmware_tag:
-    hostname: 10.65.223.91
-    username: administrator@vsphere.local
-    password: Esxi@123$
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
     category_id: 'urn:vmomi:InventoryServiceCategory:e785088d-6981-4b1c-9fb8-1100c3e1f742:GLOBAL'
     tag_name: Sample_Tag_0002
     tag_description: Sample Description
     state: present
+  delegate_to: localhost
 
 - name: Update tag description
   vmware_tag:
-    hostname: 10.65.223.91
-    username: administrator@vsphere.local
-    password: Esxi@123$
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     tag_name: Sample_Tag_0002
     tag_description: Some fancy description
     state: present
+  delegate_to: localhost
 
 - name: Delete tag
   vmware_tag:
-    hostname: 10.65.223.91
-    username: administrator@vsphere.local
-    password: Esxi@123$
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     tag_name: Sample_Tag_0002
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''

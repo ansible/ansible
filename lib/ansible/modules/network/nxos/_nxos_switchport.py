@@ -133,13 +133,13 @@ def get_interface_mode(interface, module):
     Returns:
         str: 'layer2' or 'layer3'
     """
-    command = 'show interface ' + interface
+    command = 'show interface {0} | json'.format(interface)
     intf_type = get_interface_type(interface)
     mode = 'unknown'
     interface_table = {}
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         interface_table = body['TABLE_interface']['ROW_interface']
     except (KeyError, AttributeError, IndexError):
         return mode
@@ -167,9 +167,9 @@ def interface_is_portchannel(interface, module):
     intf_type = get_interface_type(interface)
 
     if intf_type == 'ethernet':
-        command = 'show interface ' + interface
+        command = 'show interface {0} | json'.format(interface)
         try:
-            body = execute_show_command(command, module)[0]
+            body = run_commands(module, [command])[0]
             interface_table = body['TABLE_interface']['ROW_interface']
         except (KeyError, AttributeError, IndexError):
             interface_table = None
@@ -194,10 +194,10 @@ def get_switchport(port, module):
         dictionary with k/v pairs for L2 vlan config
     """
 
-    command = 'show interface {0} switchport'.format(port)
+    command = 'show interface {0} switchport | json'.format(port)
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         sp_table = body['TABLE_interface']['ROW_interface']
     except (KeyError, AttributeError, IndexError):
         sp_table = None
@@ -358,11 +358,11 @@ def vlan_range_to_list(vlans):
 
 def get_list_of_vlans(module):
 
-    command = 'show vlan'
+    command = 'show vlan | json'
     vlan_list = []
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         vlan_table = body['TABLE_vlanbrief']['ROW_vlanbrief']
     except (KeyError, AttributeError, IndexError):
         return []
@@ -403,21 +403,6 @@ def apply_value_map(value_map, resource):
     for key, value in value_map.items():
         resource[key] = value[resource.get(key)]
     return resource
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
 
 
 def flatten_list(command_lists):

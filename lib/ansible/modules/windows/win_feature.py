@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, Trond Hindenes <trond@hindenes.com> and others
+# Copyright: (c) 2014, Paul Durivage <paul.durivage@rackspace.com>
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -27,6 +26,7 @@ options:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features.
     required: yes
+    type: list
   state:
     description:
       - State of the features or roles on the system.
@@ -136,12 +136,6 @@ feature_result:
             sample: True
 reboot_required:
     description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
-    returned: success
-    type: boolean
-    sample: True
-restart_needed:
-    description: DEPRECATED in Ansible 2.4 (refer to C(reboot_required) instead). True when the target server requires a reboot to complete updates
-                 (no further updates can be installed until after a reboot)
     returned: success
     type: boolean
     sample: True

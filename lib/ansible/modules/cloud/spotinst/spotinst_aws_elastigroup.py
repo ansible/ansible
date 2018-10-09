@@ -106,7 +106,7 @@ options:
 
   elastic_ips:
     description:
-      - (List of Strings) List of ElasticIps Allocation Ids to associate to the group instances
+      - (List of Strings) List of ElasticIps Allocation Ids (Example C(eipalloc-9d4e16f8)) to associate to the group instances
 
   fallback_to_od:
     description:

@@ -77,11 +77,11 @@ options:
       - Name the hypervisor to be used for creating the new instance.
       - Relevant when using I(state=present), but only considered if not set on ISO/template.
       - If not set or found on ISO/template, first found hypervisor will be used.
-    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
+    choices: [ KVM, kvm, VMware, vmware, BareMetal, baremetal, XenServer, xenserver, LXC, lxc, HyperV, hyperv, UCS, ucs, OVM, ovm, Simulator, simulator ]
   keyboard:
     description:
       - Keyboard device type for the instance.
-    choices: [ de, de-ch, es, fi, fr, fr-be, fr-ch, is, it, jp, nl-be, no, pt, uk, us ]
+    choices: [ 'de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us' ]
   networks:
     description:
       - List of networks to use for the new instance.
@@ -147,6 +147,12 @@ options:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
     type: bool
     default: no
+  allow_root_disk_shrink:
+    description:
+      - Enables a volume shrinkage when the new size is smaller than the old one.
+    type: bool
+    default: no
+    version_added: '2.7'
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -183,7 +189,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 - name: for changing a running instance, use the 'force' parameter
-- cs_instance:
+  cs_instance:
     name: web-vm-1
     display_name: web-vm-01.example.com
     iso: Linux Debian 7 64-bit
@@ -743,11 +749,33 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
         security_groups_changed = self.security_groups_has_changed()
 
+        # Volume data
+
+        args_volume_update = {}
+        root_disk_size = self.module.params.get('root_disk_size')
+        root_disk_size_changed = False
+
+        if root_disk_size is not None:
+            res = self.query_api('listVolumes', type='ROOT', virtualmachineid=instance['id'])
+            [volume] = res['volume']
+
+            size = volume['size'] >> 30
+
+            args_volume_update['id'] = volume['id']
+            args_volume_update['size'] = root_disk_size
+
+            shrinkok = self.module.params.get('allow_root_disk_shrink')
+            if shrinkok:
+                args_volume_update['shrinkok'] = shrinkok
+
+            root_disk_size_changed = root_disk_size != size
+
         changed = [
             service_offering_changed,
             instance_changed,
             security_groups_changed,
             ssh_key_changed,
+            root_disk_size_changed,
         ]
 
         if any(changed):
@@ -787,6 +815,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                         instance = self.poll_job(instance, 'virtualmachine')
                         self.instance = instance
 
+                    # Root disk size
+                    if root_disk_size_changed:
+                        async_result = self.query_api('resizeVolume', **args_volume_update)
+                        self.poll_job(async_result, 'volume')
+
                     # Start VM again if it was running before
                     if instance_state == 'running' and start_vm:
                         instance = self.start_instance()
@@ -807,7 +840,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 'hostid': self.get_host_id(),
             }
             if not self.module.check_mode:
-                res = self.query_api('migrateVirtualMachineWithVolume', **args_host)
+                res = self.query_api('migrateVirtualMachine', **args_host)
                 instance = self.poll_job(res, 'virtualmachine')
 
         return instance
@@ -971,7 +1004,7 @@ def main():
         disk_offering=dict(),
         disk_size=dict(type='int'),
         root_disk_size=dict(type='int'),
-        keyboard=dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us']),
+        keyboard=dict(type='str', choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us']),
         hypervisor=dict(choices=CS_HYPERVISORS),
         host=dict(),
         security_groups=dict(type='list', aliases=['security_group']),
@@ -986,6 +1019,7 @@ def main():
         tags=dict(type='list', aliases=['tag']),
         details=dict(type='dict'),
         poll_async=dict(type='bool', default=True),
+        allow_root_disk_shrink=dict(type='bool', default=False),
     ))
 
     required_together = cs_required_together()

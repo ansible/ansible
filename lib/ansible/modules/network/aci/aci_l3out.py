@@ -54,12 +54,19 @@ options:
   route_control:
     description:
     - Route Control enforcement direction. The only allowed values are export or import,export.
-    choices: [ 'export', 'import' ]
+    type: list
+    choices: [ export, import ]
     aliases: [ route_control_enforcement ]
   l3protocol:
     description:
     - Routing protocol for the L3Out
-    choices: [ static, bgp, ospf, pim ]
+    type: list
+    choices: [ bgp, eigrp, ospf, pim, static ]
+  asn:
+    description:
+    - The AS number for the L3Out. Only applicable when using 'eigrp' as the l3protocol
+    aliases: [ as_number ]
+    version_added: '2.8'
   description:
     description:
     - Description for the L3Out.
@@ -85,6 +92,8 @@ EXAMPLES = r'''
     domain: l3dom_prod
     vrf: prod
     l3protocol: ospf
+    state: present
+  delegate_to: localhost
 
 - name: Delete L3Out
   aci_l3out:
@@ -94,6 +103,7 @@ EXAMPLES = r'''
     tenant: production
     name: prod_l3out
     state: absent
+  delegate_to: localhost
 
 - name: Query L3Out information
   aci_l3out:
@@ -103,6 +113,8 @@ EXAMPLES = r'''
     tenant: production
     name: prod_l3out
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -227,7 +239,8 @@ def main():
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42',
                            'AF43', 'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        l3protocol=dict(type='list', choices=['static', 'bgp', 'ospf', 'pim']),
+        l3protocol=dict(type='list', choices=['bgp', 'eigrp', 'ospf', 'pim', 'static']),
+        asn=dict(type='int', aliases=['as_number']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
 
@@ -235,8 +248,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['name', 'tenant']],
-            ['state', 'present', ['name', 'tenant', 'domain', 'vrf']],
+            ['state', 'absent', ['l3out', 'tenant']],
+            ['state', 'present', ['l3out', 'tenant', 'domain', 'vrf']],
         ],
     )
 
@@ -249,8 +262,14 @@ def main():
     enforceRtctrl = module.params['route_control']
     vrf = module.params['vrf']
     l3protocol = module.params['l3protocol']
+    asn = module.params['asn']
     state = module.params['state']
     tenant = module.params['tenant']
+
+    if 'eigrp' in l3protocol and asn is None:
+        module.fail_json(msg="Parameter 'asn' is required when l3protocol is 'eigrp'")
+    if 'eigrp' not in l3protocol and asn is not None:
+        module.warn("Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored")
 
     enforce_ctrl = ''
     if enforceRtctrl is not None:
@@ -267,14 +286,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='l3extOut',
             aci_rn='out-{0}'.format(l3out),
-            filter_target='eq(l3extOut.name, "{0}")'.format(l3out),
             module_object=l3out,
+            target_filter={'name': l3out},
         ),
         child_classes=child_classes,
     )
@@ -291,6 +310,9 @@ def main():
             if protocol == 'bgp':
                 child_configs.append(
                     dict(bgpExtP=dict(attributes=dict(descr='', nameAlias=''))))
+            elif protocol == 'eigrp':
+                child_configs.append(
+                    dict(eigrpExtP=dict(attributes=dict(descr='', nameAlias='', asn=asn))))
             elif protocol == 'ospf':
                 child_configs.append(
                     dict(ospfExtP=dict(attributes=dict(descr='', nameAlias=''))))

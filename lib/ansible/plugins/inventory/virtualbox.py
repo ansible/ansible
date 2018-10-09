@@ -16,6 +16,10 @@ DOCUMENTATION = '''
       - constructed
       - inventory_cache
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'virtualbox' plugin
+            required: True
+            choices: ['virtualbox']
         running_only:
             description: toggles showing all vms vs only those currently running
             type: boolean
@@ -44,11 +48,11 @@ simple_config_file:
 
 import os
 
-from collections import MutableMapping
 from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 

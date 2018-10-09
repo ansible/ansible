@@ -16,7 +16,7 @@ module: java_cert
 version_added: '2.3'
 short_description: Uses keytool to import/remove key from java keystore(cacerts)
 description:
-  - This is a wrapper module around keytool. Which can be used to import/remove
+  - This is a wrapper module around keytool, which can be used to import/remove
     certificates from a given java keystore.
 options:
   cert_url:
@@ -31,7 +31,8 @@ options:
       - Local path to load certificate from. One of cert_url or cert_path is required to load certificate.
   cert_alias:
     description:
-      - Imported certificate alias.
+      - Imported certificate alias. The alias is used when checking for the
+        presence of a certificate in the keystore.
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.

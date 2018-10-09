@@ -13,6 +13,18 @@ ALLOW_WORLD_READABLE_TMPFILES:
   type: boolean
   yaml: {key: defaults.allow_world_readable_tmpfiles}
   version_added: "2.1"
+ANSIBLE_CONNECTION_PATH:
+  name: Path of ansible-connection script
+  default: null
+  description:
+    - Specify where to look for the ansible-connection script. This location will be checked before searching $PATH.
+    - If null, ansible will start with the same directory as the ansible script.
+  type: path
+  env: [{name: ANSIBLE_CONNECTION_PATH}]
+  ini:
+  - {key: ansible_connection_path, section: persistent_connection}
+  yaml: {key: persistent_connection.ansible_connection_path}
+  version_added: "2.8"
 ANSIBLE_COW_SELECTION:
   name: Cowsay filter selection
   default: default
@@ -160,9 +172,8 @@ BECOME_ALLOW_SAME_USER:
   type: boolean
   yaml: {key: privilege_escalation.become_allow_same_user}
 AGNOSTIC_BECOME_PROMPT:
-  # TODO: Switch the default to True in either the Ansible 2.6 release or the 2.7 release, whichever happens after the Tower 3.3 release
   name: Display an agnostic become prompt
-  default: False
+  default: True
   type: boolean
   description: Display an agnostic become prompt instead of displaying a prompt containing the command line supplied become method
   env: [{name: ANSIBLE_AGNOSTIC_BECOME_PROMPT}]
@@ -211,6 +222,14 @@ COLOR_CHANGED:
   ini:
   - {key: changed, section: colors}
   yaml: {key: display.colors.changed}
+COLOR_CONSOLE_PROMPT:
+  name: "Color for ansible-console's prompt task status"
+  default: white
+  description: Defines the default color to use for ansible-console
+  env: [{name: ANSIBLE_COLOR_CONSOLE_PROMPT}]
+  ini:
+  - {key: console_prompt, section: colors}
+  version_added: "2.7"
 COLOR_DEBUG:
   name: Color for debug statements
   default: dark gray
@@ -581,7 +600,7 @@ DEFAULT_GATHERING:
   choices: ['smart', 'explicit', 'implicit']
 DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
-  default: 'all'
+  default: ['all']
   description:
       - Set the `gather_subset` option for the M(setup) task in the implicit fact gathering.
         See the module documentation for specifics.
@@ -1375,6 +1394,17 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+INVALID_TASK_ATTRIBUTE_FAILED:
+  name: Controls whether invalid attributes for a task result in errors instead of warnings
+  default: True
+  description: If 'false', invalid attributes for a task will result in warnings instead of errors
+  type: boolean
+  env:
+    - name: ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED
+  ini:
+    - key: invalid_task_attribute_failed
+      section: defaults
+  version_added: "2.7"
 INVENTORY_ANY_UNPARSED_IS_FAILED:
   name: Controls whether any unparseable inventory source is a fatal error
   default: False
@@ -1440,21 +1470,9 @@ MAX_FILE_SIZE_FOR_DIFF:
   ini:
   - {key: max_diff_size, section: defaults}
   type: int
-MERGE_MULTIPLE_CLI_TAGS:
-  name: Merge 'tags' options
-  default: True
-  description:
-    - "This allows changing how multiple --tags and --skip-tags arguments are handled on the command line.
-      In Ansible up to and including 2.3, specifying --tags more than once will only take the last value of --tags."
-    - "Setting this config value to True will mean that all of the --tags options will be merged together. The same holds true for --skip-tags."
-  env: [{name: ANSIBLE_MERGE_MULTIPLE_CLI_TAGS}]
-  ini:
-    - {key: merge_multiple_cli_tags, section: defaults}
-  type: bool
-  version_added: "2.3"
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
   description: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
@@ -1543,6 +1561,13 @@ PLUGIN_FILTERS_CFG:
   ini:
   - key: plugin_filters_cfg
     section: default
+    deprecated:
+      why: Specifying "plugin_filters_cfg" under the "default" section is deprecated
+      version: "2.12"
+      alternatives: the "defaults" section instead
+  - key: plugin_filters_cfg
+    section: defaults
+  type: path
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True
@@ -1595,6 +1620,7 @@ TAGS_RUN:
   env: [{name: ANSIBLE_RUN_TAGS}]
   ini:
   - {key: run, section: tags}
+  version_added: "2.5"
 TAGS_SKIP:
   name: Skip Tags
   default: []
@@ -1603,6 +1629,7 @@ TAGS_SKIP:
   env: [{name: ANSIBLE_SKIP_TAGS}]
   ini:
   - {key: skip, section: tags}
+  version_added: "2.5"
 USE_PERSISTENT_CONNECTIONS:
   name: Persistence
   default: False
@@ -1632,4 +1659,13 @@ YAML_FILENAME_EXTENSIONS:
     - section: defaults
       key: yaml_valid_extensions
   type: list
+NETCONF_SSH_CONFIG:
+  description: This variable is used to enable bastion/jump host with netconf connection. If set to True the bastion/jump
+               host ssh settings should be present in ~/.ssh/config file, alternatively it can be set
+               to custom ssh configuration file path to read the bastion/jump host settings.
+  env: [{name: ANSIBLE_NETCONF_SSH_CONFIG}]
+  ini:
+  - {key: ssh_config, section: netconf_connection}
+  yaml: {key: netconf_connection.ssh_config}
+  default: null
 ...

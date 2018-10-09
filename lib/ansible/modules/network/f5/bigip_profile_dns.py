@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 module: bigip_profile_dns
 short_description: Manage DNS profiles on a BIG-IP
 description:
-  - Manage DNS profiles on a BIG-IP. There are a variety of DNS profiles, each with their
+  - Manage DNS profiles on a BIG-IP. Many DNS profiles; each with their
     own adjustments to the standard C(dns) profile. Users of this module should be aware
     that many of the adjustable knobs have no module default. Instead, the default is
     assigned by the BIG-IP system itself which, in most cases, is acceptable.
@@ -35,8 +35,8 @@ options:
   enable_dns_express:
     description:
       - Specifies whether the DNS Express engine is enabled.
-      - When creating a new profile, if this parameter is not specified, the default is
-        C(yes).
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
       - The DNS Express engine receives zone transfers from the authoritative DNS server
         for the zone. If the C(enable_zone_transfer) setting is also C(yes) on this profile,
         the DNS Express engine also responds to zone transfer requests made by the nameservers
@@ -46,8 +46,8 @@ options:
     description:
       - Specifies whether the system answers zone transfer requests for a DNS zone created
         on the system.
-      - When creating a new profile, if this parameter is not specified, the default is
-        C(no).
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
       - The C(enable_dns_express) and C(enable_zone_transfer) settings on a DNS profile
         affect how the system responds to zone transfer requests.
       - When the C(enable_dns_express) and C(enable_zone_transfer) settings are both C(yes),
@@ -61,21 +61,21 @@ options:
     description:
       - Specifies whether the system signs responses with DNSSEC keys and replies to DNSSEC
         specific queries (e.g., DNSKEY query type).
-      - When creating a new profile, if this parameter is not specified, the default is
-        C(yes).
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
     type: bool
   enable_gtm:
     description:
       - Specifies whether the system uses Global Traffic Manager to manage the response.
-      - When creating a new profile, if this parameter is not specified, the default is
-        C(yes).
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
     type: bool
   process_recursion_desired:
     description:
       - Specifies whether to process client-side DNS packets with Recursion Desired set in
         the header.
-      - When creating a new profile, if this parameter is not specified, the default is
-        C(yes).
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
       - If set to C(no), processing of the packet is subject to the unhandled-query-action
         option.
     type: bool
@@ -84,15 +84,54 @@ options:
       - Specifies whether the system forwards non-wide IP queries to the local BIND server
         on the BIG-IP system.
       - For best performance, disable this setting when using a DNS cache.
-      - When creating a new profile, if this parameter is not specified, the default is
-        C(yes).
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
     type: bool
   enable_dns_firewall:
     description:
       - Specifies whether DNS firewall capability is enabled.
-      - When creating a new profile, if this parameter is not specified, the default is
-        C(no).
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
     type: bool
+  enable_cache:
+    description:
+      - Specifies whether the system caches DNS responses.
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
+      - When C(yes), the BIG-IP system caches DNS responses handled by the virtual
+        servers associated with this profile. When you enable this setting, you must
+        also specify a value for C(cache_name).
+      - When C(no), the BIG-IP system does not cache DNS responses handled by the
+        virtual servers associated with this profile. However, the profile retains
+        the association with the DNS cache in the C(cache_name) parameter. Disable
+        this setting when you want to debug the system.
+    type: bool
+    version_added: 2.7
+  cache_name:
+    description:
+      - Specifies the user-created cache that the system uses to cache DNS responses.
+      - When you select a cache for the system to use, you must also set C(enable_dns_cache)
+        to C(yes)
+    version_added: 2.7
+  unhandled_query_action:
+    description:
+      - Specifies the action to take when a query does not match a Wide IP or a DNS Express Zone.
+      - When C(allow), the BIG-IP system forwards queries to a DNS server or pool member.
+        If a pool is not associated with a listener and the Use BIND Server on BIG-IP setting
+        is set to Enabled, requests are forwarded to the local BIND server.
+      - When C(drop), the BIG-IP system does not respond to the query.
+      - When C(reject), the BIG-IP system returns the query with the REFUSED return code.
+      - When C(hint), the BIG-IP system returns the query with a list of root name servers.
+      - When C(no-error), the BIG-IP system returns the query with the NOERROR return code.
+      - When creating a new profile, if this parameter is not specified, the default
+        is provided by the parent profile.
+    choices:
+      - allow
+      - drop
+      - reject
+      - hint
+      - no-error
+    version_added: 2.7
   partition:
     description:
       - Device partition to manage resources on.
@@ -132,37 +171,52 @@ enable_dns_express:
   description: Whether DNS Express is enabled on the resource or not.
   returned: changed
   type: bool
-  sample: True
+  sample: yes
 enable_zone_transfer:
   description: Whether zone transfer are enabled on the resource or not.
   returned: changed
   type: bool
-  sample: False
+  sample: no
 enable_dnssec:
   description: Whether DNSSEC is enabled on the resource or not.
   returned: changed
   type: bool
-  sample: False
+  sample: no
 enable_gtm:
   description: Whether GTM is used to manage the resource or not.
   returned: changed
   type: bool
-  sample: True
+  sample: yes
 process_recursion_desired:
   description: Whether client-side DNS packets are processed with Recursion Desired set.
   returned: changed
   type: bool
-  sample: True
+  sample: yes
 use_local_bind:
   description: Whether non-wide IP queries are forwarded to the local BIND server or not.
   returned: changed
   type: bool
-  sample: False
+  sample: no
 enable_dns_firewall:
   description: Whether DNS firewall capability is enabled or not.
   returned: changed
   type: bool
-  sample: False
+  sample: no
+enable_cache:
+  description: Whether DNS caching is enabled or not.
+  returned: changed
+  type: bool
+  sample: no
+cache_name:
+  description: Name of the cache used by DNS.
+  returned: changed
+  type: string
+  sample: /Common/cache1
+unhandled_query_action:
+  description: What to do with unhandled queries
+  returned: changed
+  type: string
+  sample: allow
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -204,6 +258,9 @@ class Parameters(AnsibleF5Parameters):
         'processXfr': 'enable_zone_transfer',
         'enableDnsExpress': 'enable_dns_express',
         'defaultsFrom': 'parent',
+        'enableCache': 'enable_cache',
+        'cache': 'cache_name',
+        'unhandledQueryAction': 'unhandled_query_action',
     }
 
     api_attributes = [
@@ -214,7 +271,10 @@ class Parameters(AnsibleF5Parameters):
         'enableDnssec',
         'processXfr',
         'enableDnsExpress',
-        'defaultsFrom'
+        'defaultsFrom',
+        'cache',
+        'enableCache',
+        'unhandledQueryAction',
     ]
 
     returnables = [
@@ -225,6 +285,9 @@ class Parameters(AnsibleF5Parameters):
         'enable_dnssec',
         'enable_zone_transfer',
         'enable_dns_express',
+        'cache_name',
+        'enable_cache',
+        'unhandled_query_action',
     ]
 
     updatables = [
@@ -235,6 +298,9 @@ class Parameters(AnsibleF5Parameters):
         'enable_dnssec',
         'enable_zone_transfer',
         'enable_dns_express',
+        'cache_name',
+        'enable_cache',
+        'unhandled_query_action',
     ]
 
 
@@ -272,6 +338,14 @@ class ApiParameters(Parameters):
         return False
 
     @property
+    def enable_cache(self):
+        if self._values['enable_cache'] is None:
+            return None
+        if self._values['enable_cache'] == 'yes':
+            return True
+        return False
+
+    @property
     def enable_dnssec(self):
         if self._values['enable_dnssec'] is None:
             return None
@@ -295,6 +369,14 @@ class ApiParameters(Parameters):
             return True
         return False
 
+    @property
+    def unhandled_query_action(self):
+        if self._values['unhandled_query_action'] is None:
+            return None
+        elif self._values['unhandled_query_action'] == 'noerror':
+            return 'no-error'
+        return self._values['unhandled_query_action']
+
 
 class ModuleParameters(Parameters):
     @property
@@ -302,6 +384,15 @@ class ModuleParameters(Parameters):
         if self._values['parent'] is None:
             return None
         result = fq_name(self.partition, self._values['parent'])
+        return result
+
+    @property
+    def cache_name(self):
+        if self._values['cache_name'] is None:
+            return None
+        if self._values['cache_name'] == '':
+            return ''
+        result = fq_name(self.partition, self._values['cache_name'])
         return result
 
 
@@ -351,6 +442,14 @@ class UsableChanges(Changes):
         return 'no'
 
     @property
+    def enable_cache(self):
+        if self._values['enable_cache'] is None:
+            return None
+        if self._values['enable_cache']:
+            return 'yes'
+        return 'no'
+
+    @property
     def enable_dnssec(self):
         if self._values['enable_dnssec'] is None:
             return None
@@ -374,63 +473,17 @@ class UsableChanges(Changes):
             return 'yes'
         return 'no'
 
+    @property
+    def unhandled_query_action(self):
+        if self._values['unhandled_query_action'] is None:
+            return None
+        elif self._values['unhandled_query_action'] == 'no-error':
+            return 'noerror'
+        return self._values['unhandled_query_action']
+
 
 class ReportableChanges(Changes):
-    @property
-    def enable_dns_firewall(self):
-        if self._values['enable_dns_firewall'] is None:
-            return None
-        if self._values['enable_dns_firewall'] == 'yes':
-            return True
-        return False
-
-    @property
-    def use_local_bind(self):
-        if self._values['use_local_bind'] is None:
-            return None
-        if self._values['use_local_bind'] == 'yes':
-            return True
-        return False
-
-    @property
-    def process_recursion_desired(self):
-        if self._values['process_recursion_desired'] is None:
-            return None
-        if self._values['process_recursion_desired'] == 'yes':
-            return True
-        return False
-
-    @property
-    def enable_gtm(self):
-        if self._values['enable_gtm'] is None:
-            return None
-        if self._values['enable_gtm'] == 'yes':
-            return True
-        return False
-
-    @property
-    def enable_dnssec(self):
-        if self._values['enable_dnssec'] is None:
-            return None
-        if self._values['enable_dnssec'] == 'yes':
-            return True
-        return False
-
-    @property
-    def enable_zone_transfer(self):
-        if self._values['enable_zone_transfer'] is None:
-            return None
-        if self._values['enable_zone_transfer'] == 'yes':
-            return True
-        return False
-
-    @property
-    def enable_dns_express(self):
-        if self._values['enable_dns_express'] is None:
-            return None
-        if self._values['enable_dns_express'] == 'yes':
-            return True
-        return False
+    pass
 
 
 class Difference(object):
@@ -540,6 +593,11 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
+        if self.changes.enable_cache is True or self.have.enable_cache is True:
+            if not self.have.cache_name or self.changes.cache_name == '':
+                raise F5ModuleError(
+                    "To enable DNS cache, a DNS cache must be specified."
+                )
         if self.module.check_mode:
             return True
         self.update_on_device()
@@ -554,22 +612,12 @@ class ModuleManager(object):
         return True
 
     def create(self):
-        if self.want.enable_dns_express is None:
-            self.want.update({'enable_dns_express': True})
-        if self.want.enable_zone_transfer is None:
-            self.want.update({'enable_zone_transfer': False})
-        if self.want.enable_dnssec is None:
-            self.want.update({'enable_dnssec': True})
-        if self.want.enable_gtm is None:
-            self.want.update({'enable_gtm': True})
-        if self.want.process_recursion_desired is None:
-            self.want.update({'process_recursion_desired': True})
-        if self.want.use_local_bind is None:
-            self.want.update({'use_local_bind': True})
-        if self.want.enable_dns_firewall is None:
-            self.want.update({'enable_dns_firewall': False})
-
         self._set_changed_options()
+        if self.want.enable_cache is True and not self.want.cache_name:
+            raise F5ModuleError(
+                "You must specify a 'cache_name' when creating a DNS profile that sets 'enable_cache' to 'yes'."
+            )
+
         if self.module.check_mode:
             return True
         self.create_on_device()
@@ -626,6 +674,11 @@ class ArgumentSpec(object):
             process_recursion_desired=dict(type='bool'),
             use_local_bind=dict(type='bool'),
             enable_dns_firewall=dict(type='bool'),
+            enable_cache=dict(type='bool'),
+            unhandled_query_action=dict(
+                choices=['allow', 'drop', 'reject', 'hint', 'no-error']
+            ),
+            cache_name=dict(),
             state=dict(
                 default='present',
                 choices=['present', 'absent']

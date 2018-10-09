@@ -19,9 +19,6 @@ Ansible has a graduated support structure that extends to three major releases.
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
 see the chart in :ref:`release_schedule` for the degrees to which current releases are supported.
 
-.. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
-    are only supported for two releases.
-
 If you are using a release of Ansible that is no longer supported, we strongly
 encourage you to upgrade as soon as possible in order to benefit from the
 latest features and security fixes.
@@ -40,14 +37,16 @@ Release status
 ===============   ==========================   =================================================
 Ansible Release   Latest Version               Status
 ===============   ==========================   =================================================
-devel             `2.6` (unreleased, trunk)    In development
-2.5               `2.5.5`_ (2018-06-14)        Supported (security **and** general bug fixes)
-2.4               `2.4.5`_ (2018-06-21)        Supported (security **and** critical bug fixes)
-2.3               `2.3.3`_ (2017-12-20)        Unsupported (end of life)
-2.2               `2.2.3`_ (2017-05-09)        Unsupported (end of life)
-2.1               `2.1.6`_ (2017-06-01)        Unsupported (end of life)
-2.0               `2.0.2`_ (2016-04-19)        Unsupported (end of life)
-1.9               `1.9.6`_ (2016-04-15)        Unsupported (end of life)
+devel             2.8 (unreleased, trunk)      In development
+`2.7`_            2.7.0 (2018-10-04)           Supported (security **and** general bug fixes)
+`2.6`_            2.6.5 (2018-09-28)           Supported (security **and** critical bug fixes)
+`2.5`_            2.5.9 (2018-09-10)           Supported (security fixes)
+`2.4`_            2.4.6 (2018-07-05)           Unsupported (end of life)
+`2.3`_            2.3.3 (2017-12-20)           Unsupported (end of life)
+`2.2`_            2.2.3 (2017-05-09)           Unsupported (end of life)
+`2.1`_            2.1.6 (2017-06-01)           Unsupported (end of life)
+`2.0`_            2.0.2 (2016-04-19)           Unsupported (end of life)
+`1.9`_            1.9.6 (2016-04-15)           Unsupported (end of life)
 <1.9              n/a                          Unsupported (end of life)
 ===============   ==========================   =================================================
 
@@ -57,13 +56,15 @@ devel             `2.6` (unreleased, trunk)    In development
 
 .. Comment: devel used to point here but we're currently revamping our changelog process and have no
    link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
-.. _2.5.5: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
-.. _2.4.5: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
-.. _2.3.3: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
-.. _2.2.3: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
-.. _2.1.6: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
-.. _2.0.2: https://github.com/ansible/ansible/blob/stable-2.0/CHANGELOG.md
-.. _1.9.6: https://github.com/ansible/ansible/blob/stable-1.9/CHANGELOG.md
+.. _2.7: https://github.com/ansible/ansible/blob/stable-2.7/changelogs/CHANGELOG-v2.7.rst
+.. _2.6: https://github.com/ansible/ansible/blob/stable-2.6/changelogs/CHANGELOG-v2.6.rst
+.. _2.5: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
+.. _2.4: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
+.. _2.3: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
+.. _2.2: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
+.. _2.1: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
+.. _2.0: https://github.com/ansible/ansible/blob/stable-2.0/CHANGELOG.md
+.. _1.9: https://github.com/ansible/ansible/blob/stable-1.9/CHANGELOG.md
 
 .. _support_life:
 .. _methods:
@@ -90,14 +91,59 @@ security fixes to releases which are two releases old. This work is tracked on t
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.
 
-For more information on the changes included in each new version, you can refer
-to the changelog_, available on GitHub.
-
 Note that while there are no guarantees for providing fixes for unsupported
 releases of Ansible, there can sometimes be exceptions for critical issues.
 
 .. _GitHub: https://github.com/ansible/ansible
-.. _changelog: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+
+.. _changelogs_how_to:
+
+Changelogs
+~~~~~~~~~~~~~~~~~~
+
+Older versions logged changes in ``stable-<version>`` branches at ``stable-<version>/CHANGELOG.md``. For example, here is the changelog for 2.4_ on GitHub.
+
+We now generate changelogs based on fragments. Here is the generated changelog for 2.6_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
+
+Creating New Fragments
+----------------------
+
+Create a new file with a unique and descriptive name in ``changelogs/fragments/`` that ends in ``.yaml`` such as ``user-40696-backup-shadow-file.yaml``
+
+A single changelog fragment may contain multiple sections but most will only contain one section. Here are the valid sections and a description of each:
+
+**major_changes**
+    Major changes to Ansible itself. Generally does not include module or plugin changes.
+
+**minor_changes**
+  Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
+
+**deprecated_features**
+  Features that have been deprecated and are scheduled for removal in a future release.
+
+**removed_features**
+  Features that were previously deprecated and are now removed.
+
+**bugfixes**
+  Fixes that resolve issues. If there is a specific issue related to this bugfix, add a link in the changelog entry.
+
+**known_issues**
+  Known issues that are currently not fixed or will not be fixed.
+
+Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and include a link to the related issue if one exists. Here are some examples:
+
+.. code-block:: yaml
+
+  bugfixes:
+    - win_updates - fixed issue where running win_updates on async fails without any error
+
+.. code-block:: yaml
+
+  minor_changes:
+    - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
+
+Commit the changelog fragment and include it with the pull request.
+
 
 
 Release candidates
@@ -158,11 +204,9 @@ For modules/plugins, we keep the documentation after the removal for users of ol
        Testing strategies
    :ref:`ansible_community_guide`
        Community information and contributing
-   `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md>`_
-       Documentation of the improvements for each version of Ansible
    `Ansible release tarballs <https://releases.ansible.com/ansible/>`_
        Ansible release tarballs
-   `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

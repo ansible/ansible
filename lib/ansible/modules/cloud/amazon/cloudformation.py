@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -33,8 +34,6 @@ options:
   create_timeout:
     description:
       - The amount of time (in minutes) that can pass before the stack status becomes CREATE_FAILED
-    required: false
-    default: null
     version_added: "2.6"
   template_parameters:
     description:
@@ -53,7 +52,7 @@ options:
       - This must be the full path to the file, relative to the working directory. If using roles this may look
         like "roles/cloudformation/files/cloudformation-example.json".
       - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        must be specified (but only one of them). If 'state' is 'present', the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
   notification_arns:
     description:
@@ -82,6 +81,7 @@ options:
         See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
         WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
         changeset."
+    type: bool
     default: 'no'
     version_added: "2.4"
   changeset_name:
@@ -382,8 +382,10 @@ def create_changeset(module, stack_params, cfn, events_limit):
                 elif newcs['Status'] == 'FAILED' and "The submitted information didn't contain changes" in newcs['StatusReason']:
                     cfn.delete_change_set(ChangeSetName=cs['Id'])
                     result = dict(changed=False,
-                                  output='Stack is already up-to-date, Change Set refused to create due to lack of changes.')
-                    module.exit_json(**result)
+                                  output='The created Change Set did not contain any changes to this stack and was deleted.')
+                    # a failed change set does not trigger any stack events so we just want to
+                    # skip any further processing of result and just return it directly
+                    return result
                 else:
                     break
                 # Lets not hog the cpu/spam the AWS API

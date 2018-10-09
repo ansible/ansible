@@ -44,6 +44,26 @@
             <<: *aws_connection_info
           register: ecs_taskdefinition_creation_vpc
 
+        - name: create ecs_taskdefinition and execution_role_arn (expected to fail)
+          ecs_taskdefinition:
+            containers:
+              - name: my_container
+                image: ubuntu
+                memory: 128
+            family: "{{ resource_prefix }}-vpc"
+            execution_role_arn: not_a_real_arn
+            state: present
+            network_mode: awsvpc
+            <<: *aws_connection_info
+          ignore_errors: yes
+          register: ecs_taskdefinition_arn
+
+        - name: check that graceful failure message is returned from ecs_taskdefinition_arn
+          assert:
+            that:
+              - ecs_taskdefinition_arn.failed
+              - 'ecs_taskdefinition_arn.msg == "botocore needs to be version 1.10.44 or higher to use execution_role_arn"'
+
         - name: ecs_taskdefinition works fine even when older botocore is used
           assert:
             that:

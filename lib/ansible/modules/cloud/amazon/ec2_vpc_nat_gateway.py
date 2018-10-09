@@ -67,9 +67,9 @@ options:
         When specifying this option, ensure you specify the eip_address parameter
         as well otherwise any subsequent runs will fail.
 author:
-  - "Allen Sanabria (@linuxdynasty)"
-  - "Jon Hadfield (@jonhadfield)"
-  - "Karen Cheng(@Etherdaemon)"
+  - Allen Sanabria (@linuxdynasty)
+  - Jon Hadfield (@jonhadfield)
+  - Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
   - ec2
@@ -151,7 +151,7 @@ EXAMPLES = '''
 
 RETURN = '''
 create_time:
-  description: The ISO 8601 date time formatin UTC.
+  description: The ISO 8601 date time format in UTC.
   returned: In all cases.
   type: string
   sample: "2016-03-05T05:19:20.282000+00:00'"

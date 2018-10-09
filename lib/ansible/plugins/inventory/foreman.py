@@ -10,18 +10,27 @@ DOCUMENTATION = '''
     plugin_type: inventory
     short_description: foreman inventory source
     version_added: "2.6"
+    requirements:
+        - requests >= 1.1
     description:
         - Get inventory hosts from the foreman service.
+        - "Uses a configuration file as an inventory source, it must end in foreman.yml or foreman.yaml and has a ``plugin: foreman`` entry."
     extends_documentation_fragment:
         - inventory_cache
     options:
+      plugin:
+        description: the name of this plugin, it should alwys be set to 'foreman' for this plugin to recognize it as it's own.
+        required: True
+        choices: ['foreman']
       url:
         description: url to foreman
         default: 'http://localhost:300'
       user:
         description: foreman authentication user
+        required: True
       password:
         description: forman authentication password
+        required: True
       validate_certs:
         description: verify SSL certificate if using https
         type: boolean
@@ -42,13 +51,22 @@ DOCUMENTATION = '''
         default: False
 '''
 
+EXAMPLES = '''
+# my.foreman.yml
+plugin: foreman
+url: http://localhost:2222
+user: ansible-tester
+password: secure
+validate_certs: False
+'''
+
 import re
 
-from collections import MutableMapping
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 # 3rd party imports

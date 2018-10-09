@@ -9,6 +9,7 @@
 - name: "Enable feature LACP"
   nxos_feature:
     feature: lacp
+    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -16,12 +17,14 @@
   nxos_config: &intdefault1
     lines:
       - "default interface {{ testint1 }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Put interface {{testint2}} into default state"
   nxos_config: &intdefault2
     lines:
       - "default interface {{ testint2 }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: Remove possibly configured port-channel 99
@@ -29,8 +32,8 @@
     group: 99
     members: ["{{ testint1 }}", "{{ testint2 }}"]
     force: 'true'
+    provider: "{{ connection }}"
     state: absent
-    timeout: 60
 
 - block:
   - name: Configure port-channel mode active
@@ -39,8 +42,8 @@
       members: ["{{ testint1 }}", "{{ testint2 }}"]
       mode: active
       force: 'true'
+      provider: "{{ connection }}"
       state: present
-      timeout: 60
     register: result
 
   - assert: &true
@@ -61,8 +64,8 @@
       members: ["{{ testint1 }}", "{{ testint2 }}"]
       mode: passive
       force: 'true'
+      provider: "{{ connection }}"
       state: present
-      timeout: 60
     register: result
 
   - assert: *true
@@ -83,8 +86,8 @@
   - name: "Disable feature LACP"
     nxos_feature:
       feature: lacp
+      provider: "{{ connection }}"
       state: disabled
-      timeout: 60
 
   always:
   - name: Delete port-channel

@@ -315,7 +315,7 @@ class PluginLoader:
             if alias_name in pull_cache:
                 if not ignore_deprecated and not os.path.islink(pull_cache[alias_name]):
                     # FIXME: this is not always the case, some are just aliases
-                    display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '
+                    display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '  # pylint: disable=ansible-deprecated-no-version
                                        'The module documentation details page may explain more about this rationale.' % name.lstrip('_'))
                 return pull_cache[alias_name]
 
@@ -486,7 +486,10 @@ class PluginLoader:
                 continue
 
             if path not in self._module_cache:
-                module = self._load_module_source(name, path)
+                try:
+                    module = self._load_module_source(name, path)
+                except Exception as e:
+                    display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 self._module_cache[path] = module
                 found_in_cache = False
 

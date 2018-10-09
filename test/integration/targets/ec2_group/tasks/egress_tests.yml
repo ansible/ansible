@@ -121,6 +121,29 @@
         that:
           - result.ip_permissions_egress|length == 2
 
+    - name: Purge the second rule (CHECK MODE) (DIFF MODE)
+      ec2_group:
+        name: '{{ec2_group_name}}-egress-tests'
+        description: '{{ec2_group_description}}'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        rules_egress:
+        - proto: tcp
+          ports:
+          - 1212
+          cidr_ip: 1.2.1.2/32
+        <<: *aws_connection_info
+        state: present
+      register: result
+      check_mode: True
+      diff: True
+
+    - name: assert first rule will be left
+      assert:
+        that:
+          - result.changed
+          - result.diff.0.after.ip_permissions_egress|length == 1
+          - result.diff.0.after.ip_permissions_egress[0].ip_ranges[0].cidr_ip == '1.2.1.2/32'
+
     - name: Purge the second rule
       ec2_group:
         name: '{{ec2_group_name}}-egress-tests'

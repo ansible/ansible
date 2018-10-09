@@ -348,7 +348,6 @@ class BaseSubClass(base.Base):
     _test_attr_list_no_listof = FieldAttribute(isa='list', always_post_validate=True)
     _test_attr_list_required = FieldAttribute(isa='list', listof=string_types, required=True,
                                               default=[], always_post_validate=True)
-    _test_attr_barelist = FieldAttribute(isa='barelist', always_post_validate=True)
     _test_attr_string = FieldAttribute(isa='string', default='the_test_attr_string_default_value')
     _test_attr_string_required = FieldAttribute(isa='string', required=True,
                                                 default='the_test_attr_string_default_value')
@@ -609,11 +608,6 @@ class TestBaseSubClass(TestBase):
         templar = Templar(loader=fake_loader)
         self.assertRaisesRegexp(AnsibleParserError, 'cannot have empty values',
                                 bsc.post_validate, templar)
-
-    def test_attr_barelist(self):
-        ds = {'test_attr_barelist': 'comma,separated,values'}
-        bsc = self._base_validate(ds)
-        self.assertEquals(['comma', 'separated', 'values'], bsc._attributes['test_attr_barelist'])
 
     def test_attr_unknown(self):
         a_list = ['some string']

@@ -114,7 +114,7 @@ response:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
-from copy import deepcopy
+from ansible.module_utils.common.dict_transformations import dict_merge
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -210,6 +210,7 @@ class AzureRMResource(AzureRMModuleBase):
             self.status_code.append(204)
 
         if self.url is None:
+            orphan = None
             rargs = dict()
             rargs['subscription'] = self.subscription_id
             rargs['resource_group'] = self.resource_group
@@ -217,16 +218,27 @@ class AzureRMResource(AzureRMModuleBase):
                 rargs['namespace'] = "Microsoft." + self.provider
             else:
                 rargs['namespace'] = self.provider
-            rargs['type'] = self.resource_type
-            rargs['name'] = self.resource_name
 
-            for i in range(len(self.subresource)):
-                rargs['child_namespace_' + str(i + 1)] = self.subresource[i].get('namespace', None)
-                rargs['child_type_' + str(i + 1)] = self.subresource[i].get('type', None)
-                rargs['child_name_' + str(i + 1)] = self.subresource[i].get('name', None)
+            if self.resource_type is not None and self.resource_name is not None:
+                rargs['type'] = self.resource_type
+                rargs['name'] = self.resource_name
+                for i in range(len(self.subresource)):
+                    resource_ns = self.subresource[i].get('namespace', None)
+                    resource_type = self.subresource[i].get('type', None)
+                    resource_name = self.subresource[i].get('name', None)
+                    if resource_type is not None and resource_name is not None:
+                        rargs['child_namespace_' + str(i + 1)] = resource_ns
+                        rargs['child_type_' + str(i + 1)] = resource_type
+                        rargs['child_name_' + str(i + 1)] = resource_name
+                    else:
+                        orphan = resource_type
+            else:
+                orphan = self.resource_type
 
             self.url = resource_id(**rargs)
 
+            if orphan is not None:
+                self.url += '/' + orphan
         query_parameters = {}
         query_parameters['api-version'] = self.api_version
 
@@ -263,21 +275,6 @@ class AzureRMResource(AzureRMModuleBase):
         self.results['changed'] = needs_update
 
         return self.results
-
-
-def dict_merge(a, b):
-    '''recursively merges dict's. not just simple a['key'] = b['key'], if
-    both a and bhave a key who's value is a dict then dict_merge is called
-    on both values and the result stored in the returned dictionary.'''
-    if not isinstance(b, dict):
-        return b
-    result = deepcopy(a)
-    for k, v in b.items():
-        if k in result and isinstance(result[k], dict):
-                result[k] = dict_merge(result[k], v)
-        else:
-            result[k] = deepcopy(v)
-    return result
 
 
 def main():

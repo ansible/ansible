@@ -68,6 +68,26 @@ class TestParameters(unittest.TestCase):
         p = Parameters(params=args)
         assert p.name == 'foo.iapp'
 
+    def test_module_parameters_custom_name(self):
+        iapp = load_fixture('create_iapp_template.iapp')
+        args = dict(
+            content=iapp,
+            name='foobar'
+        )
+        p = Parameters(params=args)
+        assert p.name == 'foobar'
+        assert 'sys application template /Common/foobar' in p.content
+
+    def test_module_parameters_custom_partition(self):
+        iapp = load_fixture('create_iapp_template.iapp')
+        args = dict(
+            content=iapp,
+            partition='foobar'
+        )
+        p = Parameters(params=args)
+        assert p.name == 'foo.iapp'
+        assert 'sys application template /foobar/foo.iapp' in p.content
+
 
 class TestManager(unittest.TestCase):
 
@@ -78,7 +98,7 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -101,7 +121,7 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -130,7 +150,7 @@ class TestManager(unittest.TestCase):
     def test_delete_iapp_template(self, *args):
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin',
             state='absent'
@@ -153,7 +173,7 @@ class TestManager(unittest.TestCase):
     def test_delete_iapp_template_idempotent(self, *args):
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin',
             state='absent'

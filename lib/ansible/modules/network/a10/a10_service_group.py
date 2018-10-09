@@ -331,5 +331,6 @@ def main():
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
 
+
 if __name__ == '__main__':
     main()

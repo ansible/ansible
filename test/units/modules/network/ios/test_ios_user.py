@@ -57,16 +57,18 @@ class TestIosUserModule(TestIosModule):
     def test_ios_user_delete(self):
         set_module_args(dict(name='ansible', state='absent'))
         result = self.execute_module(changed=True)
-        cmd = {
-            "command": "no username ansible", "answer": "y", "newline": False,
-            "prompt": "This operation will remove all username related configurations with same name",
-        }
+        cmds = [
+            {
+                "command": "no username ansible", "answer": "y", "newline": False,
+                "prompt": "This operation will remove all username related configurations with same name",
+            }
+        ]
 
         result_cmd = []
         for i in result['commands']:
             result_cmd.append(i)
 
-        self.assertEqual(result_cmd, [cmd])
+        self.assertEqual(result_cmd, cmds)
 
     def test_ios_user_password(self):
         set_module_args(dict(name='ansible', configured_password='test'))
@@ -114,3 +116,15 @@ class TestIosUserModule(TestIosModule):
         set_module_args(dict(name='ansible', configured_password='test', update_password='always'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['username ansible secret test'])
+
+    def test_ios_user_set_sshkey(self):
+        set_module_args(dict(name='ansible', sshkey='dGVzdA=='))
+        commands = [
+            'ip ssh pubkey-chain',
+            'username ansible',
+            'key-hash ssh-rsa 098F6BCD4621D373CADE4E832627B4F6',
+            'exit',
+            'exit'
+        ]
+        result = self.execute_module(changed=True, commands=commands)
+        self.assertEqual(result['commands'], commands)

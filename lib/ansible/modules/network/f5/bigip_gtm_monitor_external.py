@@ -163,6 +163,7 @@ try:
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import compare_dictionary
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
@@ -176,16 +177,11 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import compare_dictionary
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -256,12 +252,11 @@ class Parameters(AnsibleF5Parameters):
     def ip(self):
         if self._values['ip'] is None:
             return None
-        try:
-            if self._values['ip'] in ['*', '0.0.0.0']:
-                return '*'
-            result = str(netaddr.IPAddress(self._values['ip']))
-            return result
-        except netaddr.core.AddrFormatError:
+        if self._values['ip'] in ['*', '0.0.0.0']:
+            return '*'
+        elif is_valid_ip(self._values['ip']):
+            return self._values['ip']
+        else:
             raise F5ModuleError(
                 "The provided 'ip' parameter is not an IP address."
             )
@@ -420,7 +415,7 @@ class Difference(object):
             )
         result = dict()
 
-        different = compare_dictionary([self.want.variables], [self.have.variables])
+        different = compare_dictionary(self.want.variables, self.have.variables)
         if not different:
             return None
 

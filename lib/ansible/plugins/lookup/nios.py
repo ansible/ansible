@@ -30,7 +30,7 @@ description:
     supports adding additional keywords to filter the return data and specify
     the desired set of returned fields.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
     _terms:

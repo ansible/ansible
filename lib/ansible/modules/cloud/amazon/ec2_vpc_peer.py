@@ -50,7 +50,7 @@ options:
     required: false
     default: present
     choices: ['present', 'absent', 'accept', 'reject']
-author: Mike Mochan(@mmochan)
+author: Mike Mochan (@mmochan)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -126,7 +126,7 @@ EXAMPLES = '''
     region: us-east-1
     vpc_id: vpc-12345678
     peer_vpc_id: vpc-87654321
-    peer_vpc_region: us-west-2
+    peer_region: us-west-2
     state: present
     tags:
       Name: Peering connection for us-east-1 VPC to us-west-2 VPC

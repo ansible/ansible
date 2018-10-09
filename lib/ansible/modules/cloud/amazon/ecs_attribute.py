@@ -257,7 +257,7 @@ def main():
         attributes=dict(required=True, type='list'),
     ))
 
-    required_together = (['cluster', 'ec2_instance_id', 'attributes'])
+    required_together = [['cluster', 'ec2_instance_id', 'attributes']]
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_together=required_together)

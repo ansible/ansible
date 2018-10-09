@@ -13,12 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: na_ontap_net_ifgrp
-short_description: Create, modify, destroy the network interface group
+short_description: NetApp Ontap modify network interface group
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author:
-- Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
 - Create, modify, destroy the network interface group
 options:

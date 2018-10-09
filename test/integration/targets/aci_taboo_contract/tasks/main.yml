@@ -13,7 +13,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: absent
@@ -26,7 +26,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: ansible_test
     state: present
 
@@ -40,7 +40,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: present
@@ -54,7 +54,8 @@
 - name: Verify add_taboo_contract
   assert:
     that:
-    - cm_add_taboo_contract.changed == nm_add_taboo_contract.changed == true
+    - cm_add_taboo_contract is changed
+    - nm_add_taboo_contract is changed
     - 'cm_add_taboo_contract.sent == nm_add_taboo_contract.sent == {"vzTaboo": {"attributes": {"name": "taboo_contract_test"}}}'
     - 'cm_add_taboo_contract.proposed == nm_add_taboo_contract.proposed == {"vzTaboo": {"attributes": {"name": "taboo_contract_test"}}}'
     - cm_add_taboo_contract.previous == nm_add_taboo_contract.previous == []
@@ -76,7 +77,8 @@
 - name: Verify add_taboo_contract_again
   assert:
     that:
-    - cm_add_taboo_contract_again.changed == nm_add_taboo_contract_again.changed == false
+    - cm_add_taboo_contract_again is not changed
+    - nm_add_taboo_contract_again is not changed
     - cm_add_taboo_contract_again.current == nm_add_taboo_contract_again.current == nm_add_taboo_contract.current
 
 
@@ -97,7 +99,8 @@
 - name: Verify add_taboo_contract_descr
   assert:
     that:
-    - cm_add_taboo_contract_descr.changed == nm_add_taboo_contract_descr.changed == true
+    - cm_add_taboo_contract_descr is changed
+    - nm_add_taboo_contract_descr is changed
     - 'cm_add_taboo_contract_descr.sent == nm_add_taboo_contract_descr.sent == {"vzTaboo": {"attributes": {"descr": "Ansible test taboo contract"}}}'
     - 'cm_add_taboo_contract_descr.proposed == nm_add_taboo_contract_descr.proposed == {"vzTaboo": {"attributes": {"descr": "Ansible test taboo contract", "name": "taboo_contract_test"}}}'
     - cm_add_taboo_contract_descr.previous == nm_add_taboo_contract_descr.previous == cm_add_taboo_contract_descr.current == nm_add_taboo_contract.current
@@ -121,7 +124,8 @@
 - name: Verify add_taboo_contract_descr_again
   assert:
     that:
-    - cm_add_taboo_contract_descr_again.changed == nm_add_taboo_contract_descr_again.changed == false
+    - cm_add_taboo_contract_descr_again is not changed
+    - nm_add_taboo_contract_descr_again is not changed
     - cm_add_taboo_contract_descr_again.current == nm_add_taboo_contract_descr_again.current == nm_add_taboo_contract_descr.current
 
 
@@ -138,7 +142,8 @@
 - name: Verify add_taboo_contract_again_no_descr
   assert:
     that:
-    - cm_add_taboo_contract_again_no_descr.changed == nm_add_taboo_contract_again_no_descr.changed == false
+    - cm_add_taboo_contract_again_no_descr is not changed
+    - nm_add_taboo_contract_again_no_descr is not changed
     - cm_add_taboo_contract_again_no_descr.current == nm_add_taboo_contract_again_no_descr.current == nm_add_taboo_contract_descr.current
 
 
@@ -151,6 +156,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_taboo_contracts
@@ -162,7 +168,8 @@
 - name: Verify query_all_taboo_contracts
   assert:
     that:
-    - cm_query_all_taboo_contracts.changed == nm_query_all_taboo_contracts.changed == false
+    - cm_query_all_taboo_contracts is not changed
+    - nm_query_all_taboo_contracts is not changed
     - cm_query_all_taboo_contracts == nm_query_all_taboo_contracts
     - cm_query_all_taboo_contracts.current|length >= 1
 
@@ -186,7 +193,8 @@
 - name: Verify query_taboo_contract
   assert:
     that:
-    - cm_query_taboo_contract.changed == nm_query_taboo_contract.changed == false
+    - cm_query_taboo_contract is not changed
+    - nm_query_taboo_contract is not changed
     - cm_query_taboo_contract == nm_query_taboo_contract
     - nm_query_taboo_contract.current.0.vzTaboo.attributes.descr == 'Ansible test taboo contract'
     - nm_query_taboo_contract.current.0.vzTaboo.attributes.dn == 'uni/tn-ansible_test/taboo-taboo_contract_test'
@@ -206,7 +214,8 @@
 - name: Verify remove_taboo_contract
   assert:
     that:
-    - cm_remove_taboo_contract.changed == nm_remove_taboo_contract.changed == true
+    - cm_remove_taboo_contract is changed
+    - nm_remove_taboo_contract is changed
     - 'cm_remove_taboo_contract.current == cm_remove_taboo_contract.previous == nm_remove_taboo_contract.previous == [{"vzTaboo": {"attributes": {"descr": "Ansible test taboo contract", "dn": "uni/tn-ansible_test/taboo-taboo_contract_test", "name": "taboo_contract_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
     - nm_remove_taboo_contract.current == []
 
@@ -222,7 +231,8 @@
 - name: Verify remove_taboo_contract_again
   assert:
     that:
-    - cm_remove_taboo_contract_again.changed == nm_remove_taboo_contract_again.changed == false
+    - cm_remove_taboo_contract_again is not changed
+    - nm_remove_taboo_contract_again is not changed
     - cm_remove_taboo_contract_again.proposed == nm_remove_taboo_contract_again.proposed == {}
     - cm_remove_taboo_contract_again.sent == nm_remove_taboo_contract_again.sent == {}
     - cm_remove_taboo_contract_again.previous == nm_remove_taboo_contract_again.previous == []
@@ -249,7 +259,8 @@
 - name: Verify query_non_taboo_contract
   assert:
     that:
-    - cm_query_non_taboo_contract.changed == nm_query_non_taboo_contract.changed == false
+    - cm_query_non_taboo_contract is not changed
+    - nm_query_non_taboo_contract is not changed
     - cm_remove_taboo_contract_again.previous == nm_remove_taboo_contract_again.previous == []
     - cm_remove_taboo_contract_again.current == nm_remove_taboo_contract_again.current == []
 
@@ -263,7 +274,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     state: present
   ignore_errors: yes
   register: error_on_missing_required_param
@@ -271,5 +282,5 @@
 - name: Verify error_on_missing_required_param
   assert:
     that:
-    - error_on_missing_required_param.failed == true
+    - error_on_missing_required_param is failed
     - 'error_on_missing_required_param.msg == "state is present but all of the following are missing: tenant, taboo_contract"'

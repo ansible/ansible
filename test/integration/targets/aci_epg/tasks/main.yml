@@ -73,17 +73,17 @@
 - name: present assertions
   assert:
     that:
-      - epg_present_check_mode.changed == true
+      - epg_present_check_mode is changed
       - epg_present_check_mode.previous == []
       - epg_present_check_mode.sent.fvAEPg.attributes != {}
-      - 'epg_present_check_mode.sent.fvAEPg.children.0.fvRsBd.attributes.tnFvBDName == "anstest"'
-      - epg_present.changed == true
+      - epg_present_check_mode.sent.fvAEPg.children.0.fvRsBd.attributes.tnFvBDName == "anstest"
+      - epg_present is changed
       - epg_present.sent == epg_present_check_mode.sent
-      - epg_present_idempotent.changed == false
+      - epg_present_idempotent is not changed
       - epg_present_idempotent.sent == {}
-      - epg_present_update.changed == true
+      - epg_present_update is changed
       - 'epg_present_update.sent == {"fvAEPg": {"attributes": {"descr": "Ansible Test Update"}}}'
-      - epg_present_missing_param.failed == true
+      - epg_present_missing_param is failed
       - 'epg_present_missing_param.msg == "state is present but all of the following are missing: ap"'
 
 - name: get specific epg
@@ -102,11 +102,11 @@
 - name: query assertions
   assert:
     that:
-      - epg_query.changed == false
+      - epg_query is not changed
       - epg_query.current | length == 1
-      - 'epg_query.current.0.fvAEPg.attributes.name == "anstest"'
+      - epg_query.current.0.fvAEPg.attributes.name == "anstest"
       - '"tn-anstest/ap-anstest/epg-anstest.json" in epg_query.url'
-      - epg_query_all.changed == false
+      - epg_query_all is not changed
       - epg_query_all.current | length > 1
       - '"rsp-subtree-class=fvRsBd" in epg_query_all.filter_string'
       - '"class/fvAEPg.json" in epg_query_all.url'
@@ -143,13 +143,13 @@
 - name: query assertions
   assert:
     that:
-      - delete_epg_check_mode.changed == true
+      - delete_epg_check_mode is changed
       - delete_epg_check_mode.previous != []
-      - delete_epg.changed == true
+      - delete_epg is changed
       - delete_epg.previous == delete_epg_check_mode.previous
-      - delete_epg_idempotent.changed == false
+      - delete_epg_idempotent is not changed
       - delete_epg_idempotent.previous == []
-      - delete_epg_missing_param.failed == true
+      - delete_epg_missing_param is failed
       - 'delete_epg_missing_param.msg == "state is absent but all of the following are missing: tenant"'
 
 - name: cleanup bd

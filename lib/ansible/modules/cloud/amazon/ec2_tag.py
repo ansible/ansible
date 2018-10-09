@@ -14,11 +14,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ec2_tag
-short_description: create and remove tag(s) to ec2 resources.
+short_description: create and remove tags on ec2 resources.
 description:
-    - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX).
-      It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
+    - Creates, removes and lists tags for any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX).
+      It is designed to be used with complex args (tags), see the examples.
 version_added: "1.3"
+requirements: [ "boto3", "botocore" ]
 options:
   resource:
     description:
@@ -33,8 +34,17 @@ options:
     description:
       - a hash/dictionary of tags to add to the resource; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: true
+  purge_tags:
+    description:
+      - Whether unspecified tags should be removed from the resource.
+      - "Note that when combined with C(state: absent), specified tags with non-matching values are not purged."
+    type: bool
+    default: no
+    version_added: '2.7'
 
-author: "Lester Wade (@lwade)"
+author:
+  - Lester Wade (@lwade)
+  - Paul Arthur (@flowerysong)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -50,36 +60,6 @@ EXAMPLES = '''
       Name: ubervol
       env: prod
 
-- name: Ensure one dbserver is running
-  ec2:
-    count_tag:
-      Name: dbserver
-      Env: production
-    exact_count: 1
-    group: '{{ security_group }}'
-    keypair: '{{ keypair }}'
-    image: '{{ image_id }}'
-    instance_tags:
-      Name: dbserver
-      Env: production
-    instance_type: '{{ instance_type }}'
-    region: eu-west-1
-    volumes:
-      - device_name: /dev/xvdb
-        device_type: standard
-        volume_size: 10
-        delete_on_termination: True
-    wait: True
-  register: ec2
-
-- name: Retrieve all volumes for a queried instance
-  ec2_vol:
-    instance: '{{ item.id }}'
-    region: eu-west-1
-    state: list
-  with_items: '{{ ec2.tagged_instances }}'
-  register: ec2_vol
-
 - name: Ensure all volumes are tagged
   ec2_tag:
     region:  eu-west-1
@@ -90,93 +70,112 @@ EXAMPLES = '''
       Env: production
   with_items: '{{ ec2_vol.volumes }}'
 
-- name: Get EC2 facts
-  action: ec2_facts
-
 - name: Retrieve all tags on an instance
   ec2_tag:
-    region: '{{ ansible_ec2_placement_region }}'
-    resource: '{{ ansible_ec2_instance_id }}'
+    region: eu-west-1
+    resource: i-xxxxxxxxxxxxxxxxx
     state: list
   register: ec2_tags
 
-- name: List tags, such as Name and env
-  debug:
-    msg: '{{ ec2_tags.tags.Name }} {{ ec2_tags.tags.env }}'
+- name: Remove all tags except for Name from an instance
+  ec2_tag:
+    region: eu-west-1
+    resource: i-xxxxxxxxxxxxxxxxx
+    tags:
+        Name: ''
+    state: absent
+    purge_tags: true
 '''
 
+RETURN = '''
+tags:
+  description: A dict containing the tags on the resource
+  returned: always
+  type: dict
+added_tags:
+  description: A dict of tags that were added to the resource
+  returned: If tags were added
+  type: dict
+removed_tags:
+  description: A dict of tags that were removed from the resource
+  returned: If tags were removed
+  type: dict
+'''
+
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 
 try:
-    import boto.ec2
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
+    from botocore.exceptions import BotoCoreError, ClientError
+except:
+    pass    # Handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
+
+def get_tags(ec2, module, resource):
+    filters = [{'Name': 'resource-id', 'Values': [resource]}]
+    try:
+        return boto3_tag_list_to_ansible_dict(ec2.describe_tags(Filters=filters)['Tags'])
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to fetch tags for resource {0}'.format(resource))
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         resource=dict(required=True),
         tags=dict(type='dict'),
+        purge_tags=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent', 'list']),
     )
-    )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    required_if = [('state', 'present', ['tags']), ('state', 'absent', ['tags'])]
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec, required_if=required_if, supports_check_mode=True)
 
-    resource = module.params.get('resource')
-    tags = module.params.get('tags')
-    state = module.params.get('state')
+    resource = module.params['resource']
+    tags = module.params['tags']
+    state = module.params['state']
+    purge_tags = module.params['purge_tags']
 
-    ec2 = ec2_connect(module)
+    result = {'changed': False}
 
-    # We need a comparison here so that we can accurately report back changed status.
-    # Need to expand the gettags return format and compare with "tags" and then tag or detag as appropriate.
-    filters = {'resource-id': resource}
-    gettags = ec2.get_all_tags(filters=filters)
+    ec2 = module.client('ec2')
 
-    dictadd = {}
-    dictremove = {}
-    baddict = {}
-    tagdict = {}
-    for tag in gettags:
-        tagdict[tag.name] = tag.value
-
-    if state == 'present':
-        if not tags:
-            module.fail_json(msg="tags argument is required when state is present")
-        if set(tags.items()).issubset(set(tagdict.items())):
-            module.exit_json(msg="Tags already exists in %s." % resource, changed=False)
-        else:
-            for (key, value) in set(tags.items()):
-                if (key, value) not in set(tagdict.items()):
-                    dictadd[key] = value
-        if not module.check_mode:
-            ec2.create_tags(resource, dictadd)
-        module.exit_json(msg="Tags %s created for resource %s." % (dictadd, resource), changed=True)
-
-    if state == 'absent':
-        if not tags:
-            module.fail_json(msg="tags argument is required when state is absent")
-        for (key, value) in set(tags.items()):
-            if (key, value) not in set(tagdict.items()):
-                baddict[key] = value
-                if set(baddict) == set(tags):
-                    module.exit_json(msg="Nothing to remove here. Move along.", changed=False)
-        for (key, value) in set(tags.items()):
-            if (key, value) in set(tagdict.items()):
-                dictremove[key] = value
-        if not module.check_mode:
-            ec2.delete_tags(resource, dictremove)
-        module.exit_json(msg="Tags %s removed for resource %s." % (dictremove, resource), changed=True)
+    current_tags = get_tags(ec2, module, resource)
 
     if state == 'list':
-        module.exit_json(changed=False, tags=tagdict)
+        module.exit_json(changed=False, tags=current_tags)
+
+    add_tags, remove = compare_aws_tags(current_tags, tags, purge_tags=purge_tags)
+
+    remove_tags = {}
+    if state == 'absent':
+        for key in tags:
+            if key in current_tags and current_tags[key] == tags[key]:
+                remove_tags[key] = tags[key]
+
+    for key in remove:
+        remove_tags[key] = current_tags[key]
+
+    if remove_tags:
+        result['changed'] = True
+        result['removed_tags'] = remove_tags
+        if not module.check_mode:
+            try:
+                ec2.delete_tags(Resources=[resource], Tags=ansible_dict_to_boto3_tag_list(remove_tags))
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg='Failed to remove tags {0} from resource {1}'.format(remove_tags, resource))
+
+    if state == 'present' and add_tags:
+        result['changed'] = True
+        result['added_tags'] = add_tags
+        current_tags.update(add_tags)
+        if not module.check_mode:
+            try:
+                ec2.create_tags(Resources=[resource], Tags=ansible_dict_to_boto3_tag_list(add_tags))
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg='Failed to set tags {0} on resource {1}'.format(add_tags, resource))
+
+    result['tags'] = get_tags(ec2, module, resource)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

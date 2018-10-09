@@ -156,5 +156,6 @@ def main():
     return avi_ansible_api(module, 'ipaddrgroup',
                            set([]))
 
+
 if __name__ == '__main__':
     main()

@@ -25,7 +25,18 @@ version_added: "2.6"
 author: Remy Leone (@sieben)
 description:
     - "This module manages compute instances on Scaleway."
+extends_documentation_fragment: scaleway
+
 options:
+
+  public_ip:
+    description:
+    - Manage public IP on a Scaleway server
+    - Could be Scaleway IP address UUID
+    - C(dynamic) Means that IP is destroyed at the same time the host is destroyed
+    - C(absent) Means no public IP at all
+    version_added: '2.8'
+    default: absent
 
   enable_ipv6:
     description:
@@ -64,11 +75,6 @@ options:
     required: false
     default: []
 
-  oauth_token:
-    description:
-     - Scaleway OAuth token.
-    required: true
-
   region:
     description:
     - Scaleway compute zone
@@ -103,12 +109,6 @@ options:
       - X64-30GB
       - X64-60GB
       - X64-120GB
-
-  timeout:
-    description:
-    - Timeout for API calls
-    required: false
-    default: 30
 
   wait:
     description:
@@ -159,9 +159,8 @@ import datetime
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote
-from ansible.module_utils.scaleway import ScalewayAPI, SCALEWAY_LOCATION
+from ansible.module_utils.scaleway import SCALEWAY_LOCATION, scaleway_argument_spec, Scaleway
 
 SCALEWAY_COMMERCIAL_TYPES = [
 
@@ -244,16 +243,45 @@ def wait_to_complete_state_transition(compute_api, server):
         compute_api.module.fail_json(msg="Server takes too long to finish its transition")
 
 
+def public_ip_payload(compute_api, public_ip):
+    # We don't want a public ip
+    if public_ip in ("absent",):
+        return {"dynamic_ip_required": False}
+
+    # IP is only attached to the instance and is released as soon as the instance terminates
+    if public_ip in ("dynamic", "allocated"):
+        return {"dynamic_ip_required": True}
+
+    # We check that the IP we want to attach exists, if so its ID is returned
+    response = compute_api.get("ips")
+    if not response.ok:
+        msg = 'Error during public IP validation: (%s) %s' % (response.status_code, response.json)
+        compute_api.module.fail_json(msg=msg)
+
+    ip_list = []
+    try:
+        ip_list = response.json["ips"]
+    except KeyError:
+        compute_api.module.fail_json(msg="Error in getting the IP information from: %s" % response.json)
+
+    lookup = [ip["id"] for ip in ip_list]
+    if public_ip in lookup:
+        return {"public_ip": public_ip}
+
+
 def create_server(compute_api, server):
     compute_api.module.debug("Starting a create_server")
     target_server = None
+    payload = {"enable_ipv6": server["enable_ipv6"],
+               "tags": server["tags"],
+               "commercial_type": server["commercial_type"],
+               "image": server["image"],
+               "dynamic_ip_required": server["dynamic_ip_required"],
+               "name": server["name"],
+               "organization": server["organization"]}
+
     response = compute_api.post(path="servers",
-                                data={"enable_ipv6": server["enable_ipv6"],
-                                      "tags": server["tags"],
-                                      "commercial_type": server["commercial_type"],
-                                      "image": server["image"],
-                                      "name": server["name"],
-                                      "organization": server["organization"]})
+                                data=payload)
 
     if not response.ok:
         msg = 'Error during server creation: (%s) %s' % (response.status_code, response.json)
@@ -573,7 +601,6 @@ def server_change_attributes(compute_api, target_server, wished_server):
 
 
 def core(module):
-    api_token = module.params['oauth_token']
     region = module.params["region"]
     wished_server = {
         "state": module.params["state"],
@@ -581,40 +608,40 @@ def core(module):
         "name": module.params["name"],
         "commercial_type": module.params["commercial_type"],
         "enable_ipv6": module.params["enable_ipv6"],
+        "dynamic_ip_required": module.params["dynamic_ip_required"],
         "tags": module.params["tags"],
         "organization": module.params["organization"]
     }
+    module.params['api_url'] = SCALEWAY_LOCATION[region]["api_endpoint"]
 
-    compute_api = ScalewayAPI(module=module,
-                              headers={'X-Auth-Token': api_token},
-                              base_url=SCALEWAY_LOCATION[region]["api_endpoint"])
+    compute_api = Scaleway(module=module)
+
+    # IP parameters of the wished server depends on the configuration
+    ip_payload = public_ip_payload(compute_api=compute_api, public_ip=module.params["public_ip"])
+    wished_server.update(ip_payload)
 
     changed, summary = state_strategy[wished_server["state"]](compute_api=compute_api, wished_server=wished_server)
     module.exit_json(changed=changed, msg=summary)
 
 
 def main():
+    argument_spec = scaleway_argument_spec()
+    argument_spec.update(dict(
+        image=dict(required=True),
+        name=dict(),
+        region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
+        commercial_type=dict(required=True, choices=SCALEWAY_COMMERCIAL_TYPES),
+        enable_ipv6=dict(default=False, type="bool"),
+        public_ip=dict(default="absent"),
+        state=dict(choices=state_strategy.keys(), default='present'),
+        tags=dict(type="list", default=[]),
+        organization=dict(required=True),
+        wait=dict(type="bool", default=False),
+        wait_timeout=dict(type="int", default=300),
+        wait_sleep_time=dict(type="int", default=3),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            oauth_token=dict(
-                no_log=True,
-                # Support environment variable for Scaleway OAuth Token
-                fallback=(env_fallback, ['SCW_TOKEN', 'SCW_API_KEY', 'SCW_OAUTH_TOKEN']),
-                required=True,
-            ),
-            image=dict(required=True),
-            name=dict(),
-            region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
-            commercial_type=dict(required=True, choices=SCALEWAY_COMMERCIAL_TYPES),
-            enable_ipv6=dict(default=False, type="bool"),
-            state=dict(choices=state_strategy.keys(), default='present'),
-            tags=dict(type="list", default=[]),
-            organization=dict(required=True),
-            timeout=dict(type="int", default=30),
-            wait=dict(type="bool", default=False),
-            wait_timeout=dict(type="int", default=300),
-            wait_sleep_time=dict(type="int", default=3),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 

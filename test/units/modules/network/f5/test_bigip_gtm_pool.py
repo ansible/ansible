@@ -130,7 +130,7 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             preferred_lb_method='round-robin',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -162,7 +162,7 @@ class TestUntypedManager(unittest.TestCase):
             preferred_lb_method='topology',
             alternate_lb_method='drop-packet',
             fallback_lb_method='cpu',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -197,7 +197,7 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             state='absent',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -233,7 +233,7 @@ class TestTypedManager(unittest.TestCase):
             name='foo',
             preferred_lb_method='round-robin',
             type='a',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -266,7 +266,7 @@ class TestTypedManager(unittest.TestCase):
             alternate_lb_method='drop-packet',
             fallback_lb_method='cpu',
             type='a',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -302,7 +302,7 @@ class TestTypedManager(unittest.TestCase):
             name='foo',
             type='a',
             state='absent',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

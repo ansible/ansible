@@ -28,6 +28,7 @@
   - name: Ensure interface is in its default switchport state
     nxos_switchport: &def_swi
       interface: "{{ intname }}"
+      provider: "{{ connection }}"
       state: unconfigured
 
   - name: Ensure interface is configured for access vlan 20
@@ -86,6 +87,7 @@
       interface: "{{ intname }}"
       mode: trunk
       trunk_vlans: 2-50
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -114,6 +116,7 @@
       interface: "{{ intname }}"
       mode: trunk
       trunk_vlans: 30-4094
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -141,6 +144,7 @@
   - name: "remove vlans"
     nxos_vlan:
       vlan_range: "5-10,20"
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 

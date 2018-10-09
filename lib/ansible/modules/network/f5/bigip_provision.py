@@ -117,7 +117,6 @@ try:
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.bigip.contexts import TransactionContextManager
-        from f5.sdk_exception import LazyAttributesRequired
     except ImportError:
         HAS_F5SDK = False
 except ImportError:
@@ -130,7 +129,6 @@ except ImportError:
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from f5.bigip.contexts import TransactionContextManager
-        from f5.sdk_exception import LazyAttributesRequired
     except ImportError:
         HAS_F5SDK = False
 
@@ -342,7 +340,7 @@ class ModuleManager(object):
         # Sleep a little to let rebooting take effect
         time.sleep(20)
 
-        while nops < 6:
+        while nops < 3:
             try:
                 self.client.reconnect()
                 next_reboot = self._get_last_reboot()

@@ -166,7 +166,9 @@ class TestSELinux(ModuleTestCase):
     def test_module_utils_basic_ansible_module_is_special_selinux_path(self):
         from ansible.module_utils import basic
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos"}))
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos",
+                                                    '_ansible_remote_tmp': "/tmp",
+                                                    '_ansible_keep_remote_files': False}))
 
         with swap_stdin_and_argv(stdin_data=args):
             basic._ANSIBLE_ARGS = None

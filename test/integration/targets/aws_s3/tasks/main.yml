@@ -93,7 +93,7 @@
       async_status:
         jid: "{{ test_async.ansible_job_id }}"
       register: status
-      until: status.finished
+      until: status is finished
       retries: 10
 
     - name: check that roles file lookups work as expected

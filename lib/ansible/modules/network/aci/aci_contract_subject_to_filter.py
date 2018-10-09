@@ -69,6 +69,7 @@ EXAMPLES = r'''
     filter: '{{ filter }}'
     log: '{{ log }}'
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing contract subject to filter binding
   aci_contract_subject_to_filter:
@@ -81,6 +82,7 @@ EXAMPLES = r'''
     filter: '{{ filter }}'
     log: '{{ log }}'
     state: present
+  delegate_to: localhost
 
 - name: Query a specific contract subject to filter binding
   aci_contract_subject_to_filter:
@@ -92,6 +94,8 @@ EXAMPLES = r'''
     subject: test
     filter: '{{ filter }}'
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all contract subject to filter bindings
   aci_contract_subject_to_filter:
@@ -102,6 +106,8 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: test
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -252,26 +258,26 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
             aci_rn='brc-{0}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
+            target_filter={'name': contract},
         ),
         subclass_2=dict(
             aci_class='vzSubj',
             aci_rn='subj-{0}'.format(subject),
-            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
             module_object=subject,
+            target_filter={'name': subject},
         ),
         subclass_3=dict(
             aci_class='vzRsSubjFiltAtt',
             aci_rn='rssubjFiltAtt-{0}'.format(filter_name),
-            filter_target='eq(vzRsSubjFiltAtt.tnVzFilterName, "{0}")'.format(filter_name),
             module_object=filter_name,
+            target_filter={'tnVzFilterName': filter_name},
         ),
     )
 

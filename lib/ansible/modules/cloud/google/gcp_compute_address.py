@@ -33,15 +33,15 @@ DOCUMENTATION = '''
 module: gcp_compute_address
 description:
     - Represents an Address resource.
-    - Each virtual machine instance has an ephemeral internal IP address and,
-      optionally, an external IP address. To communicate between instances on
-      the same network, you can use an instance's internal IP address. To
-      communicate with the Internet and instances outside of the same network,
-      you must specify the instance's external IP address.
-    - Internal IP addresses are ephemeral and only belong to an instance for the
-      lifetime of the instance; if the instance is deleted and recreated, the
-      instance is assigned a new internal IP address, either by Compute Engine
-      or by you. External IP addresses can be either ephemeral or static.
+    - Each virtual machine instance has an ephemeral internal IP address and, optionally,
+      an external IP address. To communicate between instances on the same network, you
+      can use an instance's internal IP address. To communicate with the Internet and
+      instances outside of the same network, you must specify the instance's external
+      IP address.
+    - Internal IP addresses are ephemeral and only belong to an instance for the lifetime
+      of the instance; if the instance is deleted and recreated, the instance is assigned
+      a new internal IP address, either by Compute Engine or by you. External IP addresses
+      can be either ephemeral or static.
 short_description: Creates a GCP Address
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
@@ -53,53 +53,76 @@ options:
     state:
         description:
             - Whether the given object should exist in GCP
-        required: true
         choices: ['present', 'absent']
         default: 'present'
     address:
         description:
-            - The static external IP address represented by this resource. Only
-              IPv4 is supported.
+            - The static external IP address represented by this resource. Only IPv4 is supported.
+              An address may only be specified for INTERNAL address types. The IP address must
+              be inside the specified subnetwork, if any.
         required: false
+    address_type:
+        description:
+            - The type of address to reserve, either INTERNAL or EXTERNAL.
+            - If unspecified, defaults to EXTERNAL.
+        required: false
+        default: EXTERNAL
+        version_added: 2.7
+        choices: ['INTERNAL', 'EXTERNAL']
     description:
         description:
             - An optional description of this resource.
         required: false
     name:
         description:
-            - Name of the resource. The name must be 1-63 characters long, and
-              comply with RFC1035. Specifically, the name must be 1-63
-              characters long and match the regular expression
-              [a-z]([-a-z0-9]*[a-z0-9])? which means the first character must be
-              a lowercase letter, and all following characters must be a dash,
-              lowercase letter, or digit, except the last character, which
-              cannot be a dash.
+            - Name of the resource. The name must be 1-63 characters long, and comply with RFC1035.
+              Specifically, the name must be 1-63 characters long and match the regular expression
+              `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
+              letter, and all following characters must be a dash, lowercase letter, or digit,
+              except the last character, which cannot be a dash.
+        required: true
+    subnetwork:
+        description:
+            - The URL of the subnetwork in which to reserve the address. If an IP address is specified,
+              it must be within the subnetwork's IP range.
+            - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
         required: false
+        version_added: 2.7
     region:
         description:
-            - A reference to Region resource.
+            - URL of the region where the regional address resides.
+            - This field is not applicable to global addresses.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/beta/addresses)"
+    - "Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/instances-and-network)"
+    - "Reserving a Static Internal IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address)"
 '''
 
 EXAMPLES = '''
 - name: create a address
   gcp_compute_address:
-      name: 'test-address1'
-      region: 'us-west1'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      name: test-address1
+      region: us-west1
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
     address:
         description:
-            - The static external IP address represented by this resource. Only
-              IPv4 is supported.
+            - The static external IP address represented by this resource. Only IPv4 is supported.
+              An address may only be specified for INTERNAL address types. The IP address must
+              be inside the specified subnetwork, if any.
+        returned: success
+        type: str
+    address_type:
+        description:
+            - The type of address to reserve, either INTERNAL or EXTERNAL.
+            - If unspecified, defaults to EXTERNAL.
         returned: success
         type: str
     creation_timestamp:
@@ -119,15 +142,20 @@ RETURN = '''
         type: int
     name:
         description:
-            - Name of the resource. The name must be 1-63 characters long, and
-              comply with RFC1035. Specifically, the name must be 1-63
-              characters long and match the regular expression
-              [a-z]([-a-z0-9]*[a-z0-9])? which means the first character must be
-              a lowercase letter, and all following characters must be a dash,
-              lowercase letter, or digit, except the last character, which
-              cannot be a dash.
+            - Name of the resource. The name must be 1-63 characters long, and comply with RFC1035.
+              Specifically, the name must be 1-63 characters long and match the regular expression
+              `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
+              letter, and all following characters must be a dash, lowercase letter, or digit,
+              except the last character, which cannot be a dash.
         returned: success
         type: str
+    subnetwork:
+        description:
+            - The URL of the subnetwork in which to reserve the address. If an IP address is specified,
+              it must be within the subnetwork's IP range.
+            - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
+        returned: success
+        type: dict
     users:
         description:
             - The URLs of the resources that are using this address.
@@ -135,7 +163,8 @@ RETURN = '''
         type: list
     region:
         description:
-            - A reference to Region resource.
+            - URL of the region where the regional address resides.
+            - This field is not applicable to global addresses.
         returned: success
         type: str
 '''
@@ -160,11 +189,16 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             address=dict(type='str'),
+            address_type=dict(default='EXTERNAL', type='str', choices=['INTERNAL', 'EXTERNAL']),
             description=dict(type='str'),
-            name=dict(type='str'),
+            name=dict(required=True, type='str'),
+            subnetwork=dict(type='dict'),
             region=dict(required=True, type='str')
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#address'
@@ -175,10 +209,10 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                fetch = update(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -198,12 +232,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -211,10 +245,11 @@ def delete(module, link, kind, fetch):
 def resource_to_request(module):
     request = {
         u'kind': 'compute#address',
-        u'region': module.params.get('region'),
         u'address': module.params.get('address'),
+        u'addressType': module.params.get('address_type'),
         u'description': module.params.get('description'),
-        u'name': module.params.get('name')
+        u'name': module.params.get('name'),
+        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
     }
     return_vals = {}
     for k, v in request.items():
@@ -283,10 +318,12 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'address': response.get(u'address'),
+        u'addressType': response.get(u'addressType'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
+        u'subnetwork': response.get(u'subnetwork'),
         u'users': response.get(u'users')
     }
 
@@ -303,7 +340,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#address')
@@ -326,6 +363,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

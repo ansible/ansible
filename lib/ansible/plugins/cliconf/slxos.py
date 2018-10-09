@@ -49,7 +49,7 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_model'] = match.group(2)
 
-        reply = self.get(b'show running-config | inc "switch-attributes host-name')
+        reply = self.get(b'show running-config | inc "switch-attributes host-name"')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'switch-attributes host-name (\S+)', data, re.M)
@@ -60,7 +60,7 @@ class Cliconf(CliconfBase):
 
     def get_config(self, source='running', flags=None):
         if source not in ('running', 'startup'):
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
         if source == 'running':
             cmd = 'show running-config'
         else:

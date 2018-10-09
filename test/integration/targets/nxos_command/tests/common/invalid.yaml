@@ -4,6 +4,7 @@
 - name: run invalid command
   nxos_command:
     commands: ['show foo']
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
@@ -16,6 +17,7 @@
     commands:
       - show version
       - show foo
+    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 

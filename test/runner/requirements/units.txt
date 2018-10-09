@@ -24,10 +24,13 @@ f5-icontrol-rest ; python_version >= '2.7'
 deepdiff
 
 # requirement for Fortinet specific modules
-pyfmg
+pyFMG
 
 # requirement for aci_rest module
 xmljson
 
 # requirement for winrm connection plugin tests
 pexpect
+
+# requirement for the linode module
+linode-python

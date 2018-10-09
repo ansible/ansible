@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>, Josh Ludwig <jludwig@chathamfinancial.com>
+# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>
+# Copyright: (c) 2015, Josh Ludwig <jludwig@chathamfinancial.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -79,6 +80,7 @@ options:
       other hive saved as a file.
     - Using this function requires the user to have the C(SeRestorePrivilege)
       and C(SeBackupPrivilege) privileges enabled.
+    type: path
     version_added: '2.5'
 notes:
 - Check-mode C(-C/--check) and diff output C(-D/--diff) are supported, so that you can test every change against the active configuration before

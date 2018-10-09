@@ -78,7 +78,7 @@ options:
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
 requirements: [ "proxmoxer", "requests" ]
-author: "Sergei Antipov @UnderGreen"
+author: Sergei Antipov (@UnderGreen)
 '''
 
 EXAMPLES = '''
@@ -136,7 +136,7 @@ def get_template(proxmox, node, storage, content_type, template):
 
 
 def upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
-    taskid = proxmox.nodes(node).storage(storage).upload.post(content=content_type, filename=open(realpath))
+    taskid = proxmox.nodes(node).storage(storage).upload.post(content=content_type, filename=open(realpath, 'rb'))
     while timeout:
         task_status = proxmox.nodes(api_host.split('.')[0]).tasks(taskid).status.get()
         if task_status['status'] == 'stopped' and task_status['exitstatus'] == 'OK':

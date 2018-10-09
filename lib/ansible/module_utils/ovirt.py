@@ -18,7 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import inspect
 import os
 import time
@@ -27,10 +26,13 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from distutils.version import LooseVersion
 
+from ansible.module_utils.common._collections_compat import Mapping
+
 try:
     from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
+    import ovirtsdk4.types as otypes
     HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
 except ImportError:
     HAS_SDK = False
@@ -511,7 +513,7 @@ class BaseModule(object):
 
     def diff_update(self, after, update):
         for k, v in update.items():
-            if isinstance(v, collections.Mapping):
+            if isinstance(v, Mapping):
                 after[k] = self.diff_update(after.get(k, dict()), v)
             else:
                 after[k] = update[k]
@@ -786,3 +788,17 @@ class BaseModule(object):
             entity = search_by_attributes(self._service, list_params=list_params, name=self._module.params['name'])
 
         return entity
+
+    def _get_major(self, full_version):
+        if full_version is None:
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.major)
+        return int(full_version.split('.')[0])
+
+    def _get_minor(self, full_version):
+        if full_version is None:
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.minor)
+        return int(full_version.split('.')[1])

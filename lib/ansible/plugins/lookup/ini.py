@@ -15,7 +15,7 @@ DOCUMENTATION = """
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:
-        description: they key(s) too look up
+        description: The key(s) to look up
         required: True
       type:
         description: ini Type of the file. 'properties' refers to the Java properties files.
@@ -62,12 +62,12 @@ _raw:
 """
 import os
 import re
-from collections import MutableSequence
 from io import StringIO
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.plugins.lookup import LookupBase
 
 

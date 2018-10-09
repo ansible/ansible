@@ -270,5 +270,6 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
 def main():
     AzureRMSecurityGroupFacts()
 
+
 if __name__ == '__main__':
     main()

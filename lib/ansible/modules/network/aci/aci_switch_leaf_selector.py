@@ -28,7 +28,7 @@ version_added: '2.5'
 options:
   description:
     description:
-    - The description to assign to the C(leaf)
+    - The description to assign to the C(leaf).
   leaf_profile:
     description:
     - Name of the Leaf Profile to which we add a Selector.
@@ -39,22 +39,24 @@ options:
     aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
   leaf_node_blk:
     description:
-    - Name of Node Block range to be added to Leaf Selector of given Leaf Profile
+    - Name of Node Block range to be added to Leaf Selector of given Leaf Profile.
     aliases: [ leaf_node_blk_name, node_blk_name ]
   leaf_node_blk_description:
     description:
     - The description to assign to the C(leaf_node_blk)
   from:
     description:
-    - Start of Node Block Range
+    - Start of Node Block range.
+    type: int
     aliases: [ node_blk_range_from, from_range, range_from ]
   to:
     description:
-    - Start of Node Block Range
+    - Start of Node Block range.
+    type: int
     aliases: [ node_blk_range_to, to_range, range_to ]
   policy_group:
     description:
-    - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile
+    - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile.
     aliases: [ name, policy_group_name ]
   state:
     description:
@@ -78,6 +80,7 @@ EXAMPLES = r'''
     to: 1011
     policy_group: somepolicygroupname
     state: present
+  delegate_to: localhost
 
 - name: adding a switch policy leaf profile selector associated Node Block range (w/o policy group)
   aci_switch_leaf_selector:
@@ -90,6 +93,7 @@ EXAMPLES = r'''
     from: 1011
     to: 1011
     state: present
+  delegate_to: localhost
 
 - name: Removing a switch policy leaf profile selector
   aci_switch_leaf_selector:
@@ -99,6 +103,7 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     leaf: leaf_selector_name
     state: absent
+  delegate_to: localhost
 
 - name: Querying a switch policy leaf profile selector
   aci_switch_leaf_selector:
@@ -108,6 +113,8 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     leaf: leaf_selector_name
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -258,15 +265,15 @@ def main():
         root_class=dict(
             aci_class='infraNodeP',
             aci_rn='infra/nprof-{0}'.format(leaf_profile),
-            filter_target='eq(infraNodeP.name, "{0}")'.format(leaf_profile),
-            module_object=leaf_profile
+            module_object=leaf_profile,
+            target_filter={'name': leaf_profile},
         ),
         subclass_1=dict(
             aci_class='infraLeafS',
             # NOTE: normal rn: leaves-{name}-typ-{type}, hence here hardcoded to range for purposes of module
             aci_rn='leaves-{0}-typ-range'.format(leaf),
-            filter_target='eq(infraLeafS.name, "{0}")'.format(leaf),
             module_object=leaf,
+            target_filter={'name': leaf},
         ),
         # NOTE: infraNodeBlk is not made into a subclass because there is a 1-1 mapping between node block and leaf selector name
         child_classes=['infraNodeBlk', 'infraRsAccNodePGrp'],

@@ -47,6 +47,22 @@ for example::
     - set_fact:
         myvar: "{{ result.stdout | from_json }}"
 
+
+.. versionadded:: 2.7
+
+To parse multi-document yaml strings, the ``from_yaml_all`` filter is provided.
+The ``from_yaml_all`` filter will return a generator of parsed yaml documents.
+
+for example::
+
+  tasks:
+    - shell: cat /some/path/to/multidoc-file.yaml
+      register: result
+   - debug:
+       msg: '{{ item }}'
+    loop: '{{ result.stdout | from_yaml_all | list }}'
+
+
 .. _forcing_variables_to_be_defined:
 
 Forcing Variables To Be Defined
@@ -73,8 +89,8 @@ Jinja2 provides a useful 'default' filter that is often a better approach to fai
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
-If the variable evaluates to an empty string, the second parameter of the filter should be set to
-`true`::
+If you want to use the default value when variables evaluate to false or an empty string you have to set the second parameter to
+``true``::
 
     {{ lookup('env', 'MY_USER') | default('admin', true) }}
 
@@ -184,6 +200,96 @@ into::
     - key: Environment
       value: dev
 
+.. versionadded:: 2.8
+
+``dict2items`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
+
+    {{ files | dict2items(key_name='file', value_name='path') }}
+
+Which turns::
+
+    files:
+      users: /etc/passwd
+      groups: /etc/group
+
+into::
+
+    - file: users
+      path: /etc/passwd
+    - file: groups
+      path: /etc/group
+
+items2dict filter
+`````````````````
+
+.. versionadded:: 2.7
+
+This filter turns a list of dicts with 2 keys, into a dict, mapping the values of those keys into ``key: value`` pairs::
+
+    {{ tags | items2dict }}
+
+Which turns::
+
+    tags:
+      - key: Application
+        value: payment
+      - key: Environment
+        value: dev
+
+into::
+
+    Application: payment
+    Environment: dev
+
+This is the reverse of the ``dict2items`` filter.
+
+``items2dict`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
+
+    {{ tags | items2dict(key_name='key', value_name='value') }}
+
+
+.. _zip_filter:
+
+zip and zip_longest filters
+```````````````````````````
+
+.. versionadded:: 2.3
+
+To get a list combining the elements of other lists use ``zip``::
+
+    - name: give me list combo of two lists
+      debug:
+       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
+
+    - name: give me shortest combo of two lists
+      debug:
+        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
+
+To always exhaust all list use ``zip_longest``::
+
+    - name: give me longest combo of three lists , fill with X
+      debug:
+        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
+
+
+Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to contruct a ``dict``::
+
+    {{ dict(keys_list | zip(values_list)) }}
+
+Which turns::
+
+    list_one:
+      - one
+      - two
+    list_two:
+      - apple
+      - orange
+
+into::
+
+    one: apple
+    two: orange
+
 subelements Filter
 ``````````````````
 
@@ -196,43 +302,45 @@ Produces a product of an object, and subelement values of that object, similar t
 Which turns::
 
     users:
-      - name: alice
-        authorized:
-          - /tmp/alice/onekey.pub
-          - /tmp/alice/twokey.pub
-        groups:
-          - wheel
-          - docker
-      - name: bob
-        authorized:
-          - /tmp/bob/id_rsa.pub
-        groups:
-          - docker
+    - name: alice
+      authorized:
+      - /tmp/alice/onekey.pub
+      - /tmp/alice/twokey.pub
+      groups:
+      - wheel
+      - docker
+    - name: bob
+      authorized:
+      - /tmp/bob/id_rsa.pub
+      groups:
+      - docker
 
 Into::
 
     -
       - name: alice
         groups:
-          - wheel
-          - docker
+        - wheel
+        - docker
         authorized:
-          - /tmp/alice/onekey.pub
+        - /tmp/alice/onekey.pub
+        - /tmp/alice/twokey.pub
       - wheel
     -
       - name: alice
         groups:
-          - wheel
-          - docker
+        - wheel
+        - docker
         authorized:
-          - /tmp/alice/onekey.pub
+        - /tmp/alice/onekey.pub
+        - /tmp/alice/twokey.pub
       - docker
     -
       - name: bob
         authorized:
-          - /tmp/bob/id_rsa.pub
+        - /tmp/bob/id_rsa.pub
         groups:
-          - docker
+        - docker
       - docker
 
 An example of using this filter with ``loop``::
@@ -386,40 +494,51 @@ Now, let's take the following data structure::
 To extract all clusters from this structure, you can use the following query::
 
     - name: "Display all cluster names"
-      debug: var=item
-      loop: "{{domain_definition|json_query('domain.cluster[*].name')}}"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.cluster[*].name') }}"
 
 Same thing for all server names::
 
     - name: "Display all server names"
-      debug: var=item
-      loop: "{{domain_definition|json_query('domain.server[*].name')}}"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.server[*].name') }}"
 
 This example shows ports from cluster1::
 
-    - name: "Display all server names from cluster1"
-      debug: var=item
-      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+    - name: "Display all ports from cluster1"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
 .. note:: You can use a variable to make the query more readable.
 
-Or, alternatively::
+Or, alternatively print out the ports in a comma separated string::
 
-    - name: "Display all server names from cluster1"
+    - name: "Display all ports from cluster1 as a string"
       debug:
-        var: item
-      loop: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
+        msg: "{{ domain_definition | json_query('domain.server[?cluster==`cluster1`].port') | join(', ') }}"
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
+
+Or, using YAML `single quote escaping <http://yaml.org/spec/current.html#id2534365>`_::
+
+    - name: "Display all ports from cluster1"
+      debug:
+        var: item
+      loop: "{{ domain_definition | json_query('domain.server[?cluster==''cluster1''].port') }}"
+
+.. note:: Escaping single quotes within single quotes in YAML is done by doubling the single quote.
 
 In this example, we get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
       debug:
         var: item
-      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{ domain_definition | json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
@@ -683,7 +802,19 @@ An idempotent method to generate unique hashes per system is to use a salt that 
     {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
 
 Hash types available depend on the master system running ansible,
-'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
+'hash' depends on hashlib password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
+
+.. versionadded:: 2.7
+
+Some hash types allow providing a rounds parameter::
+
+    {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt', rounds=10000) }}
+
+When`Passlib <https://passlib.readthedocs.io/en/stable/>`_ is installed
+`password_hash` supports any crypt scheme and parameter supported by 'Passlib'::
+
+    {{ 'secretpassword'|password_hash('sha256_crypt', 'mysecretsalt', rounds=5000) }}
+    {{ 'secretpassword'|password_hash('bcrypt', ident='2b', rounds=14) }}
 
 .. _combine_filter:
 
@@ -902,7 +1033,7 @@ To search a string with a regex, use the "regex_search" filter::
 
     # will return empty if it cannot find a match
     {{ 'ansible' | regex_search('(foobar)') }}
-    
+
     # case insensitive search in multiline mode
     {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
@@ -910,7 +1041,7 @@ To search a string with a regex, use the "regex_search" filter::
 To search for all occurrences of regex matches, use the "regex_findall" filter::
 
     # Return a list of all IPv4 addresses in the string
-    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b') }}
+    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}
 
 
 To replace text in a string with regex, use the "regex_replace" filter::
@@ -926,7 +1057,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
-    
+
     # add "https://" prefix to each item in a list
     {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
 
@@ -951,6 +1082,10 @@ To add quotes for shell usage::
 To use one value on true and another on false (new in version 1.9)::
 
     {{ (name == "John") | ternary('Mr','Ms') }}
+
+To use one value on true, one value on false and a third value on null (new in version 2.8)::
+
+   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
 
 To concatenate a list into a string::
 
@@ -1051,6 +1186,25 @@ To get date object from string use the `to_datetime` filter, (new in version in 
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
     {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).days  }}
 
+.. versionadded:: 2.4
+
+To format a date using a string (like with the shell date command), use the "strftime" filter::
+
+    # Display year-month-day
+    {{ '%Y-%m-%d' | strftime }}
+
+    # Display hour:min:sec
+    {{ '%H:%M:%S' | strftime }}
+
+    # Use ansible_date_time.epoch fact
+    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
+
+    # Use arbitrary epoch value
+    {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
+    {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
+
+.. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
+
 Combination Filters
 ````````````````````
 
@@ -1074,41 +1228,7 @@ Combinations always require a set size::
         msg: "{{ [1,2,3,4,5]|combinations(2)|list }}"
 
 
-To get a list combining the elements of other lists use ``zip``::
-
-    - name: give me list combo of two lists
-      debug:
-       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
-
-    - name: give me shortest combo of two lists
-      debug:
-        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
-
-To always exhaust all list use ``zip_longest``::
-
-    - name: give me longest combo of three lists , fill with X
-      debug:
-        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
-
-
-.. versionadded:: 2.4
-
-To format a date using a string (like with the shell date command), use the "strftime" filter::
-
-    # Display year-month-day
-    {{ '%Y-%m-%d' | strftime }}
-
-    # Display hour:min:sec
-    {{ '%H:%M:%S' | strftime }}
-
-    # Use ansible_date_time.epoch fact
-    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
-
-    # Use arbitrary epoch value
-    {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
-    {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
-
-.. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
+Also see the :ref:`zip_filter`
 
 Debugging Filters
 `````````````````
@@ -1144,7 +1264,7 @@ to be added to core so everyone can make use of them.
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

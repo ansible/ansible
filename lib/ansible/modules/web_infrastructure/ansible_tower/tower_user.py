@@ -71,7 +71,7 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
 '''
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
@@ -83,8 +83,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         username=dict(required=True),
         first_name=dict(),
         last_name=dict(),
@@ -93,12 +92,9 @@ def main():
         superuser=dict(type='bool', default=False),
         auditor=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     username = module.params.get('username')
     first_name = module.params.get('first_name')
@@ -130,6 +126,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

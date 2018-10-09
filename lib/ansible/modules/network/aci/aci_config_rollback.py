@@ -77,44 +77,47 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: present
     export_policy: config_backup
+    state: present
+  delegate_to: localhost
 
 - name: Query Existing Snapshots
   aci_config_snapshot:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     export_policy: config_backup
+    state: query
+  delegate_to: localhost
 
 - name: Compare Snapshot Files
   aci_config_rollback:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: preview
     export_policy: config_backup
     snapshot: run-2017-08-28T06-24-01
     compare_export_policy: config_backup
     compare_snapshot: run-2017-08-27T23-43-56
+    state: preview
+  delegate_to: localhost
 
 - name: Rollback Configuration
   aci_config_rollback:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: rollback
     import_policy: rollback_config
     export_policy: config_backup
     snapshot: run-2017-08-28T06-24-01
+    state: rollback
+  delegate_to: localhost
 
 - name: Rollback Configuration
   aci_config_rollback:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: rollback
     import_policy: rollback_config
     export_policy: config_backup
     snapshot: run-2017-08-28T06-24-01
@@ -122,6 +125,8 @@ EXAMPLES = r'''
     import_mode: atomic
     import_type: replace
     fail_on_decrypt: yes
+    state: rollback
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -232,8 +237,8 @@ def main():
             root_class=dict(
                 aci_class='configImportP',
                 aci_rn='fabric/configimp-{0}'.format(import_policy),
-                filter_target='eq(configImportP.name, "{0}")'.format(import_policy),
                 module_object=import_policy,
+                target_filter={'name': import_policy},
             ),
         )
 

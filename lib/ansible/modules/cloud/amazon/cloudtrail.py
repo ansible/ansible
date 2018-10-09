@@ -19,9 +19,9 @@ description:
   - Creates, deletes, or updates CloudTrail configuration. Ensures logging is also enabled.
 version_added: "2.0"
 author:
-    - "Ansible Core Team"
-    - "Ted Timmons"
-    - "Daniel Shepherd (@shepdelacreme)"
+    - Ansible Core Team
+    - Ted Timmons (@tedder)
+    - Daniel Shepherd (@shepdelacreme)
 requirements:
   - boto3
   - botocore

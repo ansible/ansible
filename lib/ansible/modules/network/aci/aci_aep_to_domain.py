@@ -64,6 +64,7 @@ EXAMPLES = r'''
     domain: phys_dom
     domain_type: phys
     state: present
+  delegate_to: localhost
 
 - name: Remove AEP to domain binding
   aci_aep_to_domain: &binding_absent
@@ -74,6 +75,7 @@ EXAMPLES = r'''
     domain: phys_dom
     domain_type: phys
     state: absent
+  delegate_to: localhost
 
 - name: Query our AEP to domain binding
   aci_aep_to_domain:
@@ -84,6 +86,8 @@ EXAMPLES = r'''
     domain: phys_dom
     domain_type: phys
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all AEP to domain bindings
   aci_aep_to_domain: &binding_query
@@ -91,6 +95,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -264,14 +270,14 @@ def main():
         root_class=dict(
             aci_class='infraAttEntityP',
             aci_rn='infra/attentp-{0}'.format(aep),
-            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
             module_object=aep,
+            target_filter={'name': aep},
         ),
         subclass_1=dict(
             aci_class='infraRsDomP',
             aci_rn='rsdomP-[{0}]'.format(domain_mo),
-            filter_target='eq(infraRsDomP.tDn, "{0}")'.format(domain_mo),
             module_object=domain_mo,
+            target_filter={'tDn': domain_mo},
         ),
     )
 

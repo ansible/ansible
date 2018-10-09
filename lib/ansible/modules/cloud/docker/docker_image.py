@@ -58,6 +58,7 @@ options:
     description:
       - "Image name. Name format will be one of: name, repository/name, registry_server:port/name.
         When pushing or pulling an image the name can optionally include the tag by appending ':tag_name'."
+      - Note that image IDs (hashes) are not supported.
     required: true
   path:
     description:
@@ -128,7 +129,7 @@ options:
     description:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
-      - Requires Docker API >= 1.21 and docker-py >= 1.7.0.
+      - Requires Docker API >= 1.21.
     required: false
     version_added: "2.2"
   container_limits:
@@ -167,7 +168,15 @@ extends_documentation_fragment:
 
 requirements:
   - "python >= 2.6"
-  - "docker-py >= 1.7.0"
+  - "docker-py >= 1.8.0"
+  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+     module has been superseded by L(docker,https://pypi.org/project/docker/)
+     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+     For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+     install the C(docker) Python module. Note that both modules should I(not)
+     be installed at the same time. Also note that when both modules are installed
+     and one of them is uninstalled, the other might no longer function and a
+     reinstall of it is required."
   - "Docker API >= 1.20"
 
 author:
@@ -396,7 +405,7 @@ class ImageManager(DockerBaseClass):
                 self.fail("Error getting image %s - %s" % (image_name, str(exc)))
 
             try:
-                with open(self.archive_path, 'w') as fd:
+                with open(self.archive_path, 'wb') as fd:
                     if HAS_DOCKER_PY_3:
                         for chunk in image:
                             fd.write(chunk)
@@ -547,7 +556,7 @@ class ImageManager(DockerBaseClass):
         '''
         try:
             self.log("Opening image %s" % self.load_path)
-            image_tar = open(self.load_path, 'r')
+            image_tar = open(self.load_path, 'rb')
         except Exception as exc:
             self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
 

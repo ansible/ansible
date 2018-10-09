@@ -10,7 +10,7 @@ This page describes advanced YAML syntax that enables you to have more control o
 YAML tags and Python types
 ``````````````````````````
 
-The documentation covered here is an extension of the documentation that can be found in the `PyYAML Documentation <http://pyyaml.org/wiki/PyYAMLDocumentation#YAMLtagsandPythontypes>`_
+The documentation covered here is an extension of the documentation that can be found in the `PyYAML Documentation <https://pyyaml.org/wiki/PyYAMLDocumentation#YAMLtagsandPythontypes>`_
 
 .. _unsafe_strings:
 
@@ -53,7 +53,7 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
 
    :doc:`playbooks_variables`
        All about variables
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -31,14 +31,10 @@ options:
     secret_value:
         description:
             - Secret to be secured by keyvault.
-        required: false
-        aliases:
-            - secret
     state:
         description:
             - Assert the state of the subnet. Use 'present' to create or update a secret and
               'absent' to delete a secret .
-        required: false
         default: present
         choices:
             - absent
@@ -100,7 +96,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             secret_name=dict(type='str', required=True),
-            secret_value=dict(type='str', aliases=['secret'], no_log=True),
+            secret_value=dict(type='str', no_log=True),
             keyvault_uri=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent'])
         )
@@ -133,7 +129,24 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         # Create KeyVault Client using KeyVault auth class and auth_callback
-        self.client = KeyVaultClient(self.azure_credentials)
+        def auth_callback(server, resource, scope):
+            if self.credentials['client_id'] is None or self.credentials['secret'] is None:
+                self.fail('Please specify client_id, secret and tenant to access azure Key Vault.')
+
+            tenant = self.credentials.get('tenant')
+            if not self.credentials['tenant']:
+                tenant = "common"
+
+            authcredential = ServicePrincipalCredentials(
+                client_id=self.credentials['client_id'],
+                secret=self.credentials['secret'],
+                tenant=tenant,
+                resource="https://vault.azure.net")
+
+            token = authcredential.token
+            return token['token_type'], token['access_token']
+
+        self.client = KeyVaultClient(KeyVaultAuthentication(auth_callback))
 
         results = dict()
         changed = False
@@ -194,6 +207,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
 
 def main():
     AzureRMKeyVaultSecret()
+
 
 if __name__ == '__main__':
     main()

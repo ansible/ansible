@@ -4,6 +4,7 @@
 - name: get output for single command
   nxos_command:
     commands: ['show version']
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -15,6 +16,7 @@
     commands:
       - show version
       - show interface
+    provider: "{{ connection }}"
   register: result
 
 - assert:

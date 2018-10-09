@@ -29,7 +29,7 @@ notes:
   - Once a floating_ip is created all parameters except C(server) are read-only.
   - It's not possible to request a floating IP without associating it with a server at the same time.
   - This module requires the ipaddress python library. This library is included in Python since version 3.3. It is available as a
-    module on PyPi for earlier versions.
+    module on PyPI for earlier versions.
 version_added: 2.5
 author: "Gaudenz Steinlin (@gaudenz) <gaudenz.steinlin@cloudscale.ch>"
 options:

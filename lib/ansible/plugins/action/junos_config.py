@@ -25,9 +25,8 @@ import time
 import glob
 
 from ansible.plugins.action.junos import ActionModule as _ActionModule
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
-from ansible.module_utils._text import to_bytes
 from ansible.utils.vars import merge_hash
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
@@ -41,7 +40,7 @@ class ActionModule(_ActionModule):
             try:
                 self._handle_template()
             except ValueError as exc:
-                return dict(failed=True, msg=exc.message)
+                return dict(failed=True, msg=to_text(exc))
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect

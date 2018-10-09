@@ -1,20 +1,6 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -37,7 +23,7 @@ description:
     module to wait for a specific condition before returning or timing out if
     the condition is not met.
   - This module does not support running configuration commands.
-    We expect to release an exos_config module soon to configure EXOS devices.
+    Please use M(exos_config) to configure EXOS devices.
 notes:
   - If a command sent to the device requires answering a prompt, it is possible
     to pass a dict containing I(command), I(answer) and I(prompt). See examples.
@@ -57,7 +43,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    default: null
   match:
     description:
       - The I(match) argument is used in conjunction with the

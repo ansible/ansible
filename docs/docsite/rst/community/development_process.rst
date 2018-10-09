@@ -1,7 +1,8 @@
 .. _community_development_process:
 
+*******************************
 The Ansible Development Process
-===============================
+*******************************
 
 .. contents:: Topics
 
@@ -63,7 +64,7 @@ pull request to backport the change to a previous stable branch.
 
        git cherry-pick -x [SHA_FROM_DEVEL]
 
-#. Add a changelog entry for the change, and commit it.
+#. Add a :ref:`changelog fragment <changelogs_how_to>` for the change, and commit it.
 
 #. Push your feature branch to your fork on GitHub:
 
@@ -81,6 +82,13 @@ pull request to backport the change to a previous stable branch.
     about the purpose of that branch. It is not required to use this format,
     but it can be helpful, especially when making multiple backport PRs for
     multiple stable branches.
+
+.. note::
+
+    If you prefer, you can use CPython's cherry-picker tool to backport commits
+    from devel to stable branches in Ansible. Take a look at the `cherry-picker
+    documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for
+    details on installing, configuring, and using it.
 
 
 Ansibullbot

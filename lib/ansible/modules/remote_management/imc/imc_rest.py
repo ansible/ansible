@@ -422,5 +422,6 @@ def main():
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     module.exit_json(**result)
 
+
 if __name__ == '__main__':
     main()

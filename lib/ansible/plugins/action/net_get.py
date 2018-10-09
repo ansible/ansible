@@ -21,8 +21,10 @@ import copy
 import os
 import time
 import re
+import uuid
+import hashlib
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
@@ -74,6 +76,16 @@ class ActionModule(ActionBase):
             socket_path = self._connection.socket_path
 
         conn = Connection(socket_path)
+
+        try:
+            changed = self._handle_existing_file(conn, src, dest, proto, sock_timeout)
+            if changed is False:
+                result['changed'] = False
+                result['destination'] = dest
+                return result
+        except Exception as exc:
+            result['msg'] = ('Warning: exception %s idempotency check failed. Check '
+                             'dest' % exc)
 
         try:
             out = conn.get_file(
@@ -128,3 +140,41 @@ class ActionModule(ActionBase):
             raise AnsibleError('ansible_network_os must be specified on this host to use platform agnostic modules')
 
         return network_os
+
+    def _handle_existing_file(self, conn, source, dest, proto, timeout):
+        if not os.path.exists(dest):
+            return True
+        cwd = self._loader.get_basedir()
+        filename = str(uuid.uuid4())
+        tmp_dest_file = os.path.join(cwd, filename)
+        try:
+            out = conn.get_file(
+                source=source, destination=tmp_dest_file,
+                proto=proto, timeout=timeout
+            )
+        except Exception as exc:
+            os.remove(tmp_dest_file)
+            raise Exception(exc)
+
+        try:
+            with open(tmp_dest_file, 'r') as f:
+                new_content = f.read()
+            with open(dest, 'r') as f:
+                old_content = f.read()
+        except (IOError, OSError) as ioexc:
+            raise IOError(ioexc)
+
+        sha1 = hashlib.sha1()
+        old_content_b = to_bytes(old_content, errors='surrogate_or_strict')
+        sha1.update(old_content_b)
+        checksum_old = sha1.digest()
+
+        sha1 = hashlib.sha1()
+        new_content_b = to_bytes(new_content, errors='surrogate_or_strict')
+        sha1.update(new_content_b)
+        checksum_new = sha1.digest()
+        os.remove(tmp_dest_file)
+        if checksum_old == checksum_new:
+            return False
+        else:
+            return True

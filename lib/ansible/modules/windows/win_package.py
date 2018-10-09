@@ -32,11 +32,18 @@ options:
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
       with msiexec.
+  chdir:
+    description:
+    - Set the specified path as the current working directory before installing
+      or uninstalling a package.
+    type: path
+    version_added: '2.8'
   creates_path:
     description:
     - Will check the existance of the path specified and use the result to
       determine whether the package is already installed.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
+    type: path
     version_added: '2.4'
   creates_service:
     description:
@@ -59,6 +66,7 @@ options:
       C(3010).
     - A return code of C(3010) usually means that a reboot is required, the
       C(reboot_required) return value is set if the return code is C(3010).
+    type: list
     default: [0, 3010]
   password:
     description:
@@ -213,11 +221,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-exit_code:
-  description: See rc, this will be removed in favour of rc in Ansible 2.6.
-  returned: change occured
-  type: int
-  sample: 0
 log:
   description: The contents of the MSI log.
   returned: change occured and package is an MSI
@@ -231,12 +234,6 @@ rc:
 reboot_required:
   description: Whether a reboot is required to finalise package. This is set
     to true if the executable return code is 3010.
-  returned: always
-  type: bool
-  sample: True
-restart_required:
-  description: See reboot_required, this will be removed in favour of
-    reboot_required in Ansible 2.6
   returned: always
   type: bool
   sample: True

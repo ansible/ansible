@@ -27,14 +27,16 @@ class HttpApi(HttpApiBase):
         request = request_builder(queue, output)
         headers = {'Content-Type': 'application/json'}
 
-        response = self.connection.send('/ins', request, headers=headers, method='POST')
-        response_text = to_text(response.read())
-        try:
-            response = json.loads(response_text)
-        except ValueError:
-            raise ConnectionError('Response was not valid JSON, got {0}'.format(response_text))
+        response, response_data = self.connection.send('/ins', request, headers=headers, method='POST')
 
-        results = handle_response(response)
+        try:
+            response_data = json.loads(to_text(response_data.getvalue()))
+        except ValueError:
+            raise ConnectionError('Response was not valid JSON, got {0}'.format(
+                to_text(response_data.getvalue())
+            ))
+
+        results = handle_response(response_data)
 
         if self._become:
             results = results[1:]
@@ -73,17 +75,26 @@ class HttpApi(HttpApiBase):
             return responses[0]
         return responses
 
-    # Migrated from module_utils
-    def edit_config(self, command):
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = list()
-        responses = self.send_request(command, output='config')
+
+        operations = self.connection.get_device_operations()
+        self.connection.check_edit_config_capability(operations, candidate, commit, replace, comment)
+
+        if replace:
+            device_info = self.connection.get_device_info()
+            if '9K' not in device_info.get('network_os_platform', ''):
+                raise ConnectionError(msg=u'replace is supported only on Nexus 9K devices')
+            candidate = 'config replace {0}'.format(replace)
+
+        responses = self.send_request(candidate, output='config')
         for response in to_list(responses):
             if response != '{}':
                 resp.append(response)
         if not resp:
             resp = ['']
 
-        return json.dumps(resp)
+        return resp
 
     def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
@@ -91,7 +102,7 @@ class HttpApi(HttpApiBase):
         try:
             out = self.send_request(commands)
         except ConnectionError as exc:
-            if check_rc:
+            if check_rc is True:
                 raise
             out = to_text(exc)
 

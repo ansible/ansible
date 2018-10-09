@@ -42,7 +42,6 @@ options:
      description:
         - Enable Source NAT (SNAT) attribute.
      type: bool
-     default: 'yes'
    network:
      description:
         - Unique name or ID of the external gateway network.
@@ -307,7 +306,8 @@ def _build_kwargs(cloud, module, router, network):
     if network:
         kwargs['ext_gateway_net_id'] = network['id']
         # can't send enable_snat unless we have a network
-        kwargs['enable_snat'] = module.params['enable_snat']
+        if module.params['enable_snat']:
+            kwargs['enable_snat'] = module.params['enable_snat']
 
     if module.params['external_fixed_ips']:
         kwargs['ext_fixed_ips'] = []
@@ -371,7 +371,7 @@ def main():
         state=dict(default='present', choices=['absent', 'present']),
         name=dict(required=True),
         admin_state_up=dict(type='bool', default=True),
-        enable_snat=dict(type='bool', default=True),
+        enable_snat=dict(type='bool'),
         network=dict(default=None),
         interfaces=dict(type='list', default=None),
         external_fixed_ips=dict(type='list', default=None),

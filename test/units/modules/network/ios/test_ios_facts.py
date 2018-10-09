@@ -77,3 +77,13 @@ class TestIosFactsModule(TestIosModule):
         self.assertIsNone(
             result['ansible_facts']['ansible_net_interfaces']['Tunnel1110']['macaddress']
         )
+
+    def test_ios_facts_filesystems_info(self):
+        set_module_args(dict(gather_subset='hardware'))
+        result = self.execute_module()
+        self.assertEqual(
+            result['ansible_facts']['ansible_net_filesystems_info']['bootflash:']['spacetotal_kb'], 7712692.0
+        )
+        self.assertEqual(
+            result['ansible_facts']['ansible_net_filesystems_info']['bootflash:']['spacefree_kb'], 6453180.0
+        )

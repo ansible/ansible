@@ -24,7 +24,8 @@ import select
 import socket
 import sys
 import time
-from collections import namedtuple, Mapping
+from collections import namedtuple
+from ansible.module_utils.common._collections_compat import Mapping
 
 try:
     monotonic = time.monotonic
@@ -76,6 +77,7 @@ def _fileobj_to_fd(fileobj):
     if fd < 0:
         raise ValueError("Invalid file descriptor: {0}".format(fd))
     return fd
+
 
 # Python 3.5 uses a more direct route to wrap system calls to increase speed.
 if sys.version_info >= (3, 5):
@@ -136,7 +138,7 @@ else:
                     if expires is not None:
                         current_time = monotonic()
                         if current_time > expires:
-                            raise OSError(errno=errno.ETIMEDOUT)
+                            raise OSError(errno.ETIMEDOUT)
                         if recalc_timeout:
                             if "timeout" in kwargs:
                                 kwargs["timeout"] = expires - current_time
@@ -305,6 +307,7 @@ class BaseSelector(object):
     def __exit__(self, *args):
         self.close()
 
+
 # Almost all platforms have select.select()
 if hasattr(select, "select"):
     class SelectSelector(BaseSelector):
@@ -340,7 +343,7 @@ if hasattr(select, "select"):
             timeout = None if timeout is None else max(timeout, 0.0)
             ready = []
             r, w, _ = _syscall_wrapper(self._select, True, self._readers,
-                                       self._writers, timeout)
+                                       self._writers, timeout=timeout)
             r = set(r)
             w = set(w)
             for fd in r | w:
@@ -561,14 +564,14 @@ if hasattr(select, "kqueue"):
                                        select.KQ_FILTER_READ,
                                        select.KQ_EV_ADD)
 
-                _syscall_wrapper(self._kqueue.control, False, [kevent], 0, 0)
+                _syscall_wrapper(self._wrap_control, False, [kevent], 0, 0)
 
             if events & EVENT_WRITE:
                 kevent = select.kevent(key.fd,
                                        select.KQ_FILTER_WRITE,
                                        select.KQ_EV_ADD)
 
-                _syscall_wrapper(self._kqueue.control, False, [kevent], 0, 0)
+                _syscall_wrapper(self._wrap_control, False, [kevent], 0, 0)
 
             return key
 
@@ -579,7 +582,7 @@ if hasattr(select, "kqueue"):
                                        select.KQ_FILTER_READ,
                                        select.KQ_EV_DELETE)
                 try:
-                    _syscall_wrapper(self._kqueue.control, False, [kevent], 0, 0)
+                    _syscall_wrapper(self._wrap_control, False, [kevent], 0, 0)
                 except SelectorError:
                     pass
             if key.events & EVENT_WRITE:
@@ -587,7 +590,7 @@ if hasattr(select, "kqueue"):
                                        select.KQ_FILTER_WRITE,
                                        select.KQ_EV_DELETE)
                 try:
-                    _syscall_wrapper(self._kqueue.control, False, [kevent], 0, 0)
+                    _syscall_wrapper(self._wrap_control, False, [kevent], 0, 0)
                 except SelectorError:
                     pass
 
@@ -600,8 +603,8 @@ if hasattr(select, "kqueue"):
             max_events = len(self._fd_to_key) * 2
             ready_fds = {}
 
-            kevent_list = _syscall_wrapper(self._kqueue.control, True,
-                                           None, max_events, timeout)
+            kevent_list = _syscall_wrapper(self._wrap_control, True,
+                                           None, max_events, timeout=timeout)
 
             for kevent in kevent_list:
                 fd = kevent.ident
@@ -625,6 +628,9 @@ if hasattr(select, "kqueue"):
         def close(self):
             self._kqueue.close()
             super(KqueueSelector, self).close()
+
+        def _wrap_control(self, changelist, max_events, timeout):
+            return self._kqueue.control(changelist, max_events, timeout)
 
     __all__.append('KqueueSelector')
 

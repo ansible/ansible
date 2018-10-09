@@ -121,20 +121,60 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data:
-    description: Information about the created or manipulated object.
-    returned: info
-    type: list
-    sample:
-        [
-            {
-                "email": "john@doe.com",
-                "id": "12345677890",
-                "name": "John Doe",
-                "networks": [],
-                "orgAccess": "full",
-                "tags": []
-            }
-        ]
+    description: List of administrators.
+    returned: success
+    type: complex
+    contains:
+        email:
+            description: Email address of administrator.
+            returned: success
+            type: string
+            sample: your@email.com
+        id:
+            description: Unique identification number of administrator.
+            returned: success
+            type: string
+            sample: 1234567890
+        name:
+            description: Given name of administrator.
+            returned: success
+            type: string
+            sample: John Doe
+        networks:
+            description: List of networks administrator has access on.
+            returned: success
+            type: complex
+            contains:
+                id:
+                     description: The network ID.
+                     returned: when network permissions are set
+                     type: string
+                     sample: N_0123456789
+                access:
+                     description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                     returned: when network permissions are set
+                     type: string
+                     sample: read-only
+        tags:
+            description: Tags the adminsitrator has access on.
+            returned: success
+            type: complex
+            contains:
+                tag:
+                    description: Tag name.
+                    returned: when tag permissions are set
+                    type: string
+                    sample: production
+                access:
+                    description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
+                    returned: when tag permissions are set
+                    type: string
+                    sample: full
+        orgAccess:
+            description: The privilege of the dashboard administrator on the organization. Options are 'full', 'read-only', or 'none'.
+            returned: success
+            type: string
+            sample: full
 '''
 
 import os
@@ -153,7 +193,8 @@ def get_admins(meraki, org_id):
         ),
         method='GET'
     )
-    return admins
+    if meraki.status == 200:
+        return admins
 
 
 def get_admin_id(meraki, data, name=None, email=None):
@@ -189,10 +230,11 @@ def find_admin(meraki, data, email):
 
 def delete_admin(meraki, org_id, admin_id):
     path = meraki.construct_path('revoke', 'admin', org_id=org_id) + admin_id
-    # meraki.fail_json(msg=path)
     r = meraki.request(path,
                        method='DELETE'
                        )
+    if meraki.status == 204:
+        return r
 
 
 def network_factory(meraki, networks, nets):
@@ -207,11 +249,6 @@ def network_factory(meraki, networks, nets):
     return networks_new
 
 
-def get_nets_temp(meraki, org_id):  # Function won't be needed when get_nets is added to util
-    path = meraki.construct_path('get_all', function='network', org_id=org_id)
-    return meraki.request(path, method='GET')
-
-
 def create_admin(meraki, org_id, name, email):
     payload = dict()
     payload['name'] = name
@@ -224,7 +261,7 @@ def create_admin(meraki, org_id, name, email):
     if meraki.params['tags'] is not None:
         payload['tags'] = json.loads(meraki.params['tags'])
     if meraki.params['networks'] is not None:
-        nets = get_nets_temp(meraki, org_id)
+        nets = meraki.get_nets(org_id=org_id)
         networks = network_factory(meraki, meraki.params['networks'], nets)
         # meraki.fail_json(msg=str(type(networks)), data=networks)
         payload['networks'] = networks
@@ -234,8 +271,9 @@ def create_admin(meraki, org_id, name, email):
                            method='POST',
                            payload=json.dumps(payload)
                            )
-        meraki.result['changed'] = True
-        return r
+        if meraki.status == 201:
+            meraki.result['changed'] = True
+            return r
     elif is_admin_existing is not None:  # Update existing admin
         if not meraki.params['tags']:
             payload['tags'] = []
@@ -248,8 +286,9 @@ def create_admin(meraki, org_id, name, email):
                                method='PUT',
                                payload=json.dumps(payload)
                                )
-            meraki.result['changed'] = True
-            return r
+            if meraki.status == 200:
+                meraki.result['changed'] = True
+                return r
         else:
             # meraki.fail_json(msg='No update is required!!!')
             return -1

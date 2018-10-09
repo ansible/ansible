@@ -55,7 +55,8 @@ options:
     description:
     - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
     - This acts as the secondary encap when using useg.
-    choices: [ range from 1 to 4096 ]
+    - Accepted values range between C(1) and C(4096).
+    type: int
   encap_mode:
     description:
     - The ecapsulataion method to be used.
@@ -73,7 +74,8 @@ options:
   primary_encap:
     description:
     - Determines the primary VLAN ID when using useg.
-    choices: [ range from 1 to 4096 ]
+    - Accepted values range between C(1) and C(4096).
+    type: int
   resolution_immediacy:
     description:
     - Determines when the policies should be resolved and available.
@@ -110,6 +112,7 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing physical domain to EPG binding
   aci_epg_to_domain:
@@ -122,6 +125,7 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific physical domain to EPG binding
   aci_epg_to_domain:
@@ -134,6 +138,8 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all domain to EPG bindings
   aci_epg_to_domain:
@@ -141,6 +147,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -267,7 +275,7 @@ def main():
     argument_spec.update(
         allow_useg=dict(type='str', choices=['encap', 'useg']),
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
-        deploy_immediacy=dict(type='str', choices=['immediate', 'on-demand']),
+        deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
         domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
@@ -333,26 +341,26 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvTenant.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class='fvRsDomAtt',
             aci_rn='rsdomAtt-[{0}]'.format(epg_domain),
-            filter_target='eq(fvRsDomAtt.tDn, "{0}")'.format(epg_domain),
             module_object=epg_domain,
+            target_filter={'tDn': epg_domain},
         ),
     )
 

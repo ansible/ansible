@@ -50,6 +50,7 @@ options:
       - >
         Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can
         operate on firewalld configs when it's not running (requires firewalld >= 3.0.9). (NOTE: If this is false, immediate is assumed true.)
+    type: bool
   immediate:
     description:
       - "Should this configuration be applied immediately, if set as permanent"
@@ -81,7 +82,7 @@ notes:
     Note that zone transactions must explicitly be permanent. This is a limitation in firewalld.
     This also means that you will have to reload firewalld after adding a zone that you wish to perform immediate actions on.
     The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not
-    permanent. Therefor, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
+    permanent. Therefore, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
     creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
 requirements: [ 'firewalld >= 0.2.11' ]
 author: "Adam Miller (@maxamillion)"
@@ -90,28 +91,28 @@ author: "Adam Miller (@maxamillion)"
 EXAMPLES = '''
 - firewalld:
     service: https
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
     port: 8081/tcp
-    permanent: true
+    permanent: yes
     state: disabled
 
 - firewalld:
     port: 161-162/udp
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
     zone: dmz
     service: http
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
     rich_rule: 'rule service name="ftp" audit limit value="1/m" accept'
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
@@ -122,26 +123,26 @@ EXAMPLES = '''
 - firewalld:
     zone: trusted
     interface: eth2
-    permanent: true
+    permanent: yes
     state: enabled
 
 - firewalld:
     masquerade: yes
     state: enabled
-    permanent: true
+    permanent: yes
     zone: dmz
 
 - firewalld:
     zone: custom
     state: present
-    permanent: true
+    permanent: yes
 
 - name: Redirect port 443 to 8443 with Rich Rule
   firewalld:
     rich_rule: rule family={{ item }} forward-port port=443 protocol=tcp to-port=8443
     zone:      public
-    permanent: true
-    immediate: true
+    permanent: yes
+    immediate: yes
     state:     enabled
   with_items:
     - ipv4
@@ -498,7 +499,9 @@ class ZoneTransaction(FirewallTransaction):
         self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def get_enabled_permanent(self):
-        if self.zone in self.fw.config().getZoneNames():
+        zones = self.fw.config().listZones()
+        zone_names = [self.fw.config().getZone(z).get_property("name") for z in zones]
+        if self.zone in zone_names:
             return True
         else:
             return False

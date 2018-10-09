@@ -1,5 +1,4 @@
-#
-#  Copyright 2018 Red Hat | Ansible
+# Copyright 2018 Red Hat | Ansible
 #
 # This file is part of Ansible
 #
@@ -18,15 +17,18 @@
 
 from __future__ import absolute_import, division, print_function
 
-import os
 import copy
+import json
+import os
 
 
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.dict_transformations import recursive_diff
+from ansible.module_utils.six import iteritems, string_types
 
 try:
     import kubernetes
+    import openshift
     from openshift.dynamic import DynamicClient
     from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError
     HAS_K8S_MODULE_HELPER = True
@@ -40,16 +42,21 @@ except ImportError:
     HAS_YAML = False
 
 try:
-    import dictdiffer
-    HAS_DICTDIFFER = True
-except ImportError:
-    HAS_DICTDIFFER = False
-
-try:
     import urllib3
     urllib3.disable_warnings()
 except ImportError:
     pass
+
+
+def list_dict_str(value):
+    if isinstance(value, list):
+        return value
+    elif isinstance(value, dict):
+        return value
+    elif isinstance(value, string_types):
+        return value
+    raise TypeError
+
 
 ARG_ATTRIBUTES_BLACKLIST = ('property_path',)
 
@@ -63,7 +70,7 @@ COMMON_ARG_SPEC = {
         'default': False,
     },
     'resource_definition': {
-        'type': 'dict',
+        'type': list_dict_str,
         'aliases': ['definition', 'inline']
     },
     'src': {
@@ -128,54 +135,39 @@ class K8sAnsibleMixin(object):
         auth_params = auth_params or getattr(self, 'params', {})
         auth = copy.deepcopy(auth_params)
 
-        configuration = kubernetes.client.Configuration()
+        # If authorization variables aren't defined, look for them in environment variables
         for key, value in iteritems(auth_params):
+            if key in auth_args and value is None:
+                env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
+                if env_value is not None:
+                    auth[key] = env_value
+
+        def auth_set(*names):
+            return all([auth.get(name) for name in names])
+
+        if auth_set('username', 'password', 'host') or auth_set('api_key', 'host'):
+            # We have enough in the parameters to authenticate, no need to load incluster or kubeconfig
+            pass
+        elif auth_set('kubeconfig', 'context'):
+            kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
+        else:
+            # First try to do incluster config, then kubeconfig
+            try:
+                kubernetes.config.load_incluster_config()
+            except kubernetes.config.ConfigException:
+                kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
+
+        # Override any values in the default configuration with Ansible parameters
+        configuration = kubernetes.client.Configuration()
+        for key, value in iteritems(auth):
             if key in auth_args and value is not None:
                 if key == 'api_key':
                     setattr(configuration, key, {'authorization': "Bearer {0}".format(value)})
                 else:
                     setattr(configuration, key, value)
-            elif key in auth_args and value is None:
-                env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
-                if env_value is not None:
-                    setattr(configuration, key, env_value)
-                    auth[key] = env_value
 
         kubernetes.client.Configuration.set_default(configuration)
-
-        if auth.get('username') and auth.get('password') and auth.get('host'):
-            auth_method = 'params'
-        elif auth.get('api_key') and auth.get('host'):
-            auth_method = 'params'
-        elif auth.get('kubeconfig') or auth.get('context'):
-            auth_method = 'file'
-        else:
-            auth_method = 'default'
-
-        # First try to do incluster config, then kubeconfig
-        if auth_method == 'default':
-            try:
-                kubernetes.config.load_incluster_config()
-                return DynamicClient(kubernetes.client.ApiClient())
-            except kubernetes.config.ConfigException:
-                return DynamicClient(self.client_from_kubeconfig(auth.get('kubeconfig'), auth.get('context')))
-
-        if auth_method == 'file':
-            return DynamicClient(self.client_from_kubeconfig(auth.get('kubeconfig'), auth.get('context')))
-
-        if auth_method == 'params':
-            return DynamicClient(kubernetes.client.ApiClient(configuration))
-
-    def client_from_kubeconfig(self, config_file, context):
-        try:
-            return kubernetes.config.new_client_from_config(config_file, context)
-        except (IOError, kubernetes.config.ConfigException):
-            # If we failed to load the default config file then we'll return
-            # an empty configuration
-            # If one was specified, we will crash
-            if not config_file:
-                return kubernetes.client.ApiClient()
-            raise
+        return DynamicClient(kubernetes.client.ApiClient(configuration))
 
     def find_resource(self, kind, api_version, fail=False):
         for attribute in ['kind', 'name', 'singular_name']:
@@ -191,14 +183,18 @@ class K8sAnsibleMixin(object):
 
     def kubernetes_facts(self, kind, api_version, name=None, namespace=None, label_selectors=None, field_selectors=None):
         resource = self.find_resource(kind, api_version)
-        result = resource.get(name=name,
-                              namespace=namespace,
-                              label_selector=','.join(label_selectors),
-                              field_selector=','.join(field_selectors)).to_dict()
+        try:
+            result = resource.get(name=name,
+                                  namespace=namespace,
+                                  label_selector=','.join(label_selectors),
+                                  field_selector=','.join(field_selectors)).to_dict()
+        except openshift.dynamic.exceptions.NotFoundError:
+            return dict(items=[])
+
         if 'items' in result:
-            return result
+            return dict(resources=result['items'])
         else:
-            return dict(items=[result])
+            return dict(resources=[result])
 
     def remove_aliases(self):
         """
@@ -225,12 +221,12 @@ class K8sAnsibleMixin(object):
 
     @staticmethod
     def diff_objects(existing, new):
-        if not HAS_DICTDIFFER:
-            return False, []
-
-        diffs = list(dictdiffer.diff(new, existing))
-        match = len(diffs) == 0
-        return match, diffs
+        result = dict()
+        diff = recursive_diff(existing, new)
+        if diff:
+            result['before'] = diff[0]
+            result['after'] = diff[1]
+        return not diff, result
 
 
 class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
@@ -245,6 +241,7 @@ class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
 
         if not HAS_K8S_MODULE_HELPER:
             self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`")
+        self.openshift_version = openshift.__version__
 
         if not HAS_YAML:
             self.fail_json(msg="This module requires PyYAML. Try `pip install PyYAML`")

@@ -93,6 +93,10 @@ class IncludedFile:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
                     if index_var and index_var in include_result:
                         task_vars[index_var] = include_variables[index_var] = include_result[index_var]
+                    if '_ansible_item_label' in include_result:
+                        task_vars['_ansible_item_label'] = include_variables['_ansible_item_label'] = include_result['_ansible_item_label']
+                    if original_task.no_log and '_ansible_no_log' not in include_variables:
+                        task_vars['_ansible_no_log'] = include_variables['_ansible_no_log'] = original_task.no_log
 
                     if original_task.action in ('include', 'include_tasks'):
                         include_file = None

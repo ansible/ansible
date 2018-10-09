@@ -49,7 +49,7 @@ options:
         default: 'present'
     default_service:
         description:
-            - A reference to BackendService resource.
+            - A reference to BackendService resource if none of the hostRules match.
         required: true
     description:
         description:
@@ -93,7 +93,8 @@ options:
         suboptions:
             default_service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to a BackendService resource. This will be used if none of the pathRules
+                      defined by this PathMatcher is matched by the URL's path portion.
                 required: false
             description:
                 description:
@@ -116,7 +117,7 @@ options:
                         required: false
                     service:
                         description:
-                            - A reference to BackendService resource.
+                            - A reference to the BackendService resource if this rule is matched.
                         required: false
     tests:
         description:
@@ -138,7 +139,7 @@ options:
                 required: false
             service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to expected BackendService resource the given URL should be mapped to.
                 required: false
 extends_documentation_fragment: gcp
 '''
@@ -146,18 +147,17 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-urlmap'
-      zone: 'us-central1-a'
+      name: "instancegroup-urlmap"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
+
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-urlmap'
+      name: "httphealthcheck-urlmap"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
@@ -165,34 +165,30 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
+
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-urlmap'
+      name: "backendservice-urlmap"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
+      - "{{ healthcheck.selfLink }}"
       enable_cdn: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
+
 - name: create a url map
   gcp_compute_url_map:
-      name: testObject
+      name: "test_object"
       default_service: "{{ backendservice }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -204,7 +200,7 @@ RETURN = '''
         type: str
     default_service:
         description:
-            - A reference to BackendService resource.
+            - A reference to BackendService resource if none of the hostRules match.
         returned: success
         type: dict
     description:
@@ -261,7 +257,8 @@ RETURN = '''
         contains:
             default_service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to a BackendService resource. This will be used if none of the pathRules
+                      defined by this PathMatcher is matched by the URL's path portion.
                 returned: success
                 type: dict
             description:
@@ -289,7 +286,7 @@ RETURN = '''
                         type: list
                     service:
                         description:
-                            - A reference to BackendService resource.
+                            - A reference to the BackendService resource if this rule is matched.
                         returned: success
                         type: dict
     tests:
@@ -316,7 +313,7 @@ RETURN = '''
                 type: str
             service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to expected BackendService resource the given URL should be mapped to.
                 returned: success
                 type: dict
 '''
@@ -366,6 +363,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#urlMap'
 
@@ -375,10 +375,10 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                fetch = update(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -398,12 +398,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -415,7 +415,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'hostRules': UrlMapHostRulesArray(module.params.get('host_rules', []), module).to_request(),
         u'name': module.params.get('name'),
-        u'pathMatchers': UrlMapPathMatchArray(module.params.get('path_matchers', []), module).to_request(),
+        u'pathMatchers': UrlMapPathMatchersArray(module.params.get('path_matchers', []), module).to_request(),
         u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request()
     }
     return_vals = {}
@@ -490,7 +490,7 @@ def response_to_hash(module, response):
         u'hostRules': UrlMapHostRulesArray(response.get(u'hostRules', []), module).from_response(),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
-        u'pathMatchers': UrlMapPathMatchArray(response.get(u'pathMatchers', []), module).from_response(),
+        u'pathMatchers': UrlMapPathMatchersArray(response.get(u'pathMatchers', []), module).from_response(),
         u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response()
     }
 
@@ -507,7 +507,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#urlMap')
@@ -567,7 +567,7 @@ class UrlMapHostRulesArray(object):
         })
 
 
-class UrlMapPathMatchArray(object):
+class UrlMapPathMatchersArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -672,6 +672,7 @@ class UrlMapTestsArray(object):
             u'path': item.get(u'path'),
             u'service': item.get(u'service')
         })
+
 
 if __name__ == '__main__':
     main()

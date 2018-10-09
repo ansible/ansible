@@ -101,7 +101,7 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             sync_device_to_group='yes',
             device_group="foo",
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

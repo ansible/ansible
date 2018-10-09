@@ -150,5 +150,5 @@ class LookupModule(LookupBase):
                 return [path]
         if skip:
             return []
-        raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no "
+        raise AnsibleLookupError("No file was found when using first_found. Use the 'skip: true' option to allow this task to be skipped if no "
                                  "files are found")

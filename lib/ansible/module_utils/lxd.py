@@ -39,10 +39,7 @@ from ansible.module_utils._text import to_text
 HTTPConnection = http_client.HTTPConnection
 HTTPSConnection = http_client.HTTPSConnection
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 class UnixHTTPConnection(HTTPConnection):

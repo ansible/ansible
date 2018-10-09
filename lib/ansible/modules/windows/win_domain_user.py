@@ -52,6 +52,7 @@ options:
         Principal Group, set C(groups=<principal group name>) and
         I(groups_action=replace). Note that users cannot be removed from
         their principal group (for example, "Domain Users").
+    type: list
   groups_action:
     description:
       - If C(add), the user is added to each group in I(groups) where not

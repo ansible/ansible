@@ -48,7 +48,7 @@ options:
       - When passing a hashed password it must be generated with the format
         C('str["md5"] + md5[ password + username ]'), resulting in a total of
         35 characters. An easy way to do this is C(echo "md5$(echo -n
-        'verysecretpasswordJOE' | md5sum)").
+        'verysecretpasswordJOE' | md5sum | awk '{print $1}')").
       - Note that if the provided password string is already in MD5-hashed
         format, then it is used as-is, regardless of C(encrypted) parameter.
   db:
@@ -160,6 +160,7 @@ EXAMPLES = '''
     name: django
     password: ceec4eif7ya
     priv: "CONNECT/products:ALL"
+    expires: "Jan 31 2020"
 
 # Create rails user, set its password (MD5-hashed) and grant privilege to create other
 # databases and demote rails from super user status
@@ -189,7 +190,7 @@ EXAMPLES = '''
     name: django
     password: mysupersecretword
     priv: "CONNECT/products:ALL"
-    expire: infinity
+    expires: infinity
 
 # Example privileges string format
 # INSERT,UPDATE/table:SELECT/anothertable:ALL

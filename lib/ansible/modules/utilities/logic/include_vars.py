@@ -18,9 +18,11 @@ author: Allen Sanabria (@linuxdynasty)
 module: include_vars
 short_description: Load variables from files, dynamically within a task
 description:
-  - Loads variables from a YAML/JSON files dynamically from within a file or from a directory recursively during task
-    runtime. If loading a directory, the files are sorted alphabetically before being loaded.
+  - Loads YAML/JSON variables dynamically from a file or directory, recursively, during task runtime.
+  - If loading a directory, the files are sorted alphabetically before being loaded.
   - This module is also supported for Windows targets.
+  - To assign included variables to a different host than C(inventory_hostname),
+    use C(delegate_to) and set L(delegate_facts=True,../user_guide/playbooks_delegate.html#delegated-facts).
 version_added: "1.4"
 options:
   file:
@@ -56,10 +58,10 @@ options:
     description:
       - List of file extensions to read when using C(dir).
     default: [yaml, yml, json]
-  ignore_unkown_extensions:
+  ignore_unknown_extensions:
     version_added: "2.7"
     description:
-      - Ignore unkown file extensions within the directory. This allows users to specify a directory containing vars files
+      - Ignore unknown file extensions within the directory. This allows users to specify a directory containing vars files
         that are intermingled with non vars files extension types (For example, a directory with a README in it and vars files)
     default: False
   free-form:
@@ -83,11 +85,12 @@ EXAMPLES = """
   when: x == 0
 
 - name: Load a variable file based on the OS type, or a default if not found. Using free-form to specify the file.
-  include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ ansible_distribution }}.yaml"
-    - "{{ ansible_os_family }}.yaml"
-    - default.yaml
+  include_vars: "{{ lookup('first_found', possible_files) }}"
+  vars:
+    possible_files:
+      - "{{ ansible_distribution }}.yaml"
+      - "{{ ansible_os_family }}.yaml"
+      - default.yaml
 
 - name: Bare include (free-form)
   include_vars: myvars.yaml

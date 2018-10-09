@@ -36,7 +36,7 @@ options:
       - Optional text to use for the prompt message.
   echo:
     description:
-      - Contols whether or not keyboard input is shown when typing.
+      - Controls whether or not keyboard input is shown when typing.
       - Has no effect if 'seconds' or 'minutes' is set.
     type: bool
     default: 'yes'

@@ -24,6 +24,10 @@ class ModuleDocFragment(object):
 options:
   authorize:
     description:
+      - B(Deprecated)
+      - "Starting with Ansible 2.7 we recommend using C(connection: network_cli) and C(become: yes)."
+      - For more information please see the L(IronWare Platform Options guide, ../network/user_guide/platform_ironware.html).
+      - HORIZONTALLINE
       - Instructs the module to enter privileged mode on the remote device
         before sending any commands.  If not specified, the device will
         attempt to execute all commands in non-privileged mode. If the value
@@ -33,6 +37,10 @@ options:
     default: 'no'
   provider:
     description:
+      - B(Deprecated)
+      - "Starting with Ansible 2.7 we recommend using C(connection: network_cli) and C(become: yes)."
+      - For more information please see the L(IronWare Platform Options guide, ../network/user_guide/platform_ironware.html).
+      - HORIZONTALLINE
       - A dict object containing connection details.
     suboptions:
       host:
@@ -85,4 +93,6 @@ options:
             if the console freezes before continuing. For example when saving
             configurations.
         default: 10
+notes:
+  - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
 """

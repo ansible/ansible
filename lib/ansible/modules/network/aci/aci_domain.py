@@ -99,6 +99,7 @@ EXAMPLES = r'''
     domain_type: vmm
     vm_provider: microsoft
     state: present
+  delegate_to: localhost
 
 - name: Remove a VMM domain
   aci_domain:
@@ -109,6 +110,7 @@ EXAMPLES = r'''
     domain_type: vmm
     vm_provider: microsoft
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific physical domain
   aci_domain:
@@ -118,6 +120,8 @@ EXAMPLES = r'''
     domain: phys_dom
     domain_type: phys
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all domains
   aci_domain:
@@ -126,6 +130,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     domain_type: phys
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -334,8 +340,8 @@ def main():
         root_class=dict(
             aci_class=domain_class,
             aci_rn=domain_rn,
-            filter_target='eq({0}.name, "{1}")'.format(domain_class, domain),
             module_object=domain_mo,
+            target_filter={'name': domain},
         ),
     )
 

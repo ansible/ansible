@@ -362,21 +362,6 @@ class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.want = self.get_module_params(params=self.module.params)
-        self.have = self.get_api_params()
-        self.changes = self.get_usable_changes()
-
-    def get_usable_changes(self, params=None):
-        pass
-
-    def get_api_params(self, params=None):
-        pass
-
-    def get_module_params(self, params=None):
-        pass
-
-    def get_reportable_changes(self, params=None):
-        pass
 
     def _set_changed_options(self):
         changed = {}
@@ -482,6 +467,13 @@ class V1Manager(BaseManager):
     """Manages remote-syslog settings
 
     """
+
+    def __init__(self, *args, **kwargs):
+        super(V1Manager, self).__init__(*args, **kwargs)
+        self.want = self.get_module_params(params=self.module.params)
+        self.have = self.get_api_params()
+        self.changes = self.get_usable_changes()
+
     def _validate_creation_parameters(self):
         if self.want.syslog_format is None:
             self.want.update({'syslog_format': 'bsd-syslog'})
@@ -560,6 +552,12 @@ class V2Manager(BaseManager):
     """Manages remote-high-speed-log settings
 
     """
+    def __init__(self, *args, **kwargs):
+        super(V2Manager, self).__init__(*args, **kwargs)
+        self.want = self.get_module_params(params=self.module.params)
+        self.have = self.get_api_params()
+        self.changes = self.get_usable_changes()
+
     def get_reportable_changes(self, params=None):
         if params:
             return V2ReportableChanges(params=params)

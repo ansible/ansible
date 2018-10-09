@@ -40,6 +40,26 @@ extends_documentation_fragment:
   - k8s_resource_options
   - k8s_auth_options
 
+options:
+  merge_type:
+    description:
+    - Whether to override the default patch merge approach with a specific type. By the default, the strategic
+      merge will typically be used.
+    - For example, Custom Resource Definitions typically aren't updatable by the usual strategic merge. You may
+      want to use C(merge) if you see "strategic merge patch format is not supported"
+    - See U(https://kubernetes.io/docs/tasks/run-application/update-api-object-kubectl-patch/#use-a-json-merge-patch-to-update-a-deployment)
+    - Requires openshift >= 0.6.2
+    - If more than one merge_type is given, the merge_types will be tried in order
+    - If openshift >= 0.6.2, this defaults to C(['strategic-merge', 'merge']), which is ideal for using the same parameters
+      on resource kinds that combine Custom Resources and built-in resources. For openshift < 0.6.2, the default
+      is simply C(strategic-merge).
+    choices:
+    - json
+    - merge
+    - strategic-merge
+    type: list
+    version_added: "2.7"
+
 requirements:
   - "python >= 2.7"
   - "openshift >= 0.6"
@@ -99,12 +119,12 @@ EXAMPLES = '''
 - name: Read definition file from the Ansible controller file system
   k8s:
     state: present
-    definition: "{{ lookup('file', '/testing/deployment.yml') | from_yaml }}"
+    definition: "{{ lookup('file', '/testing/deployment.yml') }}"
 
 - name: Read definition file from the Ansible controller file system after Jinja templating
   k8s:
     state: present
-    definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
+    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
 '''
 
 RETURN = '''
@@ -135,8 +155,8 @@ result:
        returned: success
        type: complex
      items:
-       description: Returned only when the I(kind) is a List type resource. Contains a set of objects.
-       returned: when resource is a List
+       description: Returned only when multiple yaml documents are passed to src or resource_definition
+       returned: when resource_definition or src contains list of objects
        type: list
 '''
 

@@ -58,6 +58,7 @@ EXAMPLES = r'''
     pool_allocation_mode: dynamic
     description: Production VLANs
     state: present
+  delegate_to: localhost
 
 - name: Remove a VLAN pool
   aci_vlan_pool:
@@ -67,6 +68,7 @@ EXAMPLES = r'''
     pool: production
     pool_allocation_mode: dynamic
     state: absent
+  delegate_to: localhost
 
 - name: Query a VLAN pool
   aci_vlan_pool:
@@ -76,6 +78,8 @@ EXAMPLES = r'''
     pool: production
     pool_allocation_mode: dynamic
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VLAN pools
   aci_vlan_pool:
@@ -83,6 +87,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -231,8 +237,8 @@ def main():
         root_class=dict(
             aci_class='fvnsVlanInstP',
             aci_rn='infra/vlanns-{0}'.format(pool_name),
-            filter_target='eq(fvnsVlanInstP.name, "{0}")'.format(pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
     )
 

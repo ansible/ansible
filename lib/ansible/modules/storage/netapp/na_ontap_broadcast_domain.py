@@ -13,11 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_broadcast_domain
-short_description: Manage NetApp ONTAP broadcast domains.
+short_description: NetApp ONTAP manage broadcast domains..
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Chris Archibald (carchi8py@gmail.com), Kevin Hutton (khutton@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
 - Modify a ONTAP broadcast domain.
 options:
@@ -35,7 +35,8 @@ options:
     - Specify the required mtu for the broadcast domain
   ipspace:
     description:
-    - Specify the required ipspace for the broadcast domain
+    - Specify the required ipspace for the broadcast domain.
+    - A domain ipspace can not be modified after the domain has been created
   ports:
     description:
     - Specify the ports associated with this broadcast domain. Should be comma separated
@@ -248,6 +249,7 @@ def main():
     """
     obj = NetAppOntapBroadcastDomain()
     obj.apply()
+
 
 if __name__ == '__main__':
     main()

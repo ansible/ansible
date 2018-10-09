@@ -4,9 +4,6 @@
 # Copyright: (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# this is a windows documentation stub.  actual code lives in the .ps1
-# file of the same name
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -27,10 +24,13 @@ options:
   members:
     description:
       - A list of members to ensure are present/absent from the group.
-      - Accepts local users as username, .\username, and SERVERNAME\username.
+      - Accepts local users as .\username, and SERVERNAME\username.
       - Accepts domain users and groups as DOMAIN\username and username@DOMAIN.
       - Accepts service users as NT AUTHORITY\username.
+      - Accepts all local, domain and service user types as username,
+        favoring domain lookups when in a domain.
     required: yes
+    type: list
   state:
     description:
       - Desired state of the members in the group.
@@ -69,7 +69,7 @@ added:
       empty if no members are added.
     returned: success and C(state) is C(present)
     type: list
-    sample: ["NewLocalAdmin", "DOMAIN\\TestUser"]
+    sample: ["SERVERNAME\\NewLocalAdmin", "DOMAIN\\TestUser"]
 removed:
     description: A list of members removed when C(state) is C(absent); this is
       empty if no members are removed.
@@ -81,5 +81,5 @@ members:
       if the group contains no members.
     returned: success
     type: list
-    sample: ["DOMAIN\\TestUser", "NewLocalAdmin"]
+    sample: ["DOMAIN\\TestUser", "SERVERNAME\\NewLocalAdmin"]
 '''

@@ -157,5 +157,6 @@ def main():
     return avi_ansible_api(module, 'authprofile',
                            set([]))
 
+
 if __name__ == '__main__':
     main()

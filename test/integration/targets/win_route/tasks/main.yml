@@ -19,7 +19,7 @@
 
 
 - name: get os info
-  script: ../files/Test-Os.ps1
+  win_shell: '[Environment]::OSVersion.Version -ge [Version]"6.3"'
   register: os
 
 - name: Perform with os Windows 2012R2 or newer

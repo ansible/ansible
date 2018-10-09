@@ -10,16 +10,23 @@ script="${args[0]}"
 test="$1"
 
 docker images ansible/ansible
+docker images quay.io/ansible/*
+docker ps
+
+for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/' | sed 's/^.* //'); do
+    docker rm -f "${container}"
+done
+
 docker ps
 
 if [ -d /home/shippable/cache/ ]; then
     ls -la /home/shippable/cache/
 fi
 
-which python
+command -v python
 python -V
 
-which pip
+command -v pip
 pip --version
 pip list --disable-pip-version-check
 

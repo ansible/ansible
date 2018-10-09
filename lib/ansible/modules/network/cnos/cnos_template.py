@@ -91,17 +91,13 @@ msg:
 '''
 
 import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 import time
 import socket
 import array
 import json
 import time
 import re
+import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
@@ -122,58 +118,28 @@ def main():
             password=dict(required=True, no_log=True),
             enablePassword=dict(required=False, no_log=True),),
         supports_check_mode=False)
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
     commandfile = module.params['commandfile']
     outputfile = module.params['outputfile']
-    deviceType = module.params['deviceType']
-    hostIP = module.params['host']
-    output = ""
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
-
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
-
-    # Automatically add untrusted hosts (make sure okay for security policy in your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(hostIP, username=username, password=password)
-    time.sleep(2)
-
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
-
-    # Enable and enter configure terminal then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
-
-    output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
-
-    # Make terminal length = 0
-    output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
-
-    # Go to config mode
-    output = output + cnos.waitForDeviceResponse("configure device\n", "(config)#", 2, remote_conn)
+    output = ''
 
     # Send commands one by one to the device
     f = open(commandfile, "r")
+    cmd = []
     for line in f:
         # Omit the comment lines in template file
         if not line.startswith("#"):
-            command = line
-            if not line.endswith("\n"):
-                command = command + "\n"
-            response = cnos.waitForDeviceResponse(command, "#", 2, remote_conn)
-            errorMsg = cnos.checkOutputForError(response)
-            output = output + response
-            if(errorMsg is not None):
-                break   # To cater to Mufti case
+            command = line.strip()
+            inner_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+            cmd.extend(inner_cmd)
     # Write to memory
-    output = output + cnos.waitForDeviceResponse("save\n", "#", 3, remote_conn)
+    save_cmd = [{'command': 'save', 'prompt': None, 'answer': None}]
+    cmd.extend(save_cmd)
+    output = output + str(cnos.run_cnos_commands(module, cmd))
     # Write output to file
+    path = outputfile.rsplit('/', 1)
+    # cnos.debugOutput(path[0])
+    if not os.path.exists(path[0]):
+        os.makedirs(path[0])
     file = open(outputfile, "a")
     file.write(output)
     file.close()
@@ -184,6 +150,7 @@ def main():
         module.exit_json(changed=True, msg="Template Applied")
     else:
         module.fail_json(msg=errorMsg)
+
 
 if __name__ == '__main__':
     main()

@@ -8,10 +8,12 @@
     nxos_config:
       lines: "hostname switch"
       match: none
+      provider: "{{ connection }}"
 
   - name: configure hostname
     nxos_system:
       hostname: foo
+      provider: "{{ connection }}"
     register: result
 
   - assert:
@@ -21,6 +23,7 @@
   - name: verify hostname
     nxos_system:
       hostname: foo
+      provider: "{{ connection }}"
     register: result
 
   - assert:
@@ -32,6 +35,7 @@
     nxos_config:
       lines: "hostname switch"
       match: none
+      provider: "{{ connection }}"
 
 
   - debug: msg="END connection={{ ansible_connection }}/set_hostname.yaml"

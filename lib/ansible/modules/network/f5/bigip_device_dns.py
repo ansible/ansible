@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 module: bigip_device_dns
 short_description: Manage BIG-IP device DNS settings
 description:
-  - Manage BIG-IP device DNS settings
+  - Manage BIG-IP device DNS settings.
 version_added: 2.2
 options:
   cache:
@@ -206,7 +206,7 @@ class ModuleManager(object):
         self.have = None
         self.changes = Parameters()
 
-    def _update_changed_options(self):
+    def _update_changed_options(self):  # lgtm [py/similar-function]
         changed = {}
         for key in Parameters.updatables:
             if getattr(self.want, key) is not None:
@@ -219,7 +219,7 @@ class ModuleManager(object):
             return True
         return False
 
-    def exec_module(self):
+    def exec_module(self):  # lgtm [py/similar-function]
         changed = False
         result = dict()
         state = self.want.state

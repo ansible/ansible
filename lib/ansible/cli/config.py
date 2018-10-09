@@ -13,7 +13,7 @@ import yaml
 from ansible.cli import CLI
 from ansible.config.manager import ConfigManager, Setting, find_ini_config_file
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.path import unfrackpath

@@ -264,7 +264,7 @@ state:
 from ansible.module_utils.basic import AnsibleModule, to_bytes
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, text_type, binary_type
 import base64
 import hashlib
 import json
@@ -610,7 +610,7 @@ class JenkinsPlugin(object):
         # Store the plugin into a temp file and then move it
         tmp_f_fd, tmp_f = tempfile.mkstemp()
 
-        if isinstance(data, str):
+        if isinstance(data, (text_type, binary_type)):
             os.write(tmp_f_fd, data)
         else:
             os.write(tmp_f_fd, data.read())
@@ -734,8 +734,7 @@ def main():
     # Params was removed
     # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
     if module.params['params']:
-        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5"
-                         "since it circumvents Ansible's option handling")
+        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5 since it circumvents Ansible's option handling")
 
     # Force basic authentication
     module.params['force_basic_auth'] = True

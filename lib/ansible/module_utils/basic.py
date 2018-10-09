@@ -62,6 +62,7 @@ PASS_BOOLS = ('no_log', 'debug', 'diff')
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
+import __main__
 import atexit
 import locale
 import os
@@ -81,6 +82,7 @@ import pwd
 import platform
 import errno
 import datetime
+from collections import deque
 from itertools import chain, repeat
 
 try:
@@ -108,26 +110,14 @@ NoneType = type(None)
 try:
     import json
     # Detect the python-json library which is incompatible
-    # Look for simplejson if that's the case
     try:
         if not isinstance(json.loads, types.FunctionType) or not isinstance(json.dumps, types.FunctionType):
             raise ImportError
     except AttributeError:
         raise ImportError
 except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        print('\n{"msg": "Error: ansible requires the stdlib json or simplejson module, neither was found!", "failed": true}')
-        sys.exit(1)
-    except SyntaxError:
-        print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
-        sys.exit(1)
-    else:
-        sj_version = json.__version__.split('.')
-        if sj_version < ['1', '6']:
-            # Version 1.5 released 2007-01-18 does not have the encoding parameter which we need
-            print('\n{"msg": "Error: Ansible requires the stdlib json or simplejson >= 1.6.  Neither was found!", "failed": true}')
+    print('\n{"msg": "Error: ansible requires the stdlib json and was not found!", "failed": true}')
+    sys.exit(1)
 
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:
@@ -143,22 +133,29 @@ try:
         algorithms = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
     for algorithm in algorithms:
         AVAILABLE_HASH_ALGORITHMS[algorithm] = getattr(hashlib, algorithm)
-except ImportError:
+
+    # we may have been able to import md5 but it could still not be available
+    try:
+        hashlib.md5()
+    except ValueError:
+        algorithms.pop('md5', None)
+except Exception:
     import sha
     AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
     try:
         import md5
         AVAILABLE_HASH_ALGORITHMS['md5'] = md5.md5
-    except ImportError:
+    except Exception:
         pass
 
 from ansible.module_utils.common._collections_compat import (
-    deque,
     KeysView,
     Mapping, MutableMapping,
     Sequence, MutableSequence,
     Set, MutableSet,
 )
+from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.common.file import is_executable
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
@@ -172,7 +169,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
 
 # Note: When getting Sequence from collections, it matches with strings.  If
@@ -669,20 +666,6 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     return int(round(num * limit))
 
 
-def is_executable(path):
-    '''is the given path executable?
-
-    Limitations:
-    * Does not account for FSACLs.
-    * Most times we really want to know "Can the current user execute this
-      file"  This function does not tell us that, only if an execute bit is set.
-    '''
-    # These are all bitfields so first bitwise-or all the permissions we're
-    # looking for, then bitwise-and with the file's mode to determine if any
-    # execute bits are set.
-    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
-
-
 def _load_params():
     ''' read the modules parameters and store them globally.
 
@@ -930,20 +913,35 @@ class AnsibleModule(object):
 
     @property
     def tmpdir(self):
-        # if _ansible_tmpdir was not set, the module needs to create it and
-        # clean it up once finished.
+        # if _ansible_tmpdir was not set and we have a remote_tmp,
+        # the module needs to create it and clean it up once finished.
+        # otherwise we create our own module tmp dir from the system defaults
         if self._tmpdir is None:
+            basedir = None
+
             basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
             if not os.path.exists(basedir):
-                self.warn("Module remote_tmp %s did not exist and was created "
-                          "with a mode of 0700, this may cause issues when "
-                          "running as another user. To avoid this, create the "
-                          "remote_tmp dir with the correct permissions "
-                          "manually" % basedir)
-                os.makedirs(basedir, mode=0o700)
+                try:
+                    os.makedirs(basedir, mode=0o700)
+                except (OSError, IOError) as e:
+                    self.warn("Unable to use %s as temporary directory, "
+                              "failing back to system: %s" % (basedir, to_native(e)))
+                    basedir = None
+                else:
+                    self.warn("Module remote_tmp %s did not exist and was "
+                              "created with a mode of 0700, this may cause"
+                              " issues when running as another user. To "
+                              "avoid this, create the remote_tmp dir with "
+                              "the correct permissions manually" % basedir)
 
             basefile = "ansible-moduletmp-%s-" % time.time()
-            tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            try:
+                tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
+            except (OSError, IOError) as e:
+                self.fail_json(
+                    msg="Failed to create remote module tmp path at dir %s "
+                        "with prefix %s: %s" % (basedir, basefile, to_native(e))
+                )
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir
@@ -2271,28 +2269,13 @@ class AnsibleModule(object):
            - opt_dirs:  optional list of directories to search in addition to PATH
         if found return full path; otherwise return None
         '''
-        opt_dirs = [] if opt_dirs is None else opt_dirs
 
-        sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-        paths = []
-        for d in opt_dirs:
-            if d is not None and os.path.exists(d):
-                paths.append(d)
-        paths += os.environ.get('PATH', '').split(os.pathsep)
         bin_path = None
-        # mangle PATH to include /sbin dirs
-        for p in sbin_paths:
-            if p not in paths and os.path.exists(p):
-                paths.append(p)
-        for d in paths:
-            if not d:
-                continue
-            path = os.path.join(d, arg)
-            if os.path.exists(path) and not os.path.isdir(path) and is_executable(path):
-                bin_path = path
-                break
-        if required and bin_path is None:
-            self.fail_json(msg='Failed to find required executable %s in paths: %s' % (arg, os.pathsep.join(paths)))
+        try:
+            bin_path = get_bin_path(arg, required, opt_dirs)
+        except ValueError as e:
+            self.fail_json(msg=to_text(e))
+
         return bin_path
 
     def boolean(self, arg):
@@ -2344,6 +2327,8 @@ class AnsibleModule(object):
                 for d in kwargs['deprecations']:
                     if isinstance(d, SEQUENCETYPE) and len(d) == 2:
                         self.deprecate(d[0], version=d[1])
+                    elif isinstance(d, Mapping):
+                        self.deprecate(d['msg'], version=d.get('version', None))
                     else:
                         self.deprecate(d)
             else:
@@ -2369,10 +2354,15 @@ class AnsibleModule(object):
             raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
 
-        # add traceback if debug or high verbosity and it is missing
-        # Note: badly named as exception, it is really always been 'traceback'
+        # Add traceback if debug or high verbosity and it is missing
+        # NOTE: Badly named as exception, it really always has been a traceback
         if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+            if PY2:
+                # On Python 2 this is the last (stack frame) exception and as such may be unrelated to the failure
+                kwargs['exception'] = 'WARNING: The below traceback may *not* be related to the actual failure.\n' +\
+                                      ''.join(traceback.format_tb(sys.exc_info()[2]))
+            else:
+                kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -2603,7 +2593,8 @@ class AnsibleModule(object):
                                 if unsafe_writes and e.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
-                                    self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, to_native(e)),
+                                    self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
+                                                       (src, dest, b_tmp_dest_name, to_native(e)),
                                                    exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError) as e:
                             self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)),
@@ -2691,7 +2682,8 @@ class AnsibleModule(object):
         return self._clean
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
-                    use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
+                    use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
+                    expand_user_and_vars=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2729,6 +2721,11 @@ class AnsibleModule(object):
             python3 versions we support) otherwise a UnicodeError traceback
             will be raised.  This does not affect transformations of strings
             given as args.
+        :kw expand_user_and_vars: When ``use_unsafe_shell=False`` this argument
+            dictates whether ``~`` is expanded in paths and environment variables
+            are expanded before running the command. When ``True`` a string such as
+            ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
+            ``use_unsafe_shell=False`` no path or variable expansion will be done.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2767,8 +2764,11 @@ class AnsibleModule(object):
                     args = to_text(args, errors='surrogateescape')
                 args = shlex.split(args)
 
-            # expand shellisms
-            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
+            # expand ``~`` in paths, and all environment vars
+            if expand_user_and_vars:
+                args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
+            else:
+                args = [x for x in args if x is not None]
 
         prompt_re = None
         if prompt_regex:

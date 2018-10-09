@@ -158,9 +158,9 @@ EXAMPLES = '''
 import hashlib
 import os
 import posixpath
-import sys
 import shutil
 import io
+import tempfile
 
 try:
     from lxml import etree
@@ -177,7 +177,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
 def split_pre_existing_dir(dirname):
@@ -371,55 +371,39 @@ class MavenDownloader:
             raise ValueError(failmsg + " because of " + info['msg'] + "for URL " + url_to_use)
         return None
 
-    def download(self, artifact, verify_download, filename=None):
-        filename = artifact.get_filename(filename)
+    def download(self, tmpdir, artifact, verify_download, filename=None):
         if not artifact.version or artifact.version == "latest":
             artifact = Artifact(artifact.group_id, artifact.artifact_id, self.find_latest_version_available(artifact),
                                 artifact.classifier, artifact.extension)
         url = self.find_uri_for_artifact(artifact)
-        if self.local:
-            parsed_url = urlparse(url)
-            if os.path.isfile(parsed_url.path):
-                shutil.copy2(parsed_url.path, filename)
+        tempfd, tempname = tempfile.mkstemp(dir=tmpdir)
+
+        try:
+            # copy to temp file
+            if self.local:
+                parsed_url = urlparse(url)
+                if os.path.isfile(parsed_url.path):
+                    shutil.copy2(parsed_url.path, tempname)
+                else:
+                    return "Can not find local file: " + parsed_url.path
             else:
-                return "Can not find local file: " + parsed_url.path
-        else:
-            response = self._request(url, "Failed to download artifact " + str(artifact))
-            with io.open(filename, 'wb') as f:
-                self._write_chunks(response, f, report_hook=self.chunk_report)
-        if verify_download:
-            invalid_md5 = self.is_invalid_md5(filename, url)
-            if invalid_md5:
-                # if verify_change was set, the previous file would be deleted
-                os.remove(filename)
-                return invalid_md5
+                response = self._request(url, "Failed to download artifact " + str(artifact))
+                with os.fdopen(tempfd, 'wb') as f:
+                    shutil.copyfileobj(response, f)
+
+            if verify_download:
+                invalid_md5 = self.is_invalid_md5(tempname, url)
+                if invalid_md5:
+                    # if verify_change was set, the previous file would be deleted
+                    os.remove(tempname)
+                    return invalid_md5
+        except Exception as e:
+            os.remove(tempname)
+            raise e
+
+        # all good, now copy temp file to target
+        shutil.move(tempname, artifact.get_filename(filename))
         return None
-
-    def chunk_report(self, bytes_so_far, chunk_size, total_size):
-        percent = float(bytes_so_far) / total_size
-        percent = round(percent * 100, 2)
-        sys.stdout.write("Downloaded %d of %d bytes (%0.2f%%)\r" %
-                         (bytes_so_far, total_size, percent))
-        if bytes_so_far >= total_size:
-            sys.stdout.write('\n')
-
-    def _write_chunks(self, response, filehandle, chunk_size=8192, report_hook=None):
-        total_size = response.info().get('Content-Length').strip()
-        total_size = int(total_size)
-        bytes_so_far = 0
-
-        while True:
-            chunk = response.read(chunk_size)
-            bytes_so_far += len(chunk)
-
-            if not chunk:
-                break
-
-            filehandle.write(chunk)
-            if report_hook:
-                report_hook(bytes_so_far, chunk_size, total_size)
-
-        return bytes_so_far
 
     def is_invalid_md5(self, file, remote_url):
         if os.path.exists(file):
@@ -428,9 +412,20 @@ class MavenDownloader:
                 parsed_url = urlparse(remote_url)
                 remote_md5 = self._local_md5(parsed_url.path)
             else:
-                remote_md5 = self._getContent(remote_url + '.md5', "Failed to retrieve MD5", False)
+                try:
+                    remote_md5 = to_text(self._getContent(remote_url + '.md5', "Failed to retrieve MD5", False), errors='strict')
+                except UnicodeError as e:
+                    return "Cannot retrieve a valid md5 from %s: %s" % (remote_url, to_native(e))
                 if(not remote_md5):
                     return "Cannot find md5 from " + remote_url
+            try:
+                # Check if remote md5 only contains md5 or md5 + filename
+                _remote_md5 = remote_md5.split(None)[0]
+                remote_md5 = _remote_md5
+                # remote_md5 is empty so we continue and keep original md5 string
+                # This should not happen since we check for remote_md5 before
+            except IndexError as e:
+                pass
             if local_md5 == remote_md5:
                 return None
             else:
@@ -441,7 +436,7 @@ class MavenDownloader:
     def _local_md5(self, file):
         md5 = hashlib.md5()
         with io.open(file, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), ''):
+            for chunk in iter(lambda: f.read(8192), b''):
                 md5.update(chunk)
         return md5.hexdigest()
 
@@ -449,8 +444,8 @@ class MavenDownloader:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            group_id=dict(default=None),
-            artifact_id=dict(default=None),
+            group_id=dict(required=True),
+            artifact_id=dict(required=True),
             version=dict(default="latest"),
             classifier=dict(default=''),
             extension=dict(default='jar'),
@@ -459,7 +454,7 @@ def main():
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
-            dest=dict(type="path", default=None),
+            dest=dict(type="path", required=True),
             validate_certs=dict(required=False, default=True, type='bool'),
             keep_name=dict(required=False, default=False, type='bool'),
             verify_checksum=dict(required=False, default='download', choices=['never', 'download', 'change', 'always'])
@@ -535,7 +530,7 @@ def main():
 
     if prev_state == "absent":
         try:
-            download_error = downloader.download(artifact, verify_download, b_dest)
+            download_error = downloader.download(module.tmpdir, artifact, verify_download, b_dest)
             if download_error is None:
                 changed = True
             else:
@@ -551,6 +546,7 @@ def main():
                          extension=extension, repository_url=repository_url, changed=changed)
     else:
         module.exit_json(state=state, dest=dest, changed=changed)
+
 
 if __name__ == '__main__':
     main()

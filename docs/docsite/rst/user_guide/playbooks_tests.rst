@@ -43,7 +43,7 @@ To match strings against a substring or a regex, use the "match" or "search" fil
       url: "http://example.com/users/foo/resources/bar"
 
     tasks:
-        - debug: 
+        - debug:
             msg: "matched pattern 1"
           when: url is match("http://example.com/users/.*/resources/.*")
 
@@ -67,14 +67,14 @@ Version Comparison
 
 .. note:: In 2.5 ``version_compare`` was renamed to ``version``
 
-To compare a version number, such as checking if the ``ansible_distribution_version``
+To compare a version number, such as checking if the ``ansible_facts['distribution_version']``
 version is greater than or equal to '12.04', you can use the ``version`` test.
 
-The ``version`` test can also be used to evaluate the ``ansible_distribution_version``::
+The ``version`` test can also be used to evaluate the ``ansible_facts['distribution_version']``::
 
-    {{ ansible_distribution_version is version('12.04', '>=') }}
+    {{ ansible_facts['distribution_version'] is version('12.04', '>=') }}
 
-If ``ansible_distribution_version`` is greater than or equal to 12.04, this test returns True, otherwise False.
+If ``ansible_facts['distribution_version']`` is greater than or equal to 12.04, this test returns True, otherwise False.
 
 The ``version`` test accepts the following operators::
 
@@ -88,8 +88,8 @@ be used.  The default is ``False``, but this setting as ``True`` uses more stric
 
 .. _math_tests:
 
-Group theory tests
-``````````````````
+Set theory tests
+````````````````
 
 .. versionadded:: 2.1
 
@@ -119,7 +119,7 @@ You can use `any` and `all` to check if any or all elements in a list are true o
   vars:
     mylist:
         - 1
-        - 3 == 3
+        - "{{ 3 == 3 }}"
         - True
     myotherlist:
         - False
@@ -138,7 +138,7 @@ You can use `any` and `all` to check if any or all elements in a list are true o
 Testing paths
 `````````````
 
-.. note:: In 2.5 the follwing tests were renamed to remove the ``is_`` prefix
+.. note:: In 2.5 the following tests were renamed to remove the ``is_`` prefix
 
 The following tests can provide information about a path on the controller::
 
@@ -224,7 +224,7 @@ The following tasks are illustrative of the tests meant to check the status of t
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

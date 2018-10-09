@@ -152,6 +152,7 @@ options:
               I(lambda_function_associations[])
                 I(lambda_function_arn)
                 I(event_type)
+              I(field_level_encryption_id)
 
     cache_behaviors:
       description:
@@ -180,6 +181,7 @@ options:
             I(max_ttl)
             I(compress)
             I(lambda_function_associations[])
+            I(field_level_encryption_id)
 
     purge_cache_behaviors:
       description: Whether to remove any cache behaviors that aren't listed in I(cache_behaviors). This switch
@@ -1090,6 +1092,7 @@ web_acl_id:
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, compare_aws_tags
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
@@ -1142,24 +1145,6 @@ def ansible_list_to_cloudfront_list(list_items=None, include_quantity=True):
     if len(list_items) > 0:
         result['items'] = list_items
     return result
-
-
-def recursive_diff(dict1, dict2):
-    left = dict((k, v) for (k, v) in dict1.items() if k not in dict2)
-    right = dict((k, v) for (k, v) in dict2.items() if k not in dict1)
-    for k in (set(dict1.keys()) & set(dict2.keys())):
-        if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
-            result = recursive_diff(dict1[k], dict2[k])
-            if result:
-                left[k] = result[0]
-                right[k] = result[1]
-        elif dict1[k] != dict2[k]:
-            left[k] = dict1[k]
-            right[k] = dict2[k]
-    if left or right:
-        return left, right
-    else:
-        return None
 
 
 def create_distribution(client, module, config, tags):
@@ -1505,6 +1490,7 @@ class CloudFrontValidationManager(object):
         cache_behavior = self.validate_allowed_methods(config, cache_behavior.get('allowed_methods'), cache_behavior)
         cache_behavior = self.validate_lambda_function_associations(config, cache_behavior.get('lambda_function_associations'), cache_behavior)
         cache_behavior = self.validate_trusted_signers(config, cache_behavior.get('trusted_signers'), cache_behavior)
+        cache_behavior = self.validate_field_level_encryption_id(config, cache_behavior.get('field_level_encryption_id'), cache_behavior)
         return cache_behavior
 
     def validate_cache_behavior_first_level_keys(self, config, cache_behavior, valid_origins, is_default_cache):
@@ -1586,6 +1572,14 @@ class CloudFrontValidationManager(object):
             return cache_behavior
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating lambda function associations")
+
+    def validate_field_level_encryption_id(self, config, field_level_encryption_id, cache_behavior):
+        # only set field_level_encryption_id if it's already set or if it was passed
+        if field_level_encryption_id is not None:
+            cache_behavior['field_level_encryption_id'] = field_level_encryption_id
+        elif 'field_level_encryption_id' in config:
+            cache_behavior['field_level_encryption_id'] = config.get('field_level_encryption_id')
+        return cache_behavior
 
     def validate_allowed_methods(self, config, allowed_methods, cache_behavior):
         try:
@@ -1802,7 +1796,7 @@ class CloudFrontValidationManager(object):
 
     def wait_until_processed(self, client, wait_timeout, distribution_id, caller_reference):
         if distribution_id is None:
-            distribution_id = self.validate_distribution_id_from_caller_reference(caller_reference=caller_reference)
+            distribution_id = self.validate_distribution_from_caller_reference(caller_reference=caller_reference)['Id']
 
         try:
             waiter = client.get_waiter('distribution_deployed')

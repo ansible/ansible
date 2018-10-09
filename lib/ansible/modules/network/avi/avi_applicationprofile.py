@@ -200,5 +200,6 @@ def main():
     return avi_ansible_api(module, 'applicationprofile',
                            set([]))
 
+
 if __name__ == '__main__':
     main()

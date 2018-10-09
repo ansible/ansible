@@ -74,30 +74,30 @@ options:
               be a dash.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/backendBuckets)"
+    - "Using a Cloud Storage bucket as a load balancer backend: U(https://cloud.google.com/compute/docs/load-balancing/http/backend-bucket)"
 '''
 
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: 'bucket-backendbucket'
+      name: "bucket-backendbucket"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
   register: bucket
+
 - name: create a backend bucket
   gcp_compute_backend_bucket:
-      name: testObject
+      name: "test_object"
       bucket_name: "{{ bucket.name }}"
-      description: "A BackendBucket to connect LNB w/ Storage Bucket"
+      description: A BackendBucket to connect LNB w/ Storage Bucket
       enable_cdn: true
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -166,6 +166,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#backendBucket'
 
@@ -175,10 +178,10 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                fetch = update(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -198,12 +201,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -303,7 +306,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#backendBucket')
@@ -326,6 +329,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

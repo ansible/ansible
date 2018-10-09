@@ -15,7 +15,7 @@
   hosts: facthost21
   tags: [ 'fact_network' ]
   connection: local
-  gather_subset: "!all,network"
+  gather_subset: ["!all", "network"]
   gather_facts: yes
   tasks:
     - name: Test that retrieving network facts works and gets prereqs from platform and distribution
@@ -69,7 +69,7 @@
   hosts: facthost23
   tags: [ 'fact_service_mgr' ]
   connection: local
-  gather_subset: "!all,service_mgr"
+  gather_subset: ["!all", "service_mgr"]
   gather_facts: yes
   tasks:
     - name: Test that retrieving service_mgr facts works and gets prereqs from platform and distribution
@@ -195,7 +195,7 @@
 - hosts: facthost2
   tags: [ 'fact_network' ]
   connection: local
-  gather_subset: "!all,!min,network"
+  gather_subset: ["!all", "!min", "network"]
   gather_facts: yes
   tasks:
     - name: Test that retrieving network facts work
@@ -237,7 +237,7 @@
 - hosts: facthost5
   tags: [ 'fact_comma_string' ]
   connection: local
-  gather_subset: "virtual,network"
+  gather_subset: ["virtual", "network"]
   gather_facts: yes
   tasks:
     - name: Test that retrieving virtualization and network as a string works
@@ -288,7 +288,7 @@
 - hosts: facthost8
   tags: [ 'fact_mixed_negation_addition' ]
   connection: local
-  gather_subset: "!hardware,network"
+  gather_subset: ["!hardware", "network"]
   gather_facts: yes
   tasks:
     - name: Test that negation and additional subsets work together
@@ -302,7 +302,7 @@
 - hosts: facthost14
   tags: [ 'fact_mixed_negation_addition_min' ]
   connection: local
-  gather_subset: "!all,!min,network"
+  gather_subset: ["!all", "!min", "network"]
   gather_facts: yes
   tasks:
     - name: Test that negation and additional subsets work together for min subset
@@ -319,7 +319,7 @@
 - hosts: facthost15
   tags: [ 'fact_negate_all_min_add_pkg_mgr' ]
   connection: local
-  gather_subset: "!all,!min,pkg_mgr"
+  gather_subset: ["!all", "!min", "pkg_mgr"]
   gather_facts: yes
   tasks:
     - name: Test that negation and additional subsets work together for min subset

@@ -55,7 +55,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
     def test_task_executor_run(self):
@@ -82,7 +82,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         te._get_loop_items = MagicMock(return_value=None)
@@ -126,7 +126,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         items = te._get_loop_items()
@@ -162,7 +162,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         def _execute(variables):
@@ -208,7 +208,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         # No replacement
@@ -400,7 +400,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
@@ -455,7 +455,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         te._connection = MagicMock()

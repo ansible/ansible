@@ -627,7 +627,7 @@ class Nmcli(object):
         try:
             proxy = bus.get_object(service_name, "/org/freedesktop/NetworkManager/Settings")
             settings = dbus.Interface(proxy, "org.freedesktop.NetworkManager.Settings")
-        except dbus.Exceptions.DBusException as e:
+        except dbus.exceptions.DBusException as e:
             self.module.fail_json(msg="Unable to read Network Manager settings from DBus system bus: %s" % to_native(e),
                                   details="Please check if NetworkManager is installed and"
                                           " service network-manager is started.")
@@ -1195,7 +1195,7 @@ def main():
             hellotime=dict(required=False, default="2", type='str'),
             maxage=dict(required=False, default="20", type='str'),
             ageingtime=dict(required=False, default="300", type='str'),
-            hairpin=dict(required=False, default=True, type='str'),
+            hairpin=dict(required=False, default=True, type='bool'),
             path_cost=dict(required=False, default="100", type='str'),
             # vlan specific vars
             vlanid=dict(required=False, default=None, type='str'),

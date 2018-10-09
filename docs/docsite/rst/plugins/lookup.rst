@@ -1,5 +1,6 @@
 .. contents:: Topics
 
+.. _lookup_plugins:
 
 Lookup Plugins
 --------------
@@ -17,7 +18,7 @@ Lookups are an Ansible-specific extension to the Jinja2 templating language.
    - Lookups are executed with a working directory relative to the role or play,
      as opposed to local tasks, which are executed relative the executed script.
    - Since Ansible version 1.9, you can pass wantlist=True to lookups to use in Jinja2 template "for" loops.
-   - Lookup plugins are an advanced feature; to best leverage them you should have a good working knowledge of how to use Ansible plays.  
+   - Lookup plugins are an advanced feature; to best leverage them you should have a good working knowledge of how to use Ansible plays.
 
 .. warning::
    - Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage.
@@ -59,7 +60,7 @@ You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` an
 
   tasks:
     - name: valid but useless and over complicated chained lookups and filters
-      debug: msg="find the answer here:\n{{ lookup('url', 'http://google.com/search/?q=' + item|urlencode)|join(' ') }}"
+      debug: msg="find the answer here:\n{{ lookup('url', 'https://google.com/search/?q=' + item|urlencode)|join(' ') }}"
       with_nested:
         - "{{lookup('consul_kv', 'bcs/' + lookup('file', '/the/question') + ', host=localhost, port=2000')|shuffle}}"
         - "{{lookup('sequence', 'end=42 start=2 step=2')|map('log', 4)|list)}}"
@@ -157,7 +158,7 @@ You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. U
        Jinja2 test plugins
    :ref:`playbooks_lookups`
        Jinja2 lookup plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

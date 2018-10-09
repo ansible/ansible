@@ -58,6 +58,7 @@ EXAMPLES = '''
 # Create a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: present
     name: demoproject
     description: demodescription
@@ -67,6 +68,7 @@ EXAMPLES = '''
 # Delete a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: absent
     name: demoproject
 '''

@@ -29,6 +29,7 @@ options:
     description:
       - The full path including file name to the registry file on the remote machine to be merged
     required: yes
+    type: path
   compare_key:
     description:
       - The parent key to use when comparing the contents of the registry to the contents of the file.  Needs to be in HKLM or HKCU part of registry.

@@ -84,24 +84,23 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Set the state of a virtual machine to poweroff
   vmware_guest_powerstate:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
-    folder: /testvms
-    name: testvm_2
+    folder: /"{{ datacenter_name }}"/vm/my_folder
+    name: "{{ guest_name }}"
     state: powered-off
   delegate_to: localhost
   register: deploy
 
 - name: Set the state of a virtual machine to poweroff at given scheduled time
   vmware_guest_powerstate:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
-    folder: /datacenter-1/vm/my_folder
-    name: testvm_2
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: /"{{ datacenter_name }}"/vm/my_folder
+    name: "{{ guest_name }}"
     state: powered-off
     scheduled_at: "09/01/2018 10:18"
   delegate_to: localhost
@@ -109,11 +108,10 @@ EXAMPLES = r'''
 
 - name: Wait for the virtual machine to shutdown
   vmware_guest_powerstate:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
-    name: testvm_2
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ guest_name }}"
     state: shutdown-guest
     state_change_timeout: 200
   delegate_to: localhost

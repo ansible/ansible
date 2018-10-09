@@ -1,3 +1,7 @@
+:orphan:
+
+.. _testing_units:
+
 **********
 Unit Tests
 **********
@@ -89,7 +93,7 @@ Structuring Unit Tests
 
 Ansible drives unit tests through `pytest <https://docs.pytest.org/en/latest/>`_. This
 means that tests can either be written a simple functions which are included in any file
-name like ``test_<something>.py`` or as classes. 
+name like ``test_<something>.py`` or as classes.
 
 Here is an example of a function::
 
@@ -100,23 +104,23 @@ Here is an example of a function::
       b = 23
       c = 33
       assert a + b = c
-    
+
 Here is an example of a class::
 
-  import unittest:
-      
+  import unittest
+
   class AddTester(unittest.TestCase)
-      
+
       def SetUp()
           self.a = 10
           self.b = 23
- 
-      # this function will 
+
+      # this function will
       def test_add()
         c = 33
         assert self.a + self.b = c
 
-     # this function will 
+     # this function will
       def test_subtract()
         c = -13
         assert self.a - self.b = c
@@ -125,9 +129,9 @@ Both methods work fine in most circumstances; the function-based interface is si
 quicker and so that's probably where you should start when you are just trying to add a
 few basic tests for a module.  The class-based test allows more tidy set up and tear down
 of pre-requisites, so if you have many test cases for your module you may want to refactor
-to use that.  
+to use that.
 
-Assertions using the simple ``assert`` function inside the tests will give give full
+Assertions using the simple ``assert`` function inside the tests will give full
 information on the cause of the failure with a trace-back of functions called during the
 assertion.  This means that plain asserts are recommended over other external assertion
 libraries.
@@ -200,9 +204,8 @@ reports.
    :doc:`testing_running_locally`
        Running tests locally including gathering and reporting coverage data
    `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
-       The documentation of the unittest framework in python 3 
+       The documentation of the unittest framework in python 3
    `Python 2 documentation - 25.3. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
        The documentation of the earliest supported unittest framework - from Python 2.6
    `pytest: helps you write better programs <https://docs.pytest.org/en/latest/>`_
        The documentation of pytest - the framework actually used to run Ansible unit tests
-

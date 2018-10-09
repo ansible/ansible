@@ -32,13 +32,15 @@ $maximum_redirection = Get-AnsibleParam -obj $params -name "maximum_redirection"
 $return_content = Get-AnsibleParam -obj $params -name "return_content" -type "bool" -default $false
 $status_code = Get-AnsibleParam -obj $params -name "status_code" -type "list" -default @(200)
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 30
-$use_basic_parsing = Get-AnsibleParam -obj $params -name "use_basic_parsing" -type "bool"
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $client_cert = Get-AnsibleParam -obj $params -name "client_cert" -type "path"
 $client_cert_password = Get-AnsibleParam -obj $params -name "client_cert_password" -type "str"
 
+$JSON_CANDIDATES = @('text', 'json', 'javascript')
+
 $result = @{
     changed = $false
+    elapsed = 0
     url = $url
 }
 
@@ -52,10 +54,6 @@ if ($removes -and -not (Test-AnsiblePath -Path $removes)) {
     Exit-Json -obj $result -message "The 'removes' file or directory ($removes) does not exist."
 }
 
-if ($use_basic_parsing) {
-    Add-DeprecationWarning -obj $result -message "Since Ansible 2.5, use_basic_parsing does not change any behaviour, this option will be removed" -version 2.7
-}
-
 if ($status_code) {
     $status_code = foreach ($code in $status_code) {
         try {
@@ -66,6 +64,16 @@ if ($status_code) {
         }
     }
 }
+
+# Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
+$security_protocols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
+if ([Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
+    $security_protocols = $security_protocols -bor [Net.SecurityProtocolType]::Tls11
+}
+if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
+    $security_protocols = $security_protocols -bor [Net.SecurityProtocolType]::Tls12
+}
+[Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
 $client = [System.Net.WebRequest]::Create($url)
 $client.Method = $method
@@ -97,17 +105,6 @@ if ($maximum_redirection -eq 0) {
 if (-not $validate_certs) {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 }
-
-# Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
-$security_protcols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
-if ([Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
-    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls11
-}
-if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
-    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
-}
-[Net.ServicePointManager]::SecurityProtocol = $security_protcols
-
 
 if ($null -ne $content_type) {
     $client.ContentType = $content_type
@@ -185,9 +182,12 @@ if ($null -ne $body) {
     }
 }
 
+$module_start = Get-Date
+
 try {
     $response = $client.GetResponse()
 } catch [System.Net.WebException] {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     $response = $null
     if ($_.Exception.PSObject.Properties.Name -match "Response") {
         # was a non-successful response but we at least have a response and
@@ -198,13 +198,17 @@ try {
     # in the case a response (or empty response) was on the exception like in
     # a timeout scenario, we should still fail
     if ($null -eq $response) {
+        $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
         Fail-Json -obj $result -message "WebException occurred when sending web request: $($_.Exception.Message)"
     }
 } catch [System.Net.ProtocolViolationException] {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     Fail-Json -obj $result -message "ProtocolViolationException when sending web request: $($_.Exception.Message)"
 } catch {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     Fail-Json -obj $result -message "Unhandled exception occured when sending web request. Exception: $($_.Exception.Message)"
 }
+$result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 ForEach ($prop in $response.psobject.properties) {
     $result_key = Convert-StringToSnakeCase -string $prop.Name
@@ -238,8 +242,12 @@ if ($return_content -or $dest) {
             $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin)
             $content_bytes = $memory_st.ToArray()
             $result.content = [System.Text.Encoding]::UTF8.GetString($content_bytes)
-            if ($result.ContainsKey("content_type") -and $result.content_type -in @("application/json", "application/javascript")) {
-                $result.json = ConvertFrom-Json -InputObject $result.content
+            if ($result.ContainsKey("content_type") -and $result.content_type -Match ($JSON_CANDIDATES -join '|')) {
+                try {
+                    $result.json = ConvertFrom-Json -InputObject $result.content
+                } catch [System.ArgumentException] {
+                    # Simply continue, since 'text' might be anything
+                }
             }
         }
 
@@ -252,7 +260,7 @@ if ($return_content -or $dest) {
 
                 $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider
                 $content_checksum = [System.BitConverter]::ToString($sp.ComputeHash($memory_st)).Replace("-", "").ToLower()
-    
+
                 if ($actual_checksum -eq $content_checksum) {
                     $changed = $false
                 }

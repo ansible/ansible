@@ -8,6 +8,7 @@
       - show interface mgmt0 | json
     wait_for:
       - "result[1].TABLE_interface.ROW_interface.eth_ip_mask gt 0"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -21,6 +22,7 @@
       - show interface mgmt0 | json
     wait_for:
       - "result[1].TABLE_interface.ROW_interface.eth_ip_mask > 0"
+    provider: "{{ connection }}"
   register: result
 
 - assert:

@@ -71,6 +71,7 @@ EXAMPLES = r'''
     pool_allocation_mode: dynamic
     vm_provider: vmware
     state: present
+  delegate_to: localhost
 
 - name: Remove a VMM domain to VLAN pool binding
   aci_domain_to_vlan_pool:
@@ -83,6 +84,7 @@ EXAMPLES = r'''
     pool_allocation_mode: dynamic
     vm_provider: vmware
     state: absent
+  delegate_to: localhost
 
 - name: Bind a physical domain to VLAN pool
   aci_domain_to_vlan_pool:
@@ -94,6 +96,7 @@ EXAMPLES = r'''
     pool: phys_pool
     pool_allocation_mode: static
     state: present
+  delegate_to: localhost
 
 - name: Bind a physical domain to VLAN pool
   aci_domain_to_vlan_pool:
@@ -105,6 +108,7 @@ EXAMPLES = r'''
     pool: phys_pool
     pool_allocation_mode: static
     state: absent
+  delegate_to: localhost
 
 - name: Query an domain to VLAN pool binding
   aci_domain_to_vlan_pool:
@@ -116,6 +120,8 @@ EXAMPLES = r'''
     pool: phys_pool
     pool_allocation_mode: static
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all domain to VLAN pool bindings
   aci_domain_to_vlan_pool:
@@ -124,6 +130,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     domain_type: phys
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -315,8 +323,8 @@ def main():
         root_class=dict(
             aci_class=domain_class,
             aci_rn=domain_rn,
-            filter_target='eq({0}.name, "{1}")'.format(domain_class, domain),
             module_object=domain_mo,
+            target_filter={'name': domain},
         ),
         child_classes=['infraRsVlanNs'],
     )

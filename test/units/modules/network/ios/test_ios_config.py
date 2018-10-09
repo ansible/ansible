@@ -177,7 +177,7 @@ class TestIosConfigModule(TestIosModule):
         module.params = {'lines': lines, 'parents': parents, 'src': None}
         candidate_config = ios_config.get_candidate_config(module)
 
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate_config, self.running_config, replace='block', path=parents))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate_config, self.running_config, diff_replace='block', path=parents))
 
         commands = parents + lines
         self.execute_module(changed=True, commands=commands)
@@ -185,7 +185,7 @@ class TestIosConfigModule(TestIosModule):
     def test_ios_config_match_none(self):
         lines = ['hostname router']
         set_module_args(dict(lines=lines, match='none'))
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff('\n'.join(lines), self.running_config, match='none'))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff('\n'.join(lines), self.running_config, diff_match='none'))
         self.execute_module(changed=True, commands=lines)
 
     def test_ios_config_match_none(self):
@@ -196,7 +196,7 @@ class TestIosConfigModule(TestIosModule):
         module = MagicMock()
         module.params = {'lines': lines, 'parents': parents, 'src': None}
         candidate_config = ios_config.get_candidate_config(module)
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate_config, self.running_config, match='none', path=parents))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate_config, self.running_config, diff_match='none', path=parents))
 
         commands = parents + lines
         self.execute_module(changed=True, commands=commands, sort=False)
@@ -210,7 +210,7 @@ class TestIosConfigModule(TestIosModule):
         module = MagicMock()
         module.params = {'lines': lines, 'parents': parents, 'src': None}
         candidate_config = ios_config.get_candidate_config(module)
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate_config, self.running_config, match='strict', path=parents))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate_config, self.running_config, diff_match='strict', path=parents))
 
         commands = parents + ['shutdown']
         self.execute_module(changed=True, commands=commands, sort=False)
@@ -224,7 +224,7 @@ class TestIosConfigModule(TestIosModule):
         module = MagicMock()
         module.params = {'lines': lines, 'parents': parents, 'src': None}
         candidate_config = ios_config.get_candidate_config(module)
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate_config, self.running_config, match='exact', path=parents))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate_config, self.running_config, diff_match='exact', path=parents))
 
         commands = parents + lines
         self.execute_module(changed=True, commands=commands, sort=False)

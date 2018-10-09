@@ -202,9 +202,9 @@ with remote hosts.
 Ansible With (And Versus) CloudFormation
 ````````````````````````````````````````
 
-CloudFormation is a Amazon technology for defining a cloud stack as a JSON document.   
+CloudFormation is a Amazon technology for defining a cloud stack as a JSON or YAML document.   
 
-Ansible modules provide an easier to use interface than CloudFormation in many examples, without defining a complex JSON document.
+Ansible modules provide an easier to use interface than CloudFormation in many examples, without defining a complex JSON/YAML document.
 This is recommended for most users.
 
 However, for users that have decided to use CloudFormation, there is an Ansible module that can be used to apply a CloudFormation template
@@ -247,7 +247,7 @@ documentation for a full list with examples.
        An introduction to playbooks
    :ref:`playbooks_delegation`
        Delegation, useful for working with loud balancers, clouds, and locally executed steps.
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

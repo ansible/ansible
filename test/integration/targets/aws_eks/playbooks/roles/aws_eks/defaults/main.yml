@@ -21,7 +21,7 @@ eks_security_groups:
         from_port: 1025
         to_port: 65535
         proto: tcp
-  - name: "{{ eks_cluster_name }}-worker-sg"
+  - name: "{{ eks_cluster_name }}-workers-sg"
     description: "EKS Worker Security Group"
     rules:
       - group_name: "{{ eks_cluster_name }}-workers-sg"

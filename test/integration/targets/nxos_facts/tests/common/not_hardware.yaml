@@ -9,6 +9,7 @@
     gather_subset:
       - "!hardware"
     timeout: 30
+    provider: "{{ connection }}"
   register: result
 
 - assert:

@@ -1,2 +1,110 @@
 ---
 # tasks file for test_ec2_tag
+- name: Set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+    - name: Create an EC2 volume so we have something to tag
+      ec2_vol:
+        name: "{{ resource_prefix }} ec2_tag volume"
+        volume_size: 1
+        state: present
+        zone: "{{ aws_region }}a"
+        <<: *aws_connection_info
+      register: volume
+
+    - name: List the tags
+      ec2_tag:
+        resource: "{{ volume.volume_id }}"
+        state: list
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.tags | length == 1
+          - result.tags.Name == '{{ resource_prefix }} ec2_tag volume'
+
+    - name: Set some new tags
+      ec2_tag:
+        resource: "{{ volume.volume_id }}"
+        state: present
+        tags:
+          foo: foo
+          bar: baz
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.tags | length == 3
+          - result.added_tags | length == 2
+          - result.tags.Name == '{{ resource_prefix }} ec2_tag volume'
+          - result.tags.foo == 'foo'
+          - result.tags.bar == 'baz'
+
+    - name: Remove a tag
+      ec2_tag:
+        resource: "{{ volume.volume_id }}"
+        state: absent
+        tags:
+          foo: foo
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.tags | length == 2
+          - "'added_tags' not in result"
+          - result.removed_tags | length == 1
+          - result.tags.Name == '{{ resource_prefix }} ec2_tag volume'
+          - result.tags.bar == 'baz'
+
+    - name: Set an exclusive tag
+      ec2_tag:
+        resource: "{{ volume.volume_id }}"
+        purge_tags: true
+        tags:
+          baz: quux
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.tags | length == 1
+          - result.added_tags | length == 1
+          - result.removed_tags | length == 2
+          - result.tags.baz == 'quux'
+
+    - name: Remove all tags
+      ec2_tag:
+        resource: "{{ volume.volume_id }}"
+        purge_tags: true
+        tags: {}
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result.tags | length == 0
+
+  always:
+    - name: Remove the volume
+      ec2_vol:
+        id: "{{ volume.volume_id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      until: result is not failed
+      ignore_errors: yes
+      retries: 10

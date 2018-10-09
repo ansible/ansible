@@ -583,6 +583,7 @@ class AosInventory(object):
             for key, value in device.value['status'].items():
                 self.add_var_to_host(device.name, key, value)
 
+
 # Run the script
 if __name__ == '__main__':
     AosInventory()

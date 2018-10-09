@@ -6,11 +6,6 @@ import json
 import os
 import datetime
 
-try:
-    import ConfigParser as configparser
-except ImportError:
-    import configparser
-
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -23,7 +18,8 @@ from lib.util import (
     SubprocessError,
     run_command,
     display,
-    find_executable,
+    read_lines_without_comments,
+    ConfigParser,
 )
 
 from lib.executor import (
@@ -69,43 +65,44 @@ class PylintTest(SanitySingleVersion):
             display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
 
-        with open(PYLINT_SKIP_PATH, 'r') as skip_fd:
-            skip_paths = skip_fd.read().splitlines()
+        skip_paths = read_lines_without_comments(PYLINT_SKIP_PATH)
 
         invalid_ignores = []
 
         supported_versions = set(SUPPORTED_PYTHON_VERSIONS) - set(UNSUPPORTED_PYTHON_VERSIONS)
         supported_versions = set([v.split('.')[0] for v in supported_versions]) | supported_versions
 
-        with open(PYLINT_IGNORE_PATH, 'r') as ignore_fd:
-            ignore_entries = ignore_fd.read().splitlines()
-            ignore = collections.defaultdict(dict)
-            line = 0
+        ignore_entries = read_lines_without_comments(PYLINT_IGNORE_PATH)
+        ignore = collections.defaultdict(dict)
+        line = 0
 
-            for ignore_entry in ignore_entries:
-                line += 1
+        for ignore_entry in ignore_entries:
+            line += 1
 
-                if ' ' not in ignore_entry:
-                    invalid_ignores.append((line, 'Invalid syntax'))
+            if not ignore_entry:
+                continue
+
+            if ' ' not in ignore_entry:
+                invalid_ignores.append((line, 'Invalid syntax'))
+                continue
+
+            path, code = ignore_entry.split(' ', 1)
+
+            if not os.path.exists(path):
+                invalid_ignores.append((line, 'Remove "%s" since it does not exist' % path))
+                continue
+
+            if ' ' in code:
+                code, version = code.split(' ', 1)
+
+                if version not in supported_versions:
+                    invalid_ignores.append((line, 'Invalid version: %s' % version))
                     continue
 
-                path, code = ignore_entry.split(' ', 1)
+                if version != args.python_version and version != args.python_version.split('.')[0]:
+                    continue  # ignore version specific entries for other versions
 
-                if not os.path.exists(path):
-                    invalid_ignores.append((line, 'Remove "%s" since it does not exist' % path))
-                    continue
-
-                if ' ' in code:
-                    code, version = code.split(' ', 1)
-
-                    if version not in supported_versions:
-                        invalid_ignores.append((line, 'Invalid version: %s' % version))
-                        continue
-
-                    if version != args.python_version and version != args.python_version.split('.')[0]:
-                        continue  # ignore version specific entries for other versions
-
-                ignore[path][code] = line
+            ignore[path][code] = line
 
         skip_paths_set = set(skip_paths)
 
@@ -193,6 +190,9 @@ class PylintTest(SanitySingleVersion):
         for path in skip_paths:
             line += 1
 
+            if not path:
+                continue
+
             if not os.path.exists(path):
                 # Keep files out of the list which no longer exist in the repo.
                 errors.append(SanityMessage(
@@ -240,7 +240,7 @@ class PylintTest(SanitySingleVersion):
         if not os.path.exists(rcfile):
             rcfile = 'test/sanity/pylint/config/default'
 
-        parser = configparser.SafeConfigParser()
+        parser = ConfigParser()
         parser.read(rcfile)
 
         if parser.has_section('ansible-test'):
@@ -263,7 +263,7 @@ class PylintTest(SanitySingleVersion):
         ] + paths
 
         env = ansible_environment(args)
-        env['PYTHONPATH'] += '%s%s' % (os.pathsep, self.plugin_dir)
+        env['PYTHONPATH'] += '%s%s' % (os.path.pathsep, self.plugin_dir)
 
         if paths:
             try:

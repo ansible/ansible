@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-author: "Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)"
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
   - "Create or destroy or modify cifs-share-access-controls on ONTAP"
 extends_documentation_fragment:
@@ -40,7 +40,7 @@ options:
     description:
       - "The user or group name for which the permissions are listed."
     required: true
-short_description: "Manage NetApp cifs-share-access-control"
+short_description: "NetApp ONTAP manage cifs-share-access-control"
 version_added: "2.6"
 
 '''

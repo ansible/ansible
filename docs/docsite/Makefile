@@ -35,7 +35,7 @@ endif
 
 all: docs
 
-docs: clean htmldocs
+docs: htmldocs
 
 generate_rst: staticmin config cli keywords modules plugins testing
 

@@ -68,7 +68,7 @@ options:
         choices: ['NONE', 'PROXY_V1']
     service:
         description:
-            - A reference to BackendService resource.
+            - A reference to the BackendService resource.
         required: true
     ssl_certificates:
         description:
@@ -76,23 +76,25 @@ options:
               users and the load balancer. Currently, exactly one SSL certificate must be specified.
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetSslProxies)"
+    - "Setting Up SSL proxy for Google Cloud Load Balancing: U(https://cloud.google.com/compute/docs/load-balancing/tcp-ssl/)"
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targetsslproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targetsslproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
+
 - name: create a health check
   gcp_compute_health_check:
-      name: 'healthcheck-targetsslproxy'
+      name: "healthcheck-targetsslproxy"
       type: TCP
       tcp_health_check:
         port_name: service-health
@@ -104,30 +106,27 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
+
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targetsslproxy'
+      name: "backendservice-targetsslproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
-      protocol: 'SSL'
+      - "{{ healthcheck.selfLink }}"
+      protocol: SSL
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
+
 - name: create a ssl certificate
   gcp_compute_ssl_certificate:
-      name: 'sslcert-targetsslproxy'
-      description: |
-        "A certificate for testing. Do not use this certificate in production"
+      name: "sslcert-targetsslproxy"
+      description: A certificate for testing. Do not use this certificate in production
       certificate: |
         -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
@@ -155,21 +154,18 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: sslcert
+
 - name: create a target ssl proxy
   gcp_compute_target_ssl_proxy:
-      name: testObject
+      name: "test_object"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       service: "{{ backendservice }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "service_account"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -207,7 +203,7 @@ RETURN = '''
         type: str
     service:
         description:
-            - A reference to BackendService resource.
+            - A reference to the BackendService resource.
         returned: success
         type: dict
     ssl_certificates:
@@ -245,6 +241,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#targetSslProxy'
 
@@ -254,10 +253,10 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                fetch = update(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -277,12 +276,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -384,7 +383,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#targetSslProxy')
@@ -407,6 +406,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

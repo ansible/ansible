@@ -29,6 +29,10 @@ description:
     - Before Ansible 2.5, this required an image found in the Azure Marketplace which can be discovered with
       M(azure_rm_virtualmachineimage_facts). In Ansible 2.5 and newer, custom images can be used as well, see the
       examples for more details.
+    - If you need to use the I(custom_data) option, many images in the marketplace are not cloud-init ready. Thus, data
+      sent to I(custom_data) would be ignored. If the image you are attempting to use is not listed in
+      U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
+      follow these steps U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
 
 options:
     resource_group:
@@ -144,6 +148,10 @@ options:
             - Standard_LRS
             - Premium_LRS
         version_added: "2.4"
+    os_disk_name:
+        description:
+            - OS disk name
+        version_added: "2.8"
     os_disk_caching:
         description:
             - Type of OS disk caching.
@@ -153,6 +161,10 @@ options:
         default: ReadOnly
         aliases:
             - disk_caching
+    os_disk_size_gb:
+        description:
+            - Type of OS disk size in GB.
+        version_added: "2.7"
     os_type:
         description:
             - Base type of operating system.
@@ -226,9 +238,11 @@ options:
               providing a list of ports.
     network_interface_names:
         description:
-            - List of existing network interface names to add to the VM. If a network interface name is not provided
-              when the VM is created, a default network interface will be created. In order for the module to create
-              a network interface, at least one Virtual Network with one Subnet must exist.
+            - List of existing network interface names to add to the VM.
+            - Item can be a str of name or resource id of the network interface.
+            - Item can also be a dict contains C(resource_group) and C(name) of the network interface.
+            - If a network interface name is not provided when the VM is created, a default network interface will be created.
+            - In order for the module to create a new network interface, at least one Virtual Network with one Subnet must exist.
         aliases:
             - network_interfaces
     virtual_network_resource_group:
@@ -239,15 +253,17 @@ options:
     virtual_network_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
-              The new network interface will be assigned to the first virtual network found in the resource group.
-              Use this parameter to provide a specific virtual network instead.
+            - The network interface will be assigned to the first virtual network found in the resource group.
+            - Use this parameter to provide a specific virtual network instead.
+            - If the virtual network in in another resource group, specific resource group by C(virtual_network_resource_group).
         aliases:
             - virtual_network
     subnet_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
-              The new network interface will be assigned to the first subnet found in the virtual network.
-              Use this parameter to provide a specific subnet instead.
+            - The new network interface will be assigned to the first subnet found in the virtual network.
+            - Use this parameter to provide a specific subnet instead.
+            - If the subnet is in another resource group, specific resource group by C(virtual_network_resource_group).
         aliases:
             - subnet
     remove_on_absent:
@@ -276,6 +292,13 @@ options:
             promotion_code:
                 description:
                     - optional promotion code
+    accept_terms:
+        description:
+            - Accept terms for marketplace images that require it
+            - Only Azure service admin/account admin users can purchase images from the marketplace
+        type: bool
+        default: false
+        version_added: "2.7"
 
 extends_documentation_fragment:
     - azure
@@ -284,7 +307,6 @@ extends_documentation_fragment:
 author:
     - "Chris Houseknecht (@chouseknecht)"
     - "Matt Davis (@nitzmahone)"
-
 '''
 EXAMPLES = '''
 
@@ -300,21 +322,27 @@ EXAMPLES = '''
       sku: '7.1'
       version: latest
 
+- name: Create an availability set for managed disk vm
+  azure_rm_availabilityset:
+    name: avs-managed-disk
+    resource_group: Testing
+    platform_update_domain_count: 5
+    platform_fault_domain_count: 2
+    sku: Aligned
+
 - name: Create a VM with managed disk
   azure_rm_virtualmachine:
     resource_group: Testing
-    name: testvm001
-    vm_size: Standard_D4
-    managed_disk_type: Standard_LRS
+    name: vm-managed-disk
     admin_username: adminUser
-    ssh_public_keys:
-      - path: /home/adminUser/.ssh/authorized_keys
-        key_data: < insert yor ssh public key here... >
+    availability_set: avs-managed-disk
+    managed_disk_type: Standard_LRS
     image:
       offer: CoreOS
       publisher: CoreOS
       sku: Stable
       version: latest
+    vm_size: Standard_D4
 
 - name: Create a VM with existing storage account and NIC
   azure_rm_virtualmachine:
@@ -403,6 +431,35 @@ EXAMPLES = '''
     image:
       name: customimage001
       resource_group: Testing
+
+- name: Create VM with spcified OS disk size
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: big-os-disk
+    admin_username: chouseknecht
+    admin_password: <your password here>
+    os_disk_size_gb: 512
+    image:
+      offer: CentOS
+      publisher: OpenLogic
+      sku: '7.1'
+      version: latest
+
+- name: Create VM with OS and Plan, accepting the terms
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: f5-nva
+    admin_username: chouseknecht
+    admin_password: <your password here>
+    image:
+      publisher: f5-networks
+      offer: f5-big-ip-best
+      sku: f5-bigip-virtual-edition-200m-best-hourly
+      version: latest
+    plan:
+      name: f5-bigip-virtual-edition-200m-best-hourly
+      product: f5-big-ip-best
+      publisher: f5-networks
 
 - name: Power Off
   azure_rm_virtualmachine:
@@ -614,7 +671,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import to_native, to_bytes
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name, format_resource_id
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
@@ -655,12 +712,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
                                  default='ReadOnly'),
+            os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
+            os_disk_name=dict(type='str'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
-            network_interface_names=dict(type='list', aliases=['network_interfaces']),
+            network_interface_names=dict(type='list', aliases=['network_interfaces'], elements='raw'),
             remove_on_absent=dict(type='list', default=['all']),
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
@@ -669,7 +728,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
             data_disks=dict(type='list'),
-            plan=dict(type='dict')
+            plan=dict(type='dict'),
+            accept_terms=dict(type='bool', default=False)
         )
 
         self.resource_group = None
@@ -690,7 +750,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.storage_blob_name = None
         self.os_type = None
         self.os_disk_caching = None
+        self.os_disk_size_gb = None
         self.managed_disk_type = None
+        self.os_disk_name = None
         self.network_interface_names = None
         self.remove_on_absent = set()
         self.tags = None
@@ -706,6 +768,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.differences = None
         self.data_disks = None
         self.plan = None
+        self.accept_terms = None
 
         self.results = dict(
             changed=False,
@@ -753,9 +816,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 ))
 
             if self.network_interface_names:
-                for name in self.network_interface_names:
-                    nic = self.get_network_interface(name)
-                    network_interfaces.append(nic.id)
+                for nic_name in self.network_interface_names:
+                    nic = self.parse_network_interface(nic_name)
+                    network_interfaces.append(nic)
 
             if self.ssh_public_keys:
                 msg = "Parameter error: expecting ssh_public_keys to be a list of type dict where " \
@@ -840,6 +903,27 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     differences.append('OS Disk caching')
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['caching'] = self.os_disk_caching
+
+                if self.os_disk_name and \
+                   self.os_disk_name != vm_dict['properties']['storageProfile']['osDisk']['name']:
+                    self.log('CHANGED: virtual machine {0} - OS disk name'.format(self.name))
+                    differences.append('OS Disk name')
+                    changed = True
+                    vm_dict['properties']['storageProfile']['osDisk']['name'] = self.os_disk_name
+
+                if self.os_disk_size_gb and \
+                   self.os_disk_size_gb != vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']:
+                    self.log('CHANGED: virtual machine {0} - OS disk size '.format(self.name))
+                    differences.append('OS Disk size')
+                    changed = True
+                    vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB'] = self.os_disk_size_gb
+
+                if self.vm_size and \
+                   self.vm_size != vm_dict['properties']['hardwareProfile']['vmSize']:
+                    self.log('CHANGED: virtual machine {0} - size '.format(self.name))
+                    differences.append('VM size')
+                    changed = True
+                    vm_dict['properties']['hardwareProfile']['vmSize'] = self.vm_size
 
                 update_tags, vm_dict['tags'] = self.update_tags(vm_dict.get('tags', dict()))
                 if update_tags:
@@ -971,11 +1055,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         ),
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
-                                name=self.storage_blob_name,
+                                name=self.os_disk_name if self.os_disk_name else self.storage_blob_name,
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
                                 caching=self.os_disk_caching,
+                                disk_size_gb=self.os_disk_size_gb
                             ),
                             image_reference=image_reference,
                         ),
@@ -1061,6 +1146,24 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                         vm_resource.storage_profile.data_disks = data_disks
 
+                    # Before creating VM accept terms of plan if `accept_terms` is True
+                    if self.accept_terms is True:
+                        if not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
+                            self.fail("parameter error: plan must be specified and include name, product, and publisher")
+                        try:
+                            plan_name = self.plan.get('name')
+                            plan_product = self.plan.get('product')
+                            plan_publisher = self.plan.get('publisher')
+                            term = self.marketplace_client.marketplace_agreements.get(
+                                publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name)
+                            term.accepted = True
+                            agreement = self.marketplace_client.marketplace_agreements.create(
+                                publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name, parameters=term)
+                        except Exception as exc:
+                            self.fail(("Error accepting terms for virtual machine {0} with plan {1}. " +
+                                       "Only service admin/account admin users can purchase images " +
+                                       "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
+
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vm(vm_resource)
 
@@ -1106,8 +1209,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 create_option=vm_dict['properties']['storageProfile']['osDisk']['createOption'],
                                 os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
+                                disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']
                             ),
                             image_reference=self.compute_models.ImageReference(
+                                id=vm_dict['properties']['storageProfile']['imageReference']['id'],
+                            ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
                                 offer=vm_dict['properties']['storageProfile']['imageReference']['offer'],
                                 sku=vm_dict['properties']['storageProfile']['imageReference']['sku'],
@@ -1241,7 +1347,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         # Expand network interfaces to include config properties
         for interface in vm.network_profile.network_interfaces:
             int_dict = azure_id_to_dict(interface.id)
-            nic = self.get_network_interface(int_dict['networkInterfaces'])
+            nic = self.get_network_interface(int_dict['resourceGroups'], int_dict['networkInterfaces'])
             for interface_dict in result['properties']['networkProfile']['networkInterfaces']:
                 if interface_dict['id'] == interface.id:
                     nic_dict = self.serialize_obj(nic, 'NetworkInterface')
@@ -1254,7 +1360,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 if config['properties'].get('publicIPAddress'):
                     pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])
                     try:
-                        pip = self.network_client.public_ip_addresses.get(self.resource_group,
+                        pip = self.network_client.public_ip_addresses.get(pipid_dict['resourceGroups'],
                                                                           pipid_dict['publicIPAddresses'])
                     except Exception as exc:
                         self.fail("Error fetching public ip {0} - {1}".format(pipid_dict['publicIPAddresses'],
@@ -1341,18 +1447,18 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Storing NIC names for deletion.')
             for interface in vm.network_profile.network_interfaces:
                 id_dict = azure_id_to_dict(interface.id)
-                nic_names.append(id_dict['networkInterfaces'])
-            self.log('NIC names to delete {0}'.format(', '.join(nic_names)))
+                nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
+            self.log('NIC names to delete {0}'.format(str(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
             if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
-                for name in nic_names:
-                    nic = self.get_network_interface(name)
+                for nic_dict in nic_names:
+                    nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
                     for ipc in nic.ip_configurations:
                         if ipc.public_ip_address:
                             pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
-                            pip_names.append(pip_dict['publicIPAddresses'])
-                self.log('Public IPs to  delete are {0}'.format(', '.join(pip_names)))
+                            pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
+                self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
 
         self.log("Deleting virtual machine {0}".format(self.name))
@@ -1374,37 +1480,37 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
             self.log('Deleting network interfaces')
-            for name in nic_names:
-                self.delete_nic(name)
+            for nic_dict in nic_names:
+                self.delete_nic(nic_dict['resource_group'], nic_dict['name'])
 
         if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
             self.log('Deleting public IPs')
-            for name in pip_names:
-                self.delete_pip(name)
+            for pip_dict in pip_names:
+                self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
         return True
 
-    def get_network_interface(self, name):
+    def get_network_interface(self, resource_group, name):
         try:
-            nic = self.network_client.network_interfaces.get(self.resource_group, name)
+            nic = self.network_client.network_interfaces.get(resource_group, name)
             return nic
         except Exception as exc:
             self.fail("Error fetching network interface {0} - {1}".format(name, str(exc)))
 
-    def delete_nic(self, name):
+    def delete_nic(self, resource_group, name):
         self.log("Deleting network interface {0}".format(name))
         self.results['actions'].append("Deleted network interface {0}".format(name))
         try:
-            poller = self.network_client.network_interfaces.delete(self.resource_group, name)
+            poller = self.network_client.network_interfaces.delete(resource_group, name)
         except Exception as exc:
             self.fail("Error deleting network interface {0} - {1}".format(name, str(exc)))
         self.get_poller_result(poller)
         # Delete doesn't return anything. If we get this far, assume success
         return True
 
-    def delete_pip(self, name):
+    def delete_pip(self, resource_group, name):
         self.results['actions'].append("Deleted public IP {0}".format(name))
         try:
-            poller = self.network_client.public_ip_addresses.delete(self.resource_group, name)
+            poller = self.network_client.public_ip_addresses.delete(resource_group, name)
             self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deleting {0} - {1}".format(name, str(exc)))
@@ -1462,6 +1568,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                       self.image['offer'],
                                                                       self.image['sku'],
                                                                       self.image['version']))
+        return None
 
     def get_custom_image_reference(self, name, resource_group=None):
         try:
@@ -1478,6 +1585,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 return self.compute_models.ImageReference(id=vm_image.id)
 
         self.fail("Error could not find image with name {0}".format(name))
+        return None
 
     def get_availability_set(self, resource_group, name):
         try:
@@ -1691,6 +1799,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error creating network interface {0} - {1}".format(network_interface_name, str(exc)))
         return new_nic
+
+    def parse_network_interface(self, nic):
+        nic = self.parse_resource_to_dict(nic)
+        if 'name' not in nic:
+            self.fail("Invalid network interface {0}".format(str(nic)))
+        return format_resource_id(val=nic['name'],
+                                  subscription_id=nic['subscription_id'],
+                                  resource_group=nic['resource_group'],
+                                  namespace='Microsoft.Network',
+                                  types='networkInterfaces')
 
 
 def main():

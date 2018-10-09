@@ -367,6 +367,7 @@ def link(restbase, user, passwd, params):
 
     return ret
 
+
 # Some parameters are required depending on the operation:
 OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    comment=['issue', 'comment'],

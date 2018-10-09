@@ -30,7 +30,9 @@ import re
 import sys
 import warnings
 from collections import defaultdict
+from copy import deepcopy
 from distutils.version import LooseVersion
+from functools import partial
 from pprint import PrettyPrinter
 
 try:
@@ -49,9 +51,12 @@ from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
+from ansible.utils._build_helpers import update_file_if_different
 
 
 #####################################################################################
@@ -154,6 +159,20 @@ def rst_xline(width, char="="):
     return char * width
 
 
+test_list = partial(is_sequence, include_strings=False)
+
+
+def normalize_options(value):
+    """Normalize boolean option value."""
+
+    if value.get('type') == 'bool' and 'default' in value:
+        try:
+            value['default'] = boolean(value['default'], strict=True)
+        except TypeError:
+            pass
+    return value
+
+
 def write_data(text, output_dir, outputname, module=None):
     ''' dumps module output to a file or the screen, as requested '''
 
@@ -165,8 +184,8 @@ def write_data(text, output_dir, outputname, module=None):
             os.makedirs(output_dir)
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
-        with open(fname, 'wb') as f:
-            f.write(to_bytes(text))
+
+        update_file_if_different(fname, to_bytes(text))
     else:
         print(text)
 
@@ -246,11 +265,18 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # Regular module to process
         #
 
+        # use ansible core library to parse out doc metadata YAML and plaintext examples
+        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+
+        if metadata and 'removed' in metadata.get('status'):
+            continue
+
         category = categories
 
         # Start at the second directory because we don't want the "vendor"
         mod_path_only = os.path.dirname(module_path[len(module_dir):])
 
+        primary_category = ''
         module_categories = []
         # build up the categories that this module belongs to
         for new_cat in mod_path_only.split('/')[1:]:
@@ -266,8 +292,15 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         if module_categories:
             primary_category = module_categories[0]
 
-        # use ansible core library to parse out doc metadata YAML and plaintext examples
-        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+        if 'options' in doc and doc['options'] is None:
+            display.error("*** ERROR: DOCUMENTATION.options must be a dictionary/hash when used. ***")
+            pos = getattr(doc, "ansible_pos", None)
+            if pos is not None:
+                display.error("Module position: %s, %d, %d" % doc.ansible_pos)
+            doc['options'] = dict()
+
+        for key, opt in doc.get('options', {}).items():
+            doc['options'][key] = normalize_options(opt)
 
         # save all the information
         module_info[module] = {'path': module_path,
@@ -334,6 +367,7 @@ def jinja2_environment(template_dir, typ, plugin_type):
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
+        env.tests['list'] = test_list
         templates['plugin'] = env.get_template('plugin.rst.j2')
 
         if plugin_type == 'module':
@@ -497,6 +531,11 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
 
 def process_categories(plugin_info, categories, templates, output_dir, output_name, plugin_type):
+    # For some reason, this line is changing plugin_info:
+    # text = templates['list_of_CATEGORY_modules'].render(template_data)
+    # To avoid that, make a deepcopy of the data.
+    # We should track that down and fix it at some point in the future.
+    plugin_info = deepcopy(plugin_info)
     for category in sorted(categories.keys()):
         module_map = categories[category]
         category_filename = output_name % category
@@ -650,7 +689,7 @@ def main():
             display.vv(key)
             display.vvvvv(pp.pformat(('record', record)))
             if record.get('doc', None):
-                short_desc = record['doc']['short_description']
+                short_desc = record['doc']['short_description'].rstrip('.')
                 if short_desc is None:
                     display.warning('short_description for %s is None' % key)
                     short_desc = ''

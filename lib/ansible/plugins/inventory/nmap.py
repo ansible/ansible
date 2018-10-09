@@ -17,6 +17,10 @@ DOCUMENTATION = '''
     requirements:
       - nmap CLI installed
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'nmap' plugin.
+            required: True
+            choices: ['nmap']
         address:
             description: Network IP or range of IPs to scan, you can use a simple range (10.2.2.15-25) or CIDR notation.
             required: True
@@ -43,7 +47,7 @@ EXAMPLES = '''
     # inventory.config file in YAML format
     plugin: nmap
     strict: False
-    network: 192.168.0.0/24
+    address: 192.168.0.0/24
 '''
 
 import os

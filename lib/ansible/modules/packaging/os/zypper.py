@@ -198,6 +198,9 @@ from xml.dom.minidom import parseString as parseXML
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
 
 class Package:
     def __init__(self, name, prefix, version):
@@ -522,7 +525,6 @@ def main():
 
     module.exit_json(name=name, state=state, update_cache=update_cache, **retvals)
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
+
 if __name__ == "__main__":
     main()

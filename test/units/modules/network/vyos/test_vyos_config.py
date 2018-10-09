@@ -75,15 +75,17 @@ class TestVyosConfigModule(TestVyosModule):
     def test_vyos_config_src(self):
         src = load_fixture('vyos_config_src.cfg')
         set_module_args(dict(src=src))
+        candidate = '\n'.join(self.module.format_commands(src.splitlines()))
         commands = ['set system host-name foo', 'delete interfaces ethernet eth0 address']
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(src, self.running_config))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate, self.running_config))
         self.execute_module(changed=True, commands=commands)
 
     def test_vyos_config_src_brackets(self):
         src = load_fixture('vyos_config_src_brackets.cfg')
         set_module_args(dict(src=src))
+        candidate = '\n'.join(self.module.format_commands(src.splitlines()))
         commands = ['set interfaces ethernet eth0 address 10.10.10.10/24', 'set system host-name foo']
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(src, self.running_config))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate, self.running_config))
         self.execute_module(changed=True, commands=commands)
 
     def test_vyos_config_backup(self):
@@ -111,5 +113,5 @@ class TestVyosConfigModule(TestVyosModule):
                  'set system interfaces ethernet eth0 description test string']
         set_module_args(dict(lines=lines, match='none'))
         candidate = '\n'.join(lines)
-        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate, None, match='none'))
+        self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(candidate, None, diff_match='none'))
         self.execute_module(changed=True, commands=lines, sort=False)

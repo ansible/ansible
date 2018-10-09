@@ -30,14 +30,16 @@ class HttpApi(HttpApiBase):
         request = request_builder(data, output)
         headers = {'Content-Type': 'application/json-rpc'}
 
-        response = self.connection.send('/command-api', request, headers=headers, method='POST')
-        response_text = to_text(response.read())
-        try:
-            response = json.loads(response_text)
-        except ValueError:
-            raise ConnectionError('Response was not valid JSON, got {0}'.format(response_text))
+        response, response_data = self.connection.send('/command-api', request, headers=headers, method='POST')
 
-        results = handle_response(response)
+        try:
+            response_data = json.loads(to_text(response_data.getvalue()))
+        except ValueError:
+            raise ConnectionError('Response was not valid JSON, got {0}'.format(
+                to_text(response_data.getvalue())
+            ))
+
+        results = handle_response(response_data)
 
         if self._become:
             results = results[1:]
@@ -50,8 +52,7 @@ class HttpApi(HttpApiBase):
         # Fake a prompt for @enable_mode
         if self._become:
             return '#'
-        else:
-            return '>'
+        return '>'
 
     # Imported from module_utils
     def edit_config(self, config, commit=False, replace=False):
@@ -85,7 +86,12 @@ class HttpApi(HttpApiBase):
             else:
                 commands.append(command)
 
-        response = self.send_request(commands)
+        try:
+            response = self.send_request(commands)
+        except Exception:
+            commands = ['configure session %s' % session, 'abort']
+            response = self.send_request(commands, output='text')
+            raise
 
         commands = ['configure session %s' % session, 'show session-config diffs']
         if commit:
@@ -108,7 +114,13 @@ class HttpApi(HttpApiBase):
         responses = list()
 
         def run_queue(queue, output):
-            response = to_list(self.send_request(queue, output=output))
+            try:
+                response = to_list(self.send_request(queue, output=output))
+            except Exception as exc:
+                if check_rc:
+                    raise
+                return to_text(exc)
+
             if output == 'json':
                 response = [json.loads(item) for item in response]
             return response
@@ -152,7 +164,13 @@ class HttpApi(HttpApiBase):
 def handle_response(response):
     if 'error' in response:
         error = response['error']
-        raise ConnectionError(error['message'], code=error['code'])
+
+        error_text = []
+        for data in error['data']:
+            error_text.extend(data.get('errors', []))
+        error_text = '\n'.join(error_text) or error['message']
+
+        raise ConnectionError(error_text, code=error['code'])
 
     results = []
     for result in response['result']:

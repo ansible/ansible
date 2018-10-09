@@ -60,11 +60,10 @@ all: # keys must be unique, i.e. only one 'hosts' per group
 
 import os
 
-from collections import MutableMapping
-
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
 
@@ -90,6 +89,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         ''' parses the inventory file '''
 
         super(InventoryModule, self).parse(inventory, loader, path)
+        self.set_options()
 
         try:
             data = self.loader.load_from_file(path, cache=False)

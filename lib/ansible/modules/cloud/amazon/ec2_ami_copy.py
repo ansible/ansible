@@ -71,7 +71,9 @@ options:
         in an existing AMI, the AMI will not be copied again.
     default: false
     version_added: 2.6
-author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
+author:
+- Amir Moulavi (@amir343) <amir.moulavi@gmail.com>
+- Tim C <defunct@defunct.io>
 extends_documentation_fragment:
     - aws
     - ec2
