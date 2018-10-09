@@ -1,0 +1,2 @@
+bugfixes:
+- "route53 - fix CAA record ordering for idempotency."
