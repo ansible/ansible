@@ -1,0 +1,2 @@
+minor_changes:
+  - mongodb_user - apply "readWrite" as default value for parameter roles (https://github.com/ansible/ansible/issues/46443)
