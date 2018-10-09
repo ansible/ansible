@@ -23,7 +23,7 @@ DOCUMENTATION = """
 ---
 module: dellemc_install_firmware
 short_description: Firmware update from a repository on a network share (CIFS, NFS).
-version_added: "2.7"
+version_added: "2.8"
 description:
     - Update the Firmware by connecting to a network share (either CIFS or NFS) that contains a catalog of
         available updates.
