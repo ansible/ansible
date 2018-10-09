@@ -322,6 +322,8 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
     def get_active_connections_count(self):
         active_connections = 0
         for family in self.source_file.keys():
+            if not os.path.isfile(self.source_file[family]):
+                continue
             f = open(self.source_file[family])
             for tcp_connection in f.readlines():
                 tcp_connection = tcp_connection.strip().split()
