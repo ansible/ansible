@@ -94,6 +94,17 @@ SUCCESS_MSG = "Success %s result"
 PYLXCA_REQUIRED = 'Lenovo xClarity Administrator Python Client pylxca is required for this module.'
 
 
+class connection_object:
+    def __init__(self, module):
+        self.module = module
+
+    def __enter__(self):
+        return setup_conn(self.module)
+
+    def __exit__(self, type, value, traceback):
+        disconnect()
+
+
 def has_pylxca(module):
     """
     Check pylxca is installed
@@ -183,39 +194,35 @@ INPUT_ARG_SPEC = dict(
 )
 
 
-def execute_module(module, lxca_con):
+def execute_module(module):
     """
     This function invoke commands
     :param module: Ansible module object
-    :param lxca_con:  lxca connection object
     """
     try:
-        result = FUNC_DICT[module.params['command_options']](module, lxca_con)
-        disconnect(lxca_con)
-        module.exit_json(changed=False,
-                         msg=SUCCESS_MSG % module.params['command_options'],
-                         result=result)
+        with connection_object(module) as lxca_con:
+            result = FUNC_DICT[module.params['command_options']](module, lxca_con)
+            module.exit_json(changed=False,
+                             msg=SUCCESS_MSG % module.params['command_options'],
+                             result=result)
     except Exception as exception:
         error_msg = '; '.join((e) for e in exception.args)
-        disconnect(lxca_con)
         module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
 
-def run_tasks(module, lxca_con):
+def run_tasks(module):
     """
     :param module: Ansible module object
-    :param lxca_con:  lxca connection object
     """
 
-    execute_module(module, lxca_con)
+    execute_module(module)
 
 
 def main():
     module = setup_module_object()
     has_pylxca(module)
     validate_parameters(module)
-    lxca_con = setup_conn(module)
-    run_tasks(module, lxca_con)
+    run_tasks(module)
 
 
 if __name__ == '__main__':
