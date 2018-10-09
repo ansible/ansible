@@ -66,6 +66,7 @@ coverage.xml
 /test/units/cover-html
 /test/integration/targets/*/backup/
 /test/cache/*
+metadata-*.json
 # Development
 /test/develop
 venv

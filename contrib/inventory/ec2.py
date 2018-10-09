@@ -301,6 +301,50 @@ class Ec2Inventory(object):
 
         return False
 
+    @staticmethod
+    def _read_regions_setting(
+            eucalyptus,
+            eucalyptus_host,
+            credentials,
+            args_regions,
+            config_regions,
+            config_regions_exclude):
+        regions = []
+        temp_regions = []
+
+        def split_regions(regions_str):
+            # support regions separated by comma and space
+            region_replacements = (',',)
+            for r in region_replacements:
+                regions_str = regions_str.replace(r, ' ')
+
+            return regions_str.split()
+
+        # override regions with option provided
+        if args_regions is not None:
+            temp_regions = split_regions(args_regions)
+        else:
+            # read regions from ini config file
+            if config_regions == 'all':
+                if eucalyptus:
+                    temp_regions.append(boto.connect_euca(host=eucalyptus_host, **credentials).region.name)
+                else:
+                    temp_regions = [region_info.name for region_info in ec2.regions()]
+            elif 'auto' in config_regions:
+                env_region = os.environ.get('AWS_REGION')
+                if env_region is None:
+                    env_region = os.environ.get('AWS_DEFAULT_REGION')
+                temp_regions = [env_region]
+            else:
+                temp_regions = split_regions(config_regions)
+
+        # exclude to clean up regions
+        for region in temp_regions:
+            if region not in config_regions_exclude:
+                regions.append(region)
+
+        return regions
+
     def read_settings(self):
         ''' Reads the settings from the ec2.ini file '''
 
@@ -344,24 +388,16 @@ class Ec2Inventory(object):
         self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
 
         # Regions
-        self.regions = []
         config_regions = config.get('ec2', 'regions')
-        if (config_regions == 'all'):
-            if self.eucalyptus_host:
-                self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
-            else:
-                config_regions_exclude = config.get('ec2', 'regions_exclude')
-
-                for region_info in ec2.regions():
-                    if region_info.name not in config_regions_exclude:
-                        self.regions.append(region_info.name)
-        else:
-            self.regions = config_regions.split(",")
-        if 'auto' in self.regions:
-            env_region = os.environ.get('AWS_REGION')
-            if env_region is None:
-                env_region = os.environ.get('AWS_DEFAULT_REGION')
-            self.regions = [env_region]
+        config_regions_exclude = config.get('ec2', 'regions_exclude')
+        self.regions = self._read_regions_setting(
+            self.eucalyptus,
+            self.eucalyptus_host,
+            self.credentials,
+            self.args.regions,
+            config_regions,
+            config_regions_exclude,
+        )
 
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
@@ -532,6 +568,8 @@ class Ec2Inventory(object):
                             help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
         parser.add_argument('--profile', '--boto-profile', action='store', dest='boto_profile',
                             help='Use boto profile for connections to EC2')
+        parser.add_argument('--regions', action='store',
+                            help='Override regions settings in ini config file')
         self.args = parser.parse_args()
 
     def do_api_calls_update_cache(self):
