@@ -377,6 +377,8 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                                 ('mysql_native_password', encrypted_password, user, host)
                             )
                             cursor.execute("FLUSH PRIVILEGES")
+                        else:
+                            raise e
                 changed = True
 
         # Handle privileges
