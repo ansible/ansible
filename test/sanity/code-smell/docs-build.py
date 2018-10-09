@@ -90,9 +90,6 @@ def main():
         else:
             code = 'error'
 
-        if code == 'not-in-toc-tree' and path.startswith('docs/docsite/rst/modules/'):
-            continue  # modules are not expected to be in the toc tree
-
         print('%s:%d:%d: %s: %s' % (path, lineno, column, code, message))
 
 
