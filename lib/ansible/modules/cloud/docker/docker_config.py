@@ -18,34 +18,37 @@ module: docker_config
 
 short_description: Manage docker configs.
 
-version_added: "2.6"
+version_added: "2.8"
 
 description:
-     - Create and remove Docker configs in a Swarm environment. Similar to `docker config create` and `docker config rm`.
+     - Create and remove Docker configs in a Swarm environment. Similar to C(docker config create) and C(docker config rm).
      - Adds to the metadata of new configs 'ansible_key', an encrypted hash representation of the data, which is then used
-     - in future runs to test if a config has changed.
-     - If 'ansible_key is not present, then a config will not be updated unless the C(force) option is set.
+       in future runs to test if a config has changed.
+     - If 'ansible_key' is not present, then a config will not be updated unless the C(force) option is set.
      - Updates to configs are performed by removing the config and creating it again.
 options:
   data:
     description:
-      - String. The value of the config. Required when state is C(present).
+      - The value of the config. Required when state is C(present).
     required: false
+    type: str
   labels:
     description:
       - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
       - If new meta data is provided, or existing meta data is modified, the config will be updated by removing it and creating it again.
     required: false
+    type: dict
   force:
     description:
       - Use with state C(present) to always remove and recreate an existing config.
-      - If I(true), an existing config will be replaced, even if it has not changed.
+      - If I(true), an existing config will be replaced, even if it has not been changed.
     default: false
     type: bool
   name:
     description:
       - The name of the config.
     required: true
+    type: str
   state:
     description:
       - Set to C(present), if the config should exist, and C(absent), if it should not.
@@ -59,7 +62,15 @@ extends_documentation_fragment:
     - docker
 
 requirements:
-  - "docker-py >= 2.6.0"
+  - "docker >= 2.6.0"
+  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+     module has been superseded by L(docker,https://pypi.org/project/docker/)
+     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+     For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+     install the C(docker) Python module. Note that both modules should I(not)
+     be installed at the same time. Also note that when both modules are installed
+     and one of them is uninstalled, the other might no longer function and a
+     reinstall of it is required."
   - "Docker API >= 1.30"
 
 author:
@@ -114,7 +125,7 @@ EXAMPLES = '''
       one: '1'
     state: present
 
-- name: Force the removal/creation of the config
+- name: Force the (re-)creation of the config
   docker_config:
     name: foo
     data: Goodnight everyone!
@@ -131,7 +142,7 @@ RETURN = '''
 config_id:
   description:
     - The ID assigned by Docker to the config object.
-  returned: success
+  returned: success and C(state == "present")
   type: string
   sample: 'hzehrmyjigmcp2gb6nlhmjqcv'
 '''
@@ -222,7 +233,7 @@ class ConfigManager(DockerBaseClass):
                 for label in attrs['Labels']:
                     if self.labels.get(label) and self.labels[label] != attrs['Labels'][label]:
                         labels_changed = True
-                # check if user added a label
+            # check if user added a label
             labels_added = False
             if self.labels:
                 if attrs.get('Labels'):
