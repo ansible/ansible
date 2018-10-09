@@ -96,10 +96,10 @@ def main():
         current_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
         new_limit = (nofile_limit, nofile_limit)
         if current_limit > new_limit:
-            logger.debug('RLIMIT_NOFILE: %s -> %s' % (current_limit, new_limit))
+            logger.debug('RLIMIT_NOFILE: %s -> %s', current_limit, new_limit)
             resource.setrlimit(resource.RLIMIT_NOFILE, (nofile_limit, nofile_limit))
         else:
-            logger.debug('RLIMIT_NOFILE: %s' % (current_limit, ))
+            logger.debug('RLIMIT_NOFILE: %s', current_limit)
 
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'injector.json')
 
