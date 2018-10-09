@@ -79,21 +79,68 @@ EXAMPLES = '''
     mongodb_parameters:
       #mandatory parameters
       database: 'local'
-      #optional
       collection: "startup_log"
+      #optional
       connection_string: "mongodb://localhost/"
+	  # connection_string: "mongodb://username:password@my.server.com:27017/"
       # extra_connection_parameters: { "ssl" : True , "ssl_certfile": /etc/self_signed_certificate.pem" }
       #optional query  parameters, we accept any parameter from the normal mongodb query.
-      # filter:  { "hostname": "batman" }
+      # filter:  { "hostname": "u18" }
       projection: { "pid": True    , "_id" : False , "hostname" : True }
       skip: 0
       limit: 1
       sort:  [ [ "startTime" , "ASCENDING" ] , [ "age", "DESCENDING" ] ]
   tasks:
-    - debug: msg="Mongo has already started with the following PID [{{ item.pid }}] - full_data {{ item }} "
-      with_items:
-      - "{{ lookup('mongodb', mongodb_parameters) }}"
+    - debug: msg="The PID from MongoDB is {{ lookup('mongodb', mongodb_parameters ).pid }}"
+
+    - debug: msg="The HostName from the MongoDB server is {{ lookup('mongodb', mongodb_parameters ).hostname }}"
+
+    - debug: msg="Mongo DB is stored at {{ lookup('mongodb', mongodb_parameters_inline )}}"
+      vars:
+        mongodb_parameters_inline:
+          database: 'local'
+          collection: "startup_log"
+          connection_string: "mongodb://localhost/"
+          limit: 1
+          projection: { "cmdline.storage": True }
+
+      # lookup syntax, does the same as below
+    - debug: msg="The hostname is {{ item.hostname }} and the pid is {{ item.pid }}"
+      loop: "{{ lookup('mongodb', mongodb_parameters, wantlist=True) }}"
+
+      # query syntax, does the same as above
+    - debug: msg="The hostname is {{ item.hostname }} and the pid is {{ item.pid }}"
+      loop: "{{ query('mongodb', mongodb_parameters) }}"
+
+    - name: "Raw output from the mongodb lookup (a json with pid and hostname )"
+      debug: msg="{{ lookup('mongodb', mongodb_parameters) }}"
+
+    - name: "Yet another mongodb query, now with the parameters on the task itself"
+      debug: msg="pid={{item.pid}} hostname={{item.hostname}} version={{ item.buildinfo.version }}"
+      with_mongodb:
+        - database: 'local'
+          collection: "startup_log"
+          connection_string: "mongodb://localhost/"
+          limit: 1
+          projection: { "pid": True    , "hostname": True , "buildinfo.version": True }
+
+    # Please notice this specific query may result more than one result. This is expected
+    - name: "Shows the whole output from mongodb"
+      debug: msg="{{ item }}"
+      with_mongodb:
+        - database: 'local'
+          collection: "startup_log"
+          connection_string: "mongodb://localhost/"
+
+
 '''
+
+RETURN = """
+  _list_of_jsons:
+    description:
+      - a list of JSONs with the results of the MongoDB query.
+    type: list
+"""
 
 import datetime
 
