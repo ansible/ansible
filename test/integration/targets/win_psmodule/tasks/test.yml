@@ -63,7 +63,7 @@
   assert:
     that:
       - "module_required_version_setup_3 is not changed"
-      - "'Problems installing {{ powershell_module }} module: No match was found for the specified search criteria' in module_required_version_setup_3.module_stderr"
+      - "module_required_version_setup_3 is failed"
 
 - name: check Powershell Gallery module setup - maximum_version
   win_psmodule:
@@ -105,7 +105,7 @@
   assert:
     that:
       - "module_maximum_version_setup_3 is not changed"
-      - "'Problems installing {{ powershell_module }} module: No match was found for the specified search criteria' in module_maximum_version_setup_3.module_stderr"
+      - "module_maximum_version_setup_3 is failed"
 
 - name: chek module install with allow_clobber not active
   win_psmodule:
@@ -332,7 +332,7 @@
 
 - name: check remove installed powershell module - minimum_version
   win_psmodule:
-    name: powershell-yaml
+    name: "{{ powershell_module }}"
     minimum_version: "{{ powershell_module_minimum_version_request }}"
     state: absent
   register: module_uninstall_minimum_version
@@ -346,7 +346,7 @@
 
 - name: check remove installed powershell module - minimum_version - ultra high version
   win_psmodule:
-    name: powershell-yaml
+    name: "{{ powershell_module }}"
     minimum_version: "{{ powershell_module_ultra_high_version }}"
     state: absent
   register: module_uninstall_minimum_version
@@ -384,36 +384,35 @@
 
 - name: copy some module to custom repo
   win_shell: |
-
     # Need PSGet 1.6.0 for publishing and named repo usage
-    $psg = [PSCustomObject]@{ n="PowerShellGet"; v="1.6.0"};
-    Remove-Module -Name $psg.n -Force -ErrorAction SilentlyContinue;
-    Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -ErrorVariable missingProvider -Force | Out-Null;
+    $psg = [PSCustomObject]@{ n="PowerShellGet"; v="1.6.0"}
+    Remove-Module -Name $psg.n -Force -ErrorAction SilentlyContinue
+    Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -ErrorVariable missingProvider -Force | Out-Null
 
     if($missingProvider){
-      Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force | Out-Null;
+      Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force | Out-Null
 
       # Unload previous version
       Remove-Module -Name $psg.n -Force -ErrorAction SilentlyContinue;
-      Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force | Out-Null;
+      Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force | Out-Null
     }
 
-    $modName = "{{powershell_module}}";
+    $modName = "{{powershell_module}}"
     $temp = $env:Temp;
 
-    Save-Module -Name $modName -Repository PSGallery -Path $temp | Out-Null;
+    Save-Module -Name $modName -Repository PSGallery -Path $temp | Out-Null
 
-    $repoName = "{{custom_repo_name}}";
-    $repoPath = "{{custom_repo_path}}";
+    $repoName = "{{custom_repo_name}}"
+    $repoPath = "{{custom_repo_path}}"
 
-    if(!(Test-Path $repoPath)){
-      New-Item -Type Directory $repoPath -Force | Out-Null;
+    if(-not(Test-Path $repoPath)){
+      New-Item -Type Directory $repoPath -Force | Out-Null
     }
 
-    Register-PSRepository -Name $repoName -SourceLocation $repoPath -InstallationPolicy Trusted | Out-Null;
+    Register-PSRepository -Name $repoName -SourceLocation $repoPath -InstallationPolicy Trusted | Out-Null
 
-    Publish-Module -Path "$temp\\$modName" -Repository $repoName -Force -Confirm:$false | Out-Null;
-    Get-ChildItem "$repoPath\\*" | ? Name -match "$modName.*.nupkg" | % Name;
+    Publish-Module -Path "$temp\\$modName" -Repository $repoName -Force -Confirm:$false | Out-Null
+    Get-ChildItem -Path "$repoPath\\*" | Where-Object { $_.Name -match "$modName.*.nupkg" } | ForEach { $_.Name }
 
   register: saved_package
 
