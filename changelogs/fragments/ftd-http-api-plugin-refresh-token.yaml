@@ -1,0 +1,2 @@
+bugfixes:
+- Fix the issue with refreshing the token by storing Authorization header inside HttpApi connection plugin.
