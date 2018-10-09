@@ -132,7 +132,7 @@ branches:
 build:
   pre_ci_boot:
     image_name: drydock/u16pytall
-    image_tag: master
+    image_tag: v6.9.4
     pull: false
     options: "--privileged=false --net=bridge"
   ci:
