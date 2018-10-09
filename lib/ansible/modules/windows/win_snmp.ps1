@@ -51,7 +51,7 @@ ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
 
   If ($remove) {
     $result.changed = $True
-    Remove-ItemProperty -Path $Managers_reg_key -Name $idx -WhatIf $check_mode
+    Remove-ItemProperty -Path $Managers_reg_key -Name $idx -WhatIf:$check_mode
   }
 }
 
@@ -75,7 +75,7 @@ ForEach ($community in (Get-Item $Communities_reg_key).Property) {
 
   If ($remove) {
     $result.changed = $True
-    Remove-ItemProperty -Path $Communities_reg_key -Name $community -WhatIf $check_mode
+    Remove-ItemProperty -Path $Communities_reg_key -Name $community -WhatIf:$check_mode
   }
 }
 
@@ -110,7 +110,7 @@ ForEach ($manager in $managers) {
 # Add communities that don't already exist
 ForEach ($community in $communities) {
   $result.changed = $True
-  New-ItemProperty -Path $Communities_reg_key -Name $community -PropertyType DWord -Value 4 -WhatIf $check_mode
+  New-ItemProperty -Path $Communities_reg_key -Name $community -PropertyType DWord -Value 4 -WhatIf:$check_mode
 }
 
 Exit-Json $result
