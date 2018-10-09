@@ -71,6 +71,7 @@ class CallbackModule(CallbackBase):
 
         if self._run_is_verbose(result):
             task_result = "%s %s: %s" % (task_host, msg, self._dump_results(result._result, indent=4))
+            return task_result
 
         if self.delegated_vars:
             task_delegate_host = self.delegated_vars['ansible_host']
