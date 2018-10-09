@@ -48,7 +48,7 @@ options:
     description:
         description:
             - "Description of the snapshot."
-     download_image_path:
+    download_image_path:
         description:
             - "Path on a file system where disk should be downloaded."
             - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
