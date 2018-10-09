@@ -93,7 +93,7 @@ options:
      description:
        - Path to a .deb package on the remote machine.
        - If :// in the path, ansible will attempt to download deb before installing. (Version added 2.1)
-       - The deb parameter require xz-utils package in order to extract the control file of the deb package to install.
+       - Requires the C(xz-utils) package to extract the control file of the deb package to install.
      required: false
      version_added: "1.6"
   autoremove:
