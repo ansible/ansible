@@ -115,7 +115,10 @@ class UTM:
         if info["status"] >= 400:
             self.module.fail_json(result=json.loads(info))
         else:
-            self.module.exit_json(result=result, changed=False)
+            if result is None:
+                self.module.exit_json(changed=False)
+            else:
+                self.module.exit_json(result=result, changed=False)
 
     def _add(self):
         """
