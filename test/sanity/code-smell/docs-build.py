@@ -53,7 +53,6 @@ def main():
     }
 
     ignore_codes = [
-        'reference-target-not-found',
     ]
 
     used_ignore_codes = set()
