@@ -1,0 +1,2 @@
+minor_changes:
+- win_updates - filter updates based on a post category classification - https://github.com/ansible/ansible/issues/45476

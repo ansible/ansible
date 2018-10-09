@@ -54,9 +54,9 @@ options:
         - A list of categories to check an update is in. This can be used to
           confirm which product categories are applied. Category names here may
           overlap with the C(category_names) option.
-        - Matches are a regular expression match. For example, Windows will match
-          any Windows OS update, while the category string may be Windows Server
-          2012 R2.
+        - Matches are a regular expression match. For example, C(Windows) will match
+          any Windows OS update, while the category string may be
+          C(Windows Server 2012 R2).
         - These categories are filtered after searching for updates, while the
           list in C(category_names) is applied during the search for updates.
         - To get the list of categories, run the module with C(state=query).
