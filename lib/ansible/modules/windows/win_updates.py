@@ -59,6 +59,7 @@ options:
           2012 R2.
         - These categories are filtered after searching for updates, while the
           list in C(category_names) is applied during the search for updates.
+        - To get the list of categories, run the module with C(state=query).
         type: list
         version_added: '2.8'
     reboot:
