@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # (c) 2013, Greg Buehler
-# Updates 2017 by tony@nieuwenborg.nl
+# Updates 2017-2018 by tony@nieuwenborg.nl
 # This file is part of Ansible,
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -30,6 +30,7 @@ name, use asterisk. For example --limit="Linux*servers".
 Metadata:
 - ansible_host: IP found in host info, or macro {$ANSIBLE_HOST} if set.
 - ansible_port: macro {$ANSIBLE_PORT} if set, otherwise 22
+- ansible_enabled: macro {$ANSIBLE_ENABLED}, defaults to '1'
 - user defined vars: macro {$ANSIBLE_VARS} takes json like:
   { "foo":"bar", "num":2 }
 - templates: list of templates used by host
@@ -97,6 +98,7 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
+        #data = {}
         data = api.host.get({"filter": {'name': name}})
         return data
 
@@ -117,14 +119,17 @@ class ZabbixInventory(object):
             hostname = host['name']
             ip = host['interfaces'][0]['ip']
             port = 22
+            enabled = '1'
 
-            data[self.defaultgroup]['hosts'].append(hostname)
+            #data[self.defaultgroup]['hosts'].append(hostname)
             zabbixvars = ''
             for m in host['macros']:
                 if m['macro'] == '{$ANSIBLE_PORT}':
                     port = m['value']
                 elif m['macro'] == '{$ANSIBLE_HOST}':
                     ip = m['value']
+                elif m['macro'] == '{$ANSIBLE_ENABLED}':
+                    enabled = m['value']
                 elif m['macro'] == '{$ANSIBLE_VARS}':
                     zv = m['value']
                     try:
@@ -134,7 +139,16 @@ class ZabbixInventory(object):
                               + hostname + ":"
                               + "{$ANSIBLE_VARS}: " + zv)
                         sys.exit(1)
-
+            if '0' == enabled:
+                print("host " + hostname + " has enabled flag set to 0", file=sys.stderr)
+                continue
+            data[self.defaultgroup]['hosts'].append(hostname)
+#            if '0' == enabled:
+            #    print("Ansible has been disabled for host " 
+            #        + hostname)
+        #        sys.exit(1)
+            #    return {}
+                
             # TODO maybe only add when actually (re)defined?
             data['_meta']['hostvars'][hostname] = {'ansible_host': ip,
                                                    'ansible_port': port}
@@ -168,8 +182,9 @@ class ZabbixInventory(object):
 
         if self.zabbix_server and self.zabbix_username:
             try:
-                api = ZabbixAPI(server=self.zabbix_server, validate_certs=self.validate_certs)
-                api.login(user=self.zabbix_username, password=self.zabbix_password)
+                api = ZabbixAPI(server=self.zabbix_server)
+                api.login(user=self.zabbix_username,
+                          password=self.zabbix_password)
             except BaseException as e:
                 print("Error: Could not login to Zabbix server. Check your zabbix.ini.",
                       file=sys.stderr)
