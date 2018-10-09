@@ -97,12 +97,12 @@ EXAMPLES = """
 ---
 - name: Import Server Configuration Profile
   dellemc_import_server_config_profile:
-       idrac_ip:   "xx.xx.xx.xx"
-       idrac_user: "xxxx"
-       idrac_pwd:  "xxxxxxxx"
+       idrac_ip:   "{{ idrac_ip }}"
+       idrac_user: "{{ idrac_user }}"
+       idrac_pwd:  "{{ idrac_pwd }}"
        share_name: "xx.xx.xx.xx:/share"
-       share_user: "xxxx"
-       share_pwd:  "xxxxxxxx"
+       share_user: "{{ share_user }}"
+       share_pwd:  "{{ share_pwd }}"
        scp_file:   "scp_file.xml"
        scp_components: "ALL"
        job_wait: True

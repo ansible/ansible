@@ -84,12 +84,12 @@ EXAMPLES = """
 ---
 - name: Update firmware from repository on a Network Share
   dellemc_install_firmware:
-       idrac_ip:   "xx.xx.xx.xx"
-       idrac_user: "xxxx"
-       idrac_pwd:  "xxxxxxxx"
+       idrac_ip:   "{{ idrac_ip }}"
+       idrac_user: "{{ idrac_user }}"
+       idrac_pwd:  "{{ idrac_pwd }}"
        share_name: "xx.xx.xx.xx:/share"
-       share_user: "xxxx"
-       share_pwd:  "xxxxxxxx"
+       share_user: "{{ share_user }}"
+       share_pwd:  "{{ share_pwd }}"
        share_mnt: "/mnt/share"
        reboot:     True
        job_wait:   True

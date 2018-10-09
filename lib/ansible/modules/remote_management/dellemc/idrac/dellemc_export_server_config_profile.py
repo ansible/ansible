@@ -86,12 +86,12 @@ EXAMPLES = """
 ---
 - name: Export Server Configuration Profile (SCP)
   dellemc_export_server_config_profile:
-       idrac_ip:   "xx.xx.xx.xx"
-       idrac_user: "xxxx"
-       idrac_pwd:  "xxxxxxxx"
+       idrac_ip:   "{{ idrac_ip }}"
+       idrac_user: "{{ idrac_user }}"
+       idrac_pwd:  "{{ idrac_pwd }}"
        share_name: "xx.xx.xx.xx:/share"
-       share_pwd:  "xxxxxxxx"
-       share_user: "xxxx"
+       share_pwd:  "{{ share_pwd }}"
+       share_user: "{{ share_user }}"
        job_wait: True
        export_format:  "XML"
        export_use:     "Default"
