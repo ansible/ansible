@@ -31,7 +31,8 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(
+        filename=os.path.splitext(os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -74,7 +75,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -106,7 +107,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -138,7 +139,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -170,7 +171,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -202,7 +203,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -234,7 +235,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -266,7 +267,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -298,7 +299,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -330,7 +331,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -362,7 +363,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -394,7 +395,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -426,7 +427,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -458,7 +459,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -490,7 +491,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -522,7 +523,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -554,7 +555,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -586,7 +587,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -618,7 +619,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -650,7 +651,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -682,7 +683,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -714,7 +715,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -746,7 +747,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp6
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -778,7 +779,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_ip
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -810,7 +811,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -842,7 +843,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -874,7 +875,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -906,7 +907,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp6
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -938,7 +939,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_ip
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -970,7 +971,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_proxy_all
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1002,7 +1003,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1034,7 +1035,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1066,7 +1067,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1098,7 +1099,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp6
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1130,7 +1131,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_ip
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1162,7 +1163,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_proxy_all
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1194,7 +1195,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1226,7 +1227,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1258,7 +1259,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp6
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1290,7 +1291,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_ip
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1322,7 +1323,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1354,7 +1355,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_proxy_all
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1386,7 +1387,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1418,7 +1419,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1450,7 +1451,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1482,7 +1483,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp6
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1514,7 +1515,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_ip
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1546,7 +1547,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_proxy_all
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1578,7 +1579,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1610,7 +1611,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1642,7 +1643,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_icmp6
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1674,7 +1675,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_ip
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1706,7 +1707,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_serviceWithSource
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1738,7 +1739,7 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_proxy_all
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -1936,7 +1937,7 @@ def test_fmgr_fwobj_service_group(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -1968,7 +1969,7 @@ def test_fmgr_fwobj_service_group(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2000,7 +2001,7 @@ def test_fmgr_fwobj_service_group(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2032,7 +2033,7 @@ def test_fmgr_fwobj_service_group(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2064,7 +2065,7 @@ def test_fmgr_fwobj_service_group(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2096,7 +2097,7 @@ def test_fmgr_fwobj_service_group(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -2128,7 +2129,7 @@ def test_fmgr_fwobj_service_group(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2160,7 +2161,7 @@ def test_fmgr_fwobj_service_group(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -2223,7 +2224,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: set
@@ -2255,7 +2256,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -2287,7 +2288,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -2319,7 +2320,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -2351,7 +2352,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -2383,7 +2384,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -2415,7 +2416,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -2447,7 +2448,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: 0
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: 3
     # mode: add
@@ -2479,7 +2480,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2511,7 +2512,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2543,7 +2544,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2575,7 +2576,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2607,7 +2608,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2639,7 +2640,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2671,7 +2672,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2703,7 +2704,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -2735,7 +2736,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -2767,7 +2768,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -2799,7 +2800,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: set
@@ -2831,7 +2832,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: ansible_custom_service
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: add
@@ -2863,7 +2864,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -2895,7 +2896,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -2927,7 +2928,7 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # tcp-timewait-timer: 0
     # name: None
     # app-service-type: None
-    # fqdn: 
+    # fqdn:
     # app-category: None
     # check-reset-range: None
     # mode: delete
@@ -3005,4 +3006,3 @@ def test_fmgr_fwobj_service_category(fixture_data, mocker):
     # Test using fixture 23 #
     output = fmgr_fwobj_service.fmgr_fwobj_service_category(fmg_instance, fixture_data[22]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -3
-
