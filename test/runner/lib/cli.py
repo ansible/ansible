@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 import errno
 import os
+import resource
 import sys
 
 from lib.util import (
@@ -83,6 +84,18 @@ def main():
         display.color = config.color
         display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
+
+        # to achieve a consistent nofile ulimit, set to 16k here, this can affect performance in subprocess.Popen when
+        # being called with close_fds=True on Python (8x the time on some environments)
+        nofile_limit = 16 * 1024
+        current_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+        new_limit = (nofile_limit, nofile_limit)
+
+        if current_limit > new_limit:
+            display.info('RLIMIT_NOFILE: %s -> %s' % (current_limit, new_limit), verbosity=1)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (nofile_limit, nofile_limit))
+        else:
+            display.info('RLIMIT_NOFILE: %s' % (current_limit, ), verbosity=1)
 
         try:
             args.func(config)
