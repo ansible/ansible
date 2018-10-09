@@ -2,6 +2,7 @@
   - name: Add initial SNMP community
     register: snmp_community
     win_snmp:
+      action: add
       community_strings:
         - ansible-ro-test
 
@@ -22,6 +23,7 @@
   - name: Add initial SNMP community again
     register: snmp_community_again
     win_snmp:
+      action: add
       community_strings:
         - ansible-ro-test
 
@@ -33,6 +35,7 @@
   - name: Add next SNMP community
     register: snmp_community_next
     win_snmp:
+      action: add
       community_strings:
         - ansible-ro-test-next
 
@@ -66,7 +69,7 @@
   - name: Replace SNMP community
     register: snmp_community_replace
     win_snmp:
-      replace: yes
+      action: set
       community_strings:
         - ansible-ro-test-replace
 
@@ -97,3 +100,38 @@
         - snmp_community_reg_replace.exists
         - snmp_community_reg_replace.type == 'REG_DWORD'
         - snmp_community_reg_replace.value == 4
+
+  # This task has already been tested
+  - name: Add another SNMP community before testing removal
+    win_snmp:
+      action: add
+      community_strings:
+        - ansible-ro-remove-add
+
+  - name: Remove the replaced SNMP community
+    register: snmp_community_remove
+    win_snmp:
+      action: remove
+      community_strings:
+        - ansible-ro-test-replace
+
+  - name: Check replace SNMP community is removed in registry
+    register: snmp_community_reg_remove
+    win_reg_stat:
+      path: "{{ valid_communities_key }}"
+      name: ansible-ro-test-replace
+
+  - name: Check SNMP community that was added for testing removal exists in registry
+    register: snmp_community_reg_remove_add
+    win_reg_stat:
+      path: "{{ valid_communities_key }}"
+      name: ansible-ro-remove-add
+
+  - name: Assert removal of SNMP community succeeded and next SNMP community remains
+    assert:
+      that:
+        - snmp_community_remove is changed
+        - snmp_community_reg_remove.exists == false
+        - snmp_community_reg_remove_add.exists
+        - snmp_community_reg_remove_add.type == 'REG_DWORD'
+        - snmp_community_reg_remove_add.value == 4

@@ -9,7 +9,8 @@ $params      = Parse-Args -arguments $args -supports_check_mode $true;
 $check_mode  = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $managers    = Get-AnsibleParam -obj $params -name "permitted_managers"  -type "list" -default @()
 $communities = Get-AnsibleParam -obj $params -name "community_strings"   -type "list" -default @()
-$replace     = Get-AnsibleParam -obj $params -name "replace"             -type "bool" -default $false
+$action_in   = Get-AnsibleParam -obj $params -name "replace"             -type "str"  -default "set" -ValidateSet @("set", "add", "remove")
+$action      = $action_in.ToLower()
 
 $result = @{failed = $False; changed = $False;}
 
@@ -35,19 +36,22 @@ ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
     continue
   }
 
+  $remove = $False
   If ($managers.Contains($manager)) {
-    # Remove manager from list since it already exists
-    $managers.Remove($manager)
-  } Else {
-    If ($replace -And $managers.Count -gt 0) {
-      # Will remove this manager since it is not in the list
-      $result.changed = $True
-
-      If (-Not $check_mode) {
-        # Remove the permitted manager
-        Remove-ItemProperty -Path $Managers_reg_key -Name $idx
-      }
+    If ($action -eq "remove") {
+      $remove = $True
+    } Else {
+      # Remove manager from list to add since it already exists
+      $managers.Remove($manager)
     }
+  } ElseIf ($action -eq "set" -And $managers.Count -gt 0) {
+    # Will remove this manager since it is not in the set list
+    $remove = $True
+  }
+
+  If ($remove) {
+    $result.changed = $True
+    Remove-ItemProperty -Path $Managers_reg_key -Name $idx -WhatIf $check_mode
   }
 }
 
@@ -56,20 +60,27 @@ ForEach ($community in (Get-Item $Communities_reg_key).Property) {
     continue
   }
 
+  $remove = $False
   If ($communities.Contains($community)) {
-    # Remove community from list since it already exists
-    $communities.Remove($community)
-  } Else {
-    If ($replace -And $communities.Count -gt 0) {
-      # Will remove this community since it is not in the list
-      $result.changed = $True
-
-      If (-Not $check_mode) {
-        # Remove the community
-        Remove-ItemProperty -Path $Communities_reg_key -Name $community
-      }
+    If ($action -eq "remove") {
+      $remove = $True
+    } Else {
+      # Remove community from list to add since it already exists
+      $communities.Remove($community)
     }
+  } ElseIf ($action -eq "set" -And $communities.Count -gt 0) {
+    # Will remove this community since it is not in the set list
+    $remove = $True
   }
+
+  If ($remove) {
+    $result.changed = $True
+    Remove-ItemProperty -Path $Communities_reg_key -Name $community -WhatIf $check_mode
+  }
+}
+
+If ($action -eq "remove") {
+  Exit-Json $result
 }
 
 # Get used manager indexes as integers
@@ -96,12 +107,10 @@ ForEach ($manager in $managers) {
   }
 }
 
-# Add communities that don't arleady exist
+# Add communities that don't already exist
 ForEach ($community in $communities) {
   $result.changed = $True
-  If (-Not $check_mode) {
-    New-ItemProperty -Path $Communities_reg_key -Name $community -PropertyType DWord -Value 4
-  }
+  New-ItemProperty -Path $Communities_reg_key -Name $community -PropertyType DWord -Value 4 -WhatIf $check_mode
 }
 
 Exit-Json $result

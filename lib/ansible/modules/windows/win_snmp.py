@@ -30,13 +30,13 @@ options:
         - The list of read-only SNMP community strings.
         required: false
         type: list
-    replace:
+    action:
         description:
-        - Whether this module should replace all existing values. The list of
-          managers and communities will be maintained if C(replace=true) but no
-          list is provided to replace the existing managers or communities.
-        type: bool
-        default: false
+        - C(add) will add new SNMP community strings and/or SNMP managers
+        - C(set) will replace SNMP community strings and/or SNMP managers
+        - C(remove) will remove SNMP community strings and/or SNMP managers
+        default: set
+        choices: [ add, set, remove ]
 '''
 
 EXAMPLES = '''
@@ -49,7 +49,7 @@ EXAMPLES = '''
             - public
           managers:
             - 192.168.1.2
-          replace: True
+          action: set
 '''
 
 RETURN = r'''
