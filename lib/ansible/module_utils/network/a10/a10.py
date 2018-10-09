@@ -118,11 +118,11 @@ def axapi_call_v3(module, url, method=None, body=None, signature=None):
         if info['body'] is not None:
             error_message = json.loads(info['body']).get('response').get('err').get('msg')
         module.fail_json(msg="failed to connect (status code %s), error was: %s " % (info['status'], error_message))
-    
-    # in at least one case (uploading an ssl cert) the api simply returns HTTP 204 which would result in status == fail 
+
+    # in at least one case (uploading an ssl cert) the api simply returns HTTP 204 which would result in status == fail
     elif info['status'] == 204:
         return {"response": {"status": "OK", "msg": "HTTP %s %s" % (info['status'], ' equals success')}}
-    
+
     try:
         raw_data = rsp.read()
         data = json.loads(raw_data)
