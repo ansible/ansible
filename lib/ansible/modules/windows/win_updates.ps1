@@ -125,7 +125,7 @@ $update_script_block = {
                 kb = $update.KBArticleIDs
                 id = $update.Identity.UpdateId
                 installed = $false
-                categories = New-Object System.Collections.ArrayList
+                categories = $update.Categories.Name
             }
         
             # validate update again blacklist/whitelist
@@ -192,16 +192,12 @@ $update_script_block = {
             # to check
             $post_cat_matched = ($post_categories.Count -eq 0)
 
-            ForEach ($update_cat in $update.Categories) {
-                $update_info.categories.Add($update_cat.Name) | Out-Null
+            If (-Not $post_cat_matched) {
                 ForEach ($match_cat in $post_categories) {
-                    If ($update_cat.Name -Match $match_cat) {
+                    If ($update.Categories.Name -Match $match_cat) {
                         $post_cat_matched = $True
                         break
                     }
-                }
-                If ($post_cat_matched) {
-                    break
                 }
             }
 
