@@ -29,8 +29,6 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
-from ansible.plugins.connection.network_cli import Connection as NetworkCli
-from ansible.plugins.connection.httpapi import Connection as HttpApi
 
 
 class Cliconf(CliconfBase):
@@ -49,20 +47,6 @@ class Cliconf(CliconfBase):
         self._module_context[module_key] = module_context
 
         return None
-
-    def send_command(self, command, **kwargs):
-        """Executes a cli command and returns the results
-        This method will execute the CLI command on the connection and return
-        the results to the caller.  The command output will be returned as a
-        string
-        """
-        if isinstance(self._connection, NetworkCli):
-            resp = super(Cliconf, self).send_command(command, **kwargs)
-        elif isinstance(self._connection, HttpApi):
-            resp = self._connection.send_request(command, **kwargs)
-        else:
-            raise ValueError("Invalid connection type")
-        return resp
 
     def get_device_info(self):
         device_info = {}
@@ -261,13 +245,8 @@ class Cliconf(CliconfBase):
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
+        result['network_api'] = 'cliconf'
 
-        if isinstance(self._connection, NetworkCli):
-            result['network_api'] = 'cliconf'
-        elif isinstance(self._connection, HttpApi):
-            result['network_api'] = 'nxapi'
-        else:
-            raise ValueError("Invalid connection type")
         return json.dumps(result)
 
     def _get_command_with_output(self, command, output):

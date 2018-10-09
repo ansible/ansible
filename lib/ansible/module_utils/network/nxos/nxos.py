@@ -108,7 +108,12 @@ def get_connection(module):
         if is_nxapi(module):
             conn = Nxapi(module)
         else:
-            conn = Cli(module)
+            connection_proxy = Connection(module._socket_path)
+            cap = json.loads(connection_proxy.get_capabilities())
+            if cap['network_api'] == 'cliconf':
+                conn = Cli(module)
+            elif cap['network_api'] == 'nxapi':
+                conn = HttpApi(module)
         _DEVICE_CONNECTION = conn
     return _DEVICE_CONNECTION
 
@@ -494,6 +499,62 @@ class Nxapi:
         self._module_context[module_key] = module_context
 
         return None
+
+
+class HttpApi:
+    def __init__(self, module):
+        self._module = module
+        self._device_configs = {}
+        self._connection_obj = None
+
+    @property
+    def _connection(self):
+        if self._connection_obj:
+            return self._connection_obj
+
+        self._connection_obj = Connection(self._module._socket_path)
+        return self._connection_obj
+
+    def run_commands(self, commands, check_rc=True):
+        """Runs list of commands on remote device and returns results
+        """
+        try:
+            out = self._connection.send_request(commands)
+        except ConnectionError as exc:
+            if check_rc is True:
+                raise
+            out = to_text(exc)
+
+        out = to_list(out)
+        if not out[0]:
+            return out
+
+        for index, response in enumerate(out):
+            if response[0] == '{':
+                out[index] = json.loads(response)
+
+        return out
+
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
+        resp = list()
+
+        operations = self._connection.get_device_operations()
+        self._connection.check_edit_config_capability(operations, candidate, commit, replace, comment)
+
+        if replace:
+            device_info = self._connection.get_device_info()
+            if '9K' not in device_info.get('network_os_platform', ''):
+                raise ConnectionError(msg=u'replace is supported only on Nexus 9K devices')
+            candidate = 'config replace {0}'.format(replace)
+
+        responses = self._connection.send_request(candidate, output='config')
+        for response in to_list(responses):
+            if response != '{}':
+                resp.append(response)
+        if not resp:
+            resp = ['']
+
+        return resp
 
 
 def is_json(cmd):

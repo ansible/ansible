@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import re
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
@@ -19,29 +20,6 @@ except ImportError:
 
 
 class HttpApi(HttpApiBase):
-    def _run_queue(self, queue, output):
-        if self._become:
-            display.vvvv('firing event: on_become')
-            queue.insert(0, 'enable')
-
-        request = request_builder(queue, output)
-        headers = {'Content-Type': 'application/json'}
-
-        response, response_data = self.connection.send('/ins', request, headers=headers, method='POST')
-
-        try:
-            response_data = json.loads(to_text(response_data.getvalue()))
-        except ValueError:
-            raise ConnectionError('Response was not valid JSON, got {0}'.format(
-                to_text(response_data.getvalue())
-            ))
-
-        results = handle_response(response_data)
-
-        if self._become:
-            results = results[1:]
-        return results
-
     def send_request(self, data, **message_kwargs):
         output = None
         queue = list()
@@ -75,46 +53,112 @@ class HttpApi(HttpApiBase):
             return responses[0]
         return responses
 
-    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
-        resp = list()
+    def _run_queue(self, queue, output):
+        if self._become:
+            display.vvvv('firing event: on_become')
+            queue.insert(0, 'enable')
 
-        operations = self.connection.get_device_operations()
-        self.connection.check_edit_config_capability(operations, candidate, commit, replace, comment)
+        request = request_builder(queue, output)
+        headers = {'Content-Type': 'application/json'}
 
-        if replace:
-            device_info = self.connection.get_device_info()
-            if '9K' not in device_info.get('network_os_platform', ''):
-                raise ConnectionError(msg=u'replace is supported only on Nexus 9K devices')
-            candidate = 'config replace {0}'.format(replace)
+        response, response_data = self.connection.send('/ins', request, headers=headers, method='POST')
 
-        responses = self.send_request(candidate, output='config')
-        for response in to_list(responses):
-            if response != '{}':
-                resp.append(response)
-        if not resp:
-            resp = ['']
-
-        return resp
-
-    def run_commands(self, commands, check_rc=True):
-        """Runs list of commands on remote device and returns results
-        """
         try:
-            out = self.send_request(commands)
-        except ConnectionError as exc:
-            if check_rc is True:
-                raise
-            out = to_text(exc)
+            response_data = json.loads(to_text(response_data.getvalue()))
+        except ValueError:
+            raise ConnectionError('Response was not valid JSON, got {0}'.format(
+                to_text(response_data.getvalue())
+            ))
 
-        out = to_list(out)
-        if not out[0]:
-            return out
+        results = handle_response(response_data)
 
-        for index, response in enumerate(out):
-            if response[0] == '{':
-                out[index] = json.loads(response)
+        if self._become:
+            results = results[1:]
+        return results
 
-        return out
+    def get_device_info(self):
+        device_info = {}
+
+        device_info['network_os'] = 'nxos'
+        reply = self.send_request('show version')
+        platform_reply = self.send_request('show inventory')
+
+        match_sys_ver = re.search(r'\s+system:\s+version\s*(\S+)', reply, re.M)
+        if match_sys_ver:
+            device_info['network_os_version'] = match_sys_ver.group(1)
+        else:
+            match_kick_ver = re.search(r'\s+kickstart:\s+version\s*(\S+)', reply, re.M)
+            if match_kick_ver:
+                device_info['network_os_version'] = match_kick_ver.group(1)
+
+        if 'network_os_version' not in device_info:
+            match_sys_ver = re.search(r'\s+NXOS:\s+version\s*(\S+)', reply, re.M)
+            if match_sys_ver:
+                device_info['network_os_version'] = match_sys_ver.group(1)
+
+        match_chassis_id = re.search(r'Hardware\n\s+cisco\s*(\S+\s+\S+)', reply, re.M)
+        if match_chassis_id:
+            device_info['network_os_model'] = match_chassis_id.group(1)
+
+        match_host_name = re.search(r'\s+Device name:\s*(\S+)', reply, re.M)
+        if match_host_name:
+            device_info['network_os_hostname'] = match_host_name.group(1)
+
+        match_isan_file_name = re.search(r'\s+system image file is:\s*(\S+)', reply, re.M)
+        if match_isan_file_name:
+            device_info['network_os_image'] = match_isan_file_name.group(1)
+        else:
+            match_kick_file_name = re.search(r'\s+kickstart image file is:\s*(\S+)', reply, re.M)
+            if match_kick_file_name:
+                device_info['network_os_image'] = match_kick_file_name.group(1)
+
+        if 'network_os_image' not in device_info:
+            match_isan_file_name = re.search(r'\s+NXOS image file is:\s*(\S+)', reply, re.M)
+            if match_isan_file_name:
+                device_info['network_os_image'] = match_isan_file_name.group(1)
+
+        match_os_platform = re.search(r'NAME: "Chassis",\s*DESCR:.*\n'
+                                      r'PID:\s*(\S+)', platform_reply, re.M)
+        if match_os_platform:
+            device_info['network_os_platform'] = match_os_platform.group(1)
+
+        return device_info
+
+    def get_device_operations(self):
+        return {
+            'supports_diff_replace': True,
+            'supports_commit': False,
+            'supports_rollback': False,
+            'supports_defaults': True,
+            'supports_onbox_diff': False,
+            'supports_commit_comment': False,
+            'supports_multiline_delimiter': False,
+            'supports_diff_match': True,
+            'supports_diff_ignore_lines': True,
+            'supports_generate_diff': True,
+            'supports_replace': True
+        }
+
+    def get_capabilities(self):
+        result = {}
+        __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
+        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
+        result['rpc'] = __rpc__ + rpc_list
+        result['device_info'] = self.get_device_info()
+        result['device_operations'] = self.get_device_operations()
+        result.update(get_option_values())
+        result['network_api'] = 'nxapi'
+
+        return json.dumps(result)
+
+
+def get_option_values():
+    return {
+        'format': ['text', 'json'],
+        'diff_match': ['line', 'strict', 'exact', 'none'],
+        'diff_replace': ['line', 'block', 'config'],
+        'output': ['text', 'json']
+    }
 
 
 def handle_response(response):

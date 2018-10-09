@@ -23,7 +23,7 @@ options:
       - name: ANSIBLE_EOS_USE_SESSIONS
     vars:
       - name: ansible_eos_use_sessions
-        version_added: '2.7'
+        version_added: '2.8'
 """
 
 import json
