@@ -8,7 +8,7 @@ Ansible has a lot of documentation and a small team of writers. Community suppor
 
 Improving the documentation is an easy way to make your first contribution to the Ansible project. You don't have to be a programmer, since our documentation is written in YAML (module documentation) or reStructured Text. If you're using Ansible, you know YAML - playbooks are written in YAML. And rST is mostly just text. You don't even need git experience, if you use the ``Edit on GitHub`` option.
 
-If you find a typo, a broken example, a missing topic, or any other error or omission on docs.ansible.com, let us know. Here are some ways to support Ansible documentation:
+If you find a typo, a broken example, a missing topic, or any other error or omission on this documentation website, let us know. Here are some ways to support Ansible documentation:
 
 .. contents::
    :local:
@@ -16,7 +16,7 @@ If you find a typo, a broken example, a missing topic, or any other error or omi
 Editing docs directly on GitHub
 ===============================
 
-For typos and other quick fixes, you can edit the documentation right from the documentation website. Look at the top right corner of this page. That ``Edit on GitHub`` link is available on every page in the documentation. If you have a GitHub account, you can submit a quick and easy pull request this way.
+For typos and other quick fixes, you can edit the documentation right from the site. Look at the top right corner of this page. That ``Edit on GitHub`` link is available on every page in the documentation. If you have a GitHub account, you can submit a quick and easy pull request this way.
 
 To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 
@@ -153,7 +153,7 @@ You can also contribute by reviewing open documentation issues and PRs. To add a
 Joining the documentation working group
 =======================================
 
-The Documentation Working Group is just getting started, please visit the community repo for more information.
+The Documentation Working Group is just getting started, please visit the `community repo <https://github.com/ansible/community>`_ for more information.
 
 .. seealso::
    :ref:`More about testing module documentation <testing_documentation>`
