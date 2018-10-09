@@ -348,7 +348,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     )
                 FROM user WHERE user = %%s AND host = %%s
                 """ % (colA[0], colA[0], colB[0], colB[0]), (user, host))
-            current_pass_hash = cursor.fetchone()
+            current_pass_hash = cursor.fetchone()[0]
 
             if encrypted:
                 encrypted_password = password
