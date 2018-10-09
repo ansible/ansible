@@ -68,6 +68,11 @@ options:
     required: false
     default: false
     version_added: "2.7"
+  aws_profile:
+    description:
+      - Allows an AWS profile to be passed for credentials to the serverless command, equivalent to serverless `--aws-profile` option.
+    required: false
+    version_added: "2.8"
 notes:
    - Currently, the `serverless` command must be in the path of the node executing the task. In the future this may be a flag.
 requirements: [ "serverless", "yaml" ]
@@ -174,7 +179,8 @@ def main():
             deploy=dict(default=True, type='bool', required=False),
             serverless_bin_path=dict(required=False, type='path'),
             force=dict(default=False, required=False),
-            verbose=dict(default=False, required=False)
+            verbose=dict(default=False, required=False),
+            aws_profile=dict(default='', required=False)
         ),
     )
 
@@ -190,6 +196,7 @@ def main():
     force = module.params.get('force', False)
     verbose = module.params.get('verbose', False)
     serverless_bin_path = module.params.get('serverless_bin_path')
+    aws_profile = module.params.get('aws_profile')
 
     if serverless_bin_path is not None:
         command = serverless_bin_path + " "
@@ -215,6 +222,8 @@ def main():
         command += '--stage {} '.format(stage)
     if verbose:
         command += '--verbose '
+    if aws_profile:
+        command += '--aws-profile {} '.format(aws_profile)
 
     rc, out, err = module.run_command(command, cwd=service_path)
     if rc != 0:
