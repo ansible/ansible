@@ -684,7 +684,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
             display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
-            zipdata = open(cached_module_filename, 'rb').read()
+            with open(cached_module_filename, 'rb') as module_data:
+                zipdata = module_data.read()
         else:
             if module_name in action_write_locks.action_write_locks:
                 display.debug('ANSIBALLZ: Using lock for %s' % module_name)

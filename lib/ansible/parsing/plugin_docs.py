@@ -39,8 +39,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
     }
 
     try:
-        b_module_data = open(filename, 'rb').read()
-        M = ast.parse(b_module_data)
+        with open(filename, 'rb') as b_module_data:
+            M = ast.parse(b_module_data.read())
 
         for child in M.body:
             if isinstance(child, ast.Assign):
