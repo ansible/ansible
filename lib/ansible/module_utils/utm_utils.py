@@ -25,6 +25,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
+
 import json
 
 from ansible.module_utils._text import to_native
@@ -66,9 +70,9 @@ class UTMModule(AnsibleModule):
                                         check_invalid_arguments, mutually_exclusive, required_together, required_one_of,
                                         add_file_common_args, supports_check_mode, required_if)
 
-    def _merge_specs(self, default_specs, custom_sepcs):
+    def _merge_specs(self, default_specs, custom_specs):
         result = default_specs.copy()
-        result.update(custom_sepcs)
+        result.update(custom_specs)
         return result
 
 
@@ -82,7 +86,7 @@ class UTM:
         :param change_relevant_keys: The keys of the object to check for changes
         """
         self.module = module
-        self.request_url = module.params.get('utm_protocol') + "://" + module.params.get('utm_host') + ":" + str(
+        self.request_url = module.params.get('utm_protocol') + "://" + module.params.get('utm_host') + ":" + to_native(
             module.params.get('utm_port')) + "/api/objects/" + endpoint + "/"
 
         """
@@ -93,7 +97,8 @@ class UTM:
         self.module.params['url_password'] = module.params.get('utm_token')
         if all(elem in self.change_relevant_keys for elem in module.params.keys()):
             raise UTMModuleConfigurationError(
-                "The keys " + str(self.change_relevant_keys) + " to check are not in the modules keys:\n" + str(
+                "The keys " + to_native(
+                    self.change_relevant_keys) + " to check are not in the modules keys:\n" + to_native(
                     module.params.keys()))
 
     def execute(self):
@@ -102,23 +107,8 @@ class UTM:
                 self._add()
             elif self.module.params.get('state') == 'absent':
                 self._remove()
-            elif self.module.params.get('state') == 'info':
-                self._info()
         except Exception as e:
             self.module.fail_json(msg=to_native(e))
-
-    def _info(self):
-        """
-        returns the info for an object in utm
-        """
-        info, result = self._lookup_entry(self.module, self.request_url)
-        if info["status"] >= 400:
-            self.module.fail_json(result=json.loads(info))
-        else:
-            if result is None:
-                self.module.exit_json(changed=False)
-            else:
-                self.module.exit_json(result=result, changed=False)
 
     def _add(self):
         """
