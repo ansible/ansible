@@ -1087,7 +1087,7 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
-  team_cloudstack: resmo dpassante
+  team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
   team_extreme: bigmstone LindsayHill
