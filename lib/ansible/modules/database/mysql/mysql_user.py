@@ -311,6 +311,7 @@ def is_hash(password):
 
 def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, module):
     changed = False
+    msg = "User unchanged"
     grant_option = False
 
     if host_all:
@@ -361,13 +362,16 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 encrypted_password = cursor.fetchone()[0]
 
             if current_pass_hash != encrypted_password:
+                msg = "Password updated"
                 if module.check_mode:
-                    return True
+                    return (True, msg)
                 if old_user_mgmt:
                     cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, encrypted_password))
+                    msg = "Password updated (old style)"
                 else:
                     try:
                         cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, encrypted_password))
+                        msg = "Password updated (new style)"
                     except (MySQLdb.Error) as e:
                         # https://stackoverflow.com/questions/51600000/authentication-string-of-root-user-on-mysql
                         # Replacing empty root password with new authentication mechanisms fails with error 1396
@@ -377,6 +381,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                                 ('mysql_native_password', encrypted_password, user, host)
                             )
                             cursor.execute("FLUSH PRIVILEGES")
+                            msg = "Password forced update"
                         else:
                             raise e
                 changed = True
@@ -393,8 +398,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     grant_option = True
                 if db_table not in new_priv:
                     if user != "root" and "PROXY" not in priv and not append_privs:
+                        msg = "Privileges updated"
                         if module.check_mode:
-                            return True
+                            return (True, msg)
                         privileges_revoke(cursor, user, host, db_table, priv, grant_option)
                         changed = True
 
@@ -402,8 +408,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             # we can perform a straight grant operation.
             for db_table, priv in iteritems(new_priv):
                 if db_table not in curr_priv:
+                    msg = "New privileges granted"
                     if module.check_mode:
-                        return True
+                        return (True, msg)
                     privileges_grant(cursor, user, host, db_table, priv)
                     changed = True
 
@@ -413,14 +420,15 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             for db_table in db_table_intersect:
                 priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
                 if len(priv_diff) > 0:
+                    msg = "Privileges updated"
                     if module.check_mode:
-                        return True
+                        return (True, msg)
                     if not append_privs:
                         privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
                     privileges_grant(cursor, user, host, db_table, new_priv[db_table])
                     changed = True
 
-    return changed
+    return (changed, msg)
 
 
 def user_delete(cursor, user, host, host_all, check_mode):
@@ -658,9 +666,9 @@ def main():
         if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
-                    changed = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module)
+                    changed, msg = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module)
                 else:
-                    changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
+                    changed, msg = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
 
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e))
@@ -669,14 +677,19 @@ def main():
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
                 changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
+                if changed:
+                    msg = "User added"
+
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e))
     elif state == "absent":
         if user_exists(cursor, user, host, host_all):
             changed = user_delete(cursor, user, host, host_all, module.check_mode)
+            msg = "User deleted"
         else:
             changed = False
-    module.exit_json(changed=changed, user=user)
+            msg = "User doesn't exist"
+    module.exit_json(changed=changed, user=user, msg=msg)
 
 
 if __name__ == '__main__':
