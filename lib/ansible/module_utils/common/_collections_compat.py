@@ -18,6 +18,7 @@ try:
         Mapping, MutableMapping,
         Sequence, MutableSequence,
         Set, MutableSet,
+        Iterable,
     )
 except ImportError:
     """Use old lib location under 2.6-3.2."""
@@ -26,4 +27,5 @@ except ImportError:
         Mapping, MutableMapping,
         Sequence, MutableSequence,
         Set, MutableSet,
+        Iterable,
     )
