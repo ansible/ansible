@@ -82,7 +82,7 @@ options:
       - Desired number of instances in group, if unspecified then the current group value will be used.
   replace_all_instances:
     description:
-      - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuration.
+      - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuration. How does it roll them out ?
     version_added: "1.8"
     default: 'no'
   replace_batch_size:
