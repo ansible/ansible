@@ -17,6 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -324,6 +325,7 @@ from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiM
 # check for pyFMG lib
 try:
     from pyFMG.fortimgr import FortiManager
+
     HAS_PYFMGR = True
 except ImportError:
     HAS_PYFMGR = False
@@ -333,10 +335,10 @@ except ImportError:
 def cidr_to_netmask(cidr):
     cidr = int(cidr)
     mask = (0xffffffff >> (32 - cidr)) << (32 - cidr)
-    return(str((0xff000000 & mask) >> 24) + '.' +
-           str((0x00ff0000 & mask) >> 16) + '.' +
-           str((0x0000ff00 & mask) >> 8) + '.' +
-           str((0x000000ff & mask)))
+    return (str((0xff000000 & mask) >> 24) + '.' +
+            str((0x00ff0000 & mask) >> 16) + '.' +
+            str((0x0000ff00 & mask) >> 8) + '.' +
+            str((0x000000ff & mask)))
 
 
 def fmgr_fwobj_service_custom(fmg, paramgram):
@@ -351,7 +353,7 @@ def fmgr_fwobj_service_custom(fmg, paramgram):
 
     -- the protocol parameter is the protocol NUMBER, not the string of it.
     """
-
+    response = (-100000, {"msg": "Nothing Happened."})
     if paramgram["mode"] in ['set', 'add']:
         # SET THE URL FOR ADD / SET
         url = '/pm/config/adom/{adom}/obj/firewall/service/custom'.format(adom=paramgram["adom"])
@@ -459,7 +461,7 @@ def fmgr_fwobj_service_custom(fmg, paramgram):
         # IF MODE = DELETE  -- USE THE DELETE URL AND API CALL MODE
     if paramgram["mode"] == "delete":
         response = fmg.delete(url, datagram)
-    
+
     return response
 
 
@@ -474,7 +476,7 @@ def fmgr_fwobj_service_group(fmg, paramgram):
     color =
     comment
     """
-
+    response = (-100000, {"msg": "Nothing Happened."})
     if paramgram["mode"] in ['set', 'add']:
         url = '/pm/config/adom/{adom}/obj/firewall/service/group'.format(adom=paramgram["adom"])
         datagram = {
@@ -508,7 +510,7 @@ def fmgr_fwobj_service_group(fmg, paramgram):
         # IF MODE = DELETE  -- USE THE DELETE URL AND API CALL MODE
     if paramgram["mode"] == "delete":
         response = fmg.delete(url, datagram)
-    
+
     return response
 
 
@@ -516,6 +518,7 @@ def fmgr_fwobj_service_category(fmg, paramgram):
     """
     # NOTES
     """
+    response = (-100000, {"msg": "Nothing Happened."})
     if paramgram["mode"] in ['set', 'add']:
         url = '/pm/config/adom/{adom}/obj/firewall/service/category'.format(adom=paramgram["adom"])
         # GET RID OF ANY WHITESPACE
@@ -546,7 +549,7 @@ def fmgr_fwobj_service_category(fmg, paramgram):
         # IF MODE = DELETE  -- USE THE DELETE URL AND API CALL MODE
     if paramgram["mode"] == "delete":
         response = fmg.delete(url, datagram)
-    
+
     return response
 
 
@@ -582,6 +585,38 @@ def fmgr_is_empty_dict(obj):
             return_val = True
 
     return return_val
+
+
+def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_fail=True, logout_on_success=False):
+    """
+    THIS METHOD CONTROLS THE LOGOUT AND ERROR REPORTING AFTER AN METHOD OR FUNCTION RUNS
+    """
+    # VALIDATION ERROR (NO RESULTS, JUST AN EXIT)
+    if msg != "NULL" and len(results) == 0:
+        try:
+            fmg.logout()
+        except:
+            pass
+        module.fail_json(msg=msg)
+
+    # SUBMISSION ERROR
+    if len(results) > 0:
+        if msg == "NULL":
+            try:
+                msg = results[1]['status']['message']
+            except:
+                msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
+
+        if results[0] not in good_codes:
+            if logout_on_fail:
+                fmg.logout()
+                module.fail_json(msg=msg, **results[1])
+        else:
+            if logout_on_success:
+                fmg.logout()
+                module.exit_json(msg="API Called worked, but logout handler has been asked to logout on success",
+                                 **results[1])
+    return msg
 
 
 def main():
@@ -679,29 +714,31 @@ def main():
     # WE NEED TO ADD THE CATEGORY BEFORE ADDING THE OBJECT
     # IF ANY category ARE DEFINED AND MODE IS ADD OR SET LETS ADD THOSE
     # THIS IS A "BLIND ADD" AND THE EXIT CODE FOR OBJECT ALREADY EXISTS IS TREATED AS A PASS
-    if paramgram["category"] is not None and paramgram["mode"] in ['add', 'set']\
+    results = (-100000, {"msg": "Nothing Happened."})
+
+    if paramgram["category"] is not None and paramgram["mode"] in ['add', 'set'] \
             and paramgram["object_type"] != "category":
         categoryAdd = fmgr_fwobj_service_category(fmg, paramgram)
-        if not categoryAdd[0] in [0, -2, -3]:
-            module.fail_json(msg="Failed to add/remove service category", **categoryAdd[1])
+        fmgr_logout(fmg, module, results=categoryAdd, good_codes=[0, -2, -3],
+                    msg="Failed to add/remove service category")
 
     # IF OBJECT_TYPE IS CATEGORY...
     if paramgram["object_type"] == 'category':
         results = fmgr_fwobj_service_category(fmg, paramgram)
-        if not results[0] in [0, -2, -3]:
-            module.fail_json(msg="Failed to add/remove service category", **results[1])
+        fmgr_logout(fmg, module, results=results, good_codes=[0, -2, -3],
+                    msg="Failed to add/remove service category")
 
     # IF OBJECT_TYPE IS CUSTOM...
     if paramgram["object_type"] == 'custom':
         results = fmgr_fwobj_service_custom(fmg, paramgram)
-        if not results[0] in [0, -2, -3]:
-            module.fail_json(msg="Failed to add/remove custom service", **results[1])
+        fmgr_logout(fmg, module, results=results, good_codes=[0, -2, -3],
+                    msg="Failed to add/remove custom service")
 
     # IF OBJECT_TYPE IS GROUP...
     if paramgram["object_type"] == 'group':
         results = fmgr_fwobj_service_group(fmg, paramgram)
-        if not results[0] in [0, -2, -3]:
-            module.fail_json(msg="Failed to add/remove service group", **results[1])
+        fmgr_logout(fmg, module, results=results, good_codes=[0, -2, -3],
+                    msg="Failed to add/remove service group")
 
     fmg.logout()
 
