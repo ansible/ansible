@@ -359,12 +359,6 @@ RETURN = '''
             - This field is not used for internal load balancing.
         returned: success
         type: dict
-    labelFingerprint:
-        description:
-            - The fingerprint used for optimistic locking of this resource.  Used internally during
-              updates.
-        returned: success
-        type: str
     networkTier:
         description:
             - 'The networking tier used for configuring this address. This field can take the
@@ -476,19 +470,6 @@ def target_update(module, request, response):
     )
 
 
-def label_fingerprint_update(module, request, response):
-    auth = GcpSession(module, 'compute')
-    auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/forwardingRules/{name}/setLabels"
-        ]).format(**module.params),
-        {
-            u'labelFingerprint': response.get('labelFingerprint')
-        }
-    )
-
-
 def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
@@ -589,7 +570,6 @@ def response_to_hash(module, response):
         u'ports': response.get(u'ports'),
         u'subnetwork': response.get(u'subnetwork'),
         u'target': response.get(u'target'),
-        u'labelFingerprint': response.get(u'labelFingerprint'),
         u'networkTier': module.params.get('network_tier')
     }
 

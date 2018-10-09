@@ -199,12 +199,6 @@ items:
                 - This field is not used for internal load balancing.
             returned: success
             type: dict
-        labelFingerprint:
-            description:
-                - The fingerprint used for optimistic locking of this resource.  Used internally during
-                  updates.
-            returned: success
-            type: str
         networkTier:
             description:
                 - 'The networking tier used for configuring this address. This field can take the
