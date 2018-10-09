@@ -475,13 +475,13 @@ def main():
         state = module.params['state']
         if state == 'present':
             module.params['disk_id'] = get_snapshot_disk_id(module, snapshots_service)
-            if module.params['upload_image_path']:
+            if module.params.get('upload_image_path'):
                 ret['changed'] = upload_disk_image(connection, module)
-            if module.params['download_image_path']:
+            if module.params.get('download_image_path'):
                 ret['changed'] = download_disk_image(connection, module)
             if module.params.get('keep_days_old') is not None:
                 ret = remove_old_snapshosts(module, vm_service, snapshots_service)
-            else:
+            elif module.params.get('description'):
                 ret = create_snapshot(module, vm_service, snapshots_service)
         elif state == 'restore':
             ret = restore_snapshot(module, vm_service, snapshots_service)
