@@ -15,6 +15,14 @@ def scaleway_argument_spec():
     )
 
 
+def payload_from_object(scw_object):
+    return dict(
+        (k, v)
+        for k, v in scw_object.items()
+        if k != 'id' and v is not None
+    )
+
+
 class ScalewayException(Exception):
 
     def __init__(self, message):
@@ -115,6 +123,9 @@ class Scaleway(object):
 
     def update(self, path, data=None, headers=None):
         return self.send("UPDATE", path, data, headers)
+
+    def warn(self, x):
+        self.module.warn(str(x))
 
 
 SCALEWAY_LOCATION = {

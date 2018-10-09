@@ -17,14 +17,14 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: na_ontap_cifs_server
-short_description: cifs server configuration
+short_description: NetApp ONTAP CIFS server configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
-    - Creating / deleting and modifying the CIF server .
+    - Creating / deleting and modifying the CIFS server.
 
 options:
 

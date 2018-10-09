@@ -34,7 +34,6 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping
 import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
@@ -46,6 +45,7 @@ from ansible.module_utils.six import iteritems, string_types, integer_types, rer
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.encrypt import passlib_or_crypt
@@ -178,9 +178,11 @@ def regex_search(value, regex, *args, **kwargs):
             return items
 
 
-def ternary(value, true_val, false_val):
+def ternary(value, true_val, false_val, none_val=None):
     '''  value ? true_val : false_val '''
-    if bool(value):
+    if value is None and none_val is not None:
+        return none_val
+    elif bool(value):
         return true_val
     else:
         return false_val
@@ -494,7 +496,7 @@ def subelements(obj, subelements, skip_missing=False):
     return results
 
 
-def dict_to_list_of_dict_key_value_elements(mydict):
+def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='value'):
     ''' takes a dictionary and transforms it into a list of dictionaries,
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
@@ -503,7 +505,7 @@ def dict_to_list_of_dict_key_value_elements(mydict):
 
     ret = []
     for key in mydict:
-        ret.append({'key': key, 'value': mydict[key]})
+        ret.append({key_name: key, value_name: mydict[key]})
     return ret
 
 

@@ -25,12 +25,12 @@ import os
 import traceback
 import string
 
-from collections import Mapping
 from xml.etree.ElementTree import fromstring
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import Template
 from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.utils.encrypt import random_password
 

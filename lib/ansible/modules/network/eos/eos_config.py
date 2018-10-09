@@ -213,11 +213,6 @@ EXAMPLES = """
   eos_config:
     lines: hostname {{ inventory_hostname }}
 
-- name: diff against a provided master config
-  eos_config:
-    diff_against: config
-    config: "{{ lookup('file', 'master.cfg') }}"
-
 - name: load an acl into the device
   eos_config:
     lines:
@@ -232,6 +227,11 @@ EXAMPLES = """
 - name: load configuration from file
   eos_config:
     src: eos.cfg
+
+- name: render a Jinja2 template onto an Arista switch
+  eos_config:
+    backup: yes
+    src: eos_template.j2
 
 - name: diff the running config against a master config
   eos_config:

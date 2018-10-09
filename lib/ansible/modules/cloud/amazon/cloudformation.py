@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -33,8 +34,6 @@ options:
   create_timeout:
     description:
       - The amount of time (in minutes) that can pass before the stack status becomes CREATE_FAILED
-    required: false
-    default: null
     version_added: "2.6"
   template_parameters:
     description:
@@ -82,6 +81,7 @@ options:
         See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
         WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
         changeset."
+    type: bool
     default: 'no'
     version_added: "2.4"
   changeset_name:

@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 
 module: na_ontap_qtree
 
-short_description: Manage qtrees
+short_description: NetApp ONTAP manage qtrees
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
@@ -29,23 +29,23 @@ options:
 
   state:
     description:
-    - Whether the specified Qtree should exist or not.
+    - Whether the specified qtree should exist or not.
     choices: ['present', 'absent']
     default: 'present'
 
   name:
     description:
-    - The name of the Qtree to manage.
+    - The name of the qtree to manage.
     required: true
 
   from_name:
     description:
-    - Name of the Qtree to be renamed.
+    - Name of the qtree to be renamed.
     version_added: '2.7'
 
   flexvol_name:
     description:
-    - The name of the FlexVol the Qtree should exist on. Required when C(state=present).
+    - The name of the FlexVol the qtree should exist on. Required when C(state=present).
 
   vserver:
     description:

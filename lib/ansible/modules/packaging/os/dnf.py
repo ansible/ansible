@@ -77,9 +77,7 @@ options:
     description:
       - Specifies an alternative release from which all packages will be
         installed.
-    required: false
     version_added: "2.6"
-    default: null
 
   autoremove:
     description:
@@ -87,7 +85,7 @@ options:
         installed as dependencies of user-installed packages but which are no longer
         required by any such package. Should be used alone or when state is I(absent)
     type: bool
-    default: false
+    default: "no"
     version_added: "2.4"
   exclude:
     description:
@@ -112,7 +110,6 @@ options:
     description:
       - When using latest, only update installed packages. Do not install packages.
       - Has an effect only if state is I(latest)
-    required: false
     default: "no"
     type: bool
     version_added: "2.7"
@@ -125,7 +122,6 @@ options:
   bugfix:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
-    required: false
     default: "no"
     type: bool
     version_added: "2.7"
@@ -133,13 +129,11 @@ options:
     description:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
-    required: false
     version_added: "2.7"
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
-    required: false
     version_added: "2.7"
   disable_excludes:
     description:
@@ -147,7 +141,6 @@ options:
       - If set to C(all), disables all excludes.
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
-    required: false
     choices: [ all, main, repoid ]
     version_added: "2.7"
   validate_certs:
@@ -168,22 +161,37 @@ options:
         package and others can cause changes to the packages which were
         in the earlier transaction).
     type: bool
-    default: False
+    default: "no"
     version_added: "2.7"
   install_repoquery:
     description:
       - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
         parity/compatibility with the I(yum) module.
     type: bool
-    default: True
+    default: "yes"
     version_added: "2.7"
   download_only:
     description:
       - Only download the packages, do not install them.
-    required: false
     default: "no"
     type: bool
     version_added: "2.7"
+  lock_poll:
+    description:
+      - Poll interval to wait for the dnf lockfile to be freed.
+      - "By default this is set to -1, if you set it to a positive integer it will enable to polling"
+    required: false
+    default: -1
+    type: int
+    version_added: "2.8"
+  lock_timeout:
+    description:
+      - Amount of time to wait for the dnf lockfile to be freed
+      - This should be set along with C(lock_poll) to enable the lockfile polling.
+    required: false
+    default: 10
+    type: int
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -205,6 +213,13 @@ EXAMPLES = '''
 - name: install the latest version of Apache
   dnf:
     name: httpd
+    state: latest
+
+- name: install the latest version of Apache and MariaDB
+  dnf:
+    name:
+      - httpd
+      - mariadb-server
     state: latest
 
 - name: remove the Apache package
@@ -286,6 +301,8 @@ class DnfModule(YumDnf):
         super(DnfModule, self).__init__(module)
 
         self._ensure_dnf()
+        self.lockfile = "/var/cache/dnf/*_lock.pid"
+        self.pkg_mgr_name = "dnf"
 
     def _sanitize_dnf_error_msg(self, spec, error):
         """
@@ -488,13 +505,26 @@ class DnfModule(YumDnf):
         # Set installroot
         conf.installroot = installroot
 
+        # Handle different DNF versions immutable mutable datatypes and
+        # dnf v1/v2/v3
+        #
+        # In DNF < 3.0 are lists, and modifying them works
+        # In DNF >= 3.0 < 3.6 are lists, but modifying them doesn't work
+        # In DNF >= 3.6 have been turned into tuples, to communicate that modifying them doesn't work
+        #
+        # https://www.happyassassin.net/2018/06/27/adams-debugging-adventures-the-immutable-mutable-object/
+        #
         # Set excludes
         if self.exclude:
-            conf.exclude(self.exclude)
-
+            _excludes = list(conf.exclude)
+            _excludes.extend(self.exclude)
+            conf.exclude = _excludes
         # Set disable_excludes
         if self.disable_excludes:
-            conf.disable_excludes.append(self.disable_excludes)
+            _disable_excludes = list(conf.disable_excludes)
+            if self.disable_excludes not in _disable_excludes:
+                _disable_excludes.append(self.disable_excludes)
+                conf.disable_excludes = _disable_excludes
 
         # Set releasever
         if self.releasever is not None:
@@ -531,20 +561,29 @@ class DnfModule(YumDnf):
 
         # Disable repositories
         for repo_pattern in disablerepo:
-            for repo in repos.get_matching(repo_pattern):
-                repo.disable()
+            if repo_pattern:
+                for repo in repos.get_matching(repo_pattern):
+                    repo.disable()
 
         # Enable repositories
         for repo_pattern in enablerepo:
-            for repo in repos.get_matching(repo_pattern):
-                repo.enable()
+            if repo_pattern:
+                for repo in repos.get_matching(repo_pattern):
+                    repo.enable()
 
     def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
         self._specify_repositories(base, disablerepo, enablerepo)
-        base.fill_sack(load_system_repo='auto')
+        try:
+            base.fill_sack(load_system_repo='auto')
+        except dnf.exceptions.RepoError as e:
+            self.module.fail_json(
+                msg="{0}".format(to_text(e)),
+                results=[],
+                rc=1
+            )
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
             base._update_security_filters = [base.sack.query().filter(**key)]
@@ -552,7 +591,14 @@ class DnfModule(YumDnf):
             key = {'advisory_type__eq': 'security'}
             base._update_security_filters = [base.sack.query().filter(**key)]
         if self.update_cache:
-            base.update_cache()
+            try:
+                base.update_cache()
+            except dnf.exceptions.RepoError as e:
+                self.module.fail_json(
+                    msg="{0}".format(to_text(e)),
+                    results=[],
+                    rc=1
+                )
         return base
 
     def list_items(self, command):
@@ -927,7 +973,7 @@ class DnfModule(YumDnf):
 
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
-                    if installed.filter(name=pkg_spec):
+                    if ("*" in pkg_spec) or installed.filter(name=pkg_spec):
                         self.base.remove(pkg_spec)
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
@@ -1008,6 +1054,18 @@ class DnfModule(YumDnf):
                     msg="Autoremove should be used alone or with state=absent",
                     results=[],
                 )
+
+        if self.update_cache and not self.names and not self.list:
+            self.base = self._base(
+                self.conf_file, self.disable_gpg_check, self.disablerepo,
+                self.enablerepo, self.installroot
+            )
+            self.module.exit_json(
+                msg="Cache updated",
+                changed=False,
+                results=[],
+                rc=0
+            )
 
         # Set state as installed by default
         # This is not set in AnsibleModule() because the following shouldn't happend

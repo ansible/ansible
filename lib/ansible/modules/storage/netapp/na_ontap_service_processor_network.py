@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_service_processor_network
-short_description: Manage NetApp ONTAP service processor network
+short_description: NetApp ONTAP service processor network
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

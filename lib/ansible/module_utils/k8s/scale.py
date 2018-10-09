@@ -70,7 +70,7 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
             existing = resource.get(name=name, namespace=namespace)
             return_attributes['result'] = existing.to_dict()
         except KubernetesException as exc:
-            self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.message),
+            self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc),
                            error=exc.value.get('status'))
 
         if self.kind == 'job':
@@ -129,7 +129,7 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
             resource.scale.patch(body=scale_obj)
         except Exception as exc:
             self.fail_json(
-                msg="Scale request failed: {0}".format(exc.message)
+                msg="Scale request failed: {0}".format(exc)
             )
 
         if wait and stream is not None:
@@ -173,7 +173,7 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
                             watcher.stop()
                             break
         except Exception as exc:
-            self.fail_json(msg="Exception reading event stream: {0}".format(exc.message))
+            self.fail_json(msg="Exception reading event stream: {0}".format(exc))
 
         if not return_obj:
             self.fail_json(msg="Error fetching the patched object. Try a higher wait_timeout value.")

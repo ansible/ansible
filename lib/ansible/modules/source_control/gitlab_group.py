@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
+
+# Copyright: (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -29,25 +30,19 @@ options:
     validate_certs:
         description:
             - When using https if SSL certificate needs to be verified.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
         aliases:
             - verify_ssl
     login_user:
         description:
             - Gitlab user name.
-        required: false
-        default: null
     login_password:
         description:
             - Gitlab password for login_user
-        required: false
-        default: null
     login_token:
         description:
             - Gitlab token for logging in.
-        required: false
-        default: null
     name:
         description:
             - Name of the group you want to create.
@@ -56,19 +51,14 @@ options:
         description:
             - The path of the group you want to create, this will be server_url/group_path
             - If not supplied, the group_name will be used.
-        required: false
-        default: null
     description:
         description:
             - A description for the group.
-        required: false
-        default: null
         version_added: "2.7"
     state:
         description:
             - create or delete group.
             - Possible values are present and absent.
-        required: false
         default: "present"
         choices: ["present", "absent"]
 '''

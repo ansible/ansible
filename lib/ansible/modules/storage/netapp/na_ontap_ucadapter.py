@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 
 module: na_ontap_ucadapter
-short_description: ONTAP UC adapter configuration
+short_description: NetApp ONTAP UC adapter configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

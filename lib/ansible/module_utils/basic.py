@@ -82,6 +82,7 @@ import pwd
 import platform
 import errno
 import datetime
+from collections import deque
 from itertools import chain, repeat
 
 try:
@@ -148,7 +149,6 @@ except Exception:
         pass
 
 from ansible.module_utils.common._collections_compat import (
-    deque,
     KeysView,
     Mapping, MutableMapping,
     Sequence, MutableSequence,
@@ -2327,6 +2327,8 @@ class AnsibleModule(object):
                 for d in kwargs['deprecations']:
                     if isinstance(d, SEQUENCETYPE) and len(d) == 2:
                         self.deprecate(d[0], version=d[1])
+                    elif isinstance(d, Mapping):
+                        self.deprecate(d['msg'], version=d.get('version', None))
                     else:
                         self.deprecate(d)
             else:

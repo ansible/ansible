@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_broadcast_domain_ports
-short_description: Manage NetApp ONTAP broadcast domain ports
+short_description: NetApp ONTAP manage broadcast domain ports
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

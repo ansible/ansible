@@ -28,17 +28,15 @@ import json
 import os
 import shlex
 import zipfile
-import random
 import re
-from distutils.version import LooseVersion
 from io import BytesIO
 
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_text, to_native
-from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
-from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
+from ansible.plugins.loader import module_utils_loader
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
@@ -430,74 +428,6 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-class PSModuleDepFinder():
-
-    def __init__(self):
-        self.modules = dict()
-        self.ps_version = None
-        self.os_version = None
-        self.become = False
-
-        self._re_module = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
-        self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
-        self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
-        self._re_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
-
-    def scan_module(self, module_data):
-        lines = module_data.split(b'\n')
-        module_utils = set()
-
-        for line in lines:
-            module_util_match = self._re_module.match(line)
-            if module_util_match:
-                # tolerate windows line endings by stripping any remaining newline chars
-                module_util_name = to_text(module_util_match.group(1).rstrip())
-                if module_util_name not in self.modules.keys():
-                    module_utils.add(module_util_name)
-
-            ps_version_match = self._re_ps_version.match(line)
-            if ps_version_match:
-                self._parse_version_match(ps_version_match, "ps_version")
-
-            os_version_match = self._re_os_version.match(line)
-            if os_version_match:
-                self._parse_version_match(os_version_match, "os_version")
-
-            # once become is set, no need to keep on checking recursively
-            if not self.become:
-                become_match = self._re_become.match(line)
-                if become_match:
-                    self.become = True
-
-        # recursively drill into each Requires to see if there are any more
-        # requirements
-        for m in set(module_utils):
-            m = to_text(m)
-            mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
-            if not mu_path:
-                raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
-
-            module_util_data = to_bytes(_slurp(mu_path))
-            self.modules[m] = module_util_data
-            self.scan_module(module_util_data)
-
-    def _parse_version_match(self, match, attribute):
-        new_version = to_text(match.group(1)).rstrip()
-
-        # PowerShell cannot cast a string of "1" to Version, it must have at
-        # least the major.minor for it to be valid so we append 0
-        if match.group(2) is None:
-            new_version = "%s.0" % new_version
-
-        existing_version = getattr(self, attribute, None)
-        if existing_version is None:
-            setattr(self, attribute, new_version)
-        else:
-            # determine which is the latest version and set that
-            if LooseVersion(new_version) > LooseVersion(existing_version):
-                setattr(self, attribute, new_version)
-
-
 def _slurp(path):
     if not os.path.exists(path):
         raise AnsibleError("imported module support code does not exist at %s" % os.path.abspath(path))
@@ -688,69 +618,6 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
-def _create_powershell_wrapper(b_module_data, module_args, environment,
-                               async_timeout, become, become_method,
-                               become_user, become_password, become_flags,
-                               scan_dependencies=True):
-    # creates the manifest/wrapper used in PowerShell modules to enable things
-    # like become and async - this is also called in action/script.py
-    exec_manifest = dict(
-        module_entry=to_text(base64.b64encode(b_module_data)),
-        powershell_modules=dict(),
-        module_args=module_args,
-        actions=['exec'],
-        environment=environment
-    )
-
-    exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
-
-    if async_timeout > 0:
-        exec_manifest["actions"].insert(0, 'async_watchdog')
-        exec_manifest["async_watchdog"] = to_text(
-            base64.b64encode(to_bytes(async_watchdog)))
-        exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_wrapper"] = to_text(
-            base64.b64encode(to_bytes(async_wrapper)))
-        exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
-        exec_manifest["async_timeout_sec"] = async_timeout
-
-    if become and become_method == 'runas':
-        exec_manifest["actions"].insert(0, 'become')
-        exec_manifest["become_user"] = become_user
-        exec_manifest["become_password"] = become_password
-        exec_manifest['become_flags'] = become_flags
-        exec_manifest["become"] = to_text(
-            base64.b64encode(to_bytes(become_wrapper)))
-
-    finder = PSModuleDepFinder()
-
-    # we don't want to scan for any module_utils or other module related flags
-    # if scan_dependencies=False - action/script sets to False
-    if scan_dependencies:
-        finder.scan_module(b_module_data)
-
-    for name, data in finder.modules.items():
-        b64_data = to_text(base64.b64encode(data))
-        exec_manifest['powershell_modules'][name] = b64_data
-
-    exec_manifest['min_ps_version'] = finder.ps_version
-    exec_manifest['min_os_version'] = finder.os_version
-    if finder.become and 'become' not in exec_manifest['actions']:
-        exec_manifest['actions'].insert(0, 'become')
-        exec_manifest['become_user'] = 'SYSTEM'
-        exec_manifest['become_password'] = None
-        exec_manifest['become_flags'] = None
-        exec_manifest['become'] = to_text(
-            base64.b64encode(to_bytes(become_wrapper)))
-
-    # FUTURE: smuggle this back as a dict instead of serializing here;
-    # the connection plugin may need to modify it
-    b_json = to_bytes(json.dumps(exec_manifest))
-    b_data = exec_wrapper.replace(b"$json_raw = ''",
-                                  b"$json_raw = @'\r\n%s\r\n'@" % b_json)
-    return b_data
-
-
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
                        become_method, become_user, become_password, become_flags, environment):
     """
@@ -932,10 +799,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         shebang = u'#!powershell'
         # create the common exec wrapper payload and set that as the module_data
         # bytes
-        b_module_data = _create_powershell_wrapper(
+        b_module_data = ps_manifest._create_powershell_wrapper(
             b_module_data, module_args, environment, async_timeout, become,
             become_method, become_user, become_password, become_flags,
-            scan_dependencies=True
+            module_substyle
         )
 
     elif module_substyle == 'jsonargs':

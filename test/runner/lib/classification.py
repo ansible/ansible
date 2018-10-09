@@ -25,6 +25,10 @@ from lib.import_analysis import (
     get_python_module_utils_imports,
 )
 
+from lib.csharp_import_analysis import (
+    get_csharp_module_utils_imports,
+)
+
 from lib.powershell_import_analysis import (
     get_powershell_module_utils_imports,
 )
@@ -168,6 +172,7 @@ class PathMapper(object):
         self.units_targets = list(walk_units_targets())
         self.sanity_targets = list(walk_sanity_targets())
         self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.ps1']
+        self.csharp_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.cs']
 
         self.units_modules = set(t.module for t in self.units_targets if t.module)
         self.units_paths = set(a for t in self.units_targets for a in t.aliases)
@@ -189,6 +194,7 @@ class PathMapper(object):
 
         self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
         self.powershell_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+        self.csharp_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
 
     def get_dependent_paths(self, path):
         """
@@ -203,6 +209,9 @@ class PathMapper(object):
 
             if ext == '.psm1':
                 return self.get_powershell_module_utils_usage(path)
+
+            if ext == '.cs':
+                return self.get_csharp_module_utils_usage(path)
 
         if path.startswith('test/integration/targets/'):
             return self.get_integration_target_usage(path)
@@ -246,6 +255,22 @@ class PathMapper(object):
         name = os.path.splitext(os.path.basename(path))[0]
 
         return sorted(self.powershell_module_utils_imports[name])
+
+    def get_csharp_module_utils_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        if not self.csharp_module_utils_imports:
+            display.info('Analyzing C# module_utils imports...')
+            before = time.time()
+            self.csharp_module_utils_imports = get_csharp_module_utils_imports(self.powershell_targets, self.csharp_targets)
+            after = time.time()
+            display.info('Processed %d C# module_utils in %d second(s).' % (len(self.csharp_module_utils_imports), after - before))
+
+        name = os.path.splitext(os.path.basename(path))[0]
+
+        return sorted(self.csharp_module_utils_imports[name])
 
     def get_integration_target_usage(self, path):
         """
@@ -320,7 +345,7 @@ class PathMapper(object):
                 return {
                     'units': module_name if module_name in self.units_modules else None,
                     'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
-                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext == '.ps1' else None,
+                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext in ['.cs', '.ps1'] else None,
                     'network-integration': self.network_integration_by_module.get(module_name),
                     FOCUSED_TARGET: True,
                 }
@@ -328,6 +353,9 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('lib/ansible/module_utils/'):
+            if ext == '.cs':
+                return minimal  # already expanded using get_dependent_paths
+
             if ext == '.psm1':
                 return minimal  # already expanded using get_dependent_paths
 

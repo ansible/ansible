@@ -29,7 +29,6 @@ options:
         upstream yum developers. As of Ansible 2.7+, this module also supports C(YUM4), which is the
         "new yum" and it has an C(dnf) backend.
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
-    required: false
     default: "auto"
     choices: [ auto, yum, yum4, dnf ]
     version_added: "2.7"
@@ -112,7 +111,6 @@ options:
     description:
       - When using latest, only update installed packages. Do not install packages.
       - Has an effect only if state is I(latest)
-    required: false
     default: "no"
     type: bool
     version_added: "2.5"
@@ -132,7 +130,6 @@ options:
   bugfix:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
-    required: false
     default: "no"
     version_added: "2.6"
   allow_downgrade:
@@ -152,21 +149,17 @@ options:
     description:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
-    required: false
     version_added: "2.5"
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
-    required: false
     version_added: "2.5"
   releasever:
     description:
       - Specifies an alternative release from which all packages will be
         installed.
-    required: false
     version_added: "2.7"
-    default: null
   autoremove:
     description:
       - If C(yes), removes all "leaf" packages from the system that were originally
@@ -174,7 +167,7 @@ options:
         required by any such package. Should be used alone or when state is I(absent)
       - "NOTE: This feature requires yum >= 3.4.3 (RHEL/CentOS 7+)"
     type: bool
-    default: false
+    default: "no"
     version_added: "2.7"
   disable_excludes:
     description:
@@ -182,16 +175,30 @@ options:
       - If set to C(all), disables all excludes.
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
-    required: false
     choices: [ all, main, repoid ]
     version_added: "2.7"
   download_only:
     description:
       - Only download the packages, do not install them.
-    required: false
     default: "no"
     type: bool
     version_added: "2.7"
+  lock_poll:
+    description:
+      - Poll interval to wait for the yum lockfile to be freed.
+      - "By default this is set to -1, if you set it to a positive integer it will enable to polling"
+    required: false
+    default: -1
+    type: int
+    version_added: "2.8"
+  lock_timeout:
+    description:
+      - Amount of time to wait for the yum lockfile to be freed
+      - This should be set along with C(lock_poll) to enable the lockfile polling.
+    required: false
+    default: 10
+    type: int
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -345,12 +352,10 @@ except ImportError:
     transaction_helpers = False
 
 from contextlib import contextmanager
+from ansible.module_utils.urls import fetch_file
 
 def_qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}"
 rpmbin = None
-
-# 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
-BUFSIZE = 65536
 
 
 class YumModule(YumDnf):
@@ -374,27 +379,8 @@ class YumModule(YumDnf):
         # This populates instance vars for all argument spec params
         super(YumModule, self).__init__(module)
 
-    def fetch_rpm_from_url(self, spec):
-        # FIXME: Remove this once this PR is merged:
-        #   https://github.com/ansible/ansible/pull/19172
-
-        # download package so that we can query it
-        package_name, dummy = os.path.splitext(str(spec.rsplit('/', 1)[1]))
-        package_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, prefix=package_name, suffix='.rpm', delete=False)
-        self.module.add_cleanup_file(package_file.name)
-        try:
-            rsp, info = fetch_url(self.module, spec)
-            if not rsp:
-                self.module.fail_json(msg="Failure downloading %s, %s" % (spec, info['msg']))
-            data = rsp.read(BUFSIZE)
-            while data:
-                package_file.write(data)
-                data = rsp.read(BUFSIZE)
-            package_file.close()
-        except Exception as e:
-            self.module.fail_json(msg="Failure downloading %s, %s" % (spec, to_native(e)))
-
-        return package_file.name
+        self.pkg_mgr_name = "yum"
+        self.lockfile = '/var/run/yum.pid'
 
     def yum_base(self):
         my = yum.YumBase()
@@ -874,7 +860,7 @@ class YumModule(YumDnf):
 
                 if '://' in spec:
                     with self.set_env_proxy():
-                        package = self.fetch_rpm_from_url(spec)
+                        package = fetch_file(self.module, spec)
                 else:
                     package = spec
 
@@ -1195,7 +1181,7 @@ class YumModule(YumDnf):
                 elif '://' in spec:
                     # download package so that we can check if it's already installed
                     with self.set_env_proxy():
-                        package = self.fetch_rpm_from_url(spec)
+                        package = fetch_file(self.module, spec)
                     envra = self.local_envra(package)
 
                     if envra is None:
@@ -1443,11 +1429,30 @@ class YumModule(YumDnf):
         if not HAS_YUM_PYTHON:
             error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
 
+        self.wait_for_lock()
+
         if self.disable_excludes and yum.__version_info__ < (3, 4):
             self.module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
 
         if error_msgs:
             self.module.fail_json(msg='. '.join(error_msgs))
+
+        if self.update_cache and not self.names and not self.list:
+            rc, stdout, stderr = self.module.run_command(self.yum_basecmd + ['clean', 'expire-cache'])
+            if rc == 0:
+                self.module.exit_json(
+                    changed=False,
+                    msg="Cache updated",
+                    rc=rc,
+                    results=[]
+                )
+            else:
+                self.module.exit_json(
+                    changed=False,
+                    msg="Failed to update cache",
+                    rc=rc,
+                    results=[stderr],
+                )
 
         # fedora will redirect yum to dnf, which has incompatibilities
         # with how this module expects yum to operate. If yum-deprecated

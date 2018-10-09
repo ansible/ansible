@@ -10,6 +10,7 @@ DOCUMENTATION = '''
     plugin_type: inventory
     author:
         - Remy Leone (@sieben)
+        - Anthony Ruhier (@Anthony25)
     short_description: NetBox inventory source
     description:
         - Get inventory hosts from NetBox
@@ -42,6 +43,7 @@ DOCUMENTATION = '''
                 - sites
                 - tenants
                 - racks
+                - tags
                 - device_roles
                 - device_types
                 - manufacturers
@@ -57,7 +59,7 @@ DOCUMENTATION = '''
 
 EXAMPLES = '''
 # netbox_inventory.yml file in YAML format
-# Example command line: ansible-inventory --list -i netbox_inventory.yml
+# Example command line: ansible-inventory -v --list -i netbox_inventory.yml
 
 plugin: netbox
 api_endpoint: http://localhost:8000
@@ -65,11 +67,28 @@ group_by:
   - device_roles
 query_filters:
   - role: network-edge-router
+
+# Query filters are passed directly as an argument to the fetching queries.
+# You can repeat tags in the query string.
+
+query_filters:
+  - role: server
+  - tag: web
+  - tag: production
+
+# See the NetBox documentation at https://netbox.readthedocs.io/en/latest/api/overview/
+# the query_filters work as a logical **OR**
+#
+# Prefix any custom fields with cf_ and pass the field value with the regular NetBox query string
+
+query_filters:
+  - cf_foo: bar
 '''
 
 import json
 import uuid
 from sys import version as python_version
+from threading import Thread
 
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.module_utils.ansible_release import __version__ as ansible_version
@@ -116,7 +135,6 @@ class InventoryModule(BaseInventoryPlugin):
     NAME = 'netbox'
 
     def _fetch_information(self, url):
-
         response = open_url(url, headers=self.headers, timeout=self.timeout)
 
         try:
@@ -129,22 +147,15 @@ class InventoryModule(BaseInventoryPlugin):
         except ValueError:
             raise AnsibleError("Incorrect JSON payload: %s" % raw_data)
 
-    def get_resource_list(self, api_url, api_token=None, specific_host=None):
+    def get_resource_list(self, api_url):
         """Retrieves resource list from netbox API.
          Returns:
             A list of all resource from netbox API.
         """
         if not api_url:
             raise AnsibleError("Please check API URL in script configuration file.")
-        api_url_headers = {}
-        api_url_params = {}
-        if api_token:
-            api_url_headers.update({"Authorization": "Token %s" % api_token})
-        if specific_host:
-            api_url_params.update({"name": specific_host})
 
         hosts_list = []
-
         # Pagination.
         while api_url:
             self.display.v("Fetching: " + api_url)
@@ -162,6 +173,7 @@ class InventoryModule(BaseInventoryPlugin):
             "sites": self.extract_site,
             "tenants": self.extract_tenant,
             "racks": self.extract_rack,
+            "tags": self.extract_tags,
             "device_roles": self.extract_device_role,
             "device_types": self.extract_device_type,
             "manufacturers": self.extract_manufacturer
@@ -169,37 +181,37 @@ class InventoryModule(BaseInventoryPlugin):
 
     def extract_device_type(self, host):
         try:
-            return self.device_types_lookup[host["device_type"]["id"]]
+            return [self.device_types_lookup[host["device_type"]["id"]]]
         except Exception:
             return
 
     def extract_rack(self, host):
         try:
-            return self.racks_lookup[host["rack"]["id"]]
+            return [self.racks_lookup[host["rack"]["id"]]]
         except Exception:
             return
 
     def extract_site(self, host):
         try:
-            return self.sites_lookup[host["site"]["id"]]
+            return [self.sites_lookup[host["site"]["id"]]]
         except Exception:
             return
 
     def extract_tenant(self, host):
         try:
-            return self.tenants_lookup[host["tenant"]["id"]]
+            return [self.tenants_lookup[host["tenant"]["id"]]]
         except Exception:
             return
 
     def extract_device_role(self, host):
         try:
-            return self.device_roles_lookup[host["device_role"]["id"]]
+            return [self.device_roles_lookup[host["device_role"]["id"]]]
         except Exception:
             return
 
     def extract_manufacturer(self, host):
         try:
-            return self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]
+            return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
         except Exception:
             return
 
@@ -223,6 +235,9 @@ class InventoryModule(BaseInventoryPlugin):
             return str(ip_interface(address).ip)
         except Exception:
             return
+
+    def extract_tags(self, host):
+        return host["tags"]
 
     def refresh_sites_lookup(self):
         url = urljoin(self.api_endpoint, "/api/dcim/sites/?limit=0")
@@ -260,21 +275,32 @@ class InventoryModule(BaseInventoryPlugin):
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
 
     def refresh_lookups(self):
-        self.refresh_sites_lookup()
-        self.refresh_regions_lookup()
-        self.refresh_tenants_lookup()
-        self.refresh_racks_lookup()
-        self.refresh_device_roles_lookup()
-        self.refresh_device_types_lookup()
-        self.refresh_manufacturers_lookup()
+        lookup_processes = (
+            self.refresh_sites_lookup,
+            self.refresh_regions_lookup,
+            self.refresh_tenants_lookup,
+            self.refresh_racks_lookup,
+            self.refresh_device_roles_lookup,
+            self.refresh_device_types_lookup,
+            self.refresh_manufacturers_lookup,
+        )
+
+        thread_list = []
+        for p in lookup_processes:
+            t = Thread(target=p)
+            thread_list.append(t)
+            t.start()
+
+        for thread in thread_list:
+            thread.join()
 
     def validate_query_parameters(self, x):
         if not (isinstance(x, dict) and len(x) == 1):
             self.display.warning("Warning query parameters %s not a dict with a single key." % x)
             return
 
-        k = x.keys()[0]
-        v = x.values()[0]
+        k = tuple(x.keys())[0]
+        v = tuple(x.values())[0]
 
         if not (k in ALLOWED_DEVICE_QUERY_PARAMETERS or k.startswith("cf_")):
             self.display.warning("Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS))
@@ -297,15 +323,16 @@ class InventoryModule(BaseInventoryPlugin):
         return host["name"] or str(uuid.uuid4())
 
     def add_host_to_groups(self, host, hostname):
-        for g in self.group_by:
-            group = self.group_extractors[g](host)
+        for group in self.group_by:
+            sub_groups = self.group_extractors[group](host)
 
-            if not group:
+            if not sub_groups:
                 continue
 
-            group_name = "_".join([g, group])
-            self.inventory.add_group(group=group_name)
-            self.inventory.add_host(group=group_name, host=hostname)
+            for sub_group in sub_groups:
+                group_name = "_".join([group, sub_group])
+                self.inventory.add_group(group=group_name)
+                self.inventory.add_host(group=group_name, host=hostname)
 
     def _fill_host_variables(self, host, hostname):
         for attribute, extractor in self.group_extractors.items():
@@ -342,7 +369,7 @@ class InventoryModule(BaseInventoryPlugin):
         self.api_endpoint = self.get_option("api_endpoint")
         self.timeout = self.get_option("timeout")
         self.headers = {
-            'Authorization': "Bearer %s" % token,
+            'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
             'Content-type': 'application/json'
         }

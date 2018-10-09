@@ -200,6 +200,25 @@ into::
     - key: Environment
       value: dev
 
+.. versionadded:: 2.8
+
+``dict2items`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
+
+    {{ files | dict2items(key_name='file', value_name='path') }}
+
+Which turns::
+
+    files:
+      users: /etc/passwd
+      groups: /etc/group
+
+into::
+
+    - file: users
+      path: /etc/passwd
+    - file: groups
+      path: /etc/group
+
 items2dict filter
 `````````````````
 
@@ -283,43 +302,45 @@ Produces a product of an object, and subelement values of that object, similar t
 Which turns::
 
     users:
-      - name: alice
-        authorized:
-          - /tmp/alice/onekey.pub
-          - /tmp/alice/twokey.pub
-        groups:
-          - wheel
-          - docker
-      - name: bob
-        authorized:
-          - /tmp/bob/id_rsa.pub
-        groups:
-          - docker
+    - name: alice
+      authorized:
+      - /tmp/alice/onekey.pub
+      - /tmp/alice/twokey.pub
+      groups:
+      - wheel
+      - docker
+    - name: bob
+      authorized:
+      - /tmp/bob/id_rsa.pub
+      groups:
+      - docker
 
 Into::
 
     -
       - name: alice
         groups:
-          - wheel
-          - docker
+        - wheel
+        - docker
         authorized:
-          - /tmp/alice/onekey.pub
+        - /tmp/alice/onekey.pub
+        - /tmp/alice/twokey.pub
       - wheel
     -
       - name: alice
         groups:
-          - wheel
-          - docker
+        - wheel
+        - docker
         authorized:
-          - /tmp/alice/onekey.pub
+        - /tmp/alice/onekey.pub
+        - /tmp/alice/twokey.pub
       - docker
     -
       - name: bob
         authorized:
-          - /tmp/bob/id_rsa.pub
+        - /tmp/bob/id_rsa.pub
         groups:
-          - docker
+        - docker
       - docker
 
 An example of using this filter with ``loop``::
@@ -1012,7 +1033,7 @@ To search a string with a regex, use the "regex_search" filter::
 
     # will return empty if it cannot find a match
     {{ 'ansible' | regex_search('(foobar)') }}
-    
+
     # case insensitive search in multiline mode
     {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
@@ -1036,7 +1057,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
-    
+
     # add "https://" prefix to each item in a list
     {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
 
@@ -1061,6 +1082,10 @@ To add quotes for shell usage::
 To use one value on true and another on false (new in version 1.9)::
 
     {{ (name == "John") | ternary('Mr','Ms') }}
+
+To use one value on true, one value on false and a third value on null (new in version 2.8)::
+
+   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
 
 To concatenate a list into a string::
 
@@ -1161,6 +1186,25 @@ To get date object from string use the `to_datetime` filter, (new in version in 
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
     {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).days  }}
 
+.. versionadded:: 2.4
+
+To format a date using a string (like with the shell date command), use the "strftime" filter::
+
+    # Display year-month-day
+    {{ '%Y-%m-%d' | strftime }}
+
+    # Display hour:min:sec
+    {{ '%H:%M:%S' | strftime }}
+
+    # Use ansible_date_time.epoch fact
+    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
+
+    # Use arbitrary epoch value
+    {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
+    {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
+
+.. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
+
 Combination Filters
 ````````````````````
 
@@ -1185,25 +1229,6 @@ Combinations always require a set size::
 
 
 Also see the :ref:`zip_filter`
-
-.. versionadded:: 2.4
-
-To format a date using a string (like with the shell date command), use the "strftime" filter::
-
-    # Display year-month-day
-    {{ '%Y-%m-%d' | strftime }}
-
-    # Display hour:min:sec
-    {{ '%H:%M:%S' | strftime }}
-
-    # Use ansible_date_time.epoch fact
-    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
-
-    # Use arbitrary epoch value
-    {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
-    {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
-
-.. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
 
 Debugging Filters
 `````````````````

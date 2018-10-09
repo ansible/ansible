@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_volume_clone
-short_description: Manage NetApp ONTAP volume clones.
+short_description: NetApp ONTAP manage volume clones.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

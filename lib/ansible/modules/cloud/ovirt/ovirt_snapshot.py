@@ -71,6 +71,11 @@ options:
             - "restore_memory"
             - "save_memory"
         type: bool
+    keep_days_old:
+        description:
+            - "Number of days after which should snapshot be deleted."
+            - "It will check all snapshots of virtual machine and delete them, if they are older."
+        version_added: "2.8"
 notes:
     - "Note that without a guest agent the data on the created snapshot may be
        inconsistent."
@@ -124,6 +129,11 @@ EXAMPLES = '''
     snapshot_id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
     disk_name: DiskName
     download_image_path: /home/user/mydisk.qcow2
+
+# Delete all snapshots older than 2 days
+- ovirt_snapshot:
+    vm_name: test
+    keep_days_old: 2
 '''
 
 
@@ -138,6 +148,10 @@ snapshot:
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/snapshot."
     returned: On success if snapshot is found.
     type: dict
+snapshots:
+    description: List of deleted snapshots when keep_days_old is defined and snapshot is older than the input days
+    returned: On success returns deleted snapshots
+    type: list
 '''
 
 
@@ -157,6 +171,7 @@ import time
 from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
+from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     check_sdk,
@@ -325,10 +340,12 @@ def create_snapshot(module, vm_service, snapshots_service):
     }
 
 
-def remove_snapshot(module, vm_service, snapshots_service):
+def remove_snapshot(module, vm_service, snapshots_service, snapshot_id=None):
     changed = False
+    if not snapshot_id:
+        snapshot_id = module.params['snapshot_id']
     snapshot = get_entity(
-        snapshots_service.snapshot_service(module.params['snapshot_id'])
+        snapshots_service.snapshot_service(snapshot_id)
     )
 
     if snapshot:
@@ -397,6 +414,20 @@ def get_snapshot_disk_id(module, snapshots_service):
 
     return snapshot_disks_service.disk_service(disk_id).get().id
 
+def remove_old_snapshosts(module, vm_service, snapshots_service):
+    deleted_snapshots = []
+    changed = False
+    date_now = datetime.now()
+    for snapshot in snapshots_service.list():
+        if snapshot.vm is not None and snapshot.vm.name == module.params.get('vm_name'):
+            diff = date_now - snapshot.date.replace(tzinfo=None)
+            if diff.days >= module.params.get('keep_days_old'):
+                snapshot = remove_snapshot(module, vm_service, snapshots_service, snapshot.id).get('snapshot')
+                deleted_snapshots.append(snapshot)
+                changed = True
+    return dict(snapshots=deleted_snapshots, changed=changed)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -410,6 +441,7 @@ def main():
         description=dict(default=None),
         download_image_path=dict(default=None),
         upload_image_path=dict(default=None, aliases=['image_path']),
+        keep_days_old=dict(default=None, type='int'),
         use_memory=dict(
             default=None,
             type='bool',
@@ -424,9 +456,6 @@ def main():
             ('state', 'restore', ['snapshot_id']),
         ]
     )
-
-    if module._name == 'ovirt_snapshots':
-        module.deprecate("The 'ovirt_snapshots' module is being renamed 'ovirt_snapshot'", version=2.8)
 
     check_sdk(module)
     ret = {}
@@ -450,7 +479,9 @@ def main():
                 ret['changed'] = upload_disk_image(connection, module)
             if module.params['download_image_path']:
                 ret['changed'] = download_disk_image(connection, module)
-            if module.params['description']:
+            if module.params.get('keep_days_old') is not None:
+                ret = remove_old_snapshosts(module, vm_service, snapshots_service)
+            else:
                 ret = create_snapshot(module, vm_service, snapshots_service)
         elif state == 'restore':
             ret = restore_snapshot(module, vm_service, snapshots_service)

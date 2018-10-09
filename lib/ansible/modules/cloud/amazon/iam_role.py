@@ -87,8 +87,7 @@ EXAMPLES = '''
   iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
-    managed_policy:
-      -
+    managed_policy: []
 
 - name: Delete the role
   iam_role:

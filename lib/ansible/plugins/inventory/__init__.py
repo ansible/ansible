@@ -24,12 +24,11 @@ import os
 import re
 import string
 
-from collections import Mapping
-
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar

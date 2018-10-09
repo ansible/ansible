@@ -29,7 +29,7 @@ options:
   name:
     description:
      - Name to give the instance (alphanumeric, dashes, underscore).
-     - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID_).
+     - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID-).
     required: true
   displaygroup:
     description:
@@ -151,6 +151,8 @@ requirements:
 author:
 - Vincent Viallet (@zbal)
 notes:
+  - Please note, linode-python does not have python 3 support.
+  - This module uses the now deprecated v3 of the Linode API.
   - C(LINODE_API_KEY) env variable can be used instead.
   - Please review U(https://www.linode.com/api/linode) for determining the required parameters.
 '''
@@ -365,7 +367,7 @@ def linodeServers(module, api, state, name,
                                         PaymentTerm=payment_term)
                 linode_id = res['LinodeID']
                 # Update linode Label to match name
-                api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
+                api.linode_update(LinodeId=linode_id, Label='%s-%s' % (linode_id, name))
                 # Update Linode with Ansible configuration options
                 api.linode_update(LinodeId=linode_id, LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog, **kwargs)
                 # Save server

@@ -48,11 +48,11 @@ simple_config_file:
 
 import os
 
-from collections import MutableMapping
 from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 
