@@ -350,7 +350,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             current_pass_hash = cursor.fetchone()
 
             if encrypted:
-                encrypted_password = (password)
+                encrypted_password = password
                 if not is_hash(encrypted_password):
                     module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
             else:
@@ -358,16 +358,16 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     cursor.execute("SELECT PASSWORD(%s)", (password,))
                 else:
                     cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
-                encrypted_password = cursor.fetchone()
+                encrypted_password = cursor.fetchone()[0]
 
             if current_pass_hash != encrypted_password:
                 if module.check_mode:
                     return True
                 if old_user_mgmt:
-                    cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
+                    cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, encrypted_password))
                 else:
                     try:
-                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
+                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, encrypted_password))
                     except (MySQLdb.Error) as e:
                         # https://stackoverflow.com/questions/51600000/authentication-string-of-root-user-on-mysql
                         # Replacing empty root password with new authentication mechanisms fails with error 1396
