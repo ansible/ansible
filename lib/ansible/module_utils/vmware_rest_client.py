@@ -185,3 +185,20 @@ class VmwareRestClient(object):
         for t in temp_tags_model:
             tags.append(t.name)
         return tags
+
+    @staticmethod
+    def search_svc_object_byname(service, svc_obj_name):
+        """
+        Return service object by name
+        Args:
+            service: Service object
+            svc_obj_name: Name of service object to find
+
+        Returns: Service object if found else None
+
+        """
+        for svc_object in service.list():
+            svc_obj = service.get(svc_object)
+            if svc_obj.name == svc_obj_name:
+                return svc_obj
+        return None
