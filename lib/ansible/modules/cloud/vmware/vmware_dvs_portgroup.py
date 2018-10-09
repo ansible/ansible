@@ -42,7 +42,7 @@ options:
     vlan_id:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
-            - 'If C(vlan_trunk) is configured to be I(true), this can be a range, example: 1-4094 or a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
+            - 'If C(vlan_trunk) is configured to be I(true), this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
         required: True
     num_ports:
         description:
