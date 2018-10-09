@@ -439,7 +439,7 @@ class StorageDomainModule(BaseModule):
             else:
                 raise Exception(
                     "Can't bring storage to state `%s`, because Datacenter "
-                    "%s is not UP"
+                    "%s is not UP" % (self.param('state'), dc.name)
                 )
 
     def _attached_sds_service(self, dc_name):
