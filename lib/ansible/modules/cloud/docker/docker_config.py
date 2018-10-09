@@ -23,8 +23,8 @@ version_added: "2.8"
 description:
      - Create and remove Docker configs in a Swarm environment. Similar to C(docker config create) and C(docker config rm).
      - Adds to the metadata of new configs 'ansible_key', an encrypted hash representation of the data, which is then used
-       in future runs to test if a config has changed.
-     - If 'ansible_key' is not present, then a config will not be updated unless the C(force) option is set.
+       in future runs to test if a config has changed. If 'ansible_key' is not present, then a config will not be updated
+       unless the C(force) option is set.
      - Updates to configs are performed by removing the config and creating it again.
 options:
   data:
