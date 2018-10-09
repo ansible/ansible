@@ -52,9 +52,6 @@ def main():
         'unknown-interpreted-text-role': '^Unknown interpreted text role "[^"]*".$',
     }
 
-    ignore_codes = [
-    ]
-
     used_ignore_codes = set()
 
     for line in lines:
