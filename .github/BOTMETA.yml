@@ -113,7 +113,7 @@ files:
     maintainers: rambleraptor erjohnso
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
-  $modules/cloud/linode/: intheclouddan lwm displague rmcintosh
+  $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: analbeard
   $modules/cloud/misc/ovirt.py:
@@ -384,11 +384,13 @@ files:
     labels:
       - cloud
     support: community
-  contrib/inventory/linode.py:
+  contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
-    maintainers: intheclouddan lwm displague rmcintosh
-    labels: cloud
+    maintainers: $team_linode
+    labels:
+      - cloud
+      - linode
   contrib/inventory/openstack_inventory.py:
     keywords:
       - openstack dynamic inventory script
@@ -878,6 +880,13 @@ files:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
+  lib/ansible/plugins/inventory/linode.py:
+    keywords:
+      - linode dynamic inventory script
+    maintainers: $team_linode
+    labels:
+      - cloud
+      - linode
   lib/ansible/plugins/inventory/openshift.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
@@ -1093,6 +1102,7 @@ macros:
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
+  team_linode: intheclouddan lwm displague rmcintosh
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
