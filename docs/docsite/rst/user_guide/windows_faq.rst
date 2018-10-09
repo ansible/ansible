@@ -37,7 +37,7 @@ No, Ansible cannot run on a Windows host natively and can only manage Windows ho
 but Ansible can be run under the Windows Subsystem for Linux (WSL).
 
 .. note:: The Windows Subsystem for Linux is not supported by Ansible and
-          should not be used for production systems.
+    should not be used for production systems.
 
 To install Ansible on WSL, the following commands
 can be run in the bash terminal:
