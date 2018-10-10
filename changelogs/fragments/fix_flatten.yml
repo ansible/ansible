@@ -1,0 +1,2 @@
+bugfixes:
+    - fix flatten to properly handle multiple lists in lists https://github.com/ansible/ansible/issues/46343
