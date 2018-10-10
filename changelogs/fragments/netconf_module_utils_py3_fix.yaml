@@ -1,0 +1,3 @@
+---
+bugfixes:
+- netconf_config - Fix netconf module_utils dict changed size issue (https://github.com/ansible/ansible/pull/46778)
