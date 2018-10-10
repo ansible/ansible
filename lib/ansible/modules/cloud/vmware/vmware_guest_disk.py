@@ -24,7 +24,7 @@ description:
     - All parameters and VMware object names are case sensitive.
     - This module is destructive in nature, please read documentation carefully before proceeding.
     - Be careful while removing disk specified as this may lead to data loss.
-version_added: 2.6
+version_added: 2.8
 author:
     - Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
 notes:
@@ -63,11 +63,11 @@ options:
    disk:
      description:
      - A list of disks to add.
-     - The virtual disk related information in provided using this list.
+     - The virtual disk related information is provided using this list.
      - All values and parameters are case sensitive.
      - 'Valid attributes are:'
      - ' - C(size[_tb,_gb,_mb,_kb]) (integer): Disk storage size in specified unit.'
-     - '   If C(size) specified then unit must be specified.'
+     - '   If C(size) specified then unit must be specified. There is no space allowed in between size number and unit.'
      - '   Only first occurance in disk element will be considered, even if there are multiple size* parameters available.'
      - ' - C(type) (string): Valid values are:'
      - '     - C(thin) thin disk'
@@ -78,14 +78,14 @@ options:
      - ' - C(autoselect_datastore) (bool): Select the less used datastore. Specify only if C(datastore) is not specified.'
      - ' - C(scsi_controller) (integer): SCSI controller number. Valid value range from 0 to 3.'
      - '   Only 4 SCSI controllers are allowed per VM.'
-     - '   Care should be take while specifying C(scsi_controller) is 0 and C(unit_number) as 0 as this disk may contain OS.'
+     - '   Care should be taken while specifying C(scsi_controller) is 0 and C(unit_number) as 0 as this disk may contain OS.'
      - ' - C(unit_number) (integer): Disk Unit Number. Valid value range from 0 to 15. Only 15 disks are allowed per SCSI Controller.'
      - ' - C(scsi_type) (string): Type of SCSI controller. This value is required only for the first occurance of SCSI Controller.'
      - '   This value is ignored, if SCSI Controller is already present or C(state) is C(absent).'
      - '   Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual).'
      - '   C(paravirtual) is default value for this parameter.'
      - ' - C(state) (string): State of disk. This is either "absent" or "present".'
-     - '   If C(state) is set to C(absent), disk will be removed permanently from virtual machine configuration.'
+     - '   If C(state) is set to C(absent), disk will be removed permanently from virtual machine configuration and from VMware storage.'
      - '   If C(state) is set to C(present), disk will be added if not present at given SCSI Controller and Unit Number.'
      - '   If C(state) is set to C(present) and disk exists with different size, disk size is increased.'
      - '   Reducing disk size is not allowed.'
@@ -96,10 +96,10 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Add disks to virtual machine using UUID
   vmware_guest_disk:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    datacenter: ha-datacenter
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
     validate_certs: no
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     disk:
@@ -117,15 +117,22 @@ EXAMPLES = '''
         scsi_controller: 2
         scsi_type: 'buslogic'
         unit_number: 12
+      - size: 10Gb
+        type: eagerzeroedthick
+        state: present
+        autoselect_datastore: True
+        scsi_controller: 2
+        scsi_type: 'buslogic'
+        unit_number: 1
   delegate_to: localhost
   register: disk_facts
 
 - name: Remove disks from virtual machine using name
   vmware_guest_disk:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    datacenter: ha-datacenter
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
     validate_certs: no
     name: VM_225
     disk:
@@ -185,7 +192,7 @@ class PyVmomiHelper(PyVmomi):
 
     def create_scsi_controller(self, scsi_type, scsi_bus_number):
         """
-        Function to create SCSI Controller with given SCSI Type and SCSI Bus Number
+        Create SCSI Controller with given SCSI Type and SCSI Bus Number
         Args:
             scsi_type: Type of SCSI
             scsi_bus_number: SCSI Bus number to be assigned
@@ -207,7 +214,7 @@ class PyVmomiHelper(PyVmomi):
     @staticmethod
     def create_scsi_disk(scsi_ctl_key, disk_index):
         """
-        Function to create Virtual Device Spec for virtual disk
+        Create Virtual Device Spec for virtual disk
         Args:
             scsi_ctl_key: Unique SCSI Controller Key
             disk_index: Disk unit number at which disk needs to be attached
@@ -227,7 +234,7 @@ class PyVmomiHelper(PyVmomi):
 
     def reconfigure_vm(self, config_spec, device_type):
         """
-        Function to reconfigure virtual machine after modifying device spec
+        Reconfigure virtual machine after modifying device spec
         Args:
             config_spec: Config Spec
             device_type: Type of device being modified
@@ -252,7 +259,7 @@ class PyVmomiHelper(PyVmomi):
 
     def ensure_disks(self, vm_obj=None):
         """
-        Function to manage internal state of virtual machine disks
+        Manage internal state of virtual machine disks
         Args:
             vm_obj: Managed object of virtual machine
 
@@ -320,7 +327,6 @@ class PyVmomiHelper(PyVmomi):
                 if disk['state'] == 'present':
                     disk_spec = vim.vm.device.VirtualDeviceSpec()
                     # set the operation to edit so that it knows to keep other settings
-                    disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                     disk_spec.device = current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']]
                     # Edit and no resizing allowed
                     if disk['size'] < disk_spec.device.capacityInKB:
@@ -329,6 +335,7 @@ class PyVmomiHelper(PyVmomi):
                                                                                        disk['size'],
                                                                                        disk_spec.device.capacityInKB))
                     if disk['size'] != disk_spec.device.capacityInKB:
+                        disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                         disk_spec.device.capacityInKB = disk['size']
                         self.config_spec.deviceChange.append(disk_spec)
                         disk_change = True
@@ -340,10 +347,12 @@ class PyVmomiHelper(PyVmomi):
                     # Disk already exists, deleting
                     disk_spec = vim.vm.device.VirtualDeviceSpec()
                     disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                    disk_spec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.destroy
                     disk_spec.device = current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']]
                     self.config_spec.deviceChange.append(disk_spec)
                     disk_change = True
                     results['disk_changes'][disk['disk_index']] = "Disk deleted."
+
             if disk_change:
                 # Adding multiple disks in a single attempt raises weird errors
                 # So adding single disk at a time.
@@ -359,7 +368,7 @@ class PyVmomiHelper(PyVmomi):
 
     def sanitize_disk_inputs(self):
         """
-        Function to check correctness of disk input provided by user
+        Check correctness of disk input provided by user
         Returns: A list of dictionary containing disk information
 
         """
@@ -450,9 +459,18 @@ class PyVmomiHelper(PyVmomi):
                         # consider first value only
                         param = [x for x in disk.keys() if x.startswith('size_')][0]
                         unit = param.split('_')[-1]
+                        disk_size = disk[param]
+                        if isinstance(disk_size, (float, int)):
+                            disk_size = str(disk_size)
+
                         try:
-                            expected = int(disk[param])
-                        except ValueError:
+                            if re.match(r'\d+\.\d+', disk_size):
+                                # We found float value in string, let's typecast it
+                                expected = float(disk_size)
+                            else:
+                                # We found int value in string, let's typecast it
+                                expected = int(disk_size)
+                        except (TypeError, ValueError, NameError):
                             disk_size_parse_failed = True
 
                     if disk_size_parse_failed:
@@ -462,8 +480,8 @@ class PyVmomiHelper(PyVmomi):
                                                   " using documentation." % disk_index)
 
                     disk_units = dict(tb=3, gb=2, mb=1, kb=0)
+                    unit = unit.lower()
                     if unit in disk_units:
-                        unit = unit.lower()
                         current_disk['size'] = expected * (1024 ** disk_units[unit])
                     else:
                         self.module.fail_json(msg="%s is not a supported unit for disk size for disk index [%s]."
@@ -532,7 +550,7 @@ class PyVmomiHelper(PyVmomi):
 
     def get_recommended_datastore(self, datastore_cluster_obj):
         """
-        Function to return Storage DRS recommended datastore from datastore cluster
+        Return Storage DRS recommended datastore from datastore cluster
         Args:
             datastore_cluster_obj: datastore cluster managed object
 
@@ -571,7 +589,7 @@ class PyVmomiHelper(PyVmomi):
     @staticmethod
     def gather_disk_facts(vm_obj):
         """
-        Function to gather facts about VM's disks
+        Gather facts about VM's disks
         Args:
             vm_obj: Managed object of virtual machine
 
