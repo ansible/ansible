@@ -18,6 +18,15 @@ DOCUMENTATION = '''
       - default_callback
     requirements:
       - set as stdout in configuration
+    options:
+      show_only_changed:
+        description: Whether to display output from 'ok' task results
+        default: False
+        env:
+          - name: UNIXY_SHOW_ONLY_CHANGED
+        ini:
+          - section: callback_unixy
+            key: show_only_changed
 '''
 
 from os.path import basename
@@ -127,10 +136,13 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result, msg="ok", display_color=C.COLOR_OK):
         self._preprocess_result(result)
 
+        show_only_changed = self.get_option('show_only_changed')
         result_was_changed = ('changed' in result._result and result._result['changed'])
         if result_was_changed:
             msg = "done"
             display_color = C.COLOR_CHANGED
+        elif show_only_changed:
+            return
 
         task_result = self._process_result_output(result, msg)
         self._display.display("  " + task_result, display_color)
