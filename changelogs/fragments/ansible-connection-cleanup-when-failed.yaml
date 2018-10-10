@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-connection - Clean up socket files if playbook aborted before connection is started.
