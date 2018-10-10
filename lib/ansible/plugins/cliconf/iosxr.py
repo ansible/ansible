@@ -195,7 +195,7 @@ class Cliconf(CliconfBase):
                 try:
                     out = to_text(out, errors='surrogate_or_strict').strip()
                 except UnicodeError:
-                    raise ConnectionError(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+                    raise ConnectionError(message=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
                 try:
                     out = json.loads(out)
