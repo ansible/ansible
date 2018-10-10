@@ -20,7 +20,7 @@ DOCUMENTATION = '''
       - set as stdout in configuration
     options:
       show_only_changed:
-        description: Whether to display output from 'ok' task results
+        description: If true, do not show output from 'ok' task results
         default: False
         env:
           - name: UNIXY_SHOW_ONLY_CHANGED
