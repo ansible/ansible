@@ -51,9 +51,11 @@ options:
     disk_id:
         description:
             - "Disk id which you want to upload or download"
+        version_added: "2.8"
     disk_name:
         description:
             - "Disk name which you want to upload or download"
+        version_added: "2.8"
     download_image_path:
         description:
             - "Path on a file system where disk should be downloaded."
