@@ -77,6 +77,7 @@ options:
      - Choose if EFI secure boot should be enabled.
      type: 'bool'
      default: False
+     version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 
