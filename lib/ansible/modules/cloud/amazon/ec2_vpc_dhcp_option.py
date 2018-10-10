@@ -49,7 +49,7 @@ options:
     description:
       - NetBIOS node type to advertise in the DHCP options.
         The AWS recommendation is to use 2 (when using netbios name services)
-        http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html
+        U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html)
   vpc_id:
     description:
       - VPC ID to associate with the requested DHCP option set.

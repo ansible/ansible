@@ -47,8 +47,8 @@ options:
     description:
       - An existing S3 bucket where CloudTrail will deliver log files.
       - This bucket should exist and have the proper policy.
-      - See U(http://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html)
-      - Required when C(state=present)
+      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html).
+      - Required when C(state=present).
     version_added: "2.4"
   s3_key_prefix:
     description:
@@ -71,25 +71,25 @@ options:
     aliases: [ "include_global_service_events" ]
   sns_topic_name:
     description:
-      - SNS Topic name to send notifications to when a log file is delivered
+      - SNS Topic name to send notifications to when a log file is delivered.
     version_added: "2.4"
   cloudwatch_logs_role_arn:
     description:
       - Specifies a full ARN for an IAM role that assigns the proper permissions for CloudTrail to create and write to the log group.
-      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html)
-      - Required when C(cloudwatch_logs_log_group_arn)
+      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html).
+      - Required when C(cloudwatch_logs_log_group_arn).
     version_added: "2.4"
   cloudwatch_logs_log_group_arn:
     description:
       - A full ARN specifying a valid CloudWatch log group to which CloudTrail logs will be delivered. The log group should already exist.
-      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html)
-      - Required when C(cloudwatch_logs_role_arn)
+      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html).
+      - Required when C(cloudwatch_logs_role_arn).
     version_added: "2.4"
   kms_key_id:
     description:
       - Specifies the KMS key ID to use to encrypt the logs delivered by CloudTrail. This also has the effect of enabling log file encryption.
       - The value can be an alias name prefixed by "alias/", a fully specified ARN to an alias, a fully specified ARN to a key, or a globally unique identifier.
-      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html)
+      - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html).
     version_added: "2.4"
   tags:
     description:

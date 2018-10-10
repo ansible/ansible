@@ -19,7 +19,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeCustomerGateways.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeCustomerGateways.html) for possible filters.
   customer_gateway_ids:
     description:
       - Get details of a specific customer gateways using customer gateway ID/IDs. This value should be provided as a list.
