@@ -13,28 +13,27 @@ $params = Parse-Args $args -supports_check_mode $true
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true 
 $repo = Get-AnsibleParam -obj $params -name "repository" -type "str"
 $url = Get-AnsibleParam -obj $params -name "url" -type "str"
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent", "latest"
 $allow_clobber = Get-AnsibleParam -obj $params -name "allow_clobber" -type "bool" -default $false
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
-$latest = Get-AnsibleParam -obj $params -name "latest" -type "bool" -default $false
-$required_version = Get-AnsibleParam -obj $params -name "required_version" -type "str"
-$force_required_version = Get-AnsibleParam -obj $params -name "force_required_version" -type "bool" -default $false
+$version = Get-AnsibleParam -obj $params -name "version" -type "str"
+$force_version = Get-AnsibleParam -obj $params -name "force_version" -type "bool" -default $false
 
 $result = @{"changed" = $false
             "output" = ""
             "nuget_changed" = $false
             "repository_changed" = $false}
 
-If (($latest -eq $true) -and ($required_version -ne $null)) {
-    Fail-Json $result "latest and required_version are mutually exclusive but have both been set"
+If (($state -eq 'latest') -and ($version -ne $null)) {
+    Fail-Json $result "latest and version are mutually exclusive but have both been set"
 }
 
-if ((($latest -eq $true) -or ($required_version)) -and $state -eq 'absent'){
-    Fail-Json $result "latest and required_version can be user only when state = present"
+if ((($state -eq 'latest') -or ($version)) -and $state -eq 'absent'){
+    Fail-Json $result "latest and version can be user only when state = present"
 } 
 
-If (($force_required_version -eq $true) -and ($required_version -eq $null)) {
-    Fail-Json $result "force_required_version can be used only when required_version is set"
+If (($force_version -eq $true) -and ($version -eq $null)) {
+    Fail-Json $result "force_version can be used only when version is set"
 }
 
 Function Install-NugetProvider {
@@ -182,11 +181,11 @@ Function Install-PsModule {
         Fail-Json $result $ErrorMessage
     }
     #Saving old logic: if module is present, and no new parameters are specified - do nothing, no matter which version
-    if ($module -and ($Latest -eq $false) -and !($RequiredVersion)){
+    if ($module -and ($state -eq 'present') -and !($RequiredVersion)){
         $result.output = "Module $($Name) already present"
     }
     #If module is present and latest version is needed
-    elseif ($module -and $Latest -eq $true) {
+    elseif ($module -and $state -eq 'latest') {
         if ($module_version_current -lt $search_result_version) {
             $need_update = $true
         }
@@ -195,7 +194,7 @@ Function Install-PsModule {
         }
         #when repository has lower version than target computer. Just to be safe
         else {
-            $ErrorMessage = "Installed version of module $($Name):$($module_version_current) higher than in repository:$search_result_version"
+            $ErrorMessage = "Installed version of module $($Name):$($module_version_current) higher than in repository:$($search_result_version)"
             Fail-Json $result $ErrorMessage
         }    
     }
@@ -205,12 +204,12 @@ Function Install-PsModule {
             #if current version higher than required
             if ($module_version_current -gt $search_result_version) {
                 # remove all versions and install required when forced
-                if ($force_required_version -eq $true){
+                if ($force_version -eq $true){
                     $need_remove = $true
                     $need_update = $true
                 }      
                 else {
-                    Add-Warning -obj $result -message "Current version $($module_version_current) higher than required $($RequiredVersion). No changes have been made. Use force_required_version parameter to downgrade"
+                    Add-Warning -obj $result -message "Current version $($module_version_current) higher than required $($RequiredVersion). No changes have been made. Use force_version parameter to downgrade"
                 }
             }
             #if current version lower than required - install required
@@ -289,7 +288,7 @@ if ($PsVersion.Major -lt 5){
   Fail-Json $result $ErrorMessage
 }
 
-if ($state -eq "present") {
+if ($state -in @('latest','present')) {
     # Install NuGet Provider if needed
     $nuget = Install-NugetProvider -CheckMode $check_mode;
     if (($repo) -and ($url)) {
@@ -299,7 +298,7 @@ if ($state -eq "present") {
         $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
     }
 
-    Install-PsModule -Name $Name -Repository $repo -CheckMode $check_mode -Latest $latest -RequiredVersion $required_version -AllowClobber $allow_clobber -ForceRequiredVersion $force_required_version -NugetVersion $nuget.version;
+    Install-PsModule -Name $Name -Repository $repo -CheckMode $check_mode -RequiredVersion $version -AllowClobber $allow_clobber -ForceRequiredVersion $force_version -NugetVersion $nuget.version;
 }
 else {  
     if ($repo) {   

@@ -39,30 +39,25 @@ options:
     description:
       - If C(present) a new module is installed.
       - If C(absent) all versions of a module are removed.
-    choices: [ absent, present ]
+      - >
+        If C(latest) searches for new versions in repository. If module present - updates module, else installs latest version. This is mutually
+        exclusive with I(version).
+    choices: [ absent, present, latest ]
     default: present
-  latest:
-    description:
-      - If C(yes) searches for new versions in repository.If found updates module, else installs latest version.
-      - If C(no) does not check versions. If module present makes no changes, else installs latest version.
-      - This is mutually exclusive with I(required_version).
-      - Requires I(state=present).
-    type: bool
-    default: 'no'
-    version_added: '2.8'
-  required_version:
+  version:
     description:
       - Allows to select version of powershell module to install. Requires I(state=present).
       - If there is no version present on target host a selected version will be installed.
       - If lower versions of module are present a selected version will be installed.
-      - If there is higher version present warning will be returned. No changed will be done. I(force_required_version) can be used to change this behavior.
-      - This is mutually exclusive with I(latest).
+      - >
+        If there is higher version present warning will be returned. No changed will be done. I(force_version) can be used to change this behavior.
+        This is mutually exclusive with I(state=latest).
     default: 'null'
     version_added: '2.8'
-  force_required_version:
+  force_version:
     description:
-      - Changes behavior of I(required_version). If there is higher version present all versions will be uninstalled, selected version will be installed.
-      - Requires I(required_version).
+      - Changes behavior of I(version). If there is higher version present all versions will be uninstalled, selected version will be installed.
+      - Requires I(version).
     type: bool
     default: 'no'
     version_added: '2.8'
@@ -71,6 +66,7 @@ notes:
 
 author:
 - Daniele Lazzari
+- Denis Pastukhov
 '''
 
 EXAMPLES = '''
@@ -96,23 +92,22 @@ EXAMPLES = '''
 - name: Always install latest version of module when possible
   win_psmodule:
     name: MyCustomModule
-    state: present
-    latest: yes
+    state: latest
 
 - name: Install a specific version of module from a specific repository
   win_psmodule:
     name: MyCustomModule
     repository: MyRepository
     state: present
-    required_version: 1.6.0.0
+    version: 1.6.0.0
 
 - name: Install a specific version of module from a specific repository even if highest version already installed
   win_psmodule:
     name: MyCustomModule
     repository: MyRepository
     state: present
-    required_version: 1.6.0.0
-    force_required_version: yes
+    version: 1.6.0.0
+    force_version: yes
 
 - name: Remove a powershell module
   win_psmodule:
@@ -145,7 +140,7 @@ repository_changed:
   sample: True
 version:
   description: show changes of versions
-  returned: on success
+  returned: on version change
   type: string
   sample: 1.0.0.9 => 1.0.0.5
 '''

@@ -1,5 +1,4 @@
 ---
-
 - name: install module from Powershell Gallery
   win_psmodule:
     name: "{{ powershell_module }}"
@@ -204,3 +203,108 @@
   assert:
     that:
       - "is_package_customrepo.stdout_lines[0] == custom_repo_name"
+
+- name: Uninstall module from local repository and unregister this repository.
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+    repository: "{{custom_repo_name}}"
+    url: "{{custom_repo_path}}"
+  register: uninstall_module_from_custom_repo
+
+- name: Validate sample module is uninstalled from custom repo
+  assert:
+    that:
+      - "uninstall_module_from_custom_repo is changed"
+
+- name: Get three previous versions of module
+  win_shell: Find-Module "{{ powershell_module }}" -AllVersions | select -First 3 -ExpandProperty version
+  register: module_version_list
+
+- name: Install specific module version
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+    version: "{{module_version_list.stdout_lines[1]}}"
+  register: install_module_specific_version
+
+- name: Validate specific version of module is installed
+  assert:
+    that:
+      - "'=> {{ module_version_list.stdout_lines[1]}}' in install_module_specific_version.version"
+      - "install_module_specific_version is changed"
+      
+- name: Check idempotency installing specific version
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+    version: "{{module_version_list.stdout_lines[1]}}"
+  register: install_module_specific_version_2
+  
+- name: Validate idempotency re-installing specific version
+  assert:
+    that:
+      - "install_module_specific_version_2 is not changed"
+
+- name: Check no changes are made downgrading module without force_version
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+    version: "{{module_version_list.stdout_lines[2]}}"
+  register: install_module_specific_version_3
+
+- name: Validate module is downgraded
+  assert:
+    that:
+      - "install_module_specific_version_3 is not changed"
+
+- name: Downgrade module
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+    version: "{{module_version_list.stdout_lines[2]}}"
+    force_version: yes
+  register: install_module_specific_version_4
+
+- name: Validate module is downgraded
+  assert:
+    that:
+      - "'=> {{ module_version_list.stdout_lines[2]}}' in install_module_specific_version_4.version"
+      - "install_module_specific_version_4 is changed"
+      
+- name: Install latest version of module
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: latest
+  register: install_module_specific_version_5
+
+- name: Validate latest version of module is installed
+  assert:
+    that:
+      - "'=> {{ module_version_list.stdout_lines[0]}}' in install_module_specific_version_5.version"
+      - "install_module_specific_version_5 is changed"
+
+- name: Check idempotency reinstalling latest version
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: latest
+  register: install_module_specific_version_6
+
+- name: Validate idempotency reinstalling latest version
+  assert:
+    that:
+      - "install_module_specific_version_6 is not changed"
+
+- name: Try to install wrong version
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+    version: 99.99.99.99
+  ignore_errors: yes
+  register: install_module_specific_version_7
+
+- name: Validate idempotency reinstalling latest version
+  assert:
+    that:
+      - "install_module_specific_version_7 is not changed"
+      - "install_module_specific_version_7 is failed"
