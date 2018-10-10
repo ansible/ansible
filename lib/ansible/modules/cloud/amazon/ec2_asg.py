@@ -83,7 +83,7 @@ options:
   replace_all_instances:
     description:
       - In a rolling fashion, replace all instances that used the old launch configuration with one from the new launch configuration. 
-        It increases the ASG size by replace_batch_size, waits for the new instances to be up and running. 
+        It increases the ASG size by C(replace_batch_size), waits for the new instances to be up and running. 
         After that, it terminates a batch of old instances, waits for the replacements, and repeats, until all old instances are replaced. 
         Once that's done the ASG size is reduced back to the expected size.
     version_added: "1.8"
