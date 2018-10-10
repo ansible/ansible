@@ -10,3 +10,5 @@ ansible-playbook test_loop_control.yml -v "$@"
 ansible-playbook test_delegate_to_loop_randomness.yml -v "$@"
 
 ansible-playbook delegate_and_nolog.yml -v "$@"
+
+ansible-playbook delegate_facts_block.yml -v "$@"
