@@ -153,11 +153,17 @@ def check(module, name, state, service_id, integration_key, api_key, incident_ke
     if info['status'] != 200:
         module.fail_json(msg="failed to check current incident status."
                              "Reason: %s" % info['msg'])
-    json_out = json.loads(response.read())["incidents"][0]
 
-    if state != json_out["status"]:
-        return json_out, True
-    return json_out, False
+    incidents = json.loads(response.read())["incidents"]
+
+    if len(incidents) == 0 and state in ('acknowledged', 'resolved'):
+        return "No corresponding incident", False
+    elif len(incidents) == 0:
+        return "No corresponding incident", True
+    elif state != incidents[0]["status"]:
+        return incidents[0], True
+
+    return incidents[0], False
 
 
 def send_event(module, service_key, event_type, desc,
