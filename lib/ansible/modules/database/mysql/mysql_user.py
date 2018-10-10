@@ -372,7 +372,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     try:
                         cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, encrypted_password))
                         msg = "Password updated (new style)"
-                    except (MySQLdb.Error) as e:
+                    except (mysql_driver.Error) as e:
                         # https://stackoverflow.com/questions/51600000/authentication-string-of-root-user-on-mysql
                         # Replacing empty root password with new authentication mechanisms fails with error 1396
                         if e.args[0] == 1396:
