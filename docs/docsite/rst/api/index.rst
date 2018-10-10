@@ -56,18 +56,6 @@ The basic utilities for AnsibleModule.
 
 The main class for an Ansible module.
 
-.. py:class:: bytes
-
-The bytes class.
-
-.. py:class:: str
-
-The string class.
-
-.. py:class:: unicode
-
-The unicode character class.
-
 
 Functions
 =========
@@ -76,9 +64,6 @@ Functions
 
 Load parameters.
 
-.. py:function:: main()
-
-The main function.
 
 Methods
 =======
@@ -90,10 +75,6 @@ Logs the output of Ansible.
 .. py:method:: AnsibleModule.debug()
 
 Debugs Ansible.
-
-.. py:method:: os.path.expanduser()
-
-A python method we don't recommend for use with Ansible.
 
 .. py:method:: Ansible.get_bin_path()
 
@@ -120,5 +101,3 @@ Modules
 .. py:module:: ansible.module_utils.basic
 
 .. py:module:: ansible.module_utils.url
-
-.. py:module:: requests
