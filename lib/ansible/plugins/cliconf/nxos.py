@@ -170,7 +170,7 @@ class Cliconf(CliconfBase):
         if replace:
             device_info = self.get_device_info()
             if '9K' not in device_info.get('network_os_platform', ''):
-                raise ConnectionError(msg=u'replace is supported only on Nexus 9K devices')
+                raise ConnectionError(message=u'replace is supported only on Nexus 9K devices')
             candidate = 'config replace {0}'.format(replace)
 
         if commit:
@@ -222,7 +222,7 @@ class Cliconf(CliconfBase):
                 try:
                     out = to_text(out, errors='surrogate_or_strict').strip()
                 except UnicodeError:
-                    raise ConnectionError(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+                    raise ConnectionError(message=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
                 try:
                     out = json.loads(out)
