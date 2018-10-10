@@ -1,12 +1,12 @@
-- name: Check if already in swarm
-  shell: docker node ls 2>&1 | grep 'docker swarm init'
-  register: output
-  ignore_errors: yes
+- name: Make sure we're not already using Docker swarm
+  docker_swarm:
+    state: absent
+    force: true
 
-- name: Enable swarm mode
-  command: docker swarm init
-  when: output.rc == 0
-  notify: disable_swarm
+- name: Create a Swarm cluster
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address}}"
 
 - name: Parameter name should be required
   docker_config:
@@ -95,3 +95,8 @@
   assert:
     that:
       - output.failed
+
+- name: Remove a Swarm cluster
+  docker_swarm:
+    state: absent
+    force: true
