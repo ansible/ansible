@@ -30,12 +30,12 @@ options:
     description: Username to use for HTTP authentication.
     type: string
     default: None
-    version_added: "2.7"
+    version_added: "2.8"
   url_password:
     description: Password to use for HTTP authentication.
     type: string
     default: None
-    version_added: "2.7"
+    version_added: "2.8"
 """
 
 EXAMPLES = """
