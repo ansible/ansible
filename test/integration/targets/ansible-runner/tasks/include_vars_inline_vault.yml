@@ -1,0 +1,2 @@
+- include_vars: inline_vault
+- debug: msg="show none vaulted var {{nonvault}} and inline var is processed properly w/o accessing it nor needing a secret"
