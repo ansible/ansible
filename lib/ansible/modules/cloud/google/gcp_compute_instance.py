@@ -910,9 +910,11 @@ def main():
 
     if fetch:
         if state == 'present':
-            if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
-                changed = True
+            pass
+            # TODO: fix update beheavior (issue #46531)
+            # if is_different(module, fetch):
+            #     fetch = update(module, self_link(module), kind)
+            #     changed = True
         else:
             delete(module, self_link(module), kind)
             fetch = {}
