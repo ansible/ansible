@@ -82,7 +82,7 @@ EXAMPLES = '''
       collection: "startup_log"
       #optional
       connection_string: "mongodb://localhost/"
-	  # connection_string: "mongodb://username:password@my.server.com:27017/"
+      # connection_string: "mongodb://username:password@my.server.com:27017/"
       # extra_connection_parameters: { "ssl" : True , "ssl_certfile": /etc/self_signed_certificate.pem" }
       #optional query  parameters, we accept any parameter from the normal mongodb query.
       # filter:  { "hostname": "u18" }
