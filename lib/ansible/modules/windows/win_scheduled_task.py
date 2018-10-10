@@ -191,7 +191,7 @@ options:
             description:
             - Defines how long the pattern is repeated.
             - The value is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
-            - Defaults to repeat indefinitely.
+            - By default this is not set which means it will repeat indefinitely
             type: str
           interval:
             description:
