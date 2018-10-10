@@ -78,13 +78,15 @@ class UTMModule(AnsibleModule):
 
 class UTM:
 
-    def __init__(self, module, endpoint, change_relevant_keys):
+    def __init__(self, module, endpoint, change_relevant_keys, info_only=False):
         """
         Initialize UTM Class
-        :param module: The ansible module
-        :param endpoint: The corresponing endpoint to the module
+        :param module: The Ansible module
+        :param endpoint: The corresponding endpoint to the module
         :param change_relevant_keys: The keys of the object to check for changes
+        :param info_only: When implementing an info module, set this to true. Will allow access to the info method only
         """
+        self.info_only = info_only
         self.module = module
         self.request_url = module.params.get('utm_protocol') + "://" + module.params.get('utm_host') + ":" + to_native(
             module.params.get('utm_port')) + "/api/objects/" + endpoint + "/"
@@ -103,12 +105,28 @@ class UTM:
 
     def execute(self):
         try:
-            if self.module.params.get('state') == 'present':
-                self._add()
-            elif self.module.params.get('state') == 'absent':
-                self._remove()
+            if not self.info_only:
+                if self.module.params.get('state') == 'present':
+                    self._add()
+                elif self.module.params.get('state') == 'absent':
+                    self._remove()
+            else:
+                self._info()
         except Exception as e:
             self.module.fail_json(msg=to_native(e))
+
+    def _info(self):
+        """
+        returns the info for an object in utm
+        """
+        info, result = self._lookup_entry(self.module, self.request_url)
+        if info["status"] >= 400:
+            self.module.fail_json(result=json.loads(info))
+        else:
+            if result is None:
+                self.module.exit_json(changed=False)
+            else:
+                self.module.exit_json(result=result, changed=False)
 
     def _add(self):
         """
