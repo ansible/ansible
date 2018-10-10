@@ -129,6 +129,9 @@ branches:
     - "*-patch-*"
     - "revert-*-*"
 
+runtime:
+  nodePool: test_node_pool
+
 build:
   ci:
     - test/utils/shippable/timing.sh test/utils/shippable/shippable.sh $T
