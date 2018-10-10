@@ -1,0 +1,3 @@
+bugfixes:
+- cs_instance - Fix host migration without volume (https://github.com/ansible/ansible/pull/46115).
+- cs_instance - Fix docs and typo in examples (https://github.com/ansible/ansible/pull/46035).
