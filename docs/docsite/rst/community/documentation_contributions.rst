@@ -119,7 +119,7 @@ For example:
 
    sphinx-build -b html -c rst/ rst/dev_guide/ _build/html/dev_guide/ rst/dev_guide/developing_modules_documenting.rst
 
-If you build a single file, Sphinx won’t create reference links and you’ll get bogus ``undefined label`` warnings. But ``sphinx-build`` provides good syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings.
+If you build a single file, Sphinx won't create reference links and you'll get bogus ``undefined label`` warnings. But ``sphinx-build`` provides good syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings.
 
 Building all the rST pages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
