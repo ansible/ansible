@@ -68,7 +68,7 @@ options:
         For overlay type networks only.
     type: bool
     default: 'no'
-    version_added: "2.7"
+    version_added: "2.8"
 
   ipam_driver:
     description:
