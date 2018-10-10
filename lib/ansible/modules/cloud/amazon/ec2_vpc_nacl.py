@@ -16,7 +16,7 @@ module: ec2_vpc_nacl
 short_description: create and delete Network ACLs.
 description:
   - Read the AWS documentation for Network ACLS
-    U(http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_ACLs.html)
+    U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_ACLs.html)
 version_added: "2.2"
 options:
   name:
