@@ -10,6 +10,7 @@ pytest
 pytest-mock
 pytest-xdist
 python-memcached
+pyvmomi
 pyyaml
 redis
 requests
