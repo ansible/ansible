@@ -306,7 +306,7 @@ def _build_kwargs(cloud, module, router, network):
     if network:
         kwargs['ext_gateway_net_id'] = network['id']
         # can't send enable_snat unless we have a network
-        if module.params['enable_snat']:
+        if module.params.get('enable_snat') is not None:
             kwargs['enable_snat'] = module.params['enable_snat']
 
     if module.params['external_fixed_ips']:
