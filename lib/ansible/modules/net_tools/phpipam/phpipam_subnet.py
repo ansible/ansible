@@ -162,7 +162,11 @@ def main():
     except:
         module.fail_json(msg='section doesn\'t exist', **result)
     found_subnet = session.get_subnet(subnet, section)
-    optional_args = {'description': description}
+    optional_args = {}
+    
+    if description:
+        optional_args['description'] = description
+
     if vlan:
         # If vlan is defined, make sure it exists and then set
 
