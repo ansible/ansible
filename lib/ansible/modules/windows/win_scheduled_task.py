@@ -186,9 +186,22 @@ options:
         - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated
           after the task is started.
         - It takes in the following keys, C(duration), C(interval), C(stop_at_duration_end)
-        - Optional- C(duration) is how long the pattern is repeated and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S). If not included the duration will be indefinitely.
-        - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
-        - C(stop_at_duration_end) is a boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
+        suboptions:
+          duration:
+            description:
+            - Defines how long the pattern is repeated.
+            - The value is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+            - Defaults to repeat indefinitely.
+            type: str
+          interval:
+            description:
+            - The amount of time between earch restart of the task/
+            - The value is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+            type: str
+          stop_at_duration_end:
+            description:
+            - Whether a running instance of the task is stopped at the end of the repetition pattern.
+            type: bool
     version_added: '2.5'
 
   # Principal options
