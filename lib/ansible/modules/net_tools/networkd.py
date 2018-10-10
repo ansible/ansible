@@ -30,10 +30,6 @@ options:
             - Whether the configuration files should exist or not.
         required: True
         choices: [ "present", "absent" ]
-    name:
-        description:
-            - Where name will be the what we call the interface name.
-        required: True
     config_type:
         description:
             - Specifies the configuration type file to create.
@@ -48,7 +44,25 @@ options:
         description:
             - This configuration file name  where the configurations will be written.
 
-# NetDev Configuration
+# [Match] Section Options
+    name:
+        description:
+            - Where name will be the what we call the interface name.
+        required: True
+
+    match_mac_address:
+        description:
+            - Specifies the intercace mac address that would be applied for matching.
+        required: True
+
+    driver:
+        description:
+            - Matches against the hostname or machine ID of the host. Applies to link config [Match] section.
+    host:
+        description:
+            - A whitespace-separated list of shell-style globs matching the driver currently bound to the device.
+
+# NetDev Configuration [NetDev]
 
     kind:
         description:
@@ -57,7 +71,7 @@ options:
                    "ip6gretap", "vti", "vti6", "vxlan" ]
     mac_address:
         description:
-            - Configures the MAC address.
+            - Configures the MAC address that should be applied to this netdev.
     mtu_bytes:
         description:
             - Configures MTU of the interface.
@@ -129,7 +143,7 @@ options:
             - Configures the default destination UDP port on a per-device basis.
         required: false
 
-# Network Configuration
+# Network Configuration [Network] Section
 
     lldp:
         description:
@@ -182,12 +196,9 @@ options:
         description:
             - The name of a tunnel(ipip) to create on the link.
         required: false
-    driver:
-        description:
-            - Matches against the hostname or machine ID of the host. Applies to link config [Match] section.
-    host:
-        description:
-            - A whitespace-separated list of shell-style globs matching the driver currently bound to the device.
+
+# [Link] Section Options
+
     alias:
         description:
             - The "ifalias" is set to this value. Applies to link config [Link] section.
@@ -209,6 +220,14 @@ EXAMPLES = '''
       conf_type: network
       name: eth1
       dhcp: yes
+      state: present
+
+# Configure interface with multiple addresses
+  - networkd:
+      conf_type: network
+      name: eth0
+      dhcp: yes
+      addresses: 192.168.1.5/24 192.168.1.6/24 192.168.1.7/24
       state: present
 
 # Bridge with two ports
@@ -385,6 +404,7 @@ class Link:
         self.name = module.params['name']
         self.link_name = module.params['link_name']
         self.mac_address = module.params['mac_address']
+        self.match_mac_address = module.params['match_mac_address']
         self.host = module.params['host']
         self.wake_on_lan = module.params['wake_on_lan']
         self.driver = module.params['driver']
@@ -396,8 +416,8 @@ class Link:
 
         if self.driver:
             conf += 'Driver={0}\n'.format(self.driver)
-        if self.mac_address:
-            conf += 'MACAddress={0}\n'.format(self.mac_address)
+        if self.match_mac_address:
+            conf += 'MACAddress={0}\n'.format(self.match_mac_address)
         if self.name:
             conf += 'Name={0}\n'.format(self.name)
         if self.host:
@@ -413,6 +433,8 @@ class Link:
             conf += 'Alias={0}\n'.format(self.alias)
         if self.link_name:
             conf += 'Name={0}\n'.format(self.link_name)
+        if self.mac_address:
+            conf += 'MACAddress={0}\n'.format(self.mac_address)
         if self.mtu_bytes:
             conf += 'MTUBytes={0}\n'.format(self.mtu_bytes)
         if self.wake_on_lan:
@@ -443,6 +465,8 @@ class Network:
         self.macvlan_device = module.params['macvlan_device']
         self.vlan_device = module.params['vlan_device']
         self.tunnel_device = module.params['tunnel_device']
+
+        self.addresses = module.params['addresses']
 
     def create_config_network(self):
         link = Link(self.module)
@@ -478,6 +502,11 @@ class Network:
             conf += 'MACVLAN={0}\n'.format(self.macvlan_device)
         if self.tunnel_device:
                 conf += 'Tunnel={0}\n'.format(self.tunnel_device)
+
+        if self.addresses:
+            list_addresses = self.addresses.split(' ')
+            for address in list_addresses:
+                conf += "\n[Address]\nAddress={0}\n".format(address)
 
         config = NetworkdUtilities(self.module)
         return config.write_configs_to_file(conf)
@@ -655,14 +684,16 @@ def main():
                                                                                   UNIT_PATH_NETWORKD_SYSTEM]),
             file_name=dict(default=None, type='str'),
             config_type=dict(type='str', default=None, choices=['link', 'netdev', 'network']),
+
+            # [Match] section
+            match_mac_address=dict(type='str', default=None),
             name=dict(required=True, type='str'),
-
-            mac_address=dict(type='str', default=None),
-            mtu_bytes=dict(type='str', default=None),
-
-            # [link] section
             host=dict(type='str', default=None),
             driver=dict(type='str', default=None),
+
+            # [link] section
+            mac_address=dict(type='str', default=None),
+            mtu_bytes=dict(type='str', default=None),
             alias=dict(type='str', default=None),
             wake_on_lan=dict(type='str', default=None, choices=['phy', 'unicast', 'multicast',
                                                                 'broadcast', 'arp', 'magic', 'secureon', 'off']),
@@ -717,6 +748,10 @@ def main():
             macvlan_device=dict(type='str', default=None),
             vlan_device=dict(type='str', default=None),
             tunnel_device=dict(type='str', default=None),
+
+            # [Address] Section options
+            addresses=dict(type='str', default=None),
+
         ),
     )
 
