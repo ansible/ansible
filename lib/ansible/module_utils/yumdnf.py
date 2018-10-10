@@ -130,6 +130,9 @@ class YumDnf(with_metaclass(ABCMeta, object)):
 
         some_list.extend(new_list)
 
+        if some_list == [""]:
+            return []
+
         return some_list
 
     @abstractmethod

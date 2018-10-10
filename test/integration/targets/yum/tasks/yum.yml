@@ -83,6 +83,16 @@
     that:
         - "not yum_result is changed"
 
+- name: install sos again with empty string enablerepo
+  yum: name=sos state=present enablerepo=""
+  register: yum_result
+- name: verify no change on third install with empty string enablerepo
+  assert:
+    that:
+        - "yum_result is success"
+        - "not yum_result is changed"
+
+
 # INSTALL AGAIN WITH LATEST
 - name: install sos again with state latest in check mode
   yum: name=sos state=latest
