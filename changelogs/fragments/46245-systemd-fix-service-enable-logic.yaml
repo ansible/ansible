@@ -1,0 +1,2 @@
+bugfixes:
+- In systemd module, fix check if a systemd+initd service is enabled - disabled in systemd means disabled
