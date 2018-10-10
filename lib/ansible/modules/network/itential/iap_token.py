@@ -1,8 +1,10 @@
 #!/usr/bin/python
-
+# -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Itential <opensource@itential.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+"""
+This module provides the token for Itential Automation Platform
+"""
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -11,13 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: iap_token
-version_added: "2.6"
+version_added: "2.8"
 author: "Itential (opensource@itential.com)"
-requirements:
-  - requests
 short_description: Get token for the Itential Automation Platform
 description:
   - Checks the connection to IAP and retrieves a login token.
@@ -55,7 +55,7 @@ options:
 
 notes:
   - This module is under construction
-'''
+"""
 
 EXAMPLES = '''
 - name: Get token for the Itential Automation Platform
@@ -75,59 +75,15 @@ token:
     type: str
     returned: always
 '''
-
-# Ansible imports
 from ansible.module_utils.basic import AnsibleModule
-
-# Standard library imports
-import ansible.module_utils.urls
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
+from ansible.module_utils.urls import fetch_url
 
 
-def run_module():
-    # define the available arguments/parameters that a user can pass to
-    # the module
-    module_args = dict(
-        iap_port=dict(type='str', required=True),
-        iap_fqdn=dict(type='str', required=True),
-        username=dict(type='str', required=True),
-        password=dict(type='str', required=True),
-        https=(dict(type='bool', default=False))
-    )
-
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # change is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
-    result = dict(
-        changed=False,
-        token='',
-        msg=''
-    )
-
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
-    module = AnsibleModule(
-        argument_spec=module_args,
-        supports_check_mode=True
-    )
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    if module.check_mode:
-        return result
-
-    # manipulate or modify the state as needed
-    # hit the target system and get the token
-
+def get_token(module):
+    """
+    :param module:
+    :return: token
+    """
     # defaulting the value for transport_protocol to be : http
     transport_protocol = 'http'
     if module.params['https'] is True:
@@ -143,28 +99,44 @@ def run_module():
             "password": password
         }
     }
-    try:
-        responseresult = requests.post(url=url, json=login)
-        responseresult.raise_for_status()
-        if responseresult.status_code == 200:
-            result['changed'] = True
-            result['token'] = responseresult.content
-            result['msg'] = 'Token found'
-    except requests.ConnectionError as err:
-        module.fail_json(msg="Failed to connect to Itential Automation Platform : {} ".format(err), **result)
-    except requests.exceptions.HTTPError as errh:
-        module.fail_json(msg="Http Error: {} ".format(errh), **result)
-    except requests.exceptions.Timeout as errt:
-        module.fail_json(msg="Timeout Error: {} ".format(errt), **result)
-    except requests.exceptions.RequestException as err:
-        module.fail_json(msg="Something happened: {} ".format(err), **result)
+    json_body = module.jsonify(login)
+    headers = {}
+    headers['Content-Type'] = 'application/json'
+
+    # Using fetch url instead of requests
+    response, info = fetch_url(module, url, data=json_body, headers=headers)
+    response_code = str(info['status'])
+    if info['status'] != 200:
+        if info['status'] >= 400:
+            module.fail_json(msg="Failed to connect to Itential Automation Platform" + response_code)
+        else:
+            module.fail_json(msg="Failed to connect to Itential Automation Platform " + response_code)
+    response = response.read()
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
-    module.exit_json(**result)
+    module.exit_json(changed=True, token=response)
 
 
 def main():
-    run_module()
+    """
+    :return: token
+    """
+    # define the available arguments/parameters that a user can pass to
+    # the module
+    # the AnsibleModule object will be our abstraction working with Ansible
+    # this includes instantiation, a couple of common attr would be the
+    # args/params passed to the execution, as well as if the module
+    # supports check mode
+    module = AnsibleModule(
+        argument_spec=dict(
+            iap_port=dict(type='str', required=True),
+            iap_fqdn=dict(type='str', required=True),
+            username=dict(type='str', required=True),
+            password=dict(type='str', required=True),
+            https=(dict(type='bool', default=False))
+        )
+    )
+    get_token(module)
 
 
 if __name__ == '__main__':
