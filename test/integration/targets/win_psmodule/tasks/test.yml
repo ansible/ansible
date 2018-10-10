@@ -253,7 +253,7 @@
     version: "{{module_version_list.stdout_lines[2]}}"
   register: install_module_specific_version_3
 
-- name: Validate module is downgraded
+- name: Validate module is not downgraded
   assert:
     that:
       - "install_module_specific_version_3 is not changed"

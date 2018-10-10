@@ -10,7 +10,7 @@
 
 $params = Parse-Args $args -supports_check_mode $true
 
-$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true 
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $repo = Get-AnsibleParam -obj $params -name "repository" -type "str"
 $url = Get-AnsibleParam -obj $params -name "url" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent", "latest"
