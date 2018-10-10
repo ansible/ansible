@@ -18,6 +18,8 @@
 
 from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.six import string_types, integer_types
+from ansible.module_utils._text import to_native
+
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -31,7 +33,7 @@ DOCUMENTATION = '''
     options:
         connect_string:
             description:
-                - Can be any valid MongoDB connection string, supporting authentication, replicasets, etc.
+                - Can be any valid MongoDB connection string, supporting authentication, replica sets, etc.
                 - "More info at U(https://docs.mongodb.org/manual/reference/connection-string/)"
             default: "mongodb://localhost/"
         database:
@@ -62,7 +64,7 @@ DOCUMENTATION = '''
             type: integer
         sort:
             description:
-                - Sorting rules. Please notice the constats are replaced by strings.
+                - Sorting rules. Please use the strings "ASCENDING" and "DESCENDING" to set the order. Check the example for more information.
             type: list
             default: "[]"
     notes:
@@ -72,28 +74,79 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-- hosts: all
+- hosts: localhost
   gather_facts: false
   vars:
     mongodb_parameters:
       #mandatory parameters
       database: 'local'
-      #optional
       collection: "startup_log"
+      #optional
       connection_string: "mongodb://localhost/"
-      extra_connection_parameters: { "ssl" : True , "ssl_certfile": /etc/self_signed_certificate.pem" }
+      # connection_string: "mongodb://username:password@my.server.com:27017/"
+      # extra_connection_parameters: { "ssl" : True , "ssl_certfile": /etc/self_signed_certificate.pem" }
       #optional query  parameters, we accept any parameter from the normal mongodb query.
-      filter:  { "hostname": "batman" }
+      # filter:  { "hostname": "u18" }
       projection: { "pid": True    , "_id" : False , "hostname" : True }
       skip: 0
       limit: 1
       sort:  [ [ "startTime" , "ASCENDING" ] , [ "age", "DESCENDING" ] ]
   tasks:
-    - debug: msg="Mongo has already started with the following PID [{{ item.pid }}]"
-      with_mongodb: "{{mongodb_parameters}}"
+    - debug: msg="The PID from MongoDB is {{ lookup('mongodb', mongodb_parameters ).pid }}"
+
+    - debug: msg="The HostName from the MongoDB server is {{ lookup('mongodb', mongodb_parameters ).hostname }}"
+
+    - debug: msg="Mongo DB is stored at {{ lookup('mongodb', mongodb_parameters_inline )}}"
+      vars:
+        mongodb_parameters_inline:
+          database: 'local'
+          collection: "startup_log"
+          connection_string: "mongodb://localhost/"
+          limit: 1
+          projection: { "cmdline.storage": True }
+
+      # lookup syntax, does the same as below
+    - debug: msg="The hostname is {{ item.hostname }} and the pid is {{ item.pid }}"
+      loop: "{{ lookup('mongodb', mongodb_parameters, wantlist=True) }}"
+
+      # query syntax, does the same as above
+    - debug: msg="The hostname is {{ item.hostname }} and the pid is {{ item.pid }}"
+      loop: "{{ query('mongodb', mongodb_parameters) }}"
+
+    - name: "Raw output from the mongodb lookup (a json with pid and hostname )"
+      debug: msg="{{ lookup('mongodb', mongodb_parameters) }}"
+
+    - name: "Yet another mongodb query, now with the parameters on the task itself"
+      debug: msg="pid={{item.pid}} hostname={{item.hostname}} version={{ item.buildinfo.version }}"
+      with_mongodb:
+        - database: 'local'
+          collection: "startup_log"
+          connection_string: "mongodb://localhost/"
+          limit: 1
+          projection: { "pid": True    , "hostname": True , "buildinfo.version": True }
+
+    # Please notice this specific query may result more than one result. This is expected
+    - name: "Shows the whole output from mongodb"
+      debug: msg="{{ item }}"
+      with_mongodb:
+        - database: 'local'
+          collection: "startup_log"
+          connection_string: "mongodb://localhost/"
+
+
 '''
 
+RETURN = """
+  _list_of_jsons:
+    description:
+      - a list of JSONs with the results of the MongoDB query.
+    type: list
+"""
+
 import datetime
+
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
 
 try:
     from pymongo import ASCENDING, DESCENDING
@@ -108,10 +161,6 @@ except ImportError:
         pymongo_found = True
 else:
     pymongo_found = True
-
-
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
 
 
 class LookupModule(LookupBase):
@@ -163,49 +212,20 @@ class LookupModule(LookupBase):
             return u"{0}".format(result)
 
     def run(self, terms, variables, **kwargs):
+        try:
+            return self._run_helper(terms)
+        except Exception as e:
+            print(u"There was an exception on the mongodb_lookup: {0}".format(to_native(e)))
+            raise e
 
+    def _run_helper(self, terms):
+        if not pymongo_found:
+            raise AnsibleError(u"pymongo is required in the master node (this machine) for mongodb lookup.")
         ret = []
         for term in terms:
-            u'''
-            Makes a MongoDB query and returns the output as a valid list of json.
-            Timestamps are converted to epoch integers/longs.
-
-            Here is a sample playbook that uses it:
-
--------------------------------------------------------------------------------
-- hosts: all
-  gather_facts: false
-
-  vars:
-    mongodb_parameters:
-      #optional parameter, default = "mongodb://localhost/"
-      # connection_string: "mongodb://localhost/"
-
-      #mandatory parameters
-      database: 'local'
-      collection: "startup_log"
-
-      #optional query  parameters
-      #we accept any parameter from the normal mongodb query.
-      # the official documentation is here
-      # https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find
-      #   filter:  { "hostname": "batman" }
-      #   projection: { "pid": True    , "_id" : False , "hostname" : True }
-      #   skip: 0
-      #   limit: 1
-      #   sort:  [ [ "startTime" , "ASCENDING" ] , [ "age", "DESCENDING" ] ]
-      #   extra_connection_parameters = { }
-
-      # dictionary with extra parameters like ssl, ssl_keyfile, maxPoolSize etc...
-      # the full list is available here. It varies from PyMongo version
-      # https://api.mongodb.org/python/current/api/pymongo/mongo_client.html#pymongo.mongo_client.MongoClient
-
-  tasks:
-    - debug: msg="Mongo has already started with the following PID [{{ item.pid }}] - full_data {{ item }} "
-      with_items:
-      - "{{ lookup('mongodb', mongodb_parameters) }}"
--------------------------------------------------------------------------------
-            '''
+            for required_parameter in [u"database", u"collection"]:
+                if required_parameter not in term:
+                    raise AnsibleError(u"missing mandatory parameter [{0}]".format(required_parameter))
 
             connection_string = term.get(u'connection_string', u"mongodb://localhost")
             database = term[u"database"]

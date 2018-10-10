@@ -1,0 +1,62 @@
+- name: "assert we complain properly if pymongo is not there"
+  debug: msg="{{ lookup('mongodb', mongodb_parameters ) }}"
+  register: result
+  ignore_errors: yes
+
+- name: "assert we complain properly if pymongo is not there (assert part)"
+  assert:
+    that:
+    - result is failed
+    - result is not changed
+    - "'pymongo is required' in result.msg"
+
+- name: install pymongo
+  pip:
+    name: "pymongo"
+
+- name: "assert we complain properly if we can't connect to mongo"
+  debug: msg="{{ lookup('mongodb', mongodb_parameters ) }}"
+  register: result
+  ignore_errors: yes
+
+- name: Assert we fail with the right message if we can't connect to mongodb
+  assert:
+    that:
+    - result is failed
+    - result is not changed
+    - "'unable to connect to database' in result.msg"
+
+- name: "Copying our custom /etc/mongodb.conf which does not use as much disk space and makes mongo start quickly"
+  copy:
+    src: mongodb.conf
+    dest: /etc/mongodb.conf
+
+- name: Installing mongodb
+  # somehow the apt module messes up all tests...
+  command: "apt-get install -o Dpkg::Options::=\"--force-confold\" --force-yes -y mongodb"
+
+- name: "Start service mongodb, if not started. This may fail, but mongodb starts anyway after a while..."
+  command: "/etc/init.d/mongodb start"
+  ignore_errors: yes
+
+- name: Wait up to 300 seconds for port 27017 (mongodb) to become open on the host, don't start checking for 10 seconds
+  wait_for:
+    port: 27017
+
+- name: "make a simple query"
+  debug: msg="{{ lookup('mongodb', mongodb_parameters ).pid }}"
+  register: result
+
+- name: asserting query result is a valid value
+  assert:
+    that:
+    - "(result.msg |int) > 0"
+
+- name: removing mongodb
+  # somehow the apt module messes up all tests...
+  command: "apt-get purge --force-yes -y mongodb"
+
+- name: deleting custom mongodb.conf
+  file:
+    state: absent
+    path: "/etc/mongodb.conf"
