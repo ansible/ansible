@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.six import string_types, integer_types
 from ansible.module_utils._text import to_native
+
 __metaclass__ = type
 
 DOCUMENTATION = '''
